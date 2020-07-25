@@ -29,7 +29,7 @@ from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom.scan import QRextract
 from plom.scan import rotateBitmap
-from plom import PlomImageExtWhitelist
+from plom import PlomImageExts
 
 
 def decodeQRs(where):
@@ -42,7 +42,7 @@ def decodeQRs(where):
         where (str, Path): where to search, e.g., "bundledir/pageImages"
     """
     stuff = []
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         stuff.extend(where.glob("*.{}".format(ext)))
     N = len(stuff)
     # TODO: processes=8?  Seems its chosen automatically (?)

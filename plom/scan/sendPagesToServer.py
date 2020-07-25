@@ -21,7 +21,7 @@ import toml
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
-from plom import PlomImageExtWhitelist
+from plom import PlomImageExts
 from plom.rules import isValidStudentNumber
 
 
@@ -336,7 +336,7 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
 
     files = []
     # Look for pages in decodedPages
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
     TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
     # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
@@ -398,7 +398,7 @@ def uploadHWPages(
     # files are sitting in "bundles/submittedHWByQ/<bundle_name>"
     os.chdir(os.path.join("bundles", "submittedHWByQ", bundle_name))
     # Look for pages in pageImages
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
 
     HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name)
@@ -462,7 +462,7 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
     # files are sitting in "bundles/submittedLoose/<bundle_name>"
     os.chdir(os.path.join("bundles", "submittedLoose", bundle_name))
     # Look for pages in pageImages
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
 
     LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)

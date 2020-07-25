@@ -17,7 +17,7 @@ from textwrap import dedent
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
-from plom import PlomImageExtWhitelist
+from plom import PlomImageExts
 from .sendUnknownsToServer import extractOrder
 
 
@@ -96,7 +96,7 @@ def print_collision_warning(bundle_dir):
         bundle_dir (str, Path): path to a bundle.
     """
     files = []
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
     if not files:
         return
@@ -148,7 +148,7 @@ def upload_collisions(bundleDir, server=None, password=None):
             raise ValueError("should've been a directory!")
 
         files = []
-        for ext in PlomImageExtWhitelist:
+        for ext in PlomImageExts:
             files.extend(
                 (bundleDir / "uploads/collidingPages").glob("*.{}".format(ext))
             )

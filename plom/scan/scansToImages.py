@@ -21,7 +21,7 @@ import fitz
 from PIL import Image
 import jpegtran
 
-from plom import PlomImageExtWhitelist
+from plom import PlomImageExts
 from plom import ScenePixelHeight
 
 
@@ -166,7 +166,7 @@ def processFileToBitmaps(file_name, dest):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"].lower() in PlomImageExtWhitelist:
+                if d["ext"].lower() in PlomImageExts:
                     converttopng = False
                     # Bail on jpeg if dimensions are not multiples of 16.
                     # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
@@ -181,7 +181,7 @@ def processFileToBitmaps(file_name, dest):
                 else:
                     converttopng = True
                     print(
-                        "  {} format not whitelisted; transcoding to PNG".format(
+                        "  {} format not in allowlist: transcoding to PNG".format(
                             d["ext"]
                         )
                     )
@@ -382,7 +382,7 @@ def postProcessing(thedir, dest):
     #     gamma_adjust(x)
 
     fileList = []
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         fileList.extend(thedir.glob("*.{}".format(ext)))
     # move them to pageimages for barcode reading
     for file in fileList:
