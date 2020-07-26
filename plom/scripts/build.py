@@ -178,8 +178,7 @@ def main():
         createSpecificationFile(fname)
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
-            print("DEMO MODE: adjustng for {} tests".format(args.demo_num_papers))
-            # TODO: if too large demo classlist may be exhausted, double check that at demo classlist
+            print("DEMO MODE: adjustng spec for {} tests".format(args.demo_num_papers))
             # TODO: use specParser eventually instead of shell out
             subprocess.check_call(
                 [
@@ -191,13 +190,14 @@ def main():
                     fname,
                 ]
             )
+            cl = pkg_resources.resource_string("plom", "demoClassList.csv")
+            # half of them, up to length of demo classlist
+            num_to_name = min(args.demo_num_papers // 2, len(str(cl).split(r"\n")))
             subprocess.check_call(
                 [
                     "sed",
                     "-i",
-                    "s/numberToName = 10/numberToName = {}/".format(
-                        args.demo_num_papers // 2
-                    ),
+                    "s/numberToName = 10/numberToName = {}/".format(num_to_name),
                     fname,
                 ]
             )
