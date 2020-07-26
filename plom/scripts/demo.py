@@ -82,12 +82,17 @@ def main():
     #         "plom-scan all -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
     #     )
     # )
+
+    opts = "--no-gamma-shift"
+    # opts = ""
     for f in (
         "fake_scribbled_exams1",
         "fake_scribbled_exams2",
         "fake_scribbled_exams3",
     ):
-        subprocess.check_call(split("plom-scan process -w 4567 {}.pdf".format(f)))
+        subprocess.check_call(
+            split("plom-scan process -w 4567 {} {}.pdf".format(opts, f))
+        )
         subprocess.check_call(split("plom-scan upload -w 4567 -u {}".format(f)))
 
     time.sleep(0.5)

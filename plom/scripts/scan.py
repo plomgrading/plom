@@ -106,7 +106,7 @@ def make_required_directories(bundle=None):
             os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processScans(server, password, pdf_fname):
+def processScans(server, password, pdf_fname, skip_gamma):
     """Process PDF file into images and read QRcodes
 
     Convert file into a bundle-name
@@ -161,7 +161,7 @@ def processScans(server, password, pdf_fname):
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir)
+    scansToImages.processScans(pdf_fname, bundledir, skip_gamma)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
     # TODO: can collisions warning be written here too?
@@ -332,6 +332,11 @@ spC = sub.add_parser(
 # )
 # spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
+spP.add_argument(
+    "--no-gamma-shift",
+    action="store_true",
+    help="Save a little time by skipping the white balancing.",
+)
 spU.add_argument("bundleName", help="The name of the PDF file, without extension.")
 spU.add_argument(
     "-u",
@@ -355,7 +360,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "process":
-        processScans(args.server, args.password, args.scanPDF)
+        processScans(args.server, args.password, args.scanPDF, args.no_gamma_shift)
     elif args.command == "upload":
         uploadImages(
             args.server, args.password, args.bundleName, args.unknowns, args.collisions
