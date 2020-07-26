@@ -93,7 +93,7 @@ group.add_argument(
     action="store_true",
     help="Use an auto-generated demo test. **Obviously not for real use**",
 )
-# Add to spC not execlusive group
+# Add to spC not exclusive group
 spC.add_argument(
     "--demo-num-papers",
     type=int,
