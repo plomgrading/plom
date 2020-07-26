@@ -29,6 +29,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 parser.add_argument(
+    "-n",
     "--num-papers",
     type=int,
     # default=20,  # we want it to give None
