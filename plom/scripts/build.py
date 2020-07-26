@@ -12,6 +12,7 @@ import argparse
 import os
 from warnings import warn
 from textwrap import dedent, wrap
+import subprocess
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -92,7 +93,15 @@ group.add_argument(
     action="store_true",
     help="Use an auto-generated demo test. **Obviously not for real use**",
 )
-#
+# Add to spC not execlusive group
+spC.add_argument(
+    "--demo-num-papers",
+    type=int,
+    # default=20,  # we want it to give None
+    metavar="N",
+    help="How many fake exam papers for the demo (defaults to 20 if omitted)",
+)
+
 spP = sub.add_parser(
     "parse",
     help="Parse spec file",
@@ -167,6 +176,31 @@ def main():
             fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         createSpecificationFile(fname)
+        if args.demo_num_papers:
+            assert args.demo, "cannot specify number of demo paper outside of demo mode"
+            print("DEMO MODE: adjustng for {} tests".format(args.demo_num_papers))
+            # TODO: if too large demo classlist may be exhausted, double check that at demo classlist
+            # TODO: use specParser eventually instead of shell out
+            subprocess.check_call(
+                [
+                    "sed",
+                    "-i",
+                    "s/numberToProduce = 20/numberToProduce = {}/".format(
+                        args.demo_num_papers
+                    ),
+                    fname,
+                ]
+            )
+            subprocess.check_call(
+                [
+                    "sed",
+                    "-i",
+                    "s/numberToName = 10/numberToName = {}/".format(
+                        args.demo_num_papers // 2
+                    ),
+                    fname,
+                ]
+            )
         if args.demo:
             print("DEMO MODE: building source files")
             if not buildDemoSourceFiles():
