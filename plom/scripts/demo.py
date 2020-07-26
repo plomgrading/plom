@@ -28,6 +28,13 @@ parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--num-papers",
+    type=int,
+    # default=20,  # we want it to give None
+    metavar="N",
+    help="How many fake exam papers for the demo (defaults to 20 if omitted)",
+)
 
 
 def main():
@@ -48,7 +55,9 @@ def main():
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
-    subprocess.check_call(split("plom-build new --demo"))
+    subprocess.check_call(
+        split("plom-build new --demo --demo-num-papers {}".format(args.num_papers))
+    )
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
