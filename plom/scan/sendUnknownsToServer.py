@@ -16,7 +16,7 @@ import getpass
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
-from plom import PlomImageExtWhitelist
+from plom import PlomImageExts
 
 
 def doFiling(rmsg, bundle, shortName, fname):
@@ -83,7 +83,7 @@ def print_unknowns_warning(bundle_dir):
         bundle_dir (str, Path): path to a bundle.
     """
     files = []
-    for ext in PlomImageExtWhitelist:
+    for ext in PlomImageExts:
         files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
     if not files:
         return
@@ -129,7 +129,7 @@ def upload_unknowns(bundle_dir, server=None, password=None):
             raise ValueError("should've been a directory!")
         files = []
         # Look for pages in unknowns
-        for ext in PlomImageExtWhitelist:
+        for ext in PlomImageExts:
             files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
         sendUnknownFiles(scanMessenger, bundle_dir.name, files)
     finally:

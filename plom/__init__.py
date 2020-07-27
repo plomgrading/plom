@@ -18,7 +18,7 @@ Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase
 # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
-PlomImageExtWhitelist = ("png", "jpg", "jpeg")
+PlomImageExts = ("png", "jpg", "jpeg")
 
 ScenePixelHeight = 2000
 
