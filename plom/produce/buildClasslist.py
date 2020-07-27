@@ -8,12 +8,9 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import csv
-import json
 import os
 import sys
-import subprocess
 import tempfile
-from pathlib import Path
 
 import pkg_resources
 import pandas
