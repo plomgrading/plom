@@ -131,11 +131,7 @@ spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
 group = spL.add_mutually_exclusive_group(required=True)
 group.add_argument("classlist", nargs="?", help="filename in csv format")
-group.add_argument(
-    "--demo",
-    action="store_true",
-    help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
-)
+group.add_argument("--demo", action="store_true", help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**")
 
 spB = sub.add_parser(
     "make",
