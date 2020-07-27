@@ -269,19 +269,18 @@ def process_classlist_backend(student_csv_file_name):
     # we need to check it has the minimum information ie student name/id.
     # If not we will fail the process.
 
-    # First we check if this csv file is a Canvas output using check_canvas_csv
+    # First we check if this csv file is a Canvas output
     if check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
         student_info_df = clean_canvas_csv(student_csv_file_name)
         print("We have successfully extracted columns from Canvas data and renaming")
-    # Is not a Canvas formed file, we will check if the canvas data is usable using check_non_canvas_csv
     elif check_is_non_canvas_csv(student_csv_file_name):
         print(
-            "This file looks like it was not exported from Canvas, we will check the function for the required information"
+            "This file looks like it was not exported from Canvas; checking for the required information..."
         )
         student_info_df = clean_non_canvas_csv(student_csv_file_name)
         print(
-            "We have successfully extracted and renamed columns from the non Canvas data and have the required information"
+            "We have successfully extracted and renamed columns from the non Canvas data."
         )
     # Otherwise we have an error
     else:
