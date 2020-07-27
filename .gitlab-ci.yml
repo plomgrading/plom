@@ -299,6 +299,9 @@ legacy_full:
     - python3 -m pip -V
     - python3 -m pip install --upgrade setuptools
     - python3 -m pip install packaging
+    # Issue #950, tensorflow minimal versions
+    - python3 -m pip install numpy==1.16.6
+    - python3 -m pip install requests==2.21.0
     # let setup.py deps do their thing
     # python3 -m pip install pymupdf weasyprint peewee toml aiohttp pyzbar
     # not needed until prediction
@@ -308,6 +311,8 @@ legacy_full:
     - pushd dist
     - python3 -m pip install plom-*.whl
     - popd
+    # First, run the unit tests
+    - pytest-3 -l --pyargs plom
     # Build tests
     - mkdir play
     - pushd play
