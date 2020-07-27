@@ -178,6 +178,17 @@ def main():
         createSpecificationFile(fname)
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
+            classlist_len = len(
+                str(pkg_resources.resource_string("plom", "demoClassList.csv")).split(
+                    r"\n"
+                )
+            )
+            classlist_len -= 1  # b/c of header
+            if args.demo_num_papers > classlist_len:
+                # TODO: could make longer classlist on the fly?  Or checkin longer list?
+                raise ValueError(
+                    "Demo size capped at classlist length of {}".format(classlist_len)
+                )
             print("DEMO MODE: adjustng spec for {} tests".format(args.demo_num_papers))
             # TODO: use specParser eventually instead of shell out
             subprocess.check_call(
@@ -190,9 +201,8 @@ def main():
                     fname,
                 ]
             )
-            cl = pkg_resources.resource_string("plom", "demoClassList.csv")
             # half of them, up to length of demo classlist
-            num_to_name = min(args.demo_num_papers // 2, len(str(cl).split(r"\n")))
+            num_to_name = min(args.demo_num_papers // 2, classlist_len)
             subprocess.check_call(
                 [
                     "sed",
