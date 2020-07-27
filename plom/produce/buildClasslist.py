@@ -286,7 +286,7 @@ def process_classlist_backend(student_csv_file_name):
     # Otherwise we have an error
     else:
         print("Problems with the classlist you supplied. See output above.")
-        exit(1)
+        sys.exit(1)
 
     # Check characters in names are latin-1 compatible
     if not check_latin_names(student_info_df):
@@ -340,11 +340,11 @@ def process_class_list(student_csv_file_name, demo=False):
 
     if not student_csv_file_name:
         print("Please provide a classlist file: see help")
-        exit(1)
+        sys.exit(1)
 
     if not os.path.isfile(student_csv_file_name):
         print('Cannot find file "{}"'.format(student_csv_file_name))
-        exit(1)
+        sys.exit(1)
     df = process_classlist_backend(student_csv_file_name)
     # order is important, leave it as a list
     return list(zip(df.id, df.studentName))
