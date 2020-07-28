@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
+import io
 import os
 from warnings import warn
 from textwrap import dedent, wrap
@@ -16,6 +17,7 @@ import subprocess
 
 # import tools for dealing with resource files
 import pkg_resources
+import pandas
 
 from plom import __version__
 from plom import SpecVerifier, SpecParser
@@ -178,12 +180,9 @@ def main():
         createSpecificationFile(fname)
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
-            classlist_len = len(
-                str(pkg_resources.resource_string("plom", "demoClassList.csv")).split(
-                    r"\n"
-                )
-            )
-            classlist_len -= 1  # b/c of header
+            classlist_len = pandas.read_csv(
+                io.BytesIO(pkg_resources.resource_string("plom", "demoClassList.csv"))
+            ).shape[0]
             if args.demo_num_papers > classlist_len:
                 # TODO: could make longer classlist on the fly?  Or checkin longer list?
                 raise ValueError(
