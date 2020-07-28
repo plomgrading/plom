@@ -214,7 +214,6 @@ class IDClient(QWidget):
 
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
-        self.ui.nameEdit.returnPressed.connect(self.enterName)
         self.ui.closeButton.clicked.connect(self.shutDown)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton.clicked.connect(self.acceptPrediction)
@@ -280,21 +279,23 @@ class IDClient(QWidget):
         `student_name_to_idlist`
             Names are not unique so we map each name to a list of IDs.
         """
-        self.student_id_to_name_map = dict(messenger.IDrequestClasslist())
-        self.student_name_to_idlist = {}
-        for sid, sname in self.student_id_to_name_map.items():
-            if not self.student_name_to_idlist.get(sname):
-                self.student_name_to_idlist[sname] = [sid]
-            else:
-                self.student_name_to_idlist[sname].append(sid)
-                log.warn(
-                    'multiple students with name "{}": associated id list is now {}'.format(
-                        censorName(sname),
-                        ", ".join(
-                            [censorID(x) for x in self.student_name_to_idlist[sname]]
-                        ),
-                    )
-                )
+        # a list of pairs [sid, sname]
+        self.student_id_and_name_list = messenger.IDrequestClasslist()
+        # use 'snid' to mean "student_id_and_name" as one string.
+        self.snid_to_student_id = dict()
+        self.snid_to_student_name = dict()
+        # also need id to snid for predictionlist wrangling.
+        self.student_id_to_snid = dict()
+
+        name_list = []
+        for sid, sname in self.student_id_and_name_list:
+            snid = "{}: {}".format(sid, sname)
+            self.snid_to_student_id[snid] = sid
+            self.snid_to_student_name[snid] = sname
+            self.student_id_to_snid[sid] = snid
+
+            if sname in name_list:
+                log.warn('Multiple students with name "{}"'.format(sname))
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
@@ -329,27 +330,19 @@ class IDClient(QWidget):
         Means that user can enter the first few numbers (or letters) and
         be prompted with little pop-up with list of possible completions.
         """
-        # Build stringlistmodels - one for ID and one for names.
-        self.sidlist = QStringListModel()
-        self.snamelist = QStringListModel()
+        # Build stringlistmodels - one for combined student_name_and_id = snid
+        self.snidlist = QStringListModel()
         # Feed in the numbers and names.
-        self.sidlist.setStringList(list(self.student_id_to_name_map.keys()))
-        self.snamelist.setStringList(list(self.student_name_to_idlist.keys()))
-        # Build the number-completer
-        self.sidcompleter = QCompleter()
-        self.sidcompleter.setModel(self.sidlist)
-        # Build the name-completer (matches substring, not just prefix)
-        self.snamecompleter = QCompleter()
-        self.snamecompleter.setModel(self.snamelist)
-        self.snamecompleter.setCaseSensitivity(Qt.CaseInsensitive)
-        self.snamecompleter.setFilterMode(Qt.MatchContains)
+        self.snidlist.setStringList(list(self.snid_to_student_id.keys()))
+        # Build the snid-completer = substring matching and case insensitive
+        self.snidcompleter = QCompleter()
+        self.snidcompleter.setModel(self.snidlist)
+        self.snidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
+        self.snidcompleter.setFilterMode(Qt.MatchContains)
         # Link the ID-completer to the ID-lineedit in the gui.
-        self.ui.idEdit.setCompleter(self.sidcompleter)
-        # Similarly for the name-completer
-        self.ui.nameEdit.setCompleter(self.snamecompleter)
-        # Make sure both lineedits have little "Clear this" buttons.
+        self.ui.idEdit.setCompleter(self.snidcompleter)
+        # Make sure lineedit has little "Clear this" button.
         self.ui.idEdit.setClearButtonEnabled(True)
-        self.ui.nameEdit.setClearButtonEnabled(True)
 
     def shutDownError(self):
         self.my_shutdown_signal.emit(1)
@@ -401,7 +394,6 @@ class IDClient(QWidget):
         # with the data from the table - if it exists.
         # Update the displayed image with that of the newly selected test.
         self.ui.idEdit.setText(self.exM.data(selnew.indexes()[2]))
-        self.ui.nameEdit.setText(self.exM.data(selnew.indexes()[3]))
         self.updateImage(selnew.indexes()[0].row())
         self.ui.idEdit.setFocus()
 
@@ -444,8 +436,9 @@ class IDClient(QWidget):
             self.ui.pNameLabel.setText(self.exM.paperList[r].sname)
             QTimer.singleShot(0, self.setuiedit)
         elif tn in self.predictedTestToNumbers:
-            psid = self.predictedTestToNumbers[tn]
-            pname = self.student_id_to_name_map[psid]
+            psid = self.predictedTestToNumbers[tn]  # predicted student ID
+            psnid = self.student_id_to_snid[psid]  # predicted SNID
+            pname = self.snid_to_student_name[psnid]  # predicted student name
             if pname == "":
                 self.ui.predictionBox.hide()
             else:
@@ -460,7 +453,8 @@ class IDClient(QWidget):
             self.ui.idEdit.setFocus()
 
     def setuiedit(self):
-        self.ui.idEdit.setText(self.ui.pSIDLabel.text())
+        snid = "{}: {}".format(self.ui.pSIDLabel.text(), self.ui.pNameLabel.text())
+        self.ui.idEdit.setText(snid)
 
     def addPaperToList(self, paper, update=True):
         # Add paper to the exam-table-model - get back the corresponding row.
@@ -540,8 +534,9 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
+        snid = "{}: {}".format(sid, sname)
 
-        if not self.identifyStudent(index, sid, sname):
+        if not self.identifyStudent(index, snid):
             return
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
@@ -551,12 +546,24 @@ class IDClient(QWidget):
             self.updateProgress()
         return
 
-    def identifyStudent(self, index, sid, sname):
+    def identifyStudent(self, index, snid, blank=False, no_id=False):
         """User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
-        is called by "enterID" or "enterName" when user hits return on either
-        of those lineedits.
+        is called by "enterID" or "acceptPrediction" when user hits return on the line-edit.
+
+        If called from blank then is called with either 'blank' or 'no_id' set to True
         """
+        # convert snid to name/id.
+        if blank or no_id:
+            sid = None
+            if blank:
+                sname = "Blank paper"
+            else:
+                sname = "No ID given"
+        else:
+            sid = self.snid_to_student_id[snid]
+            sname = self.snid_to_student_name[snid]
+
         # Pass the info to the exam model to put data into the table.
         self.exM.identifyStudent(index, sid, sname)
         code = self.exM.data(index[0])
@@ -576,7 +583,6 @@ class IDClient(QWidget):
         # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
         QTimer.singleShot(0, self.ui.idEdit.clear)
-        QTimer.singleShot(0, self.ui.nameEdit.clear)
         # Update progressbars
         self.updateProgress()
         return True
@@ -619,15 +625,11 @@ class IDClient(QWidget):
             else:
                 alreadyIDd = True
 
-        # Check if the entered ID is in the list from the classlist.
-        if self.ui.idEdit.text() in self.student_id_to_name_map:
-            # If so then fill in the name-edit with the corresponding name.
-            self.ui.nameEdit.setText(self.student_id_to_name_map[self.ui.idEdit.text()])
+        # Check if the entered SNID (student name and id) is in the list from the classlist.
+        if self.ui.idEdit.text() in self.snid_to_student_id:
             # Ask user to confirm ID/Name
             msg = SimpleMessage(
-                "Student ID {} = {}. Enter and move to next?".format(
-                    self.ui.idEdit.text(), self.ui.nameEdit.text()
-                )
+                'Student "{}". Enter and move to next?'.format(self.ui.idEdit.text())
             )
             # Put message popup in its last location
             if self.msgGeometry is not None:
@@ -674,107 +676,8 @@ class IDClient(QWidget):
                 )
                 msg.exec_()
                 return
-            self.ui.nameEdit.setText(str(name))
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
-            if alreadyIDd:
-                self.moveToNextUnID()
-                return
-            if index[0].row() == self.exM.rowCount() - 1:  # last row is highlighted
-                if self.requestNext():
-                    return
-            self.moveToNextUnID()
-
-    def enterName(self):
-        """Triggered when user hits return in the name-lineedit.. that is
-        when they have entered a full student ID.
-        """
-        # if no papers then simply return.
-        if self.exM.rowCount() == 0:
-            return
-        # Grab table-index and code of current test.
-        index = self.ui.tableView.selectedIndexes()
-        code = self.exM.data(index[0])
-        # No code then return.
-        if code is None:
-            return
-        # Get the status of the test
-        status = self.exM.data(index[1])
-        alreadyIDd = False
-        # If the paper is already ID'd ask the user if they want to
-        # change it - set the alreadyIDd flag to true.
-        if status == "identified":
-            msg = SimpleMessage("Do you want to change the ID?")
-            # Put message popup on top-corner of idenfier window
-            msg.move(self.pos())
-            if msg.exec_() == QMessageBox.No:
-                return
-            else:
-                alreadyIDd = True
-        # Check if the entered name is in the list from the classlist.
-        if self.ui.nameEdit.text() in self.student_name_to_idlist:
-            # If so then fill in the ID-edit with the corresponding number.
-            sidlist = self.student_name_to_idlist[self.ui.nameEdit.text()]
-            if len(sidlist) == 1:
-                self.ui.idEdit.setText(sidlist[0])
-            else:
-                ErrorMessage(
-                    'Student name "{}" is not unique in the class list.\n'.format(
-                        self.ui.nameEdit.text()
-                    )
-                    + "Corresponding students IDs include:\n"
-                    + ", ".join(sidlist)
-                    + ".\n\n"
-                    + "Try entering the student ID instead."
-                ).exec_()
-                return
-
-            # Ask user to confirm ID/Name
-            msg = SimpleMessage(
-                "Student ID {} = {}. Enter and move to next?".format(
-                    self.ui.idEdit.text(), self.ui.nameEdit.text()
-                )
-            )
-            # Put message popup on top-corner of idenfier window
-            msg.move(self.pos())
-            # Put message popup in its last location
-            if self.msgGeometry is not None:
-                msg.setGeometry(self.msgGeometry)
-            self.msgGeometry = msg.geometry()
-            # If user says "no" then just return from function.
-            if msg.exec_() == QMessageBox.No:
-                return
-        else:
-            # Name is not in class list - ask user if they really want to
-            # enter that name.
-            msg = SimpleMessage(
-                "Student name {} not in list. Do you want to enter it anyway?".format(
-                    self.ui.nameEdit.text()
-                )
-            )
-            # Put message popup on top-corner of idenfier window
-            msg.move(self.pos())
-            # If no then return from function.
-            if msg.exec_() == QMessageBox.No:
-                return
-            # Otherwise get a number from the user (and the okay)
-            num, ok = QInputDialog.getText(
-                self, "Enter number", "Enter student number:"
-            )
-            if not ok:
-                return
-            # TODO: or just check if its non-blank `if not num:`
-            if not isValidStudentNumber(num):
-                msg = ErrorMessage(
-                    "<p>&ldquo;{}&rdquo; is not a valid student number.</p>"
-                    "<p>(If you need to indicate a blank page, use the "
-                    "<em>&ldquo;{}&rdquo;</em> button.)</p>".format(num, "Blank page",)
-                )
-                msg.exec_()
-                return
-            self.ui.idEdit.setText(str(num))
-        # Run identify student command (which talks to server)
-        if self.identifyStudent(index, self.ui.idEdit.text(), self.ui.nameEdit.text()):
+        if self.identifyStudent(index, self.ui.idEdit.text()):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
@@ -816,11 +719,15 @@ class IDClient(QWidget):
         elif rv == 1:
             sname = "Blank paper"
             sid = None
+            # make a combined SNID
+            snid = "{}: {}".format(sid, sname)
+            self.identifyStudent(index, snid, blank=True)
         else:
             sname = "No ID given"
             sid = None
-
-        self.identifyStudent(index, sid, sname)
+            # make a combined SNID
+            snid = "{}: {}".format(sid, sname)
+            self.identifyStudent(index, snid, no_id=True)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
