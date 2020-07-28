@@ -76,6 +76,7 @@ black:
     - pip3 install black
   script:
     - black --check --diff plom
+  allow_failure: true
 
 
 basic:
