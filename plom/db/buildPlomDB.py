@@ -39,6 +39,11 @@ def buildExamDatabaseFromSpec(spec, db):
     Raises:
         ValueError: if database already populated.
     """
+    # fire up logging
+    import logging
+
+    log = logging.getLogger("DB")
+
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")
 
@@ -62,6 +67,9 @@ def buildExamDatabaseFromSpec(spec, db):
     # Note: need to produce these in a particular order for random seed to be
     # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
+        log.info(
+            "Creating DB entry for test {} of {}.".format(t, spec["numberToProduce"])
+        )
         if db.createTest(t):
             status += "DB entry for test {:04}:".format(t)
         else:
