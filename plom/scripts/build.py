@@ -11,7 +11,6 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import io
 import os
-from warnings import warn
 from textwrap import dedent, wrap
 import subprocess
 
