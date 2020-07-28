@@ -4,7 +4,7 @@ __credits__ = ["Andrew Rechnitzer"]
 __license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QResizeEvent, QTransform
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QResizeEvent, QTransform, QPalette
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    QToolButton,
 )
 from .uiFiles.ui_test_view import Ui_TestView
 from .examviewwindow import ExamViewWindow
@@ -211,44 +212,59 @@ class RearrangementViewer(QDialog):
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
 
-        self.appendB = QPushButton("Append")
-        self.removeB = QPushButton("Remove")
-        self.sLeftB = QPushButton("Shuffle Left")
-        self.sRightB = QPushButton("Shuffle Right")
+        self.appendB = QToolButton()
+        self.appendB.setArrowType(Qt.DownArrow)
+        self.appendB.setText("Add Page")
+        self.appendB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.removeB = QToolButton()
+        self.removeB.setArrowType(Qt.UpArrow)
+        self.removeB.setText("Remove Page")
+        self.removeB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sLeftB = QToolButton()
+        self.sLeftB.setArrowType(Qt.LeftArrow)
+        self.sLeftB.setText("Shift Left")
+        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sRightB = QToolButton()
+        self.sRightB.setArrowType(Qt.RightArrow)
+        self.sRightB.setText("Shift Right")
+        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.reverseB = QPushButton("Reverse Order")
-        self.rotateB = QPushButton("Rotate 90 (local copy only)")
-
-        self.page = ExamViewWindow([])
+        self.rotateB = QPushButton("Rotate Page (local copy only)")
 
         self.closeB = QPushButton("Close")
         self.acceptB = QPushButton("Accept new layout")
 
         self.permute = [False]
 
-        hb0 = QHBoxLayout()
-        vb1 = QVBoxLayout()
-        vb1.addWidget(self.scrollA)
-        vb1.addWidget(self.scrollB)
         hb1 = QHBoxLayout()
-        hb1.addWidget(self.sLeftB)
-        hb1.addWidget(self.reverseB)
-        hb1.addWidget(self.sRightB)
-        vb2 = QVBoxLayout()
-        vb2.addWidget(self.appendB)
-        vb2.addWidget(self.removeB)
-        vb2.addLayout(hb1)
-        vb3 = QVBoxLayout()
-        vb3.addWidget(self.acceptB)
-        vb3.addLayout(vb2)
-        vb3.addWidget(self.rotateB)
-        vb3.addWidget(self.closeB)
-        hb0.addLayout(vb1)
-        hb0.addLayout(vb3)
-        hb0.addWidget(self.page)
+        hb1.addWidget(self.appendB)
+        hb1.addWidget(self.removeB)
+        hb2 = QHBoxLayout()
+        hb2.addWidget(self.sLeftB)
+        hb2.addWidget(self.sRightB)
 
-        hb0.setStretch(0, 2)
-        hb0.setStretch(2, 3)
-        self.setLayout(hb0)
+        hb3 = QHBoxLayout()
+        hb3.addWidget(self.rotateB)
+        hb3.addWidget(self.reverseB)
+        hb3.addWidget(self.acceptB)
+        hb3.addWidget(self.closeB)
+
+        allPages = QLabel("All Pages in Exam")
+        allPages.setAlignment(Qt.AlignCenter)
+        thisQuestion = QLabel("Pages for this Question")
+        thisQuestion.setAlignment(Qt.AlignCenter)
+
+        vb0 = QVBoxLayout()
+        vb0.addWidget(allPages)
+        vb0.addWidget(self.scrollA)
+        vb0.addLayout(hb1)
+        vb0.addWidget(thisQuestion)
+        vb0.addWidget(self.scrollB)
+        vb0.addLayout(hb2)
+        vb0.addLayout(hb3)
+
+        self.setLayout(vb0)
+        self.resize(QSize(self.parent.width() / 2, self.parent.height() * 2 / 3))
 
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
@@ -292,7 +308,7 @@ class RearrangementViewer(QDialog):
         self.listB.rotateImage()
 
     def viewImage(self, fname):
-        self.page.updateImage(fname)
+        page = ShowExamPage(self, fname)
 
     def doShuffle(self):
         msg = SimpleMessage(
@@ -307,6 +323,28 @@ class RearrangementViewer(QDialog):
             # return pairs of [iref, file]
         print(self.permute)
         self.accept()
+
+
+class ShowExamPage(QDialog):
+    def __init__(self, parent, fname):
+        super(ShowExamPage, self).__init__()
+        self.setParent(parent)
+        self.setWindowFlags(Qt.Dialog)
+        grid = QGridLayout()
+        self.testImg = ExamViewWindow(fname)
+        self.closeButton = QPushButton("&Close")
+        grid.addWidget(self.testImg, 1, 1, 6, 6)
+        grid.addWidget(self.closeButton, 7, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+
+        self.show()
+
+    def closeEvent(self, event):
+        self.closeWindow()
+
+    def closeWindow(self):
+        self.close()
 
 
 class OriginalScansViewer(QWidget):
