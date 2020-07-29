@@ -248,7 +248,7 @@ class CommentWidget(QWidget):
         return self.CL.getCurrentItemRow()
 
     def setCurrentItemRow(self, r):
-        # We will make row 0 as a default in case 
+        # We will make row 0 as a default in case
         # due to Issue #1053. TODO: Come up with a better fix.
         if r is None:
             r = 0
@@ -581,7 +581,7 @@ class SimpleCommentTable(QTableView):
             return self.selectedIndexes()[0].row()
 
     def setCurrentItemRow(self, r):
-        # We will make row 0 as a default in case 
+        # We will make row 0 as a default in case
         # due to Issue #1053. TODO: Come up with a better fix.
         if r is None:
             r = 0
