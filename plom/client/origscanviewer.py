@@ -214,15 +214,24 @@ class RearrangementViewer(QDialog):
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pageFiles)
-
-        self.setupUI()
+        self._setupUI()
         self.pageData = pageData
         self.pageFiles = pageFiles
         self.nameToIrefNFile = {}
         # note pagedata  triples [name, image-ref, true/false]
         self.populateList()
 
-    def setupUI(self):
+    def _setupUI(self):
+        """
+        Sets up thee UI for the rearrangement Viewer.
+
+        Notes:
+             helper method for __init__
+
+        Returns:
+            None
+
+        """
 
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
@@ -309,6 +318,13 @@ class RearrangementViewer(QDialog):
         )
 
     def populateList(self):
+        """
+        Populates the QListWidgets with exam pages.
+
+        Returns:
+            None
+
+        """
         for k in range(len(self.pageData)):
             self.nameToIrefNFile[self.pageData[k][0]] = [
                 self.pageData[k][1],
@@ -322,36 +338,78 @@ class RearrangementViewer(QDialog):
                 self.listB.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
 
     def sourceToSink(self):
+        """
+        Adds the currently selected page to the list for the current question.
+
+        Notes:
+            If currently selected page is in current question, does nothing.
+
+        Returns:
+            None
+
+        """
         if self.listA.selectionModel().hasSelection():
             self.listB.appendItem(self.listA.removeItem())
         else:
             pass
 
     def sinkToSource(self):
+        """
+        Removes the currently selected page from the list for the current
+        question.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
         if self.listB.selectionModel().hasSelection():
             self.listA.returnItem(self.listB.removeItem())
         else:
             pass
 
     def shuffleLeft(self):
+        """
+        Shuffles currently selected page to the left one position.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
         if self.listB.selectionModel().hasSelection():
             self.listB.shuffleLeft()
         else:
             pass
 
     def shuffleRight(self):
+        """
+        Shuffles currently selected page to the left one position.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
         if self.listB.selectionModel().hasSelection():
             self.listB.shuffleRight()
         else:
             pass
 
     def reverseOrder(self):
-        if self.listB.selectionModel().hasSelection():
-            self.listB.reverseOrder()
-        else:
-            pass
+        """
+        reverses the order of the pages in current question.
+        """
+        self.listB.reverseOrder()
 
     def rotateImage(self):
+        """ Rotates the currently selected page by 90 degrees."""
         if self.listA.selectionModel().hasSelection():
             self.listA.rotateImage()
         elif self.listB.selectionModel().hasSelection():
@@ -360,11 +418,19 @@ class RearrangementViewer(QDialog):
             pass
 
     def viewImage(self, fname):
+        """ Shows a larger view of the currently selected page."""
         ShowExamPage(self, fname)
 
     def doShuffle(self):
+        """
+        Reorders and saves pages according to user's selections.
+
+        Returns:
+
+        """
         msg = SimpleMessage(
-            "Are you sure you want to shuffle pages. This will erase all your annotations and relaunch the annotator."
+            "Are you sure you want to save this page order? This will erase "
+            "all your annotations and relaunch the annotator."
         )
         if msg.exec() == QMessageBox.No:
             return
@@ -378,16 +444,17 @@ class RearrangementViewer(QDialog):
 
     def singleSelect(self, currentList, allPages):
         """
+        If item selected by user isnt in currentList, deselects currentList.
 
         Args:
-            currentList:
-            allPages:
+            currentList (QListWidget): the list being checked.
+            allPages (List[QListWidget]): all lists in selection
 
         Notes:
             from https://stackoverflow.com/questions/45509496/qt-multiple-qlistwidgets-and-only-a-single-entry-selected
 
-
         Returns:
+            None
 
         """
         for lstViewI in allPages:
@@ -400,7 +467,18 @@ class RearrangementViewer(QDialog):
 
 
 class ShowExamPage(QDialog):
+    """
+    Shows an expanded view of the Exam.
+    """
+
     def __init__(self, parent, fname):
+        """
+        Initialize new exam page
+        Args:
+            parent (RearrangementViewer): Parent.
+            fname (str): file name
+
+        """
         super(ShowExamPage, self).__init__()
         self.setParent(parent)
         self.setWindowFlags(Qt.Dialog)
@@ -411,13 +489,29 @@ class ShowExamPage(QDialog):
         grid.addWidget(self.closeButton, 7, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
-
         self.show()
 
     def closeEvent(self, event):
+        """
+        Closes the window.
+
+        Args:
+            event (QEvent): the event of closing the window.
+
+        Returns:
+            None.
+
+        """
         self.closeWindow()
 
     def closeWindow(self):
+        """
+        Closes the window.
+
+        Returns:
+            None
+
+        """
         self.close()
 
 
