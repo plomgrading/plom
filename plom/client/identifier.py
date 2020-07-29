@@ -28,10 +28,17 @@ from PyQt5.QtCore import (
     pyqtSignal,
 )
 from PyQt5.QtGui import QIntValidator
-from PyQt5.QtWidgets import QCompleter, QWidget, QMainWindow, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import (
+    QCompleter,
+    QDialog,
+    QWidget,
+    QMainWindow,
+    QInputDialog,
+    QMessageBox,
+)
 
 from .examviewwindow import ExamViewWindow
-from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox
+from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
 
@@ -644,15 +651,8 @@ class IDClient(QWidget):
         else:
             # Number is not in class list - ask user if they really want to
             # enter that number.
-            if not isValidStudentNumber(self.ui.idEdit.text()):
-                ErrorMessage(
-                    "<p>&ldquo;{}&rdquo; is an invalid form for a student ID.</p>".format(
-                        self.ui.idEdit.text()
-                    )
-                ).exec_()
-                return
             msg = SimpleMessage(
-                "Student ID {} not in list. Do you want to enter it anyway?".format(
+                "Student {} not in list. Do you want to enter it anyway?".format(
                     self.ui.idEdit.text()
                 )
             )
@@ -663,19 +663,35 @@ class IDClient(QWidget):
                 self.msgPosition = msg.pos()
                 return
             self.msgPosition = msg.pos()
-            # Otherwise get a name from the user (and the okay)
-            name, ok = QInputDialog.getText(self, "Enter name", "Enter student name:")
-            if not ok:
+            # Otherwise get an id and name from the user (and the okay)
+            snidbox = SNIDBox()
+            if snidbox.exec_() != QDialog.Accepted:
                 return
-            if not name:
-                msg = ErrorMessage(
-                    "<p>Student name should not be blank.</p>"
-                    "<p>(If you cannot read it, use &ldquo;{}&rdquo;.)".format(
-                        name, "Unknown",
+            sid = snidbox.sid.strip()
+            sname = snidbox.sname.strip()
+            if not isValidStudentNumber(
+                sid
+            ):  # this should not happen as snidbox checks.
+                return
+            if not sname:  # this should not happen as snidbox checks.
+                return
+
+            # check if SID is actually in classlist.
+            if sid in self.student_id_to_snid:
+                ErrorMessage(
+                    'ID "{}" is in class list as "{}"'.format(
+                        sid, self.student_id_to_snid[sid]
                     )
-                )
-                msg.exec_()
+                ).exec_()
                 return
+            snid = "{}: {}".format(sid, sname)
+            # update our lists
+            self.snid_to_student_id[snid] = sid
+            self.snid_to_student_name[snid] = sname
+            self.student_id_to_snid[sid] = sid
+            # finally update the line-edit.
+            self.ui.idEdit.setText(snid)
+
         # Run identify student command (which talks to server)
         if self.identifyStudent(index, self.ui.idEdit.text()):
             if alreadyIDd:

@@ -15,12 +15,14 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QFrame,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QPushButton,
     QTableView,
     QToolButton,
     QVBoxLayout,
 )
+from plom import isValidStudentNumber
 
 
 class ErrorMessage(QMessageBox):
@@ -156,6 +158,40 @@ class BlankIDBox(QDialog):
         grid.addWidget(self.noIDB, 2, 1)
         grid.addWidget(self.noB, 3, 1)
         self.setLayout(grid)
+
+
+class SNIDBox(QDialog):
+    def __init__(self):
+        super(SNIDBox, self).__init__()
+        self.sidLE = QLineEdit()
+        self.snameLE = QLineEdit()
+        self.okB = QPushButton("&Done")
+        self.cancelB = QPushButton("&Cancel")
+        fl = QFormLayout()
+        fl.addRow(QLabel("Student ID:"), self.sidLE)
+        fl.addRow(QLabel("Student name:"), self.snameLE)
+        fl.addRow(self.okB)
+        fl.addRow(self.cancelB)
+        self.setLayout(fl)
+
+        self.okB.clicked.connect(self.check)
+        self.cancelB.clicked.connect(self.reject)
+        self.sid = ""
+        self.sname = ""
+
+    def check(self):
+        self.sid = self.sidLE.text().strip()
+        self.sname = self.snameLE.text().strip()
+        if not isValidStudentNumber(self.sid):
+            ErrorMessage("Not a valid student number.").exec_()
+            return
+        if not self.sname:
+            ErrorMessage(
+                "<p>Student name should not be blank.</p>"
+                "<p>(If you cannot read it, use &ldquo;Unknown&rdquo;.)</p>"
+            ).exec_()
+            return
+        self.accept()
 
 
 class ClientSettingsDialog(QDialog):
