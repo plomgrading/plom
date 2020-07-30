@@ -4,10 +4,9 @@ __credits__ = ["Andrew Rechnitzer"]
 __license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QResizeEvent, QTransform
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QDialog,
     QFormLayout,
     QHBoxLayout,
@@ -23,9 +22,11 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    QToolButton,
 )
-from .uiFiles.ui_test_view import Ui_TestView
+
 from .examviewwindow import ExamViewWindow
+from .uiFiles.ui_test_view import Ui_TestView
 from .useful_classes import SimpleMessage
 
 
@@ -38,12 +39,13 @@ class SourceList(QListWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
-        self.setIconSize(QSize(128, 128))
+        self.setIconSize(QSize(150, 150))
         self.setSpacing(16)
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
         self.originalItems = {}
         self.potentialItems = {}
+        self.setSelectionMode(QListView.SingleSelection)
 
     def addOriginalItem(self, p, pfile):
         name = str(p)
@@ -53,6 +55,24 @@ class SourceList(QListWidget):
     def addPotentialItem(self, p, pfile):
         name = str(p)
         self.potentialItems[name] = pfile
+
+    def rotateImage(self, angle=90):
+        ci = self.currentItem()
+        name = ci.text()
+        rot = QTransform()
+        rot.rotate(angle)
+
+        if name in self.potentialItems:
+            rname = self.potentialItems[name]
+        else:
+            rname = self.originalItems[name]
+
+        cpix = QPixmap(rname)
+        npix = cpix.transformed(rot)
+        npix.save(rname, format="PNG")
+
+        ci.setIcon(QIcon(rname))
+        self.parent.update()
 
     def removeItem(self):
         cr = self.currentRow()
@@ -88,12 +108,13 @@ class SinkList(QListWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
-        self.setIconSize(QSize(128, 128))
+        self.setIconSize(QSize(200, 200))
         self.setSpacing(16)
         self.setWrapping(False)
         self.originalItems = {}
         self.potentialItems = {}
         self.itemDoubleClicked.connect(self.viewImage)
+        self.setSelectionMode(QListView.SingleSelection)
 
     def addOriginalItem(self, p, pfile):
         name = str(p)
@@ -172,6 +193,7 @@ class SinkList(QListWidget):
         npix.save(rname, format="PNG")
 
         ci.setIcon(QIcon(rname))
+        self.parent.update()
 
     def viewImage(self, qi):
         if qi.text() in self.originalItems:
@@ -192,63 +214,89 @@ class RearrangementViewer(QDialog):
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pageFiles)
-
-        self.setupUI()
+        self._setupUI()
         self.pageData = pageData
         self.pageFiles = pageFiles
         self.nameToIrefNFile = {}
         # note pagedata  triples [name, image-ref, true/false]
         self.populateList()
 
-    def setupUI(self):
+    def _setupUI(self):
+        """
+        Sets up thee UI for the rearrangement Viewer.
+
+        Notes:
+             helper method for __init__
+
+        Returns:
+            None
+
+        """
 
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
         self.scrollA.setWidget(self.listA)
         self.scrollA.setWidgetResizable(True)
+        self.scrollA.setFixedHeight(170)
         self.scrollB = QScrollArea()
         self.listB = SinkList(self)
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
+        self.scrollB.setFixedHeight(220)
 
-        self.appendB = QPushButton("Append")
-        self.removeB = QPushButton("Remove")
-        self.sLeftB = QPushButton("Shuffle Left")
-        self.sRightB = QPushButton("Shuffle Right")
+        self.appendB = QToolButton()
+        self.appendB.setText("Add Page")
+        self.appendB.setArrowType(Qt.DownArrow)
+        self.appendB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.removeB = QToolButton()
+        self.removeB.setArrowType(Qt.UpArrow)
+        self.removeB.setText("Remove Page")
+        self.removeB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sLeftB = QToolButton()
+        self.sLeftB.setArrowType(Qt.LeftArrow)
+        self.sLeftB.setText("Shift Left")
+        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sRightB = QToolButton()
+        self.sRightB.setArrowType(Qt.RightArrow)
+        self.sRightB.setText("Shift Right")
+        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.reverseB = QPushButton("Reverse Order")
-        self.rotateB = QPushButton("Rotate 90 (local copy only)")
-
-        self.page = ExamViewWindow([])
+        self.rotateB = QPushButton("Rotate Page (local copy only)")
 
         self.closeB = QPushButton("Close")
         self.acceptB = QPushButton("Accept new layout")
 
         self.permute = [False]
 
-        hb0 = QHBoxLayout()
-        vb1 = QVBoxLayout()
-        vb1.addWidget(self.scrollA)
-        vb1.addWidget(self.scrollB)
         hb1 = QHBoxLayout()
-        hb1.addWidget(self.sLeftB)
-        hb1.addWidget(self.reverseB)
-        hb1.addWidget(self.sRightB)
-        vb2 = QVBoxLayout()
-        vb2.addWidget(self.appendB)
-        vb2.addWidget(self.removeB)
-        vb2.addLayout(hb1)
-        vb3 = QVBoxLayout()
-        vb3.addWidget(self.acceptB)
-        vb3.addLayout(vb2)
-        vb3.addWidget(self.rotateB)
-        vb3.addWidget(self.closeB)
-        hb0.addLayout(vb1)
-        hb0.addLayout(vb3)
-        hb0.addWidget(self.page)
+        hb1.addWidget(self.appendB)
+        hb1.addWidget(self.removeB)
+        hb2 = QHBoxLayout()
+        hb2.addWidget(self.sLeftB)
+        hb2.addWidget(self.sRightB)
 
-        hb0.setStretch(0, 2)
-        hb0.setStretch(2, 3)
-        self.setLayout(hb0)
+        hb3 = QHBoxLayout()
+        hb3.addWidget(self.rotateB)
+        hb3.addWidget(self.reverseB)
+        hb3.addWidget(self.acceptB)
+        hb3.addWidget(self.closeB)
+
+        allPages = QLabel("All Pages in Exam")
+        allPages.setAlignment(Qt.AlignCenter)
+        thisQuestion = QLabel("Pages for this Question")
+        thisQuestion.setAlignment(Qt.AlignCenter)
+
+        vb0 = QVBoxLayout()
+        vb0.addWidget(allPages)
+        vb0.addWidget(self.scrollA)
+        vb0.addLayout(hb1)
+        vb0.addWidget(thisQuestion)
+        vb0.addWidget(self.scrollB)
+        vb0.addLayout(hb2)
+        vb0.addLayout(hb3)
+
+        self.setLayout(vb0)
+        self.resize(QSize(self.parent.width() / 2, self.parent.height() * 2 / 3))
 
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
@@ -260,7 +308,23 @@ class RearrangementViewer(QDialog):
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
 
+        allPageWidgets = [self.listA, self.listB]
+
+        self.listA.selectionModel().selectionChanged.connect(
+            lambda sel, unsel: self.singleSelect(self.listA, allPageWidgets)
+        )
+        self.listB.selectionModel().selectionChanged.connect(
+            lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
+        )
+
     def populateList(self):
+        """
+        Populates the QListWidgets with exam pages.
+
+        Returns:
+            None
+
+        """
         for k in range(len(self.pageData)):
             self.nameToIrefNFile[self.pageData[k][0]] = [
                 self.pageData[k][1],
@@ -274,29 +338,99 @@ class RearrangementViewer(QDialog):
                 self.listB.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
 
     def sourceToSink(self):
-        self.listB.appendItem(self.listA.removeItem())
+        """
+        Adds the currently selected page to the list for the current question.
+
+        Notes:
+            If currently selected page is in current question, does nothing.
+
+        Returns:
+            None
+
+        """
+        if self.listA.selectionModel().hasSelection():
+            self.listB.appendItem(self.listA.removeItem())
+        else:
+            pass
 
     def sinkToSource(self):
-        self.listA.returnItem(self.listB.removeItem())
+        """
+        Removes the currently selected page from the list for the current
+        question.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
+        if self.listB.selectionModel().hasSelection():
+            self.listA.returnItem(self.listB.removeItem())
+        else:
+            pass
 
     def shuffleLeft(self):
-        self.listB.shuffleLeft()
+        """
+        Shuffles currently selected page to the left one position.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
+        if self.listB.selectionModel().hasSelection():
+            self.listB.shuffleLeft()
+        else:
+            pass
 
     def shuffleRight(self):
-        self.listB.shuffleRight()
+        """
+        Shuffles currently selected page to the left one position.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
+        if self.listB.selectionModel().hasSelection():
+            self.listB.shuffleRight()
+        else:
+            pass
 
     def reverseOrder(self):
+        """
+        reverses the order of the pages in current question.
+        """
         self.listB.reverseOrder()
 
     def rotateImage(self):
-        self.listB.rotateImage()
+        """ Rotates the currently selected page by 90 degrees."""
+        if self.listA.selectionModel().hasSelection():
+            self.listA.rotateImage()
+        elif self.listB.selectionModel().hasSelection():
+            self.listB.rotateImage()
+        else:
+            pass
 
     def viewImage(self, fname):
-        self.page.updateImage(fname)
+        """ Shows a larger view of the currently selected page."""
+        ShowExamPage(self, fname)
 
     def doShuffle(self):
+        """
+        Reorders and saves pages according to user's selections.
+
+        Returns:
+
+        """
         msg = SimpleMessage(
-            "Are you sure you want to shuffle pages. This will erase all your annotations and relaunch the annotator."
+            "Are you sure you want to save this page order? This will erase "
+            "all your annotations and relaunch the annotator."
         )
         if msg.exec() == QMessageBox.No:
             return
@@ -307,6 +441,78 @@ class RearrangementViewer(QDialog):
             # return pairs of [iref, file]
         print(self.permute)
         self.accept()
+
+    def singleSelect(self, currentList, allPages):
+        """
+        If item selected by user isnt in currentList, deselects currentList.
+
+        Args:
+            currentList (QListWidget): the list being checked.
+            allPages (List[QListWidget]): all lists in selection
+
+        Notes:
+            from https://stackoverflow.com/questions/45509496/qt-multiple-qlistwidgets-and-only-a-single-entry-selected
+
+        Returns:
+            None
+
+        """
+        for lstViewI in allPages:
+            if lstViewI == currentList:
+                continue
+            # the check is necessary to prevent recursions...
+            if lstViewI.selectionModel().hasSelection():
+                # ...as this causes emission of selectionChanged() signal as well:
+                lstViewI.selectionModel().clearSelection()
+
+
+class ShowExamPage(QDialog):
+    """
+    Shows an expanded view of the Exam.
+    """
+
+    def __init__(self, parent, fname):
+        """
+        Initialize new exam page
+        Args:
+            parent (RearrangementViewer): Parent.
+            fname (str): file name
+
+        """
+        super(ShowExamPage, self).__init__()
+        self.setParent(parent)
+        self.setWindowFlags(Qt.Dialog)
+        grid = QGridLayout()
+        self.testImg = ExamViewWindow(fname)
+        self.closeButton = QPushButton("&Close")
+        grid.addWidget(self.testImg, 1, 1, 6, 6)
+        grid.addWidget(self.closeButton, 7, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.show()
+
+    def closeEvent(self, event):
+        """
+        Closes the window.
+
+        Args:
+            event (QEvent): the event of closing the window.
+
+        Returns:
+            None.
+
+        """
+        self.closeWindow()
+
+    def closeWindow(self):
+        """
+        Closes the window.
+
+        Returns:
+            None
+
+        """
+        self.close()
 
 
 class OriginalScansViewer(QWidget):
