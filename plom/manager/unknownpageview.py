@@ -141,10 +141,12 @@ class HWTab(QWidget):
         self.ob = QPushButton("Return to other options")
         self.sidle = QLineEdit()
         # set up sid completion
-        self.sidTestDict = {iDict[x][0]: x for x in iDict}
+        self.sidTestDict = {"{}: {}".format(iDict[x][0], iDict[x][1]): x for x in iDict}
         self.sidlist = QStringListModel()
         self.sidlist.setStringList([x for x in self.sidTestDict])
         self.sidcompleter = QCompleter()
+        self.sidcompleter.setCaseSensitivity(Qt.CaseInsensitive)
+        self.sidcompleter.setFilterMode(Qt.MatchContains)
         self.sidcompleter.setModel(self.sidlist)
         self.sidle.setCompleter(self.sidcompleter)
         # now set up other gui elements
@@ -155,7 +157,7 @@ class HWTab(QWidget):
         self.cb = QPushButton("Click to confirm")
         self.vqb = QPushButton("View that question")
         self.vwb = QPushButton("View whole test")
-        fl.addRow(QLabel("Student ID:"), self.sidle)
+        fl.addRow(QLabel("Student ID / Name:"), self.sidle)
         fl.addRow(QLabel("Question number:"), self.qsb)
         fl.addRow(QLabel("Test number:"), self.testl)
         fl.addRow(self.vqb)
@@ -172,6 +174,8 @@ class HWTab(QWidget):
         self.cb.clicked.connect(self.confirm)
         self.ob.clicked.connect(self.other)
         self.sidle.returnPressed.connect(self.checkID)
+        # check ID when user clicks on entry in completer pop-up - not just when return pressed
+        self.sidcompleter.activated.connect(self.checkID)
 
     def checkID(self):
         sid = self.sidle.text()
