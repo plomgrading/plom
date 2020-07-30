@@ -26,7 +26,7 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle_highlight', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down', 'delta']:
    a.datas += [('{}.svg'.format(icon), 'plom/client/icons/{}.svg'.format(icon), 'DATA')]
 
-for cursor in ['box', 'cross', 'delete', 'line', 'pen', 'tick',]:
+for cursor in ['arrow', 'box', 'cross', 'delete', 'double_arrow', 'ellipse', 'highlighter', 'line', 'pen', 'question_mark', 'tick',]:
    a.datas += [('{}.png'.format(cursor), 'plom/client/cursors/{}.png'.format(cursor), 'DATA')]
 
 
