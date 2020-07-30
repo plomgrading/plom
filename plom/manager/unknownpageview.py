@@ -174,6 +174,8 @@ class HWTab(QWidget):
         self.cb.clicked.connect(self.confirm)
         self.ob.clicked.connect(self.other)
         self.sidle.returnPressed.connect(self.checkID)
+        # check ID when user clicks on entry in completer pop-up - not just when return pressed
+        self.sidcompleter.activated.connect(self.checkID)
 
     def checkID(self):
         sid = self.sidle.text()
