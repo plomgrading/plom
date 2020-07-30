@@ -1498,7 +1498,7 @@ class MarkerClient(QWidget):
         # Move to the next unmarked test in the table.
         # Be careful not to get stuck in a loop if all marked
         prt = self.prxM.rowCount()
-        if prt == 0:
+        if prt == 0:  # no tasks
             return False
 
         prstart = None
@@ -1506,14 +1506,14 @@ class MarkerClient(QWidget):
             prstart = self.prxM.rowFromTask(task)
         if not prstart:
             # it might be hidden by filters
-            prstart = 0
+            prstart = 0  # put 'start' at row=0
         pr = prstart
         while self.prxM.getStatus(pr) in ["marked", "uploading...", "deferred", "???"]:
             pr = (pr + 1) % prt
-            if pr == prstart:
+            if pr == prstart:  # don't get stuck in a loop
                 break
         if pr == prstart:
-            return False
+            return False  # have looped over all rows and not found anything.
         self.ui.tableView.selectRow(pr)
         return True
 
@@ -1833,7 +1833,7 @@ class MarkerClient(QWidget):
         log.debug("Annotator wants more (w/o closing)")
         if not self.allowBackgroundOps:
             self.requestNext()
-        if not self.moveToNextUnmarkedTest("t" + oldtgvID if oldtgvID else None):
+        if not self.moveToNextUnmarkedTest("q" + oldtgvID if oldtgvID else None):
             return False
         # TODO: copy paste of annotateTest()
         # probably don't need len check
