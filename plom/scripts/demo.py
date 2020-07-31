@@ -56,9 +56,12 @@ def main():
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
-    subprocess.check_call(
-        split("plom-build new --demo --demo-num-papers {}".format(args.num_papers))
-    )
+    if args.num_papers:
+        subprocess.check_call(
+            split("plom-build new --demo --demo-num-papers {}".format(args.num_papers))
+        )
+    else:
+        subprocess.check_call(split("plom-build new --demo"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
