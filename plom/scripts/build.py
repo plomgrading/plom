@@ -195,27 +195,20 @@ def main():
                     "Demo size capped at classlist length of {}".format(classlist_len)
                 )
             print("DEMO MODE: adjustng spec for {} tests".format(args.demo_num_papers))
-            # TODO: use specParser eventually instead of shell out
-            subprocess.check_call(
-                [
-                    "sed",
-                    "-i",
-                    "s/numberToProduce = 20/numberToProduce = {}/".format(
-                        args.demo_num_papers
-                    ),
-                    fname,
-                ]
+            # TODO: use specParser eventually, or put in createSpecification above
+            with open(fname, "r") as f:
+                spec = f.read()
+            spec = spec.replace(
+                "numberToProduce = 20",
+                "numberToProduce = {}".format(args.demo_num_papers),
             )
             # half of them, up to length of demo classlist
             num_to_name = min(args.demo_num_papers // 2, classlist_len)
-            subprocess.check_call(
-                [
-                    "sed",
-                    "-i",
-                    "s/numberToName = 10/numberToName = {}/".format(num_to_name),
-                    fname,
-                ]
+            spec = spec.replace(
+                "numberToName = 10", "numberToName = {}".format(num_to_name)
             )
+            with open(fname, "w") as f:
+                f.write(spec)
         if args.demo:
             print("DEMO MODE: building source files")
             if not buildDemoSourceFiles():
