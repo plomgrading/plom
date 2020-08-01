@@ -410,7 +410,7 @@ spW = sub.add_parser(
     + " 'submittedHWByQ' directory or their work already uploaded the server.",
 )
 spP = sub.add_parser(
-    "process", help="Process indicated PDFs for one student and upload to server."
+    "process", help="Process indicated PDF for one student and upload to server."
 )
 spA = sub.add_parser(
     "allbyq",
