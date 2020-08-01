@@ -1,8 +1,9 @@
 import random
 from pathlib import Path
+
 import toml
 
-from plom import specdir
+specdir = "specAndDatabase"
 
 
 class SpecVerifier:
