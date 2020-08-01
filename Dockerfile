@@ -19,8 +19,9 @@ RUN apt-get --no-install-recommends --yes install  \
     python3 python3-pip python3-dev python3-setuptools python3-wheel \
     python3-pytest
 
-RUN pip3 install --no-cache-dir --upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools
 # Note: `python3 -m pip` used below on old Ubuntu 18.04
+# Note: need newer setuptools to avoid cairocffi
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
 RUN python3 -m pip install --no-cache-dir cffi==1.14.0 pycparser==2.20
