@@ -3,7 +3,6 @@
 # Copyright (C) 2020 Colin B. Macdonald
 
 import os
-import sys
 from getpass import getpass
 
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
