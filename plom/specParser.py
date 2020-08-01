@@ -84,7 +84,7 @@ class SpecVerifier:
         return cls(toml.load(fname))
 
     @classmethod
-    def from_verified(cls, fname=Path(specdir) / "verifiedSpec.toml"):
+    def load_verified(cls, fname=Path(specdir) / "verifiedSpec.toml"):
         """Initialize a SpecVerifier from the default verified toml file."""
         # TODO: maybe we should do some testing here?
         return cls(toml.load(fname))
