@@ -353,13 +353,13 @@ def makeBundleDirectories(fname, bundle_dir):
         os.makedirs(bundle_dir / dir, exist_ok=True)
 
 
-def postProcessing(thedir, dest, do_gamma=True):
+def postProcessing(thedir, dest, skip_gamma=False):
     """Do post processing on a directory of scanned bitmaps.
 
     Args:
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
-        do_gamma_shift (bool): do some white balancing.
+        skip_gamma_shift (bool): skip the white balancing.
     """
     thedir = Path(thedir)
     dest = Path(dest)
@@ -371,7 +371,7 @@ def postProcessing(thedir, dest, do_gamma=True):
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
 
-    if do_gamma:
+    if not skip_gamma:
         # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
         print("Gamma shift the PNG images")
         # list and len bit crude here: more pythonic to leave as iterator?
@@ -427,4 +427,4 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False):
     makeBundleDirectories(pdf_fname, bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
     processFileToBitmaps(pdf_fname, bitmaps_dir)
-    postProcessing(bitmaps_dir, bundle_dir / "pageImages", not skip_gamma)
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
