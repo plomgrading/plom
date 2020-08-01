@@ -20,7 +20,7 @@ passlib==1.7.2
 pymupdf==1.16.18
 Pillow==7.0.0
 pycparser==2.20
-cffi==1.14.0
+cffi==1.14.1
 jpegtran-cffi==0.5.2
 weasyprint==51
 aiohttp==3.6.2
@@ -35,7 +35,7 @@ tensorflow==2.2.0
 lapsolver==1.1.0
 requests==2.23.0
 requests-toolbelt==0.9.1
-urllib3==1.25.8
-packaging==20.1
+urllib3==1.25.10
+packaging==20.4
 # For rando forest model
 scikit-learn==0.23.1
