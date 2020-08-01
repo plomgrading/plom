@@ -20,7 +20,7 @@ import pkg_resources
 import pandas
 
 from plom import __version__
-from plom import SpecVerifier, SpecParser
+from plom import SpecVerifier
 from plom import specdir
 from plom.produce import process_class_list, get_messenger, upload_classlist
 from plom.produce import buildDatabaseAndPapers
@@ -87,7 +87,7 @@ def parseAndVerifySpecification(fname):
         '\nSee "plom-server --help" for more information on how to get the server up and running.\n'
     )
 
-    sp = SpecParser()
+    sp = SpecVerifier.load_verified()
     if sp.spec["numberToName"] > 0:
         print(
             ">>> Note <<<\n"

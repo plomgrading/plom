@@ -5,12 +5,6 @@ import toml
 from plom import specdir
 
 
-class SpecParser:
-    def __init__(self, specFileName=Path(specdir) / "verifiedSpec.toml"):
-        # read the whole spec toml file into a dict
-        self.spec = toml.load(specFileName)
-
-
 class SpecVerifier:
     """Verify Plom exam specifications.
 
@@ -85,6 +79,11 @@ class SpecVerifier:
 
     @classmethod
     def from_toml_file(cls, fname="testSpec.toml"):
+        """Initialize a SpecVerifier from a toml file."""
+        return cls(toml.load(fname))
+
+    @classmethod
+    def from_verified(cls, fname=Path(specdir) / "verifiedSpec.toml"):
         """Initialize a SpecVerifier from a toml file."""
         return cls(toml.load(fname))
 
