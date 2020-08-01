@@ -95,6 +95,16 @@ unittests:
     - pytest-3 -l --pyargs plom
 
 
+doctests:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    # TODO: need to recursively do this instead of specifying files
+    - python3 -m doctest plom/specParser.py
+    - echo "no news is good news"
+
+
 demoserver:
   stage: test
   needs: ["docker-image"]
