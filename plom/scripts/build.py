@@ -80,7 +80,7 @@ def parseAndVerifySpecification(fname):
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
     sv.checkCodes()
-    sv.saveVerifiedSpec()
+    sv.saveVerifiedSpec(verbose=True)
     print(
         ">>> Note <<<\n"
         "Before proceeding further, you will need to start the server."

@@ -156,8 +156,10 @@ class SpecVerifier:
             print("Assigning a publicCode to the spec - check")
             self.spec["publicCode"] = str(random.randrange(0, 10 ** 6)).zfill(6)
 
-    def saveVerifiedSpec(self):
-        print('Saving the verified spec to "verifiedSpec.toml"')
+    def saveVerifiedSpec(self, verbose=False):
+        """Saves the verified spec to a particular name."""
+        if verbose:
+            print('Saving the verified spec to "verifiedSpec.toml"')
         with open(Path(specdir) / "verifiedSpec.toml", "w+") as fh:
             fh.write("# This file is produced by the plom-build script.\n")
             fh.write(
