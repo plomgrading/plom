@@ -1,9 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+from pathlib import Path
 # trickery from setup.py to define __version__ without import
 with open(os.path.join("plom", "version.py")) as f:
     exec(f.read())
+
+CursorList = [x.name for x in Path("plom/client/cursors").glob("*.png")]
+# filter out some unused ones
+CursorList = [x for x in CursorList if not x.startswith("text")]
+print("** Hacky cursor list: {}".format(", ".join(CursorList)))
+
+IconList = [x.name for x in Path("plom/client/icons").glob("*.svg")]
+# filter out some unused ones
+IconList = [x for x in IconList if not x.startswith("manager")]
+IconList = [x for x in IconList if not x in ("rectangle.svg", "zoom_in.svg", "zoom_out.svg")]
+print("** Hacky icon list: {}".format(", ".join(IconList)))
+
 
 block_cipher = None
 
@@ -23,11 +36,11 @@ a = Analysis(['plom/scripts/client.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle_highlight', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down', 'delta']:
-   a.datas += [('{}.svg'.format(icon), 'plom/client/icons/{}.svg'.format(icon), 'DATA')]
+for icon in IconList:
+   a.datas += [(icon, 'plom/client/icons/{}'.format(icon), 'DATA')]
 
-for cursor in ['box', 'cross', 'delete', 'line', 'pen', 'tick',]:
-   a.datas += [('{}.png'.format(cursor), 'plom/client/cursors/{}.png'.format(cursor), 'DATA')]
+for cursor in CursorList:
+   a.datas += [(cursor, 'plom/client/cursors/{}'.format(cursor), 'DATA')]
 
 
 exe = EXE(pyz,

@@ -1,4 +1,9 @@
-from .idReader import is_model_absent, log_likelihood, download_or_train_model
+"""
+Note: Code in this file is very similar to test_IDreader code for the 
+    Sklearn model.
+"""
+
+from .idReader import is_model_absent, calc_log_likelihood, download_or_train_model
 
 
 def test_is_model_absent():
@@ -8,7 +13,8 @@ def test_is_model_absent():
 def test_log_likelihood():
     import numpy as np
 
-    student_ids = [i for i in range(0, 8)]
+    num_digits = 8
+    student_ids = [i for i in range(0, num_digits)]
     probabilities = [
         [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -20,7 +26,11 @@ def test_log_likelihood():
         [0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0],
     ]
     assert bool(
-        np.isclose(log_likelihood(student_ids, probabilities), 5.545177444479562, 1e-7)
+        np.isclose(
+            calc_log_likelihood(student_ids, probabilities, num_digits),
+            5.545177444479562,
+            1e-7,
+        )
     )
 
 

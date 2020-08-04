@@ -547,211 +547,6 @@ class Messenger(BaseMessenger):
 
     # ------------------------
     # ------------------------
-    # Totaller client API stuff
-
-    def TgetMaxMark(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/maxMark".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
-            maxMark = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return maxMark
-
-    def TrequestDoneTasks(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/tasks/complete".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            idList = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return idList
-
-    def TprogressCount(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/progress".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
-            progress = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return progress
-
-    def TaskNextTask(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/tasks/available".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            if response.status_code == 204:
-                return None
-            response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
-            progress = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return progress
-
-    def TclaimThisTask(self, task):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.patch(
-                "https://{}/TOT/tasks/{}".format(self.server, task),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            if response.status_code == 204:
-                raise PlomTakenException("Task taken by another user.")
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()  # pass back image as bytes
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return image
-
-    def TdidNotFinishTask(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.delete(
-                "https://{}/TOT/tasks/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return True
-
-    def TrequestImage(self, testNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/image/{}".format(self.server, testNumber),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return image
-
-    def TreturnTotaledTask(self, code, mark):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.put(
-                "https://{}/TOT/tasks/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token, "mark": mark},
-                verify=False,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        # TODO - do we need this return value?
-        return True
-
-    # ------------------------
-    # ------------------------
     # Marker stuff
     def MgetMaxMark(self, question, ver):
         """Get the maximum mark for this question and version.
@@ -907,19 +702,21 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        # should be multipart = [tags, image1, image2, ....]
+        # should be multipart = [tags, integrity_check, image1, image2, ....]
         tags = "tagsAndImages[0].text  # this is raw text"
         imageList = []
         i = 0
         for img in MultipartDecoder.from_response(response).parts:
             if i == 0:
                 tags = img.text
+            elif i == 1:
+                integrity_check = img.text
             else:
                 imageList.append(
                     BytesIO(img.content).getvalue()
                 )  # pass back image as bytes
             i += 1
-        return imageList, tags
+        return imageList, tags, integrity_check
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()
@@ -947,12 +744,34 @@ class Messenger(BaseMessenger):
 
         return image
 
-    def MrequestImages(self, code):
+    def MrequestImages(self, code, integrity_check):
+        """Download images relevant to a question, both original and annotated.
+
+        Args:
+            code (str): the task code such as "q1234g9".
+
+        Returns:
+            3-tuple: `(image_list, annotated_image, plom_file)`
+                `image_list` is a list of images (e.g., png files to be
+                written to disc).
+                `annotated_image` and `plom_file` are the png file and
+                and data associated with a previous annotations, or None.
+
+        Raises:
+            PlomAuthenticationException
+            PlomTaskChangedError: you no longer own this task.
+            PlomTaskDeletedError
+            PlomSeriousException
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.get(
                 "https://{}/MK/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "integrity_check": integrity_check,
+                },
                 verify=False,
             )
             response.raise_for_status()
@@ -990,10 +809,16 @@ class Messenger(BaseMessenger):
                     "Cannot find image file for {}.".format(code)
                 ) from None
             elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
+                raise PlomTaskChangedError(
+                    "Ownership of task {} has changed.".format(code)
+                ) from None
+            elif response.status_code == 406:
+                raise PlomTaskChangedError(
+                    "Task {} has been changed by manager.".format(code)
+                ) from None
+            elif response.status_code == 410:
+                raise PlomTaskDeletedError(
+                    "Task {} has been deleted by manager.".format(code)
                 ) from None
             else:
                 raise PlomSeriousException(
@@ -1036,10 +861,25 @@ class Messenger(BaseMessenger):
 
         return imageList
 
-    def MreturnMarkedTask(self, code, pg, ver, score, mtime, tags, aname, pname, cname):
+    def MreturnMarkedTask(
+        self, code, pg, ver, score, mtime, tags, aname, pname, cname, integrity_check
+    ):
+        """Upload annotated image and associated data to the server.
+
+        Returns:
+            list: a 2-list of the form `[#done, #total]`.
+
+        Raises:
+            PlomAuthenticationException
+            PlomConflict: integrity check failed, perhaps manager
+                altered task.
+            PlomTaskChangedError
+            PlomTaskDeletedError
+            PlomSeriousException
+        """
         self.SRmutex.acquire()
         try:
-            # doesn't like ints, so covert ints to strings
+            # doesn't like ints, so convert ints to strings
             param = {
                 "user": self.user,
                 "token": self.token,
@@ -1050,6 +890,7 @@ class Messenger(BaseMessenger):
                 "tags": tags,
                 "comments": open(cname, "r").read(),
                 "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
+                "integrity_check": integrity_check,
             }
 
             dat = MultipartEncoder(
@@ -1066,10 +907,20 @@ class Messenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            ret = response.json()  # this is [#done, #total]
+            ret = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 406:
+                raise PlomConflict(
+                    "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                ) from None
+            elif response.status_code == 409:
+                raise PlomTaskChangedError("Task ownership has changed.") from None
+            elif response.status_code == 410:
+                raise PlomTaskDeletedError(
+                    "No such task - it has been deleted from server."
+                ) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(
                     "Image file is corrupted. This should not happen".format(code)

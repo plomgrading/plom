@@ -161,12 +161,18 @@ class MarkHandler:
         claimed_task = self.server.MclaimThisTask(data["user"], task_code)
         task_available = claimed_task[0]
 
-        if task_available:  # return [True, tag, filename1, filename2,...]
+        if (
+            task_available
+        ):  # return [True, tag, integrity_check, filename1, filename2,...]
             task_tags = claimed_task[1]
-            task_page_paths = claimed_task[2:]
+            task_integrity_check = claimed_task[2]
+            task_page_paths = claimed_task[3:]
 
             with MultipartWriter("imageAndTags") as multipart_writer:
                 multipart_writer.append(task_tags)  # append tags as raw text.
+                multipart_writer.append(
+                    task_integrity_check
+                )  # append integrity_check as raw text.
                 for file_name in task_page_paths:
                     multipart_writer.append(open(file_name, "rb"))
             return web.Response(body=multipart_writer, status=200)
@@ -199,7 +205,7 @@ class MarkHandler:
 
         This function also responds with the number of done tasks and the total number of tasks.
         The returned statement is similar to MprogressCount.
-        Respond with status 200/400/401/406/409.
+        Respond with status 200/400/401/406/409/410.
         Log activity.
 
         Args:
@@ -237,6 +243,7 @@ class MarkHandler:
                 "mtime",
                 "tags",
                 "md5sum",
+                "integrity_check",
             ],
         ):
             return web.Response(status=400)
@@ -276,20 +283,30 @@ class MarkHandler:
             int(task_metadata["mtime"]),
             task_metadata["tags"],
             task_metadata["md5sum"],
+            task_metadata["integrity_check"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
-        marking_success = marked_task_status[0]
-        if marking_success:
+        if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
             total_num_tasks = marked_task_status[2]
             return web.json_response([num_done_tasks, total_num_tasks], status=200)
         else:
-            log.warning("Returning with error 400 = {}".format(marked_task_status))
-            return web.Response(status=400)  # some sort of error with task_image file
+            if marked_task_status[1] == "no_such_task":
+                log.warning("Returning with error 410 = {}".format(marked_task_status))
+                return web.Response(status=410)
+            elif marked_task_status[1] == "not_owner":
+                log.warning("Returning with error 409 = {}".format(marked_task_status))
+                return web.Response(status=409)
+            elif marked_task_status[1] == "integrity_fail":
+                log.warning("Returning with error 406 = {}".format(marked_task_status))
+                return web.Response(status=406)
+            else:
+                log.warning("Returning with error 400 = {}".format(marked_task_status))
+                return web.Response(status=400)
 
     # @routes.get("/MK/images/{task}")
-    @authenticate_by_token_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user", "integrity_check"])
     def MgetImages(self, data, request):
         """Return the image of a question/task to the client.
 
@@ -307,7 +324,9 @@ class MarkHandler:
         """
 
         task_code = request.match_info["task"]
-        task_image_results = self.server.MgetImages(data["user"], task_code)
+        task_image_results = self.server.MgetImages(
+            data["user"], task_code, data["integrity_check"]
+        )
         # A list which includes:
         # 1. True/False process status.
         # 2. Number of pages for task.
@@ -335,7 +354,14 @@ class MarkHandler:
                     multipart_writer.append(open(file_name, "rb"))
             return web.Response(body=multipart_writer, status=200)
         else:
-            return web.Response(status=409)  # someone else has that task_image
+            if task_image_results[1] == "owner":
+                return web.Response(status=409)  # someone else has that task_image
+            elif task_image_results[1] == "integrity_fail":
+                return web.Response(status=406)  # task changed
+            elif task_image_results[1] == "no_such_task":
+                return web.Response(status=410)  # task deleted
+            else:
+                return web.Response(status=400)  # some other error
 
     # @routes.get("/MK/originalImage/{task}")
     @authenticate_by_token_required_fields([])

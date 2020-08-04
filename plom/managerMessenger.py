@@ -337,30 +337,6 @@ class ManagerMessenger(BaseMessenger):
 
         return progress
 
-    def TprogressCount(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/progress".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            # throw errors when response code != 200.
-            response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
-            progress = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return progress
-
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
         try:
@@ -442,6 +418,10 @@ class ManagerMessenger(BaseMessenger):
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find image file for {}.".format(code)
+                ) from None
+            elif response.status_code == 410:
+                raise PlomBenignException(
+                    "That ID group of {} has not been scanned.".format(code)
                 ) from None
             elif response.status_code == 409:
                 raise PlomSeriousException(
@@ -536,11 +516,11 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def replaceMissingTestPage(self, code, t, p, v):
+    def replaceMissingTestPage(self, t, p, v):
         self.SRmutex.acquire()
         try:
             response = self.session.put(
-                "https://{}/admin/missingTestPage/{}".format(self.server, code),
+                "https://{}/admin/missingTestPage".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
@@ -548,6 +528,41 @@ class ManagerMessenger(BaseMessenger):
                     "test": t,
                     "page": p,
                     "version": v,
+                },
+            )
+            response.raise_for_status()
+            rval = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the page - this should not happen!"
+                ) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return rval
+
+    def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
+        # can replace by SID or by test-number
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/missingHWQuestion".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "sid": student_id,
+                    "test": test,
                 },
             )
             response.raise_for_status()
@@ -559,6 +574,10 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 405:  # that question already has pages
+                raise PlomTakenException() from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -568,27 +587,23 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def removeScannedPage(self, code, t, p, v):
+    def removeAllScannedPages(self, test_number):
         self.SRmutex.acquire()
         try:
             response = self.session.delete(
-                "https://{}/admin/scannedPage/{}".format(self.server, code),
+                "https://{}/admin/scannedPages".format(self.server),
                 verify=False,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "page": p,
-                    "version": v,
-                },
+                json={"user": self.user, "token": self.token, "test": test_number,},
             )
             response.raise_for_status()
             rval = response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
-                    "Server could not find the TPV - this should not happen!"
+                    "Server could not find the page - this should not happen!"
                 ) from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             else:
@@ -701,6 +716,36 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/scannedHWPage".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": t,
+                    "question": q,
+                    "order": o,
+                },
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                return None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return image
+
+    def getEXPageImage(self, t, q, o):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/scannedEXPage".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
@@ -877,10 +922,13 @@ class ManagerMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            # response is [image1, image2,... image.n]
+            # response is [n, image1, image2,... image.n]
             imageList = []
+            i = 0  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(BytesIO(img.content).getvalue())
+                if i > 0:
+                    imageList.append(BytesIO(img.content).getvalue())
+                i += 1
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -909,10 +957,13 @@ class ManagerMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            # response is [image1, image2,... image.n]
+            # response is [n, image1, image2,... image.n]
             imageList = []
+            i = 0  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(BytesIO(img.content).getvalue())
+                if i > 0:
+                    imageList.append(BytesIO(img.content).getvalue())
+                i += 1
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -930,11 +981,11 @@ class ManagerMessenger(BaseMessenger):
 
         return imageList
 
-    def checkPage(self, testNumber, pageNumber):
+    def checkTPage(self, testNumber, pageNumber):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/admin/checkPage".format(self.server),
+                "https://{}/admin/checkTPage".format(self.server),
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -944,11 +995,11 @@ class ManagerMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
-            # either [version] or [version, image]
+            # either ["scanned", version] or ["collision", version, image]
             vimg = MultipartDecoder.from_response(response).parts
-            ver = int(vimg[0].content)
-            if len(vimg) == 2:
-                rval = [ver, BytesIO(vimg[1].content).getvalue()]
+            ver = int(vimg[1].content)
+            if len(vimg) == 3:  # just look at length - sufficient for now?
+                rval = [ver, BytesIO(vimg[2].content).getvalue()]
             else:
                 rval = [ver, None]
             # response is [v, None] or [v, image1]
@@ -989,8 +1040,10 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
-                    "Cannot find test/page {}.".format(tp)
+                    "Cannot find test/page {}/{}.".format(test, page)
                 ) from None
+            elif response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -1019,10 +1072,44 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             elif response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find test/question {}/{}.".format(test, question)
                 ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+    def unknownToHWPage(self, fname, test, question, theta):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/admin/unknownToHWPage".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                    "test": test,
+                    "question": question,
+                    "rotation": theta,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Cannot find test/question {}/{}.".format(test, question)
+                ) from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -1053,6 +1140,8 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(
                     "Cannot find test/page {}/{}.".format(test, page)
                 ) from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -1252,28 +1341,6 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def getTOTReview(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/totReview".format(self.server),
-                verify=False,
-                json={"user": self.user, "token": self.token,},
-            )
-            response.raise_for_status()
-            rval = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return rval
-
     def RgetAnnotatedImage(self, testNumber, questionNumber, version):
         self.SRmutex.acquire()
         try:
@@ -1308,38 +1375,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return img
-
-    def TrequestImage(self, testNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/TOT/image/{}".format(self.server, testNumber),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return image
 
     def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
@@ -1463,33 +1498,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.patch(
                 "https://{}/ID/review".format(self.server),
-                verify=False,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Could not find test = {}.".format(testNumber)
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-    def TreviewTOT(self, testNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.patch(
-                "https://{}/TOT/review".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,

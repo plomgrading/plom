@@ -76,6 +76,7 @@ black:
     - pip3 install black
   script:
     - black --check --diff plom
+  allow_failure: true
 
 
 basic:
@@ -92,6 +93,16 @@ unittests:
   image: $IM
   script:
     - pytest-3 -l --pyargs plom
+
+
+doctests:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    # TODO: need to recursively do this instead of specifying files
+    - python3 -m doctest plom/specParser.py
+    - echo "no news is good news"
 
 
 demoserver:
@@ -118,10 +129,54 @@ demoserver:
     - plom-build class --demo -w 1234
     - plom-build make -w 1234
     - python3 -m plom.produce.faketools -w 1234
-    - plom-scan process fake_scribbled_exams.pdf
-    - plom-scan read   -w 4567
-    - plom-scan upload -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 fake_scribbled_exams1
     - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 fake_scribbled_exams2
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 fake_scribbled_exams3
+    - plom-scan status -w 4567
+    - echo "Now take down the server"
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - jobs -l
+    - kill %1
+    - sleep 2
+    - echo "Should be no jobs and this should succeed"
+    - jobs -l
+    - popd
+
+
+hwdemoserver:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
+  script:
+    - mkdir demo
+    - pushd demo
+    - plom-build new --demo
+    # Start server
+    - ip addr
+    - plom-server init
+    - plom-server users --demo
+    - plom-server launch &
+    - sleep 2
+    - sleep 2
+    - echo "Server should be in background"
+    - jobs -l
+    - echo "We should be able to connect to it"
+    - curl -k https://localhost:41984/Version
+    - plom-build class --demo -w 1234
+    - plom-build make -w 1234
+    - plom-hwscan status -w 4567
+    - python3 -m plom.produce.hwFaker -w 1234
+    - plom-hwscan allbyq -w 4567 -y
+    - plom-hwscan missing -w 4567 -y
+    - plom-hwscan submitted -w 4567
+    - plom-hwscan submitted -d
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
@@ -168,12 +223,16 @@ fullworkflow:
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
-    - plom-scan process fake_scribbled_exams.pdf
-    - plom-scan read -s localhost -w 4567
-    - plom-scan upload -s localhost -w 4567
-    - plom-scan upload -u -s localhost -w 4567
-    - plom-scan upload -c -s localhost -w 4567
-    - plom-scan status -s localhost -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1
+    # TODO: I removed some -c lines here...
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3
+    - plom-scan status -w 4567
     ## not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
@@ -251,6 +310,9 @@ legacy_full:
     - python3 -m pip -V
     - python3 -m pip install --upgrade setuptools
     - python3 -m pip install packaging
+    # Issue #950, tensorflow minimal versions
+    - python3 -m pip install numpy==1.16.6
+    - python3 -m pip install requests==2.21.0
     # let setup.py deps do their thing
     # python3 -m pip install pymupdf weasyprint peewee toml aiohttp pyzbar
     # not needed until prediction
@@ -260,6 +322,8 @@ legacy_full:
     - pushd dist
     - python3 -m pip install plom-*.whl
     - popd
+    # First, run the unit tests
+    - pytest-3 -l --pyargs plom
     # Build tests
     - mkdir play
     - pushd play
@@ -289,12 +353,16 @@ legacy_full:
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
-    - plom-scan process fake_scribbled_exams.pdf
-    - plom-scan read -s localhost -w 4567
-    - plom-scan upload -s localhost -w 4567
-    - plom-scan upload -u -s localhost -w 4567
-    - plom-scan upload -c -s localhost -w 4567
-    - plom-scan status -s localhost -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1
+    # TODO: I removed some -c lines here...
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3
+    - plom-scan status -w 4567
     ## not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123

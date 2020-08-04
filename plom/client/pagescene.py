@@ -295,6 +295,9 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
+        # set focus so that shift/control change cursor
+        self.views()[0].setFocus(Qt.TabFocusReason)
+
         self.mode = mode
         # if current mode is not comment or delta, make sure the
         # ghostcomment is hidden
@@ -377,7 +380,13 @@ class PageScene(QGraphicsScene):
 
     def keyPressEvent(self, event):
         """
-        Escape key removes focus from the scene, other events are passed on.
+        Changes the focus or cursor based on key presses.
+
+        Notes:
+            Overrides parent method.
+            Escape key removes focus from the scene.
+            Changes the cursor in accordance with each tool's mousePress
+            documentation.
 
         Args:
             event (QKeyEvent): The Key press event.
@@ -386,10 +395,60 @@ class PageScene(QGraphicsScene):
             None
 
         """
+
+        deltaShift = self.parent.cursorCross
+        if self.mode == "delta":
+            if not int(self.markDelta) > 0:
+                deltaShift = self.parent.cursorTick
+
+        variableCursors = {
+            "cross": [self.parent.cursorTick, self.parent.cursorQMark],
+            "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
+            "delta": [deltaShift, self.parent.cursorQMark],
+            "tick": [self.parent.cursorCross, self.parent.cursorQMark],
+            "box": [self.parent.cursorEllipse, self.parent.cursorBox],
+            "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
+        }
+
+        if self.mode in variableCursors:
+            if event.key() == Qt.Key_Shift:
+                self.views()[0].setCursor(variableCursors.get(self.mode)[0])
+            elif event.key() == Qt.Key_Control:
+                self.views()[0].setCursor(variableCursors.get(self.mode)[1])
+            else:
+                pass
+
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
         else:
             super(PageScene, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """
+        Changes cursors back to their standard cursor when keys are released.
+
+        Args:
+            event (QKeyEvent): the key release.
+
+        Returns:
+            None
+
+        """
+        variableCursorRelease = {
+            "cross": self.parent.cursorCross,
+            "line": self.parent.cursorLine,
+            "delta": Qt.ArrowCursor,
+            "tick": self.parent.cursorTick,
+            "box": self.parent.cursorBox,
+            "pen": self.parent.cursorPen,
+        }
+        if self.mode in variableCursorRelease:
+            if self.views()[0].cursor() == variableCursorRelease.get(self.mode):
+                pass
+            else:
+                self.views()[0].setCursor(variableCursorRelease.get(self.mode))
+        else:
+            pass
 
     def mousePressEvent(self, event):
         """
@@ -1116,8 +1175,11 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
-            # check if rect has some perimeter (allow long/thin)
-            if self.boxItem.rect().width() + self.boxItem.rect().height() > 24:
+            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            if (
+                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
+                > 24
+            ):
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
         else:
@@ -1184,7 +1246,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.arrowFlag is not 0:
+        if self.arrowFlag:
             self.currentPos = event.scenePos()
             self.lineItem.setLine(QLineF(self.originPos, self.currentPos))
 
@@ -1279,7 +1341,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.penFlag is not 0:
+        if self.penFlag:
             self.currentPos = event.scenePos()
             self.path.lineTo(self.currentPos)
             self.pathItem.setPath(self.path)
@@ -1345,7 +1407,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        if self.zoomFlag is not 0:
+        if self.zoomFlag:
             return
 
         if (event.button() == Qt.RightButton) or (
@@ -1379,7 +1441,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.zoomFlag is not 0:
+        if self.zoomFlag:
             self.zoomFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.zoomBoxItem is None:
@@ -1444,7 +1506,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        if self.deleteFlag is not 0:
+        if self.deleteFlag:
             return
 
         self.deleteFlag = 1
@@ -1467,7 +1529,7 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.deleteFlag is not 0:
+        if self.deleteFlag:
             self.deleteFlag = 2  # drag started.
             self.currentPos = event.scenePos()
             if self.delBoxItem is None:
@@ -1744,7 +1806,7 @@ class PageScene(QGraphicsScene):
                 false otherwise.
 
         Returns:
-            None
+            True if the delta is legal, false otherwise.
 
         """
         legalDelta = self.isLegalDelta(newDelta)

@@ -36,7 +36,8 @@ client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQ
 server_install_requires = [
     "toml>=0.10.0",
     "tqdm",
-    "numpy",
+    "numpy>=1.16.0",  # for tensorflow
+    "requests>=2.21.0",  # for tensorflow
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
@@ -50,7 +51,8 @@ server_install_requires = [
     "peewee",
     "imutils",
     "opencv-python",
-    "tensorflow>=2",
+    "tensorflow~=2.2.0",
+    "scikit-learn>=0.23.1",
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",

@@ -3,35 +3,39 @@
 # Instructions
 # ------------
 #
-# First, build plomdockerbuild by running:
-#   `sudo docker build . --tag plomship`
-# in whatever directory has the `Dockerfile` in it.  For example, inside your
-# git clone and in whatever branch you want; change --tag name if you want.
-#
-# Next, copy this script somewhere
+# Copy this script somewhere
 #   `cp plomdock.sh ${HOME}/plomdock/`
 #   `cd ${HOME}/plomdock`
 #
 # Adjust ports: notation is `host_port:container_port`.
 #
 # Run this script.
+#
+# If you wish, you can build your own local docker:
+#   `docker build . --tag plomship`
+# in the plom source directory, where the `Dockerfile` is.
 
-export BASEIMG=plomship
+# semi-regularly updated devel version:
+export BASEIMG=docker.io/cbm755/plom:devel
+# Local image:
+#export BASEIMG=plomship
+# Current main branch:
+#export BASEIMG=registry.gitlab.com/plom/plom:master
+# Official docker image, TODO: coming soon:
+#export BASEIMG=docker.io/plomgrading/plom
+
 export PD=plom0
 export UID=`id -u`
 
-# Take it down
-#rm -rf plom
-#sudo docker stop $PD
-#sudo docker rm $PD
-
 mkdir -p plom
 
-# docker pull ${BASEIMG}
-sudo docker run -p 41984:41984 --name=$PD --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
-sudo docker exec $PD adduser -u $UID --no-create-home --disabled-password --gecos "" $USER
+docker pull ${BASEIMG}
+docker run -p 41984:41984 --name=$PD --detach --init --env=LC_ALL=C.UTF-8 --volume=$PWD/plom:/plom:z ${BASEIMG} sleep inf
+docker exec $PD adduser -u $UID --no-create-home --disabled-password --gecos "" $USER
 
-IP=`sudo docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" $PD`
-#sed -i "s/127.0.0.1/${IP}/" plom/todo/foo.json
-echo "Server IP is ${IP}"
-sudo docker exec --user $USER $PD bash -c "cd /plom; plom-demo"
+docker exec --user $USER $PD bash -c "cd /plom; plom-demo"
+
+# Take it down
+#docker stop $PD
+#docker rm $PD
+#rm -rf plom

@@ -9,12 +9,14 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
+import io
 import os
-from warnings import warn
 from textwrap import dedent, wrap
+import subprocess
 
 # import tools for dealing with resource files
 import pkg_resources
+import pandas
 
 from plom import __version__
 from plom import SpecVerifier, SpecParser
@@ -67,10 +69,17 @@ def parseAndVerifySpecification(fname):
     sv.verifySpec()
     sv.checkCodes()
     sv.saveVerifiedSpec()
+    print(
+        ">>> Note <<<\n"
+        "Before proceeding further, you will need to start the server."
+        '\nSee "plom-server --help" for more information on how to get the server up and running.\n'
+    )
+
     sp = SpecParser()
     if sp.spec["numberToName"] > 0:
         print(
-            'Your spec indicates that you wish to print named papers.\nPlease process your class list using "plom-build class ".'
+            ">>> Note <<<\n"
+            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-build class ".\n'
         )
 
 
@@ -92,7 +101,15 @@ group.add_argument(
     action="store_true",
     help="Use an auto-generated demo test. **Obviously not for real use**",
 )
-#
+# Add to spC not exclusive group
+spC.add_argument(
+    "--demo-num-papers",
+    type=int,
+    # default=20,  # we want it to give None
+    metavar="N",
+    help="How many fake exam papers for the demo (defaults to 20 if omitted)",
+)
+
 spP = sub.add_parser(
     "parse",
     help="Parse spec file",
@@ -167,6 +184,38 @@ def main():
             fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         createSpecificationFile(fname)
+        if args.demo_num_papers:
+            assert args.demo, "cannot specify number of demo paper outside of demo mode"
+            classlist_len = pandas.read_csv(
+                io.BytesIO(pkg_resources.resource_string("plom", "demoClassList.csv"))
+            ).shape[0]
+            if args.demo_num_papers > classlist_len:
+                # TODO: could make longer classlist on the fly?  Or checkin longer list?
+                raise ValueError(
+                    "Demo size capped at classlist length of {}".format(classlist_len)
+                )
+            print("DEMO MODE: adjustng spec for {} tests".format(args.demo_num_papers))
+            # TODO: use specParser eventually instead of shell out
+            subprocess.check_call(
+                [
+                    "sed",
+                    "-i",
+                    "s/numberToProduce = 20/numberToProduce = {}/".format(
+                        args.demo_num_papers
+                    ),
+                    fname,
+                ]
+            )
+            # half of them, up to length of demo classlist
+            num_to_name = min(args.demo_num_papers // 2, classlist_len)
+            subprocess.check_call(
+                [
+                    "sed",
+                    "-i",
+                    "s/numberToName = 10/numberToName = {}/".format(num_to_name),
+                    fname,
+                ]
+            )
         if args.demo:
             print("DEMO MODE: building source files")
             if not buildDemoSourceFiles():
