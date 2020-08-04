@@ -7,9 +7,8 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-
 # Not really server deps
-#PyQt5==5.14.1
+PyQt5==5.14.2
 #PyQt5-sip==12.7.1
 
 pandas==0.25.3
