@@ -1009,25 +1009,6 @@ class Messenger(BaseMessenger):
 
         return [pageData, images]
 
-    def MshuffleImages(self, code, imageRefs):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.patch(
-                "https://{}/MK/shuffle/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token, "imageRefs": imageRefs},
-                verify=False,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
     # ------------------------
     # ------------------------
 

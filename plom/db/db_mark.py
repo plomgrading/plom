@@ -244,7 +244,10 @@ def MtakeTaskFromClient(
         # make a list of all the image-ids of all pages assoc with tref
         test_image_ids = []
         for pref in tref.tpages:
-            test_image_ids.append(pref.image.id)
+            # tpages are always present - whether or not anything uploaded
+            if pref.scanned:  # so only check scanned ones
+                test_image_ids.append(pref.image.id)
+        # other page types only present if used
         for pref in tref.hwpages:
             test_image_ids.append(pref.image.id)
         for pref in tref.expages:
@@ -424,36 +427,6 @@ def MgetWholePaper(self, test_number, question):
         pageData.append(["l{}".format(p.order), p.image.id, False])
         pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
-
-
-def MshuffleImages(self, user_name, task, image_id_list):
-    """Rearrange page images in the annotation for that task.
-    Permutation given by the references inside the image_id_list.
-    """
-    uref = User.get(name=user_name)  # authenticated, so not-None
-
-    with plomdb.atomic():
-        gref = Group.get(Group.gid == task)
-        qref = gref.qgroups[0]
-        if qref.user != uref:
-            return [False]  # not your task
-        # grab the last annotation
-        aref = gref.qgroups[0].annotations[-1]
-        # delete the old pages
-        for p in aref.apages:
-            p.delete_instance()
-        # now create new apages
-        ord = 0
-        for iref in image_id_list:
-            ord += 1
-            APage.create(annotation=aref, image=iref, order=ord)
-        aref.time = datetime.now()
-        uref.last_activity = datetime.now()
-        uref.last_action = "Shuffled images of {}".format(task)
-        aref.save()
-        uref.save()
-    log.info("MshuffleImages - task {} now ids {}".format(task, image_id))
-    return [True]
 
 
 def MreviewQuestion(self, test_number, question, version):

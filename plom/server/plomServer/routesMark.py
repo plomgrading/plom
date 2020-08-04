@@ -517,35 +517,6 @@ class MarkHandler:
         else:  # cannot find that task
             return web.Response(status=404)
 
-    # @routes.patch("/MK/shuffle/{task}")
-    @authenticate_by_token_required_fields(["user", "imageRefs"])
-    def MshuffleImages(self, data, request):
-        """Shuffle images for a task and pass the shuffle data to the database.
-
-        Respond with status 200/401.
-
-        Args:
-            data (dict): Dictionary including user data in addition to
-                the rearranged image references.
-            request (aiohttp.web_request.Request): Request of type PATCH /MK/shuffle/`task code`.
-
-        Returns:
-            aiohttp.web_response.Response: Empty status response indication if the question
-                images shuffling was successful.
-        """
-
-        task_code = request.match_info["task"]
-        # A list with a single boolean indicating if the operation was successful
-        shuffle_images_response = self.server.MshuffleImages(
-            data["user"], task_code, data["imageRefs"]
-        )
-        shuffle_images_status = shuffle_images_response[0]
-
-        if shuffle_images_status:
-            return web.Response(status=200)
-        else:  # not your task
-            return web.Response(status=401)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -567,4 +538,3 @@ class MarkHandler:
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
-        router.add_patch("/MK/shuffle/{task}", self.MshuffleImages)

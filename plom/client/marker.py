@@ -1936,8 +1936,6 @@ class MarkerClient(QWidget):
         task = "q" + task
         self.examModel.setOriginalFiles(task, inames)
         self.examModel.setImageIDs(task, irefs)
-        # now tell server about new list of images for the annotation.
-        # messenger.MshuffleImages(task, irefs)
         # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 
