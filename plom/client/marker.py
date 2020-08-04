@@ -656,6 +656,10 @@ class MarkerExamModel(QStandardItemModel):
         """Set the original un-annotated image filenames."""
         self._setDataByTask(task, 5, repr(fnames))
 
+    def setImageIDs(self, task, image_ids):
+        """Set the ids of the files."""
+        self._setDataByTask(task, 10, json.dumps(image_ids))
+
     def setAnnotatedFile(self, task, aname, pname):
         """Set the annotated image and .plom file names."""
         self._setDataByTask(task, 6, aname)
@@ -1724,9 +1728,8 @@ class MarkerClient(QWidget):
         tgv = task[1:]
         # get the integrity_check code and image_id_list of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
-        image_id_list = json.loads(
-            self.examModel.getImageIDList(task)
-        )  # convert back to list[int]
+        # convert back to list[int]
+        image_id_list = json.loads(self.examModel.getImageIDList(task))
         return (
             tgv,
             exam_name,
@@ -1932,8 +1935,9 @@ class MarkerClient(QWidget):
 
         task = "q" + task
         self.examModel.setOriginalFiles(task, inames)
+        self.examModel.setImageIDs(task, irefs)
         # now tell server about new list of images for the annotation.
-        messenger.MshuffleImages(task, irefs)
+        # messenger.MshuffleImages(task, irefs)
         # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 

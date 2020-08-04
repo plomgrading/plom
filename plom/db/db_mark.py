@@ -97,7 +97,7 @@ def MgetNextTask(self, q, v):
 
 def MgiveTaskToClient(self, user_name, group_id):
     """Assign question/version #group_id as a task to the given user, unless has been taken by another user.
-    Create new annotation (and associated pages, etc) by copying the last one for that qdata.
+    Create new annotation by copying the last one for that qdata - pages created when returned.
     Return [True, tags, integrity_check, [image-ids], image0, image1, image2,...].
     """
 
@@ -123,6 +123,8 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.save()
         # update the associated annotation
         # - create a new annotation copied from the previous one (inc the integrity_check code)
+        # but we give the marker the pages from the **existing** annotation
+        # when task comes back we create the new pages
         aref = qref.annotations[-1]  # are these in right order
         new_aref = Annotation.create(
             qgroup=qref,
@@ -132,10 +134,10 @@ def MgiveTaskToClient(self, user_name, group_id):
             time=datetime.now(),
             integrity_check=aref.integrity_check,
         )
-        # create its pages and keep list of image-ids
+        # get list of image-ids to send to marker, but defer apage creation
         image_id_list = []
         for p in aref.apages.order_by(APage.order):
-            APage.create(annotation=new_aref, order=p.order, image=p.image)
+            # APage.create(annotation=new_aref, order=p.order, image=p.image)
             image_id_list.append(p.image.id)
         new_aref.save()
         # update user activity
@@ -144,14 +146,13 @@ def MgiveTaskToClient(self, user_name, group_id):
         uref.save()
         # return [true, tags, integrity_check, image-id-list,  page1, page2, etc]
         rval = [True, new_aref.tags, new_aref.integrity_check, image_id_list]
-        for p in new_aref.apages.order_by(APage.order):
+        for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
         log.debug(
             'Giving marking task {} to user "{}" with integrity_check {}'.format(
                 group_id, user_name, new_aref.integrity_check
             )
         )
-        print("Giving task with IDS {}".format(image_id_list))
         return rval
 
 
@@ -177,9 +178,9 @@ def MdidNotFinish(self, user_name, group_id):
         qref.status = "todo"
         qref.user = None
         qref.marked = False
-        # delete the associated APages and then the annotation.
+        # delete the annotation.
         aref = qref.annotations[-1]
-        for p in aref.apages:
+        for p in aref.apages:  # this should not be needed.
             p.delete_instance()
         aref.delete_instance()
         # now clean up the qgroup
@@ -212,6 +213,15 @@ def MtakeTaskFromClient(
     uref = User.get(name=user_name)  # authenticated, so not-None
 
     with plomdb.atomic():
+        # make sure all returned image-ids are actually images - and keep the refs
+        image_ref_list = []
+        for img_id in image_id_list:
+            iref = Image.get_or_none(id=img_id)
+            if iref:
+                image_ref_list.append(iref)
+            else:
+                return [False, "No_such_image"]
+
         # grab the group corresponding to that task
         gref = Group.get_or_none(Group.gid == task)
         if gref is None or gref.scanned is False:  # this should not happen
@@ -245,13 +255,11 @@ def MtakeTaskFromClient(
         for img_id in image_id_list:
             if img_id not in test_image_ids:
                 return [False, "image_not_in_test"]
-        # recreate apages from the image_id_list given.
-        for p in aref.apages:
-            p.delete_instance()
+
+        # create apages from the image_ref_list.
         ord = 0
-        for img_id in image_id_list:
+        for iref in image_ref_list:
             ord += 1
-            iref = Image.get(id=img_id)  # TODO - NEEDS A GET_OR_NONE
             APage.create(annotation=aref, order=ord, image=iref)
 
         # update status, mark, annotate-file-name, time, and
