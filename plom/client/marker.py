@@ -78,8 +78,8 @@ class BackgroundDownloader(QThread):
     """
 
     downloadSuccess = pyqtSignal(
-        str, list, str, str
-    )  # [task, files, tags, integrity_check]
+        str, list, list, str, str
+    )  # [task, files, image_ids, tags, integrity_check]
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -131,7 +131,12 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                imageList, tags, integrity_check = messenger.MclaimThisTask(task)
+                (
+                    imageList,
+                    image_ids,
+                    tags,
+                    integrity_check,
+                ) = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -147,7 +152,7 @@ class BackgroundDownloader(QThread):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        self.downloadSuccess.emit(task, inames, tags, integrity_check)
+        self.downloadSuccess.emit(task, inames, image_ids, tags, integrity_check)
         self.quit()
 
 
@@ -239,6 +244,7 @@ def upload(
     ver,
     tags,
     integrity_check,
+    image_id_list,
     knownFailCallback=None,
     unknownFailCallback=None,
     successCallback=None,
@@ -257,6 +263,7 @@ def upload(
         ver (int or str): the version number
         tags (str): any tags associated with this exam.
         integrity_check (str): the integrity_check string of the task.
+        image_id_list (list[int]): a list of image ids used.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
         unknownFailCallback: if we fail but don't really know why or what
@@ -297,6 +304,7 @@ def upload(
             pname,
             cname,
             integrity_check,
+            image_id_list,
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
@@ -330,6 +338,7 @@ class ExamQuestion:
         mtime="0",
         tags="",
         integrity_check="",
+        image_ids=[],
     ):
         """
         Initializes an exam question.
@@ -344,6 +353,7 @@ class ExamQuestion:
             mtime (int): marking time spent on that page in seconds.
             tags (str): Tags corresponding to the exam.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
+            image_ids (list[int]): a list containing the refs to the images for the test question.
 
         Notes:
             By default set mark to be negative (since 0 is a possible mark)
@@ -352,6 +362,7 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.originalFiles = fnames
+        self.image_ids = image_ids
         self.annotatedFile = ""  # The filename for the (future) annotated image
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
@@ -383,6 +394,7 @@ class MarkerExamModel(QStandardItemModel):
                 "PlomFile",
                 "PaperDir",
                 "integrity_check",
+                "image_ids",
             ]
         )
 
@@ -419,13 +431,14 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(str(paper.mark)),
                 QStandardItem(str(paper.markingTime)),
                 QStandardItem(paper.tags),
-                # TODO - work out how to store list more directly rather than as a string-rep of the list of file names.
+                # TODO - work out how to store list more directly rather than as a string-rep of the list of file names - maybe json? similarly for image_ids
                 QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
                 QStandardItem("placeholder"),
                 # todo - reorder these?
                 QStandardItem(paper.integrity_check),
+                QStandardItem(json.dumps(paper.image_ids)),  # json (list[int] -> str)
             ]
         )
         return r
@@ -651,6 +664,10 @@ class MarkerExamModel(QStandardItemModel):
     def getIntegrityCheck(self, task):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
+
+    def getImageIDList(self, task):
+        """Return image_id list for task as a string."""
+        return self._getDataByTask(task, 10)
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
         """
@@ -1202,6 +1219,7 @@ class MarkerClient(QWidget):
                     mtime=x[2],
                     tags=x[3],
                     integrity_check=x[4],
+                    image_ids=[],
                 )
             )
 
@@ -1358,7 +1376,12 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                imageList, tags, integrity_check = messenger.MclaimThisTask(task)
+                (
+                    imageList,
+                    image_id_list,
+                    tags,
+                    integrity_check,
+                ) = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1373,7 +1396,13 @@ class MarkerClient(QWidget):
                 fh.write(imageList[i])
 
         self.examModel.addPaper(
-            ExamQuestion(task, inames, tags=tags, integrity_check=integrity_check)
+            ExamQuestion(
+                task,
+                inames,
+                image_ids=image_id_list,
+                tags=tags,
+                integrity_check=integrity_check,
+            )
         )
         pr = self.prxM.rowFromTask(task)
         if pr is not None:
@@ -1412,13 +1441,16 @@ class MarkerClient(QWidget):
         )
         self.backgroundDownloader.start()
 
-    def _requestNextInBackgroundFinished(self, task, fnames, tags, integrity_check):
+    def _requestNextInBackgroundFinished(
+        self, task, fnames, image_ids, tags, integrity_check
+    ):
         """
         Adds paper to exam model once it's been requested.
 
         Args:
             task (str): the task name for the next test.
-            fnames (str): the file name for next test
+            fnames (list[str]): the file names for next test
+            image_ids (list[int]): the refs for the images
             tags (str): tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
@@ -1427,7 +1459,13 @@ class MarkerClient(QWidget):
 
         """
         self.examModel.addPaper(
-            ExamQuestion(task, fnames, tags=tags, integrity_check=integrity_check)
+            ExamQuestion(
+                task,
+                fnames,
+                image_ids=image_ids,
+                tags=tags,
+                integrity_check=integrity_check,
+            )
         )
         # Clean up the table
         self.ui.tableView.resizeColumnsToContents()
@@ -1684,8 +1722,11 @@ class MarkerClient(QWidget):
         exam_name = self.exam_spec["name"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        # get the integrity_check code of the task
+        # get the integrity_check code and image_id_list of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
+        image_id_list = json.loads(
+            self.examModel.getImageIDList(task)
+        )  # convert back to list[int]
         return (
             tgv,
             exam_name,
@@ -1696,6 +1737,7 @@ class MarkerClient(QWidget):
             markStyle,
             pdict,
             integrity_check,
+            image_id_list,
         )
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
@@ -1757,6 +1799,7 @@ class MarkerClient(QWidget):
                 plomFileName(str): the name of thee .plom file
                 commentFileName(str): the name of the comment file.
                 integrity_check(str): the integrity_check string of the task.
+                image_id_list(list[int]): the list of image ids
 
         Returns:
             None
@@ -1771,6 +1814,7 @@ class MarkerClient(QWidget):
             plomFileName,
             commentFileName,
             integrity_check,
+            image_id_list,
         ) = stuff
 
         if not (0 <= gr and gr <= self.maxMark):
@@ -1807,6 +1851,7 @@ class MarkerClient(QWidget):
             self.version,
             tags,
             integrity_check,
+            image_id_list,
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
@@ -1850,7 +1895,7 @@ class MarkerClient(QWidget):
             return
 
         assert tgvID[1:] == data[0]
-        pdict = data[-2]  # the plomdict is second-last object in data
+        pdict = data[-3]  # the plomdict is third-last object in data
         assert pdict is None, "Annotator should not pull a regrade"
 
         if self.allowBackgroundOps:

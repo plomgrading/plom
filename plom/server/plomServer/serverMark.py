@@ -141,7 +141,7 @@ def MclaimThisTask(self, username, task_code):
 
     Returns:
         list: A list which either only has a False value included or
-            [True, `question_tag`, `integrity_check`, `question_image_path`]
+            [True, `question_tag`, `integrity_check`, `list_of_image_ids` `image_file1`, `image_file2`,...]
     """
 
     return self.DB.MgiveTaskToClient(username, task_code)
@@ -176,6 +176,7 @@ def MreturnMarkedTask(
     tags,
     md5_code,
     integrity_check,
+    image_ids,
 ):
     """Save the marked paper's information to database and respond with grading progress.
 
@@ -192,7 +193,9 @@ def MreturnMarkedTask(
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
         md5_code (str): MD5 hash key for this task.
-        integrity_check (str): the integrity_check string for this task (concat of md5sums of underlying images)
+        integrity_check (str): the integrity_check string for this task
+        image_ids (list[str]): list of image ids used.
+
 
     Returns:
         list: Respond with a list which includes:
@@ -244,6 +247,7 @@ def MreturnMarkedTask(
         tags,
         md5n,
         integrity_check,
+        image_ids,
     )
 
     if database_task_response[0] is False:

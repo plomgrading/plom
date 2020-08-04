@@ -163,16 +163,17 @@ class MarkHandler:
 
         if (
             task_available
-        ):  # return [True, tag, integrity_check, filename1, filename2,...]
+        ):  # return [True, tag, integrity_check, image_id_list, filename1, filename2,...]
             task_tags = claimed_task[1]
             task_integrity_check = claimed_task[2]
-            task_page_paths = claimed_task[3:]
+            task_image_ids = claimed_task[3]
+            task_page_paths = claimed_task[4:]
 
             with MultipartWriter("imageAndTags") as multipart_writer:
                 multipart_writer.append(task_tags)  # append tags as raw text.
-                multipart_writer.append(
-                    task_integrity_check
-                )  # append integrity_check as raw text.
+                # append integrity_check as raw text.
+                multipart_writer.append(task_integrity_check)
+                multipart_writer.append_json(task_image_ids)  # append as json
                 for file_name in task_page_paths:
                     multipart_writer.append(open(file_name, "rb"))
             return web.Response(body=multipart_writer, status=200)
@@ -244,6 +245,7 @@ class MarkHandler:
                 "tags",
                 "md5sum",
                 "integrity_check",
+                "image_ids",
             ],
         ):
             return web.Response(status=400)
@@ -284,6 +286,7 @@ class MarkHandler:
             task_metadata["tags"],
             task_metadata["md5sum"],
             task_metadata["integrity_check"],
+            task_metadata["image_ids"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
