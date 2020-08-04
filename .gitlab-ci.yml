@@ -430,10 +430,10 @@ linuxbin_ubuntu1910:
 linuxbin_centos:
   stage: final
   needs: []
-  image: centos:7
+  image: centos:8
   before_script:
-    - yum update -y
-    - yum install -y python3 python3-wheel python3-setuptools python3-pip
+    - dnf update -y
+    - dnf install -y python3 python3-wheel python3-setuptools python3-pip
     - pip3 install --upgrade pip
     - python3 -m pip install pyinstaller
   script:
