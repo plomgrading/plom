@@ -151,6 +151,7 @@ def MgiveTaskToClient(self, user_name, group_id):
                 group_id, user_name, new_aref.integrity_check
             )
         )
+        print("Giving task with IDS {}".format(image_id_list))
         return rval
 
 
@@ -230,22 +231,18 @@ def MtakeTaskFromClient(
             return [False, "integrity_fail"]
         # check all the images actually come from this test - sanity check against client error
         tref = qref.test
-        # make a list of all the image-ids
+        # make a list of all the image-ids of all pages assoc with tref
         test_image_ids = []
-        for iref in tref.tpages:
-            test_image_ids.append(iref.id)
-        for iref in tref.hwpages:
-            test_image_ids.append(iref.id)
-        for iref in tref.expages:
-            test_image_ids.append(iref.id)
-        for iref in tref.lpages:
-            test_image_ids.append(iref.id)
+        for pref in tref.tpages:
+            test_image_ids.append(pref.image.id)
+        for pref in tref.hwpages:
+            test_image_ids.append(pref.image.id)
+        for pref in tref.expages:
+            test_image_ids.append(pref.image.id)
+        for pref in tref.lpages:
+            test_image_ids.append(pref.image.id)
         # check image_id_list against this list
-        print("Images in test {}".format(test_image_ids))
-        print("Images returned {}".format(image_id_list))
         for img_id in image_id_list:
-            print("Checking image {} {}".format(img_id, type(img_id)))
-
             if img_id not in test_image_ids:
                 return [False, "image_not_in_test"]
         # recreate apages from the image_id_list given.
@@ -254,7 +251,7 @@ def MtakeTaskFromClient(
         ord = 0
         for img_id in image_id_list:
             ord += 1
-            iref = Image.get(id=img_id)
+            iref = Image.get(id=img_id)  # TODO - NEEDS A GET_OR_NONE
             APage.create(annotation=aref, order=ord, image=iref)
 
         # update status, mark, annotate-file-name, time, and
