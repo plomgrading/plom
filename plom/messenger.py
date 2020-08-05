@@ -875,7 +875,7 @@ class Messenger(BaseMessenger):
         pname,
         cname,
         integrity_check,
-        image_id_list,
+        image_md5_list,
     ):
         """Upload annotated image and associated data to the server.
 
@@ -904,7 +904,7 @@ class Messenger(BaseMessenger):
                 "comments": open(cname, "r").read(),
                 "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
                 "integrity_check": integrity_check,
-                "image_ids": image_id_list,
+                "image_md5s": image_md5_list,
             }
 
             dat = MultipartEncoder(

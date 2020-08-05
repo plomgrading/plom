@@ -245,7 +245,7 @@ class MarkHandler:
                 "tags",
                 "md5sum",
                 "integrity_check",
-                "image_ids",
+                "image_md5s",
             ],
         ):
             return web.Response(status=400)
@@ -286,7 +286,7 @@ class MarkHandler:
             task_metadata["tags"],
             task_metadata["md5sum"],
             task_metadata["integrity_check"],
-            task_metadata["image_ids"],
+            task_metadata["image_md5s"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
@@ -445,7 +445,7 @@ class MarkHandler:
         # This response is a list which includes the following:
         # 1. True/False for operation status.
         # 2. A list of lists where each inner list includes:
-        #   [test_number, task_number, True/False for wether the task/page is graded or not]
+        #   [test_number, task_number, True/False for whether the task/page is graded or not]
         # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
         whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
 

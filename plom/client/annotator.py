@@ -112,8 +112,8 @@ class Annotator(QWidget):
                     annotation objects on the page if you go back to continue annotating a
                     question. ie - is it mark up/down, where are all the objects, how to
                     rebuild those objects, etc.
-                integrity_check (str): integrity_check of the underlying images.
-                image_id_list (list[int]): list of image ids
+                integrity_check (str): integrity_check of the underlying task.
+                image_md5_list (list[str]): list of image md5sums of underlying images
                 }
         """
         super(Annotator, self).__init__()
@@ -297,7 +297,7 @@ class Annotator(QWidget):
         markStyle,
         plomDict,
         integrity_check,
-        image_id_list,
+        image_md5_list,
     ):
         """Loads new Data into the Toggle View window for marking.
 
@@ -323,7 +323,7 @@ class Annotator(QWidget):
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
             integrity_check (str): integrity check string
-            image_id_list (list[int]): list of image ids
+            image_md5_list (list[str]): list of image md5sums
 
         Returns:
             None: Modifies many instance vars.
@@ -337,7 +337,7 @@ class Annotator(QWidget):
         self.imageFiles = fnames
         self.saveName = saveName
         self.integrity_check = integrity_check
-        self.image_id_list = image_id_list
+        self.image_md5_list = image_md5_list
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
@@ -1493,7 +1493,7 @@ class Annotator(QWidget):
             plomFile,
             commentFile,
             self.integrity_check,
-            self.image_id_list,
+            self.image_md5_list,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True

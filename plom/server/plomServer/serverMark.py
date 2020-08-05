@@ -141,7 +141,7 @@ def MclaimThisTask(self, username, task_code):
 
     Returns:
         list: A list which either only has a False value included or
-            [True, `question_tag`, `integrity_check`, `list_of_image_ids` `image_file1`, `image_file2`,...]
+            [True, `question_tag`, `integrity_check`, `list_of_image_md5s` `image_file1`, `image_file2`,...]
     """
 
     return self.DB.MgiveTaskToClient(username, task_code)
@@ -176,7 +176,7 @@ def MreturnMarkedTask(
     tags,
     md5_code,
     integrity_check,
-    image_ids,
+    image_md5s,
 ):
     """Save the marked paper's information to database and respond with grading progress.
 
@@ -194,7 +194,7 @@ def MreturnMarkedTask(
         tags (str): Tag assigned to the paper.
         md5_code (str): MD5 hash key for this task.
         integrity_check (str): the integrity_check string for this task
-        image_ids (list[str]): list of image ids used.
+        image_md5s (list[str]): list of image md5sums used.
 
 
     Returns:
@@ -247,7 +247,7 @@ def MreturnMarkedTask(
         tags,
         md5n,
         integrity_check,
-        image_ids,
+        image_md5s,
     )
 
     if database_task_response[0] is False:
@@ -351,7 +351,7 @@ def MgetWholePaper(self, test_number, question_number):
     Returns:
         list: A list including the following information:
             Boolean of wether we got the paper images.
-            A list of lists including [`test_version`, `image_id_reference_number`, `does_page_belong_to_question`].
+            A list of lists including [`test_version`, `image_md5sum_list`, `does_page_belong_to_question`].
             Followed by a series of image paths for the pages of the paper.
     """
 

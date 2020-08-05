@@ -79,7 +79,7 @@ class BackgroundDownloader(QThread):
 
     downloadSuccess = pyqtSignal(
         str, list, list, str, str
-    )  # [task, files, image_ids, tags, integrity_check]
+    )  # [task, files, image_md5s, tags, integrity_check]
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -133,7 +133,7 @@ class BackgroundDownloader(QThread):
             try:
                 (
                     imageList,
-                    image_ids,
+                    image_md5s,
                     tags,
                     integrity_check,
                 ) = messenger.MclaimThisTask(task)
@@ -152,7 +152,7 @@ class BackgroundDownloader(QThread):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        self.downloadSuccess.emit(task, inames, image_ids, tags, integrity_check)
+        self.downloadSuccess.emit(task, inames, image_md5s, tags, integrity_check)
         self.quit()
 
 
@@ -244,7 +244,7 @@ def upload(
     ver,
     tags,
     integrity_check,
-    image_id_list,
+    image_md5_list,
     knownFailCallback=None,
     unknownFailCallback=None,
     successCallback=None,
@@ -263,7 +263,7 @@ def upload(
         ver (int or str): the version number
         tags (str): any tags associated with this exam.
         integrity_check (str): the integrity_check string of the task.
-        image_id_list (list[int]): a list of image ids used.
+        image_md5_list (list[str]): a list of image md5sums used.
         knownFailCallback: if we fail in a way that is reasonably expected,
             call this function.
         unknownFailCallback: if we fail but don't really know why or what
@@ -304,7 +304,7 @@ def upload(
             pname,
             cname,
             integrity_check,
-            image_id_list,
+            image_md5_list,
         )
     except (PlomTaskChangedError, PlomTaskDeletedError, PlomConflict) as ex:
         knownFailCallback(task, str(ex))
@@ -338,7 +338,7 @@ class ExamQuestion:
         mtime="0",
         tags="",
         integrity_check="",
-        image_ids=[],
+        image_md5s=[],
     ):
         """
         Initializes an exam question.
@@ -353,7 +353,7 @@ class ExamQuestion:
             mtime (int): marking time spent on that page in seconds.
             tags (str): Tags corresponding to the exam.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
-            image_ids (list[int]): a list containing the refs to the images for the test question.
+            image_md5s (list[str]): a list containing the md5sums of the images for the test question.
 
         Notes:
             By default set mark to be negative (since 0 is a possible mark)
@@ -362,7 +362,7 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.originalFiles = fnames
-        self.image_ids = image_ids
+        self.image_md5s = image_md5s
         self.annotatedFile = ""  # The filename for the (future) annotated image
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
@@ -394,7 +394,7 @@ class MarkerExamModel(QStandardItemModel):
                 "PlomFile",
                 "PaperDir",
                 "integrity_check",
-                "image_ids",
+                "image_md5s",
             ]
         )
 
@@ -431,14 +431,14 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(str(paper.mark)),
                 QStandardItem(str(paper.markingTime)),
                 QStandardItem(paper.tags),
-                # TODO - work out how to store list more directly rather than as a string-rep of the list of file names - maybe json? similarly for image_ids
+                # TODO - work out how to store list more directly rather than as a string-rep of the list of file names - maybe json? similarly for image_md5s
                 QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
                 QStandardItem("placeholder"),
                 # todo - reorder these?
                 QStandardItem(paper.integrity_check),
-                QStandardItem(json.dumps(paper.image_ids)),  # json (list[int] -> str)
+                QStandardItem(json.dumps(paper.image_md5s)),  # json (list[str] -> str)
             ]
         )
         return r
@@ -656,9 +656,9 @@ class MarkerExamModel(QStandardItemModel):
         """Set the original un-annotated image filenames."""
         self._setDataByTask(task, 5, repr(fnames))
 
-    def setImageIDs(self, task, image_ids):
+    def setImageMD5s(self, task, image_md5s):
         """Set the ids of the files."""
-        self._setDataByTask(task, 10, json.dumps(image_ids))
+        self._setDataByTask(task, 10, json.dumps(image_md5s))
 
     def setAnnotatedFile(self, task, aname, pname):
         """Set the annotated image and .plom file names."""
@@ -669,8 +669,8 @@ class MarkerExamModel(QStandardItemModel):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
 
-    def getImageIDList(self, task):
-        """Return image_id list for task as a string."""
+    def getImageMD5List(self, task):
+        """Return image_md5sum list for task as a string."""
         return self._getDataByTask(task, 10)
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
@@ -1223,7 +1223,7 @@ class MarkerClient(QWidget):
                     mtime=x[2],
                     tags=x[3],
                     integrity_check=x[4],
-                    image_ids=[],
+                    image_md5s=[],
                 )
             )
 
@@ -1382,7 +1382,7 @@ class MarkerClient(QWidget):
             try:
                 (
                     imageList,
-                    image_id_list,
+                    image_md5_list,
                     tags,
                     integrity_check,
                 ) = messenger.MclaimThisTask(task)
@@ -1403,7 +1403,7 @@ class MarkerClient(QWidget):
             ExamQuestion(
                 task,
                 inames,
-                image_ids=image_id_list,
+                image_md5s=image_md5_list,
                 tags=tags,
                 integrity_check=integrity_check,
             )
@@ -1446,7 +1446,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, fnames, image_ids, tags, integrity_check
+        self, task, fnames, image_md5s, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1454,7 +1454,7 @@ class MarkerClient(QWidget):
         Args:
             task (str): the task name for the next test.
             fnames (list[str]): the file names for next test
-            image_ids (list[int]): the refs for the images
+            image_md5s (list[str]): the md5sums for the images
             tags (str): tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
@@ -1466,7 +1466,7 @@ class MarkerClient(QWidget):
             ExamQuestion(
                 task,
                 fnames,
-                image_ids=image_ids,
+                image_md5s=image_md5s,
                 tags=tags,
                 integrity_check=integrity_check,
             )
@@ -1726,10 +1726,10 @@ class MarkerClient(QWidget):
         exam_name = self.exam_spec["name"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        # get the integrity_check code and image_id_list of the task
+        # get the integrity_check code and image_md5_list of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
         # convert back to list[int]
-        image_id_list = json.loads(self.examModel.getImageIDList(task))
+        image_md5_list = json.loads(self.examModel.getImageMD5List(task))
         return (
             tgv,
             exam_name,
@@ -1740,7 +1740,7 @@ class MarkerClient(QWidget):
             markStyle,
             pdict,
             integrity_check,
-            image_id_list,
+            image_md5_list,
         )
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
@@ -1802,7 +1802,7 @@ class MarkerClient(QWidget):
                 plomFileName(str): the name of thee .plom file
                 commentFileName(str): the name of the comment file.
                 integrity_check(str): the integrity_check string of the task.
-                image_id_list(list[int]): the list of image ids
+                image_md5_list(list[str]): the list of image md5sums
 
         Returns:
             None
@@ -1817,7 +1817,7 @@ class MarkerClient(QWidget):
             plomFileName,
             commentFileName,
             integrity_check,
-            image_id_list,
+            image_md5_list,
         ) = stuff
 
         if not (0 <= gr and gr <= self.maxMark):
@@ -1854,7 +1854,7 @@ class MarkerClient(QWidget):
             self.version,
             tags,
             integrity_check,
-            image_id_list,
+            image_md5_list,
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
@@ -1925,17 +1925,17 @@ class MarkerClient(QWidget):
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        irefs = []
+        image_names = []
+        image_md5s = []
         for i in range(len(imageList)):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             shutil.copyfile(imageList[i][1], tmp)
-            inames.append(tmp)
-            irefs.append(imageList[i][0])
+            image_names.append(tmp)
+            image_md5s.append(imageList[i][0])
 
         task = "q" + task
-        self.examModel.setOriginalFiles(task, inames)
-        self.examModel.setImageIDs(task, irefs)
+        self.examModel.setOriginalFiles(task, image_names)
+        self.examModel.setImageMD5s(task, image_md5s)
         # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 

@@ -134,18 +134,17 @@ def MgiveTaskToClient(self, user_name, group_id):
             time=datetime.now(),
             integrity_check=aref.integrity_check,
         )
-        # get list of image-ids to send to marker, but defer apage creation
-        image_id_list = []
+        # get list of image-md5s to send to marker, but defer apage creation
+        image_md5_list = []
         for p in aref.apages.order_by(APage.order):
-            # APage.create(annotation=new_aref, order=p.order, image=p.image)
-            image_id_list.append(p.image.id)
+            image_md5_list.append(p.image.md5sum)
         new_aref.save()
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, tags, integrity_check, image-id-list,  page1, page2, etc]
-        rval = [True, new_aref.tags, new_aref.integrity_check, image_id_list]
+        # return [true, tags, integrity_check, image-md5-list,  page1, page2, etc]
+        rval = [True, new_aref.tags, new_aref.integrity_check, image_md5_list]
         for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
         log.debug(
@@ -203,7 +202,7 @@ def MtakeTaskFromClient(
     tags,
     md5,
     integrity_check,
-    image_id_list,
+    image_md5_list,
 ):
     """Get marked image back from client and update the record
     in the database.
@@ -213,10 +212,11 @@ def MtakeTaskFromClient(
     uref = User.get(name=user_name)  # authenticated, so not-None
 
     with plomdb.atomic():
-        # make sure all returned image-ids are actually images - and keep the refs
+        # make sure all returned image-ids are actually images
+        # keep the refs for apage creation
         image_ref_list = []
-        for img_id in image_id_list:
-            iref = Image.get_or_none(id=img_id)
+        for img_md5 in image_md5_list:
+            iref = Image.get_or_none(md5sum=img_md5)
             if iref:
                 image_ref_list.append(iref)
             else:
@@ -241,22 +241,22 @@ def MtakeTaskFromClient(
             return [False, "integrity_fail"]
         # check all the images actually come from this test - sanity check against client error
         tref = qref.test
-        # make a list of all the image-ids of all pages assoc with tref
-        test_image_ids = []
+        # make a list of all the image-md5sums of all pages assoc with tref
+        test_image_md5s = []
         for pref in tref.tpages:
             # tpages are always present - whether or not anything uploaded
             if pref.scanned:  # so only check scanned ones
-                test_image_ids.append(pref.image.id)
+                test_image_md5s.append(pref.image.md5sum)
         # other page types only present if used
         for pref in tref.hwpages:
-            test_image_ids.append(pref.image.id)
+            test_image_md5s.append(pref.image.md5sum)
         for pref in tref.expages:
-            test_image_ids.append(pref.image.id)
+            test_image_md5s.append(pref.image.md5sum)
         for pref in tref.lpages:
-            test_image_ids.append(pref.image.id)
+            test_image_md5s.append(pref.image.md5sum)
         # check image_id_list against this list
-        for img_id in image_id_list:
-            if img_id not in test_image_ids:
+        for img_md5 in image_md5_list:
+            if img_md5 not in test_image_md5s:
                 return [False, "image_not_in_test"]
 
         # create apages from the image_ref_list.
@@ -392,7 +392,7 @@ def MgetWholePaper(self, test_number, question):
         return [False]
     pageData = []  # for each page append a triple [
     # page-code = t.pageNumber, h.questionNumber.order or l.order
-    # image-id-reference number,
+    # image-md5sum,
     # true/false - if belongs to the given question or not.
     pageFiles = []  # the corresponding filenames.
     question = int(question)
@@ -402,7 +402,7 @@ def MgetWholePaper(self, test_number, question):
             continue
         if p.group.group_type == "i":  # skip IDpages (but we'll include dnm pages)
             continue
-        val = ["t{}".format(p.page_number), p.image.id, False]
+        val = ["t{}".format(p.page_number), p.image.md5sum, False]
         # check if page belongs to our question
         if p.group.group_type == "q" and p.group.qgroups[0].question == question:
             val[2] = True
@@ -411,20 +411,20 @@ def MgetWholePaper(self, test_number, question):
     # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
-            val = ["h{}.{}".format(qref.question, p.order), p.image.id, False]
+            val = ["h{}.{}".format(qref.question, p.order), p.image.md5sum, False]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
         for p in qref.group.expages:
-            val = ["e{}.{}".format(qref.question, p.order), p.image.id, False]
+            val = ["e{}.{}".format(qref.question, p.order), p.image.md5sum, False]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
     # then give LPages
     for p in tref.lpages.order_by(LPage.order):
-        pageData.append(["l{}".format(p.order), p.image.id, False])
+        pageData.append(["l{}".format(p.order), p.image.md5sum, False])
         pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
 
