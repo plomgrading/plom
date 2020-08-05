@@ -39,7 +39,7 @@ class SourceList(QListWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
-        self.setIconSize(QSize(150, 150))
+        self.setIconSize(QSize(256, 256))
         self.setSpacing(16)
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
@@ -103,7 +103,7 @@ class SinkList(QListWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
-        self.setIconSize(QSize(200, 200))
+        self.setIconSize(QSize(256, 256))
         self.setSpacing(16)
         self.setWrapping(False)
         self.item_belongs = (
