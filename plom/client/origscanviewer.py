@@ -80,6 +80,7 @@ class SourceList(QListWidget):
         if ci is None:
             return None
         ci.setHidden(True)
+        self.setCurrentItem(None)
         return ci.text()
 
     def returnItem(self, name):
