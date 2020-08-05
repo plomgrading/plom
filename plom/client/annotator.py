@@ -128,7 +128,6 @@ class Annotator(QWidget):
 
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
-        self.rearrangeView = None
         self.testViewFiles = None
 
         # declares some instance vars
@@ -757,15 +756,17 @@ class Annotator(QWidget):
                     self.pageData, self.testViewFiles
                 )
             )
-        # if we haven't built a testview, built it now
-        if self.rearrangeView is None:
-            self.rearrangeView = RearrangementViewer(
-                self, testNumber, self.pageData, self.testViewFiles,
-            )
-        if self.rearrangeView.exec_() == QDialog.Accepted:
+        # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
+        rearrangeView = RearrangementViewer(
+            self, testNumber, self.pageData, self.testViewFiles,
+        )
+        if rearrangeView.exec_() == QDialog.Accepted:
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
-                self.tgvID, self.rearrangeView.permute
+                self.tgvID, rearrangeView.permute
             )
+            # clean up the files - no longer needed.
+            self.parentMarkerUI.doneWithWholePaperFiles(self.testViewFiles)
+            self.testViewFiles = None
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
