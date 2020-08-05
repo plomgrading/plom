@@ -390,19 +390,39 @@ def MgetWholePaper(self, test_number, question):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # don't know that test - this shouldn't happen
         return [False]
-    pageData = []  # for each page append a triple [
-    # page-code = t.pageNumber, h.questionNumber.order or l.order
+    pageData = []  # for each page append a 4-tuple [
+    # page-code = t.pageNumber, h.questionNumber.order, 3.questionNumber.order, or l.order
     # image-md5sum,
     # true/false - if belongs to the given question or not.
+    # position in current annotation (or none if not)
     pageFiles = []  # the corresponding filenames.
     question = int(question)
+    # get the current annotation and position of images within it.
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:  # this should not happen
+        return [False]
+    # dict of image-ids and positions in the current annotation
+    current_image_orders = {}
+    # have to be a little careful
+    # - if fresh annotation, then no apages present - grab from the previous annotation
+    # - if reannotating, then apages present - grab from the current annotation.
+    aref = qref.annotations[-1]
+    if aref.apages.count() == 0:  # no apages - must be fresh annotation
+        aref = qref.annotations[-2]  # grab from previous annot.
+    for pref in aref.apages:
+        current_image_orders[pref.image.id] = pref.order
     # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
         if p.group.group_type == "i":  # skip IDpages (but we'll include dnm pages)
             continue
-        val = ["t{}".format(p.page_number), p.image.md5sum, False]
+        val = [
+            "t{}".format(p.page_number),
+            p.image.md5sum,
+            False,
+            current_image_orders.get(p.image.id),
+        ]
         # check if page belongs to our question
         if p.group.group_type == "q" and p.group.qgroups[0].question == question:
             val[2] = True
@@ -411,20 +431,37 @@ def MgetWholePaper(self, test_number, question):
     # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
-            val = ["h{}.{}".format(qref.question, p.order), p.image.md5sum, False]
+            val = [
+                "h{}.{}".format(qref.question, p.order),
+                p.image.md5sum,
+                False,
+                current_image_orders.get(p.image.id),
+            ]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
         for p in qref.group.expages:
-            val = ["e{}.{}".format(qref.question, p.order), p.image.md5sum, False]
+            val = [
+                "e{}.{}".format(qref.question, p.order),
+                p.image.md5sum,
+                False,
+                current_image_orders.get(p.image.id),
+            ]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
     # then give LPages
     for p in tref.lpages.order_by(LPage.order):
-        pageData.append(["l{}".format(p.order), p.image.md5sum, False])
+        pageData.append(
+            [
+                "l{}".format(p.order),
+                p.image.md5sum,
+                False,
+                current_image_orders.get(p.image.id),
+            ]
+        )
         pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
 

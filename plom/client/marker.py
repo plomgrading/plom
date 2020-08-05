@@ -1936,6 +1936,8 @@ class MarkerClient(QWidget):
         task = "q" + task
         self.examModel.setOriginalFiles(task, image_names)
         self.examModel.setImageMD5s(task, image_md5s)
+        # set the status back to untouched so that any old plom files ignored
+        self.examModel.setStatusByTask(task, "untouched")
         # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 
