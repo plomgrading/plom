@@ -283,7 +283,6 @@ class RearrangementViewer(QDialog):
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
         self.rotateB.clicked.connect(self.rotateImage)
-        self.sRightB.clicked.connect(self.shuffleRight)
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
