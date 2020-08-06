@@ -115,7 +115,6 @@ class ImageItemObject(QGraphicsObject):
 
     @thickness.setter
     def thickness(self, value):
-        print("Ping ", value)
         self.ci.thick = value
         self.ci.update()
 
