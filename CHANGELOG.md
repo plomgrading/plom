@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Various UI tweaks.
+* Client "upload image" button moved to menu as "insert image"
 * Scripts can report their version.
 * Example demo data uses handwritten digits instead of fonts.
 * Annotator remains open between papers.
