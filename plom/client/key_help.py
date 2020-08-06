@@ -19,7 +19,7 @@ class KeyHelp(QDialog):
             [
                 "Box / Ellipse",
                 ["c", ","],
-                "Draw a hightlighting box (ellipse) on click (shift-click) and drag",
+                "Draw a highlight box (ellipse) on click (shift-click) and drag",
             ],
             [
                 "Cross / QMark / Tick",
