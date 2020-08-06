@@ -163,16 +163,17 @@ class MarkHandler:
 
         if (
             task_available
-        ):  # return [True, tag, integrity_check, filename1, filename2,...]
+        ):  # return [True, tag, integrity_check, image_id_list, filename1, filename2,...]
             task_tags = claimed_task[1]
             task_integrity_check = claimed_task[2]
-            task_page_paths = claimed_task[3:]
+            task_image_ids = claimed_task[3]
+            task_page_paths = claimed_task[4:]
 
             with MultipartWriter("imageAndTags") as multipart_writer:
                 multipart_writer.append(task_tags)  # append tags as raw text.
-                multipart_writer.append(
-                    task_integrity_check
-                )  # append integrity_check as raw text.
+                # append integrity_check as raw text.
+                multipart_writer.append(task_integrity_check)
+                multipart_writer.append_json(task_image_ids)  # append as json
                 for file_name in task_page_paths:
                     multipart_writer.append(open(file_name, "rb"))
             return web.Response(body=multipart_writer, status=200)
@@ -244,6 +245,7 @@ class MarkHandler:
                 "tags",
                 "md5sum",
                 "integrity_check",
+                "image_md5s",
             ],
         ):
             return web.Response(status=400)
@@ -284,6 +286,7 @@ class MarkHandler:
             task_metadata["tags"],
             task_metadata["md5sum"],
             task_metadata["integrity_check"],
+            task_metadata["image_md5s"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
@@ -442,7 +445,7 @@ class MarkHandler:
         # This response is a list which includes the following:
         # 1. True/False for operation status.
         # 2. A list of lists where each inner list includes:
-        #   [test_number, task_number, True/False for wether the task/page is graded or not]
+        #   [test_number, task_number, True/False for whether the task/page is graded or not]
         # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
         whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
 
@@ -514,35 +517,6 @@ class MarkHandler:
         else:  # cannot find that task
             return web.Response(status=404)
 
-    # @routes.patch("/MK/shuffle/{task}")
-    @authenticate_by_token_required_fields(["user", "imageRefs"])
-    def MshuffleImages(self, data, request):
-        """Shuffle images for a task and pass the shuffle data to the database.
-
-        Respond with status 200/401.
-
-        Args:
-            data (dict): Dictionary including user data in addition to
-                the rearranged image references.
-            request (aiohttp.web_request.Request): Request of type PATCH /MK/shuffle/`task code`.
-
-        Returns:
-            aiohttp.web_response.Response: Empty status response indication if the question
-                images shuffling was successful.
-        """
-
-        task_code = request.match_info["task"]
-        # A list with a single boolean indicating if the operation was successful
-        shuffle_images_response = self.server.MshuffleImages(
-            data["user"], task_code, data["imageRefs"]
-        )
-        shuffle_images_status = shuffle_images_response[0]
-
-        if shuffle_images_status:
-            return web.Response(status=200)
-        else:  # not your task
-            return web.Response(status=401)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -564,4 +538,3 @@ class MarkHandler:
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
-        router.add_patch("/MK/shuffle/{task}", self.MshuffleImages)

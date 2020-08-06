@@ -397,7 +397,7 @@ class PageScene(QGraphicsScene):
         """
 
         deltaShift = self.parent.cursorCross
-        if self.mode is "delta":
+        if self.mode == "delta":
             if not int(self.markDelta) > 0:
                 deltaShift = self.parent.cursorTick
 

@@ -13,7 +13,7 @@ specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
 from .version import __version__
 
-Plom_API_Version = "17"  # updated for bundles
+Plom_API_Version = "20"  # updated for new image twisting stuff
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase

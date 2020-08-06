@@ -28,6 +28,14 @@ parser = argparse.ArgumentParser(
     description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "-n",
+    "--num-papers",
+    type=int,
+    # default=20,  # we want it to give None
+    metavar="N",
+    help="How many fake exam papers for the demo (defaults to 20 if omitted)",
+)
 
 
 def main():
@@ -48,7 +56,12 @@ def main():
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
-    subprocess.check_call(split("plom-build new --demo"))
+    if args.num_papers:
+        subprocess.check_call(
+            split("plom-build new --demo --demo-num-papers {}".format(args.num_papers))
+        )
+    else:
+        subprocess.check_call(split("plom-build new --demo"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
@@ -82,12 +95,17 @@ def main():
     #         "plom-scan all -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
     #     )
     # )
+
+    opts = "--no-gamma-shift"
+    # opts = ""
     for f in (
         "fake_scribbled_exams1",
         "fake_scribbled_exams2",
         "fake_scribbled_exams3",
     ):
-        subprocess.check_call(split("plom-scan process -w 4567 {}.pdf".format(f)))
+        subprocess.check_call(
+            split("plom-scan process -w 4567 {} {}.pdf".format(opts, f))
+        )
         subprocess.check_call(split("plom-scan upload -w 4567 -u {}".format(f)))
 
     time.sleep(0.5)

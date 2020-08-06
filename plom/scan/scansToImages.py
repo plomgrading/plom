@@ -353,12 +353,13 @@ def makeBundleDirectories(fname, bundle_dir):
         os.makedirs(bundle_dir / dir, exist_ok=True)
 
 
-def postProcessing(thedir, dest):
+def postProcessing(thedir, dest, skip_gamma=False):
     """Do post processing on a directory of scanned bitmaps.
 
     Args:
         thedir (str, Path): a directory full of bitmaps.
         dest (str, Path): move images here (???).
+        skip_gamma_shift (bool): skip the white balancing.
     """
     thedir = Path(thedir)
     dest = Path(dest)
@@ -370,16 +371,17 @@ def postProcessing(thedir, dest):
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
 
-    # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
-    print("Gamma shift the PNG images")
-    # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(thedir.glob("*.png"))
-    N = len(stuff)
-    with Pool() as p:
-        r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
-    # Pool does this loop, but in parallel
-    # for x in glob.glob("..."):
-    #     gamma_adjust(x)
+    if not skip_gamma:
+        # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
+        print("Gamma shift the PNG images")
+        # list and len bit crude here: more pythonic to leave as iterator?
+        stuff = list(thedir.glob("*.png"))
+        N = len(stuff)
+        with Pool() as p:
+            r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
+        # Pool does this loop, but in parallel
+        # for x in glob.glob("..."):
+        #     gamma_adjust(x)
 
     fileList = []
     for ext in PlomImageExts:
@@ -389,7 +391,7 @@ def postProcessing(thedir, dest):
         shutil.move(file, dest / file.name)
 
 
-def processScans(pdf_fname, bundle_dir):
+def processScans(pdf_fname, bundle_dir, skip_gamma=False):
     """Process files into bitmap pageimages.
 
     Process each page of a pdf file into bitmaps.
@@ -405,6 +407,7 @@ def processScans(pdf_fname, bundle_dir):
             anything else by code called by this function?
         bundle_dir (pathlib.Path): the filesystem path to the bundle,
             either as an absolute path or relative the CWD.
+        skip_gamma (bool): skip white balancing in post processing.
 
     Returns:
         None
@@ -424,4 +427,4 @@ def processScans(pdf_fname, bundle_dir):
     makeBundleDirectories(pdf_fname, bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
     processFileToBitmaps(pdf_fname, bitmaps_dir)
-    postProcessing(bitmaps_dir, bundle_dir / "pageImages")
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)

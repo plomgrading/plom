@@ -204,7 +204,7 @@ def startMarking(question, version):
         # print("Trying to claim next ask = ", task)
         try:
             print("Marking task ", task)
-            imageList, tags, integrity_check = messenger.MclaimThisTask(task)
+            imageList, image_ids, tags, integrity_check = messenger.MclaimThisTask(task)
         except PlomTakenException as e:
             print("Another user got that task. Trying again.")
             continue
@@ -226,6 +226,7 @@ def startMarking(question, version):
                 plomFile,
                 commentFile,
                 integrity_check,
+                image_ids,
             )
 
 
