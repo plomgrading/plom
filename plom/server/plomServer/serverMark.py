@@ -141,7 +141,7 @@ def MclaimThisTask(self, username, task_code):
 
     Returns:
         list: A list which either only has a False value included or
-            [True, `question_tag`, `integrity_check`, `question_image_path`]
+            [True, `question_tag`, `integrity_check`, `list_of_image_md5s` `image_file1`, `image_file2`,...]
     """
 
     return self.DB.MgiveTaskToClient(username, task_code)
@@ -176,6 +176,7 @@ def MreturnMarkedTask(
     tags,
     md5_code,
     integrity_check,
+    image_md5s,
 ):
     """Save the marked paper's information to database and respond with grading progress.
 
@@ -192,7 +193,9 @@ def MreturnMarkedTask(
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
         md5_code (str): MD5 hash key for this task.
-        integrity_check (str): the integrity_check string for this task (concat of md5sums of underlying images)
+        integrity_check (str): the integrity_check string for this task
+        image_md5s (list[str]): list of image md5sums used.
+
 
     Returns:
         list: Respond with a list which includes:
@@ -244,6 +247,7 @@ def MreturnMarkedTask(
         tags,
         md5n,
         integrity_check,
+        image_md5s,
     )
 
     if database_task_response[0] is False:
@@ -347,7 +351,7 @@ def MgetWholePaper(self, test_number, question_number):
     Returns:
         list: A list including the following information:
             Boolean of wether we got the paper images.
-            A list of lists including [`test_version`, `image_id_reference_number`, `does_page_belong_to_question`].
+            A list of lists including [`test_version`, `image_md5sum_list`, `does_page_belong_to_question`].
             Followed by a series of image paths for the pages of the paper.
     """
 
@@ -375,19 +379,3 @@ def MrevertTask(self, code):
     rval = self.DB.MrevertTask(code)
     # response is [False, "NST"] or [False, "NAC"] or [True]
     return rval
-
-
-def MshuffleImages(self, username, task_code, image_references_permutation):
-    """Saves the rearranged pages for this task/question in the database.
-
-    Args:
-        username (str): User who assigned tag to the paper.
-        task_code (str): Code string for the task.
-        image_references_permutation (int): A permutation of the images within this exam that are
-            related for the question. Each image is given by its
-            `image_id_reference_number`.
-
-    Returns:
-        list: A list with a single value of either True or False.
-    """
-    return self.DB.MshuffleImages(username, task_code, image_references_permutation)

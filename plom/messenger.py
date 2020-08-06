@@ -702,7 +702,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        # should be multipart = [tags, integrity_check, image1, image2, ....]
+        # should be multipart = [tags, integrity_check, image_id_list, image1, image2, ....]
         tags = "tagsAndImages[0].text  # this is raw text"
         imageList = []
         i = 0
@@ -711,12 +711,14 @@ class Messenger(BaseMessenger):
                 tags = img.text
             elif i == 1:
                 integrity_check = img.text
+            elif i == 2:
+                image_id_list = json.loads(img.text)
             else:
                 imageList.append(
                     BytesIO(img.content).getvalue()
                 )  # pass back image as bytes
             i += 1
-        return imageList, tags, integrity_check
+        return imageList, image_id_list, tags, integrity_check
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()
@@ -862,7 +864,18 @@ class Messenger(BaseMessenger):
         return imageList
 
     def MreturnMarkedTask(
-        self, code, pg, ver, score, mtime, tags, aname, pname, cname, integrity_check
+        self,
+        code,
+        pg,
+        ver,
+        score,
+        mtime,
+        tags,
+        aname,
+        pname,
+        cname,
+        integrity_check,
+        image_md5_list,
     ):
         """Upload annotated image and associated data to the server.
 
@@ -891,6 +904,7 @@ class Messenger(BaseMessenger):
                 "comments": open(cname, "r").read(),
                 "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
                 "integrity_check": integrity_check,
+                "image_md5s": image_md5_list,
             }
 
             dat = MultipartEncoder(
@@ -994,25 +1008,6 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         return [pageData, images]
-
-    def MshuffleImages(self, code, imageRefs):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.patch(
-                "https://{}/MK/shuffle/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token, "imageRefs": imageRefs},
-                verify=False,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
 
     # ------------------------
     # ------------------------

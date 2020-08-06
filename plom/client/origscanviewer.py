@@ -39,62 +39,58 @@ class SourceList(QListWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
-        self.setIconSize(QSize(150, 150))
+        self.setIconSize(QSize(256, 256))
         self.setSpacing(16)
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
-        self.originalItems = {}
-        self.potentialItems = {}
+        self.item_positions = {}
+        self.item_files = {}
         self.setSelectionMode(QListView.SingleSelection)
 
-    def addOriginalItem(self, p, pfile):
+    def addImageItem(self, p, pfile, belongs):
+        current_row = self.count()
         name = str(p)
-        self.addItem(QListWidgetItem(QIcon(pfile), name))
-        self.originalItems[name] = pfile
-
-    def addPotentialItem(self, p, pfile):
-        name = str(p)
-        self.potentialItems[name] = pfile
+        it = QListWidgetItem(QIcon(pfile), name)
+        if belongs:
+            it.setBackground(QBrush(Qt.darkGreen))
+        self.addItem(it)  # item is added at current_row
+        self.item_positions[name] = current_row
+        self.item_files[name] = pfile
 
     def rotateImage(self, angle=90):
         ci = self.currentItem()
         name = ci.text()
         rot = QTransform()
         rot.rotate(angle)
+        rfile = self.item_files[name]
 
-        if name in self.potentialItems:
-            rname = self.potentialItems[name]
-        else:
-            rname = self.originalItems[name]
-
-        cpix = QPixmap(rname)
+        cpix = QPixmap(rfile)
         npix = cpix.transformed(rot)
-        npix.save(rname, format="PNG")
+        npix.save(rfile, format="PNG")
 
-        ci.setIcon(QIcon(rname))
+        ci.setIcon(QIcon(rfile))
         self.parent.update()
 
-    def removeItem(self):
-        cr = self.currentRow()
-        ci = self.takeItem(cr)
+    def removeItem(self, name=None):
+        if name:
+            ci = self.item(self.item_positions[name])
+        else:
+            ci = self.currentItem()
+
         if ci is None:
             return None
+        ci.setHidden(True)
         self.setCurrentItem(None)
         return ci.text()
 
     def returnItem(self, name):
-        if name in self.originalItems:
-            self.addItem(QListWidgetItem(QIcon(self.originalItems[name]), name))
-        elif name in self.potentialItems:
-            it = QListWidgetItem(QIcon(self.potentialItems[name]), name)
-            it.setBackground(QBrush(Qt.darkGreen))
-            self.addItem(it)
-        else:
-            return
-        self.sortItems()
+        ci = self.item(self.item_positions[name])
+        if ci:
+            ci.setHidden(False)
+        return
 
     def viewImage(self, qi):
-        self.parent.viewImage(self.originalItems[qi.text()])
+        self.parent.viewImage(self.item_files[qi.text()])
 
 
 class SinkList(QListWidget):
@@ -108,24 +104,20 @@ class SinkList(QListWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
-        self.setIconSize(QSize(200, 200))
+        self.setIconSize(QSize(256, 256))
         self.setSpacing(16)
         self.setWrapping(False)
-        self.originalItems = {}
-        self.potentialItems = {}
+        self.item_belongs = (
+            {}
+        )  # whether or not the item 'officially' belongs to the question
+        self.item_files = {}
         self.itemDoubleClicked.connect(self.viewImage)
         self.setSelectionMode(QListView.SingleSelection)
 
-    def addOriginalItem(self, p, pfile):
+    def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
-        it = QListWidgetItem(QIcon(pfile), name)
-        it.setBackground(QBrush(Qt.green))
-        self.addItem(it)
-        self.originalItems[name] = pfile
-
-    def addPotentialItem(self, p, pfile):
-        name = str(p)
-        self.potentialItems[name] = pfile
+        self.item_files[name] = pfile
+        self.item_belongs[name] = belongs
 
     def removeItem(self):
         cr = self.currentRow()
@@ -134,8 +126,6 @@ class SinkList(QListWidget):
             return None
         elif self.count() == 1:  # cannot remove all pages
             return None
-        # elif ci.text() in self.originalItems:
-        # return None
         else:
             ci = self.takeItem(cr)
             self.setCurrentItem(None)
@@ -144,10 +134,8 @@ class SinkList(QListWidget):
     def appendItem(self, name):
         if name is None:
             return
-        if name in self.potentialItems:
-            ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
-        else:
-            ci = QListWidgetItem(QIcon(self.originalItems[name]), name)
+        ci = QListWidgetItem(QIcon(self.item_files[name]), name)
+        if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
         self.setCurrentItem(ci)
@@ -182,24 +170,17 @@ class SinkList(QListWidget):
         name = ci.text()
         rot = QTransform()
         rot.rotate(angle)
+        rfile = self.item_files[name]
 
-        if name in self.potentialItems:
-            rname = self.potentialItems[name]
-        else:
-            rname = self.originalItems[name]
-
-        cpix = QPixmap(rname)
+        cpix = QPixmap(rfile)
         npix = cpix.transformed(rot)
-        npix.save(rname, format="PNG")
+        npix.save(rfile, format="PNG")
 
-        ci.setIcon(QIcon(rname))
+        ci.setIcon(QIcon(rfile))
         self.parent.update()
 
     def viewImage(self, qi):
-        if qi.text() in self.originalItems:
-            self.parent.viewImage(self.originalItems[qi.text()])
-        else:
-            self.parent.viewImage(self.potentialItems[qi.text()])
+        self.parent.viewImage(self.item_files[qi.text()])
 
     def getNameList(self):
         nList = []
@@ -218,7 +199,7 @@ class RearrangementViewer(QDialog):
         self.pageData = pageData
         self.pageFiles = pageFiles
         self.nameToIrefNFile = {}
-        # note pagedata  triples [name, image-ref, true/false]
+        # note pagedata  triples [name, image-ref, true/false, pos_in_current_annotation]
         self.populateList()
 
     def _setupUI(self):
@@ -303,7 +284,6 @@ class RearrangementViewer(QDialog):
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
         self.rotateB.clicked.connect(self.rotateImage)
-        self.sRightB.clicked.connect(self.shuffleRight)
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
@@ -325,17 +305,30 @@ class RearrangementViewer(QDialog):
             None
 
         """
+        # each entry in pagedata = 4-tuple of []
+        # page-code = t.pageNumber, h.questionNumber.order, e.questionNumber.order, or l.order
+        # image-id-reference number,
+        # true/false - if belongs to the given question or not.
+        # position in current annotation (or none if not)
+        move_order = {}
         for k in range(len(self.pageData)):
             self.nameToIrefNFile[self.pageData[k][0]] = [
                 self.pageData[k][1],
                 self.pageFiles[k],
             ]
-            if self.pageData[k][2]:  # is a question page
-                self.listA.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
-                self.listB.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
-            else:
-                self.listA.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
-                self.listB.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
+            # add every page image to list A
+            self.listA.addImageItem(
+                self.pageData[k][0], self.pageFiles[k], self.pageData[k][2]
+            )
+            # add the potential for every page to listB
+            self.listB.addPotentialItem(
+                self.pageData[k][0], self.pageFiles[k], self.pageData[k][2]
+            )
+            # if position in current annot is non-null then add to list of pages to move between lists.
+            if self.pageData[k][3]:
+                move_order[self.pageData[k][3]] = self.pageData[k][0]
+        for k in sorted(move_order.keys()):
+            self.listB.appendItem(self.listA.removeItem(name=move_order[k]))
 
     def sourceToSink(self):
         """
@@ -428,9 +421,10 @@ class RearrangementViewer(QDialog):
         Returns:
 
         """
+        # TODO: Issue #1085, don't ask if no annotations
         msg = SimpleMessage(
             "Are you sure you want to save this page order? This will erase "
-            "all your annotations and relaunch the annotator."
+            "all your annotations."
         )
         if msg.exec() == QMessageBox.No:
             return
@@ -439,7 +433,6 @@ class RearrangementViewer(QDialog):
         for n in self.listB.getNameList():
             self.permute.append(self.nameToIrefNFile[n])
             # return pairs of [iref, file]
-        print(self.permute)
         self.accept()
 
     def singleSelect(self, currentList, allPages):

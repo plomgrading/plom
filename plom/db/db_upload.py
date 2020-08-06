@@ -1,6 +1,7 @@
 from plom.db.tables import *
 
 from datetime import datetime
+import uuid
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
@@ -614,26 +615,22 @@ def cleanQGroup(self, qref):
                 for p in aref.apages:
                     p.delete_instance()
                 # now create new ones - tpages, then hwpage, then expages, finally any lpages
-                # update integrity_check as we go
+                # set the integrity_check string to a UUID
                 ord = 0
-                integrity_check = ""
+                integrity_check = uuid.uuid4().hex
                 for p in qref.group.tpages.order_by(TPage.page_number):
                     if p.scanned:  # make sure the tpage is actually scanned.
                         ord += 1
                         APage.create(annotation=aref, image=p.image, order=ord)
-                        integrity_check += p.image.md5sum
                 for p in qref.group.hwpages.order_by(HWPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
-                    integrity_check += p.image.md5sum
                 for p in qref.group.expages.order_by(EXPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
-                    integrity_check += p.image.md5sum
                 for p in tref.lpages.order_by(LPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
-                    integrity_check += p.image.md5sum
                 aref.integrity_check = integrity_check
                 aref.save()
             else:

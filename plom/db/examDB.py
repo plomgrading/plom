@@ -202,7 +202,6 @@ class PlomDB:
         MgetOriginalImages,
         MsetTag,
         MgetWholePaper,
-        MshuffleImages,
         MreviewQuestion,
         MrevertTask,
     )

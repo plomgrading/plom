@@ -150,7 +150,7 @@ class Annotation(BaseModel):
     user = pw.ForeignKeyField(User, backref="annotations", null=True)
     aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
-    integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
+    integrity_check = pw.CharField(null=True)  # random uuid
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     comment_file = pw.CharField(null=True)

@@ -97,8 +97,8 @@ def MgetNextTask(self, q, v):
 
 def MgiveTaskToClient(self, user_name, group_id):
     """Assign question/version #group_id as a task to the given user, unless has been taken by another user.
-    Create new annotation (and associated pages, etc) by copying the last one for that qdata.
-    Return [True, tags, image0, image1, image2,...].
+    Create new annotation by copying the last one for that qdata - pages created when returned.
+    Return [True, tags, integrity_check, [image-ids], image0, image1, image2,...].
     """
 
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -122,7 +122,9 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.user = uref
         qref.save()
         # update the associated annotation
-        # - create a new annotation copied from the previous one
+        # - create a new annotation copied from the previous one (inc the integrity_check code)
+        # but we give the marker the pages from the **existing** annotation
+        # when task comes back we create the new pages
         aref = qref.annotations[-1]  # are these in right order
         new_aref = Annotation.create(
             qgroup=qref,
@@ -130,21 +132,20 @@ def MgiveTaskToClient(self, user_name, group_id):
             edition=aref.edition + 1,
             tags=aref.tags,
             time=datetime.now(),
+            integrity_check=aref.integrity_check,
         )
-        # create its pages and compute its integrity_check from md5sums
-        md5_concat = ""
+        # get list of image-md5s to send to marker, but defer apage creation
+        image_md5_list = []
         for p in aref.apages.order_by(APage.order):
-            APage.create(annotation=new_aref, order=p.order, image=p.image)
-            md5_concat += p.image.md5sum
-        new_aref.integrity_check = md5_concat
+            image_md5_list.append(p.image.md5sum)
         new_aref.save()
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, tags, integrity_check, page1, page2, etc]
-        rval = [True, new_aref.tags, new_aref.integrity_check]
-        for p in new_aref.apages.order_by(APage.order):
+        # return [true, tags, integrity_check, image-md5-list,  page1, page2, etc]
+        rval = [True, new_aref.tags, new_aref.integrity_check, image_md5_list]
+        for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
         log.debug(
             'Giving marking task {} to user "{}" with integrity_check {}'.format(
@@ -176,9 +177,9 @@ def MdidNotFinish(self, user_name, group_id):
         qref.status = "todo"
         qref.user = None
         qref.marked = False
-        # delete the associated APages and then the annotation.
+        # delete the annotation.
         aref = qref.annotations[-1]
-        for p in aref.apages:
+        for p in aref.apages:  # this should not be needed.
             p.delete_instance()
         aref.delete_instance()
         # now clean up the qgroup
@@ -201,6 +202,7 @@ def MtakeTaskFromClient(
     tags,
     md5,
     integrity_check,
+    image_md5_list,
 ):
     """Get marked image back from client and update the record
     in the database.
@@ -210,6 +212,16 @@ def MtakeTaskFromClient(
     uref = User.get(name=user_name)  # authenticated, so not-None
 
     with plomdb.atomic():
+        # make sure all returned image-ids are actually images
+        # keep the refs for apage creation
+        image_ref_list = []
+        for img_md5 in image_md5_list:
+            iref = Image.get_or_none(md5sum=img_md5)
+            if iref:
+                image_ref_list.append(iref)
+            else:
+                return [False, "No_such_image"]
+
         # grab the group corresponding to that task
         gref = Group.get_or_none(Group.gid == task)
         if gref is None or gref.scanned is False:  # this should not happen
@@ -227,6 +239,31 @@ def MtakeTaskFromClient(
         aref = qref.annotations[-1]
         if aref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
+        # check all the images actually come from this test - sanity check against client error
+        tref = qref.test
+        # make a list of all the image-md5sums of all pages assoc with tref
+        test_image_md5s = []
+        for pref in tref.tpages:
+            # tpages are always present - whether or not anything uploaded
+            if pref.scanned:  # so only check scanned ones
+                test_image_md5s.append(pref.image.md5sum)
+        # other page types only present if used
+        for pref in tref.hwpages:
+            test_image_md5s.append(pref.image.md5sum)
+        for pref in tref.expages:
+            test_image_md5s.append(pref.image.md5sum)
+        for pref in tref.lpages:
+            test_image_md5s.append(pref.image.md5sum)
+        # check image_id_list against this list
+        for img_md5 in image_md5_list:
+            if img_md5 not in test_image_md5s:
+                return [False, "image_not_in_test"]
+
+        # create apages from the image_ref_list.
+        ord = 0
+        for iref in image_ref_list:
+            ord += 1
+            APage.create(annotation=aref, order=ord, image=iref)
 
         # update status, mark, annotate-file-name, time, and
         # time spent marking the image
@@ -253,7 +290,6 @@ def MtakeTaskFromClient(
             )
         )
         # check if there are any unmarked questions left in the test
-        tref = qref.test
         if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:
             log.info("Still unmarked questions in test {}".format(tref.test_number))
             return [True, "more"]
@@ -354,19 +390,39 @@ def MgetWholePaper(self, test_number, question):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # don't know that test - this shouldn't happen
         return [False]
-    pageData = []  # for each page append a triple [
-    # page-code = t.pageNumber, h.questionNumber.order or l.order
-    # image-id-reference number,
+    pageData = []  # for each page append a 4-tuple [
+    # page-code = t.pageNumber, h.questionNumber.order, 3.questionNumber.order, or l.order
+    # image-md5sum,
     # true/false - if belongs to the given question or not.
+    # position in current annotation (or none if not)
     pageFiles = []  # the corresponding filenames.
     question = int(question)
+    # get the current annotation and position of images within it.
+    qref = QGroup.get_or_none(test=tref, question=question)
+    if qref is None:  # this should not happen
+        return [False]
+    # dict of image-ids and positions in the current annotation
+    current_image_orders = {}
+    # have to be a little careful
+    # - if fresh annotation, then no apages present - grab from the previous annotation
+    # - if reannotating, then apages present - grab from the current annotation.
+    aref = qref.annotations[-1]
+    if aref.apages.count() == 0:  # no apages - must be fresh annotation
+        aref = qref.annotations[-2]  # grab from previous annot.
+    for pref in aref.apages:
+        current_image_orders[pref.image.id] = pref.order
     # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
         if p.group.group_type == "i":  # skip IDpages (but we'll include dnm pages)
             continue
-        val = ["t{}".format(p.page_number), p.image.id, False]
+        val = [
+            "t{}".format(p.page_number),
+            p.image.md5sum,
+            False,
+            current_image_orders.get(p.image.id),
+        ]
         # check if page belongs to our question
         if p.group.group_type == "q" and p.group.qgroups[0].question == question:
             val[2] = True
@@ -375,52 +431,39 @@ def MgetWholePaper(self, test_number, question):
     # give HW and EX pages by question
     for qref in tref.qgroups.order_by(QGroup.question):
         for p in qref.group.hwpages:
-            val = ["h{}.{}".format(qref.question, p.order), p.image.id, False]
+            val = [
+                "h{}.{}".format(qref.question, p.order),
+                p.image.md5sum,
+                False,
+                current_image_orders.get(p.image.id),
+            ]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
         for p in qref.group.expages:
-            val = ["e{}.{}".format(qref.question, p.order), p.image.id, False]
+            val = [
+                "e{}.{}".format(qref.question, p.order),
+                p.image.md5sum,
+                False,
+                current_image_orders.get(p.image.id),
+            ]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
     # then give LPages
     for p in tref.lpages.order_by(LPage.order):
-        pageData.append(["l{}".format(p.order), p.image.id, False])
+        pageData.append(
+            [
+                "l{}".format(p.order),
+                p.image.md5sum,
+                False,
+                current_image_orders.get(p.image.id),
+            ]
+        )
         pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
-
-
-def MshuffleImages(self, user_name, task, image_ref_list):
-    """Rearrange page images in the annotation for that task.
-    Permutation given by the references inside the image_ref_list.
-    """
-    uref = User.get(name=user_name)  # authenticated, so not-None
-
-    with plomdb.atomic():
-        gref = Group.get(Group.gid == task)
-        qref = gref.qgroups[0]
-        if qref.user != uref:
-            return [False]  # not your task
-        # grab the last annotation
-        aref = gref.qgroups[0].annotations[-1]
-        # delete the old pages
-        for p in aref.apages:
-            p.delete_instance()
-        # now create new apages
-        ord = 0
-        for iref in image_ref_list:
-            ord += 1
-            APage.create(annotation=aref, image=iref, order=ord)
-        aref.time = datetime.now()
-        uref.last_activity = datetime.now()
-        uref.last_action = "Shuffled images of {}".format(task)
-        aref.save()
-        uref.save()
-    log.info("MshuffleImages - task {} now irefs {}".format(task, image_ref_list))
-    return [True]
 
 
 def MreviewQuestion(self, test_number, question, version):

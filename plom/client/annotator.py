@@ -112,7 +112,8 @@ class Annotator(QWidget):
                     annotation objects on the page if you go back to continue annotating a
                     question. ie - is it mark up/down, where are all the objects, how to
                     rebuild those objects, etc.
-                integrity_check (str): integrity_check of the underlying images.
+                integrity_check (str): integrity_check of the underlying task.
+                image_md5_list (list[str]): list of image md5sums of underlying images
                 }
         """
         super(Annotator, self).__init__()
@@ -127,7 +128,6 @@ class Annotator(QWidget):
 
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
-        self.rearrangeView = None
         self.testViewFiles = None
 
         # declares some instance vars
@@ -296,6 +296,7 @@ class Annotator(QWidget):
         markStyle,
         plomDict,
         integrity_check,
+        image_md5_list,
     ):
         """Loads new Data into the Toggle View window for marking.
 
@@ -320,7 +321,8 @@ class Annotator(QWidget):
                                 annotation objects on the page if you go back to continue annotating a
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
-            integrity_check (str): integrity check string of underlying images (concat of their md5sums)
+            integrity_check (str): integrity check string
+            image_md5_list (list[str]): list of image md5sums
 
         Returns:
             None: Modifies many instance vars.
@@ -334,6 +336,7 @@ class Annotator(QWidget):
         self.imageFiles = fnames
         self.saveName = saveName
         self.integrity_check = integrity_check
+        self.image_md5_list = image_md5_list
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
@@ -753,15 +756,17 @@ class Annotator(QWidget):
                     self.pageData, self.testViewFiles
                 )
             )
-        # if we haven't built a testview, built it now
-        if self.rearrangeView is None:
-            self.rearrangeView = RearrangementViewer(
-                self, testNumber, self.pageData, self.testViewFiles,
-            )
-        if self.rearrangeView.exec_() == QDialog.Accepted:
+        # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
+        rearrangeView = RearrangementViewer(
+            self, testNumber, self.pageData, self.testViewFiles,
+        )
+        if rearrangeView.exec_() == QDialog.Accepted:
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
-                self.tgvID, self.rearrangeView.permute
+                self.tgvID, rearrangeView.permute
             )
+            # clean up the files - no longer needed.
+            self.parentMarkerUI.doneWithWholePaperFiles(self.testViewFiles)
+            self.testViewFiles = None
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
@@ -1489,6 +1494,7 @@ class Annotator(QWidget):
             plomFile,
             commentFile,
             self.integrity_check,
+            self.image_md5_list,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
