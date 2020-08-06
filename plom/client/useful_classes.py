@@ -161,10 +161,11 @@ class BlankIDBox(QDialog):
 
 
 class SNIDBox(QDialog):
-    def __init__(self):
+    def __init__(self, id_name_text):
         super(SNIDBox, self).__init__()
         self.sidLE = QLineEdit()
         self.snameLE = QLineEdit()
+        self.guessInput(id_name_text)
         self.okB = QPushButton("&Done")
         self.cancelB = QPushButton("&Cancel")
         fl = QFormLayout()
@@ -178,6 +179,23 @@ class SNIDBox(QDialog):
         self.cancelB.clicked.connect(self.reject)
         self.sid = ""
         self.sname = ""
+
+    def guessInput(self, id_name_text):
+        """Extract the digits from id_name_text and use it to fill the sid-entry, and then extract alphabetic from id_name_text and use it to fill the sname-entry
+        """
+        sid = ""
+        sname = ""
+        for c in id_name_text:
+            # if it is a number add it to sid
+            if c.isdigit():
+                sid += c
+            # if it is alphabetic add it to sname
+            elif c.isalpha() or c in [" ", ","]:
+                sname += c
+            else:
+                pass
+        self.sidLE.setText(sid.strip())
+        self.snameLE.setText(sname.strip())
 
     def check(self):
         self.sid = self.sidLE.text().strip()

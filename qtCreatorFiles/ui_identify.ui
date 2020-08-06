@@ -231,7 +231,7 @@
       <item row="2" column="0">
        <widget class="QGroupBox" name="studentBox">
         <property name="title">
-         <string>Enter student ID or name:</string>
+         <string>Search classlist by student ID or name</string>
         </property>
         <layout class="QFormLayout" name="formLayout">
          <property name="sizeConstraint">
@@ -239,13 +239,6 @@
          </property>
          <item row="0" column="0" colspan="2">
           <widget class="QLineEdit" name="idEdit"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>then press enter to continue</string>
-           </property>
-          </widget>
          </item>
         </layout>
        </widget>

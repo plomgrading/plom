@@ -636,7 +636,7 @@ class IDClient(QWidget):
         if self.ui.idEdit.text() in self.snid_to_student_id:
             # Ask user to confirm ID/Name
             msg = SimpleMessage(
-                'Student "{}". Enter and move to next?'.format(self.ui.idEdit.text())
+                'Student "{}". Save and move to next?'.format(self.ui.idEdit.text())
             )
             # Put message popup in its last location
             if self.msgGeometry is not None:
@@ -652,7 +652,7 @@ class IDClient(QWidget):
             # Number is not in class list - ask user if they really want to
             # enter that number.
             msg = SimpleMessage(
-                "Student {} not in list. Do you want to enter it anyway?".format(
+                'Student "{}" not found in classlist. Do you want to input the ID and name manually?'.format(
                     self.ui.idEdit.text()
                 )
             )
@@ -664,7 +664,7 @@ class IDClient(QWidget):
                 return
             self.msgPosition = msg.pos()
             # Otherwise get an id and name from the user (and the okay)
-            snidbox = SNIDBox()
+            snidbox = SNIDBox(self.ui.idEdit.text())
             if snidbox.exec_() != QDialog.Accepted:
                 return
             sid = snidbox.sid.strip()
