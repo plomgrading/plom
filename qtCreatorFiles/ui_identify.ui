@@ -98,7 +98,7 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Prediction</string>
+         <string>Machine prediction</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_6">
          <item row="0" column="0">
@@ -137,6 +137,7 @@
            </property>
            <property name="text">
             <string>Accept
+ machine
  prediction</string>
            </property>
           </widget>
