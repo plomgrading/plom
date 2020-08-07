@@ -98,7 +98,7 @@
          </sizepolicy>
         </property>
         <property name="title">
-         <string>Prediction</string>
+         <string>Machine prediction</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_6">
          <item row="0" column="0">
@@ -137,6 +137,7 @@
            </property>
            <property name="text">
             <string>Accept
+ machine
  prediction</string>
            </property>
           </widget>
@@ -159,6 +160,13 @@
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
+      <item row="3" column="0">
+       <widget class="QPushButton" name="nextButton">
+        <property name="text">
+         <string>Skip (for now) and &amp;get next</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="QGroupBox" name="userBox">
         <property name="title">
@@ -198,46 +206,10 @@
            <property name="selectionBehavior">
             <enum>QAbstractItemView::SelectRows</enum>
            </property>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
           </widget>
-         </item>
-        </layout>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QPushButton" name="nextButton">
-        <property name="text">
-         <string>Skip (for now) and &amp;get next</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QGroupBox" name="studentBox">
-        <property name="title">
-         <string>Enter student details</string>
-        </property>
-        <layout class="QFormLayout" name="formLayout">
-         <property name="sizeConstraint">
-          <enum>QLayout::SetDefaultConstraint</enum>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="idLabel">
-           <property name="text">
-            <string>Student ID</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="idEdit"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="nameLabel">
-           <property name="text">
-            <string>Student Name</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="nameEdit"/>
          </item>
         </layout>
        </widget>
@@ -259,6 +231,21 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item row="2" column="0">
+       <widget class="QGroupBox" name="studentBox">
+        <property name="title">
+         <string>Search classlist by student ID or name</string>
+        </property>
+        <layout class="QFormLayout" name="formLayout">
+         <property name="sizeConstraint">
+          <enum>QLayout::SetDefaultConstraint</enum>
+         </property>
+         <item row="0" column="0" colspan="2">
+          <widget class="QLineEdit" name="idEdit"/>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -288,8 +275,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>idEdit</tabstop>
-  <tabstop>nameEdit</tabstop>
   <tabstop>nextButton</tabstop>
   <tabstop>tableView</tabstop>
   <tabstop>closeButton</tabstop>

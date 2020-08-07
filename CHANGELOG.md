@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Example demo data uses handwritten digits instead of fonts.
 * Annotator remains open between papers.
 * Totaller client was removed.
+* ID-subclient - student name + id is entered in single field which auto-completes on both.
 
 ### Fixed
 * Fix left-hand mouse mode.
