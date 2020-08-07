@@ -562,12 +562,11 @@ class IDClient(QWidget):
         Args:
             index: an index into the UI table of the currently
                 highlighted row.
-            sname (str/None): The student name.
-                TODO: are you allowed to call with this None?
-                TODO: are you allowed to call with this empty?
-            sid (str/None): The student ID.
-                TODO: are you allowed to call with this None?
-                TODO: are you allowed to call with this empty?
+            sname (str/None): The student name
+                - note that this should always be non-trivial string.
+            sid (str/None): The student ID
+                - note that this is either 'None' (but only if blank or no_id is true), or
+                should have passed the 'is_valid_id' test.
             blank (bool): the paper was blank: `sid` and `sname` will be
                 ignored, you can pass None for them if you wish.
             no_id (bool): paper is not blank but student did not fill-in
@@ -579,16 +578,24 @@ class IDClient(QWidget):
 
         If called from blank then is called with either 'blank' or 'no_id' set to True
         """
-        if blank or no_id:
-            sid = None
-            if blank:
-                sname = "Blank paper"
-            else:
-                sname = "No ID given"
-        # TODO: is it true this must be non-None, non-empty?
-        # else:
-        #     assert sname
-        #     assert sid
+        # do some sanity checks on inputs.
+        assert isinstance(sname, str), "Student must be a string"
+        assert len(sname) > 0, "Student name cannot be empty"
+        # check that sid is none only when blank or no_id is true
+        if sid is None:
+            assert (
+                blank or no_id
+            ), "Student ID is only None-type when blank paper or no ID given."
+        # similarly blank only when sid=None and sname = "Blank paper"
+        if blank:
+            assert (sid is None) and (
+                sname == "Blank paper"
+            ), "Blank should only be true when sid=None and sname = 'Blank paper'"
+        # similarly no_id only when sid=None and sname = "No ID given"
+        if no_id:
+            assert (sid is None) and (
+                sname == "No ID given"
+            ), "No_id should only be true when sid=None and sname = 'No ID given'"
 
         # Pass the info to the exam model to put data into the table.
         self.exM.identifyStudent(index, sid, sname)
@@ -629,6 +636,13 @@ class IDClient(QWidget):
         """Triggered when user hits return in the ID-lineedit.. that is
         when they have entered a full student ID.
         """
+        # check that the student name / id line-edit has some text.
+        if len(self.ui.idEdit.text()) == 0:
+            ErrorMessage(
+                'Please use the "blank page" button if student has not given their name or ID.'
+            ).exec_()
+            return
+
         # if no papers then simply return.
         if self.exM.rowCount() == 0:
             return
@@ -692,6 +706,7 @@ class IDClient(QWidget):
                 return
             sid = snidbox.sid.strip()
             sname = snidbox.sname.strip()
+            # note sid, sname will not be None-types.
             if not isValidStudentNumber(
                 sid
             ):  # this should not happen as snidbox checks.
@@ -753,12 +768,15 @@ class IDClient(QWidget):
         # return
         code = self.exM.data(index[0])
         rv = BlankIDBox(self, code).exec_()
+        # return values 0=cancel, 1=blank paper, 2=no id given.
         if rv == 0:
             return
         elif rv == 1:
-            self.identifyStudent(index, None, None, blank=True)
+            # return with sname ='blank paper', and sid = None
+            self.identifyStudent(index, None, "Blank paper", blank=True)
         else:
-            self.identifyStudent(index, None, None, no_id=True)
+            # return with sname ='no id given', and sid = None
+            self.identifyStudent(index, None, "No ID given", no_id=True)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
