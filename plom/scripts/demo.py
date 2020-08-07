@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Victoria Schuster
 
 """Plom script to start a demo server.
 
@@ -51,6 +52,8 @@ parser.add_argument(
 def main():
     args = parser.parse_args()
     print("Plom version {}".format(__version__))
+
+    buildDirectory()
 
     if len(os.listdir(os.getcwd())) != 0:
         print('We recommend calling "{}" in an empty folder!'.format(parser.prog))
@@ -126,6 +129,40 @@ def main():
     input("Press enter when you want to stop the server...")
     background_server.stop()
     print("Server stopped, goodbye!")
+
+
+def buildDirectory():
+    current_path = os.getcwd()
+    path = os.path.join(current_path, "Plom_Demo")
+
+    if os.path.exists(path):
+        print(
+            "Plom_Demo Directory already exists. Files will be available "
+            "at Plom_Demo1"
+        )
+        path = os.path.join(current_path, "Plom_Demo1")
+        n = 1
+    while os.path.exists(path):
+        print(
+            "Plom_Demo" + str(n) + "already exists. Files will be "
+            "available at Plom_Demo" + str(n + 1)
+        )
+        n = n + 1
+        path = os.path.join(current_path, "Plom_Demo" + str(n))
+
+    try:
+        os.mkdir(path)
+    except OSError:
+        print("Creation of the directory %s failed" % path)
+    else:
+        print("Successfully created the directory %s " % path)
+
+    try:
+        # Change the current working Directory
+        os.chdir(path)
+        print("Directory changed, files can be found at" + path)
+    except OSError:
+        print("Can't change the Current Working Directory")
 
 
 if __name__ == "__main__":
