@@ -438,11 +438,7 @@ class IDClient(QWidget):
         self.testImg.updateImage(self.exM.paperList[r].originalFiles)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
-        if self.exM.paperList[r].status == "identified":
-            self.ui.pSIDLabel.setText(self.exM.paperList[r].sid)
-            self.ui.pNameLabel.setText(self.exM.paperList[r].sname)
-            QTimer.singleShot(0, self.setuiedit)
-        elif tn in self.predictedTestToNumbers:
+        if tn in self.predictedTestToNumbers:
             psid = self.predictedTestToNumbers[tn]  # predicted student ID
             psnid = self.student_id_to_snid[psid]  # predicted SNID
             pname = self.snid_to_student_name[psnid]  # predicted student name
@@ -452,16 +448,19 @@ class IDClient(QWidget):
                 self.ui.predictionBox.show()
                 self.ui.pSIDLabel.setText(psid)
                 self.ui.pNameLabel.setText(pname)
-                QTimer.singleShot(0, self.setuiedit)
         else:
             self.ui.pSIDLabel.setText("")
             self.ui.pNameLabel.setText("")
-            QTimer.singleShot(0, self.ui.idEdit.clear)
-            self.ui.idEdit.setFocus()
-
-    def setuiedit(self):
-        snid = "{}: {}".format(self.ui.pSIDLabel.text(), self.ui.pNameLabel.text())
-        self.ui.idEdit.setText(snid)
+        # now update the snid entry line-edit.
+        # if test is already identified then populate the idlinedit accordingly
+        if self.exM.paperList[r].status == "identified":
+            snid = "{}: {}".format(
+                self.exM.paperList[r].sid, self.exM.paperList[r].sname
+            )
+            self.ui.idEdit.setText(snid)
+        else:  # leave it blank.
+            self.ui.idEdit.clear()
+        self.ui.idEdit.setFocus()
 
     def addPaperToList(self, paper, update=True):
         # Add paper to the exam-table-model - get back the corresponding row.
@@ -504,6 +503,7 @@ class IDClient(QWidget):
             try:
                 test = messenger.IDaskNextTask()
                 if not test:  # no tasks left
+                    ErrorMessage("No more tasks left.").exec_()
                     return False
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
@@ -537,7 +537,10 @@ class IDClient(QWidget):
         index = self.ui.tableView.selectedIndexes()
         status = self.exM.data(index[1])
         if status != "unidentified":
-            return
+            msg = SimpleMessage("Do you want to change the ID?")
+            # Put message popup on top-corner of idenfier window
+            if msg.exec_() == QMessageBox.No:
+                return
         code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()

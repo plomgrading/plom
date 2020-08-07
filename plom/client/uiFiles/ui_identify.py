@@ -122,6 +122,7 @@ class Ui_IdentifyWindow(object):
         self.tableView.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.tableView.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.tableView.setObjectName("tableView")
+        self.tableView.horizontalHeader().setStretchLastSection(True)
         self.gridLayout_2.addWidget(self.tableView, 0, 0, 1, 1)
         self.gridLayout_3.addWidget(self.tableBox, 5, 0, 1, 1)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
