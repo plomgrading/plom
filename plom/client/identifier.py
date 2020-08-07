@@ -553,7 +553,7 @@ class IDClient(QWidget):
         return
 
     def identifyStudent(self, index, sid, sname, blank=False, no_id=False):
-        """Push identification of a paper to the server, misc updates.
+        """Push identification of a paper to the server and misc UI table.
 
         User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
@@ -756,9 +756,9 @@ class IDClient(QWidget):
         if rv == 0:
             return
         elif rv == 1:
-            self.identifyStudent(index, blank=True)
+            self.identifyStudent(index, None, None, blank=True)
         else:
-            self.identifyStudent(index, no_id=True)
+            self.identifyStudent(index, None, None, no_id=True)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
