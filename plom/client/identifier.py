@@ -565,21 +565,19 @@ class IDClient(QWidget):
         Args:
             index: an index into the UI table of the currently
                 highlighted row.
-            sname (str/None): The student name
+            sname (str): The student name or special placeholder.
                 - note that this should always be non-trivial string.
-            sid (str/None): The student ID
+            sid (str/None): The student ID or None.
                 - note that this is either 'None' (but only if blank or no_id is true), or
                 should have passed the 'is_valid_id' test.
-            blank (bool): the paper was blank: `sid` and `sname` will be
-                ignored, you can pass None for them if you wish.
+            blank (bool): the paper was blank: `sid` must be None and
+                `sname` must be `"Blank paper"`.
             no_id (bool): paper is not blank but student did not fill-in
-                the ID page(s).  `sid` and `sname` will be ignored, you
-                may pass None for them if you wish.
+                the ID page(s).  `sid` must be None and `sname` must be
+                `"No ID given"`.
 
         Returns:
             True/False/None: True on success, False/None on failure.
-
-        If called from blank then is called with either 'blank' or 'no_id' set to True
         """
         # do some sanity checks on inputs.
         assert isinstance(sname, str), "Student must be a string"
