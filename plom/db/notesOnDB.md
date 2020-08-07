@@ -22,7 +22,7 @@ This represents a PDF of images. ie - when 'scanner' uploads all the images from
 
 Note that when we do upload sanity checks we want to upload either
 * a new bundle
-* an existing bundle where the name **and** md5sum match exactly - this is probably continuing a crashed upload.
+* an existing bundle where the name **and** md5sum match exactly - this can happen when, for example, separately uploading the unknown pages of a bundle, or continuing an interrupted upload (such as after a crash).
 
 but definitely do not want to upload when
 * the name matches and existing bundle but the md5sum does not - this is bad file hygiene.
@@ -104,7 +104,7 @@ One thing we'd like to support in the future is having multiple people mark the 
 * user = who did / owns the annotation
 * image = this is either blank or points to the image of the annotations
 * edition = an order on the annotations for that particular question. We hope that in the future we can use this to see (for example) what changed if a user updates their marking. Further, we'd like a good review process and when the task changes ownership to a "reviewer", then they could look back at what was done before, etc etc.
-* integrity_check = this is a random UUID that is created by the server whenever the underlying pages of that question are changed (ie on upload or when manager moves pages around, but not when the client moves things about). This is used as a way of checking if the underlying task has been changed by the manager while it is out with the client (which hopefully does not happen).
+* integrity_check = this is a random UUID that is created by the server whenever the underlying pages of that question are changed (ie on upload or when manager moves pages around, but not when the client moves things about). This is used as a way of checking if the underlying task has been changed by the manager while it is out with the client - this should not happen as the manager-client is not able to make changes to tasks that belong to a given user while that user is logged in. It **might** happen if homework uploads (for a given student/question) happen split over several bundles.
 * plomFile = this points to a file which contains the annotations in a form that can be loaded by the annotator (think a hack version of svg). This allows us to go back to a previously marked question and keep going.
 * commentFile = this points to a file containing all the text comments in the annotation. This is redundant since that information is contained in the plomFile. This will be removed in the not too distant future.
 * mark = the numerical score given.
