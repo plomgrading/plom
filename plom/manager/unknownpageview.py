@@ -33,7 +33,7 @@ class ActionTab(QWidget):
         self.db = QPushButton("Discard Page")
         self.eb = QPushButton("Extra Page")
         self.tb = QPushButton("Test Page")
-        self.hb = QPushButton("Homwork Page")
+        self.hb = QPushButton("Homework Page")
         vb.addWidget(self.eb)
         vb.addWidget(self.tb)
         vb.addWidget(self.hb)
