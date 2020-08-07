@@ -302,7 +302,7 @@ class IDClient(QWidget):
             self.student_id_to_snid[sid] = snid
 
             if sname in name_list:
-                log.warn('Multiple students with name "{}"'.format(sname))
+                log.warn('Just FYI: multiple students with name "{}"'.format(censorName(sname)))
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
