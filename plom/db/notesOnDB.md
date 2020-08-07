@@ -14,12 +14,28 @@ Who is allowed to do things in Plom - including some higher-authority actors, li
 * lastActivity = when did the user last do something
 * lastAction = what did the user last do (not too low-level)
 
+### Bundle
+This represents a PDF of images. ie - when 'scanner' uploads all the images from a given PDF, the DB first creates a 'bundle' and all those images will point at that bundle. The main use for this at the present is to make sure that 'scanner' does not attempt to upload the same PDF multiple times. (ie we can check name and md5sum to make sure of this)
+
+* name = the name of the original PDF that the bundle of images came from (or similar, eg spaces replaced by underscores, that sort of thing)
+* md5sum = the md5sum of the original PDF that this came from.
+
+Note that when we do upload sanity checks we want to upload either
+* a new bundle
+* an existing bundle where the name **and** md5sum match exactly - this can happen when, for example, separately uploading the unknown pages of a bundle, or continuing an interrupted upload (such as after a crash).
+
+but definitely do not want to upload when
+* the name matches and existing bundle but the md5sum does not - this is bad file hygiene.
+* the md5sum matches but the name does not - this is, again, bad file hygiene.
+
 ### Image
 Storing both uploaded page-images as well as images annotated by clients.
 
 * originalName = if came from an uploaded image, what was name of that image file
 * fileName = the name of the file in the local (ie accessible to server) file system.
 * md5sum = to check for duplication
+* bundle = which PDF bundle did it come from originally
+* bundle_order = the page number within the PDF from which the image came.
 
 ### Test
 The overarching class that represents 1 whole paper. The main things it has to encode are the number of that testpaper and a bunch of boolean flags telling us what stage of marking it is at (see below).
@@ -30,7 +46,6 @@ The overarching class that represents 1 whole paper. The main things it has to e
 * scanned = has the whole test been scanned in.
 * identified = have we associated a student to this paper (either automatically on test generation (ie we print name on the front), or by a human reading the name and ID number).
 * marked = has every question been graded?
-* totalled = has the total mark been computed (this will typically be done automatically by "HAL")
 * recentUpload = has a new pageimage been uploaded to this test - this flag essentially tells "hey check if any questions have new pages and if so erase any annotations and restart"
 
 ### Group
@@ -40,10 +55,12 @@ This is a way of grouping together a set of page-images (hence the name). These 
 * gid = this is a human-readible identifier like:
   * i0007 = the set of ID pages from test 7
   * d0013 = the set of do-not-mark pages from test 13
-  * q0011g3 = question 3 from test 11.
+  * q0011g3 = question 3 from test 11. (note this may change to 'm0011q3' in future)
 * groupType = "i", "d" or "q"  # to distinguish between ID, DNM, and question groups
 * queuePosition = this is for future use. Later we want to be able to change the priority of tasks, and in particular, defer tasks until later.
 * scanned = has the group of pages be scanned completely (and so ready to be processed)
+* recentUpload = has a new pageimage been uploaded to this group - this flag essentially tells "hey check if any questions have new pages and if so erase any annotations and restart"
+
 
 There are 3 sub-types of groups that we need.
 #### IDGroup
@@ -87,12 +104,17 @@ One thing we'd like to support in the future is having multiple people mark the 
 * user = who did / owns the annotation
 * image = this is either blank or points to the image of the annotations
 * edition = an order on the annotations for that particular question. We hope that in the future we can use this to see (for example) what changed if a user updates their marking. Further, we'd like a good review process and when the task changes ownership to a "reviewer", then they could look back at what was done before, etc etc.
+* integrity_check = this is a random UUID that is created by the server whenever the underlying pages of that question are changed (ie on upload or when manager moves pages around, but not when the client moves things about). This is used as a way of checking if the underlying task has been changed by the manager while it is out with the client - this should not happen as the manager-client is not able to make changes to tasks that belong to a given user while that user is logged in. It **might** happen if homework uploads (for a given student/question) happen split over several bundles.
 * plomFile = this points to a file which contains the annotations in a form that can be loaded by the annotator (think a hack version of svg). This allows us to go back to a previously marked question and keep going.
-* commentFile = this points to a file containing all the text comments in the annotation. This is redundant since that information is contained in the plomFile. We would like to, in the future, mine these files for interesting pedagogical information.
+* commentFile = this points to a file containing all the text comments in the annotation. This is redundant since that information is contained in the plomFile. This will be removed in the not too distant future.
 * mark = the numerical score given.
 * markingTime = how long did the user spend marking. We keep this so that the manager can do some "load balancing" of users and tasks. ie - if a given question is quick to mark, then they could reassign users to slower questions.
 * time = when was the question marked.
 * tags = a free-form text field for user-created tagging. This is mostly for future work.
+
+Note
+* when sufficient pages are uploaded for a question the DB will create an initial annotation for that question. This will consist of the page-images and belong to "HAL".
+* when the DB gives a question-marking task to a user it creates a new annotation from the previous one. Note that it does not immediately create links to the images, but instead passes the client the images in the previous annotation. When the client returns the annotated task it tells the DB which images it used and then the DB hooks them into the annotation. This allows the client to shuffle pages around reasonably simply.
 
 #### OldAnnotations
 Effectively a copy of Annotations - we use this to store old annotations - ones that are no longer valid because a new page was added to that question or the manager reverted the task
