@@ -541,9 +541,8 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
-        snid = "{}: {}".format(sid, sname)
 
-        if not self.identifyStudent(index, snid):
+        if not self.identifyStudent(index, sid, sname):
             return
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
@@ -553,23 +552,43 @@ class IDClient(QWidget):
             self.updateProgress()
         return
 
-    def identifyStudent(self, index, snid, blank=False, no_id=False):
-        """User ID's the student of the current paper. Some care around whether
+    def identifyStudent(self, index, sid, sname, blank=False, no_id=False):
+        """Push identification of a paper to the server and misc UI table.
+
+        User ID's the student of the current paper. Some care around whether
         or not the paper was ID'd previously. Not called directly - instead
         is called by "enterID" or "acceptPrediction" when user hits return on the line-edit.
 
+        Args:
+            index: an index into the UI table of the currently
+                highlighted row.
+            sname (str/None): The student name.
+                TODO: are you allowed to call with this None?
+                TODO: are you allowed to call with this empty?
+            sid (str/None): The student ID.
+                TODO: are you allowed to call with this None?
+                TODO: are you allowed to call with this empty?
+            blank (bool): the paper was blank: `sid` and `sname` will be
+                ignored, you can pass None for them if you wish.
+            no_id (bool): paper is not blank but student did not fill-in
+                the ID page(s).  `sid` and `sname` will be ignored, you
+                may pass None for them if you wish.
+
+        Returns:
+            True/False/None: True on success, False/None on failure.
+
         If called from blank then is called with either 'blank' or 'no_id' set to True
         """
-        # convert snid to name/id.
         if blank or no_id:
             sid = None
             if blank:
                 sname = "Blank paper"
             else:
                 sname = "No ID given"
-        else:
-            sid = self.snid_to_student_id[snid]
-            sname = self.snid_to_student_name[snid]
+        # TODO: is it true this must be non-None, non-empty?
+        # else:
+        #     assert sname
+        #     assert sid
 
         # Pass the info to the exam model to put data into the table.
         self.exM.identifyStudent(index, sid, sname)
@@ -648,6 +667,10 @@ class IDClient(QWidget):
                 return
             self.msgGeometry = msg.geometry()
 
+            snid = self.ui.idEdit.text()
+            sid = self.snid_to_student_id[snid]
+            sname = self.snid_to_student_name[snid]
+
         else:
             # Number is not in class list - ask user if they really want to
             # enter that number.
@@ -689,11 +712,11 @@ class IDClient(QWidget):
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname
             self.student_id_to_snid[sid] = sid
-            # finally update the line-edit.
+            # finally update the line-edit.  TODO: remove? used to be for identifyStudent call below but not needed anymore?
             self.ui.idEdit.setText(snid)
 
         # Run identify student command (which talks to server)
-        if self.identifyStudent(index, self.ui.idEdit.text()):
+        if self.identifyStudent(index, sid, sname):
             if alreadyIDd:
                 self.moveToNextUnID()
                 return
@@ -733,17 +756,9 @@ class IDClient(QWidget):
         if rv == 0:
             return
         elif rv == 1:
-            sname = "Blank paper"
-            sid = None
-            # make a combined SNID
-            snid = "{}: {}".format(sid, sname)
-            self.identifyStudent(index, snid, blank=True)
+            self.identifyStudent(index, None, None, blank=True)
         else:
-            sname = "No ID given"
-            sid = None
-            # make a combined SNID
-            snid = "{}: {}".format(sid, sname)
-            self.identifyStudent(index, snid, no_id=True)
+            self.identifyStudent(index, None, None, no_id=True)
 
         if index[0].row() == self.exM.rowCount() - 1:  # at bottom of table.
             self.requestNext()  # updates progressbars.
