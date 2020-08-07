@@ -214,6 +214,8 @@ class Annotator(QWidget):
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", self.menuDummy).setEnabled(False)
         m.addSeparator()
+        m.addAction("Insert image", self.addImageMode)
+        m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
         m.addAction("Rearrange pages", self.rearrangePages)
         m.addSeparator()
@@ -1204,7 +1206,6 @@ class Annotator(QWidget):
         self.ui.zoomButton.clicked.connect(self.zoomMode)
         # Also the "hidden" delta-button
         self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
-        self.ui.uploadImage.clicked.connect(self.addImageMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)

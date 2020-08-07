@@ -540,7 +540,7 @@
          <item>
           <widget class="QLabel" name="modeLabel">
            <property name="text">
-            <string>mode: comment</string>
+            <string>move</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -548,13 +548,6 @@
           </widget>
          </item>
         </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="uploadImage">
-        <property name="text">
-         <string>Upload Image</string>
-        </property>
        </widget>
       </item>
       <item>
