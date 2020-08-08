@@ -23,6 +23,7 @@ import subprocess
 from shlex import split
 import argparse
 from warnings import warn
+from pathlib import Path
 
 from plom import __version__
 from plom import Default_Port
@@ -132,35 +133,26 @@ def main():
 
 
 def buildDirectory():
-    current_path = os.getcwd()
-    path = os.path.join(current_path, "Plom_Demo")
+    current_path = Path(os.getcwd())
+    path = current_path / "Plom_Demo"
 
-    if os.path.exists(path):
-        print(
-            "Plom_Demo Directory already exists. Files will be available "
-            "at Plom_Demo1"
-        )
-        path = os.path.join(current_path, "Plom_Demo1")
-        n = 1
-    while os.path.exists(path):
-        print(
-            "Plom_Demo" + str(n) + "already exists. Files will be "
-            "available at Plom_Demo" + str(n + 1)
-        )
+    n = 0
+    while path.exists():
+        print('"{}" already exists: generating a new name...'.format(path))
         n = n + 1
-        path = os.path.join(current_path, "Plom_Demo" + str(n))
+        path = current_path / "Plom_Demo{}".format(n)
 
     try:
         os.mkdir(path)
     except OSError:
         print("Creation of the directory %s failed" % path)
     else:
-        print("Successfully created the directory %s " % path)
+        print('Created the directory "{}" for the demo'.format(path))
 
     try:
         # Change the current working Directory
         os.chdir(path)
-        print("Directory changed, files can be found at" + path)
+        print('Directory changed, files can be found at "{}"'.format(path))
     except OSError:
         print("Can't change the Current Working Directory")
 
