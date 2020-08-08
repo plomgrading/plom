@@ -436,8 +436,10 @@ linuxbin_centos:
     - yum install -y dnf
     - dnf update -y
     - dnf install -y python3 python3-wheel python3-setuptools python3-pip
-    - dnf install -y libxkbcommon-x11 xorg-x11-xkb-utils libXcomposite
-          libxcb xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil
+    # Need deps for PyQt5/Qt/plugins/platforms/libqxcb.so
+    #    qt-x11 is Qt4 but good trick to get most deps, then `ldd` to find rest
+    - dnf install -y qt-x11 libxkbcommon-x11 libXcomposite
+          xcb-util-keysyms xcb-util-wm xcb-util-image xcb-util-renderutil
     - pip3 install --upgrade pip
     - python3 -m pip install pyinstaller
   script:
