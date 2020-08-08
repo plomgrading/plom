@@ -37,9 +37,10 @@ COPY requirements.txt /src/
 WORKDIR /src
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
-# TODO: it already came from Pip: I guess we want the dependencies, X etc?
 # client dependency: keep in image for now after others so easy to discard
-RUN apt-get --no-install-recommends --yes install python3-pyqt5
+RUN apt-get -y update && \
+    apt-get --no-install-recommends -y install \
+        `apt-cache depends qt5-default  | awk '/Depends:/{print$2}'`
 
 # TODO: I want to install Plom (from current dir) into the Docker image...
 # TODO: don't need/want /src in the docker image
