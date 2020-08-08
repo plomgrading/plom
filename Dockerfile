@@ -8,10 +8,9 @@
 # without any warranty.
 
 FROM ubuntu:18.04
-RUN apt-get update
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
-
-RUN apt-get --no-install-recommends --yes install  \
+RUN apt-get -y update && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
+    apt-get --no-install-recommends -y install \
     cmake make imagemagick g++ openssl \
     texlive-latex-extra dvipng latexmk texlive-fonts-recommended \
     libpango-1.0 libpangocairo-1.0 \
