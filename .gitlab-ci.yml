@@ -431,10 +431,13 @@ linuxbin_ubuntu1910:
 linuxbin_centos:
   stage: final
   needs: []
-  image: centos:8
+  image: centos:7
   before_script:
+    - yum install -y dnf
     - dnf update -y
     - dnf install -y python3 python3-wheel python3-setuptools python3-pip
+    - dnf install -y libxkbcommon-x11 xorg-x11-xkb-utils libXcomposite
+          libxcb xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil
     - pip3 install --upgrade pip
     - python3 -m pip install pyinstaller
   script:
