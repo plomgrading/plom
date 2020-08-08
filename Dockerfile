@@ -11,16 +11,25 @@ FROM ubuntu:18.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
-    cmake make imagemagick g++ openssl \
-    texlive-latex-extra dvipng latexmk texlive-fonts-recommended \
-    libpango-1.0 libpangocairo-1.0 \
-    libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev libjpeg-dev \
-    python3 python3-pip python3-dev python3-setuptools python3-wheel \
-    python3-pytest
+        cmake make g++ \
+        imagemagick \
+        openssl \
+        dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
+        libpango-1.0 libpangocairo-1.0 \
+        libzbar0 \
+        libjpeg-dev \
+        libjpeg-turbo8-dev \
+        libturbojpeg0-dev \
+        python3 \
+        python3-dev \
+        python3-pip \
+        python3-setuptools \
+        python3-wheel \
+        python3-pytest
 
 RUN pip3 install --no-cache-dir --upgrade pip setuptools
 # Note: `python3 -m pip` used below on old Ubuntu 18.04
-# Note: need newer setuptools to avoid cairocffi
+# Note: need newer setuptools to avoid cairocffi issue
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
 RUN python3 -m pip install --no-cache-dir cffi==1.14.0 pycparser==2.20
