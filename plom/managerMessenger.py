@@ -1,39 +1,15 @@
-# -*- coding: utf-8 -*-
-
-"""
-Backend bits n bobs to talk to the server
-"""
-
-__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer, Colin B. Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
-
-import sys
-import requests
-from requests_toolbelt import MultipartEncoder, MultipartDecoder
-import json
-import ssl
-from PyQt5.QtWidgets import QMessageBox
-import urllib3
-import time
-import threading
-import hashlib
-
-# from http.client import HTTPConnection
-# import logging
-#
-# logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from requests
-# logging.getLogger().setLevel(logging.DEBUG)
-# requests_log = logging.getLogger("urllib3")
-# requests_log.setLevel(logging.DEBUG)
-# requests_log.propagate = True
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 from io import StringIO, BytesIO
 
+import urllib3
+import requests
+
 from plom.plom_exceptions import *
 from plom.messenger import BaseMessenger
+
 
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
