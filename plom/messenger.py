@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 """
 Backend bits n bobs to talk to the server
@@ -8,21 +10,19 @@ __author__ = "Andrew Rechnitzer, Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer, Colin B. Macdonald"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
-import sys
-import requests
-from requests_toolbelt import MultipartEncoder, MultipartDecoder
+
 import json
 import ssl
-from PyQt5.QtWidgets import QMessageBox
-import urllib3
-import time
 import threading
 import hashlib
 import logging
-
 from io import StringIO, BytesIO
+
+import urllib3
+import requests
+from requests_toolbelt import MultipartEncoder, MultipartDecoder
+
 from plom.plom_exceptions import *
 from plom import Plom_API_Version, Default_Port
 
