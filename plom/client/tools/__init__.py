@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2020 Victoria Schuster
 
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai",
-               "Matt Coles, Victoria Schuster"]
+               "Victoria Schuster"]
 __license__ = "AGPLv3"
 
 import logging
@@ -27,7 +28,3 @@ from plom.client.tools.penArrow import *
 from plom.client.tools.questionMark import *
 from plom.client.tools.text import *
 from plom.client.tools.tick import *
-
-
-
-

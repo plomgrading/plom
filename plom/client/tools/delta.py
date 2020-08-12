@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
