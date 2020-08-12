@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
 
 """
 The Plom Marker client
 """
-# SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
 
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai",
-               "Matt Coles", "Victoria Schuster"]
+__credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPL-3.0-or-later"
 
 
