@@ -2,9 +2,8 @@
 # Copyright (C) 2018-2019 Andrew Rechnitzer
 # Copyright (C) 2020 Victoria Schuster
 
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Victoria Schuster"]
+__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer and others"
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
 import logging
