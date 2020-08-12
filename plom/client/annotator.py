@@ -1,6 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai",
+               "Matt Coles", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
 import json

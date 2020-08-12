@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QUndoCommand
 

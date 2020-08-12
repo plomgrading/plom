@@ -1,6 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer"]
+__credits__ = ["Andrew Rechnitzer", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
 from PyQt5.QtCore import Qt, QSize
