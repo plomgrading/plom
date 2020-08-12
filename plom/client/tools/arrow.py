@@ -1,5 +1,7 @@
-from math import sqrt
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
 
+from math import sqrt
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import (

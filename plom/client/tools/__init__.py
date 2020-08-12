@@ -1,6 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+
 __author__ = "Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai",
+               "Matt Coles, Victoria Schuster"]
 __license__ = "AGPLv3"
 
 import logging
@@ -24,43 +28,6 @@ from plom.client.tools.questionMark import *
 from plom.client.tools.text import *
 from plom.client.tools.tick import *
 
-## move and delete commands
 
 
-# Arrow stuff
 
-
-# Double Arrow stuff
-
-
-# Box stuff
-
-
-# cross stuff
-
-
-# Delta stuff
-
-
-# Ellipse
-
-
-# Highlight
-
-
-# Line
-
-
-# Pen
-
-
-# Pen-with-arrows
-
-
-# Question-mark
-
-
-# tick-mark
-
-
-# Text
