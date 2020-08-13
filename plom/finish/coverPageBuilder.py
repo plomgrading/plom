@@ -1,8 +1,8 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 import sys
 from weasyprint import HTML, CSS
@@ -32,7 +32,7 @@ def makeCover(test_num, sname, sid, tab):
     """Create html page of name ID etc and table of marks.
 
     Args:
-        test_num (int): the test number for the test wea re making the cover for. 
+        test_num (int): the test number for the test we are making the cover for.
         sname (str): student name.
         sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.

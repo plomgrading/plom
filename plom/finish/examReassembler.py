@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
-import fitz
 import os
 import sys
 import tempfile
 import subprocess
+
+import fitz
 
 from plom import __version__
 

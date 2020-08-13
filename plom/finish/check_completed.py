@@ -1,17 +1,14 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 import getpass
-import sys
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import FinishMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 
 
 def proc_everything(comps, numberOfQuestions):

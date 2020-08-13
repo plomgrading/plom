@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-"""Command line tools to start Plom servers."""
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+"""Command line tool to start Plom servers."""
+
+__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer, Colin B. Macdonald and others"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
 import locale
@@ -17,13 +20,10 @@ import subprocess
 from pathlib import Path
 from textwrap import fill, dedent
 
-# import tools for dealing with resource files
 import pkg_resources
 
 from plom import __version__
 from plom import specdir
-
-#################
 
 
 server_instructions = """Overview of running the Plom server:

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 """
 Produce a minimal archive of your test.
@@ -16,15 +20,17 @@ for example:
 $ ./12_archive math253 2019 S1
 """
 
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2019 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2020 Colin B. Macdonald and others"
+__credits__ = ["The Plom Project Developers"]
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os, sys, shutil
+import os
+import sys
+import shutil
 
 from plom import SpecParser
 from plom.finish import CSVFilename
+
 
 archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 

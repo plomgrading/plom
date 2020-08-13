@@ -2,10 +2,11 @@
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer, Colin B. Macdonald and others"
+__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and others"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -14,8 +15,6 @@ import random
 from pathlib import Path
 from glob import glob
 import argparse
-import csv
-import random
 import json
 import base64
 from getpass import getpass

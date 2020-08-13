@@ -4,19 +4,17 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
 import csv
-import json
 import os
-import sys
-import subprocess
 import tempfile
-from pathlib import Path
 
 import pkg_resources
 import pandas
 
 from ..finish.return_tools import import_canvas_csv
+
 
 possible_surname_fields = ["surname", "familyName", "lastName"]
 

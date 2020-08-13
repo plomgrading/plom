@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-"""Plom command-line management tools."""
+"""Plom server management GUI tool."""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"

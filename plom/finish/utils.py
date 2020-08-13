@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2019 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 """Misc utilities"""
-
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
-__license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import secrets
 import hashlib

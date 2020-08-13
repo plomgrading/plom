@@ -1,21 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 from collections import defaultdict
-import toml
-import argparse
 import os
 import csv
-import signal
-import sys
 import tempfile
-import traceback as tblib
+
 from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
 from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (

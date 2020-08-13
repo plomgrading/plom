@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
+
 from io import StringIO
 from pytest import raises
 

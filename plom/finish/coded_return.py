@@ -1,23 +1,24 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 """
 Gather reassembled papers with html page for digital return.
 """
 
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald and others"
 __credits__ = ["The Plom Project Developers"]
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os, sys, shutil
-import argparse
+import os
+import sys
+import shutil
 
 from plom import SpecParser
 from plom.rules import isValidStudentNumber
-from .utils import my_hash
-from .return_tools import csv_add_return_codes
 from plom.finish import CSVFilename
+from .return_tools import csv_add_return_codes
 
 
 def do_renaming(fromdir, todir, sns):

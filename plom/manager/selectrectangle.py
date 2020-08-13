@@ -1,7 +1,6 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
