@@ -37,7 +37,7 @@ if __name__ == "__main__":
     print("\n\nTODO: THIS SCRIPT NEEDS RETHINKING FOR 0.4!\n\n")
 
     # TODO: someday we can get this from spec file?
-    # https://gitlab.math.ubc.ca/andrewr/MLP/issues/94
+    # https://gitlab.com/plom/plom/issues/94
     if not len(sys.argv) == 4:
         print("ERROR: Incorrect command line...")
         print(__doc__)
