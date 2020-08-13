@@ -1,7 +1,6 @@
-"""
-Note: Code in this file is very similar to test_IDreader code for the 
-    Sklearn model.
-"""
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
 
 from .idReader import is_model_absent, calc_log_likelihood, download_or_train_model
 

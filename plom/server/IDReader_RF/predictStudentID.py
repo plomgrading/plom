@@ -1,11 +1,15 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
+
+__copyright__ = "Copyright (C) 2018-20120 Andrew Rechnitzer and others"
+__credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
 """
-Note: Code in this file is very similar to predictStudentID code for the Tensorflow 
-    model.
+Note: Code in this file is very similar to predictStudentID code for the
+Tensorflow model.
 """
 
 import cv2
