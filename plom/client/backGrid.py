@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import os
 import sys
+from time import localtime
 from PyQt5.QtGui import QBrush, QPixmap
 
 
@@ -21,8 +22,9 @@ class BackGrid(QBrush):
             base_path = sys._MEIPASS
         except Exception:
             base_path = os.path.dirname(__file__)
-        if username is not None and any(
-            x in username.lower() for x in ["omer", "remo", "legna", "angel"]
+        if (localtime().tm_mon == 4 and localtime().tm_mday == 1) or (
+            username
+            and any(x in username.lower() for x in ["omer", "remo", "legna", "angel"])
         ):
             self.setTexture(QPixmap(os.path.join(base_path, "backGrid2.png")))
         # else:

@@ -1,7 +1,13 @@
 html = """
 <!DOCTYPE html>
-<!-- Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>-->
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2018-2020 Colin B. Macdonald <cbm@m.fsf.org>-->
+<!-- SPDX-License-Identifier: FSFAP -->
+<!--
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  This file is offered as-is,
+     without any warranty.
+-->
 <html lang="en" dir="ltr" class="client-nojs">
 <head>
 <title>__COURSENAME__ - Online Return</title>

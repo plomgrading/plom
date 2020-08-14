@@ -41,7 +41,7 @@ Test Preparation
 ### My QR codes are badly misplaced
 
 This might be a bad interaction with `\scalebox` in LaTeX.  See
-[this bug](https://gitlab.math.ubc.ca/andrewr/MLP/issues/207).
+[this bug](https://gitlab.com/issues/207).
 
 
 Marking
