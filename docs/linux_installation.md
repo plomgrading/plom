@@ -7,6 +7,10 @@ __license__ = "AGPL-3.0-or-later"
 Installing on Popular GNU/Linux Distros
 =======================================
 
+For production use of Plom we recommend using Docker.  These instructions below
+are mainly for developers to configure their systems.
+
+
 Fedora
 ------
 
@@ -26,12 +30,12 @@ Tested on Fedora 32.  Some stuff from the package manager:
 ```
 (Upcoming Fedora 33 has a sufficiently recent python3-PyMuPDF.)
 
-Other stuff we install locally with `pip`:
+At this point `pip install --user .` from inside the Plom source tree should pull
+in the remaining dependencies.  Alternatively, you can do something like:
 ```
   # pip3 install --upgrade --user pyqrcode pyzbar pymupdf jpegtran-cffi
 ```
-
-More dependencies for the tensorflow-based ID reader:
+There are additional dependencies for the tensorflow-based ID reader:
 ```
   # sudo dnf install python3-termcolor python3-wheel python3-grpcio \
                      python3-markdown python3-h5py
