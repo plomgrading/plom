@@ -191,11 +191,11 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.2...master
-[0.4.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.1...v0.4.2
-[0.4.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...v0.4.1
-[0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
-[0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
-[0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
-[0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
-[0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.4.2...master
+[0.4.2]: https://gitlab.com/plom/plom/compare/v0.4.1...v0.4.2
+[0.4.1]: https://gitlab.com/plom/plom/compare/v0.4.0...v0.4.1
+[0.4.0]: https://gitlab.com/plom/plom/compare/v0.3.0...v0.4.0
+[0.3.0]: https://gitlab.com/plom/plom/compare/v0.2.2...v0.3.0
+[0.2.2]: https://gitlab.com/plom/plom/compare/v0.2.1...v0.2.2
+[0.2.1]: https://gitlab.com/plom/plom/compare/v0.2.0...v0.2.1
+[0.2.0]: https://gitlab.com/plom/plom/compare/v0.1.0...v0.2.0
