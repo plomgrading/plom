@@ -363,7 +363,7 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
-    # `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
+    # `linear=True` causes https://gitlab.com/plom/plom/issues/284
     if extra:
         save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
             str(test).zfill(4), extra["id"]

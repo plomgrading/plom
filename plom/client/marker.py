@@ -1677,8 +1677,8 @@ class MarkerClient(QWidget):
             assert oldpaperdir is not None
             oldaname = os.path.join(oldpaperdir, Gtask + ".png")
             oldpname = os.path.join(oldpaperdir, Gtask + ".plom")
-            # TODO: json file not downloaded
-            # https://gitlab.math.ubc.ca/andrewr/MLP/issues/415
+            # TODO: comment json file not downloaded
+            # https://gitlab.com/plom/plom/issues/415
             shutil.copyfile(oldaname, aname)
             shutil.copyfile(oldpname, pname)
 

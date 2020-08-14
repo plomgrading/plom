@@ -8,12 +8,9 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import csv
-import json
 import os
 import sys
-import subprocess
 import tempfile
-from pathlib import Path
 
 import pkg_resources
 import pandas
@@ -272,24 +269,23 @@ def process_classlist_backend(student_csv_file_name):
     # we need to check it has the minimum information ie student name/id.
     # If not we will fail the process.
 
-    # First we check if this csv file is a Canvas output using check_canvas_csv
+    # First we check if this csv file is a Canvas output
     if check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
         student_info_df = clean_canvas_csv(student_csv_file_name)
         print("We have successfully extracted columns from Canvas data and renaming")
-    # Is not a Canvas formed file, we will check if the canvas data is usable using check_non_canvas_csv
     elif check_is_non_canvas_csv(student_csv_file_name):
         print(
-            "This file looks like it was not exported from Canvas, we will check the function for the required information"
+            "This file looks like it was not exported from Canvas; checking for the required information..."
         )
         student_info_df = clean_non_canvas_csv(student_csv_file_name)
         print(
-            "We have successfully extracted and renamed columns from the non Canvas data and have the required information"
+            "We have successfully extracted and renamed columns from the non Canvas data."
         )
     # Otherwise we have an error
     else:
         print("Problems with the classlist you supplied. See output above.")
-        exit(1)
+        sys.exit(1)
 
     # Check characters in names are latin-1 compatible
     if not check_latin_names(student_info_df):
@@ -343,11 +339,11 @@ def process_class_list(student_csv_file_name, demo=False):
 
     if not student_csv_file_name:
         print("Please provide a classlist file: see help")
-        exit(1)
+        sys.exit(1)
 
     if not os.path.isfile(student_csv_file_name):
         print('Cannot find file "{}"'.format(student_csv_file_name))
-        exit(1)
+        sys.exit(1)
     df = process_classlist_backend(student_csv_file_name)
     # order is important, leave it as a list
     return list(zip(df.id, df.studentName))

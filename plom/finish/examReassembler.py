@@ -14,7 +14,7 @@ import subprocess
 
 from plom import __version__
 
-# hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
+# hardcoded for letter, https://gitlab.com/plom/plom/issues/276
 papersize_portrait = (612, 792)
 papersize_landscape = (792, 612)
 margin = 10
@@ -45,10 +45,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
 
     Return True if successful or False if the pdf file already exists.
     Note: no attempt is made to check if its correct; merely that it
-    exists.  TODO: check if anything changed here or later [1].
-
-    [1] https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
-
+    exists.
     """
     if os.path.isfile(outname):
         return False
