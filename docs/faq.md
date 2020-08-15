@@ -70,3 +70,15 @@ context of limits. Some markers like to indicate to students via (say)
 reduce their overall mark. Similarly some markers use "+0" to indicate
 that a small amount of progress has been made, but not enough to be
 worth a full point.
+
+
+Server administration
+---------------------
+
+### My server sometimes has random disk I/O errors
+
+Like this `peewee.OperationalError: disk I/O error`?
+Plom uses an SQLite database; it
+[should not be run on NFS storage](https://gitlab.com/plom/plom/issues/811).
+Apparently "people" know this but we were just as "thrilled" as you probably
+are to discover it on a production server.
