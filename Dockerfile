@@ -48,3 +48,9 @@ COPY setup.py README.md org.plomgrading.PlomClient.* /src/
 COPY plom/ /src/plom/
 WORKDIR /src
 RUN python3 -m pip install .
+
+EXPOSE 41984
+
+RUN mkdir /exam
+WORKDIR /exam
+CMD ["plom-demo"]
