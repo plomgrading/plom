@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 
 import os
+import shutil
 import time
 from warnings import warn
 from multiprocessing import Process
@@ -107,7 +108,7 @@ class PlomDemo():
         # TODO: need to do sth like .wait() or close() did already?
         time.sleep(0.1)
         print('Erasing demo tmpdir "{}"'.format(self.tmpdir))
-        os.rmdir(self.tmpdir)
+        shutil.rmtree(self.tmpdir)
 
 
 
