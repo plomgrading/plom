@@ -1,19 +1,22 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Andrew Rechnitzer
 
-"""
-Plom is PaperLess Open Marking.  TODO: Insert longer blurb
+"""Plom is Paperless Open Marking.
+
+Plom creates multi-versioned tests, scans them, coordinates online
+marking/grading, and returns them online.
 """
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer, Colin Macdonald and others"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
 from .version import __version__
 
-Plom_API_Version = "20"  # updated for new image twisting stuff
+Plom_API_Version = "21"  # updated 0.5.0rc1
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase
