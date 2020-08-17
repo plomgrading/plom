@@ -1,6 +1,7 @@
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
 __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __license__ = "AGPL-3.0-or-later"
  -->
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 """Read in a Canvas-exported spreadsheet and prepare data for upload.
 
@@ -14,11 +17,9 @@ you kept the same salt, you may be able to upload just the grades.
 TODO: testname etc not ideal
 """
 
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2019 Colin B. Macdonald"
-__credits__ = ["Matt Coles"]
+__copyright__ = "Copyright (C) 2019-2020 Colin B. Macdonald and others"
+__credits__ = ["The Plom Project Developers"]
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
 

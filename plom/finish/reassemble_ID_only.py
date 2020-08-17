@@ -1,22 +1,18 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 import getpass
 import os
-import shlex
-import subprocess
 from multiprocessing import Pool
 from tqdm import tqdm
 
-from .examReassembler import reassemble
 from plom.messenger import FinishMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom.finish.locationSpecCheck import locationAndSpecCheck
+from .examReassembler import reassemble
+
 
 numberOfTests = 0
 numberOfQuestions = 0
@@ -37,7 +33,7 @@ def reassemble_test_CMD(msgr, short_name, outDir, t, sid):
     """Reassembles a test with a filename that includes the directory and student id.
 
     Args:
-        msgr (FinishMessenger): the messenger to the plom server. 
+        msgr (FinishMessenger): the messenger to the plom server.
         short_name (str): the name of the test.
         outDir (str): the directory the reassembled test will exist in.
         t (int): test number.

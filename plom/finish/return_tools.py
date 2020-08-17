@@ -1,23 +1,23 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2020 Matthew Coles
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 """Misc tools related to digital return.
 
 Most of the Canvas-related functions are overly UBC-specific or fragile.
 """
 
-__author__ = "Colin B. Macdonald, Matthew Coles"
-__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles"
+__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles, and others"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os, sys
-import csv
-from io import StringIO
+import os
 
 import pandas
 
-from .utils import my_hash, my_secret
 from plom.finish import CSVFilename
+from .utils import my_hash, my_secret
 
 
 def import_canvas_csv(canvas_fromfile):

@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 """
 Utilities for canned users and auto-generated (poor) passwords
 """
-
-__author__ = "Colin B. Macdonald, Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Colin B. Macdonald, Andrew Rechnitzer"
-__license__ = "AGPLv3"
-
 
 import secrets
 from random import sample

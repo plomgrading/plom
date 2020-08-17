@@ -1,7 +1,8 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
 import sys
 import shlex
@@ -85,7 +86,7 @@ def create_exam_and_insert_QR(
     test_folder=None,
 ):
     """Creates the exam objects and insert the QR codes.
-    
+
     Creates the exams objects from the pdfs stored at sourceVersions.
     Then adds the 3 QR codes for each page.
     (We create 4 QR codes but only add 3 of them because of the staple side, see below).
@@ -352,8 +353,8 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     Arguments:
         extra {dict} -- A (Str:Str) dictioary with student id and name.
         exam {fitz.Document} -- The same exam object as the input, except we add the extra infor into the first page.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests. 
-    
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+
     Keyword Arguments:
         test_mode {bool} -- boolean elements used for testing, testing case with show the documents. (default: {False})
         test_folder {Str} -- A String for where to place the generated test files. (default: {None})
