@@ -68,6 +68,20 @@ docker-image-master:
     - master
 
 
+# If we have a tag, then push to PyPIi using TWINE_* env vars
+pypi:
+  image: $IM
+  stage: final
+  needs: ["docker-image"]
+  cache: {}
+  script:
+    - python3 -m pip install -U twine
+    - python3 setup.py sdist bdist_wheel
+    - python3 -m twine upload dist/*
+  only:
+    - tags
+
+
 black:
   stage: static_analysis
   needs: []
