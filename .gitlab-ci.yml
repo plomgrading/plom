@@ -68,6 +68,20 @@ docker-image-master:
     - master
 
 
+# If we have a tag the master branch, then push to pypi
+pypi:
+  image: $IM
+  stage: final
+  needs: ["docker-image"]
+  cache: {}
+  script:
+    - pip3 install -U twine
+    - python3 setup.py sdist
+    - twine upload -r testpypi dist/*
+  #only:
+  #  - tags
+
+
 black:
   stage: static_analysis
   needs: []
