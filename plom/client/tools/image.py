@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Andrew Rechnitzer
+
 from PyQt5.QtCore import (
     QTimer,
     QPropertyAnimation,
