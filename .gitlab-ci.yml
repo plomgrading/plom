@@ -68,7 +68,7 @@ docker-image-master:
     - master
 
 
-# If we have a tag, then push to pypi
+# If we have a tag, then push to PyPIi using TWINE_* env vars
 pypi:
   image: $IM
   stage: final
