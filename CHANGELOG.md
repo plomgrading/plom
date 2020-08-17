@@ -10,20 +10,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Client now has a menu button for less-commonly used commands.
+* Client can now insert small images, see "insert image" in menu.
+* Client has experimental "Rearrange pages" dialog to fine-tune page selection and layout.
+* We again offer prebuilt client binaries for some OSes.
+* Server has new experimental "Homework mode" to deal with student-scanned images.
+* Server can use Scikit-learn (instead of the default TensorFlow) for reading student numbers.
 
 ### Changed
-* Various UI tweaks.
-* Client "upload image" button moved to menu as "insert image"
-* Scripts can report their version.
+* Command line utilities can report their version.
 * Example demo data uses handwritten digits instead of fonts.
 * Annotator remains open between papers.
 * Totaller client was removed.
 * ID-subclient - student name + id is entered in single field which auto-completes on both.
+* Client sidebar can be set to the left or right (independent of mouse handedness).
+* Grades output filename is now "marks.csv".
+* Changes to various command-line tools to streamline uploading and other operations.
+* Scanning is now based more strongly on concept of "bundles" of papers.
+* Most tools now interact with the server via the API instead of using the file system.
+* Server docker image uses pinned dependency information for reproducibility.* Server, Manager and Client handling of "unknown" pages has improved.
+* Client has visual feedback for ctrl-, shift- tool alternatives via mouse cursor.
+* Various client UI tweaks.
+* Various improvements to the manager UI tool.
 
 ### Fixed
 * Fix left-hand mouse mode.
-* Other bug fixes.
-* Our Continuous Integration now builds client binaries for development testing and eventual release.
+* Annotation font sizes no longer directly depend on UI font size (but some issues still remain).
+* Pan mode no longer incorrectly moves objections.
+* Many other bug fixes.
 
 
 ## [0.4.2] - 2020-04-21
@@ -191,11 +204,11 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.2...master
-[0.4.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.1...v0.4.2
-[0.4.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...v0.4.1
-[0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
-[0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
-[0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
-[0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
-[0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.4.2...master
+[0.4.2]: https://gitlab.com/plom/plom/compare/v0.4.1...v0.4.2
+[0.4.1]: https://gitlab.com/plom/plom/compare/v0.4.0...v0.4.1
+[0.4.0]: https://gitlab.com/plom/plom/compare/v0.3.0...v0.4.0
+[0.3.0]: https://gitlab.com/plom/plom/compare/v0.2.2...v0.3.0
+[0.2.2]: https://gitlab.com/plom/plom/compare/v0.2.1...v0.2.2
+[0.2.1]: https://gitlab.com/plom/plom/compare/v0.2.0...v0.2.1
+[0.2.0]: https://gitlab.com/plom/plom/compare/v0.1.0...v0.2.0
