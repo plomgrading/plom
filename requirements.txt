@@ -19,7 +19,7 @@ toml==0.10.1
 tqdm==4.45.0
 passlib==1.7.2
 pymupdf==1.16.18
-Pillow==7.0.0
+Pillow==7.2.0
 pycparser==2.20
 cffi==1.14.1
 jpegtran-cffi==0.5.2
