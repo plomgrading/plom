@@ -48,7 +48,7 @@ server_install_requires = [
     "aiohttp~=3.6.2",
     "pyqrcode",
     "pyzbar",
-    "peewee",
+    "peewee>=3.13.3",
     "imutils",
     "opencv-python",
     "tensorflow~=2.2.0",

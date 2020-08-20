@@ -56,7 +56,7 @@ Some stuff from the package manager:
         python3-pyqrcode python3-png python3-dev \
         python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
-        latexmk texlive-fonts-recommended python3-peewee python3-pil \
+        latexmk texlive-fonts-recommended python3-pil \
         python3-tqdm libpango-1.0 libpangocairo-1.0
 ```
 The pango stuff is needed for weasyprint.
@@ -72,7 +72,7 @@ Other stuff we get from pip:
   # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
-        aiohttp pyzbar jpegtran-cffi
+        aiohttp pyzbar jpegtran-cffi peewee
   # python3 -m pip install --upgrade --user imutils lapsolver opencv-python tensorflow
 ```
 Note `python3 -m pip` to use the newly upgraded pip.  On Ubuntu 18.04, the
