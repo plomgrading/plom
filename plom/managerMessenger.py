@@ -6,6 +6,7 @@ from io import StringIO, BytesIO
 
 import urllib3
 import requests
+from requests_toolbelt import MultipartDecoder
 
 from plom.plom_exceptions import *
 from plom.messenger import BaseMessenger
