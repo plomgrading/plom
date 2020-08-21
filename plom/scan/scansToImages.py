@@ -331,7 +331,8 @@ def normalizeJPEGOrientation(f):
                 im2.height,
             )
         )
-        im2.save(f)
+        # str to workaround https://github.com/jbaiter/jpegtran-cffi/issues/28
+        im2.save(str(f))
 
 
 def makeBundleDirectories(fname, bundle_dir):
