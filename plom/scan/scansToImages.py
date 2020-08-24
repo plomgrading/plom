@@ -243,8 +243,10 @@ def extractImageFromFitzPage(page, doc):
     """
 
     imlist = page.getImageList()
-    if len(imlist) != 1:
+    if len(imlist) > 1:
         return False, "More than one image"
+    elif len(imlist) == 0:
+        return False, "Image List is Empty"
 
     d = doc.extractImage(imlist[0][0])
     # TODO: log.debug this:
