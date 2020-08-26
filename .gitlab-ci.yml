@@ -807,6 +807,7 @@ macostest:
   needs: []
   script:
   - echo "hello from the mac"
+  - sw_vers
   - pwd
   - ls
   - echo $SHELL
@@ -831,6 +832,7 @@ macos_install:
   - pwd
   - ls
   - echo $SHELL
+  - sw_vers
   - python --version
   - python3 --version
   # brew --help
