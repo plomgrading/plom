@@ -72,9 +72,7 @@ def clean_non_canvas_csv(csv_file_name):
     # we need one of some approx of last-name field
     firstname_column_title = None
     for column_title in student_info_df.columns:
-        if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_surname_fields
-        ):
+        if column_title.casefold() in (x.casefold() for x in possible_surname_fields):
             print('"{}" column present'.format(column_title))
             firstname_column_title = column_title
             break
@@ -87,7 +85,7 @@ def clean_non_canvas_csv(csv_file_name):
     lastname_column_title = None
     for column_title in student_info_df.columns:
         if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_given_name_fields
+            x.casefold() for x in possible_given_name_fields
         ):
             print('"{}" column present'.format(column_title))
             lastname_column_title = column_title
@@ -142,7 +140,7 @@ def check_is_non_canvas_csv(csv_file_name):
         firstname_column_title = None
         for column_title in student_info_df.columns:
             if column_title.casefold() in (
-                possible_title.casefold() for possible_title in possible_lastname_list
+                x.casefold() for x in possible_surname_fields
             ):
                 print('"{}" column present'.format(column_title))
                 firstname_column_title = column_title
@@ -160,7 +158,7 @@ def check_is_non_canvas_csv(csv_file_name):
         lastname_column_title = None
         for column_title in student_info_df.columns:
             if column_title.casefold() in (
-                possible_title.casefold() for possible_title in possible_firstname_list
+                x.casefold() for x in possible_given_name_fields
             ):
                 print('"{}" column present'.format(column_title))
                 lastname_column_title = column_title
