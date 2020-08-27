@@ -512,9 +512,9 @@ winpyinst:
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
   - move dist\PlomClient* .\
-  - CertUtil -hashfile PlomClient* MD5 > md5sum.txt
+  - CertUtil -hashfile PlomClient* MD5
   - ls
   artifacts:
     paths:
     - PlomClient*.exe
-    - md5sum.txt
+    # - md5sum.txt
