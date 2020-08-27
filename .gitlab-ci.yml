@@ -423,7 +423,6 @@ linuxbin_ubuntu1804:
     paths:
     - PlomClient*
     - md5sum
-    expire_in: 2 weeks
 
 
 # TODO: consider doing only on the master branch and only when tests pass
@@ -448,7 +447,6 @@ linuxbin_ubuntu1910:
     paths:
     - PlomClient*
     - md5sum
-    expire_in: 2 weeks
 
 
 # TODO: consider doing only on the master branch and only when tests pass
@@ -473,7 +471,6 @@ linuxbin_centos:
     paths:
     - PlomClient*
     - md5sum
-    expire_in: 2 weeks
 
 
 .shared_windows_runners:
@@ -523,4 +520,3 @@ winpyinst:
     paths:
     - PlomClient*.exe
     - md5sum.txt
-    expire_in: 2 weeks
