@@ -60,7 +60,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
         else:
             w, h = papersize_portrait
         pg = exam.newPage(width=w, height=h)
-        rec = [margin, margin, w - margin, h - margin]
+        rec = fitz.Rect(margin, margin, w - margin, h - margin)
         pg.insertImage(rec, filename=img)
 
     exam.setMetadata(
