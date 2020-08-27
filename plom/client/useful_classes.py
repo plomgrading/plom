@@ -181,8 +181,7 @@ class SNIDBox(QDialog):
         self.sname = ""
 
     def guessInput(self, id_name_text):
-        """Extract the digits from id_name_text and use it to fill the sid-entry, and then extract alphabetic from id_name_text and use it to fill the sname-entry
-        """
+        """Extract the digits from id_name_text and use it to fill the sid-entry, and then extract alphabetic from id_name_text and use it to fill the sname-entry"""
         sid = ""
         sname = ""
         for c in id_name_text:

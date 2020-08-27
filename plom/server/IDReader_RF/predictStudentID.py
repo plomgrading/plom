@@ -187,7 +187,7 @@ def get_digit_images(ID_box, num_digits):
 
 
 def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
-    """Return a list of probability predictions for the student ID digits on the cropped image. 
+    """Return a list of probability predictions for the student ID digits on the cropped image.
 
     Args:
         prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
@@ -197,7 +197,7 @@ def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
         num_digits (int): Number of digits in the student ID.
 
     Returns:
-        list: A list of lists of probabilities including the model's prediction for 
+        list: A list of lists of probabilities including the model's prediction for
             the digits.
     """
 
