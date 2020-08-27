@@ -11,14 +11,14 @@ import os
 from setuptools import setup, find_packages
 from glob import glob
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
 # TODO: "stop importing things from the local path" or use this workaround:
 #sys.path.insert(0, os.dirname(__file__))
 
 # This directory
 dir_setup = os.path.dirname(os.path.realpath(__file__))
+
+with open(os.path.join(dir_setup, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
 
 with open(os.path.join(dir_setup, "plom", "version.py")) as f:
     # Defines __version__
