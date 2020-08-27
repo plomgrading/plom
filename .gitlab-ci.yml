@@ -511,9 +511,9 @@ winpyinst:
   - c:\Python37\python -m plom.scripts.client -h
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
-  - move dist\PlomClient* .\
+  - move dist\PlomClient*.exe .\
   - ls
-  - CertUtil -hashfile PlomClient* MD5
+  - CertUtil -hashfile PlomClient*.exe MD5
   - ls
   artifacts:
     paths:
