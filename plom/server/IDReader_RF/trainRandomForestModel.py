@@ -11,8 +11,7 @@ from sklearn.metrics import accuracy_score
 
 
 def train_model():
-    """Trains the random forest model and saves it.
-    """
+    """Trains the random forest model and saves it."""
 
     # Fetch the MNIST data.
     mnist = fetch_openml("mnist_784")

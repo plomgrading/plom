@@ -1543,14 +1543,14 @@ class Annotator(QWidget):
 
     def _fullMarkWarn(self):
         """
-         A helper method for saveAnnotations.
+        A helper method for saveAnnotations.
 
-         Controls warnings for when paper has full marks.
+        Controls warnings for when paper has full marks.
 
-         Returns:
-             False if user cancels, True otherwise.
+        Returns:
+            False if user cancels, True otherwise.
 
-         """
+        """
         msg = "<p>You have given full {0}/{0},".format(self.maxMark)
         forceWarn = False
         if self.scene.hasOnlyTicks():

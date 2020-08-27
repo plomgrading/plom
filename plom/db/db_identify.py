@@ -23,8 +23,7 @@ log = logging.getLogger("DB")
 
 
 def IDcountAll(self):
-    """Count all tests in which ID pages are scanned.
-    """
+    """Count all tests in which ID pages are scanned."""
     try:
         return (
             Group.select()
@@ -50,8 +49,7 @@ def IDcountIdentified(self):
 
 
 def IDgetNextTask(self):
-    """Find unid'd test and send test_number to client
-    """
+    """Find unid'd test and send test_number to client"""
     with plomdb.atomic():
         try:  # grab the IDData reference provided not IDd but has been scanned
             iref = (

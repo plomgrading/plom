@@ -87,7 +87,7 @@ black:
   needs: []
   image: "python:3.8"
   before_script:
-    - pip3 install black
+    - pip3 install "black~=19.10b"
   script:
     - black --check --diff plom
   allow_failure: true

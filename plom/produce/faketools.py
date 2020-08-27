@@ -311,8 +311,7 @@ def make_colliding_pages(paper_dir_path, outfile):
 
 
 def splitFakeFile(out_file_path):
-    """Split the scribble pdf into three files
-    """
+    """Split the scribble pdf into three files"""
 
     print("Splitting PDF into 3 in order to test bundles.")
     originalPDF = fitz.open(out_file_path)

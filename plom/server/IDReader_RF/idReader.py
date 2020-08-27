@@ -70,8 +70,7 @@ def download_model():
 
 
 def download_or_train_model():
-    """Dowload the ID detection model if possible, if not, train it.
-    """
+    """Dowload the ID detection model if possible, if not, train it."""
 
     # make a directory into which to save things
     base_path = Path("model_cache")
@@ -124,8 +123,8 @@ def run_id_reader(files_dict, rectangle):
     Args:
         files_dict (dict): A dictionary of the original paper front page images to
             run the detector on. Of the form {`paper_number`,`paper_image_path`}.
-        rectangle (list): A list of the rectangle information of the form 
-            [top_left_x_coord, top_left_y_coord, x_width, y_height] for the 
+        rectangle (list): A list of the rectangle information of the form
+            [top_left_x_coord, top_left_y_coord, x_width, y_height] for the
             cropped rectangle.
     """
 
