@@ -69,14 +69,16 @@ docker-image-master:
 
 
 # If we have a tag, then push to PyPIi using TWINE_* env vars
+# Debug: `upload -r testpypi`, comment `only`, change and unprotect token
 pypi:
   image: $IM
   stage: final
   needs: ["docker-image"]
   cache: {}
   script:
-    - python3 -m pip install -U twine
+    - python3 -m pip install -U twine wheel setuptools
     - python3 setup.py sdist bdist_wheel
+    - python3 -m twine check dist/*
     - python3 -m twine upload dist/*
   only:
     - tags
