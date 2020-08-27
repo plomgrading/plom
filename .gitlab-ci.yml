@@ -406,7 +406,8 @@ legacy_full:
     - popd
 
 
-linuxbinary:
+# this one is built from our official docker image
+linuxbin_ubuntu1804:
   stage: final
   needs: ["docker-image"]
   image: $IM
@@ -416,9 +417,12 @@ linuxbinary:
     - python3 -m pip install pyinstaller
   script:
     - pyinstaller client.linux.spec
+    - mv dist/PlomClient* .
+    - md5sum PlomClient* > md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
+    - PlomClient*
+    - md5sum
     expire_in: 2 weeks
 
 
@@ -438,9 +442,12 @@ linuxbin_ubuntu1910:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
+    - mv dist/PlomClient* .
+    - md5sum PlomClient* > md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
+    - PlomClient*
+    - md5sum
     expire_in: 2 weeks
 
 
@@ -460,9 +467,12 @@ linuxbin_centos:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
+    - mv dist/PlomClient* .
+    - md5sum PlomClient* > md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
+    - PlomClient*
+    - md5sum
     expire_in: 2 weeks
 
 
@@ -506,7 +516,11 @@ winpyinst:
   - c:\Python37\python -m plom.scripts.client -h
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
+  - move dist\PlomClient* .\
+  - CertUtil -hashfile PlomClient* MD5 > md5sum.txt
+  - ls
   artifacts:
     paths:
-    - dist/PlomClient*.exe
+    - PlomClient*.exe
+    - md5sum.txt
     expire_in: 2 weeks
