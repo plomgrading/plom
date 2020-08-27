@@ -503,11 +503,9 @@ winpyinst:
   stage: final
   needs: []
   script:
-  - choco install -y python3 --version 3.7.8
+  - choco install -y python3 --version 3.7.9
   - refreshenv
-  - C:\Python37\Scripts\pip install toml
-  - C:\Python37\Scripts\pip install requests-toolbelt
-  - C:\Python37\Scripts\pip install pyqt5
+  - C:\Python37\Scripts\pip install -r requirements.txt.client
   - C:\Python37\Scripts\pip install pyinstaller
   - refreshenv
   - c:\Python37\python -m plom.scripts.client -h
