@@ -318,6 +318,7 @@ newest_deps:
       python3-pip python3-setuptools python3-wheel
       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
       libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev
+      libgl1-mesa-glx libsm6 libxrender1
       iproute2 psmisc file
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
     - pip3 install --upgrade pip
