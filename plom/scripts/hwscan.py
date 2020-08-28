@@ -72,7 +72,7 @@ def make_required_directories(bundle=None):
             os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processLooseScans(server, password, pdf_fname, student_id, gamma):
+def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
     """Process the given Loose-pages PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
@@ -180,7 +180,7 @@ def processLooseScans(server, password, pdf_fname, student_id, gamma):
     scansToImages.archiveLBundle(pdf_fname)
 
 
-def processHWScans(server, password, pdf_fname, student_id, question_list, gamma):
+def processHWScans(server, password, pdf_fname, student_id, question_list, gamma=False):
     """Process the given HW PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
