@@ -417,11 +417,12 @@ linuxbin_ubuntu1804:
     - python3 -m pip install pyinstaller
   script:
     - pyinstaller client.linux.spec
-    - mv dist/PlomClient* .
-    - md5sum PlomClient* > md5sum
+    - mv dist/PlomClient*.bin .
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
+    - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
-    - PlomClient*
+    - PlomClient*.bin
     - md5sum
 
 
@@ -441,11 +442,12 @@ linuxbin_ubuntu1910:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - mv dist/PlomClient* .
-    - md5sum PlomClient* > md5sum
+    - mv dist/PlomClient*.bin .
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1910.bin}"; done;
+    - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
-    - PlomClient*
+    - PlomClient*.bin
     - md5sum
 
 
@@ -465,11 +467,12 @@ linuxbin_centos:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - mv dist/PlomClient* .
-    - md5sum PlomClient* > md5sum
+    - mv dist/PlomClient*.bin .
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-centos7.bin}"; done;
+    - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
-    - PlomClient*
+    - PlomClient*.bin
     - md5sum
 
 
