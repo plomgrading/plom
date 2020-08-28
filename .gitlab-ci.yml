@@ -516,7 +516,8 @@ winpyinst:
   - ls dist
   - move dist\PlomClient*.exe .\
   - ls
-  - CertUtil -hashfile PlomClient*.exe MD5
+  # TODO: cannot handle the wildcard, https://gitlab.com/plom/plom/-/issues/948
+  # CertUtil -hashfile PlomClient*.exe MD5 > md5sum.txt
   - ls
   artifacts:
     paths:
