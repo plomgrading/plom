@@ -72,7 +72,7 @@ def make_required_directories(bundle=None):
             os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processLooseScans(server, password, pdf_fname, student_id):
+def processLooseScans(server, password, pdf_fname, student_id, gamma):
     """Process the given Loose-pages PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
@@ -152,7 +152,7 @@ def processLooseScans(server, password, pdf_fname, student_id):
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -180,7 +180,7 @@ def processLooseScans(server, password, pdf_fname, student_id):
     scansToImages.archiveLBundle(pdf_fname)
 
 
-def processHWScans(server, password, pdf_fname, student_id, question_list):
+def processHWScans(server, password, pdf_fname, student_id, question_list, gamma):
     """Process the given HW PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
@@ -274,7 +274,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list):
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -410,7 +410,14 @@ spW = sub.add_parser(
     + " 'submittedHWByQ' directory or their work already uploaded the server.",
 )
 spP = sub.add_parser(
-    "process", help="Process indicated PDF for one student and upload to server."
+    "process",
+    help="Process indicated PDF for one student and upload to server.",
+    description="""Process a bundle of work (typically a PDF file) from one
+        student.  You must provide the student ID.  You must also indicate
+        which question is in this bundle or that this is a "loose" bundle
+        (including all questions or otherwise unstructured).""",
+    epilog="""By default, a gamma shift is *not* applied; this is because it
+        may worsen some poor-quality scans with large shadow regions.""",
 )
 spA = sub.add_parser(
     "allbyq",
@@ -450,6 +457,19 @@ spPql.add_argument(
     action="store",
     help="Which question is answered in file.",
 )
+spPg = spP.add_mutually_exclusive_group(required=False)
+spPg.add_argument(
+    "--gamma-shift",
+    action="store_true",
+    dest="gamma",
+    help="Apply white balancing to the scan.",
+)
+spPg.add_argument(
+    "--no-gamma-shift",
+    action="store_false",
+    dest="gamma",
+    help="Do not apply white balancing.",
+)
 
 spA.add_argument(
     "-y", "--yes", action="store_true", help="Answer yes to prompts.",
@@ -472,11 +492,16 @@ def main():
     elif args.command == "process":
         if args.loose:
             processLooseScans(
-                args.server, args.password, args.hwPDF, args.studentid,
+                args.server, args.password, args.hwPDF, args.studentid, args.gamma
             )
         else:
             processHWScans(
-                args.server, args.password, args.hwPDF, args.studentid, args.question,
+                args.server,
+                args.password,
+                args.hwPDF,
+                args.studentid,
+                args.question,
+                args.gamma,
             )
             # argparse makes args.question a list.
     elif args.command == "allbyq":
