@@ -406,7 +406,8 @@ legacy_full:
     - popd
 
 
-linuxbinary:
+# this one is built from our official docker image
+linuxbin_ubuntu1804:
   stage: final
   needs: ["docker-image"]
   image: $IM
@@ -416,10 +417,13 @@ linuxbinary:
     - python3 -m pip install pyinstaller
   script:
     - pyinstaller client.linux.spec
+    - mv dist/PlomClient*.bin .
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
+    - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
+    - PlomClient*.bin
+    - md5sum
 
 
 # TODO: consider doing only on the master branch and only when tests pass
@@ -438,10 +442,13 @@ linuxbin_ubuntu1910:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
+    - mv dist/PlomClient*.bin .
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1910.bin}"; done;
+    - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
+    - PlomClient*.bin
+    - md5sum
 
 
 # TODO: consider doing only on the master branch and only when tests pass
@@ -460,10 +467,13 @@ linuxbin_centos:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
+    - mv dist/PlomClient*.bin .
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-centos7.bin}"; done;
+    - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
+    - PlomClient*.bin
+    - md5sum
 
 
 .shared_windows_runners:
@@ -496,17 +506,20 @@ winpyinst:
   stage: final
   needs: []
   script:
-  - choco install -y python3 --version 3.7.8
+  - choco install -y python3 --version 3.7.9
   - refreshenv
-  - C:\Python37\Scripts\pip install toml
-  - C:\Python37\Scripts\pip install requests-toolbelt
-  - C:\Python37\Scripts\pip install pyqt5
+  - C:\Python37\Scripts\pip install -r requirements.txt.client
   - C:\Python37\Scripts\pip install pyinstaller
   - refreshenv
   - c:\Python37\python -m plom.scripts.client -h
   - c:\Python37\Scripts\pyinstaller client.windows.spec
   - ls dist
+  - move dist\PlomClient*.exe .\
+  - ls
+  # TODO: cannot handle the wildcard, https://gitlab.com/plom/plom/-/issues/948
+  # CertUtil -hashfile PlomClient*.exe MD5 > md5sum.txt
+  - ls
   artifacts:
     paths:
-    - dist/PlomClient*.exe
-    expire_in: 2 weeks
+    - PlomClient*.exe
+    # - md5sum.txt
