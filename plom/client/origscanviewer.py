@@ -218,12 +218,10 @@ class RearrangementViewer(QDialog):
         self.listA = SourceList(self)
         self.scrollA.setWidget(self.listA)
         self.scrollA.setWidgetResizable(True)
-        self.scrollA.setFixedHeight(170)
         self.scrollB = QScrollArea()
         self.listB = SinkList(self)
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
-        self.scrollB.setFixedHeight(220)
 
         self.appendB = QToolButton()
         self.appendB.setText("Add Page")
