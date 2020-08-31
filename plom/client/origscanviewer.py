@@ -29,6 +29,9 @@ from .examviewwindow import ExamViewWindow
 from .uiFiles.ui_test_view import Ui_TestView
 from .useful_classes import SimpleMessage
 
+import os
+import sys
+
 
 class SourceList(QListWidget):
     def __init__(self, parent):
@@ -240,7 +243,19 @@ class RearrangementViewer(QDialog):
         self.sRightB.setText("Shift Right")
         self.sRightB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.reverseB = QPushButton("Reverse Order")
-        self.rotateB = QPushButton("Rotate Page (local copy only)")
+
+        try:
+            base_path = sys._MEIPASS
+        except Exception:
+            # a hack - fix soon.
+            base_path = os.path.join(os.path.dirname(__file__), "icons")
+            # base_path = "./icons"
+        self.rotateB_cw = QPushButton(
+            QIcon("{}/rotate_clockwise.svg".format(base_path)), ""
+        )
+        self.rotateB_ccw = QPushButton(
+            QIcon("{}/rotate_counter_clockwise.svg".format(base_path)), ""
+        )
 
         self.closeB = QPushButton("Close")
         self.acceptB = QPushButton("Accept new layout")
@@ -255,7 +270,8 @@ class RearrangementViewer(QDialog):
         hb2.addWidget(self.sRightB)
 
         hb3 = QHBoxLayout()
-        hb3.addWidget(self.rotateB)
+        hb3.addWidget(self.rotateB_cw)
+        hb3.addWidget(self.rotateB_ccw)
         hb3.addWidget(self.reverseB)
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
@@ -281,7 +297,8 @@ class RearrangementViewer(QDialog):
         self.sLeftB.clicked.connect(self.shuffleLeft)
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
-        self.rotateB.clicked.connect(self.rotateImage)
+        self.rotateB_cw.clicked.connect(lambda: self.rotateImage(90))
+        self.rotateB_ccw.clicked.connect(lambda: self.rotateImage(-90))
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
@@ -399,12 +416,12 @@ class RearrangementViewer(QDialog):
         """
         self.listB.reverseOrder()
 
-    def rotateImage(self):
+    def rotateImage(self, angle=90):
         """ Rotates the currently selected page by 90 degrees."""
         if self.listA.selectionModel().hasSelection():
-            self.listA.rotateImage()
+            self.listA.rotateImage(angle)
         elif self.listB.selectionModel().hasSelection():
-            self.listB.rotateImage()
+            self.listB.rotateImage(angle)
         else:
             pass
 
