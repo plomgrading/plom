@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Workaround for bug in PyMuPDF 1.17.6.
 * Various packaging improvements and fixes.
+* "Rearrange Pages" dialog resizing improved.
 
 
 ## [0.5.0] - 2020-08-26
