@@ -42,6 +42,12 @@ There are additional dependencies for the tensorflow-based ID reader:
                      python3-markdown python3-h5py
   # pip3 install --user imutils lapsolver opencv-python tensorflow
 ```
+If you're building a production server you may want to ignore some of the above
+and instead use pinned versions:
+```
+  # pip3 intall --user -r requirements.txt
+```
+You may also want to consider a tool like `virtualenv`.
 
 
 Ubuntu
@@ -78,7 +84,12 @@ Other stuff we get from pip:
 Note `python3 -m pip` to use the newly upgraded pip.  On Ubuntu 18.04, the
 `--upgrade` is required for tensorflow b/c the system numpy is too old.
 
-It also may be useful to install `x2goserver`.
+If you're building a production server you may want to ignore some of the above
+and instead use pinned versions:
+```
+  # python3 -m pip intall --user -r requirements.txt
+```
+You may also want to consider a tool like `virtualenv`.
 
 Finally: it has been noted that ImageMagick doesn't allow hacking
 of pdf files by default, some edits are needed to
