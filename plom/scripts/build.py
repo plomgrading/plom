@@ -23,10 +23,12 @@ import pandas
 from plom import __version__
 from plom import SpecVerifier, SpecParser
 from plom import specdir
-from plom.produce import process_class_list, upload_classlist
+from plom.produce import process_class_list, get_messenger, upload_classlist
 from plom.produce import buildDatabaseAndPapers
 from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
+from plom.messenger import ManagerMessenger
+
 
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
 from plom.finish import clear_manager_login
@@ -224,7 +226,8 @@ def main():
         parseAndVerifySpecification(fname)
     elif args.command == "class":
         cl = process_class_list(args.classlist, args.demo)
-        upload_classlist(cl, args.server, args.password)
+        msgr = get_messenger(args.server, args.password)
+        upload_classlist(classlist=cl, msgr=msgr)
     elif args.command == "make":
         buildDatabaseAndPapers(args.server, args.password)
     elif args.command == "clear":
