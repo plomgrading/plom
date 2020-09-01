@@ -14,4 +14,5 @@ from .buildNamedPDF import build_all_papers, confirm_processed, identify_prename
 from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .buildClasslist import process_class_list
 from .upload_classlist import upload_classlist
+from .upload_classlist import get_messenger
 from .buildDatabaseAndPapers import buildDatabaseAndPapers

@@ -9,12 +9,13 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomConflict
 
 
-def upload_classlist(classlist, server=None, password=None):
+def get_messenger(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
     else:
         msgr = ManagerMessenger(server)
+
     msgr.start()
 
     if not password:
@@ -32,6 +33,22 @@ def upload_classlist(classlist, server=None, password=None):
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
         sys.exit(10)
+
+    return msgr
+
+
+def upload_classlist(classlist, msgr):
+    """Uploads a classlist file to the server.
+
+    Arguments:
+        classdict (list): list of (str, str) pairs of the form
+                (student ID, student name).
+        msgr (ManagerMessenger): an already-connected messenger object for
+                talking to the server.
+
+
+    """
+
     try:
         msgr.upload_classlist(classlist)
     except PlomConflict:
