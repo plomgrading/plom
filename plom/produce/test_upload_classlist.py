@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden S. Wiebe
+# Copyright (C) 2020 Colin B. Macdonald
 
 from unittest.mock import MagicMock
 
@@ -10,9 +9,9 @@ from plom.plom_exceptions import PlomExistingLoginException, PlomConflict
 
 from plom.produce import upload_classlist
 
-def test_produce_upload_classlist():
 
-    classlist = [(10050380, "Fink, Iris"),]
+def test_produce_upload_classlist():
+    classlist = [(10050380, "Fink, Iris")]
 
     msgr = ManagerMessenger()
     msgr.upload_classlist = MagicMock(return_value=None)
