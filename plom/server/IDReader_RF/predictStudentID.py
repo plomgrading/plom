@@ -24,7 +24,8 @@ from PIL import Image
 from sklearn.ensemble import RandomForestClassifier
 import pickle
 from sklearn.metrics import accuracy_score
-
+import gzip
+from pathlib import Path
 
 # define this in order to sort by area of bounding rect
 def bounding_rect_area(bounding_rectangle):
@@ -233,8 +234,8 @@ def compute_probabilities(
     """
 
     # load the model
-    model_fname = "model_cache/RF_ML_model.sav"
-    prediction_model = pickle.load(open(model_fname, "rb"))
+    with gzip.open(Path("model_cache") / "RF_ML_model.sav.gz", "rb") as f:
+        prediction_model = pickle.load(f)
 
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}
