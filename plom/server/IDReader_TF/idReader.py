@@ -73,9 +73,10 @@ def download_model():
             print("\tError getting file {}.".format(file_name))
             return False
         else:
-            print("\tDone.")
+            print("\tDone Saving")
         with open(base_path / file_name, "wb+") as file_header:
             file_header.write(response.content)
+
     return True
 
 

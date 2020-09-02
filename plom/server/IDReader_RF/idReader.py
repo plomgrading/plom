@@ -16,7 +16,6 @@ __license__ = "AGPLv3"
 import os
 from pathlib import Path
 import csv
-
 import requests
 from lapsolver import solve_dense
 import numpy as np
@@ -34,7 +33,7 @@ def is_model_absent():
     """
 
     base_path = Path("model_cache")
-    files = ["RF_ML_model.sav"]
+    files = ["RF_ML_model.sav.gz"]
 
     for filename in files:
         if not os.path.isfile(base_path / filename):
@@ -51,9 +50,11 @@ def download_model():
 
     # make a directory into which to save things
     base_path = Path("model_cache")
-    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
+    base_url = (
+        "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
+    )
     files = [
-        "RF_ML_model.sav",
+        "RF_ML_model.sav.gz",
     ]
     for file_name in files:
         url = base_url + file_name
@@ -63,9 +64,10 @@ def download_model():
             print("\tError getting file {}.".format(file_name))
             return False
         else:
-            print("\tDone.")
+            print("\tDone Saving")
         with open(base_path / file_name, "wb+") as file_header:
             file_header.write(response.content)
+
     return True
 
 
