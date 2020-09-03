@@ -3,8 +3,11 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Colin B. Macdonald
 
 """
+Executable file frontend to the actual ID reader code.
+
 Note: Code in this file is very similar to runTheReader code for the Sklearn
 model.
 """
