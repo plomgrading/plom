@@ -478,6 +478,33 @@ g.add_argument(
     dest="gamma",
     help="Do not apply white balancing.",
 )
+g = spP.add_mutually_exclusive_group(required=False)
+g.add_argument(
+    "--extract-bitmaps",
+    action="store_true",
+    dest="extractbmp",
+    help="""
+        If a PDF page seems to contain exactly one bitmap image and
+        nothing else, then extract that losslessly instead of rendering
+        the page as a new PNG file.  This will typically give nicer
+        images for the common scan case where pages are simply JPEG
+        images.  But some care must be taken that the image is not
+        annotated in any way and that no other markings appear on the
+        page.
+        As the algorithm to decide this is NOT YET IDEAL, this is
+        currently OFF BY DEFAULT, but we anticipate it being the default
+        in a future version.
+    """,
+)
+g.add_argument(
+    "--no-extract-bitmaps",
+    action="store_false",
+    dest="extractbmp",
+    help="""
+        Don't try to extract bitmaps; just render each page.  This is
+        safer but not always ideal for image quality.
+    """,
+)
 
 spA.add_argument(
     "-y", "--yes", action="store_true", help="Answer yes to prompts.",
