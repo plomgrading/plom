@@ -443,28 +443,29 @@ spW.add_argument(
 
 spP.add_argument("hwPDF", action="store", help="PDF containing homework")
 spP.add_argument("studentid", action="store", help="Student ID")
-spPql = spP.add_mutually_exclusive_group(required=True)
-spPql.add_argument(
+g = spP.add_mutually_exclusive_group(required=True)
+g.add_argument(
     "-l",
     "--loose",
     action="store_true",
     help="Whether or not to upload file as loose pages.",
 )
-spPql.add_argument(
+g.add_argument(
     "-q",
     "--question",
     nargs=1,
+    metavar="N",
     action="store",
     help="Which question is answered in file.",
 )
-spPg = spP.add_mutually_exclusive_group(required=False)
-spPg.add_argument(
+g = spP.add_mutually_exclusive_group(required=False)
+g.add_argument(
     "--gamma-shift",
     action="store_true",
     dest="gamma",
     help="Apply white balancing to the scan.",
 )
-spPg.add_argument(
+g.add_argument(
     "--no-gamma-shift",
     action="store_false",
     dest="gamma",
