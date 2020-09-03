@@ -412,12 +412,14 @@ spW = sub.add_parser(
 spP = sub.add_parser(
     "process",
     help="Process indicated PDF for one student and upload to server.",
-    description="""Process a bundle of work (typically a PDF file) from one
-        student.  You must provide the student ID.  You must also indicate
-        which question is in this bundle or that this is a "loose" bundle
-        (including all questions or otherwise unstructured).""",
-    epilog="""By default, a gamma shift is *not* applied; this is because it
-        may worsen some poor-quality scans with large shadow regions.""",
+    description="""
+        Process a bundle of work (typically a PDF file) from one student.
+        You must provide the student ID.  You must also indicate which
+        question is in this bundle or that this is a "loose" bundle
+        (including all questions or otherwise unstructured).
+        Various flags control other aspects of how the bundle is
+        processed.
+    """,
 )
 spA = sub.add_parser(
     "allbyq",
@@ -463,7 +465,12 @@ g.add_argument(
     "--gamma-shift",
     action="store_true",
     dest="gamma",
-    help="Apply white balancing to the scan.",
+    help="""
+        Apply white balancing to the scan, if the image format is
+        lossless (PNG).
+        By default, this gamma shift is NOT applied; this is because it
+        may worsen some poor-quality scans with large shadow regions.
+    """,
 )
 g.add_argument(
     "--no-gamma-shift",
