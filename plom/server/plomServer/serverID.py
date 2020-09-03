@@ -148,7 +148,7 @@ def IDdidNotFinish(self, username, test_number):
 
 
 def IDgetImageFromATest(self):
-    """Return a random front page exam image for ID box selection by the client. 
+    """Return a random front page exam image for ID box selection by the client.
 
     Returns:
         list: True/False plus a list of the images' paths.
@@ -163,8 +163,8 @@ def IDdeletePredictions(self):
     Log activity.
 
     Returns:
-        list: A list with True/False which includes a message 
-            string if the response is false.
+        list: first entry is True/False for success.  If False, second
+            entry is a string with an explanation.
     """
 
     # check to see if predictor is running
@@ -212,18 +212,18 @@ def IDrunPredictions(
     Args:
         rectangle (list): A list of coordinates if the format of:
             [top_left_x, top_left_y, bottom_right_x, bottom_right_y]
-        database_reference_number (int): Number of the files which the cropped 
-            rectangle was extracted from.
-        ignore_stamp (bool): To ignore or not to ignore the timestamp when deciding
-            whether to skip the run.
+        database_reference_number (int): Number of the file which the
+            cropped rectangle was extracted from.
+        ignore_stamp (bool): Whether to ignore the timestamp when
+            deciding whether to skip the run.
 
     Returns:
-        list: A list with first value boolean and second value boolean or a 
+        list: A list with first value boolean and second value boolean or a
             message string of the format:
-            [True, False] for already running.
-            [False, str] for prediction already exists, so return the timestamp
-                for last time prediction were run. TODO: I'm pretty sure this is correct ?
-            [True, True] for started running.
+            [True, False]: it is already running.
+            [False, str]: prediction already exists, `str` is the
+                timestamp of the last time prediction run.
+            [True, True]: we started a new prediction run.
     """
 
     # from plom.server.IDReader.idReader import runIDReader
