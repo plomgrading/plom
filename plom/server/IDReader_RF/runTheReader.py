@@ -17,15 +17,17 @@ import json
 import os
 import sys
 
-lock_file = sys.argv[1]
+from .idReader import run_id_reader
 
-if not os.path.isfile(lock_file):
-    exit(1)
 
-with open(lock_file) as fh:
-    fileDictAndRect = json.load(fh)
-    from .idReader import run_id_reader
+if __name__ == "__main__":
+    lock_file = sys.argv[1]
 
-    run_id_reader(fileDictAndRect[0], fileDictAndRect[1])
+    if not os.path.isfile(lock_file):
+        sys.exit(1)
 
-os.unlink(lock_file)
+    with open(lock_file) as fh:
+        fileDictAndRect = json.load(fh)
+        run_id_reader(fileDictAndRect[0], fileDictAndRect[1])
+
+    os.unlink(lock_file)
