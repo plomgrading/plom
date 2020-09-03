@@ -24,7 +24,7 @@ if __name__ == "__main__":
     lock_file = sys.argv[1]
 
     if not os.path.isfile(lock_file):
-        sys.exit(1)
+        raise RuntimeError('Cannot acquire file "{}"'.format(lock_file))
 
     with open(lock_file) as fh:
         fileDictAndRect = json.load(fh)
