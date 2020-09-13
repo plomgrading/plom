@@ -2,30 +2,23 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-
-__copyright__ = "Copyright (C) 2018-20120 Andrew Rechnitzer and others"
-__credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
-__license__ = "AGPLv3"
+# Copyright (C) 2020 Colin B. Macdonald
 
 """
 Note: Code in this file is very similar to predictStudentID code for the
 Tensorflow model.
 """
 
+import pickle
+import gzip
+from pathlib import Path
+
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
-from imutils import contours
-import numpy as np
-import json
-import os
-import sys
-from PIL import Image
-from sklearn.ensemble import RandomForestClassifier
-import pickle
-from sklearn.metrics import accuracy_score
-import gzip
-from pathlib import Path
+
 
 # define this in order to sort by area of bounding rect
 def bounding_rect_area(bounding_rectangle):
