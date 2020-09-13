@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * `plom-hwscan` has command line arguments for gamma shift, off by default as it sometimes worsens already poor scans with large shadows.
+* `plom-hwscan` does not extract jpeg's by default (it may in the future).
+* `plom-hwscan` has new command line arguments for jpeg extraction.
 
 ### Fixed
 * Workaround for bug in PyMuPDF 1.17.6.
