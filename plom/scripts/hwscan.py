@@ -72,7 +72,9 @@ def make_required_directories(bundle=None):
             os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
+def processLooseScans(
+    server, password, pdf_fname, student_id, gamma=False, extractbmp=False
+):
     """Process the given Loose-pages PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
@@ -152,7 +154,7 @@ def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -180,7 +182,15 @@ def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
     scansToImages.archiveLBundle(pdf_fname)
 
 
-def processHWScans(server, password, pdf_fname, student_id, question_list, gamma=False):
+def processHWScans(
+    server,
+    password,
+    pdf_fname,
+    student_id,
+    question_list,
+    gamma=False,
+    extractbmp=False,
+):
     """Process the given HW PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
@@ -274,7 +284,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list, gamma
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -527,7 +537,12 @@ def main():
     elif args.command == "process":
         if args.loose:
             processLooseScans(
-                args.server, args.password, args.hwPDF, args.studentid, args.gamma
+                args.server,
+                args.password,
+                args.hwPDF,
+                args.studentid,
+                args.gamma,
+                args.extractbmp,
             )
         else:
             processHWScans(
@@ -537,9 +552,11 @@ def main():
                 args.studentid,
                 args.question,
                 args.gamma,
+                args.extractbmp,
             )
             # argparse makes args.question a list.
     elif args.command == "allbyq":
+        # TODO: gamma and extractbmp?
         processAllHWByQ(args.server, args.password, args.yes)
     elif args.command == "missing":
         processMissing(args.server, args.password, args.yes)

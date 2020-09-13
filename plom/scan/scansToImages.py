@@ -103,7 +103,7 @@ def isInArchive(file_name):
     return archive.get(md5, None)
 
 
-def processFileToBitmaps(file_name, dest):
+def processFileToBitmaps(file_name, dest, do_not_extract=False):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -114,6 +114,8 @@ def processFileToBitmaps(file_name, dest):
     Args:
         dest (str, Path): where to save the resulting bitmap files.
         file_name (str, Path): PDF file from which to extract bitmaps.
+        do_not_extract (bool): always render, do no extract even if
+            it seems possible to do so.
 
     For extracting the scanned data as is, we must be careful not to
     just grab any image off the page (for example, it must be the only
@@ -122,9 +124,7 @@ def processFileToBitmaps(file_name, dest):
     fall back on rendering with PyMuPDF.
 
     If the above fail, we fall back on calling Ghostscript as a
-    subprocess (the `gs` binary).  NOT IMPLEMENTED YET.
-
-    NOT IMPLEMENTED YET: You can force one of these...
+    subprocess (the `gs` binary).  TODO: NOT IMPLEMENTED YET.
     """
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = Path(file_name).stem.replace(" ", "_")
@@ -153,6 +153,11 @@ def processFileToBitmaps(file_name, dest):
         # TODO: which is more expensive, this or getImageList?
         if p.getText("text"):
             msgs.append("Has text")
+            ok_extract = False
+
+        # TODO: Do later to get more info in prep for future change to default
+        if do_not_extract:
+            msgs.append("Disabled by flag")
             ok_extract = False
 
         if ok_extract:
@@ -393,7 +398,7 @@ def postProcessing(thedir, dest, skip_gamma=False):
         shutil.move(file, dest / file.name)
 
 
-def processScans(pdf_fname, bundle_dir, skip_gamma=False):
+def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False):
     """Process files into bitmap pageimages.
 
     Process each page of a pdf file into bitmaps.
@@ -410,6 +415,10 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False):
         bundle_dir (pathlib.Path): the filesystem path to the bundle,
             either as an absolute path or relative the CWD.
         skip_gamma (bool): skip white balancing in post processing.
+        skip_img_extract (bool): don't try to extract raw images, just
+            render each page.  If `False`, images still may not be
+            extracted: there are a variety of sanity checks that must
+            pass.
 
     Returns:
         None
@@ -428,5 +437,5 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False):
         return
     makeBundleDirectories(pdf_fname, bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
-    processFileToBitmaps(pdf_fname, bitmaps_dir)
+    processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
