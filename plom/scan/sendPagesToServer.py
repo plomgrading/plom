@@ -166,7 +166,7 @@ def extractIDQO(fileName):  # get ID, Question and Order
     sid = splut[-3]
     # split again, now on "-" to separate Q and N
     resplut = splut[-2].split("-")
-    q = int(resplut[0])
+    q = resplut[0]
     n = int(resplut[1])
 
     return (sid, q, n)
@@ -195,6 +195,8 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
         question (int): the question being uploaded
+            TODO: this can be overwritten by something dumb like the
+            contents of the filename.  TODO: fix.
         skip_list (list of int): the bundle-orders of pages already in
             the system and so can be skipped.
 
@@ -223,6 +225,7 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
         if sid != student_id:  # or q != question:
             print("Problem with file {} - skipping".format(fname))
             continue
+        q = question
 
         print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
