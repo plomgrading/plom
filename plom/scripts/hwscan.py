@@ -186,11 +186,13 @@ def processHWScans(
     password,
     pdf_fname,
     student_id,
-    question_list,
+    questions,
     gamma=False,
     extractbmp=False,
 ):
     """Process the given HW PDF into images, upload then archive the pdf.
+
+    TODO: relax filename!  Currently .YY. must be present but is ignored.
 
     pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
     where XXXX should be student_id and YY should be question_number.
@@ -208,6 +210,11 @@ def processHWScans(
     Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+
+    args:
+        ...
+        questions (list): list of integers of which questions this
+            bundle covers.
     """
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
@@ -217,12 +224,11 @@ def processHWScans(
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
 
-    question = int(question_list[0])  # args passes '[q]' rather than just 'q'
-
     assert os.path.split(pdf_fname)[0] in [
         "submittedHWByQ",
         "./submittedHWByQ",
     ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
+    # TODO: relax!
     IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
         raise ValueError(
@@ -235,17 +241,23 @@ def processHWScans(
                 student_id, sid
             )
         )
-    if int(q) != question:
-        raise ValueError(
-            "Question supplied {} does not match that in filename {}. Stopping.".format(
-                question, q
-            )
-        )
+    # TODO:
+    # if int(q) != question:
+    #     raise ValueError(
+    #         "Question supplied {} does not match that in filename {}. Stopping.".format(
+    #             question, q
+    #         )
+    #     )
+    if len(questions) == 1:
+        qlabel = "question"
+    else:
+        qlabel = "questions"
     print(
-        "Process and upload file {} as answer to question {} for sid {}".format(
-            pdf_fname.name, question, student_id
+        "Process and upload file {} as answer to {} {} for sid {}".format(
+            pdf_fname.name, qlabel, questions, student_id
         )
     )
+
     test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
     if test_number is None:
         raise ValueError("No test has student ID = {}. Skipping.".format(student_id))
@@ -302,7 +314,7 @@ def processHWScans(
 
     # send the images to the server
     sendPagesToServer.uploadHWPages(
-        bundle_name, skip_list, student_id, question, server, password
+        bundle_name, skip_list, student_id, questions, server, password
     )
     # now archive the PDF
     scansToImages.archiveHWBundle(pdf_fname)
@@ -463,7 +475,11 @@ g.add_argument(
     nargs=1,
     metavar="N",
     action="store",
-    help="Which question is answered in file.",
+    help="""
+        Which question(s) are answered in file.
+        You can pass a list like `-q 1,2,3` or ranges or TODO
+        or keyword `all` (TODO: maybe?) or...  TODO decide interface.
+    """,
 )
 g = spP.add_mutually_exclusive_group(required=False)
 g.add_argument(
@@ -557,12 +573,15 @@ def main():
                 args.extractbmp,
             )
         else:
+            questions = args.question[0]  # args passes '[q]' rather than just 'q'
+            questions = [int(x) for x in questions.split(",")]
+            print('TEMP DEBUG: questions="{}"'.format(questions))
             processHWScans(
                 args.server,
                 args.password,
                 args.hwPDF,
                 args.studentid,
-                args.question,
+                questions,
                 args.gamma,
                 args.extractbmp,
             )

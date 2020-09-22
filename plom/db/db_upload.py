@@ -214,28 +214,22 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
 
 
 def uploadHWPage(
-    self, sid, question, order, original_name, file_name, md5, bundle_name, bundle_order
+    self,
+    sid,
+    questions,
+    order,
+    original_name,
+    file_name,
+    md5,
+    bundle_name,
+    bundle_order,
 ):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
         return [False, "SID does not correspond to any test on file."]
     tref = iref.test
-    qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:  # should not happen.
-        return [False, "Test/Question does not correspond to anything on file."]
 
-    gref = qref.group
-    href = HWPage.get_or_none(test=tref, group=gref, order=order)
-    # the href should be none - but could exist if uploading HW in two bundles
-    if href is not None:
-        # we found a page with that order, so we need to put the uploaded page at the end.
-        lastOrder = (
-            HWPage.select(fn.MAX(HWPage.order))
-            .where(HWPage.test == tref, HWPage.group == gref)
-            .scalar()
-        )
-        order = lastOrder + 1
     # we need the bundle.
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
@@ -255,7 +249,28 @@ def uploadHWPage(
             ),
         ]
 
-    self.createNewHWPage(tref, qref, order, image_ref)
+    log.warn('upload: db going to loop over questions="{}"'.format(questions))
+    if not isinstance(questions, list):
+        questions = [questions]
+    for question in questions:
+        qref = QGroup.get_or_none(test=tref, question=question)
+        # TODO: consider factoring out before creating
+        if qref is None:  # should not happen.
+            return [False, "Test/Question does not correspond to anything on file."]
+
+        gref = qref.group  # loop
+        href = HWPage.get_or_none(test=tref, group=gref, order=order)
+        # the href should be none - but could exist if uploading HW in two bundles
+        if href is not None:
+            # we found a page with that order, so we need to put the uploaded page at the end.
+            lastOrder = (
+                HWPage.select(fn.MAX(HWPage.order))
+                .where(HWPage.test == tref, HWPage.group == gref)
+                .scalar()
+            )
+            order = lastOrder + 1
+
+        self.createNewHWPage(tref, qref, order, image_ref)
     return [True]
 
 
