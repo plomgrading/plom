@@ -219,7 +219,8 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
             )
             continue
 
-        if sid != student_id or q != question:
+        # HACKING out question check from filename
+        if sid != student_id:  # or q != question:
             print("Problem with file {} - skipping".format(fname))
             continue
 
