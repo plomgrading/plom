@@ -154,7 +154,7 @@ def processLooseScans(
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, extractbmp)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -284,7 +284,7 @@ def processHWScans(
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, extractbmp)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
