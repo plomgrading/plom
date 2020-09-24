@@ -206,7 +206,11 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         z = (float(ScenePixelHeight) - 0.01) / p.MediaBoxSize[1]
         ## For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
-        print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
+        print(
+            "{}: Fitz render z={:4.2f}. No extract b/c: {}".format(
+                basename, z, "; ".join(msgs)
+            )
+        )
         pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
         if pix.height != ScenePixelHeight:
             warnings.warn(
