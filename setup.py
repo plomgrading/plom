@@ -46,6 +46,7 @@ server_install_requires = [
     "jpegtran-cffi",
     "weasyprint",
     "aiohttp~=3.6.2",
+    "pypng",  # unlisted dep of pyqrcode
     "pyqrcode",
     "pyzbar",
     "peewee>=3.13.3",
