@@ -31,7 +31,7 @@ def IDQorIDorBad(fullfname):
     fname = os.path.basename(fullfname)
     splut = fname.split(".")
     try:
-        QFlag = splut[-2].isnumeric()
+        QFlag = splut[-2].isnumeric() or splut[-2] == "_"
         IDFlag = isValidStudentNumber(splut[-3])
     except IndexError:
         return ["BAD"]
