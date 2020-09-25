@@ -222,7 +222,7 @@ class Annotator(QWidget):
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
-        m.addAction("Rearrange pages", self.rearrangePages)
+        m.addAction("Rearrange pages\tctrl-r", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
@@ -1058,6 +1058,9 @@ class Annotator(QWidget):
         self.undoShortCut.activated.connect(self.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
         self.redoShortCut.activated.connect(self.redo)
+
+        self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
+        self.twisterShortCut.activated.connect(self.rearrangePages)
 
         # pan shortcuts
         self.panShortCut = QShortcut(QKeySequence("space"), self)
