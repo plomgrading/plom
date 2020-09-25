@@ -72,7 +72,9 @@ def make_required_directories(bundle=None):
             os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
+def processLooseScans(
+    server, password, pdf_fname, student_id, gamma=False, extractbmp=False
+):
     """Process the given Loose-pages PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
@@ -152,7 +154,7 @@ def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -180,7 +182,15 @@ def processLooseScans(server, password, pdf_fname, student_id, gamma=False):
     scansToImages.archiveLBundle(pdf_fname)
 
 
-def processHWScans(server, password, pdf_fname, student_id, question_list, gamma=False):
+def processHWScans(
+    server,
+    password,
+    pdf_fname,
+    student_id,
+    question_list,
+    gamma=False,
+    extractbmp=False,
+):
     """Process the given HW PDF into images, upload then archive the pdf.
 
     pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
@@ -274,7 +284,7 @@ def processHWScans(server, password, pdf_fname, student_id, question_list, gamma
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -412,12 +422,14 @@ spW = sub.add_parser(
 spP = sub.add_parser(
     "process",
     help="Process indicated PDF for one student and upload to server.",
-    description="""Process a bundle of work (typically a PDF file) from one
-        student.  You must provide the student ID.  You must also indicate
-        which question is in this bundle or that this is a "loose" bundle
-        (including all questions or otherwise unstructured).""",
-    epilog="""By default, a gamma shift is *not* applied; this is because it
-        may worsen some poor-quality scans with large shadow regions.""",
+    description="""
+        Process a bundle of work (typically a PDF file) from one student.
+        You must provide the student ID.  You must also indicate which
+        question is in this bundle or that this is a "loose" bundle
+        (including all questions or otherwise unstructured).
+        Various flags control other aspects of how the bundle is
+        processed.
+    """,
 )
 spA = sub.add_parser(
     "allbyq",
@@ -443,32 +455,65 @@ spW.add_argument(
 
 spP.add_argument("hwPDF", action="store", help="PDF containing homework")
 spP.add_argument("studentid", action="store", help="Student ID")
-spPql = spP.add_mutually_exclusive_group(required=True)
-spPql.add_argument(
+g = spP.add_mutually_exclusive_group(required=True)
+g.add_argument(
     "-l",
     "--loose",
     action="store_true",
     help="Whether or not to upload file as loose pages.",
 )
-spPql.add_argument(
+g.add_argument(
     "-q",
     "--question",
     nargs=1,
+    metavar="N",
     action="store",
     help="Which question is answered in file.",
 )
-spPg = spP.add_mutually_exclusive_group(required=False)
-spPg.add_argument(
+g = spP.add_mutually_exclusive_group(required=False)
+g.add_argument(
     "--gamma-shift",
     action="store_true",
     dest="gamma",
-    help="Apply white balancing to the scan.",
+    help="""
+        Apply white balancing to the scan, if the image format is
+        lossless (PNG).
+        By default, this gamma shift is NOT applied; this is because it
+        may worsen some poor-quality scans with large shadow regions.
+    """,
 )
-spPg.add_argument(
+g.add_argument(
     "--no-gamma-shift",
     action="store_false",
     dest="gamma",
     help="Do not apply white balancing.",
+)
+g = spP.add_mutually_exclusive_group(required=False)
+g.add_argument(
+    "--extract-bitmaps",
+    action="store_true",
+    dest="extractbmp",
+    help="""
+        If a PDF page seems to contain exactly one bitmap image and
+        nothing else, then extract that losslessly instead of rendering
+        the page as a new PNG file.  This will typically give nicer
+        images for the common scan case where pages are simply JPEG
+        images.  But some care must be taken that the image is not
+        annotated in any way and that no other markings appear on the
+        page.
+        As the algorithm to decide this is NOT YET IDEAL, this is
+        currently OFF BY DEFAULT, but we anticipate it being the default
+        in a future version.
+    """,
+)
+g.add_argument(
+    "--no-extract-bitmaps",
+    action="store_false",
+    dest="extractbmp",
+    help="""
+        Don't try to extract bitmaps; just render each page.  This is
+        safer but not always ideal for image quality.
+    """,
 )
 
 spA.add_argument(
@@ -492,7 +537,12 @@ def main():
     elif args.command == "process":
         if args.loose:
             processLooseScans(
-                args.server, args.password, args.hwPDF, args.studentid, args.gamma
+                args.server,
+                args.password,
+                args.hwPDF,
+                args.studentid,
+                args.gamma,
+                args.extractbmp,
             )
         else:
             processHWScans(
@@ -502,9 +552,11 @@ def main():
                 args.studentid,
                 args.question,
                 args.gamma,
+                args.extractbmp,
             )
             # argparse makes args.question a list.
     elif args.command == "allbyq":
+        # TODO: gamma and extractbmp?
         processAllHWByQ(args.server, args.password, args.yes)
     elif args.command == "missing":
         processMissing(args.server, args.password, args.yes)
