@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.5.1] - 2020-09-25
 
 ### Added
-* Annotator: Ctrl-r shortcut key for page rearranger tool.
+* Annotator: Ctrl-r shortcut key for Rearrange Pages tool.
 
 ### Changed
 * `plom-hwscan` has command line arguments for gamma shift, off by default as it sometimes worsens already poor scans with large shadows.
@@ -219,7 +219,7 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.0...master
+[0.5.1]: https://gitlab.com/plom/plom/compare/v0.5.0...v0.5.1
 [0.5.0]: https://gitlab.com/plom/plom/compare/v0.4.2...v0.5.0
 [0.4.2]: https://gitlab.com/plom/plom/compare/v0.4.1...v0.4.2
 [0.4.1]: https://gitlab.com/plom/plom/compare/v0.4.0...v0.4.1
