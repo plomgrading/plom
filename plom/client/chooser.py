@@ -168,7 +168,7 @@ class Chooser(QDialog):
         if len(pwd) < 4:
             log.warning("Password too short")
             return
-        server = self.ui.serverLE.text()
+        server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
@@ -260,7 +260,7 @@ class Chooser(QDialog):
     def saveDetails(self):
         lastTime["user"] = self.ui.userLE.text()
         lastTime["server"] = "{}:{}".format(
-            self.ui.serverLE.text(), self.ui.mportSB.value()
+            self.ui.serverLE.text().strip(), self.ui.mportSB.value()
         )
         lastTime["question"] = self.getQuestion()
         lastTime["v"] = self.getv()
@@ -323,7 +323,7 @@ class Chooser(QDialog):
         messenger = None
 
     def getInfo(self):
-        server = self.ui.serverLE.text()
+        server = self.ui.serverLE.text().strip()
         if not server:
             log.warning("No server URI")
             return
