@@ -319,9 +319,6 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
         )
         exit(10)
 
-    spec = msgr.get_spec()
-    numberOfPages = spec["numberOfPages"]
-
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
 
@@ -381,9 +378,6 @@ def uploadHWPages(
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
         exit(10)
-
-    spec = msgr.get_spec()
-    numberOfPages = spec["numberOfPages"]
 
     file_list = []
     # files are sitting in "bundles/submittedHWByQ/<bundle_name>"
@@ -445,9 +439,6 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
         exit(10)
-
-    spec = msgr.get_spec()
-    numberOfPages = spec["numberOfPages"]
 
     file_list = []
     # files are sitting in "bundles/submittedLoose/<bundle_name>"
