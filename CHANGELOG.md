@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+* A collection of utility scripts now ships in `share/plom/contrib`.
+
 ### Changed
 
-### FIxed
+### Fixed
 
 
 ## [0.5.1] - 2020-09-25

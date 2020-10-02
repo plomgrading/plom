@@ -14,6 +14,7 @@ __license__ = "AGPL-3.0-or-later"
 import os
 import sys
 import shutil
+from pathlib import Path
 
 from plom import SpecParser
 from plom.rules import isValidStudentNumber
@@ -23,6 +24,8 @@ from .return_tools import csv_add_return_codes
 
 def do_renaming(fromdir, todir, sns):
     print("Searching for foo_<studentnumber>.pdf files in {0}...".format(fromdir))
+    todir = Path(todir)
+    fromdir = Path(fromdir)
     numfiles = 0
     for file in os.scandir(fromdir):
         if file.name.endswith(".pdf"):
@@ -31,13 +34,13 @@ def do_renaming(fromdir, todir, sns):
             assert isValidStudentNumber(sn)
             code = sns[sn]
             newname = "{0}_{1}.pdf".format(oldname, code)
-            newname = os.path.join(todir, newname)
+            newname = todir / newname
             print(
                 '  found SN {0}: code {1}, copying "{2}" to "{3}"'.format(
                     sn, code, file.name, newname
                 )
             )
-            shutil.copyfile(os.path.join(fromdir, file.name), newname)
+            shutil.copyfile(fromdir / file.name, newname)
             numfiles += 1
     return numfiles
 
@@ -46,6 +49,7 @@ def main():
     spec = SpecParser().spec
     shortname = spec["name"]
     longname = spec["longName"]
+    codedReturnDir = Path("codedReturn")
 
     reassembles = ["reassembled", "reassembled_ID_but_not_marked"]
     if os.path.isdir(reassembles[0]) and os.path.isdir(reassembles[1]):
@@ -62,40 +66,40 @@ def main():
         sys.exit(3)
     print('We will take pdf files from "{0}".'.format(fromdir))
 
-    if os.path.exists("codedReturn") or os.path.exists("return_codes.csv"):
+    if codedReturnDir.exists() or os.path.exists("return_codes.csv"):
         print(
-            'Directory "codedReturn" and/or "return_codes.csv" already exist:\n'
-            "  if you want to re-run this script, delete them first."
+            'Directory "{}" and/or "return_codes.csv" already exist:\n'
+            "  if you want to re-run this script, delete them first.".format(
+                codedReturnDir
+            )
         )
         sys.exit(4)
-    os.makedirs("codedReturn")
+    os.makedirs(codedReturnDir)
 
     print("Generating return codes spreadsheet...")
     sns = csv_add_return_codes(CSVFilename, "return_codes.csv", "StudentID")
     print('The return codes are in "return_codes.csv"')
 
-    numfiles = do_renaming(fromdir, "codedReturn", sns)
+    numfiles = do_renaming(fromdir, codedReturnDir, sns)
     if numfiles > 0:
         print("Copied (and renamed) {0} files".format(numfiles))
     else:
         print('no pdf files in "{0}"?  Stopping!'.format(fromdir))
         sys.exit(5)
 
-    print("Adding codedReturn/index.html file")
+    print("Adding index.html file")
     from .html_view_test_template import html
 
     html = html.replace("__COURSENAME__", longname)
     html = html.replace("__TESTNAME__", shortname)
 
-    newname = os.path.join("codedReturn", "index.html")
-    with open(newname, "w") as htmlfile:
+    with open(codedReturnDir / "index.html", "w") as htmlfile:
         htmlfile.write(html)
 
     print("All done!  Next tasks:")
-    print('  * Copy "codedReturn/" to your webserver')
+    print('  * Copy "{}" to your webserver'.format(codedReturnDir))
     print('  * Privately communicate info from "return_codes.csv"')
-    print("      - E.g., try `11_write_to_canvas_spreadsheet`")
-    print("        (warning: beta!) and upload to Canvas.")
+    print("      - E.g., see `contrib/plom-return_codes_to_canvas_csv.py`")
     print("  * Read docs about the security implications of all this.")
 
 

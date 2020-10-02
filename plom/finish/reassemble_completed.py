@@ -5,7 +5,9 @@
 
 import getpass
 import os
+from pathlib import Path
 from multiprocessing import Pool
+
 from tqdm import tqdm
 
 from plom.messenger import FinishMessenger
@@ -71,9 +73,11 @@ def reassemble_test_CMD(msgr, short_name, out_dir, t, sid):
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
-    covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
+    testnumstr = str(t).zfill(4)
+    covername = "coverPages/cover_{}.pdf".format(testnumstr)
     rnames = fnames
-    outname = os.path.join(out_dir, "{}_{}.pdf".format(short_name, sid))
+    out_dir = Path(out_dir)
+    outname = out_dir / "{}_{}.pdf".format(short_name, sid)
     return (outname, short_name, sid, covername, rnames)
 
 
