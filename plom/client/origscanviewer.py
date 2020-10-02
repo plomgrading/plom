@@ -43,8 +43,8 @@ class SourceList(QListWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
-        self.setIconSize(QSize(256, 256))
-        self.setSpacing(16)
+        self.setIconSize(QSize(320, 320))
+        self.setSpacing(8)
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
         self.item_positions = {}
@@ -108,8 +108,8 @@ class SinkList(QListWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
-        self.setIconSize(QSize(256, 256))
-        self.setSpacing(16)
+        self.setIconSize(QSize(320, 320))
+        self.setSpacing(8)
         self.setWrapping(False)
         self.item_belongs = (
             {}
@@ -230,19 +230,19 @@ class RearrangementViewer(QDialog):
         self.appendB = QToolButton()
         self.appendB.setText("Add Page")
         self.appendB.setArrowType(Qt.DownArrow)
-        self.appendB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.UpArrow)
         self.removeB.setText("Remove Page")
-        self.removeB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.LeftArrow)
         self.sLeftB.setText("Shift Left")
-        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sRightB = QToolButton()
         self.sRightB.setArrowType(Qt.RightArrow)
         self.sRightB.setText("Shift Right")
-        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.reverseB = QPushButton("Reverse Order")
 
         try:
@@ -254,25 +254,26 @@ class RearrangementViewer(QDialog):
         self.rotateB_cw = QPushButton(
             QIcon("{}/rotate_clockwise.svg".format(base_path)), ""
         )
+        self.rotateB_cw.setText("Rotate CW")
         self.rotateB_ccw = QPushButton(
             QIcon("{}/rotate_counter_clockwise.svg".format(base_path)), ""
         )
+        self.rotateB_ccw.setText("Rotate CCW")
 
-        self.closeB = QPushButton("Close")
-        self.acceptB = QPushButton("Accept new layout")
+        self.closeB = QPushButton("&Close")
+        self.acceptB = QPushButton("&Accept")
 
         self.permute = [False]
 
         hb1 = QHBoxLayout()
         hb1.addWidget(self.appendB)
         hb1.addWidget(self.removeB)
-        hb2 = QHBoxLayout()
-        hb2.addWidget(self.sLeftB)
-        hb2.addWidget(self.sRightB)
 
         hb3 = QHBoxLayout()
         hb3.addWidget(self.rotateB_cw)
         hb3.addWidget(self.rotateB_ccw)
+        hb3.addWidget(self.sLeftB)
+        hb3.addWidget(self.sRightB)
         hb3.addWidget(self.reverseB)
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
@@ -288,7 +289,6 @@ class RearrangementViewer(QDialog):
         vb0.addLayout(hb1)
         vb0.addWidget(thisQuestion)
         vb0.addWidget(self.scrollB)
-        vb0.addLayout(hb2)
         vb0.addLayout(hb3)
 
         self.setLayout(vb0)
