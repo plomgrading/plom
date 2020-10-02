@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 """Start the Plom client."""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
 import datetime
@@ -15,11 +17,12 @@ import sys
 import traceback as tblib
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom import __version__
-from plom.client.chooser import Chooser
 from plom import Default_Port
+from plom.client.chooser import Chooser
+
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
