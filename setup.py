@@ -127,6 +127,15 @@ setup(
         ("share/applications", ["org.plomgrading.PlomClient.desktop"]),
         ("share/metainfo", ["org.plomgrading.PlomClient.metainfo.xml"]),
         ("share/icons/hicolor/128x128/apps/", ["org.plomgrading.PlomClient.png"]),
+        # ("share/plom/contrib", glob('contrib/**/*', recursive=True)),
+        (
+            "share/plom/contrib",
+            [
+                "contrib/README.txt",
+                "contrib/plom-return_codes_to_canvas_csv.py",
+                "contrib/plom-write_grades_to_canvas_csv.py",
+            ],
+        ),
     ],
     install_requires=list(set(client_install_requires + server_install_requires)),
 )
