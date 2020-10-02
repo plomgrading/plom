@@ -198,9 +198,9 @@ class RearrangementViewer(QDialog):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
-        self.numberOfPages = len(pageFiles)
         self.need_to_confirm = need_to_confirm
         self._setupUI()
+        pageData, pageFiles = self.temp_dedupe_filter(pageData, pageFiles)
         self.pageData = pageData
         self.pageFiles = pageFiles
         self.nameToIrefNFile = {}
@@ -313,6 +313,39 @@ class RearrangementViewer(QDialog):
         self.listB.selectionModel().selectionChanged.connect(
             lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
         )
+
+    def temp_dedupe_filter(self, pageData, pageFiles):
+        """A temporary hack for a side branch.  Usually should be a no-op.
+
+        This supports [1] and hopefully does nothing in other cases.
+
+        [1] https://gitlab.com/plom/plom/-/merge_requests/698
+
+        The data looks like the following.  We want to remove False rows that
+        have their md5 in one of the True rows:
+        ```
+        ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1] /tmp/plom_zq/tmpnqq.image
+        ['h1.2', '97521f4122df24ca012a12930391195a', True, 2] /tmp/plom_zq/tmp_om.image
+        ['h2.1', 'e224c22eda93456143fbac94beb0ffbd', False, 1] /tmp/plom_zq/tmpx0s.image
+        ['h2.2', '97521f4122df24ca012a12930391195a', False, 2] /tmp/plom_zq/tmpd5g.image
+        ```
+        """
+        bottom_md5_list = []
+        for x in pageData:
+            if x[2]:
+                bottom_md5_list.append(x[1])
+        new_pageData = []
+        new_pageFiles = []
+        for x, y in zip(pageData, pageFiles):
+            print("debug: {}, {}".format(x, y))
+            if x[2]:
+                new_pageData.append(x)
+                new_pageFiles.append(y)
+            else:
+                if x[1] not in bottom_md5_list:
+                    new_pageData.append(x)
+                    new_pageFiles.append(y)
+        return new_pageData, new_pageFiles
 
     def populateList(self):
         """
