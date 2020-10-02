@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Colin B. Macdonald
-# Copyright (C) Victoria Schuster
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Vala Vakilian
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
