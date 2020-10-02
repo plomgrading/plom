@@ -19,12 +19,11 @@ from plom.finish import make_canvas_gradefile
 
 canvas_fromfile = "canvas_from_export.csv"
 canvas_grades_tofile = "canvas_grades_for_import.csv"
+# TODO: check if former exists and latter does not, and give some
+# basic instructions
 
 # TODO: should get this from project?!
 Default_canvas_test_name = "Midterm ("  # almost certainly wrong
-
-# TODO: check if former exists and latter does not, and give some
-# basic instructions
 
 
 if __name__ == "__main__":
@@ -61,7 +60,7 @@ if __name__ == "__main__":
 
     Read "docs/returning_papers.md" before using this.
     """.format(
-            canvas_fromfile, canvas_test_name, canvas_grades_tofile,
+            canvas_fromfile, canvas_test_name, canvas_grades_tofile
         )
     )
     input("Press Enter to continue...")

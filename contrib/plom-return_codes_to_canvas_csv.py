@@ -20,12 +20,9 @@ from plom.finish import canvas_csv_add_return_codes, canvas_csv_check_pdf
 
 canvas_fromfile = "canvas_from_export.csv"
 canvas_return_tofile = "canvas_return_codes_for_import.csv"
-
-# TODO: should get this from project?!
-Default_canvas_test_name = "Midterm ("  # almost certainly wrong
-
 # TODO: check if former exists and latter does not, and give some
 # basic instructions
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
