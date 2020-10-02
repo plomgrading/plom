@@ -764,8 +764,9 @@ class Annotator(QWidget):
                 )
             )
         # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
+        is_dirty = True  # TODO: Issue #1085, don't ask if no annotations
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.pageData, self.testViewFiles,
+            self, testNumber, self.pageData, self.testViewFiles, is_dirty
         )
         if rearrangeView.exec_() == QDialog.Accepted:
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
