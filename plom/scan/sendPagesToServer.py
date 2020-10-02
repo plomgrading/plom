@@ -537,19 +537,13 @@ def bundle_name_from_filename(filename):
     """Return the bundle name for a file.
 
     Args:
-        filename (str, Path): name of file, currently this must be a
-            PDF file.
+        filename (str, Path): name of file, typically a PDF file.
 
     Returns
-        str: Currently bundle name is the stem of the file name with any
-            spaces replaced with underscores.
-
-    Exceptions:
-        ValueError: file is not a PDF file.
+        str: Currently bundle name is the stem of the file name with
+            some input sanitizing such as spaces replaced with underscores.
     """
     filename = Path(filename)
-    if filename.suffix.lower() != ".pdf":
-        raise ValueError("currently only PDF files are supported")
     return filename.stem.replace(" ", "_")
 
 
@@ -564,14 +558,11 @@ def bundle_name_and_md5(filename):
 
     Exceptions:
         FileNotFoundError: file does not exist.
-        ValueError: file is not a PDF file.
     """
     filename = Path(filename)
     if not filename.is_file():
         raise FileNotFoundError("not found or not a file/symlink")
-    if filename.suffix.lower() != ".pdf":
-        raise ValueError("currently only PDF files are supported")
-    bundle_name = filename.stem.replace(" ", "_")
+    bundle_name = bundle_name_from_filename(filename)
     md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
     return (bundle_name, md5)
 

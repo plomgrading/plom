@@ -119,29 +119,6 @@ def get_and_start_scan_msgr(server=None, password=None):
     return msgr
 
 
-# monkey patching b/c the official one fails on non-PDF
-def bundle_name_and_md5(filename):
-    """Return the bundle name and md5sum checksum for a file.
-
-    Args:
-        filename (str, Path): name of file.
-
-    Returns
-        tuple: (str, str) for bundle_name and md5sum.
-
-    Exceptions:
-        FileNotFoundError: file does not exist.
-        ValueError: file is not a PDF file.
-    """
-    filename = Path(filename)
-    if not filename.is_file():
-        raise FileNotFoundError("not found or not a file/symlink")
-    # TODO: used name instead of stem viz official plom
-    bundle_name = filename.name.replace(" ", "_")
-    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
-    return (bundle_name, md5)
-
-
 if __name__ == "__main__":
     q = [1, 2]
     print('TODO: Question hardcoded to "{}"'.format(q))
