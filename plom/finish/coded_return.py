@@ -99,8 +99,7 @@ def main():
     print("All done!  Next tasks:")
     print('  * Copy "{}" to your webserver'.format(codedReturnDir))
     print('  * Privately communicate info from "return_codes.csv"')
-    print("      - E.g., try `11_write_to_canvas_spreadsheet`")
-    print("        (warning: beta!) and upload to Canvas.")
+    print("      - E.g., see `contrib/plom-return_codes_to_canvas_csv.py`")
     print("  * Read docs about the security implications of all this.")
 
 

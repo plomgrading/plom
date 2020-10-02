@@ -15,8 +15,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 
-from plom.finish.return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
-from plom.finish.return_tools import make_canvas_gradefile
+from plom.finish import make_canvas_gradefile
 
 canvas_fromfile = "canvas_from_export.csv"
 canvas_grades_tofile = "canvas_grades_for_import.csv"

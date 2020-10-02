@@ -10,3 +10,6 @@ __license__ = "AGPL-3.0-or-later"
 CSVFilename = "marks.csv"
 
 from .clearLogin import clear_manager_login
+
+from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
+from .return_tools import make_canvas_gradefile
