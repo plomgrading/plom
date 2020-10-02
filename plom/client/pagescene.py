@@ -369,6 +369,22 @@ class PageScene(QGraphicsScene):
         br = self.sceneRect()
         w = br.width()
         h = br.height()
+        MINWIDTH = 1024  # subject to maxheight
+        MAXWIDTH = 16383
+        MAXHEIGHT = 8191
+        if w < MINWIDTH:
+            r = (1.0*w) / (1.0*h)
+            w = MINWIDTH
+            h = w / r
+            if h > MAXHEIGHT:
+                h = MAXHEIGHT
+                w = h * r
+        if w > MAXWIDTH:
+            r = (1.0*w) / (1.0*h)
+            w = MAXWIDTH
+            h = w / r
+        w = round(w)
+        h = round(h)
         # Create an output pixmap and painter (to export it)
         oimg = QPixmap(w, h)
         exporter = QPainter(oimg)
