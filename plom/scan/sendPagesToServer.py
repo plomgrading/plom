@@ -1,11 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 from collections import defaultdict
 from glob import glob
@@ -14,15 +9,11 @@ import hashlib
 import json
 import os
 import shutil
-import sys
 from pathlib import Path
-
-import toml
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom import PlomImageExts
-from plom.rules import isValidStudentNumber
 
 
 def extractTPV(name):

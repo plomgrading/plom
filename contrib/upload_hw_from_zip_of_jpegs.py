@@ -34,8 +34,7 @@ import getpass
 import pandas as pd
 
 from plom.messenger import ScanMessenger
-# TODO: upstream an __init__ change to get this from plom.scan
-from plom.scan.sendPagesToServer import bundle_name_and_md5
+from plom.scan import bundle_name_and_md5
 
 
 where_csv = Path('../../')
