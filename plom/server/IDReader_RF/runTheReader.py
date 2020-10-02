@@ -3,8 +3,11 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Colin B. Macdonald
 
 """
+Executable file frontend to the actual ID reader code.
+
 Note: Code in this file is very similar to runTheReader code for the
 Tensorflow model.
 """
@@ -17,15 +20,17 @@ import json
 import os
 import sys
 
-lock_file = sys.argv[1]
+from .idReader import run_id_reader
 
-if not os.path.isfile(lock_file):
-    exit(1)
 
-with open(lock_file) as fh:
-    fileDictAndRect = json.load(fh)
-    from .idReader import run_id_reader
+if __name__ == "__main__":
+    lock_file = sys.argv[1]
 
-    run_id_reader(fileDictAndRect[0], fileDictAndRect[1])
+    if not os.path.isfile(lock_file):
+        raise RuntimeError('Cannot acquire file "{}"'.format(lock_file))
 
-os.unlink(lock_file)
+    with open(lock_file) as fh:
+        fileDictAndRect = json.load(fh)
+        run_id_reader(fileDictAndRect[0], fileDictAndRect[1])
+
+    os.unlink(lock_file)
