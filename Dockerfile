@@ -46,6 +46,7 @@ RUN apt-get -y update && \
 # TODO: don't need/want /src in the docker image
 COPY setup.py README.md org.plomgrading.PlomClient.* /src/
 COPY plom/ /src/plom/
+COPY contrib/ /src/contrib/
 WORKDIR /src
 RUN python3 -m pip install .
 
