@@ -117,6 +117,17 @@ for x in (spCheck, spCSV, spAssemble, spClear):
 def main():
     args = parser.parse_args()
 
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
+        except KeyError:
+            pass
+
     if args.command == "status":
         plom.finish.check_completed.main(args.server, args.password)
     elif args.command == "csv":
