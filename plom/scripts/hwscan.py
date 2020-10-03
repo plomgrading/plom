@@ -14,11 +14,9 @@ import argparse
 from collections import defaultdict
 import glob
 import os
-import shutil
 from pathlib import Path
 
 from plom import __version__
-from plom.rules import isValidStudentNumber
 from plom.scan import bundle_name_and_md5
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 

@@ -49,8 +49,8 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-import shutil
 from pathlib import Path
+from warnings import warn
 
 import toml
 
@@ -185,7 +185,6 @@ def uploadImages(
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
     """
-    from warnings import warn
     from plom.scan import sendPagesToServer, scansToImages
 
     if bundle_name.lower().endswith(".pdf"):
@@ -278,22 +277,6 @@ def uploadImages(
         if bundle_has_nonuploaded_collisions(bundledir):
             print_collision_warning(bundledir)
             print('If you want to upload these collisions, rerun with "--collisions".')
-
-
-def _doAllToScans(server, password, scanPDFs):
-    """Process and upload all give PDFs
-
-    Currently disabled.
-    """
-    from plom.scan import scansToImages, sendPagesToServer, readQRCodes
-
-    make_required_directories()
-
-    print("Processing and uploading the following files: {}".format(scanPDFs))
-    # do all steps for one PDF at a time.
-    for fname in scanPDFs:
-        self.processScans(server, password, fname)
-        self.uploadImages(server, password, fname)
 
 
 parser = argparse.ArgumentParser(
