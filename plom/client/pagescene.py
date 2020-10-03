@@ -373,14 +373,14 @@ class PageScene(QGraphicsScene):
         MAXWIDTH = 16383
         MAXHEIGHT = 8191
         if w < MINWIDTH:
-            r = (1.0*w) / (1.0*h)
+            r = (1.0 * w) / (1.0 * h)
             w = MINWIDTH
             h = w / r
             if h > MAXHEIGHT:
                 h = MAXHEIGHT
                 w = h * r
         if w > MAXWIDTH:
-            r = (1.0*w) / (1.0*h)
+            r = (1.0 * w) / (1.0 * h)
             w = MAXWIDTH
             h = w / r
         w = round(w)
