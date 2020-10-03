@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * A collection of utility scripts now ships in `share/plom/contrib`.
 
 ### Changed
+* Command-line utilities can load credentials from environment variables.
 
 ### Fixed
 
