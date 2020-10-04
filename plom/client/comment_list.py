@@ -572,11 +572,11 @@ class SimpleCommentTable(QTableView):
     def currentItem(self):
         # If no selected row, then select row 0.
         # else select current row - triggers a signal.
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
-            self.selectRow(0)
-        else:
-            self.selectRow(sel[0].row())
+        r = self.getCurrentItemRow()
+        if r is None:
+            if self.cmodel.rowCount() >= 1:
+                r = 0
+        self.setCurrentItemRow(r)
 
     def getCurrentItemRow(self):
         """Return the currently-selected row or None if no selection."""
@@ -598,7 +598,10 @@ class SimpleCommentTable(QTableView):
         """Move selection to the next row, wrapping around if needed."""
         r = self.getCurrentItemRow()
         if r is None:
-            return
+            if self.cmodel.rowCount() >= 1:
+                r = 0
+            else:
+                return
         r = (r + 1) % self.cmodel.rowCount()
         self.setCurrentItemRow(r)
 
@@ -606,7 +609,10 @@ class SimpleCommentTable(QTableView):
         """Move selection to the prevoous row, wrapping around if needed."""
         r = self.getCurrentItemRow()
         if r is None:
-            return
+            if self.cmodel.rowCount() >= 1:
+                r = 0
+            else:
+                return
         r = (r - 1) % self.cmodel.rowCount()
         self.setCurrentItemRow(r)
 
