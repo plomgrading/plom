@@ -595,20 +595,20 @@ class SimpleCommentTable(QTableView):
             self.selectRow(r)
 
     def nextItem(self):
-        # Select next row (wraps around)
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
-            self.selectRow(0)
-        else:
-            self.selectRow((sel[0].row() + 1) % self.cmodel.rowCount())
+        """Move selection to the next row, wrapping around if needed."""
+        r = self.getCurrentItemRow()
+        if r is None:
+            return
+        r = (r + 1) % self.cmodel.rowCount()
+        self.setCurrentItemRow(r)
 
     def previousItem(self):
-        # Select previous row (wraps around)
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
-            self.selectRow(0)
-        else:
-            self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
+        """Move selection to the prevoous row, wrapping around if needed."""
+        r = self.getCurrentItemRow()
+        if r is None:
+            return
+        r = (r - 1) % self.cmodel.rowCount()
+        self.setCurrentItemRow(r)
 
     def insertItem(self, com):
         self.clist.append(com)
