@@ -552,12 +552,11 @@ class SimpleCommentTable(QTableView):
 
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
+        r = self.getCurrentItemRow()
+        if r is None:
             return
-        idx = int(self.cmodel.index(sel[0].row(), 2).data())
+        idx = int(self.cmodel.index(r, 2).data())
         self.clist.pop(idx)
-        # self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.populateTable()
 
