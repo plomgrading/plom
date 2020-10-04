@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* There are now constraints on the returned image resolution preventing huge return images in some cases.
 
 
 ## [0.5.1] - 2020-09-25
