@@ -390,31 +390,31 @@ class PageScene(QGraphicsScene):
         MAXWIDTH = 16383
         MAXHEIGHT = 8191
         MAX_PER_PAGE_WIDTH = 2000
-        msg = None
+        msg = []
         num_pages = self.how_many_underlying_images_wide()
         if w < MINWIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = MINWIDTH
             h = w / r
-            msg = "Increasing png width because of minimum width constraint"
+            msg.append("Increasing png width because of minimum width constraint")
             if h > MAXHEIGHT:
                 h = MAXHEIGHT
                 w = h * r
-                msg = "Constraining png height by min width constraint"
+                msg.append("Constraining png height by min width constraint")
         if w > num_pages * MAX_PER_PAGE_WIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = num_pages * MAX_PER_PAGE_WIDTH
             h = w / r
-            msg = "Constraining png width by maximum per page width"
+            msg.append("Constraining png width by maximum per page width")
         if w > MAXWIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = MAXWIDTH
             h = w / r
-            msg = "Constraining png width by overall maximum width"
+            msg.append("Constraining png width by overall maximum width")
         w = round(w)
         h = round(h)
         if msg:
-            log.warning("{}: {}x{}".format(msg, w, h))
+            log.warning("{}: {}x{}".format(". ".join(msg), w, h))
 
         # Create an output pixmap and painter (to export it)
         oimg = QPixmap(w, h)
