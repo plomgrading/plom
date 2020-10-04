@@ -541,10 +541,11 @@ class SimpleCommentTable(QTableView):
         # the comment signal for the annotator to read.
         if index == 0:  # make sure something is selected
             self.currentItem()
-        r = self.selectedIndexes()[0].row()
-        self.commentSignal.emit(
-            [self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()]
-        )
+        r = self.getCurrentItemRow()
+        if r is not None:
+            self.commentSignal.emit(
+                [self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()]
+            )
 
     def saveCommentList(self):
         commentSaveList(self.clist)
