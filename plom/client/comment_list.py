@@ -591,7 +591,7 @@ class SimpleCommentTable(QTableView):
             r (int): The integer representing the row number in the
                 comments table.  If r is None, do nothing.
         """
-        if r:
+        if r is not None:
             self.selectRow(r)
 
     def nextItem(self):
