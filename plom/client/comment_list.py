@@ -252,19 +252,8 @@ class CommentWidget(QWidget):
         return self.CL.getCurrentItemRow()
 
     def setCurrentItemRow(self, r):
-        """Reset the comment row on a new task to last highlighted comment.
-
-        Is called whenever a new task is requested, basically resets the
-
-        Args:
-            r (int): The integer representing the column number in the
-                comments table.
-        """
-        # We will make row 0 as a default in case
-        # due to Issue #1053. TODO: Come up with a better fix.
-        if r is None:
-            r = 0
-        self.CL.selectRow(r)
+        """Reset the comment row on a new task to last highlighted comment."""
+        return self.CL.setCurrentItemRow(r)
 
     def addFromTextList(self):
         # text items in scene.
@@ -589,23 +578,20 @@ class SimpleCommentTable(QTableView):
             self.selectRow(sel[0].row())
 
     def getCurrentItemRow(self):
-        if self.selectedIndexes():
-            return self.selectedIndexes()[0].row()
+        """Return the currently-selected row or None if no selection."""
+        if not self.selectedIndexes():
+            return None
+        return self.selectedIndexes()[0].row()
 
     def setCurrentItemRow(self, r):
         """Reset the comment row on a new task to last highlighted comment.
 
-        Is called whenever a new task is requested, basically resets the
-
         Args:
-            r (int): The integer representing the column number in the
-                comments table.
+            r (int): The integer representing the row number in the
+                comments table.  If r is None, do nothing.
         """
-        # We will make row 0 as a default in case
-        # due to Issue #1053. TODO: Come up with a better fix.
-        if r is None:
-            r = 0
-        self.selectRow(r)
+        if r:
+            self.selectRow(r)
 
     def nextItem(self):
         # Select next row (wraps around)
