@@ -13,6 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import datetime
 import signal
+import os
 import sys
 import traceback as tblib
 
@@ -69,14 +70,29 @@ def main():
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
-    parser.add_argument("user", type=str, nargs="?")
-    parser.add_argument("password", type=str, nargs="?")
+    parser.add_argument(
+        "user",
+        type=str,
+        nargs="?",
+        help="Also checks the environment variable PLOM_USER.",
+    )
+    parser.add_argument(
+        "password",
+        type=str,
+        nargs="?",
+        help="Also checks the environment variable PLOM_PASSWORD.",
+    )
     parser.add_argument(
         "-s",
         "--server",
         metavar="SERVER[:PORT]",
         action="store",
-        help="Which server to contact, port defaults to {}.".format(Default_Port),
+        help="""
+            Which server to contact, port defaults to {}.
+            Also checks the environment variable {} if omitted.
+            """.format(
+            Default_Port, "PLOM_SERVER"
+        ),
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
@@ -91,6 +107,22 @@ def main():
         help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
     )
     args = parser.parse_args()
+
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_PASSWORD"]
+        except KeyError:
+            pass
+    if not hasattr(args, "user") or not args.user:
+        try:
+            args.user = os.environ["PLOM_USER"]
+        except KeyError:
+            pass
 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
