@@ -342,7 +342,7 @@ class RearrangementViewer(QDialog):
                 self.pageData[k][0], self.pageFiles[k], self.pageData[k][2]
             )
             # if position in current annot is non-null then add to list of pages to move between lists.
-            if self.pageData[k][3]:
+            if self.pageData[k][2] and self.pageData[k][3]:
                 move_order[self.pageData[k][3]] = self.pageData[k][0]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.removeItem(name=move_order[k]))
