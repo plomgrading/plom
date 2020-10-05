@@ -193,11 +193,12 @@ class SinkList(QListWidget):
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, pageData, pageFiles):
+    def __init__(self, parent, testNumber, pageData, pageFiles, need_to_confirm=False):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pageFiles)
+        self.need_to_confirm = need_to_confirm
         self._setupUI()
         self.pageData = pageData
         self.pageFiles = pageFiles
@@ -436,13 +437,13 @@ class RearrangementViewer(QDialog):
         Returns:
 
         """
-        # TODO: Issue #1085, don't ask if no annotations
-        msg = SimpleMessage(
-            "Are you sure you want to save this page order? This will erase "
-            "all your annotations."
-        )
-        if msg.exec() == QMessageBox.No:
-            return
+        if self.need_to_confirm:
+            msg = SimpleMessage(
+                "Are you sure you want to save this page order? This will erase "
+                "all your annotations."
+            )
+            if msg.exec() == QMessageBox.No:
+                return
 
         self.permute = []
         for n in self.listB.getNameList():
