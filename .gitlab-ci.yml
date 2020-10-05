@@ -479,12 +479,12 @@ winmintest:
   script:
   - choco install -y python3
   - refreshenv
-  - c:\Python38\Scripts\pip install toml
-  - c:\Python38\Scripts\pip install requests-toolbelt
-  - c:\Python38\Scripts\pip install pyqt5
+  - c:\Python39\Scripts\pip install toml
+  - c:\Python39\Scripts\pip install requests-toolbelt
+  - c:\Python39\Scripts\pip install pyqt5
   - refreshenv
   - echo $Env:Path
-  - c:\Python38\python -m plom.scripts.client -h
+  - c:\Python39\python -m plom.scripts.client -h
 
 
 # TODO: consider doing this only on the master branch
