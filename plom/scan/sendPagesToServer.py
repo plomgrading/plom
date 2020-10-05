@@ -1,11 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 from collections import defaultdict
 from glob import glob
@@ -14,15 +9,11 @@ import hashlib
 import json
 import os
 import shutil
-import sys
 from pathlib import Path
-
-import toml
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import *
 from plom import PlomImageExts
-from plom.rules import isValidStudentNumber
 
 
 def extractTPV(name):
@@ -537,19 +528,13 @@ def bundle_name_from_filename(filename):
     """Return the bundle name for a file.
 
     Args:
-        filename (str, Path): name of file, currently this must be a
-            PDF file.
+        filename (str, Path): name of file, typically a PDF file.
 
     Returns
-        str: Currently bundle name is the stem of the file name with any
-            spaces replaced with underscores.
-
-    Exceptions:
-        ValueError: file is not a PDF file.
+        str: Currently bundle name is the stem of the file name with
+            some input sanitizing such as spaces replaced with underscores.
     """
     filename = Path(filename)
-    if filename.suffix.lower() != ".pdf":
-        raise ValueError("currently only PDF files are supported")
     return filename.stem.replace(" ", "_")
 
 
@@ -564,14 +549,11 @@ def bundle_name_and_md5(filename):
 
     Exceptions:
         FileNotFoundError: file does not exist.
-        ValueError: file is not a PDF file.
     """
     filename = Path(filename)
     if not filename.is_file():
         raise FileNotFoundError("not found or not a file/symlink")
-    if filename.suffix.lower() != ".pdf":
-        raise ValueError("currently only PDF files are supported")
-    bundle_name = filename.stem.replace(" ", "_")
+    bundle_name = bundle_name_from_filename(filename)
     md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
     return (bundle_name, md5)
 

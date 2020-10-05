@@ -19,6 +19,7 @@ from pathlib import Path
 
 from plom import __version__
 from plom.rules import isValidStudentNumber
+from plom.scan import bundle_name_and_md5
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 
 
@@ -149,7 +150,7 @@ def processLooseScans(
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name, md5 = sendPagesToServer.bundle_name_and_md5(pdf_fname)
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_required_directories(bundledir)
 
@@ -279,7 +280,7 @@ def processHWScans(
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name, md5 = sendPagesToServer.bundle_name_and_md5(pdf_fname)
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
     make_required_directories(bundledir)
 

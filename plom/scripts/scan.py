@@ -62,6 +62,7 @@ from plom.scan import (
     upload_collisions,
     print_collision_warning,
     bundle_has_nonuploaded_collisions,
+    bundle_name_and_md5,
 )
 
 
@@ -119,7 +120,6 @@ def processScans(server, password, pdf_fname, skip_gamma):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
-    from plom.scan.sendPagesToServer import bundle_name_and_md5
 
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
