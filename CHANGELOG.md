@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Command-line utilities can load credentials from environment variables.
 
 ### Fixed
+* Fixed crashes related to deleting comments.
 
 
 ## [0.5.1] - 2020-09-25

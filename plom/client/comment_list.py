@@ -1,11 +1,15 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Vala Vakilian
+
 import os
-import toml
 import re
 import time
+
+import toml
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QDropEvent, QStandardItem, QStandardItemModel
@@ -248,7 +252,8 @@ class CommentWidget(QWidget):
         return self.CL.getCurrentItemRow()
 
     def setCurrentItemRow(self, r):
-        self.CL.selectRow(r)
+        """Reset the comment row on a new task to last highlighted comment."""
+        return self.CL.setCurrentItemRow(r)
 
     def addFromTextList(self):
         # text items in scene.
@@ -536,22 +541,22 @@ class SimpleCommentTable(QTableView):
         # the comment signal for the annotator to read.
         if index == 0:  # make sure something is selected
             self.currentItem()
-        r = self.selectedIndexes()[0].row()
-        self.commentSignal.emit(
-            [self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()]
-        )
+        r = self.getCurrentItemRow()
+        if r is not None:
+            self.commentSignal.emit(
+                [self.cmodel.index(r, 0).data(), self.cmodel.index(r, 1).data()]
+            )
 
     def saveCommentList(self):
         commentSaveList(self.clist)
 
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
+        r = self.getCurrentItemRow()
+        if r is None:
             return
-        idx = int(self.cmodel.index(sel[0].row(), 2).data())
+        idx = int(self.cmodel.index(r, 2).data())
         self.clist.pop(idx)
-        # self.cmodel.removeRow(sel[0].row())
         # TODO: maybe sloppy to rebuild, need automatic cmodel ontop of clist
         self.populateTable()
 
@@ -566,34 +571,49 @@ class SimpleCommentTable(QTableView):
     def currentItem(self):
         # If no selected row, then select row 0.
         # else select current row - triggers a signal.
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
-            self.selectRow(0)
-        else:
-            self.selectRow(sel[0].row())
+        r = self.getCurrentItemRow()
+        if r is None:
+            if self.cmodel.rowCount() >= 1:
+                r = 0
+        self.setCurrentItemRow(r)
 
     def getCurrentItemRow(self):
-        if self.selectedIndexes():
-            return self.selectedIndexes()[0].row()
+        """Return the currently-selected row or None if no selection."""
+        if not self.selectedIndexes():
+            return None
+        return self.selectedIndexes()[0].row()
 
     def setCurrentItemRow(self, r):
-        self.selectRow(r)
+        """Reset the comment row on a new task to last highlighted comment.
+
+        Args:
+            r (int): The integer representing the row number in the
+                comments table.  If r is None, do nothing.
+        """
+        if r is not None:
+            self.selectRow(r)
 
     def nextItem(self):
-        # Select next row (wraps around)
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
-            self.selectRow(0)
-        else:
-            self.selectRow((sel[0].row() + 1) % self.cmodel.rowCount())
+        """Move selection to the next row, wrapping around if needed."""
+        r = self.getCurrentItemRow()
+        if r is None:
+            if self.cmodel.rowCount() >= 1:
+                r = 0
+            else:
+                return
+        r = (r + 1) % self.cmodel.rowCount()
+        self.setCurrentItemRow(r)
 
     def previousItem(self):
-        # Select previous row (wraps around)
-        sel = self.selectedIndexes()
-        if len(sel) == 0:
-            self.selectRow(0)
-        else:
-            self.selectRow((sel[0].row() - 1) % self.cmodel.rowCount())
+        """Move selection to the prevoous row, wrapping around if needed."""
+        r = self.getCurrentItemRow()
+        if r is None:
+            if self.cmodel.rowCount() >= 1:
+                r = 0
+            else:
+                return
+        r = (r - 1) % self.cmodel.rowCount()
+        self.setCurrentItemRow(r)
 
     def insertItem(self, com):
         self.clist.append(com)
