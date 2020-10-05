@@ -6,7 +6,7 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log
+from .routeutils import validate_required_fields, log_request, log
 
 
 class UploadHandler:
@@ -50,6 +50,8 @@ class UploadHandler:
         * there does not need to be one-to-one relationship betewen
           bundles and Exam Papers or Homework Papers.
         """
+        log_request("createNewBundle", request)
+
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "bundle", "md5sum"]):
             return web.Response(status=400)
