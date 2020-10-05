@@ -1,10 +1,21 @@
 <!--
 __author__ = "Andrew Rechnitzer, Colin B Macdonald, Elyse Yeager, Vinayak Vatsal"
-__copyright__ = "Copyright (C) 2018-9 Andrew Rechnitzer"
+__copyright__ = "Copyright (C) 2018-2018 Andrew Rechnitzer"
 __license__ = "GFDL"
  -->
 
-# Returning papers
+# Returning papers via the Canvas API
+
+Oct 2020: we're in the process of a adopting a solution partially based
+on the Canvas API.  Some of the info below is out of date.
+
+Under this new workflow, ignore everything about "return codes" below.
+We still use the `share/plom/contrib` script `plom-write_grades_to_canvas_csv.py`
+to create `canvas_grades_to_import.csv`.
+
+- - - -
+
+# Returning papers via Canvas using secret codes
 
 ## Canvas limitations
 
@@ -22,17 +33,19 @@ Start by calling `plom-finish webpage`.
 
 ## Uploading grades
 
-  * Before starting, make sure your grade posting policy in Canvas is set
+  * Before starting, make sure your Grade Posting Policy in Canvas is set
     to "manual".
   * The relevant switch/tab is under the gear icon in the top-right corner
     of the gradebook.
+  * TODO: this is a **global setting**.  It will break automatic updates of
+    Webwork assignment grades.  You'll need to manually set those each back
+    to automatic.  TODO: as of Oct 2020: I'm experimenting with leaving
+    the global setting as "Automatic", then creating my "Test 2" column
+    and immediately setting its local policy to "Manual".
   * Go to Canvas, create a column with appropriate name for your test.
 
       1.  Suppose that name is "Test 2".
       2.  See details below how to do this.
-
-  * Edit `11_write_to_canvas_spreadsheet` to specify "Test 2 (".  Note the
-    open parenthesis.  TODO: this is obviously not ideal!
 
 
 ## Uploading the secret "return code" to Canvas
@@ -51,7 +64,7 @@ We have a secret code for each student.  We want to upload these numbers to Canv
           thinks its part of their score.
       6.  Publish, and check for the icon showing you that it's hidden.
       7.  Again: the name *must* be `return code` (or you will need to make
-          changes to `11_....py`).
+          changes to the Plom source).
 
   * As of autumn 2019 Canvas gradebook doesn't use "mute"; instead we set
     the "Grade Posting Policy" to "Manual", as noted above.  One can
@@ -64,12 +77,12 @@ We have a secret code for each student.  We want to upload these numbers to Canv
 
 ## Generating the files
 
-   * TODO: Currently under revision.
+   * Find some utilities in the `share/plom/contrib` directory.
 
-   * Run `11_write_to_canvas_spreadsheet.py` to create two csv files:
-
-       1. `canvas_return_codes_to_import.csv`.
-       2. `canvas_grades_to_import.csv`.
+       1. run `plom-return_codes_to_canvas_csv.py`
+       2. this creates `canvas_return_codes_to_import.csv`.
+       3. run `plom-write_grades_to_canvas_csv.py`
+       4. this creates `canvas_grades_to_import.csv`.
 
    * Upload/Import one or both of these files back to Canvas.
 
@@ -125,3 +138,7 @@ harmless.
 help getting access to `amcweb`?  When logged into my VM, the path is
 `/zfs/users/cbm/www`.  This is different than when logged into pascal or
 hypatia.
+
+"12 digits don't work any more in 2020!"
+: perhaps Canvas has changed something?  We're probably moving away from
+this mode of return.  TODO: update these documents.
