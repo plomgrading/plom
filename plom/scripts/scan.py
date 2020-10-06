@@ -62,6 +62,7 @@ from plom.scan import (
     upload_collisions,
     print_collision_warning,
     bundle_has_nonuploaded_collisions,
+    bundle_name_and_md5,
 )
 
 
@@ -119,7 +120,6 @@ def processScans(server, password, pdf_fname, skip_gamma):
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
-    from plom.scan.sendPagesToServer import bundle_name_and_md5
 
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
@@ -358,6 +358,17 @@ for x in (spU, spS, spC, spP):
 
 def main():
     args = parser.parse_args()
+
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_SCAN_PASSWORD"]
+        except KeyError:
+            pass
 
     if args.command == "process":
         processScans(args.server, args.password, args.scanPDF, args.no_gamma_shift)

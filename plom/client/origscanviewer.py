@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Colin B. Macdonald
-# Copyright (C) Victoria Schuster
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Vala Vakilian
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
@@ -42,8 +43,8 @@ class SourceList(QListWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
-        self.setIconSize(QSize(256, 256))
-        self.setSpacing(16)
+        self.setIconSize(QSize(320, 320))
+        self.setSpacing(8)
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
         self.item_positions = {}
@@ -107,8 +108,8 @@ class SinkList(QListWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
-        self.setIconSize(QSize(256, 256))
-        self.setSpacing(16)
+        self.setIconSize(QSize(320, 320))
+        self.setSpacing(8)
         self.setWrapping(False)
         self.item_belongs = (
             {}
@@ -193,11 +194,12 @@ class SinkList(QListWidget):
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, pageData, pageFiles):
+    def __init__(self, parent, testNumber, pageData, pageFiles, need_to_confirm=False):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.numberOfPages = len(pageFiles)
+        self.need_to_confirm = need_to_confirm
         self._setupUI()
         self.pageData = pageData
         self.pageFiles = pageFiles
@@ -229,19 +231,19 @@ class RearrangementViewer(QDialog):
         self.appendB = QToolButton()
         self.appendB.setText("Add Page")
         self.appendB.setArrowType(Qt.DownArrow)
-        self.appendB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.UpArrow)
         self.removeB.setText("Remove Page")
-        self.removeB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.LeftArrow)
         self.sLeftB.setText("Shift Left")
-        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sRightB = QToolButton()
         self.sRightB.setArrowType(Qt.RightArrow)
         self.sRightB.setText("Shift Right")
-        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.reverseB = QPushButton("Reverse Order")
 
         try:
@@ -253,25 +255,26 @@ class RearrangementViewer(QDialog):
         self.rotateB_cw = QPushButton(
             QIcon("{}/rotate_clockwise.svg".format(base_path)), ""
         )
+        self.rotateB_cw.setText("Rotate CW")
         self.rotateB_ccw = QPushButton(
             QIcon("{}/rotate_counter_clockwise.svg".format(base_path)), ""
         )
+        self.rotateB_ccw.setText("Rotate CCW")
 
-        self.closeB = QPushButton("Close")
-        self.acceptB = QPushButton("Accept new layout")
+        self.closeB = QPushButton("&Close")
+        self.acceptB = QPushButton("&Accept")
 
         self.permute = [False]
 
         hb1 = QHBoxLayout()
         hb1.addWidget(self.appendB)
         hb1.addWidget(self.removeB)
-        hb2 = QHBoxLayout()
-        hb2.addWidget(self.sLeftB)
-        hb2.addWidget(self.sRightB)
 
         hb3 = QHBoxLayout()
         hb3.addWidget(self.rotateB_cw)
         hb3.addWidget(self.rotateB_ccw)
+        hb3.addWidget(self.sLeftB)
+        hb3.addWidget(self.sRightB)
         hb3.addWidget(self.reverseB)
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
@@ -287,7 +290,6 @@ class RearrangementViewer(QDialog):
         vb0.addLayout(hb1)
         vb0.addWidget(thisQuestion)
         vb0.addWidget(self.scrollB)
-        vb0.addLayout(hb2)
         vb0.addLayout(hb3)
 
         self.setLayout(vb0)
@@ -340,7 +342,7 @@ class RearrangementViewer(QDialog):
                 self.pageData[k][0], self.pageFiles[k], self.pageData[k][2]
             )
             # if position in current annot is non-null then add to list of pages to move between lists.
-            if self.pageData[k][3]:
+            if self.pageData[k][2] and self.pageData[k][3]:
                 move_order[self.pageData[k][3]] = self.pageData[k][0]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.removeItem(name=move_order[k]))
@@ -436,13 +438,13 @@ class RearrangementViewer(QDialog):
         Returns:
 
         """
-        # TODO: Issue #1085, don't ask if no annotations
-        msg = SimpleMessage(
-            "Are you sure you want to save this page order? This will erase "
-            "all your annotations."
-        )
-        if msg.exec() == QMessageBox.No:
-            return
+        if self.need_to_confirm:
+            msg = SimpleMessage(
+                "Are you sure you want to save this page order? This will erase "
+                "all your annotations."
+            )
+            if msg.exec() == QMessageBox.No:
+                return
 
         self.permute = []
         for n in self.listB.getNameList():

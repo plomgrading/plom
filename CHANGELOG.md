@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * A collection of utility scripts now ships in `share/plom/contrib`.
 
 ### Changed
+* Command-line utilities can load credentials from environment variables.
 
 ### Fixed
 * There are now constraints on the returned image resolution preventing huge return images in some cases.
+* Fixed crashes related to deleting comments.
 
 
 ## [0.5.1] - 2020-09-25

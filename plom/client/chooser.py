@@ -1,32 +1,35 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Forest Kobayashi
 
+"""Chooser dialog"""
 
-import toml
+__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and others"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
+
 import os
 import datetime
 import logging
+import toml
 
-from PyQt5.QtCore import pyqtSlot, QTimer
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
-
-from .uiFiles.ui_chooser import Ui_Chooser
-from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
-from plom.plom_exceptions import *
-from . import marker
-from . import identifier
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
+from plom.plom_exceptions import *
 from plom.messenger import Messenger
+
+from .uiFiles.ui_chooser import Ui_Chooser
+from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
+from . import marker
+from . import identifier
+
 
 # TODO: for now, a global (to this module), later maybe in the QApp?
 messenger = None

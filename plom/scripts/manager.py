@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+
 """Plom server management GUI tool."""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
-import datetime
 import signal
+import os
 import sys
 import traceback as tblib
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom.manager.manager import Manager
 from plom import Default_Port
@@ -79,6 +82,17 @@ def main():
         help="Which server to contact, port defaults to {}.".format(Default_Port),
     )
     args = parser.parse_args()
+
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
+        except KeyError:
+            pass
 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
