@@ -12,7 +12,7 @@ import shutil
 from pathlib import Path
 
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
 
 
@@ -109,8 +109,8 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
         msgr (Messenger): an open authenticated communication mechanism.
         bundle_name (str): the name of the bundle we are sending.
         files (list of pathlib.Path): the page images to upload.
-        skip_list (list of int): the bundle-orders of pages already in the system
-            and so can be skipped.
+        skip_list (list of int): the bundle-orders of pages already in
+            the system and so can be skipped.
 
     Returns:
         defaultdict: TODO document this.
@@ -161,13 +161,13 @@ def extractIDQO(fileName):  # get ID, Question and Order
     """Expecting filename of the form blah.SID.Q-N.pdf - return SID Q and N"""
     splut = fileName.split(".")  # easy to get SID, and Q
 
-    id = splut[-3]
+    sid = splut[-3]
     # split again, now on "-" to separate Q and N
     resplut = splut[-2].split("-")
     q = int(resplut[0])
     n = int(resplut[1])
 
-    return (id, q, n)
+    return (sid, q, n)
 
 
 def extractJIDO(fileName):  # get just ID, Order
@@ -176,10 +176,10 @@ def extractJIDO(fileName):  # get just ID, Order
     splut = fileName.split(".")  # easy to get SID-N
     # split again, now on "-" to separate SID and N
     resplut = splut[-2].split("-")
-    id = int(resplut[0])
+    sid = int(resplut[0])
     n = int(resplut[1])
 
-    return (id, n)
+    return (sid, n)
 
 
 def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
@@ -191,8 +191,8 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
         question (int): the question being uploaded
-        skip_list (list of int): the bundle-orders of pages already in the system
-            and so can be skipped.
+        skip_list (list of int): the bundle-orders of pages already in
+            the system and so can be skipped.
 
     Returns:
         defaultdict: TODO document this.
@@ -242,8 +242,8 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
         question (int): the question being uploaded
-        skip_list (list of int): the bundle-orders of pages already in the system
-            and so can be skipped.
+        skip_list (list of int): the bundle-orders of pages already in
+            the system and so can be skipped.
 
     Returns:
         defaultdict: TODO document this.
@@ -285,7 +285,8 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
 def uploadTPages(bundleDir, skip_list, server=None, password=None):
     """Upload the test pages to the server.
 
-    Skips pages-image with orders in the skip-list (ie the page number within the bundle.pdf)
+    Skips pages-image with orders in the skip-list (i.e., the page
+    number within the bundle.pdf)
 
     Bundle must already be created.  We will upload the
     files and then send a 'please trigger an update' message to the server.
@@ -318,9 +319,6 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
             'In order to force-logout the existing authorisation run "plom-scan clear" or "plom-hwscan clear"'
         )
         exit(10)
-
-    spec = msgr.get_spec()
-    numberOfPages = spec["numberOfPages"]
 
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
@@ -382,9 +380,6 @@ def uploadHWPages(
         )
         exit(10)
 
-    spec = msgr.get_spec()
-    numberOfPages = spec["numberOfPages"]
-
     file_list = []
     # files are sitting in "bundles/submittedHWByQ/<bundle_name>"
     os.chdir(os.path.join("bundles", "submittedHWByQ", bundle_name))
@@ -412,7 +407,8 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
     """Upload the hw pages to the server.
 
     lpages uploaded to given student_id.
-    Skips pages-image with orders in the skip-list (ie the page number within the bundle.pdf)
+    Skips pages-image with orders in the skip-list (i.e., the page
+    number within the bundle.pdf)
 
     Bundle must already be created.  We will upload the
     files and then send a 'please trigger an update' message to the server.
@@ -445,9 +441,6 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
         exit(10)
-
-    spec = msgr.get_spec()
-    numberOfPages = spec["numberOfPages"]
 
     file_list = []
     # files are sitting in "bundles/submittedLoose/<bundle_name>"
