@@ -285,6 +285,23 @@ class PageScene(QGraphicsScene):
     #
     #     self.addItem(self.underImage)
 
+    def how_many_underlying_images_wide(self):
+        """How many images wide is the bottom layer?
+
+        Currently this is just the number of images (because we layout
+        in one long row) but future revisions might support alternate
+        layouts.
+        """
+        return len(self.imageNames)
+
+    def how_many_underlying_images_high(self):
+        """How many images high is the bottom layer?
+
+        Currently this is always 1 because we align the images in a
+        single row but future revisions might support alternate layouts.
+        """
+        return 1
+
     def setToolMode(self, mode):
         """
         Sets the current toolMode.
@@ -369,6 +386,36 @@ class PageScene(QGraphicsScene):
         br = self.sceneRect()
         w = br.width()
         h = br.height()
+        MINWIDTH = 1024  # subject to maxheight
+        MAXWIDTH = 16383
+        MAXHEIGHT = 8191
+        MAX_PER_PAGE_WIDTH = 2000
+        msg = []
+        num_pages = self.how_many_underlying_images_wide()
+        if w < MINWIDTH:
+            r = (1.0 * w) / (1.0 * h)
+            w = MINWIDTH
+            h = w / r
+            msg.append("Increasing png width because of minimum width constraint")
+            if h > MAXHEIGHT:
+                h = MAXHEIGHT
+                w = h * r
+                msg.append("Constraining png height by min width constraint")
+        if w > num_pages * MAX_PER_PAGE_WIDTH:
+            r = (1.0 * w) / (1.0 * h)
+            w = num_pages * MAX_PER_PAGE_WIDTH
+            h = w / r
+            msg.append("Constraining png width by maximum per page width")
+        if w > MAXWIDTH:
+            r = (1.0 * w) / (1.0 * h)
+            w = MAXWIDTH
+            h = w / r
+            msg.append("Constraining png width by overall maximum width")
+        w = round(w)
+        h = round(h)
+        if msg:
+            log.warning("{}: {}x{}".format(". ".join(msg), w, h))
+
         # Create an output pixmap and painter (to export it)
         oimg = QPixmap(w, h)
         exporter = QPainter(oimg)

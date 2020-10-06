@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Command-line utilities can load credentials from environment variables.
 
 ### Fixed
+* There are now constraints on the returned image resolution preventing huge return images in some cases.
 * Fixed crashes related to deleting comments.
 
 
