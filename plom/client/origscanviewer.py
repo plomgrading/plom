@@ -88,10 +88,11 @@ class SourceList(QListWidget):
         return ci.text()
 
     def returnItem(self, name):
+        if name is None:  # Issue #1200 workaround
+            return
         ci = self.item(self.item_positions[name])
         if ci:
             ci.setHidden(False)
-        return
 
     def viewImage(self, qi):
         self.parent.viewImage(self.item_files[qi.text()])
