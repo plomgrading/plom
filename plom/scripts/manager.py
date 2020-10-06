@@ -45,11 +45,6 @@ def _exception_hook(exctype, value, traceback):
 sys.excepthook = _exception_hook
 
 
-class Plom(QApplication):
-    def __init__(self, argv):
-        super(Plom, self).__init__(argv)
-
-
 # in order to have a graceful exit on control-c
 # https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
 def sigint_handler(*args):

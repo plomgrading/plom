@@ -14,7 +14,6 @@ import argparse
 import io
 import os
 from textwrap import dedent, wrap
-import subprocess
 
 # import tools for dealing with resource files
 import pkg_resources
@@ -27,8 +26,6 @@ from plom.produce import process_class_list, get_messenger, upload_classlist
 from plom.produce import buildDatabaseAndPapers
 from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
-from plom.messenger import ManagerMessenger
-
 
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
 from plom.finish import clear_manager_login
@@ -38,16 +35,27 @@ dbfile = os.path.join(specdir, "plom.db")
 
 
 def checkTomlExtension(fname):
+    """Append a .toml extension if not present.
+
+    Args:
+        fname (str): a filename.
+
+    Returns:
+        str: filename with a .toml extension
+
+    Raises:
+        ValueError: filename has incorrect extension (neither blank
+           nor `.toml`)
+    """
     ext = os.path.splitext(fname)[1]
     if ext == ".toml":
         return fname
     elif len(ext) == 0:
         return fname + ".toml"
     else:
-        print(
+        raise ValueError(
             'Your specification file name should either have no extension or end in ".toml".'
         )
-        exit(1)
 
 
 def createSpecificationFile(fname):

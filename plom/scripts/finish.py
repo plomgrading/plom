@@ -29,7 +29,6 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-import shutil
 from textwrap import dedent
 
 from plom import __version__
@@ -143,7 +142,6 @@ def main():
         clear_manager_login(args.server, args.password)
     else:
         parser.print_help()
-    exit(0)
 
 
 if __name__ == "__main__":
