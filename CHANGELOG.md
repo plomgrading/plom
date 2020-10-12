@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Canvas-related return code handing reduced from 12 digits to 9 by default.
 
 ### Fixed
+* Fixed drag-and-drop reordering of the rubric/comment list.
 * Various bug fixes.
 
 
