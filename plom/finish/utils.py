@@ -13,7 +13,7 @@ def my_hash(s, salt=None, digits=9):
     """Hash a string to a 9-digit code
 
     Combine the string with a salt string, compute the md5sum, grab
-    the first few digits as an integer between 100 000 000 and 999999999.
+    the first few digits as an integer between 100000000 and 999999999.
     Reference: https://en.wikipedia.org/wiki/Salt_(cryptography)
 
     Args:
@@ -40,8 +40,8 @@ def my_hash(s, salt=None, digits=9):
         b = 899_999_999_999
         l = 100_000_000_000
         return str(int(h, 16) % b + l)
-    b = int("9" * "0"*(digits - 1))
-    l = int("1" * "0"*(digits - 1))
+    b = 9 * 10 ** (digits - 1)
+    l = 10 ** (digits - 1)
     return str(int(h, 16) % b + l)
 
 
@@ -54,6 +54,6 @@ def my_secret(digits=9):
     Returns:
         int: random code.
     """
-    b = int("9" * "0"*(digits - 1))
-    l = int("1" * "0"*(digits - 1))
+    b = 9 * 10 ** (digits - 1)
+    l = 10 ** (digits - 1)
     return secrets.randbelow(b) + l
