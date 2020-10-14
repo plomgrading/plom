@@ -235,7 +235,7 @@ def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
     return sns
 
 
-def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=12):
+def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=9):
     """Adds or replaces the return codes to the canvas csv.
 
     Args:
@@ -243,7 +243,8 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=12):
         csvout (str): the name of the output csv file when we are done.
         saltstr (str): the string to salt the student numbers.
         digits (int): how many digits to use for the return codes.
-            Default: 12.
+            Default: 9.  12 used to work in Canvas but in 2020 we found
+            that 9 was the maximum (via this particular technique).
 
     Raises:
         ValueError: if the canvas return code is present but not correct.
