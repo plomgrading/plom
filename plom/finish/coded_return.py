@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 
 from plom import SpecParser
-from plom.rules import isValidStudentNumber
+from plom.rules import isValidStudentNumber, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
 
@@ -101,6 +101,8 @@ def main(use_hex, digits):
 
     html = html.replace("__COURSENAME__", longname)
     html = html.replace("__TESTNAME__", shortname)
+    html = html.replace("__CODE_LENGTH__", str(digits))
+    html = html.replace("__SID_LENGTH__", str(StudentIDLength))
 
     with open(codedReturnDir / "index.html", "w") as htmlfile:
         htmlfile.write(html)
