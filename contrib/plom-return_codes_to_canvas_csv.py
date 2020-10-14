@@ -42,8 +42,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    saltstr = args.salt
-    print('Salt is "{0}"'.format(saltstr))
+    print('Salt string is "{}"'.format(args.salt))
     print('Number of digits is "{}"'.format(args.digits))
     print(
         """
@@ -66,7 +65,7 @@ if __name__ == "__main__":
 
     print()
     sns = canvas_csv_add_return_codes(
-        canvas_fromfile, canvas_return_tofile, saltstr=saltstr, args.digits
+        canvas_fromfile, canvas_return_tofile, saltstr=args.salt, digits=args.digits
     )
 
     print()

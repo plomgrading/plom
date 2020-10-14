@@ -106,7 +106,7 @@ spCodedReturn.add_argument(
     "--hex",
     action="store_true",
     help="""
-        Use a string of hexadecimal instead of short integers for the
+        Use a string of hexadecimal instead of decimal digits for the
         secret codes.
         More secure but may cause problems if you use certain Canvas
         workarounds to distribute the codes.
