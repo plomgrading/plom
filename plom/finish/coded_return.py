@@ -45,7 +45,14 @@ def do_renaming(fromdir, todir, sns):
     return numfiles
 
 
-def main():
+def main(use_hex, digits):
+    """Make the secret codes and the return-code webpage.
+
+    args:
+        use_hex (bool): use random hex digits, otherwise an integer
+            without leading zeros.
+        digits (int): length of secret code.
+    """
     spec = SpecParser().spec
     shortname = spec["name"]
     longname = spec["longName"]
@@ -77,7 +84,9 @@ def main():
     os.makedirs(codedReturnDir)
 
     print("Generating return codes spreadsheet...")
-    sns = csv_add_return_codes(CSVFilename, "return_codes.csv", "StudentID")
+    sns = csv_add_return_codes(
+        CSVFilename, "return_codes.csv", "StudentID", use_hex, digits
+    )
     print('The return codes are in "return_codes.csv"')
 
     numfiles = do_renaming(fromdir, codedReturnDir, sns)
@@ -101,7 +110,3 @@ def main():
     print('  * Privately communicate info from "return_codes.csv"')
     print("      - E.g., see `contrib/plom-return_codes_to_canvas_csv.py`")
     print("  * Read docs about the security implications of all this.")
-
-
-if __name__ == "__main__":
-    main()

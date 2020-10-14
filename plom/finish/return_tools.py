@@ -17,7 +17,7 @@ import os
 import pandas
 
 from plom.finish import CSVFilename
-from .utils import my_hash, my_secret
+from .utils import my_hash, my_secret, rand_hex
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -154,13 +154,15 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
     return df
 
 
-def csv_add_return_codes(csvin, csvout, idcol):
+def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits):
     """Add random return_code column to a spreadsheet.
 
     Args:
         csvin: input file
         csvout: output file
         idcol (str): column name for ID number
+        use_hex (bool): use hex digits for secret code
+        digits (int): how many digits for secret code
 
     Returns:
         dict of the mapping from student number to secret code.
@@ -178,6 +180,7 @@ def csv_add_return_codes(csvin, csvout, idcol):
     ), "CSV file missing columns?  We need:\n  " + str(cols)
     df = df[cols]
 
+    # TODO: rewrite using apply
     df.insert(2, "Return Code", "")
     sns = {}
     for i, row in df.iterrows():
@@ -185,7 +188,10 @@ def csv_add_return_codes(csvin, csvout, idcol):
         # blanks, not ID'd yet for example
         if not sn == "nan":
             assert isValidStudentNumber(sn), "Invalid student ID"
-            code = my_secret()
+            if use_hex:
+                code = rand_hex(digits)
+            else:
+                code = my_secret(digits)
             df.loc[i, "Return Code"] = code
             sns[sn] = code
 

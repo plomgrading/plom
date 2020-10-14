@@ -2,7 +2,7 @@
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-from .utils import my_hash
+from .utils import my_hash, rand_hex
 
 
 def test_hash():
@@ -19,3 +19,10 @@ def test_hash_error():
     except ValueError:
         error = True
     assert error == True
+
+
+def test_hex_code():
+    assert rand_hex().isalnum()
+    assert len(rand_hex(1)) == 1
+    assert len(rand_hex(2)) == 2
+    assert len(rand_hex(32)) == 32

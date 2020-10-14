@@ -57,3 +57,9 @@ def my_secret(digits=9):
     b = 9 * 10 ** (digits - 1)
     l = 10 ** (digits - 1)
     return secrets.randbelow(b) + l
+
+
+def rand_hex(digits=16):
+    """Proper random hex string."""
+
+    return secrets.token_hex((digits + 1) // 2)[0:digits]
