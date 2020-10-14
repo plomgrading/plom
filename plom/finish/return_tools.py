@@ -229,13 +229,15 @@ def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
     return sns
 
 
-def canvas_csv_add_return_codes(csvin, csvout, saltstr):
+def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=12):
     """Adds or replaces the return codes to the canvas csv.
 
     Args:
         csvin (str): the name of the csv file to read in from canvas.
         csvout (str): the name of the output csv file when we are done.
         saltstr (str): the string to salt the student numbers.
+        digits (int): how many digits to use for the return codes.
+            Default: 12.
 
     Raises:
         ValueError: if the canvas return code is present but not correct.
@@ -274,7 +276,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
-        code = my_hash(sn, saltstr)
+        code = my_hash(sn, saltstr, digits=digits)
 
         oldcode = row[rcode]
         if pandas.isnull(oldcode):
