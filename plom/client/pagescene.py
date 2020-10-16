@@ -387,7 +387,7 @@ class PageScene(QGraphicsScene):
         w = br.width()
         h = br.height()
         MINWIDTH = 1024  # subject to maxheight
-        MAXWIDTH = 16383
+        MAXWIDTH = 16000  # 16383 but for older imagemagick
         MAXHEIGHT = 8191
         MAX_PER_PAGE_WIDTH = 2000
         msg = []
