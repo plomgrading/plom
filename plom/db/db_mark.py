@@ -351,6 +351,8 @@ def MgetOriginalImages(self, task):
 
 def MsetTag(self, user_name, task, tag):
     """Set tag on last annotation of given task.
+
+    TODO: scary that its the last annotation: maybe client should be telling us which one?
     """
 
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -393,12 +395,12 @@ def MgetWholePaper(self, test_number, question):
         return [False]
     # dict of image-ids and positions in the current annotation
     current_image_orders = {}
-    # have to be a little careful
-    # - if fresh annotation, then no apages present - grab from the previous annotation
-    # - if reannotating, then apages present - grab from the current annotation.
     aref = qref.annotations[-1]
-    if aref.apages.count() == 0:  # no apages - must be fresh annotation
-        aref = qref.annotations[-2]  # grab from previous annot.
+    if aref.apages.count() == 0:
+        # this should never happen (?) no such thing as a "fresh annotation" any more
+        log.critical("Oh my, colin thought it cannot happen aref={}".format(aref))
+        raise RuntimeError("Oh my, colin thought it cannot happen")
+        # return [False]
     for pref in aref.apages:
         current_image_orders[pref.image.id] = pref.order
     # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
