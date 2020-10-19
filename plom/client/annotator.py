@@ -350,13 +350,13 @@ class Annotator(QWidget):
         self.maxMark = maxMark
         del maxMark
 
-        log.debug("plomdict = ", plomDict)
+        log.debug("plomdict = {}".format(plomDict))
         if plomDict:
             self.markStyle = plomDict["markStyle"]
         else:
             self.markStyle = markStyle
         del markStyle  # prevent use of non-overridden value
-        log.debug("markstyle = ", self.markStyle)
+        log.debug("markstyle = {}".format(self.markStyle))
 
         if plomDict:
             assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
