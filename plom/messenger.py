@@ -750,9 +750,10 @@ class Messenger(BaseMessenger):
             code (str): the task code such as "q1234g9".
 
         Returns:
-            3-tuple: `(image_list, annotated_image, plom_file)`
+            4-tuple: `(image_list, md5_list, annotated_image, plom_file)`
                 `image_list` is a list of images (e.g., png files to be
                 written to disc).
+                `md5_list` is their md5sums
                 `annotated_image` and `plom_file` are the png file and
                 and data associated with a previous annotations, or None.
 
@@ -775,24 +776,24 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
 
-            # response is either [n, image1,..,image.n] or [n, image1,...,image.n, annotatedImage, plom-data]
+            # response is either [n, md5s, image1,..,image.n] or [n, md5s, image1,...,image.n, annotatedImage, plom-data]
             imagesAnnotAndPlom = MultipartDecoder.from_response(response).parts
             n = int(imagesAnnotAndPlom[0].content)  # 'n' sent as string
+            md5_list = json.loads(imagesAnnotAndPlom[1].text)
             imageList = [
-                BytesIO(imagesAnnotAndPlom[i].content).getvalue()
-                for i in range(1, n + 1)
+                BytesIO(imagesAnnotAndPlom[i + 2].content).getvalue() for i in range(n)
             ]
-            if len(imagesAnnotAndPlom) == n + 1:
+            if len(imagesAnnotAndPlom) == n + 2:
                 # all is fine - no annotated image or plom data
                 anImage = None
                 plDat = None
-            elif len(imagesAnnotAndPlom) == n + 3:
+            elif len(imagesAnnotAndPlom) == n + 4:
                 # all fine - last two parts are annotated image + plom-data
                 anImage = BytesIO(
-                    imagesAnnotAndPlom[n + 1].content
+                    imagesAnnotAndPlom[n + 2].content
                 ).getvalue()  # pass back annotated-image as bytes
                 plDat = BytesIO(
-                    imagesAnnotAndPlom[n + 2].content
+                    imagesAnnotAndPlom[n + 3].content
                 ).getvalue()  # pass back plomData as bytes
             else:
                 raise PlomSeriousException(
@@ -826,7 +827,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return [imageList, anImage, plDat]
+        return [imageList, md5_list, anImage, plDat]
 
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()

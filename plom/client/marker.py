@@ -654,13 +654,19 @@ class MarkerExamModel(QStandardItemModel):
         Return filename for original un-annotated image as string. """
         return eval(self._getDataByTask(task, 5))
 
-    def setOriginalFiles(self, task, fnames):
+    def _setOriginalFiles(self, task, fnames):
         """Set the original un-annotated image filenames."""
         self._setDataByTask(task, 5, repr(fnames))
 
-    def setImageMD5s(self, task, image_md5s):
-        """Set the ids of the files."""
+    def _setImageMD5s(self, task, image_md5s):
+        """Set the md5sums of the original image files."""
         self._setDataByTask(task, 10, json.dumps(image_md5s))
+
+    def setOriginalFilesAndMD5s(self, task, fnames, image_md5s):
+        """Set the original un-annotated image filenames and their md5sums."""
+        # TODO: better to store these in zipped pairs!
+        self._setOriginalFiles(task, fnames)
+        self._setImageMD5s(task, image_md5s)
 
     def setAnnotatedFile(self, task, aname, pname):
         """Set the annotated image and .plom file names."""
@@ -1248,7 +1254,7 @@ class MarkerClient(QWidget):
             return True
 
         try:
-            [imageList, anImage, plImage] = messenger.MrequestImages(
+            [imageList, md5List, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1278,7 +1284,7 @@ class MarkerClient(QWidget):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        self.examModel.setOriginalFiles(task, inames)
+        self.examModel.setOriginalFilesAndMD5s(task, inames, md5List)
 
         if anImage is None:
             return True
@@ -1918,8 +1924,7 @@ class MarkerClient(QWidget):
             image_md5s.append(imageList[i][0])
 
         task = "q" + task
-        self.examModel.setOriginalFiles(task, image_names)
-        self.examModel.setImageMD5s(task, image_md5s)
+        self.examModel.setOriginalFilesAndMD5s(task, image_names, image_md5s)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
         # finally relaunch the annotator

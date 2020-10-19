@@ -297,9 +297,9 @@ def MgetImages(self, user_name, task, integrity_check):
     Returns:
         list: On error, return `[False, msg]`, maybe details in 3rd entry.
             On success it can be:
-            `[True, N, page1, ..., pageN]`
+            `[True, N, md5s, page1, ..., pageN]`
             Or if annotated already:
-            `[True, N, page1, ..., pageN, annotatedFile, plom_file]`
+            `[True, N, md5s, page1, ..., pageN, annotatedFile, plom_file]`
 
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -325,12 +325,14 @@ def MgetImages(self, user_name, task, integrity_check):
         if aref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
         pp = []
+        md5s = []
         for p in aref.apages.order_by(APage.order):
             pp.append(p.image.file_name)
+            md5s.append(p.image.md5sum)
         if aref.aimage is not None:
-            return [True, len(pp)] + pp + [aref.aimage.file_name, aref.plom_file]
+            return [True, len(pp), md5s] + pp + [aref.aimage.file_name, aref.plom_file]
         else:
-            return [True, len(pp)] + pp
+            return [True, len(pp), md5s] + pp
 
 
 def MgetOriginalImages(self, task):

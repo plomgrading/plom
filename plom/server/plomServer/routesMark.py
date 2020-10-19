@@ -163,27 +163,25 @@ class MarkHandler:
         """
 
         task_code = request.match_info["task"]  # Task/question code string.
+        # returns [True, tag, integrity_check, image_id_list, filename1, filename2,...] or [False]
         claimed_task = self.server.MclaimThisTask(data["user"], task_code)
-        task_available = claimed_task[0]
 
-        if (
-            task_available
-        ):  # return [True, tag, integrity_check, image_id_list, filename1, filename2,...]
-            task_tags = claimed_task[1]
-            task_integrity_check = claimed_task[2]
-            task_image_ids = claimed_task[3]
-            task_page_paths = claimed_task[4:]
-
-            with MultipartWriter("imageAndTags") as multipart_writer:
-                multipart_writer.append(task_tags)  # append tags as raw text.
-                # append integrity_check as raw text.
-                multipart_writer.append(task_integrity_check)
-                multipart_writer.append_json(task_image_ids)  # append as json
-                for file_name in task_page_paths:
-                    multipart_writer.append(open(file_name, "rb"))
-            return web.Response(body=multipart_writer, status=200)
-        else:
+        if not claimed_task[0]:
             return web.Response(status=204)  # that task already taken.
+
+        task_tags = claimed_task[1]
+        task_integrity_check = claimed_task[2]
+        task_image_ids = claimed_task[3]
+        task_page_paths = claimed_task[4:]
+
+        with MultipartWriter("imageAndTags") as multipart_writer:
+            multipart_writer.append(task_tags)  # append tags as raw text.
+            # append integrity_check as raw text.
+            multipart_writer.append(task_integrity_check)
+            multipart_writer.append_json(task_image_ids)  # append as json
+            for file_name in task_page_paths:
+                multipart_writer.append(open(file_name, "rb"))
+        return web.Response(body=multipart_writer, status=200)
 
     # @routes.delete("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
@@ -332,44 +330,35 @@ class MarkHandler:
         """
 
         task_code = request.match_info["task"]
-        task_image_results = self.server.MgetImages(
+        results = self.server.MgetImages(
             data["user"], task_code, data["integrity_check"]
         )
-        # A list which includes:
-        # 1. True/False process status.
-        # 2. Number of pages for task.
-        # 3. Original Page image path.
-        # 3. Marked Page image path.
-        # 4. Marked question plom data path, ie .plom type files.
-
-        # Format is either:
-        # [True, num_pages, original_fname1, original_fname2, ... original_fname#num_pages, ] or
-        # [True, num_pages, original_fname1,..,original_fname#num_pages, annotated_fname#1, ... annotated_fname#num_pages , plomdat] or
+        # Format is one of:
         # [False, error]
-
-        task_image_success = task_image_results[0]
-
-        if task_image_success:
-            with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-                task_num_images = task_image_results[1]
-                task_images_list = task_image_results[2:]
-
-                multipart_writer.append(
-                    "{}".format(task_num_images)
-                )  # send 'n' as string
-
-                for file_name in task_images_list:
-                    multipart_writer.append(open(file_name, "rb"))
-            return web.Response(body=multipart_writer, status=200)
-        else:
-            if task_image_results[1] == "owner":
+        # [True, N, md5s, original_fname1, ..., original_fnameN]
+        # [True, N, md5s, original_fname1, ..., original_fnameN, annotated_fname, plom_file]
+        if not results[0]:
+            if results[1] == "owner":
                 return web.Response(status=409)  # someone else has that task_image
-            elif task_image_results[1] == "integrity_fail":
+            elif results[1] == "integrity_fail":
                 return web.Response(status=406)  # task changed
-            elif task_image_results[1] == "no_such_task":
+            elif results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
+
+        with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
+            num_images = results[1]
+            image_md5s = results[2]
+            assert len(image_md5s) == num_images
+            images = results[3:]
+            assert len(images) in (num_images, num_images + 2)
+
+            multipart_writer.append(str(num_images))
+            multipart_writer.append_json(image_md5s)
+            for file_name in images:
+                multipart_writer.append(open(file_name, "rb"))
+        return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/MK/originalImage/{task}")
     @authenticate_by_token_required_fields([])
@@ -391,18 +380,17 @@ class MarkHandler:
 
         task = request.match_info["task"]
         get_image_results = self.server.MgetOriginalImages(task)
+        # returns either [True, md5s, fname1, fname2,... ] or [False]
         image_return_success = get_image_results[0]
 
-        # returns either [True, fname1, fname2,... ] or [False]
-        if image_return_success:
-            original_image_paths = get_image_results[1:]
-
-            with MultipartWriter("images") as multipart_writer:
-                for file_nam in original_image_paths:
-                    multipart_writer.append(open(file_nam, "rb"))
-            return web.Response(body=multipart_writer, status=200)
-        else:
+        if not image_return_success:
             return web.Response(status=204)  # no content there
+
+        original_image_paths = get_image_results[1:]
+        with MultipartWriter("images") as multipart_writer:
+            for file_nam in original_image_paths:
+                multipart_writer.append(open(file_nam, "rb"))
+        return web.Response(body=multipart_writer, status=200)
 
     # @routes.patch("/MK/tags/{task}")
     @authenticate_by_token_required_fields(["user", "tags"])
