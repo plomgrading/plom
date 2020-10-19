@@ -1583,27 +1583,8 @@ class MarkerClient(QWidget):
         This fires up the annotation window for user annotation + marking.
 
         Args:
-            initialData (list): contains
-                {
-                tgvID (Str): Test-Group-Version ID.
-                     For Example: for Test # 0027, group # 13, Version #2
-                     tgvID = t0027g13v2
-                exam_name (str): exam name
-                paperdir (dir): Working directory for the current task
-                fnames (str): original file name (unannotated)
-                aname (str):  annotated file name
-                maxMark (int): maximum possible score for that test question
-                markStyle (int): marking style
-                       1 = mark total = user clicks the total-mark
-                       2 = mark-up = mark starts at 0 and user increments it
-                       3 = mark-down = mark starts at max and user decrements it
-                plomDict (dict): a dictionary of annotation information.
-                    A dict that contains sufficient information to recreate
-                    the annotation objects on the page if you go back to
-                    continue annotating a question. ie - is it mark up/down,
-                    where are all the objects, how to rebuild those objects,
-                    etc.
-                }
+            initialData (list): containing things documented elsewhere
+                in :func:`plom.client.annotator.Annotator.__init__`.
 
         Returns:
             None
