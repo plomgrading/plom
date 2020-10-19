@@ -703,10 +703,8 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         # should be multipart = [tags, integrity_check, image_id_list, image1, image2, ....]
-        tags = "tagsAndImages[0].text  # this is raw text"
         imageList = []
-        i = 0
-        for img in MultipartDecoder.from_response(response).parts:
+        for i, img in enumerate(MultipartDecoder.from_response(response).parts):
             if i == 0:
                 tags = img.text
             elif i == 1:
@@ -717,7 +715,6 @@ class Messenger(BaseMessenger):
                 imageList.append(
                     BytesIO(img.content).getvalue()
                 )  # pass back image as bytes
-            i += 1
         return imageList, image_id_list, tags, integrity_check
 
     def MlatexFragment(self, latex):
