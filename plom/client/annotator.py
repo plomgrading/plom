@@ -344,6 +344,10 @@ class Annotator(QWidget):
         self.saveName = saveName
         self.integrity_check = integrity_check
         self.image_md5_list = image_md5_list
+        if len(self.image_md5_list) != len(self.imageFiles):
+            log.error(
+                "Marker is shortchanging us on md5sums: probably something bad will happen soon!"
+            )
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
