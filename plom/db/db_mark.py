@@ -293,6 +293,14 @@ def MgetImages(self, user_name, task, integrity_check):
     """Send image list back to user for the given marking task.
     If question has been annotated then send back the annotated image and the plom file as well.
     Use integrity_check to make sure client is not asking for something outdated.
+
+    Returns:
+        list: On error, return `[False, msg]`, maybe details in 3rd entry.
+            On success it can be:
+            `[True, N, page1, ..., pageN]`
+            Or if annotated already:
+            `[True, N, page1, ..., pageN, annotatedFile, plom_file]`
+
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
@@ -316,9 +324,6 @@ def MgetImages(self, user_name, task, integrity_check):
         aref = qref.annotations[-1]
         if aref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
-        # return [true, n, page1,..,page.n]
-        # or (if annotated already)
-        # return [true, n, page1,..,page.n, annotatedFile, plom_file]
         pp = []
         for p in aref.apages.order_by(APage.order):
             pp.append(p.image.file_name)
@@ -330,6 +335,8 @@ def MgetImages(self, user_name, task, integrity_check):
 
 def MgetOriginalImages(self, task):
     """Return the original (unannotated) page images of the given task to the user.
+
+    Differs from MgetImages in that you need not be the owner.
     """
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
