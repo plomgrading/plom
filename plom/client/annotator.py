@@ -789,6 +789,7 @@ class Annotator(QWidget):
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
+            # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
         self.setEnabled(True)
