@@ -94,14 +94,31 @@ spCodedReturn = sub.add_parser(
         The webpage will be in `codedReturn` and the secret codes in
         `return_codes.csv`.
 
-        See the numbers scripts in `plom.finish` for various "beta" tools to
-        assist with digital return---we anticipate these tools maturing in
-        future releases.
+        There may be scripts in `share/plom/contrib` to assist with
+        distributing the secret codes.
 
         This command must have access to the results of `reassemble`.
     """
     ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+spCodedReturn.add_argument(
+    "--hex",
+    action="store_true",
+    help="""
+        Use a string of hexadecimal instead of decimal digits for the
+        secret codes.
+        More secure but may cause problems if you use certain Canvas
+        workarounds to distribute the codes.
+    """,
+)
+spCodedReturn.add_argument(
+    "--digits",
+    type=int,
+    default=9,
+    metavar="N",
+    action="store",
+    help="Length of the secret code.  Defaults to 9.",
 )
 spClear = sub.add_parser(
     "clear",
@@ -137,7 +154,7 @@ def main():
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main()
+        plom.finish.coded_return.main(args.hex, args.digits)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

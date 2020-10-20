@@ -24,14 +24,14 @@ Jane Smith,43,12345679,ABCDEFGHIJ02,Math 123 S102v,12345679,919005618467
 """
     infile = StringIO(s1)
     outfile = StringIO("")
-    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default")
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default", digits=12)
     s = outfile.getvalue()
     assert s == s2 or s.replace("\r\n", "\n") == s2
 
     # return codes already exist
     infile = StringIO(s2)
     outfile = StringIO("")
-    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default")
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default", digits=12)
     s = outfile.getvalue()
     assert s == s2 or s.replace("\r\n", "\n") == s2
 
@@ -54,7 +54,7 @@ D Smith,45,12346666,ABCDEFGHIJ04,104,12346666,149766785804
 """
     infile = StringIO(s1)
     outfile = StringIO("")
-    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default")
+    sns = canvas_csv_add_return_codes(infile, outfile, saltstr="default", digits=12)
     s = outfile.getvalue()
     assert s == s2 or s.replace("\r\n", "\n") == s2
 
@@ -71,7 +71,9 @@ John Smith,42,12345678,ABCDEFGHIJ01,101,12345678,111222333444
     outfile = StringIO("")
     raises(
         ValueError,
-        lambda: canvas_csv_add_return_codes(infile, outfile, saltstr="default"),
+        lambda: canvas_csv_add_return_codes(
+            infile, outfile, saltstr="default", digits=12
+        ),
     )
 
 

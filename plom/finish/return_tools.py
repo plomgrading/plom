@@ -17,7 +17,7 @@ import os
 import pandas
 
 from plom.finish import CSVFilename
-from .utils import my_hash, my_secret
+from .utils import my_hash, my_secret, rand_hex
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -154,13 +154,15 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
     return df
 
 
-def csv_add_return_codes(csvin, csvout, idcol):
+def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits):
     """Add random return_code column to a spreadsheet.
 
     Args:
         csvin: input file
         csvout: output file
         idcol (str): column name for ID number
+        use_hex (bool): use hex digits for secret code
+        digits (int): how many digits for secret code
 
     Returns:
         dict of the mapping from student number to secret code.
@@ -178,6 +180,7 @@ def csv_add_return_codes(csvin, csvout, idcol):
     ), "CSV file missing columns?  We need:\n  " + str(cols)
     df = df[cols]
 
+    # TODO: rewrite using apply
     df.insert(2, "Return Code", "")
     sns = {}
     for i, row in df.iterrows():
@@ -185,7 +188,10 @@ def csv_add_return_codes(csvin, csvout, idcol):
         # blanks, not ID'd yet for example
         if not sn == "nan":
             assert isValidStudentNumber(sn), "Invalid student ID"
-            code = my_secret()
+            if use_hex:
+                code = rand_hex(digits)
+            else:
+                code = my_secret(digits)
             df.loc[i, "Return Code"] = code
             sns[sn] = code
 
@@ -229,13 +235,16 @@ def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
     return sns
 
 
-def canvas_csv_add_return_codes(csvin, csvout, saltstr):
+def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=9):
     """Adds or replaces the return codes to the canvas csv.
 
     Args:
         csvin (str): the name of the csv file to read in from canvas.
         csvout (str): the name of the output csv file when we are done.
         saltstr (str): the string to salt the student numbers.
+        digits (int): how many digits to use for the return codes.
+            Default: 9.  12 used to work in Canvas but in 2020 we found
+            that 9 was the maximum (via this particular technique).
 
     Raises:
         ValueError: if the canvas return code is present but not correct.
@@ -274,7 +283,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr):
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
-        code = my_hash(sn, saltstr)
+        code = my_hash(sn, saltstr, digits=digits)
 
         oldcode = row[rcode]
         if pandas.isnull(oldcode):

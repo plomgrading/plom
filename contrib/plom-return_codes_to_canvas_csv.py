@@ -32,10 +32,18 @@ if __name__ == "__main__":
         required=True,
         help="Per-course secret salt string (required). See docs for details.",
     )
+    parser.add_argument(
+        "--digits",
+        type=int,
+        default=9,
+        metavar="N",
+        action="store",
+        help="Length of the secret code.  Defaults to 9.",
+    )
 
     args = parser.parse_args()
-    saltstr = args.salt
-    print('Salt is "{0}"'.format(saltstr))
+    print('Salt string is "{}"'.format(args.salt))
+    print('Number of digits is "{}"'.format(args.digits))
     print(
         """
     *** Warning: this script is "pre-alpha" software ***
@@ -57,7 +65,7 @@ if __name__ == "__main__":
 
     print()
     sns = canvas_csv_add_return_codes(
-        canvas_fromfile, canvas_return_tofile, saltstr=saltstr
+        canvas_fromfile, canvas_return_tofile, saltstr=args.salt, digits=args.digits
     )
 
     print()

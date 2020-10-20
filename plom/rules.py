@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Colin B. Macdonald
 
 """Utils concerning rules about data, like valid student numbers."""
 
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2020 Colin B. Macdonald"
-__license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
+
+StudentIDLength = 8
 
 
 def isValidUBCStudentNumber(n):
@@ -19,7 +18,7 @@ def isValidUBCStudentNumber(n):
         return False
     if sid < 0:
         return False
-    if len(str(n)) != 8:
+    if len(str(n)) != StudentIDLength:
         return False
     return True
 

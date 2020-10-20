@@ -9,15 +9,17 @@ import secrets
 import hashlib
 
 
-def my_hash(s, salt=None):
-    """Hash a string to a 12-digit code
+def my_hash(s, salt=None, digits=9):
+    """Hash a string to a 9-digit code
 
     Combine the string with a salt string, compute the md5sum, grab
-    the first few digits as an integer between 100000000000 and 999999999999.
+    the first few digits as an integer between 100000000 and 999999999.
+    Reference: https://en.wikipedia.org/wiki/Salt_(cryptography)
 
     Args:
         s (str): string to hash.
-        salt (str, optional): Salt string for the hash. Defaults to None (but will raise an error). https://en.wikipedia.org/wiki/Salt_(cryptography)
+        salt (str, optional): Salt string for the hash. Defaults to None
+        (but will raise an error).
 
     Raises:
         ValueError -- if the given value for salt is None.
@@ -27,19 +29,37 @@ def my_hash(s, salt=None):
     """
     if not salt:
         raise ValueError("You must set the Salt String")
+    if digits < 2:
+        raise ValueError("Not enough digits")
+    if digits > 38:
+        raise NotImplementedError("This implementation maxes out at 38 digits")
     hashthis = s + salt
     h = hashlib.md5(hashthis.encode("utf-8")).hexdigest()
-    b = 899_999_999_999
-    l = 100_000_000_000
+    if digits == 12:
+        # SPECIAL CASE for backwards compat
+        b = 899_999_999_999
+        l = 100_000_000_000
+        return str(int(h, 16) % b + l)
+    b = 9 * 10 ** (digits - 1)
+    l = 10 ** (digits - 1)
     return str(int(h, 16) % b + l)
 
 
-def my_secret():
-    """Proper random 12-digit code (between 100_000_000_000 and 999_999_999_999).
+def my_secret(digits=9):
+    """Proper random 9-digit code (between 100_000_000 and 999_999_999).
+
+    Args:
+        digits (int): defaults to 9.
 
     Returns:
         int: random code.
     """
-    b = 900_000_000_000
-    l = 100_000_000_000
+    b = 9 * 10 ** (digits - 1)
+    l = 10 ** (digits - 1)
     return secrets.randbelow(b) + l
+
+
+def rand_hex(digits=16):
+    """Proper random hex string."""
+
+    return secrets.token_hex((digits + 1) // 2)[0:digits]
