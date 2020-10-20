@@ -16,7 +16,7 @@ specdir = "specAndDatabase"
 from .specParser import SpecVerifier, SpecParser
 from .version import __version__
 
-Plom_API_Version = "21"  # updated 0.5.0rc1
+Plom_API_Version = "22"  # bumped for getImages api change
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase
