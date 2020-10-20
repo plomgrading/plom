@@ -16,6 +16,7 @@ __license__ = "AGPL-3.0-or-later"
 import json
 import logging
 import os
+import secrets
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -1917,8 +1918,13 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         image_names = []
         image_md5s = []
+        # TODO: This code was trying (badly) to overwrite the q0001 files...
+        # TODO: something with tempfile instead
+        rand6hex = secrets.token_hex(3)
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            tmp = os.path.join(
+                self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
+            )
             shutil.copyfile(imageList[i][1], tmp)
             image_names.append(tmp)
             image_md5s.append(imageList[i][0])
