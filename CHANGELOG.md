@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Canvas-related return code handing reduced from 12 digits to 9 by default.
 
 ### Fixed
+* Various bug fixes.
 
 
 ## [0.5.2] - 2020-10-06
