@@ -76,16 +76,27 @@ class Authority:
         """Validates a given token against the storageToken.
 
         Arguments:
-            clientToken {hex} -- The token we have.
-            storageToken {hex} -- The token we are checking against.
+            clientToken (str): The token, a hex string provided by the
+                client.  This may be untrusted unsanitized input.
+            storageToken (str): The token we are checking against.
 
         Returns:
-            bool -- True if validated, False otherwise
+            bool: True if validated, False otherwise.  Also returns
+                False for garbage input, such as non-string or invalid
+                tokens.
         """
-        if hex(int(clientToken, 16) ^ self.mti) == storageToken:
-            return True
-        else:
+        if not isinstance(clientToken, str):
             return False
+        # should not be significantly longer than UUID's 32 hex digits
+        if len(clientToken) > 64:
+            return False
+        try:
+            clientTokenInt = int(clientToken, 16)
+        except ValueError:
+            return False
+        if hex(clientTokenInt ^ self.mti) == storageToken:
+            return True
+        return False
 
     def check_string_is_UUID(self, tau):
         """Checks that a given string is a valid UUID.
