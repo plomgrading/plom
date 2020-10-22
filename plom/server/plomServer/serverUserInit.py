@@ -22,6 +22,9 @@ def validate(self, user, token):
     """
     # log.debug("Validating user {}.".format(user))
     dbToken = self.DB.getUserToken(user)
+    if not dbToken:
+        log.warning('User "{}" tried a token but we have no such user!'.format(user))
+        return False
     r = self.authority.validate_token(token, dbToken)
     # gives None/False/True
     if r is None:
