@@ -15,10 +15,24 @@ confdir = "serverConfiguration"
 
 
 def validate(self, user, token):
-    """Check the user's token is valid"""
+    """Check the user's token is valid.
+
+    Returns:
+        bool
+    """
     # log.debug("Validating user {}.".format(user))
     dbToken = self.DB.getUserToken(user)
-    return self.authority.validate_token(token, dbToken)
+    r = self.authority.validate_token(token, dbToken)
+    # gives None/False/True
+    if r is None:
+        log.warning(
+            'Malformed token from user "{}": client bug? malicious probing?'.format(
+                user
+            )
+        )
+    elif not r:
+        log.info('User "{}" tried to use a stale or invalid token'.format(user))
+    return bool(r)
 
 
 def InfoShortName(self):
