@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Scan now has command line arguments to enable/disable bitmap (jpeg) extraction.
+* Server now logs failed token authentication events.
 
 ### Changed
 * Opening the "Rearrange Pages" dialog displays a wait cursor as it may take some time.
