@@ -126,30 +126,29 @@ def giveUserToken(self, user, password, clientAPI):
             ),
         ]
 
-    if self.checkPassword(user, password):
-        # Now check if user is enabled
-        if self.checkUserEnabled(user):
-            pass
-        else:
-            return [
-                False,
-                "The name / password pair has been disabled. Contact your instructor.",
-            ]
-
-        # Now check if user already logged in - ie has token already.
-        if self.DB.userHasToken(user):
-            log.debug('User "{}" already has token'.format(user))
-            return [False, "UHT", "User already has token."]
-        # give user a token, and store the xor'd version.
-        [clientToken, storageToken] = self.authority.create_token()
-        self.DB.setUserToken(user, storageToken)
-        # On token request also make sure anything "out" with that user is reset as todo.
-        # We keep this here in case of client crash - todo's get reset on login and logout.
-        self.DB.resetUsersToDo(user)
-        log.info('Authorising user "{}"'.format(user))
-        return [True, clientToken]
-    else:
+    if not self.checkPassword(user, password):
+        log.warning('Invalid password-based login attempt by user "{}"'.format(user))
         return [False, "The name / password pair is not authorised"]
+
+    if not self.checkUserEnabled(user):
+        log.info('User "{}" logged in but account is disabled by manager'.format(user))
+        return [
+            False,
+            "The name / password pair has been disabled. Contact your instructor.",
+        ]
+
+    # Now check if user already logged in - ie has token already.
+    if self.DB.userHasToken(user):
+        log.debug('User "{}" already has token'.format(user))
+        return [False, "UHT", "User already has token."]
+    # give user a token, and store the xor'd version.
+    [clientToken, storageToken] = self.authority.create_token()
+    self.DB.setUserToken(user, storageToken)
+    # On token request also make sure anything "out" with that user is reset as todo.
+    # We keep this here in case of client crash - todo's get reset on login and logout.
+    self.DB.resetUsersToDo(user)
+    log.info('Authorising user "{}"'.format(user))
+    return [True, clientToken]
 
 
 def setUserEnable(self, user, enableFlag):
