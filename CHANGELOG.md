@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Scan now has command line arguments to enable/disable bitmap (jpeg) extraction.
 
 ### Changed
+* Opening the "Rearrange Pages" dialog displays a wait cursor as it may take some time.
 * New command line arguments for `plom-finish` for digital return.
 * Canvas-related return code handing reduced from 12 digits to 9 by default.
 * Scan white balancing disabled by default (now matches `hwscan` behaviour).
