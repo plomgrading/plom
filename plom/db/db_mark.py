@@ -124,7 +124,9 @@ def MgiveTaskToClient(self, user_name, group_id):
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
-            log.error("unexpectedly, len(aref.annotations) = {}".format(len(qref.annotations)))
+            log.error(
+                "unexpectedly, len(aref.annotations) = {}".format(len(qref.annotations))
+            )
             log.error("qref={}, group_id={}".format(qref, group_id))
             return [False]
         aref = qref.annotations[-1]  # are these in right order (TODO?)
