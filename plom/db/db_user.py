@@ -175,13 +175,8 @@ def resetUsersToDo(self, uname):
         for x in query:
             x.status = "todo"
             x.user = None
-            x.save()
-            # delete the last annotation and its pages
-            aref = x.annotations[-1]
-            for p in aref.apages:
-                p.delete_instance()
-            aref.delete_instance()
             # now clean up the qgroup
+            # TODO: why is this code different from db_marks->MdidNotFinish?
             x.save()
             log.info(
                 "Reset user {} question-annotation task {}".format(uname, x.group.gid)

@@ -16,6 +16,7 @@ __license__ = "AGPL-3.0-or-later"
 import json
 import logging
 import os
+import secrets
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -654,13 +655,19 @@ class MarkerExamModel(QStandardItemModel):
         Return filename for original un-annotated image as string. """
         return eval(self._getDataByTask(task, 5))
 
-    def setOriginalFiles(self, task, fnames):
+    def _setOriginalFiles(self, task, fnames):
         """Set the original un-annotated image filenames."""
         self._setDataByTask(task, 5, repr(fnames))
 
-    def setImageMD5s(self, task, image_md5s):
-        """Set the ids of the files."""
+    def _setImageMD5s(self, task, image_md5s):
+        """Set the md5sums of the original image files."""
         self._setDataByTask(task, 10, json.dumps(image_md5s))
+
+    def setOriginalFilesAndMD5s(self, task, fnames, image_md5s):
+        """Set the original un-annotated image filenames and their md5sums."""
+        # TODO: better to store these in zipped pairs!
+        self._setOriginalFiles(task, fnames)
+        self._setImageMD5s(task, image_md5s)
 
     def setAnnotatedFile(self, task, aname, pname):
         """Set the annotated image and .plom file names."""
@@ -1248,7 +1255,7 @@ class MarkerClient(QWidget):
             return True
 
         try:
-            [imageList, anImage, plImage] = messenger.MrequestImages(
+            [imageList, md5List, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1278,7 +1285,7 @@ class MarkerClient(QWidget):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        self.examModel.setOriginalFiles(task, inames)
+        self.examModel.setOriginalFilesAndMD5s(task, inames, md5List)
 
         if anImage is None:
             return True
@@ -1583,27 +1590,8 @@ class MarkerClient(QWidget):
         This fires up the annotation window for user annotation + marking.
 
         Args:
-            initialData (list): contains
-                {
-                tgvID (Str): Test-Group-Version ID.
-                     For Example: for Test # 0027, group # 13, Version #2
-                     tgvID = t0027g13v2
-                exam_name (str): exam name
-                paperdir (dir): Working directory for the current task
-                fnames (str): original file name (unannotated)
-                aname (str):  annotated file name
-                maxMark (int): maximum possible score for that test question
-                markStyle (int): marking style
-                       1 = mark total = user clicks the total-mark
-                       2 = mark-up = mark starts at 0 and user increments it
-                       3 = mark-down = mark starts at max and user decrements it
-                plomDict (dict): a dictionary of annotation information.
-                    A dict that contains sufficient information to recreate
-                    the annotation objects on the page if you go back to
-                    continue annotating a question. ie - is it mark up/down,
-                    where are all the objects, how to rebuild those objects,
-                    etc.
-                }
+            initialData (list): containing things documented elsewhere
+                in :func:`plom.client.annotator.Annotator.__init__`.
 
         Returns:
             None
@@ -1930,15 +1918,19 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         image_names = []
         image_md5s = []
+        # TODO: This code was trying (badly) to overwrite the q0001 files...
+        # TODO: something with tempfile instead
+        rand6hex = secrets.token_hex(3)
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            tmp = os.path.join(
+                self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
+            )
             shutil.copyfile(imageList[i][1], tmp)
             image_names.append(tmp)
             image_md5s.append(imageList[i][0])
 
         task = "q" + task
-        self.examModel.setOriginalFiles(task, image_names)
-        self.examModel.setImageMD5s(task, image_md5s)
+        self.examModel.setOriginalFilesAndMD5s(task, image_names, image_md5s)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
         # finally relaunch the annotator

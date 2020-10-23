@@ -121,35 +121,29 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.status = "out"
         qref.user = uref
         qref.save()
-        # update the associated annotation
-        # - create a new annotation copied from the previous one (inc the integrity_check code)
-        # but we give the marker the pages from the **existing** annotation
-        # when task comes back we create the new pages
-        aref = qref.annotations[-1]  # are these in right order
-        new_aref = Annotation.create(
-            qgroup=qref,
-            user=uref,
-            edition=aref.edition + 1,
-            tags=aref.tags,
-            time=datetime.now(),
-            integrity_check=aref.integrity_check,
-        )
-        # get list of image-md5s to send to marker, but defer apage creation
+        # we give the marker the pages from the **existing** annotation
+        # (when task comes back we create the new pages, new annotation etc)
+        if len(qref.annotations) < 1:
+            log.error(
+                "unexpectedly, len(aref.annotations) = {}".format(len(qref.annotations))
+            )
+            log.error("qref={}, group_id={}".format(qref, group_id))
+            return [False]
+        aref = qref.annotations[-1]  # are these in right order (TODO?)
         image_md5_list = []
         for p in aref.apages.order_by(APage.order):
             image_md5_list.append(p.image.md5sum)
-        new_aref.save()
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
         # return [true, tags, integrity_check, image-md5-list,  page1, page2, etc]
-        rval = [True, new_aref.tags, new_aref.integrity_check, image_md5_list]
+        rval = [True, aref.tags, aref.integrity_check, image_md5_list]
         for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
         log.debug(
             'Giving marking task {} to user "{}" with integrity_check {}'.format(
-                group_id, user_name, new_aref.integrity_check
+                group_id, user_name, aref.integrity_check
             )
         )
         return rval
@@ -177,11 +171,6 @@ def MdidNotFinish(self, user_name, group_id):
         qref.status = "todo"
         qref.user = None
         qref.marked = False
-        # delete the annotation.
-        aref = qref.annotations[-1]
-        for p in aref.apages:  # this should not be needed.
-            p.delete_instance()
-        aref.delete_instance()
         # now clean up the qgroup
         qref.test.marked = False
         qref.test.save()
@@ -236,8 +225,9 @@ def MtakeTaskFromClient(
         if qref.user != uref:  # this should not happen
             return [False, "not_owner"]  # has been claimed by someone else.
         # check the integrity_check code against the db
-        aref = qref.annotations[-1]
-        if aref.integrity_check != integrity_check:
+        # TODO: suspicious: client should probably tell us what annotation its work was based-on...
+        oldaref = qref.annotations[-1]
+        if oldaref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
         # check all the images actually come from this test - sanity check against client error
         tref = qref.test
@@ -259,6 +249,14 @@ def MtakeTaskFromClient(
             if img_md5 not in test_image_md5s:
                 return [False, "image_not_in_test"]
 
+        aref = Annotation.create(
+            qgroup=qref,
+            user=uref,
+            edition=oldaref.edition + 1,
+            tags=tags,
+            time=datetime.now(),
+            integrity_check=oldaref.integrity_check,
+        )
         # create apages from the image_ref_list.
         ord = 0
         for iref in image_ref_list:
@@ -274,9 +272,7 @@ def MtakeTaskFromClient(
         aref.mark = mark
         aref.plom_file = plom_fname
         aref.comment_file = comment_fname
-        aref.time = datetime.now()
         aref.marking_time = marking_time
-        aref.tags = tags
         qref.save()
         aref.save()
         # update user activity
@@ -303,6 +299,14 @@ def MgetImages(self, user_name, task, integrity_check):
     """Send image list back to user for the given marking task.
     If question has been annotated then send back the annotated image and the plom file as well.
     Use integrity_check to make sure client is not asking for something outdated.
+
+    Returns:
+        list: On error, return `[False, msg]`, maybe details in 3rd entry.
+            On success it can be:
+            `[True, N, md5s, page1, ..., pageN]`
+            Or if annotated already:
+            `[True, N, md5s, page1, ..., pageN, annotatedFile, plom_file]`
+
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
@@ -326,20 +330,21 @@ def MgetImages(self, user_name, task, integrity_check):
         aref = qref.annotations[-1]
         if aref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
-        # return [true, n, page1,..,page.n]
-        # or (if annotated already)
-        # return [true, n, page1,..,page.n, annotatedFile, plom_file]
         pp = []
+        md5s = []
         for p in aref.apages.order_by(APage.order):
             pp.append(p.image.file_name)
+            md5s.append(p.image.md5sum)
         if aref.aimage is not None:
-            return [True, len(pp)] + pp + [aref.aimage.file_name, aref.plom_file]
+            return [True, len(pp), md5s] + pp + [aref.aimage.file_name, aref.plom_file]
         else:
-            return [True, len(pp)] + pp
+            return [True, len(pp), md5s] + pp
 
 
 def MgetOriginalImages(self, task):
     """Return the original (unannotated) page images of the given task to the user.
+
+    Differs from MgetImages in that you need not be the owner.
     """
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
@@ -361,6 +366,8 @@ def MgetOriginalImages(self, task):
 
 def MsetTag(self, user_name, task, tag):
     """Set tag on last annotation of given task.
+
+    TODO: scary that its the last annotation: maybe client should be telling us which one?
     """
 
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -403,12 +410,12 @@ def MgetWholePaper(self, test_number, question):
         return [False]
     # dict of image-ids and positions in the current annotation
     current_image_orders = {}
-    # have to be a little careful
-    # - if fresh annotation, then no apages present - grab from the previous annotation
-    # - if reannotating, then apages present - grab from the current annotation.
     aref = qref.annotations[-1]
-    if aref.apages.count() == 0:  # no apages - must be fresh annotation
-        aref = qref.annotations[-2]  # grab from previous annot.
+    if aref.apages.count() == 0:
+        # this should never happen (?) no such thing as a "fresh annotation" any more
+        log.critical("Oh my, colin thought it cannot happen aref={}".format(aref))
+        raise RuntimeError("Oh my, colin thought it cannot happen")
+        # return [False]
     for pref in aref.apages:
         current_image_orders[pref.image.id] = pref.order
     # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages

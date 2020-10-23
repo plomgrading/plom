@@ -318,7 +318,7 @@ def MgetImages(self, username, task_code, integrity_check):
     Returns:
         list: A list of the format:
             [False, Error message string.]
-            [True, Number of papers in the question, Original image path,
+            [True, Number of papers in the question, md5 list, Original images paths,
             Annotated image path, Plom data file for this page]
     """
 

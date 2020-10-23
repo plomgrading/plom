@@ -344,19 +344,23 @@ class Annotator(QWidget):
         self.saveName = saveName
         self.integrity_check = integrity_check
         self.image_md5_list = image_md5_list
+        if len(self.image_md5_list) != len(self.imageFiles):
+            log.error(
+                "Marker is shortchanging us on md5sums: probably something bad will happen soon!"
+            )
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
         del maxMark
 
-        log.debug("plomdict = ", plomDict)
+        log.debug("plomdict = {}".format(plomDict))
         if plomDict:
             self.markStyle = plomDict["markStyle"]
         else:
             self.markStyle = markStyle
         del markStyle  # prevent use of non-overridden value
-        log.debug("markstyle = ", self.markStyle)
+        log.debug("markstyle = {}".format(self.markStyle))
 
         if plomDict:
             assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
@@ -785,6 +789,7 @@ class Annotator(QWidget):
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
+            # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
         self.setEnabled(True)
