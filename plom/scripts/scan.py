@@ -161,7 +161,7 @@ def processScans(server, password, pdf_fname, skip_gamma):
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, skip_gamma, True)
+    scansToImages.processScans(pdf_fname, bundledir, skip_gamma)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
     # TODO: can collisions warning be written here too?
