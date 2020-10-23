@@ -55,6 +55,7 @@ from .useful_classes import (
     NoAnswerBox,
 )
 
+
 log = logging.getLogger("annotr")
 
 # Short descriptions of each tool to display to user.
