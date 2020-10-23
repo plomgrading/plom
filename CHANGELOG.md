@@ -5,13 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
+## [0.5.4] - 2020-10-23
 
 ### Changed
-
-### Fixed
+* Fix crash when drag-and-drop comments.
 
 
 ## [0.5.3] - 2020-10-22
@@ -263,7 +260,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.3...master
+[0.5.4]: https://gitlab.com/plom/plom/compare/v0.5.3...v0.5.4
 [0.5.3]: https://gitlab.com/plom/plom/compare/v0.5.2...v0.5.3
 [0.5.2]: https://gitlab.com/plom/plom/compare/v0.5.1...v0.5.2
 [0.5.1]: https://gitlab.com/plom/plom/compare/v0.5.0...v0.5.1

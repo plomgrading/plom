@@ -8,6 +8,7 @@
 import os
 import re
 import time
+import logging
 
 import toml
 
@@ -33,6 +34,9 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+
+log = logging.getLogger("annotr")
 
 
 def commentLoadAll():
