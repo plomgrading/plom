@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Scan bitmap extraction disabled by default (again to match `hwscan`).
 
 ### Fixed
+* Fixed drag-and-drop reordering of the rubric/comment list.
 * Various bug fixes.
 
 

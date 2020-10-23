@@ -465,14 +465,20 @@ class SimpleCommentTable(QTableView):
             # Get the row on which to drop
             dropRow = self.drop_on(event)
             dropIdx = self.cmodel.index(dropRow, 2).data()
+            log.debug(
+                "debug DnD: drag={}, drop={}".format((row, idx), (dropRow, dropIdx))
+            )
             # If we drag from earlier row, handle index after deletion
             if row < dropRow:
                 dropRow -= 1
-            com = self.clist.pop(row)
+            # TODO: maybe `row` does not account for hidden rows, changed to `idx`
+            com = self.clist.pop(int(idx))
+            log.debug("debug DnD: com of row drag is {}".format(com))
             self.clist.insert(dropRow, com)
             self.populateTable()
 
             # Reselect the dropped row (TODO: does this work?)
+            # TODO: sometimes dropRow is None (drag to end?)
             self.selectRow(dropRow)
 
             # Resize the rows - they were expanding after drags for some reason
