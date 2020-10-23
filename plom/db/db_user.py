@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -108,6 +109,7 @@ def clearUserToken(self, uname):
 
 
 def getUserToken(self, uname):
+    """Return user's saved token or None if we have no such user."""
     uref = User.get_or_none(name=uname)
     if uref is None:
         return None

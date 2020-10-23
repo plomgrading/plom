@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Colin B. Macdonald
 
 import uuid
 from passlib.context import CryptContext
@@ -81,19 +82,19 @@ class Authority:
             storageToken (str): The token we are checking against.
 
         Returns:
-            bool: True if validated, False otherwise.  Also returns
-                False for garbage input, such as non-string or invalid
-                tokens.
+            bool/None: True if validated, False/None otherwise.  False
+                indicates an invalid token.  None indicates a malformed
+                token.  This means `if validate_token(...):` works.
         """
         if not isinstance(clientToken, str):
-            return False
+            return None
         # should not be significantly longer than UUID's 32 hex digits
         if len(clientToken) > 64:
-            return False
+            return None
         try:
             clientTokenInt = int(clientToken, 16)
         except ValueError:
-            return False
+            return None
         if hex(clientTokenInt ^ self.mti) == storageToken:
             return True
         return False
