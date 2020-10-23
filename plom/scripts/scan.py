@@ -107,7 +107,7 @@ def make_required_directories(bundle=None):
             os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
-def processScans(server, password, pdf_fname, skip_gamma):
+def processScans(server, password, pdf_fname, gamma, extractbmp):
     """Process PDF file into images and read QRcodes
 
     Convert file into a bundle-name
@@ -161,7 +161,7 @@ def processScans(server, password, pdf_fname, skip_gamma):
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, skip_gamma)
+    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
     # TODO: can collisions warning be written here too?
@@ -315,11 +315,52 @@ spC = sub.add_parser(
 # )
 # spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
 spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
-spP.add_argument(
-    "--no-gamma-shift",
+g = spP.add_mutually_exclusive_group(required=False)
+g.add_argument(
+    "--gamma-shift",
     action="store_true",
-    help="Save a little time by skipping the white balancing.",
+    dest="gamma",
+    help="""
+        Apply white balancing to the scan, if the image format is
+        lossless (PNG).
+        By default, this gamma shift is NOT applied; this is because it
+        may worsen some poor-quality scans with large shadow regions.
+    """,
 )
+g.add_argument(
+    "--no-gamma-shift",
+    action="store_false",
+    dest="gamma",
+    help="Do not apply white balancing.",
+)
+g = spP.add_mutually_exclusive_group(required=False)
+g.add_argument(
+    "--extract-bitmaps",
+    action="store_true",
+    dest="extractbmp",
+    help="""
+        If a PDF page seems to contain exactly one bitmap image and
+        nothing else, then extract that losslessly instead of rendering
+        the page as a new PNG file.  This will typically give nicer
+        images for the common scan case where pages are simply JPEG
+        images.  But some care must be taken that the image is not
+        annotated in any way and that no other markings appear on the
+        page.
+        As the algorithm to decide this is NOT YET IDEAL, this is
+        currently OFF BY DEFAULT, but we anticipate it being the default
+        in a future version.
+    """,
+)
+g.add_argument(
+    "--no-extract-bitmaps",
+    action="store_false",
+    dest="extractbmp",
+    help="""
+        Don't try to extract bitmaps; just render each page.  This is
+        safer but not always ideal for image quality.
+    """,
+)
+
 spU.add_argument("bundleName", help="The name of the PDF file, without extension.")
 spU.add_argument(
     "-u",
@@ -354,7 +395,9 @@ def main():
             pass
 
     if args.command == "process":
-        processScans(args.server, args.password, args.scanPDF, args.no_gamma_shift)
+        processScans(
+            args.server, args.password, args.scanPDF, args.gamma, args.extractbmp
+        )
     elif args.command == "upload":
         uploadImages(
             args.server, args.password, args.bundleName, args.unknowns, args.collisions

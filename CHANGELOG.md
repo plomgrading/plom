@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Scan now has command line arguments to enable/disable bitmap (jpeg) extraction.
 
 ### Changed
 * New command line arguments for `plom-finish` for digital return.
 * Canvas-related return code handing reduced from 12 digits to 9 by default.
+* Scan white balancing disabled by default (now matches `hwscan` behaviour).
+* Scan bitmap extraction disabled by default (again to match `hwscan`).
 
 ### Fixed
 * Various bug fixes.
