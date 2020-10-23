@@ -747,8 +747,14 @@ class Annotator(QWidget):
             None
 
         """
+        self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
+        # disable ui before calling process events
+        self.setEnabled(False)
+        self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
         # grab the files if needed.
+        # TODO: more responsive to tell downloader thread to the files?
+        #       then start dialog, dialog displays the images once available
         if self.testViewFiles is None:
             log.debug(
                 "rearrangePage: downloading files for testnum {}".format(testNumber)
@@ -768,6 +774,7 @@ class Annotator(QWidget):
         rearrangeView = RearrangementViewer(
             self, testNumber, self.pageData, self.testViewFiles, is_dirty
         )
+        self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
                 self.tgvID, rearrangeView.permute
@@ -780,6 +787,7 @@ class Annotator(QWidget):
             # closeCurrentTGV(self)
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
+        self.setEnabled(True)
         return
 
     def doneViewingPaper(self):
