@@ -6,6 +6,7 @@
 from PyQt5.QtCore import QEvent, QRectF
 from PyQt5.QtGui import (
     QCursor,
+    QFont,
     QGuiApplication,
     QPainter,
     QPixmap,
@@ -216,6 +217,7 @@ class PageScene(QGraphicsScene):
         # we don't want current font size from UI; use fixed physical size
         # self.fontSize = self.font().pointSizeF()
         self.fontSize = AnnFontSizePts
+        self._scale = 1.0
 
         # Define standard pen, highlight, fill, light-fill
         self.ink = QPen(Qt.red, 2)
@@ -301,6 +303,35 @@ class PageScene(QGraphicsScene):
         single row but future revisions might support alternate layouts.
         """
         return 1
+
+    def reset_scale_factor(self):
+        self._scale = 1.0
+        self._stuff_to_do_after_setting_scale()
+
+    def multiply_scale_factor(self, factor):
+        self._scale *= factor
+        self._stuff_to_do_after_setting_scale()
+
+    def increase_scale_factor(self, factor=1.1):
+        self._scale *= factor
+        self.multiple_scale_factor(factor)
+
+    def decrease_scale_factor(self, factor=1.1):
+        self._scale *= factor
+        self.multiple_scale_factor(1.0 / factor)
+
+    def _stuff_to_do_after_setting_scale(self):
+        """Private method for tasks after changing scale.
+
+        TODO: I'd like to move to a model where fontSize is constant
+        and all things (line widths, fonts, etc) get multiplied by scale
+        """
+        self.fontSize = self._scale * AnnFontSizePts
+        # TODO: don't like this 1.25 hardcoded
+        font = QFont("Helvetica")
+        font.setPointSizeF(1.25 * self.fontSize)
+        self.scoreBox.setFont(font)
+        # TODO: fix the blue ghost font size too
 
     def setToolMode(self, mode):
         """

@@ -228,6 +228,12 @@ class Annotator(QWidget):
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
+        m.addAction("Increase annotation scale", lambda: self.changeAnnotScale(1.1))
+        m.addAction("Reset annotation scale", self.changeAnnotScale)
+        m.addAction(
+            "Decrease annotation scale", lambda: self.changeAnnotScale(1.0 / 1.1)
+        )
+        m.addSeparator()
         m.addAction("Help", self.menuDummy).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", self.menuDummy).setEnabled(False)
@@ -418,6 +424,23 @@ class Annotator(QWidget):
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
+
+    def changeAnnotScale(self, scale=None):
+        """Change the scale of the annotations.
+
+        args:
+            scale (float/None): if None reset the scale to the default.
+                If any floating point number, multiple the scale by that
+                value.
+        """
+        if scale is None:
+            log.info("resetting annotation scale to default")
+            if self.scene:
+                self.scene.reset_scale_factor()
+            return
+        log.info("multiplying annotation scale by {}".format(scale))
+        if self.scene:
+            self.scene.multiply_scale_factor(scale)
 
     def setCurrentMarkMode(self):
         """
@@ -1067,6 +1090,13 @@ class Annotator(QWidget):
         # shortcuts for zoom-states
         self.zoomToggleShortCut = QShortcut(QKeySequence("Ctrl+="), self)
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
+
+        self.scaleAnnotIncShortCut = QShortcut(QKeySequence("Shift+]"), self)
+        self.scaleAnnotIncShortCut.activated.connect(lambda: self.changeAnnotScale(1.1))
+        self.scaleAnnotDecShortCut = QShortcut(QKeySequence("Shift+["), self)
+        self.scaleAnnotDecShortCut.activated.connect(
+            lambda: self.changeAnnotScale(1 / 1.1)
+        )
 
         # shortcuts for undo/redo
         self.undoShortCut = QShortcut(QKeySequence("Ctrl+z"), self)
