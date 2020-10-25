@@ -260,7 +260,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[0.5.4]: https://gitlab.com/plom/plom/compare/v0.5.3...v0.5.4
+[0.5.5]: https://gitlab.com/plom/plom/compare/v0.5.3...v0.5.5
 [0.5.3]: https://gitlab.com/plom/plom/compare/v0.5.2...v0.5.3
 [0.5.2]: https://gitlab.com/plom/plom/compare/v0.5.1...v0.5.2
 [0.5.1]: https://gitlab.com/plom/plom/compare/v0.5.0...v0.5.1
