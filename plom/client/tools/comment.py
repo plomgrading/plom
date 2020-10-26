@@ -90,7 +90,7 @@ class GroupDTItem(QGraphicsItemGroup):
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
             self.di.delta,
-            self.blurb.contents,
+            self.blurb.getContents(),
         ]
 
     def paint(self, painter, option, widget):

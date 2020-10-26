@@ -392,7 +392,7 @@ class PageScene(QGraphicsScene):
         comments = []
         for X in self.items():
             if isinstance(X, TextItem):
-                comments.append(X.contents)
+                comments.append(X.getContents())
         return comments
 
     def countComments(self):
@@ -636,7 +636,9 @@ class PageScene(QGraphicsScene):
 
         self.blurb = TextItem(self, self.fontSize)  # build the textitem
         self.blurb.setPlainText(self.commentText)
-        self.blurb.contents = self.commentText  # for pickling
+        self.blurb._contents = (
+            self.commentText
+        )  # for pickling, TODO: Colin doesn't like
         # move to correct point - update if only text no delta
 
         self.blurb.setPos(pt)
@@ -1091,7 +1093,7 @@ class PageScene(QGraphicsScene):
         if len(X) == 3:
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[0])
-            self.blurb.contents = X[0]
+            self.blurb._contents = X[0]  # TODO
             self.blurb.setPos(QPointF(X[1], X[2]))
             self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # knows to latex it if needed.
@@ -1109,7 +1111,7 @@ class PageScene(QGraphicsScene):
         if len(X) == 4:
             self.blurb = TextItem(self, self.fontSize)
             self.blurb.setPlainText(X[3])
-            self.blurb.contents = X[3]
+            self.blurb._contents = X[3]  # TODO
             self.blurb.setPos(QPointF(X[0], X[1]))
             # knows to latex it if needed.
             self.undoStack.push(
