@@ -119,18 +119,19 @@ class GhostComment(QGraphicsItemGroup):
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def tweakPositions(self, dlt, txt):
+    def tweakPositions(self):
+        """Adjust the positions of the delta and text depending on their size and ontent."""
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if dlt == ".":
+        if self.di.delta == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -cr.height() / 2)
         else:
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
             # check if blurb is empty, move accordingly to hide it
-            if txt == "":
+            if not self.blurb.is_displaying_png() and self.blurb.toPlainText() == "":
                 self.blurb.moveBy(0, -cr.height() / 2)
             else:
                 self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
@@ -143,7 +144,7 @@ class GhostComment(QGraphicsItemGroup):
         self.di.changeDelta(dlt)
         self.blurb.changeText(txt)
         # move to correct positions
-        self.tweakPositions(dlt, txt)
+        self.tweakPositions()
         self.addToGroup(self.blurb)
         if dlt == ".":
             self.di.setVisible(False)

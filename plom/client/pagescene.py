@@ -336,6 +336,8 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPointSizeF(1.25 * self.fontSize)
         self.ghostItem.di.setFont(font)
+        # TODO: position within dotted line, but breaks overall position
+        # self.ghostItem.tweakPositions()
 
     def setToolMode(self, mode):
         """
