@@ -95,9 +95,9 @@ class TextItem(QGraphicsTextItem):
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
         self.contents = ""
-        self.font = QFont("Helvetica")
-        self.font.setPointSizeF(fontsize)
-        self.setFont(self.font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(fontsize)
+        self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # Set it as editably with the text-editor
@@ -243,9 +243,9 @@ class GhostText(QGraphicsTextItem):
         super(GhostText, self).__init__()
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(txt)
-        self.font = QFont("Helvetica")
-        self.font.setPointSizeF(fontsize)
-        self.setFont(self.font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(fontsize)
+        self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         # Set it as editably with the text-editor
         self.setTextInteractionFlags(Qt.NoTextInteraction)

@@ -41,10 +41,9 @@ class ScoreBox(QGraphicsTextItem):
         self.score = score
         self.maxScore = maxScore
         self.setDefaultTextColor(Qt.red)
-        self.font = QFont("Helvetica")
-        self.fontSize = 1.25 * fontsize
-        self.font.setPointSizeF(self.fontSize)
-        self.setFont(self.font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(1.25 * fontsize)
+        self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setPos(4, 4)
