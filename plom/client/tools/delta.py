@@ -124,7 +124,7 @@ class GhostDelta(QGraphicsTextItem):
     # Similar to textitem
     def __init__(self, delta, fontsize=10):
         super(GhostDelta, self).__init__()
-        self.delta = int(delta)
+        self.delta = delta
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
