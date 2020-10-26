@@ -331,7 +331,12 @@ class PageScene(QGraphicsScene):
         font = QFont("Helvetica")
         font.setPointSizeF(1.25 * self.fontSize)
         self.scoreBox.setFont(font)
-        # TODO: fix the blue ghost font size too
+        font = QFont("Helvetica")
+        font.setPointSizeF(self.fontSize)
+        self.ghostItem.blurb.setFont(font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(1.25 * self.fontSize)
+        self.ghostItem.di.setFont(font)
 
     def setToolMode(self, mode):
         """
