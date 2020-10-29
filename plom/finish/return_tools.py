@@ -49,6 +49,7 @@ def import_canvas_csv(canvas_fromfile):
                 pandas.isnull(x["Student"])
                 or x["Student"].strip().lower().startswith("points possible")
                 or x["Student"].strip().lower().startswith("test student")
+                or x["Student"].strip().lower().startswith("student, test")
             )
         ),
         axis=1,
