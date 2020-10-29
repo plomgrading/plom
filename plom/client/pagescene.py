@@ -307,17 +307,30 @@ class PageScene(QGraphicsScene):
         self._scale = 1.0
         self._stuff_to_do_after_setting_scale()
 
-    def multiply_scale_factor(self, factor):
-        self._scale *= factor
+    def get_scale_factor(self):
+        return self._scale
+
+    def set_scale_factor(self, scale):
+        """The scale factor scales up or down all annotations."""
+        self._scale = scale
         self._stuff_to_do_after_setting_scale()
 
-    def increase_scale_factor(self, factor=1.1):
-        self._scale *= factor
-        self.multiple_scale_factor(factor)
+    def increase_scale_factor(self, r=1.1):
+        """Scale up the annotations by 110%.
 
-    def decrease_scale_factor(self, factor=1.1):
-        self._scale *= factor
-        self.multiple_scale_factor(1.0 / factor)
+        args:
+            r (float): the multiplicative factor, defaults to 1.1.
+        """
+        self._scale *= r
+        self._stuff_to_do_after_setting_scale()
+
+    def decrease_scale_factor(self, r=1.1):
+        """Scale down the annotations by 110%.
+
+        args:
+            r (float): the scale is multiplied by 1/r.
+        """
+        self.increase_scale_factor(1.0 / r)
 
     def _stuff_to_do_after_setting_scale(self):
         """Private method for tasks after changing scale.

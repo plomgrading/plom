@@ -440,7 +440,7 @@ class Annotator(QWidget):
             return
         log.info("multiplying annotation scale by {}".format(scale))
         if self.scene:
-            self.scene.multiply_scale_factor(scale)
+            self.scene.increase_scale_factor(scale)
 
     def setCurrentMarkMode(self):
         """
@@ -1721,6 +1721,7 @@ class Annotator(QWidget):
             "markStyle": self.markStyle,
             "maxMark": self.maxMark,
             "currentMark": self.score,
+            "sceneScale": self.scene.get_scale_factor(),
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
@@ -1742,6 +1743,8 @@ class Annotator(QWidget):
 
         """
         self.view.setHidden(True)
+        if plomData.get("sceneScale", None):
+            self.scene.set_scale_factor(plomData["sceneScale"])
         self.scene.unpickleSceneItems(plomData["sceneItems"])
         # if markstyle is "Total", then click appropriate button
         if self.markStyle == 1:
