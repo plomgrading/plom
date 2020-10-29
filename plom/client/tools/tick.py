@@ -18,7 +18,7 @@ from plom.client.tools import CommandMoveItem
 class CommandTick(QUndoCommand):
     # Very similar to CommandArrow
     def __init__(self, scene, pt):
-        super(CommandTick, self).__init__()
+        super().__init__()
         self.scene = scene
         self.pt = pt
         self.tickItem = TickItemObject(self.pt)
@@ -26,18 +26,18 @@ class CommandTick(QUndoCommand):
 
     def redo(self):
         self.tickItem.flash_redo()
-        self.scene.addItem(self.tickItem.ti)
+        self.scene.addItem(self.tickItem.tickitem)
 
     def undo(self):
         self.tickItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.tickItem.ti))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.tickItem.tickitem))
 
 
 class TickItemObject(QGraphicsObject):
     # As per the ArrowItemObject
     def __init__(self, pt):
-        super(TickItemObject, self).__init__()
-        self.ti = TickItem(pt, self)
+        super().__init__()
+        self.tickitem = TickItem(pt, self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -56,17 +56,17 @@ class TickItemObject(QGraphicsObject):
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.ti.pen().width()
+        return self.tickitem.pen().width()
 
     @thickness.setter
     def thickness(self, value):
-        self.ti.setPen(QPen(Qt.red, value))
+        self.tickitem.setPen(QPen(Qt.red, value))
 
 
 class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
     def __init__(self, pt, parent=None):
-        super(TickItem, self).__init__()
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False

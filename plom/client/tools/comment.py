@@ -8,16 +8,20 @@ from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools.delta import DeltaItem, GhostDelta
-from plom.client.tools.move import *
+from plom.client.tools.move import CommandMoveItem
 from plom.client.tools.text import GhostText
 
 
 class CommandGDT(QUndoCommand):
-    # GDT = group of delta and text
-    # Command to do a delta and a textitem (ie a standard comment)
-    # Must change mark
+    """GDT is group of delta and text.
+
+    Command to do a delta and a textitem together (a "rubric" or
+    "saved comment").
+
+    Note: must change mark
+    """
     def __init__(self, scene, pt, delta, blurb, fontsize):
-        super(CommandGDT, self).__init__()
+        super().__init__()
         self.scene = scene
         self.pt = pt
         self.delta = delta
@@ -42,7 +46,7 @@ class CommandGDT(QUndoCommand):
 
 class GroupDTItem(QGraphicsItemGroup):
     def __init__(self, pt, delta, blurb, fontsize):
-        super(GroupDTItem, self).__init__()
+        super().__init__()
         self.pt = pt
         self.di = DeltaItem(
             self.pt, delta, fontsize
@@ -108,12 +112,12 @@ class GroupDTItem(QGraphicsItemGroup):
             painter.setPen(QPen(QColor(255, 0, 0), self.thick, style=Qt.DotLine))
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
-        super(GroupDTItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
 
 class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):
-        super(GhostComment, self).__init__()
+        super().__init__()
         self.di = GhostDelta(dlt, fontsize)
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
@@ -157,4 +161,4 @@ class GhostComment(QGraphicsItemGroup):
         painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(GhostComment, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
