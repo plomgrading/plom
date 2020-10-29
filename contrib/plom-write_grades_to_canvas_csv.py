@@ -17,7 +17,7 @@ import argparse
 
 from plom.finish import make_canvas_gradefile
 
-canvas_fromfile = "canvas_from_export.csv"
+canvas_fromfile = "canvas_latest_export.csv"
 canvas_grades_tofile = "canvas_grades_for_import.csv"
 # TODO: check if former exists and latter does not, and give some
 # basic instructions
