@@ -566,9 +566,7 @@ class PageScene(QGraphicsScene):
         if functionName:
             # If you found a function, then call it.
             return getattr(self, functionName, None)(event)
-        else:
-            # otherwise call the usual qgraphicsscene function.
-            return super(PageScene, self).mousePressEvent(event)
+        return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         """
@@ -584,16 +582,14 @@ class PageScene(QGraphicsScene):
         functionName = mouseMove.get(self.mode, None)
         if functionName:
             return getattr(self, functionName, None)(event)
-        else:
-            return super(PageScene, self).mouseMoveEvent(event)
+        return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         # Similar to mouse-press but for mouse-release.
         functionName = mouseRelease.get(self.mode, None)
         if functionName:
             return getattr(self, functionName, None)(event)
-        else:
-            return super(PageScene, self).mouseReleaseEvent(event)
+        return super().mouseReleaseEvent(event)
 
     ###########
     # Tool functions for press, move and release.
@@ -743,7 +739,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.ClosedHandCursor)
-        super(PageScene, self).mousePressEvent(event)
+        super().mousePressEvent(event)
 
     def mousePressPan(self, event):
         """
