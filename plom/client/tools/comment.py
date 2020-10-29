@@ -23,22 +23,19 @@ class CommandGDT(QUndoCommand):
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super().__init__()
         self.scene = scene
-        self.pt = pt
-        self.delta = delta
-        self.blurb = blurb
-        self.gdt = GroupDTItem(self.pt, self.delta, self.blurb, fontsize)
+        self.gdt = GroupDTItem(pt, delta, blurb, fontsize)
         self.setText("GroupDeltaText")
 
     def redo(self):
         # Mark increased by delta
-        self.scene.changeTheMark(self.delta, undo=False)
+        self.scene.changeTheMark(self.gdt.di.delta, undo=False)
         self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
 
     def undo(self):
         # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.delta, undo=True)
+        self.scene.changeTheMark(self.gdt.di.delta, undo=True)
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
