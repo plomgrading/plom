@@ -228,10 +228,19 @@ class Annotator(QWidget):
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
-        m.addAction("Increase annotation scale", lambda: self.changeAnnotScale(1.1))
-        m.addAction("Reset annotation scale", self.changeAnnotScale)
         m.addAction(
-            "Decrease annotation scale", lambda: self.changeAnnotScale(1.0 / 1.1)
+            "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
+        )
+        # Keep a reference to this one so we can update the text
+        self._reset_scale_menu_text = "Reset annotation scale"
+        self._reset_scale_QAction = m.addAction(
+            self._reset_scale_menu_text, self.change_annot_scale
+        )
+        self.update_annot_scale_menu_label()
+
+        m.addAction(
+            "Decrease annotation scale\tshift-]",
+            lambda: self.change_annot_scale(1.0 / 1.1),
         )
         m.addSeparator()
         m.addAction("Help", self.menuDummy).setEnabled(False)
@@ -425,7 +434,7 @@ class Annotator(QWidget):
         # reset the timer (its not needed to make a new one)
         self.timer.start()
 
-    def changeAnnotScale(self, scale=None):
+    def change_annot_scale(self, scale=None):
         """Change the scale of the annotations.
 
         args:
@@ -437,10 +446,22 @@ class Annotator(QWidget):
             log.info("resetting annotation scale to default")
             if self.scene:
                 self.scene.reset_scale_factor()
+            self.update_annot_scale_menu_label()
+
             return
         log.info("multiplying annotation scale by {}".format(scale))
         if self.scene:
             self.scene.increase_scale_factor(scale)
+        self.update_annot_scale_menu_label()
+
+    def update_annot_scale_menu_label(self):
+        """Update the menu which shows the current annotation scale."""
+        if not self.scene:
+            return
+        self._reset_scale_QAction.setText(
+            self._reset_scale_menu_text
+            + "\t{:.0%}".format(self.scene.get_scale_factor())
+        )
 
     def setCurrentMarkMode(self):
         """
@@ -1092,10 +1113,12 @@ class Annotator(QWidget):
         self.zoomToggleShortCut.activated.connect(self.view.zoomToggle)
 
         self.scaleAnnotIncShortCut = QShortcut(QKeySequence("Shift+]"), self)
-        self.scaleAnnotIncShortCut.activated.connect(lambda: self.changeAnnotScale(1.1))
+        self.scaleAnnotIncShortCut.activated.connect(
+            lambda: self.change_annot_scale(1.1)
+        )
         self.scaleAnnotDecShortCut = QShortcut(QKeySequence("Shift+["), self)
         self.scaleAnnotDecShortCut.activated.connect(
-            lambda: self.changeAnnotScale(1 / 1.1)
+            lambda: self.change_annot_scale(1 / 1.1)
         )
 
         # shortcuts for undo/redo
