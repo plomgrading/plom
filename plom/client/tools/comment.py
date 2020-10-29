@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.move import CommandMoveItem
-from plom.client.tools.text import GhostText
+from plom.client.tools.text import GhostText, TextItem
 
 
 class CommandGDT(QUndoCommand):
@@ -23,7 +23,7 @@ class CommandGDT(QUndoCommand):
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super().__init__()
         self.scene = scene
-        self.gdt = GroupDTItem(pt, delta, blurb, fontsize)
+        self.gdt = GroupDTItem(pt, delta, blurb, fontsize, scene)
         self.setText("GroupDeltaText")
 
     def redo(self):
@@ -42,13 +42,21 @@ class CommandGDT(QUndoCommand):
 
 
 class GroupDTItem(QGraphicsItemGroup):
-    def __init__(self, pt, delta, blurb, fontsize):
+    """A group of Delta and Text presenting a rubric.
+
+    TODO: passing in scene is a workaround so the TextItem can talk to
+    someone about building LaTeX... can we refactor that somehow?
+    """
+    def __init__(self, pt, delta, blurb_text, fontsize, scene):
         super().__init__()
         self.pt = pt
         self.di = DeltaItem(
-            self.pt, delta, fontsize
+            pt, delta, fontsize
         )  # positioned so centre under click
-        self.blurb = blurb  # is a textitem already
+        self.blurb = TextItem(scene, fontsize)
+        self.blurb.setPlainText(blurb_text)
+        self.blurb._contents = blurb_text  # TODO
+        self.blurb.setPos(pt)
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
