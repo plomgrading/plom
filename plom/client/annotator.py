@@ -223,7 +223,7 @@ class Annotator(QWidget):
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
-        m.addAction("Rearrange pages\tctrl-r", self.rearrangePages)
+        m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
@@ -1263,8 +1263,8 @@ class Annotator(QWidget):
         # Connect up the finishing buttons
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
         self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
-        # Connect the "no answer" button
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
+        self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
 
     def handleComment(self, dlt_txt):
         """
