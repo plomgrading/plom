@@ -115,7 +115,8 @@ class MarkHandler(QWidget):
     def setMarkingDown(self):
         self.setMark(self.maxScore)
         grid = self.layout()
-
+        # assume our container will deal with margins
+        grid.setContentsMargins(0, 0, 0, 0)
         if self.maxScore > 5:
             ncolumn = 3
         else:

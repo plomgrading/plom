@@ -168,6 +168,8 @@ class CommentWidget(QWidget):
         self.parent = parent
         self.maxMark = maxMark
         grid = QGridLayout()
+        # assume our container will deal with margins
+        grid.setContentsMargins(0, 0, 0, 0)
         # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 3)
