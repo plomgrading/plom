@@ -178,7 +178,7 @@ class Annotator(QWidget):
 
         # Create the comment list widget and put into gui.
         self.comment_widget = CommentWidget(self, None)
-        self.ui.commentGrid.addWidget(self.comment_widget, 1, 1)
+        self.ui.container_commentwidget.addWidget(self.comment_widget)
 
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
@@ -396,7 +396,7 @@ class Annotator(QWidget):
         if not self.markHandler:
             # Build the mark handler and put into the gui.
             self.markHandler = MarkHandler(self, self.maxMark, self.markStyle)
-            self.ui.markGrid.addWidget(self.markHandler)
+            self.ui.container_markgrid.addWidget(self.markHandler)
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 

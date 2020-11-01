@@ -42,7 +42,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QFrame" name="frame_1">
+       <widget class="QFrame" name="frame1">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -132,7 +132,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_2">
+       <widget class="QFrame" name="frame2">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -514,7 +514,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_4">
+       <widget class="QFrame" name="frame4">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -551,14 +551,26 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="markBox">
+       <widget class="QFrame" name="frame5_markgrid">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <layout class="QGridLayout" name="markGrid">
+        <layout class="QHBoxLayout" name="container_markgrid">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="frame6">
+        <layout class="QHBoxLayout">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -569,21 +581,6 @@
           <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <property name="spacing">
-          <number>3</number>
-         </property>
-        </layout>
-       </widget>
-      </item>
-      <item>
-       <widget class="QFrame" name="frame_5">
-        <layout class="QHBoxLayout">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
           <number>0</number>
          </property>
          <item>
@@ -632,18 +629,15 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_3">
+       <widget class="QFrame" name="frame7_comment">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>2</verstretch>
          </sizepolicy>
         </property>
-        <layout class="QGridLayout" name="commentGrid">
+        <layout class="QVBoxLayout" name="container_commentwidget">
          <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
           <number>0</number>
          </property>
          <property name="rightMargin">
@@ -651,9 +645,6 @@
          </property>
          <property name="bottomMargin">
           <number>0</number>
-         </property>
-         <property name="spacing">
-          <number>3</number>
          </property>
         </layout>
        </widget>
