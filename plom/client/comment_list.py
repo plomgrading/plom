@@ -175,7 +175,7 @@ class CommentWidget(QWidget):
         grid.addWidget(self.CL, 1, 1, 2, 3)
         self.addB = QPushButton("Add")
         self.delB = QPushButton("Delete")
-        self.filtB = QPushButton("Filter...")
+        self.filtB = QPushButton("Filter")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.delB, 3, 3)
