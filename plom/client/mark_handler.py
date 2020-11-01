@@ -96,21 +96,20 @@ class MarkHandler(QWidget):
     def setMarkingUp(self):
         self.setMark(0)
         grid = self.layout()
-
-        if self.maxScore > 5:
-            ncolumn = 3
-        else:
-            ncolumn = 2
+        # assume our container will deal with margins
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(3)
+        ncolumn = min(self.maxScore, 5)
 
         for k in range(0, self.maxScore + 1):
-            self.markButtons[k] = QPushButton("+{}".format(k))
-            self.markButtons[k].setCheckable(True)
-            # self.markButtons[k].setAutoExclusive(True)
-            grid.addWidget(self.markButtons[k], k // ncolumn + 1, k % ncolumn, 1, 1)
-            self.markButtons[k].clicked.connect(self.setDeltaMark)
-            self.markButtons[k].setSizePolicy(
-                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
-            )
+            b = QToolButton()
+            self.markButtons[k] = b
+            b.setText("+{}".format(k))
+            b.setCheckable(True)
+            # b.setAutoExclusive(True)
+            grid.addWidget(b, k // ncolumn + 1, k % ncolumn, 1, 1)
+            b.clicked.connect(self.setDeltaMark)
+            b.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
         self.style = "Up"
 
@@ -119,20 +118,18 @@ class MarkHandler(QWidget):
         grid = self.layout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        if self.maxScore > 5:
-            ncolumn = 3
-        else:
-            ncolumn = 2
+        grid.setSpacing(3)
+        ncolumn = min(self.maxScore, 5)
 
         for k in range(0, self.maxScore + 1):
-            self.markButtons[k] = QPushButton("-{}".format(k))
-            self.markButtons[k].setCheckable(True)
-            # self.markButtons[k].setAutoExclusive(True)
-            grid.addWidget(self.markButtons[k], k // ncolumn + 1, k % ncolumn, 1, 1)
-            self.markButtons[k].clicked.connect(self.setDeltaMark)
-            self.markButtons[k].setSizePolicy(
-                QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
-            )
+            b = QToolButton()
+            self.markButtons[k] = b
+            b.setText("-{}".format(k))
+            b.setCheckable(True)
+            # b.setAutoExclusive(True)
+            grid.addWidget(b, k // ncolumn + 1, k % ncolumn, 1, 1)
+            b.clicked.connect(self.setDeltaMark)
+            b.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 
         self.parent.totalMarkSet(self.currentScore)
         self.style = "Down"
