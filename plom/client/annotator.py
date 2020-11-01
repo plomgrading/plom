@@ -1233,14 +1233,8 @@ class Annotator(QWidget):
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
         self.ui.redoButton.clicked.connect(self.redo)
-        # The key-help button connects to the keyPopUp command.
         # TODO: messy viz hacks
-        # self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
-        self.ui.keyHelpButton.setVisible(False)
         self.ui.cancelButton.setVisible(False)
-        # The view button connects to the viewWholePaper
-        # self.ui.viewButton.clicked.connect(self.viewWholePaper)
-        self.ui.viewButton.setVisible(False)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)

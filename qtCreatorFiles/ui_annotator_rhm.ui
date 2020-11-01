@@ -76,26 +76,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="keyHelpButton">
-           <property name="toolTip">
-            <string>List shortcut keys</string>
-           </property>
-           <property name="text">
-            <string>Key help</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="viewButton">
-           <property name="toolTip">
-            <string>Show entire paper in new window</string>
-           </property>
-           <property name="text">
-            <string>View all</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="finishedButton">
            <property name="toolTip">
             <string>Save and move to the next paper</string>
