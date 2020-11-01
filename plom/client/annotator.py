@@ -235,6 +235,7 @@ class Annotator(QWidget):
         m.addAction("Close without saving\tctrl-c", self.close)
         self.ui.hamMenuButton.setMenu(m)
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
+        self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
 
     # TODO: ask andrew what this does....
     def menuDummy(self):

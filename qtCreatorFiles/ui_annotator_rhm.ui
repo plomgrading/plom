@@ -63,15 +63,9 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QPushButton" name="hamMenuButton">
-           <property name="maximumSize">
-            <size>
-             <width>42</width>
-             <height>16777215</height>
-            </size>
-           </property>
+          <widget class="QToolButton" name="hamMenuButton">
            <property name="text">
-            <string>☰</string>
+            <string notr="true">☰</string>
            </property>
           </widget>
          </item>
