@@ -435,26 +435,23 @@ class MarkHandler:
         """
         test_number = request.match_info["number"]
         question_number = request.match_info["question"]
-        # This response is a list which includes the following:
+
+        # return [True, pageData, f1, f2, f3, ...] or [False]
         # 1. True/False for operation status.
-        # 2. A list of lists where each inner list includes:
-        #   [test_number, task_number, True/False for whether the task/page is graded or not]
-        # 3. From the 3rd element onward, we have the string paths for each page of the paper in server.
+        # 2. A list of lists, documented elsewhere (TODO: I hope)
+        # 3. 3rd element onward: paths for each page of the paper in server.
         whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
 
-        paper_retrieval_success = whole_paper_response[0]
+        if not whole_paper_response[0]:
+            return web.Response(status=404)
 
-        if paper_retrieval_success:  # return [True, pageData,f1,f2,f3,...] or [False]
-            with MultipartWriter("images") as multipart_writer:
-                pages_data = whole_paper_response[1]
-                all_pages_paths = whole_paper_response[2:]
-
-                multipart_writer.append_json(pages_data)  # append the pageData
-                for file_name in all_pages_paths:
-                    multipart_writer.append(open(file_name, "rb"))
-            return web.Response(body=multipart_writer, status=200)
-        else:
-            return web.Response(status=404)  # not found
+        with MultipartWriter("images") as multipart_writer:
+            pages_data = whole_paper_response[1]
+            all_pages_paths = whole_paper_response[2:]
+            multipart_writer.append_json(pages_data)
+            for file_name in all_pages_paths:
+                multipart_writer.append(open(file_name, "rb"))
+        return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/MK/allMax")
     @authenticate_by_token
