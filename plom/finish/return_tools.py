@@ -49,12 +49,14 @@ def import_canvas_csv(canvas_fromfile):
                 pandas.isnull(x["Student"])
                 or x["Student"].strip().lower().startswith("points possible")
                 or x["Student"].strip().lower().startswith("test student")
+                or x["Student"].strip().lower().startswith("student, test")
             )
         ),
         axis=1,
     )
     df = df[isbad == False]
-
+    # reset the Pandas-added index column to 0 for first row
+    df = df.reset_index(drop=True)
     return df
 
 
