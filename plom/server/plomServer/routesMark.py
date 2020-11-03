@@ -453,6 +453,39 @@ class MarkHandler:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
+    # @routes.get("/tmp/MK/whole/{number}")
+    @authenticate_by_token_required_fields([])
+    def MgetWholePaperMetadata(self, data, request):
+        """Return the metadata for all images associated with a paper
+
+        Respond with status 200/404.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
+
+        Returns:
+            aiohttp.web_response.Response: TODO document
+        """
+        test_number = request.match_info["number"]
+        # TODO: who cares about this?
+        question_number = request.match_info["question"]
+
+        # return [True, pageData, f1, f2, f3, ...] or [False]
+        # 1. True/False for operation status.
+        # 2. A list of lists, documented elsewhere (TODO: I hope)
+        # 3. 3rd element onward: paths for each page of the paper in server.
+        r = self.server.MgetWholePaper(test_number, question_number)
+
+        if not r[0]:
+            return web.Response(status=404)
+
+        pages_data = r[1]
+        # We just discard this, its legacy from previous API call
+        # TODO: fold into the pages_data; then we can sanity check it when it comes back!
+        all_pages_paths = r[2:]
+        return web.json_response(pages_data, status=200)
+
     # @routes.get("/MK/allMax")
     @authenticate_by_token
     def MgetAllMax(self):
@@ -526,5 +559,6 @@ class MarkHandler:
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
+        router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
