@@ -95,9 +95,9 @@ class TextItem(QGraphicsTextItem):
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
         self.contents = ""
-        self.font = QFont("Helvetica")
-        self.font.setPointSizeF(fontsize)
-        self.setFont(self.font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(fontsize)
+        self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # Set it as editably with the text-editor
@@ -243,14 +243,22 @@ class GhostText(QGraphicsTextItem):
         super(GhostText, self).__init__()
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(txt)
-        self.font = QFont("Helvetica")
-        self.font.setPointSizeF(fontsize)
-        self.setFont(self.font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(fontsize)
+        self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         # Set it as editably with the text-editor
         self.setTextInteractionFlags(Qt.NoTextInteraction)
+        # If we're displaying png-rendered-latex then we will store the
+        # original text here
+        self._png_tex_cache = None
+
+    def is_displaying_png(self):
+        """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
+        return not self._png_tex_cache is None
 
     def changeText(self, txt):
+        self._png_tex_cache = None
         self.setPlainText(txt)
         if self.scene() is not None and txt[:4].upper() == "TEX:":
             texIt = (
@@ -258,6 +266,7 @@ class GhostText(QGraphicsTextItem):
             )  # make color blue for ghost rendering
             fragfilename = self.scene().latexAFragment(texIt)
             if fragfilename:
+                self._png_tex_cache = txt
                 self.setPlainText("")
                 tc = self.textCursor()
                 qi = QImage(fragfilename)

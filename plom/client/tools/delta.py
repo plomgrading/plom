@@ -45,10 +45,10 @@ class DeltaItem(QGraphicsTextItem):
         self.delta = delta
         self.setDefaultTextColor(Qt.red)
         self.setPlainText(" {} ".format(self.delta))
-        self.font = QFont("Helvetica")
+        font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSizeF(1.25 * fontsize)
-        self.setFont(self.font)
+        font.setPointSizeF(1.25 * fontsize)
+        self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -124,13 +124,13 @@ class GhostDelta(QGraphicsTextItem):
     # Similar to textitem
     def __init__(self, delta, fontsize=10):
         super(GhostDelta, self).__init__()
-        self.delta = int(delta)
+        self.delta = delta
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(" {} ".format(self.delta))
-        self.font = QFont("Helvetica")
+        font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSizeF(1.25 * fontsize)
-        self.setFont(self.font)
+        font.setPointSizeF(1.25 * fontsize)
+        self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)

@@ -6,6 +6,7 @@
 from PyQt5.QtCore import QEvent, QRectF
 from PyQt5.QtGui import (
     QCursor,
+    QFont,
     QGuiApplication,
     QPainter,
     QPixmap,
@@ -40,10 +41,9 @@ class ScoreBox(QGraphicsTextItem):
         self.score = score
         self.maxScore = maxScore
         self.setDefaultTextColor(Qt.red)
-        self.font = QFont("Helvetica")
-        self.fontSize = 1.25 * fontsize
-        self.font.setPointSizeF(self.fontSize)
-        self.setFont(self.font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(1.25 * fontsize)
+        self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setPos(4, 4)
@@ -216,6 +216,7 @@ class PageScene(QGraphicsScene):
         # we don't want current font size from UI; use fixed physical size
         # self.fontSize = self.font().pointSizeF()
         self.fontSize = AnnFontSizePts
+        self._scale = 1.0
 
         # Define standard pen, highlight, fill, light-fill
         self.ink = QPen(Qt.red, 2)
@@ -301,6 +302,55 @@ class PageScene(QGraphicsScene):
         single row but future revisions might support alternate layouts.
         """
         return 1
+
+    def reset_scale_factor(self):
+        self._scale = 1.0
+        self._stuff_to_do_after_setting_scale()
+
+    def get_scale_factor(self):
+        return self._scale
+
+    def set_scale_factor(self, scale):
+        """The scale factor scales up or down all annotations."""
+        self._scale = scale
+        self._stuff_to_do_after_setting_scale()
+
+    def increase_scale_factor(self, r=1.1):
+        """Scale up the annotations by 110%.
+
+        args:
+            r (float): the multiplicative factor, defaults to 1.1.
+        """
+        self._scale *= r
+        self._stuff_to_do_after_setting_scale()
+
+    def decrease_scale_factor(self, r=1.1):
+        """Scale down the annotations by 110%.
+
+        args:
+            r (float): the scale is multiplied by 1/r.
+        """
+        self.increase_scale_factor(1.0 / r)
+
+    def _stuff_to_do_after_setting_scale(self):
+        """Private method for tasks after changing scale.
+
+        TODO: I'd like to move to a model where fontSize is constant
+        and all things (line widths, fonts, etc) get multiplied by scale
+        """
+        self.fontSize = self._scale * AnnFontSizePts
+        # TODO: don't like this 1.25 hardcoded
+        font = QFont("Helvetica")
+        font.setPointSizeF(1.25 * self.fontSize)
+        self.scoreBox.setFont(font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(self.fontSize)
+        self.ghostItem.blurb.setFont(font)
+        font = QFont("Helvetica")
+        font.setPointSizeF(1.25 * self.fontSize)
+        self.ghostItem.di.setFont(font)
+        # TODO: position within dotted line, but breaks overall position
+        # self.ghostItem.tweakPositions()
 
     def setToolMode(self, mode):
         """

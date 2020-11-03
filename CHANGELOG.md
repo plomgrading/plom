@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Preliminary support for changing the overall scale of annotations; adjust using the menu/shortcut keys.
 
 ### Changed
 
