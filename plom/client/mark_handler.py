@@ -1,21 +1,19 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2020 Colin B. Macdonald
 
 import logging
 
 from PyQt5.QtWidgets import (
     QWidget,
     QPushButton,
+    QToolButton,
     QButtonGroup,
     QGridLayout,
-    QStackedWidget,
-    QLabel,
     QMenu,
     QSizePolicy,
 )
-from PyQt5.QtCore import Qt
 
 
 log = logging.getLogger("markhndlr")
@@ -90,6 +88,10 @@ class MarkHandler(QWidget):
         self.markButtons = {}
         self._setStyle(markStyle)
         self.setDeltaButtonMenu()
+
+    def getButtonList(self):
+        """Return a list of the buttons"""
+        return self.markButtons.values()
 
     def setMarkingUp(self):
         self.setMark(0)

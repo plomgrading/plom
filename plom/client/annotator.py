@@ -962,12 +962,11 @@ class Annotator(QWidget):
         # We have to be a little careful since not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
 
-        if isinstance(self.sender(), QPushButton):
+        if self.sender() in self.markHandler.getButtonList():
             # has come from mark-change button, markHandler does its own styling
             pass
-        elif isinstance(
-            self.sender(), QToolButton
-        ):  # only tool buttons are the mode-changing ones.
+        elif self.sender() in self.ui.frameTools.children():
+            # tool buttons change the mode
             self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
         elif self.sender() is self.comment_widget.CL:
