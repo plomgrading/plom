@@ -32,8 +32,8 @@ class Ui_annotator_rhm(object):
         self.modeLayout = QtWidgets.QHBoxLayout(self.frame1)
         self.modeLayout.setContentsMargins(0, 0, 0, 0)
         self.modeLayout.setObjectName("modeLayout")
-        self.hamMenuButton = QtWidgets.QPushButton(self.frame1)
-        self.hamMenuButton.setMaximumSize(QtCore.QSize(42, 16777215))
+        self.hamMenuButton = QtWidgets.QToolButton(self.frame1)
+        self.hamMenuButton.setText("☰")
         self.hamMenuButton.setObjectName("hamMenuButton")
         self.modeLayout.addWidget(self.hamMenuButton)
         self.finishedButton = QtWidgets.QPushButton(self.frame1)
@@ -287,7 +287,6 @@ class Ui_annotator_rhm(object):
     def retranslateUi(self, annotator_rhm):
         _translate = QtCore.QCoreApplication.translate
         annotator_rhm.setWindowTitle(_translate("annotator_rhm", "Annotate paper"))
-        self.hamMenuButton.setText(_translate("annotator_rhm", "☰"))
         self.finishedButton.setToolTip(_translate("annotator_rhm", "Save and move to the next paper"))
         self.finishedButton.setText(_translate("annotator_rhm", "Next"))
         self.finishNoRelaunchButton.setToolTip(_translate("annotator_rhm", "Save and return to marker window"))
