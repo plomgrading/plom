@@ -42,7 +42,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QFrame" name="frame_1">
+       <widget class="QFrame" name="frame1">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -72,26 +72,6 @@
            </property>
            <property name="text">
             <string>☰</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="keyHelpButton">
-           <property name="toolTip">
-            <string>List shortcut keys</string>
-           </property>
-           <property name="text">
-            <string>Key help</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="viewButton">
-           <property name="toolTip">
-            <string>Show entire paper in new window</string>
-           </property>
-           <property name="text">
-            <string>View all</string>
            </property>
           </widget>
          </item>
@@ -132,7 +112,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_2">
+       <widget class="QFrame" name="frame2">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -514,7 +494,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_4">
+       <widget class="QFrame" name="frame4">
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -551,38 +531,26 @@
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="markBox">
+       <widget class="QFrame" name="frame5_markgrid">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <layout class="QGridLayout" name="markGrid">
+        <layout class="QHBoxLayout" name="container_markgrid">
          <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
           <number>0</number>
          </property>
          <property name="rightMargin">
           <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <property name="spacing">
-          <number>3</number>
          </property>
         </layout>
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_5">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <property name="spacing">
-          <number>6</number>
-         </property>
+       <widget class="QFrame" name="frame6">
+        <layout class="QHBoxLayout">
          <property name="leftMargin">
           <number>0</number>
          </property>
@@ -596,22 +564,15 @@
           <number>0</number>
          </property>
          <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="QPushButton" name="noAnswerButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
-            <string>No answer given</string>
+            <string>No answer</string>
            </property>
           </widget>
          </item>
@@ -622,28 +583,41 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>40</width>
+             <width>6</width>
              <height>20</height>
             </size>
            </property>
           </spacer>
          </item>
+         <item>
+          <widget class="QPushButton" name="rearrangePagesButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Find a missing page, discard irrelevant pages, rotate pages, etc&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Adjust pages</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
       <item>
-       <widget class="QFrame" name="frame_3">
+       <widget class="QFrame" name="frame7_comment">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>2</verstretch>
          </sizepolicy>
         </property>
-        <layout class="QGridLayout" name="commentGrid">
+        <layout class="QVBoxLayout" name="container_commentwidget">
          <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
           <number>0</number>
          </property>
          <property name="rightMargin">
@@ -651,9 +625,6 @@
          </property>
          <property name="bottomMargin">
           <number>0</number>
-         </property>
-         <property name="spacing">
-          <number>3</number>
          </property>
         </layout>
        </widget>

@@ -178,7 +178,7 @@ class Annotator(QWidget):
 
         # Create the comment list widget and put into gui.
         self.comment_widget = CommentWidget(self, None)
-        self.ui.commentGrid.addWidget(self.comment_widget, 1, 1)
+        self.ui.container_commentwidget.addWidget(self.comment_widget)
 
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
@@ -223,7 +223,7 @@ class Annotator(QWidget):
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
-        m.addAction("Rearrange pages\tctrl-r", self.rearrangePages)
+        m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
         m.addAction("&Wide UI\thome", self.wideLayout)
@@ -411,7 +411,7 @@ class Annotator(QWidget):
         if not self.markHandler:
             # Build the mark handler and put into the gui.
             self.markHandler = MarkHandler(self, self.maxMark, self.markStyle)
-            self.ui.markGrid.addWidget(self.markHandler)
+            self.ui.container_markgrid.addWidget(self.markHandler)
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
@@ -1286,14 +1286,8 @@ class Annotator(QWidget):
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
         self.ui.redoButton.clicked.connect(self.redo)
-        # The key-help button connects to the keyPopUp command.
         # TODO: messy viz hacks
-        # self.ui.keyHelpButton.clicked.connect(self.keyPopUp)
-        self.ui.keyHelpButton.setVisible(False)
         self.ui.cancelButton.setVisible(False)
-        # The view button connects to the viewWholePaper
-        # self.ui.viewButton.clicked.connect(self.viewWholePaper)
-        self.ui.viewButton.setVisible(False)
 
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)
@@ -1316,8 +1310,8 @@ class Annotator(QWidget):
         # Connect up the finishing buttons
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
         self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
-        # Connect the "no answer" button
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
+        self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
 
     def handleComment(self, dlt_txt):
         """
