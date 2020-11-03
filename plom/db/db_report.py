@@ -298,7 +298,7 @@ def RgetOutToDo(self):
                     qref.test.test_number, qref.question, qref.version
                 ),
                 qref.user.name,
-                "01:10:23-15:59:02",   # temporary workaround for #1234
+                "01:10:23-15:59:02",  # temporary workaround for #1234
             ]
         )
     log.debug("Sending list of tasks that are still out")
