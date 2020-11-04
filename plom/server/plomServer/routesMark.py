@@ -360,6 +360,28 @@ class MarkHandler:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
+    # @routes.get(...)
+    @authenticate_by_token_required_fields(["user"])
+    def MgetOneImage(self, data, request):
+        """Return one image from the database.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request)
+
+        Returns:
+            aiohttp.web_response.Response: the binary image data, or
+                TODO: error codes/conditions?
+        """
+        task_code = request.match_info["task"]
+        image_id = request.match_info["image_id"]
+        md5sum = request.match_info["md5sum"]
+
+        filename = self.server.DB.MgetOneImageFilename(
+            data["user"], task_code, image_id, md5sum
+        )
+        return web.FileResponse(filename, status=200)
+
     # @routes.get("/MK/originalImage/{task}")
     @authenticate_by_token_required_fields([])
     def MgetOriginalImages(self, data, request):
@@ -453,7 +475,7 @@ class MarkHandler:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
-    # @routes.get("/tmp/MK/whole/{number}")
+    # @routes.get("/MK/TMP/whole/{number}/{question}")
     @authenticate_by_token_required_fields([])
     def MgetWholePaperMetadata(self, data, request):
         """Return the metadata for all images associated with a paper
@@ -465,7 +487,11 @@ class MarkHandler:
             request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
 
         Returns:
-            aiohttp.web_response.Response: TODO document
+            aiohttp.web_response.Response: JSON data, a list of lists
+                where each list in the form documented below.
+
+        Each row of the data looks like:
+           `[name, md5, true/false, pos_in_current_annotation, image_id]`
         """
         test_number = request.match_info["number"]
         # TODO: who cares about this?
@@ -556,6 +582,7 @@ class MarkHandler:
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{task}", self.MgetImages)
+        router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)

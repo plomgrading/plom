@@ -179,6 +179,26 @@ def MdidNotFinish(self, user_name, group_id):
         log.info("User {} did not mark task {}".format(user_name, group_id))
 
 
+def MgetOneImageFilename(self, user_name, task, image_id, md5):
+    """Get the filename of one image.
+
+    Args:
+        TODO: drop user_name and task?
+
+    Returns:
+        TODO: what happens on failure too
+    """
+    uref = User.get(name=user_name)  # authenticated, so not-None
+
+    print("***** AT DB *****")
+    print(uref)
+    with plomdb.atomic():
+        iref = Image.get_or_none(id=image_id)
+        print(iref)
+        print(iref.file_name)
+        return iref.file_name
+
+
 def MtakeTaskFromClient(
     self,
     task,
@@ -429,6 +449,7 @@ def MgetWholePaper(self, test_number, question):
             p.image.md5sum,
             False,
             current_image_orders.get(p.image.id),
+            p.image.id,
         ]
         # check if page belongs to our question
         if p.group.group_type == "q" and p.group.qgroups[0].question == question:
@@ -443,6 +464,7 @@ def MgetWholePaper(self, test_number, question):
                 p.image.md5sum,
                 False,
                 current_image_orders.get(p.image.id),
+                p.image.id,
             ]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
@@ -454,6 +476,7 @@ def MgetWholePaper(self, test_number, question):
                 p.image.md5sum,
                 False,
                 current_image_orders.get(p.image.id),
+                p.image.id,
             ]
             if qref.question == question:  # check if page belongs to our question
                 val[2] = True
@@ -467,6 +490,7 @@ def MgetWholePaper(self, test_number, question):
                 p.image.md5sum,
                 False,
                 current_image_orders.get(p.image.id),
+                p.image.id,
             ]
         )
         pageFiles.append(p.image.file_name)

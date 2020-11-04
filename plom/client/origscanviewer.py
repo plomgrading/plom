@@ -195,17 +195,15 @@ class SinkList(QListWidget):
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, pageData, pageFiles, need_to_confirm=False):
+    def __init__(self, parent, testNumber, page_data, need_to_confirm=False):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
         self.need_to_confirm = need_to_confirm
         self._setupUI()
-        pageData, pageFiles = self.temp_dedupe_filter(pageData, pageFiles)
-        self.pageData = pageData
-        self.pageFiles = pageFiles
+        page_data = self.temp_dedupe_filter(page_data)
+        self.pageData = page_data
         self.nameToIrefNFile = {}
-        # note pagedata  triples [name, image-ref, true/false, pos_in_current_annotation]
         self.populateList()
 
     def _setupUI(self):
@@ -315,7 +313,7 @@ class RearrangementViewer(QDialog):
             lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
         )
 
-    def temp_dedupe_filter(self, pageData, pageFiles):
+    def temp_dedupe_filter(self, pageData):
         """A temporary hack for a side branch.  Usually should be a no-op.
 
         This supports [1] and hopefully does nothing in other cases.
@@ -325,28 +323,25 @@ class RearrangementViewer(QDialog):
         The data looks like the following.  We want to remove False rows that
         have their md5 in one of the True rows:
         ```
-        ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1] /tmp/plom_zq/tmpnqq.image
-        ['h1.2', '97521f4122df24ca012a12930391195a', True, 2] /tmp/plom_zq/tmp_om.image
-        ['h2.1', 'e224c22eda93456143fbac94beb0ffbd', False, 1] /tmp/plom_zq/tmpx0s.image
-        ['h2.2', '97521f4122df24ca012a12930391195a', False, 2] /tmp/plom_zq/tmpd5g.image
+        ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
+        ['h1.2', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
+        ['h2.1', 'e224c22eda93456143fbac94beb0ffbd', False, 1, 40, '/tmp/plom_zq/tmpx0s.image]
+        ['h2.2', '97521f4122df24ca012a12930391195a', False, 2, 41, '/tmp/plom_zq/tmpd5g.image]
         ```
+        (Possibily filenames are repeated for repeat md5: not required by this code.)
         """
         bottom_md5_list = []
         for x in pageData:
             if x[2]:
                 bottom_md5_list.append(x[1])
         new_pageData = []
-        new_pageFiles = []
-        for x, y in zip(pageData, pageFiles):
-            print("debug: {}, {}".format(x, y))
+        for x in pageData:
             if x[2]:
                 new_pageData.append(x)
-                new_pageFiles.append(y)
             else:
                 if x[1] not in bottom_md5_list:
                     new_pageData.append(x)
-                    new_pageFiles.append(y)
-        return new_pageData, new_pageFiles
+        return new_pageData
 
     def populateList(self):
         """
@@ -362,22 +357,15 @@ class RearrangementViewer(QDialog):
         # true/false - if belongs to the given question or not.
         # position in current annotation (or none if not)
         move_order = {}
-        for k in range(len(self.pageData)):
-            self.nameToIrefNFile[self.pageData[k][0]] = [
-                self.pageData[k][1],
-                self.pageFiles[k],
-            ]
+        for row in self.pageData:
+            self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
             # add every page image to list A
-            self.listA.addImageItem(
-                self.pageData[k][0], self.pageFiles[k], self.pageData[k][2]
-            )
+            self.listA.addImageItem(row[0], row[-1], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(
-                self.pageData[k][0], self.pageFiles[k], self.pageData[k][2]
-            )
+            self.listB.addPotentialItem(row[0], row[-1], row[2])
             # if position in current annot is non-null then add to list of pages to move between lists.
-            if self.pageData[k][2] and self.pageData[k][3]:
-                move_order[self.pageData[k][3]] = self.pageData[k][0]
+            if row[2] and row[3]:
+                move_order[row[3]] = row[0]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.removeItem(name=move_order[k]))
 

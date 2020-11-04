@@ -135,6 +135,7 @@ class Annotator(QWidget):
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
         self.testViewFiles = None
+        self._adjustpages_data = None
 
         # declares some instance vars
         self.cursorBox = None
@@ -332,7 +333,7 @@ class Annotator(QWidget):
                                          tgv = t0027g13v2
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
-            fnames (str): original file name (unannotated)
+            fnames (str): original file names (unannotated)
             saveName (str): name the tgv is saved as
             maxMark (int): maximum possible score for that test question
             markStyle (int): marking style
@@ -802,42 +803,73 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        # grab the files if needed.
-        # TODO: more responsive to tell downloader thread to the files?
-        #       then start dialog, dialog displays the images once available
-        if self.testViewFiles is None:
+        # we might have data cached from a previous run
+        page_data = self._adjustpages_data
+        if page_data is None:
             log.debug(
                 "rearrangePage: downloading files for testnum {}".format(testNumber)
             )
-            (
-                self.pageData,
-                self.testViewFiles,
-            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
-
-            log.debug(
-                "rearrangePage: pageData = {}, viewFiles = {}".format(
-                    self.pageData, self.testViewFiles
+            page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
+            print("v" * 100)
+            if len(set(self.image_md5_list)) != len(self.image_md5_list):
+                log.warn(
+                    "unexpected repeated md5: do you have two identical pages in the current annotator?  Is that allowed?"
                 )
-            )
+            # note we'll md5 match within one paper only: low birthday probability
+            md5_to_file_map = {
+                k: v for k, v in zip(self.image_md5_list, self.imageFiles)
+            }
+            log.info("adjustpages: md5-to-file map: {}".format(md5_to_file_map))
+            # Crawl over the page_data, append a filename for each file
+            # download what's needed but avoid re-downloading duplicate files
+            # TODO: could defer downloading to background thread of dialog
+            for (i, p) in enumerate(page_data):
+                md5 = p[1]
+                image_id = p[-1]
+                fname = md5_to_file_map.get(md5)
+                if fname:
+                    log.info(
+                        "adjustpages: not downloading image id={}; we have it already at i={}, {}".format(
+                            image_id, i, fname
+                        )
+                    )
+                else:
+                    tmp = self.parentMarkerUI.downloadOneImage(
+                        self.tgvID, image_id, md5
+                    )
+                    # TODO: use proper tempfiles
+                    fname = "/home/cbm/plomtmp/twist_{}.png".format(i)
+                    log.info(
+                        'adjustpages: writing "{}" from id={}, md5={}'.format(
+                            fname, image_id, md5
+                        )
+                    )
+                    with open(fname, "wb") as f:
+                        f.write(tmp)
+                p.append(fname)
+            print("^" * 100)
+
         # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
         is_dirty = self.scene.areThereAnnotations()
-        rearrangeView = RearrangementViewer(
-            self, testNumber, self.pageData, self.testViewFiles, is_dirty
-        )
+        rearrangeView = RearrangementViewer(self, testNumber, page_data, is_dirty)
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
                 self.tgvID, rearrangeView.permute
             )
             # clean up the files - no longer needed.
-            self.parentMarkerUI.doneWithWholePaperFiles(self.testViewFiles)
-            self.testViewFiles = None
+            self.parentMarkerUI.doneWithWholePaperFiles(md5_to_file_map.values())
+            self._adjustpages_data = None
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
             # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
+        else:
+            # keep files in case we come to this dialog again
+            # TODO Do this only on cancel b/c the "m" data changes?  not convinced...
+            self._adjustpages_data = page_data
         self.setEnabled(True)
         return
 

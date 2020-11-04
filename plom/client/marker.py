@@ -2128,6 +2128,22 @@ class MarkerClient(QWidget):
 
         return [pageData, viewFiles]
 
+    def downloadWholePaperMetadata(self, testNumber):
+        """Get metadata about all images used in a particular test paper.
+
+        Args:
+            testNumber (int): the test number.
+
+        Returns:
+            (tuple) containing pageData and viewFiles
+        """
+        pageData = messenger.MrequestWholePaperMetadata(testNumber, self.question)
+        return pageData
+
+    def downloadOneImage(self, task, image_id, md5):
+        """Download one image from server by its database id."""
+        return messenger.MrequestOneImage(task, image_id, md5)
+
     def doneWithWholePaperFiles(self, viewFiles):
         """ Unlinks files in viewFiles to os. """
         for f in viewFiles:
