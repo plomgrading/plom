@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import sys
+import tempfile
 
 from PyQt5.QtCore import (
     Qt,
@@ -791,12 +792,10 @@ class Annotator(QWidget):
         return
 
     def rearrangePages(self):
-        """
-        Rearranges pages in UI.
+        """Rearranges pages in UI.
 
         Returns:
             None
-
         """
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
         # disable ui before calling process events
@@ -805,12 +804,10 @@ class Annotator(QWidget):
         testNumber = self.tgvID[:4]
         # we might have data cached from a previous run
         page_data = self._adjustpages_data
+        # TODO: maybe download should happen in Marker?
         if page_data is None:
-            log.debug(
-                "rearrangePage: downloading files for testnum {}".format(testNumber)
-            )
+            log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
             page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
-            print("v" * 100)
             if len(set(self.image_md5_list)) != len(self.image_md5_list):
                 log.warn(
                     "unexpected repeated md5: do you have two identical pages in the current annotator?  Is that allowed?"
@@ -819,7 +816,7 @@ class Annotator(QWidget):
             md5_to_file_map = {
                 k: v for k, v in zip(self.image_md5_list, self.imageFiles)
             }
-            log.info("adjustpages: md5-to-file map: {}".format(md5_to_file_map))
+            log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
             # Crawl over the page_data, append a filename for each file
             # download what's needed but avoid re-downloading duplicate files
             # TODO: could defer downloading to background thread of dialog
@@ -829,7 +826,7 @@ class Annotator(QWidget):
                 fname = md5_to_file_map.get(md5)
                 if fname:
                     log.info(
-                        "adjustpages: not downloading image id={}; we have it already at i={}, {}".format(
+                        "adjustpgs: not downloading image id={}; we have it already at i={}, {}".format(
                             image_id, i, fname
                         )
                     )
@@ -837,8 +834,15 @@ class Annotator(QWidget):
                     tmp = self.parentMarkerUI.downloadOneImage(
                         self.tgvID, image_id, md5
                     )
-                    # TODO: use proper tempfiles
-                    fname = "/home/cbm/plomtmp/twist_{}.png".format(i)
+                    # TODO: wrong to put these in the paperdir (?)
+                    # Maybe Marker should be doing this downloading
+                    workdir = self.parentMarkerUI.workingDirectory
+                    fname = tempfile.NamedTemporaryFile(
+                        dir=workdir,
+                        prefix="adj_pg_{}_".format(i),
+                        suffix=".image",
+                        delete=False,
+                    ).name
                     log.info(
                         'adjustpages: writing "{}" from id={}, md5={}'.format(
                             fname, image_id, md5
@@ -847,7 +851,6 @@ class Annotator(QWidget):
                     with open(fname, "wb") as f:
                         f.write(tmp)
                 p.append(fname)
-            print("^" * 100)
 
         # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
         is_dirty = self.scene.areThereAnnotations()
