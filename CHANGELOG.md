@@ -12,8 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Preliminary support for changing the overall scale of annotations; adjust using the menu/shortcut keys.
 
 ### Changed
+* "Rearrange Pages" is now called "Adjust Pages" with a more prominent button.
 
 ### Fixed
+* "Adjust Pages" dialog now opens faster, in some cases much faster.
+* Other misc fixes and minor UI tweaks.
 
 
 ## [0.5.5] - 2020-10-23
