@@ -861,7 +861,8 @@ class Annotator(QWidget):
                 self.tgvID, rearrangeView.permute
             )
             # clean up the files - no longer needed.
-            self.parentMarkerUI.doneWithWholePaperFiles(md5_to_file_map.values())
+            files = [row[-1] for row in page_data]
+            self.parentMarkerUI.doneWithWholePaperFiles(files)
             self._adjustpages_data = None
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
