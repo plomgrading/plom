@@ -1054,7 +1054,9 @@ class Messenger(BaseMessenger):
             bytes: png/jpeg or whatever as bytes.
 
         Errors/Exceptions
-            TODO:
+            401: not authenticated
+            404: no such image
+            409: wrong md5sum provided
         """
         self.SRmutex.acquire()
         try:
@@ -1070,9 +1072,13 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomConflict("Wrong md5sum provided") from None
+            elif response.status_code == 404:
+                raise PlomNoMoreException("Cannot find image") from None
             else:
                 raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
+                    "Some other unexpected error {}".format(e)
                 ) from None
         finally:
             self.SRmutex.release()

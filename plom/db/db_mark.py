@@ -186,17 +186,27 @@ def MgetOneImageFilename(self, user_name, task, image_id, md5):
         TODO: drop user_name and task?
 
     Returns:
-        TODO: what happens on failure too
+        list: [True, file_name] or [False, error_msg] where
+            error_msg is `"no such image"` or `"wrong md5sum"`.
+            file_name is a string.
     """
-    uref = User.get(name=user_name)  # authenticated, so not-None
-
-    print("***** AT DB *****")
-    print(uref)
     with plomdb.atomic():
         iref = Image.get_or_none(id=image_id)
-        print(iref)
-        print(iref.file_name)
-        return iref.file_name
+        if iref is None:
+            log.warning(
+                "User {} asked for a non-existent image with id={}".format(
+                    user_name, image_id
+                )
+            )
+            return [False, "no such image"]
+        if iref.md5sum != md5:
+            log.warning(
+                "User {} asked for image id={} but supplied wrong md5sum".format(
+                    user_name, image_id
+                )
+            )
+            return [False, "wrong md5sum"]
+        return [True, iref.file_name]
 
 
 def MtakeTaskFromClient(

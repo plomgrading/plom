@@ -371,15 +371,24 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.Response: the binary image data, or
-                TODO: error codes/conditions?
+                a 404 response if no such image, or a 409 if wrong
+                md5sum saniity check was provided.
         """
         task_code = request.match_info["task"]
         image_id = request.match_info["image_id"]
         md5sum = request.match_info["md5sum"]
 
-        filename = self.server.DB.MgetOneImageFilename(
+        r = self.server.DB.MgetOneImageFilename(
             data["user"], task_code, image_id, md5sum
         )
+        if not r[0]:
+            if r[1] == "no such image":
+                return web.Response(status=404)
+            elif r[1] == "wrong md5sum":
+                return web.Response(status=409)
+            else:
+                return web.Response(status=500)
+        filename = r[1]
         return web.FileResponse(filename, status=200)
 
     # @routes.get("/MK/originalImage/{task}")
