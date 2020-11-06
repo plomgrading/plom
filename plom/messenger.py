@@ -996,6 +996,7 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            # TODO?
             elif response.status_code == 409:
                 raise PlomTakenException("Task taken by another user.") from None
             else:
@@ -1006,6 +1007,82 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         return [pageData, images]
+
+    def MrequestWholePaperMetadata(self, code, questionNumber=0):
+        """Get metadata about the images in this paper.
+
+        TODO: questionnumber?  why?
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        self.SRmutex.acquire()
+        # note - added default value for questionNumber so that this works correctly
+        # when called from identifier. - Fixes #921
+        try:
+            response = self.session.get(
+                "https://{}/MK/TMP/whole/{}/{}".format(
+                    self.server, code, questionNumber
+                ),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            response.raise_for_status()
+            ret = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+        return ret
+
+    def MrequestOneImage(self, task_code, image_id, md5sum):
+        """Download one image from server by its database id.
+
+        args:
+            code (str): the task code such as "q1234g9".
+                TODO: consider removing code/`task` from URL.
+            image_id (int): TODO: int/str?  The key into the server's
+                database of images.
+            md5sum (str): the expected md5sum, just for sanity checks or
+                something I suppose.
+
+        return:
+            bytes: png/jpeg or whatever as bytes.
+
+        Errors/Exceptions
+            401: not authenticated
+            404: no such image
+            409: wrong md5sum provided
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/MK/images/{}/{}/{}".format(
+                    self.server, task_code, image_id, md5sum
+                ),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomConflict("Wrong md5sum provided") from None
+            elif response.status_code == 404:
+                raise PlomNoMoreException("Cannot find image") from None
+            else:
+                raise PlomSeriousException(
+                    "Some other unexpected error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+        return image
 
     # ------------------------
     # ------------------------

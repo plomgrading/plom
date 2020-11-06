@@ -199,6 +199,7 @@ class PlomDB:
         MdidNotFinish,
         MtakeTaskFromClient,
         MgetImages,
+        MgetOneImageFilename,
         MgetOriginalImages,
         MsetTag,
         MgetWholePaper,
