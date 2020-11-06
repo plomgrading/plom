@@ -112,8 +112,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
       3. Render the page with Ghostscript
 
     Args:
-        dest (str, Path): where to save the resulting bitmap files.
         file_name (str, Path): PDF file from which to extract bitmaps.
+        dest (str, Path): where to save the resulting bitmap files.
         do_not_extract (bool): always render, do no extract even if
             it seems possible to do so.
 
