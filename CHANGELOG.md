@@ -7,11 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-### Changed
-
 ### Fixed
+* Fix stale-pages from previous papers appearing in the Adjust Pages dialog.
 
 
 ## [0.5.6] - 2020-11-06
