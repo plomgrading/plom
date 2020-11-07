@@ -286,7 +286,7 @@ class RearrangementViewer(QDialog):
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
 
-        allPages = QLabel("All Pages in Exam")
+        allPages = QLabel("Other Pages in Exam")
         allPages.setAlignment(Qt.AlignCenter)
         thisQuestion = QLabel("Pages for this Question")
         thisQuestion.setAlignment(Qt.AlignCenter)
