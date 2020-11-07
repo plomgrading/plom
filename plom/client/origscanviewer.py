@@ -273,8 +273,8 @@ class RearrangementViewer(QDialog):
 
         hb3 = QHBoxLayout()
 
-        hb3.addWidget(self.rotateB_cw)
         hb3.addWidget(self.rotateB_ccw)
+        hb3.addWidget(self.rotateB_cw)
         hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
         hb3.addWidget(self.sLeftB)
         hb3.addWidget(self.sRightB)
