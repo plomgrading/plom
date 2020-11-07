@@ -262,7 +262,7 @@ class RearrangementViewer(QDialog):
         )
         self.rotateB_ccw.setText("Rotate CCW")
 
-        self.closeB = QPushButton("&Close")
+        self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")
 
         self.permute = [False]
