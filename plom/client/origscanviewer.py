@@ -23,6 +23,8 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    QSpacerItem,
+    QSizePolicy,
     QToolButton,
 )
 
@@ -260,7 +262,7 @@ class RearrangementViewer(QDialog):
         )
         self.rotateB_ccw.setText("Rotate CCW")
 
-        self.closeB = QPushButton("&Close")
+        self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")
 
         self.permute = [False]
@@ -270,15 +272,21 @@ class RearrangementViewer(QDialog):
         hb1.addWidget(self.removeB)
 
         hb3 = QHBoxLayout()
-        hb3.addWidget(self.rotateB_cw)
+
         hb3.addWidget(self.rotateB_ccw)
+        hb3.addWidget(self.rotateB_cw)
+        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
         hb3.addWidget(self.sLeftB)
         hb3.addWidget(self.sRightB)
+        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
         hb3.addWidget(self.reverseB)
+        hb3.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
         hb3.addWidget(self.acceptB)
         hb3.addWidget(self.closeB)
 
-        allPages = QLabel("All Pages in Exam")
+        allPages = QLabel("Other Pages in Exam")
         allPages.setAlignment(Qt.AlignCenter)
         thisQuestion = QLabel("Pages for this Question")
         thisQuestion.setAlignment(Qt.AlignCenter)
