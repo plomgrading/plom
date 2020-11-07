@@ -136,7 +136,6 @@ class Annotator(QWidget):
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
         self.testViewFiles = None
-        self._adjustpages_data = None
 
         # declares some instance vars
         self.cursorBox = None
@@ -802,10 +801,8 @@ class Annotator(QWidget):
         self.setEnabled(False)
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
-        # we might have data cached from a previous run
-        page_data = self._adjustpages_data
         # TODO: maybe download should happen in Marker?
-        if page_data is None:
+        if True:
             log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
             page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
             if len(set(self.image_md5_list)) != len(self.image_md5_list):
@@ -860,20 +857,12 @@ class Annotator(QWidget):
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
                 self.tgvID, rearrangeView.permute
             )
-            # clean up the files - no longer needed.
-            files = [row[-1] for row in page_data]
-            self.parentMarkerUI.doneWithWholePaperFiles(files)
-            self._adjustpages_data = None
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
             # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
-        else:
-            # keep files in case we come to this dialog again
-            # TODO Do this only on cancel b/c the "m" data changes?  not convinced...
-            self._adjustpages_data = page_data
         self.setEnabled(True)
         return
 
