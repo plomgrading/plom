@@ -9,6 +9,7 @@ from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
+    QFrame,
     QFormLayout,
     QHBoxLayout,
     QGridLayout,
@@ -307,10 +308,6 @@ class RearrangementViewer(QDialog):
 
         self.permute = [False]
 
-        hb1 = QHBoxLayout()
-        hb1.addWidget(self.appendB)
-        hb1.addWidget(self.removeB)
-
         hb3 = QHBoxLayout()
 
         hb3.addWidget(self.rotateB_ccw)
@@ -327,15 +324,33 @@ class RearrangementViewer(QDialog):
         hb3.addWidget(self.closeB)
 
         allPages = QLabel("Other Pages in Exam")
-        allPages.setAlignment(Qt.AlignCenter)
         thisQuestion = QLabel("Pages for this Question")
-        thisQuestion.setAlignment(Qt.AlignCenter)
+
+        # center add/remove buttons on label row
+        hb1 = QHBoxLayout()
+        hb1.addWidget(thisQuestion)
+        hb = QHBoxLayout()
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb.addWidget(self.appendB)
+        hb.addItem(QSpacerItem(32, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.removeB)
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb1.addLayout(hb)
+        hb1.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb1.setStretch(0, 1)
+        hb1.setStretch(1, 1)
+        hb1.setStretch(2, 1)
 
         vb0 = QVBoxLayout()
         vb0.addWidget(allPages)
         vb0.addWidget(self.scrollA)
         vb0.addLayout(hb1)
-        vb0.addWidget(thisQuestion)
         vb0.addWidget(self.scrollB)
         vb0.addLayout(hb3)
 
