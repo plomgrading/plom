@@ -817,6 +817,7 @@ class Annotator(QWidget):
             # Crawl over the page_data, append a filename for each file
             # download what's needed but avoid re-downloading duplicate files
             # TODO: could defer downloading to background thread of dialog
+            page_adjuster_downloads = []
             for (i, p) in enumerate(page_data):
                 md5 = p[1]
                 image_id = p[-1]
@@ -847,6 +848,9 @@ class Annotator(QWidget):
                     )
                     with open(fname, "wb") as f:
                         f.write(tmp)
+                    assert md5_to_file_map.get(md5) is None
+                    md5_to_file_map[md5] = fname
+                    page_adjuster_downloads.append(fname)
                 p.append(fname)
 
         # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
@@ -863,6 +867,10 @@ class Annotator(QWidget):
             # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
+        # CAREFUL, wipe only those files we created
+        # TODO: consider a broader local caching system
+        for f in page_adjuster_downloads:
+            os.unlink(f)
         self.setEnabled(True)
         return
 
