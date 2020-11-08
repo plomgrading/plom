@@ -134,6 +134,15 @@ class UnderlyingImages(QGraphicsItemGroup):
             self.addToGroup(self.images[n])
 
 
+class UnderlyingRect(QGraphicsRectItem):
+    def __init__(self, rect):
+        super(QGraphicsRectItem, self).__init__()
+        self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
+        self.setBrush(QBrush(Qt.white))
+        self.setRect(rect)
+        self.setZValue(-10)
+
+
 # Dictionaries to translate tool-modes into functions
 # for mouse press, move and release
 mousePress = {
@@ -206,6 +215,16 @@ class PageScene(QGraphicsScene):
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.imageNames)
+        # and build two underlyingrect
+        br = self.underImage.boundingRect()
+        self.underRectInner = UnderlyingRect(br)
+        ur = QRectF(br)
+        ur.setHeight(br.height() * 2)
+        ur.setWidth(br.width() * 2)
+        ur.moveCenter(br.center())
+        self.underRect = UnderlyingRect(ur)
+        self.addItem(self.underRect)
+        self.addItem(self.underRectInner)
         self.addItem(self.underImage)
 
         # Build scene rectangle to fit the image, and place image into it.
@@ -422,6 +441,18 @@ class PageScene(QGraphicsScene):
         # no pickle-able items means no annotations.
         return False
 
+    def getSaveableRectangle(self):
+        # the scenerect is set to the initial images
+        br = self.sceneRect()
+        print("BR = {}".format(br))
+        # go through all saveable items
+        for X in self.items():
+            if hasattr(X, "saveable"):
+                # now check it is inside the UnderlyingRect
+                if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
+                    br = br.united(X.mapRectToScene(X.boundingRect()))
+        return br
+
     def save(self):
         """
         Save the annotated group-image.
@@ -433,7 +464,8 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        br = self.sceneRect()
+        br = self.getSaveableRectangle()
+        self.setSceneRect(br)
         w = br.width()
         h = br.height()
         MINWIDTH = 1024  # subject to maxheight
@@ -1002,17 +1034,21 @@ class PageScene(QGraphicsScene):
         """
         # clear all items from scene.
         for X in self.items():
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    UnderlyingImages,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                ]
-            ) and X is not isinstance(X, ImageItem):
+            if (
+                any(
+                    isinstance(X, Y)
+                    for Y in [
+                        ScoreBox,
+                        QGraphicsPixmapItem,
+                        UnderlyingImages,
+                        UnderlyingRect,
+                        GhostComment,
+                        GhostDelta,
+                        GhostText,
+                    ]
+                )
+                and X is not isinstance(X, ImageItem)
+            ):
                 # as ImageItem is a subclass of QGraphicsPixmapItem, we have
                 # to make sure ImageItems aren't skipped!
                 continue

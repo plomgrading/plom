@@ -93,9 +93,7 @@ class EllipseItem(QGraphicsEllipseItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
+        if not self.collidesWithItem(self.scene().underRect, mode=Qt.ContainsItemShape):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))

@@ -94,9 +94,7 @@ class GroupDTItem(QGraphicsItemGroup):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
+        if not self.collidesWithItem(self.scene().underRect, mode=Qt.ContainsItemShape):
             painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())

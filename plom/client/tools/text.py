@@ -178,9 +178,7 @@ class TextItem(QGraphicsTextItem):
         super(TextItem, self).keyPressEvent(event)
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
+        if not self.collidesWithItem(self.scene().underRect, mode=Qt.ContainsItemShape):
             if self.group() is None:
                 painter.setPen(QPen(QColor(255, 165, 0), 8))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
