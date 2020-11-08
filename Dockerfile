@@ -32,7 +32,7 @@ RUN pip3 install --no-cache-dir --upgrade pip setuptools
 # Note: need newer setuptools to avoid cairocffi issue
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
-RUN python3 -m pip install --no-cache-dir cffi==1.14.1 pycparser==2.20
+RUN python3 -m pip install --no-cache-dir cffi==1.14.3 pycparser==2.20
 COPY requirements.txt /src/
 WORKDIR /src
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
