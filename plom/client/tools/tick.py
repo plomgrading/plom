@@ -85,7 +85,7 @@ class TickItem(QGraphicsPathItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsPathItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def pickle(self):
         return ["Tick", self.pt.x() + self.x(), self.pt.y() + self.y()]
@@ -99,4 +99,4 @@ class TickItem(QGraphicsPathItem):
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(TickItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
