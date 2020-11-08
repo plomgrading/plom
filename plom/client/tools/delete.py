@@ -6,7 +6,7 @@
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QUndoCommand
 
-from plom.client.tools import DeltaItem, GroupDTItem
+from plom.client.tools import DeltaItem, GroupDeltaTextItem
 
 
 class CommandDelete(QUndoCommand):
@@ -27,7 +27,7 @@ class CommandDelete(QUndoCommand):
         if isinstance(self.deleteItem, DeltaItem):
             # Mark decreases by delta - since deleting, this is like an "undo"
             self.scene.changeTheMark(self.deleteItem.delta, undo=True)
-        if isinstance(self.deleteItem, GroupDTItem):
+        if isinstance(self.deleteItem, GroupDeltaTextItem):
             self.scene.changeTheMark(self.deleteItem.di.delta, undo=True)
         # nicely animate the deletion - since deleting, this is like an "undo"
         self.deleteItem.animateFlag = True
@@ -44,7 +44,7 @@ class CommandDelete(QUndoCommand):
             # Mark increases by delta  - since deleting, this is like an "redo"
             self.scene.changeTheMark(self.deleteItem.delta, undo=False)
         # If the object is a GroupTextDeltaItem then change mark
-        if isinstance(self.deleteItem, GroupDTItem):
+        if isinstance(self.deleteItem, GroupDeltaTextItem):
             # Mark decreases by delta -  - since deleting, this is like an "redo"
             self.scene.changeTheMark(self.deleteItem.di.delta, undo=False)
         # nicely animate the undo of deletion

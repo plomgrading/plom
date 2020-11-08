@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
 
@@ -12,8 +12,8 @@ from plom.client.tools.move import CommandMoveItem
 from plom.client.tools.text import GhostText, TextItem
 
 
-class CommandGDT(QUndoCommand):
-    """GDT is group of delta and text.
+class CommandGroupDeltaText(QUndoCommand):
+    """A group of delta and text.
 
     Command to do a delta and a textitem together (a "rubric" or
     "saved comment").
@@ -24,7 +24,7 @@ class CommandGDT(QUndoCommand):
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super().__init__()
         self.scene = scene
-        self.gdt = GroupDTItem(pt, delta, blurb, fontsize, scene)
+        self.gdt = GroupDeltaTextItem(pt, delta, blurb, fontsize, scene)
         self.setText("GroupDeltaText")
 
     def redo(self):
@@ -42,7 +42,7 @@ class CommandGDT(QUndoCommand):
         self.gdt.di.flash_undo()
 
 
-class GroupDTItem(QGraphicsItemGroup):
+class GroupDeltaTextItem(QGraphicsItemGroup):
     """A group of Delta and Text presenting a rubric.
 
     TODO: passing in scene is a workaround so the TextItem can talk to

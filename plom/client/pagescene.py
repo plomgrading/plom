@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QEvent, QRectF
+from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
     QCursor,
     QFont,
@@ -713,7 +713,7 @@ class PageScene(QGraphicsScene):
             if (
                 isinstance(under, DeltaItem)
                 or isinstance(under, TextItem)
-                or isinstance(under, GroupDTItem)
+                or isinstance(under, GroupDeltaTextItem)
             ):
                 return
 
@@ -763,10 +763,12 @@ class PageScene(QGraphicsScene):
             # return blurb to previous state
             blurb.setTextInteractionFlags(prevState)
         else:
-            command = CommandGDT(
+            command = CommandGroupDeltaText(
                 self, pt, self.commentDelta, self.commentText, self.fontSize
             )
-            log.debug("Making a GDT: commentFlag is {}".format(self.commentFlag))
+            log.debug(
+                "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
+            )
             self.undoStack.push(command)  # push the delta onto the undo stack.
         if self.commentFlag > 0:
             log.debug(
@@ -897,8 +899,8 @@ class PageScene(QGraphicsScene):
         under = self.itemAt(event.scenePos(), QTransform())
         # If something is there... (fixes bug reported by MattC)
         if under is not None:
-            # If it is part of groupDTitem then do nothing
-            if isinstance(under.group(), GroupDTItem):
+            # If it is part of a group then do nothing
+            if isinstance(under.group(), GroupDeltaTextItem):
                 return
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
@@ -1220,11 +1222,13 @@ class PageScene(QGraphicsScene):
             )
 
     def unpickleGroupDeltaText(self, X):
-        """ Unpickle an GroupDTItemObject and add it to scene. """
+        """Unpickle an GroupDeltaTextItemObject and add it to scene."""
         if len(X) == 4:
             # knows to latex it if needed.
             self.undoStack.push(
-                CommandGDT(self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize)
+                CommandGroupDeltaText(
+                    self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize
+                )
             )
 
     def unpicklePen(self, X):
@@ -1877,7 +1881,7 @@ class PageScene(QGraphicsScene):
         False otherwise.
         """
         for X in self.items():
-            if isinstance(X, (TextItem, GroupDTItem)):
+            if isinstance(X, (TextItem, GroupDeltaTextItem)):
                 return True
         return False
 
@@ -2175,7 +2179,7 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
         # build a delta-comment
-        command = CommandGDT(
+        command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
             delta,

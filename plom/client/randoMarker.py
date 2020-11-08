@@ -14,21 +14,16 @@ import os
 import random
 import sys
 import tempfile
-import toml
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainterPath, QPen
 from PyQt5.QtWidgets import QApplication, QWidget
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomTakenException, PlomExistingLoginException
 from plom.client.pageview import PageView
 from plom.client.pagescene import PageScene
 from plom import AnnFontSizePts
 
-from plom.client.tools import (
-    DeltaItem,
-    GroupDTItem,
-)
 from plom.client.tools.delete import CommandDelete
 from plom.client.tools import *
 
@@ -126,7 +121,7 @@ class SceneParent(QWidget):
                 self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
             else:
                 self.scene.undoStack.push(
-                    CommandGDT(
+                    CommandGroupDeltaText(
                         self.scene,
                         self.rpt(),
                         dlt,
@@ -143,7 +138,7 @@ class SceneParent(QWidget):
                 self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
             else:
                 self.scene.undoStack.push(
-                    CommandGDT(
+                    CommandGroupDeltaText(
                         self.scene,
                         self.rpt(),
                         dlt,
