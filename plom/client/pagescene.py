@@ -383,7 +383,8 @@ class PageScene(QGraphicsScene):
         else:
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
-            if self.commentFlag > 0:
+            if self.commentFlag > 0 and self.commentFlag < 3:
+                # TODO: colin unhappy with above fragile nonsense
                 self.removeItem(self.lineItem)
 
         # if mode is "pan", allow the view to drag about, else turn it off
@@ -1717,6 +1718,7 @@ class PageScene(QGraphicsScene):
             self.removeItem(self.boxItem)
             self.undoStack.beginMacro("Click-Drag composite object")
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            # TODO: making a small object draws a line to nowhere... was this intended?
             if (
                 abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
                 > 24
