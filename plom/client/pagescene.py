@@ -1018,23 +1018,14 @@ class PageScene(QGraphicsScene):
         # now load up the new items
         for X in lst:
             functionName = "unpickle{}".format(X[0])
-            getattr(self, functionName, self.unpickleError)(X[1:])
+            fcn = getattr(self, functionName, None)
+            if fcn:
+                fcn(X[1:])
+                continue
+            log.error("Unpickle error - What is {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
             X.setFocus(False)
-
-    def unpickleError(self, X):
-        """
-        Log an error if an item of unknown format is attempted to be unpickled.
-
-        Args:
-            X: the unknown item.
-
-        Returns:
-            None, logs the error.
-
-        """
-        log.error("Unpickle error - What is {}".format(X))
 
     def unpickleCross(self, X):
         """ Unpickle a CrossItemObject and add it to scene. """
