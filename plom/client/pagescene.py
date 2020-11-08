@@ -1892,18 +1892,34 @@ class PageScene(QGraphicsScene):
     def whichLineToDraw(self):
         g = self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
         b = self.boxItem.mapRectToScene(self.boxItem.boundingRect())
-        dd = (g.topLeft() - b.topLeft()).manhattanLength() + 10
-        bc = None
-        gc = None
-        vg = self.getVertFromRect(g)
-        vb = self.getVertFromRect(b)
-        for p in vg:
-            for q in vb:
-                if (p - q).manhattanLength() < dd:
-                    gc = p
-                    bc = q
-                    dd = (p - q).manhattanLength()
-        return QLineF(bc, gc)
+        gc = g.center()
+        bc = b.center()
+        # line runs from bc to gc = [bc,b-boundary]-outside-[g-boundary,gc]
+        delta = gc - bc
+        # fix the entry/exit from g-box
+        if abs(delta.x() * g.height()) < abs(delta.y() * g.width()):
+            if delta.y() > 0:
+                gp = gc - QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
+            else:
+                gp = gc + QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
+        else:
+            if delta.x() > 0:
+                gp = gc - QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
+            else:
+                gp = gc + QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
+
+        if abs(delta.x() * b.height()) < abs(delta.y() * b.width()):
+            if delta.y() < 0:
+                bp = bc - QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
+            else:
+                bp = bc + QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
+        else:
+            if delta.x() < 0:
+                bp = bc - QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
+            else:
+                bp = bc + QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
+
+        return QLineF(bc, gp)
 
     def mouseMoveComment(self, event):
         """
