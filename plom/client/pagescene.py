@@ -168,6 +168,7 @@ mouseRelease = {
     "pen": "mouseReleasePen",
     "pan": "mouseReleasePan",
     "zoom": "mouseReleaseZoom",
+    "comment": "mouseReleaseComment",
 }
 
 
@@ -232,6 +233,11 @@ class PageScene(QGraphicsScene):
         self.boxFlag = 0
         self.deleteFlag = 0
         self.zoomFlag = 0
+        # for box-drag-comment thingy
+        # 0 = no comment in action
+        # 1 = drawing a box
+        # 2 = drawing the line
+        self.commentFlag = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -622,6 +628,26 @@ class PageScene(QGraphicsScene):
             None, adds clicked comment to the page.
 
         """
+        # check the commentFlag and if shift-key is pressed
+        if self.commentFlag == 0:
+            if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
+                self.commentFlag = 1
+                self.originPos = event.scenePos()
+                self.currentPos = self.originPos
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+                self.boxItem.setPen(self.ink)
+                self.boxItem.setBrush(self.lightBrush)
+                self.addItem(self.boxItem)
+                return
+        elif self.commentFlag == 2:
+            (a, b) = self.whichLineToDraw()
+            command = CommandArrow(self, a, b)
+            self.undoStack.push(command)
+            self.removeItem(self.lineItem)
+            self.commentFlag = 0
+
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
         # If it is a Delta or Text or GDT then do nothing.
@@ -1002,17 +1028,20 @@ class PageScene(QGraphicsScene):
         """
         # clear all items from scene.
         for X in self.items():
-            if any(
-                isinstance(X, Y)
-                for Y in [
-                    ScoreBox,
-                    QGraphicsPixmapItem,
-                    UnderlyingImages,
-                    GhostComment,
-                    GhostDelta,
-                    GhostText,
-                ]
-            ) and X is not isinstance(X, ImageItem):
+            if (
+                any(
+                    isinstance(X, Y)
+                    for Y in [
+                        ScoreBox,
+                        QGraphicsPixmapItem,
+                        UnderlyingImages,
+                        GhostComment,
+                        GhostDelta,
+                        GhostText,
+                    ]
+                )
+                and X is not isinstance(X, ImageItem)
+            ):
                 # as ImageItem is a subclass of QGraphicsPixmapItem, we have
                 # to make sure ImageItems aren't skipped!
                 continue
@@ -1670,6 +1699,26 @@ class PageScene(QGraphicsScene):
             command = CommandDelete(self, item)
             self.undoStack.push(command)
 
+    def mouseReleaseComment(self, event):
+        if self.commentFlag == 0:
+            return
+        elif self.commentFlag == 1:
+            self.removeItem(self.boxItem)
+            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            if (
+                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
+                > 24
+            ):
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
+
+            self.commentFlag = 2
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
+            self.lineItem.setPen(self.ink)
+            self.addItem(self.lineItem)
+
     def mouseReleaseDelete(self, event):
         """
         Handle when the mouse is released after drawing a new delete box.
@@ -1824,6 +1873,20 @@ class PageScene(QGraphicsScene):
         """ Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
+    def whichLineToDraw(self):
+        g = self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
+        b = self.boxItem.mapRectToScene(self.boxItem.boundingRect())
+        dd = (g.topLeft() - b.topLeft()).manhattanLength()
+        bc = None
+        gc = None
+        for p in [g.topLeft(), g.topRight(), g.bottomLeft(), g.bottomRight()]:
+            for q in [b.topLeft(), b.topRight(), b.bottomLeft(), b.bottomRight()]:
+                if (p - q).manhattanLength() < dd:
+                    gc = p
+                    bc = q
+                    dd = (p - q).manhattanLength()
+        return (bc, gc)
+
     def mouseMoveComment(self, event):
         """
         Handles mouse moving with a comment.
@@ -1837,6 +1900,19 @@ class PageScene(QGraphicsScene):
         if not self.ghostItem.isVisible():
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
+
+        if self.commentFlag == 1:
+            self.currentPos = event.scenePos()
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        elif self.commentFlag == 2:
+            self.currentPos = event.scenePos()
+            (a, b) = self.whichLineToDraw()
+            self.lineItem.setLine(QLineF(a, b))
 
     def mouseMoveDelta(self, event):
         """
