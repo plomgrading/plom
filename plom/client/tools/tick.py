@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -23,6 +23,13 @@ class CommandTick(QUndoCommand):
         self.pt = pt
         self.tickItem = TickItemObject(self.pt)
         self.setText("Tick")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandTick from a pickled TickItem."""
+        if len(X) != 2:
+            raise RuntimeError("wrong length of pickle data")
+        return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):
         self.tickItem.flash_redo()

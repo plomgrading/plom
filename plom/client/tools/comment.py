@@ -27,6 +27,18 @@ class CommandGroupDeltaText(QUndoCommand):
         self.gdt = GroupDeltaTextItem(pt, delta, blurb, fontsize, scene)
         self.setText("GroupDeltaText")
 
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandGroupDeltaText from a pickled GroupDeltaTextItem.
+
+        TODO: maybe we should not remove the head of X?
+
+        TODO: could this comandFoo.__init__() take a FooItem?xs"""
+        if len(X) != 4:
+            raise RuntimeError("wrong length of pickle data")
+        # knows to latex it if needed.
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], scene.fontSize)
+
     def redo(self):
         # Mark increased by delta
         self.scene.changeTheMark(self.gdt.di.delta, undo=False)

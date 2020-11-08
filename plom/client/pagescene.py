@@ -1162,10 +1162,17 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
+            # in some cases, often legacy reasons, we do the unpickling
             functionName = "unpickle{}".format(X[0])
             fcn = getattr(self, functionName, None)
             if fcn:
                 fcn(X[1:])
+                continue
+            # check if the object knows how to unpickle itself
+            CmdCls = globals().get("Command{}".format(X[0]), None)
+            if CmdCls and getattr(CmdCls, "from_pickle", None):
+                # TODO: use try-except here?
+                self.undoStack.push(CmdCls.from_pickle(X[1:], scene=self))
                 continue
             log.error("Unpickle error - What is {}".format(X))
         # now make sure focus is cleared from every item
@@ -1181,11 +1188,6 @@ class PageScene(QGraphicsScene):
         """ Unpickle a QMarkItemObject(question mark) and add it to scene. """
         if len(X) == 2:
             self.undoStack.push(CommandQMark(self, QPointF(X[0], X[1])))
-
-    def unpickleTick(self, X):
-        """ Unpickle a TickItemObject and add it to scene. """
-        if len(X) == 2:
-            self.undoStack.push(CommandTick(self, QPointF(X[0], X[1])))
 
     def unpickleArrow(self, X):
         """ Unpickle an ArrowItemObject and add it to scene. """
@@ -1234,16 +1236,6 @@ class PageScene(QGraphicsScene):
         if len(X) == 3:
             self.undoStack.push(
                 CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
-            )
-
-    def unpickleGroupDeltaText(self, X):
-        """Unpickle an GroupDeltaTextItemObject and add it to scene."""
-        if len(X) == 4:
-            # knows to latex it if needed.
-            self.undoStack.push(
-                CommandGroupDeltaText(
-                    self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize
-                )
             )
 
     def unpicklePen(self, X):
