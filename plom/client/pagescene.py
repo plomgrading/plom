@@ -237,6 +237,7 @@ class PageScene(QGraphicsScene):
         # 0 = no comment in action
         # 1 = drawing a box
         # 2 = drawing the line
+        # 3 = drawing the comment
         self.commentFlag = 0
 
         # Will need origin, current position, last position points.
@@ -650,7 +651,7 @@ class PageScene(QGraphicsScene):
             command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
             self.undoStack.push(command)
             self.removeItem(self.lineItem)
-            self.commentFlag = 0
+            self.commentFlag = 3
 
         # Find the object under the mouseclick.
         under = self.itemAt(event.scenePos(), QTransform())
@@ -685,7 +686,13 @@ class PageScene(QGraphicsScene):
             self.blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
+            print("Debug: Making a GDT: commentFlag is {}".format(self.commentFlag))
             self.undoStack.push(command)  # push the delta onto the undo stack.
+            if self.commentFlag > 0:
+                print("Debug: commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro")
+                self.commentFlag = 0
+                self.undoStack.endMacro()
+
 
     def mousePressCross(self, event):
         """
@@ -1708,6 +1715,7 @@ class PageScene(QGraphicsScene):
             return
         elif self.commentFlag == 1:
             self.removeItem(self.boxItem)
+            self.undoStack.beginMacro("Click-Drag composite object")
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
             if (
                 abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
@@ -1930,6 +1938,8 @@ class PageScene(QGraphicsScene):
         elif self.commentFlag == 2:
             self.currentPos = event.scenePos()
             self.lineItem.setLine(self.whichLineToDraw())
+        # elif self.commentFlag == 3:
+        #     print("debugging....")
 
     def mouseMoveDelta(self, event):
         """
