@@ -381,6 +381,10 @@ class PageScene(QGraphicsScene):
             pass
         else:
             self.hideGhost()
+            # also check if mid-line draw and then delete the line item
+            if self.commentFlag > 0:
+                self.removeItem(self.lineItem)
+
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
             self.views()[0].setDragMode(1)
@@ -642,8 +646,8 @@ class PageScene(QGraphicsScene):
                 self.addItem(self.boxItem)
                 return
         elif self.commentFlag == 2:
-            (a, b) = self.whichLineToDraw()
-            command = CommandArrow(self, a, b)
+            connectingLine = self.whichLineToDraw()
+            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
             self.undoStack.push(command)
             self.removeItem(self.lineItem)
             self.commentFlag = 0
@@ -1873,19 +1877,33 @@ class PageScene(QGraphicsScene):
         """ Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
+    def getVertFromRect(self, r):
+        return [
+            r.topLeft(),
+            r.topRight(),
+            r.bottomLeft(),
+            r.bottomRight(),
+            (r.topLeft() + r.topRight()) / 2,
+            (r.bottomRight() + r.topRight()) / 2,
+            (r.bottomLeft() + r.bottomRight()) / 2,
+            (r.bottomLeft() + r.topLeft()) / 2,
+        ]
+
     def whichLineToDraw(self):
         g = self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
         b = self.boxItem.mapRectToScene(self.boxItem.boundingRect())
-        dd = (g.topLeft() - b.topLeft()).manhattanLength()
+        dd = (g.topLeft() - b.topLeft()).manhattanLength() + 10
         bc = None
         gc = None
-        for p in [g.topLeft(), g.topRight(), g.bottomLeft(), g.bottomRight()]:
-            for q in [b.topLeft(), b.topRight(), b.bottomLeft(), b.bottomRight()]:
+        vg = self.getVertFromRect(g)
+        vb = self.getVertFromRect(b)
+        for p in vg:
+            for q in vb:
                 if (p - q).manhattanLength() < dd:
                     gc = p
                     bc = q
                     dd = (p - q).manhattanLength()
-        return (bc, gc)
+        return QLineF(bc, gc)
 
     def mouseMoveComment(self, event):
         """
@@ -1911,8 +1929,7 @@ class PageScene(QGraphicsScene):
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
         elif self.commentFlag == 2:
             self.currentPos = event.scenePos()
-            (a, b) = self.whichLineToDraw()
-            self.lineItem.setLine(QLineF(a, b))
+            self.lineItem.setLine(self.whichLineToDraw())
 
     def mouseMoveDelta(self, event):
         """
