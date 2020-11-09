@@ -444,13 +444,15 @@ class PageScene(QGraphicsScene):
     def getSaveableRectangle(self):
         # the scenerect is set to the initial images
         br = self.sceneRect()
-        print("BR = {}".format(br))
         # go through all saveable items
         for X in self.items():
             if hasattr(X, "saveable"):
                 # now check it is inside the UnderlyingRect
                 if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
-                    br = br.united(X.mapRectToScene(X.boundingRect()))
+                    # add a little padding around things.
+                    br = br.united(
+                        X.mapRectToScene(X.boundingRect()).adjusted(-16, -16, 16, 16)
+                    )
         return br
 
     def save(self):
