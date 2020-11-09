@@ -219,9 +219,8 @@ class PageScene(QGraphicsScene):
         br = self.underImage.boundingRect()
         self.underRectInner = UnderlyingRect(br)
         ur = QRectF(br)
-        ur.setHeight(br.height() * 2)
-        ur.setWidth(br.width() * 2)
-        ur.moveCenter(br.center())
+        marg = max(512, min(br.height(), br.width())) / 2
+        ur.adjust(-marg, -marg, marg, marg)
         self.underRect = UnderlyingRect(ur)
         self.addItem(self.underRect)
         self.addItem(self.underRectInner)
