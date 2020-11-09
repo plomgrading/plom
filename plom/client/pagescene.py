@@ -384,6 +384,7 @@ class PageScene(QGraphicsScene):
             # also check if mid-line draw and then delete the line item
             if self.commentFlag > 0:
                 self.removeItem(self.lineItem)
+                self.commentFlag = 0
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
@@ -1879,47 +1880,70 @@ class PageScene(QGraphicsScene):
 
     def getVertFromRect(self, r):
         return [
-            r.topLeft(),
-            r.topRight(),
-            r.bottomLeft(),
-            r.bottomRight(),
+            # r.topLeft(),
+            # r.topRight(),
+            # r.bottomLeft(),
+            # r.bottomRight(),
             (r.topLeft() + r.topRight()) / 2,
             (r.bottomRight() + r.topRight()) / 2,
             (r.bottomLeft() + r.bottomRight()) / 2,
             (r.bottomLeft() + r.topLeft()) / 2,
         ]
 
+    def sqrDistance(self, v):
+        return v.x() * v.x() + v.y() * v.y()
+
     def whichLineToDraw(self):
-        g = self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
-        b = self.boxItem.mapRectToScene(self.boxItem.boundingRect())
-        gc = g.center()
-        bc = b.center()
-        # line runs from bc to gc = [bc,b-boundary]-outside-[g-boundary,gc]
-        delta = gc - bc
-        # fix the entry/exit from g-box
-        if abs(delta.x() * g.height()) < abs(delta.y() * g.width()):
-            if delta.y() > 0:
-                gp = gc - QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
-            else:
-                gp = gc + QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
-        else:
-            if delta.x() > 0:
-                gp = gc - QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
-            else:
-                gp = gc + QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
+        gvert = self.getVertFromRect(
+            self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
+        )
+        bvert = self.getVertFromRect(
+            self.boxItem.mapRectToScene(self.boxItem.boundingRect())
+        )
+        gp = gvert[0]
+        bp = bvert[0]
+        dd = self.sqrDistance(gp - bp)
+        for p in gvert:
+            for q in bvert:
+                dst = self.sqrDistance(p - q)
+                if dst < dd:
+                    gp = p
+                    bp = q
+                    dd = dst
+        return QLineF(bp, gp)
 
-        if abs(delta.x() * b.height()) < abs(delta.y() * b.width()):
-            if delta.y() < 0:
-                bp = bc - QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
-            else:
-                bp = bc + QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
-        else:
-            if delta.x() < 0:
-                bp = bc - QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
-            else:
-                bp = bc + QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
-
-        return QLineF(bc, gp)
+    # def centerToCenter(self):
+    #     # depricated... holding on to this for a wee bit.
+    #     g = self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
+    #     b = self.boxItem.mapRectToScene(self.boxItem.boundingRect())
+    #     gc = g.center()
+    #     bc = b.center()
+    #     # line runs from bc to gc = [bc,b-boundary]-outside-[g-boundary,gc]
+    #     delta = gc - bc
+    #     # fix the entry/exit from g-box
+    #     if abs(delta.x() * g.height()) < abs(delta.y() * g.width()):
+    #         if delta.y() > 0:
+    #             gp = gc - QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
+    #         else:
+    #             gp = gc + QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
+    #     else:
+    #         if delta.x() > 0:
+    #             gp = gc - QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
+    #         else:
+    #             gp = gc + QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
+    #
+    #     if abs(delta.x() * b.height()) < abs(delta.y() * b.width()):
+    #         if delta.y() < 0:
+    #             bp = bc - QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
+    #         else:
+    #             bp = bc + QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
+    #     else:
+    #         if delta.x() < 0:
+    #             bp = bc - QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
+    #         else:
+    #             bp = bc + QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
+    #
+    #     return QLineF(bp, gp)
 
     def mouseMoveComment(self, event):
         """
