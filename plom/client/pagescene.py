@@ -648,21 +648,19 @@ class PageScene(QGraphicsScene):
     ###########
 
     def mousePressComment(self, event):
-        """
-        Handle when mouse is pressed on a given comment.
+        """Mouse press while holding comment tool.
 
-        Notes:
-            Create a marked-comment-item from whatever is the currently
-            selected comment. This creates a Delta-object and then also
-            a text-object. They should be side-by-side with the delta
-            appearing roughly at the mouse-click.
+        Usually this creates a rubric, an object consisting of a delta
+        grade and an associated text item.  With shift modifier key, it
+        instead starts the multi-stage creation of a box-line-rubric.
+        If a box-line-rubric is in-progress, it continues to the next
+        stage.
 
         Args:
             event (QMouseEvent): the given mouse click.
 
         Returns:
-            None, adds clicked comment to the page.
-
+            None
         """
         # in comment mode the ghost is activated, so look for objects that intersect the ghost.
         # if they are delta, text or GDT then do nothing.
