@@ -8,46 +8,55 @@ from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
 
 from plom.client.tools.delta import DeltaItem, GhostDelta
-from plom.client.tools.move import *
-from plom.client.tools.text import GhostText
+from plom.client.tools.move import CommandMoveItem
+from plom.client.tools.text import GhostText, TextItem
 
 
 class CommandGDT(QUndoCommand):
-    # GDT = group of delta and text
-    # Command to do a delta and a textitem (ie a standard comment)
-    # Must change mark
+    """GDT is group of delta and text.
+
+    Command to do a delta and a textitem together (a "rubric" or
+    "saved comment").
+
+    Note: must change mark
+    """
     def __init__(self, scene, pt, delta, blurb, fontsize):
-        super(CommandGDT, self).__init__()
+        super().__init__()
         self.scene = scene
-        self.pt = pt
-        self.delta = delta
-        self.blurb = blurb
-        self.gdt = GroupDTItem(self.pt, self.delta, self.blurb, fontsize)
+        self.gdt = GroupDTItem(pt, delta, blurb, fontsize, scene)
         self.setText("GroupDeltaText")
 
     def redo(self):
         # Mark increased by delta
-        self.scene.changeTheMark(self.delta, undo=False)
+        self.scene.changeTheMark(self.gdt.di.delta, undo=False)
         self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
 
     def undo(self):
         # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.delta, undo=True)
+        self.scene.changeTheMark(self.gdt.di.delta, undo=True)
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
 
 
 class GroupDTItem(QGraphicsItemGroup):
-    def __init__(self, pt, delta, blurb, fontsize):
-        super(GroupDTItem, self).__init__()
+    """A group of Delta and Text presenting a rubric.
+
+    TODO: passing in scene is a workaround so the TextItem can talk to
+    someone about building LaTeX... can we refactor that somehow?
+    """
+    def __init__(self, pt, delta, blurb_text, fontsize, scene):
+        super().__init__()
         self.pt = pt
         self.di = DeltaItem(
-            self.pt, delta, fontsize
+            pt, delta, fontsize
         )  # positioned so centre under click
-        self.blurb = blurb  # is a textitem already
+        self.blurb = TextItem(scene, fontsize)
+        self.blurb.setPlainText(blurb_text)
+        self.blurb._contents = blurb_text  # TODO
+        self.blurb.setPos(pt)
         self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
@@ -90,7 +99,7 @@ class GroupDTItem(QGraphicsItemGroup):
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
             self.di.delta,
-            self.blurb.contents,
+            self.blurb.getContents(),
         ]
 
     def paint(self, painter, option, widget):
@@ -108,12 +117,12 @@ class GroupDTItem(QGraphicsItemGroup):
             painter.setPen(QPen(QColor(255, 0, 0), self.thick, style=Qt.DotLine))
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
-        super(GroupDTItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
 
 class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):
-        super(GhostComment, self).__init__()
+        super().__init__()
         self.di = GhostDelta(dlt, fontsize)
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
@@ -157,4 +166,4 @@ class GhostComment(QGraphicsItemGroup):
         painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(GhostComment, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
