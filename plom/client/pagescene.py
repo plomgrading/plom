@@ -265,7 +265,6 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.imageItem = QGraphicsPixmapItem
-        self.blurb = TextItem(self, self.fontSize)
         self.deleteItem = None
 
         # Add a ghost comment to scene, but make it invisible
@@ -410,7 +409,7 @@ class PageScene(QGraphicsScene):
         comments = []
         for X in self.items():
             if isinstance(X, TextItem):
-                comments.append(X.contents)
+                comments.append(X.getContents())
         return comments
 
     def countComments(self):
@@ -600,9 +599,7 @@ class PageScene(QGraphicsScene):
         if functionName:
             # If you found a function, then call it.
             return getattr(self, functionName, None)(event)
-        else:
-            # otherwise call the usual qgraphicsscene function.
-            return super(PageScene, self).mousePressEvent(event)
+        return super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         """
@@ -618,16 +615,14 @@ class PageScene(QGraphicsScene):
         functionName = mouseMove.get(self.mode, None)
         if functionName:
             return getattr(self, functionName, None)(event)
-        else:
-            return super(PageScene, self).mouseMoveEvent(event)
+        return super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         # Similar to mouse-press but for mouse-release.
         functionName = mouseRelease.get(self.mode, None)
         if functionName:
             return getattr(self, functionName, None)(event)
-        else:
-            return super(PageScene, self).mouseReleaseEvent(event)
+        return super().mouseReleaseEvent(event)
 
     ###########
     # Tool functions for press, move and release.
@@ -667,27 +662,28 @@ class PageScene(QGraphicsScene):
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
-        self.blurb = TextItem(self, self.fontSize)  # build the textitem
-        self.blurb.setPlainText(self.commentText)
-        self.blurb.contents = self.commentText  # for pickling
-        # move to correct point - update if only text no delta
-
-        self.blurb.setPos(pt)
         # If the mark-delta of comment is non-zero then create a
         # delta-object with a different offset, else just place the comment.
-
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
+            blurb = TextItem(self, self.fontSize)  # build the textitem
+            blurb.setPlainText(self.commentText)
+            blurb._contents = (
+                self.commentText
+            )  # for pickling, TODO: Colin doesn't like
+            # move to correct point - update if only text no delta
+            blurb.setPos(pt)
+
             # make sure blurb has text interaction turned off
-            prevState = self.blurb.textInteractionFlags()
-            self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+            prevState = blurb.textInteractionFlags()
+            blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text - the ghostitem has it right
-            self.blurb.moveBy(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, self.blurb, self.ink)
+            blurb.moveBy(0, self.ghostItem.blurb.pos().y())
+            command = CommandText(self, blurb, self.ink)
             self.undoStack.push(command)
             # return blurb to previous state
-            self.blurb.setTextInteractionFlags(prevState)
+            blurb.setTextInteractionFlags(prevState)
         else:
-            command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
+            command = CommandGDT(self, pt, self.commentDelta, self.commentText, self.fontSize)
             self.undoStack.push(command)  # push the delta onto the undo stack.
 
     def mousePressCross(self, event):
@@ -775,7 +771,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.ClosedHandCursor)
-        super(PageScene, self).mousePressEvent(event)
+        super().mousePressEvent(event)
 
     def mousePressPan(self, event):
         """
@@ -829,12 +825,12 @@ class PageScene(QGraphicsScene):
         # Now we construct a text object, give it focus (which fires up the
         # editor on that object), and then push it onto the undo-stack.
         self.originPos = event.scenePos()
-        self.blurb = TextItem(self, self.fontSize)
+        blurb = TextItem(self, self.fontSize)
         # move so centred under cursor
-        self.originPos -= QPointF(0, self.blurb.boundingRect().height() / 2)
-        self.blurb.setPos(self.originPos)
-        self.blurb.setFocus()
-        command = CommandText(self, self.blurb, self.ink)
+        self.originPos -= QPointF(0, blurb.boundingRect().height() / 2)
+        blurb.setPos(self.originPos)
+        blurb.setFocus()
+        command = CommandText(self, blurb, self.ink)
         self.undoStack.push(command)
 
     def mousePressTick(self, event):
@@ -1059,23 +1055,14 @@ class PageScene(QGraphicsScene):
         # now load up the new items
         for X in lst:
             functionName = "unpickle{}".format(X[0])
-            getattr(self, functionName, self.unpickleError)(X[1:])
+            fcn = getattr(self, functionName, None)
+            if fcn:
+                fcn(X[1:])
+                continue
+            log.error("Unpickle error - What is {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
             X.setFocus(False)
-
-    def unpickleError(self, X):
-        """
-        Log an error if an item of unknown format is attempted to be unpickled.
-
-        Args:
-            X: the unknown item.
-
-        Returns:
-            None, logs the error.
-
-        """
-        log.error("Unpickle error - What is {}".format(X))
 
     def unpickleCross(self, X):
         """ Unpickle a CrossItemObject and add it to scene. """
@@ -1126,13 +1113,13 @@ class PageScene(QGraphicsScene):
     def unpickleText(self, X):
         """ Unpickle a TextItemObject and add it to scene. """
         if len(X) == 3:
-            self.blurb = TextItem(self, self.fontSize)
-            self.blurb.setPlainText(X[0])
-            self.blurb.contents = X[0]
-            self.blurb.setPos(QPointF(X[1], X[2]))
-            self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+            blurb = TextItem(self, self.fontSize)
+            blurb.setPlainText(X[0])
+            blurb._contents = X[0]  # TODO
+            blurb.setPos(QPointF(X[1], X[2]))
+            blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # knows to latex it if needed.
-            self.undoStack.push(CommandText(self, self.blurb, self.ink))
+            self.undoStack.push(CommandText(self, blurb, self.ink))
 
     def unpickleDelta(self, X):
         """ Unpickle a DeltaItemObject and add it to scene. """
@@ -1144,13 +1131,9 @@ class PageScene(QGraphicsScene):
     def unpickleGroupDeltaText(self, X):
         """ Unpickle an GroupDTItemObject and add it to scene. """
         if len(X) == 4:
-            self.blurb = TextItem(self, self.fontSize)
-            self.blurb.setPlainText(X[3])
-            self.blurb.contents = X[3]
-            self.blurb.setPos(QPointF(X[0], X[1]))
             # knows to latex it if needed.
             self.undoStack.push(
-                CommandGDT(self, QPointF(X[0], X[1]), X[2], self.blurb, self.fontSize)
+                CommandGDT(self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize)
             )
 
     def unpicklePen(self, X):
@@ -2058,9 +2041,7 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
         # build a delta-comment
-        self.blurb = TextItem(self, self.fontSize)
-        self.blurb.setPlainText("NO ANSWER GIVEN")
         command = CommandGDT(
-            self, br.center() + br.topRight() / 8, delta, self.blurb, self.fontSize
+            self, br.center() + br.topRight() / 8, delta, "NO ANSWER GIVEN", self.fontSize
         )
         self.undoStack.push(command)
