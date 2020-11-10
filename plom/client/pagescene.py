@@ -666,6 +666,16 @@ class PageScene(QGraphicsScene):
             None, adds clicked comment to the page.
 
         """
+        # Find the object under the mouseclick.
+        under = self.itemAt(event.scenePos(), QTransform())
+        # If it is a Delta or Text or GDT then do nothing.
+        if (
+            isinstance(under, DeltaItem)
+            or isinstance(under, TextItem)
+            or isinstance(under, GroupDTItem)
+        ):
+            return
+
         # check the commentFlag and if shift-key is pressed
         if self.commentFlag == 0:
             if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
@@ -688,16 +698,6 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
             self.removeItem(self.lineItem)
             self.commentFlag = 3
-
-        # Find the object under the mouseclick.
-        under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a Delta or Text or GDT then do nothing.
-        if (
-            isinstance(under, DeltaItem)
-            or isinstance(under, TextItem)
-            or isinstance(under, GroupDTItem)
-        ):
-            return
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
@@ -725,12 +725,12 @@ class PageScene(QGraphicsScene):
             )
             log.debug("Making a GDT: commentFlag is {}".format(self.commentFlag))
             self.undoStack.push(command)  # push the delta onto the undo stack.
-            if self.commentFlag > 0:
-                log.debug(
-                    "commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro"
-                )
-                self.commentFlag = 0
-                self.undoStack.endMacro()
+        if self.commentFlag > 0:
+            log.debug(
+                "commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro"
+            )
+            self.commentFlag = 0
+            self.undoStack.endMacro()
 
     def mousePressCross(self, event):
         """
