@@ -676,7 +676,9 @@ class PageScene(QGraphicsScene):
 
         # check the commentFlag and if shift-key is pressed
         if self.commentFlag == 0:
-            if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
+            if (event.button() == Qt.RightButton) or (
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            ):
                 self.commentFlag = 1
                 self.originPos = event.scenePos()
                 self.currentPos = self.originPos
