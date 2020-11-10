@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
 
 ### Changed
 
 ### Fixed
+* Misc fixes and refactoring of the `pagescene` code.
 
 
 ## [0.5.7] - 2020-11-07
