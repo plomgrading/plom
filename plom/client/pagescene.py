@@ -172,6 +172,38 @@ mouseRelease = {
 }
 
 
+def getVertFromRect(a_rect):
+    """given a rectangle, return list of vertices in the middle of each side."""
+    return [
+        (a_rect.topLeft() + a_rect.topRight()) / 2,
+        (a_rect.bottomRight() + a_rect.topRight()) / 2,
+        (a_rect.bottomLeft() + a_rect.bottomRight()) / 2,
+        (a_rect.bottomLeft() + a_rect.topLeft()) / 2,
+    ]
+
+
+def sqrDistance(vect):
+    """given a 2d-vector return l2 norm of that vector"""
+    return vect.x() * vect.x() + vect.y() * vect.y()
+
+
+def whichLineToDraw(g_rect, b_rect):
+    """given two bounding rectangles, return shortest line between the midpoints of their sides"""
+    gvert = getVertFromRect(g_rect)
+    bvert = getVertFromRect(b_rect)
+    gp = gvert[0]
+    bp = bvert[0]
+    dd = sqrDistance(gp - bp)
+    for p in gvert:
+        for q in bvert:
+            dst = sqrDistance(p - q)
+            if dst < dd:
+                gp = p
+                bp = q
+                dd = dst
+    return QLineF(bp, gp)
+
+
 class PageScene(QGraphicsScene):
     """Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
@@ -383,10 +415,14 @@ class PageScene(QGraphicsScene):
         else:
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
-            if self.commentFlag > 0 and self.commentFlag < 3:
-                # TODO: colin unhappy with above fragile nonsense
+            # TODO: ask Colin why <3 is here.
+            if self.commentFlag > 0:  # and self.commentFlag < 3:
+                # TODO: colin unhappy with above fragile nonsense - sorry Colin.
                 self.removeItem(self.lineItem)
                 self.commentFlag = 0
+                # also end the macro and then trigger an undo so box removed.
+                self.undoStack.endMacro()
+                self.undo()
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
@@ -649,7 +685,10 @@ class PageScene(QGraphicsScene):
                 self.addItem(self.boxItem)
                 return
         elif self.commentFlag == 2:
-            connectingLine = self.whichLineToDraw()
+            connectingLine = whichLineToDraw(
+                self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
+                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+            )
             command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
             self.undoStack.push(command)
             self.removeItem(self.lineItem)
@@ -688,13 +727,14 @@ class PageScene(QGraphicsScene):
             self.blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGDT(self, pt, self.commentDelta, self.blurb, self.fontSize)
-            print("Debug: Making a GDT: commentFlag is {}".format(self.commentFlag))
+            log.debug("Making a GDT: commentFlag is {}".format(self.commentFlag))
             self.undoStack.push(command)  # push the delta onto the undo stack.
             if self.commentFlag > 0:
-                print("Debug: commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro")
+                log.debug(
+                    "commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro"
+                )
                 self.commentFlag = 0
                 self.undoStack.endMacro()
-
 
     def mousePressCross(self, event):
         """
@@ -1888,73 +1928,6 @@ class PageScene(QGraphicsScene):
         """ Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
-    def getVertFromRect(self, r):
-        return [
-            # r.topLeft(),
-            # r.topRight(),
-            # r.bottomLeft(),
-            # r.bottomRight(),
-            (r.topLeft() + r.topRight()) / 2,
-            (r.bottomRight() + r.topRight()) / 2,
-            (r.bottomLeft() + r.bottomRight()) / 2,
-            (r.bottomLeft() + r.topLeft()) / 2,
-        ]
-
-    def sqrDistance(self, v):
-        return v.x() * v.x() + v.y() * v.y()
-
-    def whichLineToDraw(self):
-        gvert = self.getVertFromRect(
-            self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
-        )
-        bvert = self.getVertFromRect(
-            self.boxItem.mapRectToScene(self.boxItem.boundingRect())
-        )
-        gp = gvert[0]
-        bp = bvert[0]
-        dd = self.sqrDistance(gp - bp)
-        for p in gvert:
-            for q in bvert:
-                dst = self.sqrDistance(p - q)
-                if dst < dd:
-                    gp = p
-                    bp = q
-                    dd = dst
-        return QLineF(bp, gp)
-
-    # def centerToCenter(self):
-    #     # depricated... holding on to this for a wee bit.
-    #     g = self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
-    #     b = self.boxItem.mapRectToScene(self.boxItem.boundingRect())
-    #     gc = g.center()
-    #     bc = b.center()
-    #     # line runs from bc to gc = [bc,b-boundary]-outside-[g-boundary,gc]
-    #     delta = gc - bc
-    #     # fix the entry/exit from g-box
-    #     if abs(delta.x() * g.height()) < abs(delta.y() * g.width()):
-    #         if delta.y() > 0:
-    #             gp = gc - QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
-    #         else:
-    #             gp = gc + QPointF(delta.x() / delta.y(), 1) * (g.height() / 2)
-    #     else:
-    #         if delta.x() > 0:
-    #             gp = gc - QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
-    #         else:
-    #             gp = gc + QPointF(1, delta.y() / delta.x()) * (g.width() / 2)
-    #
-    #     if abs(delta.x() * b.height()) < abs(delta.y() * b.width()):
-    #         if delta.y() < 0:
-    #             bp = bc - QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
-    #         else:
-    #             bp = bc + QPointF(delta.x() / delta.y(), 1) * (b.height() / 2)
-    #     else:
-    #         if delta.x() < 0:
-    #             bp = bc - QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
-    #         else:
-    #             bp = bc + QPointF(1, delta.y() / delta.x()) * (b.width() / 2)
-    #
-    #     return QLineF(bp, gp)
-
     def mouseMoveComment(self, event):
         """
         Handles mouse moving with a comment.
@@ -1979,7 +1952,12 @@ class PageScene(QGraphicsScene):
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
         elif self.commentFlag == 2:
             self.currentPos = event.scenePos()
-            self.lineItem.setLine(self.whichLineToDraw())
+            self.lineItem.setLine(
+                whichLineToDraw(
+                    self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
+                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+                )
+            )
         # elif self.commentFlag == 3:
         #     print("debugging....")
 
