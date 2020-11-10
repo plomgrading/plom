@@ -89,7 +89,7 @@ class KeyHelp(QDialog):
             [
                 "Current comment",
                 ["f", "j"],
-                "Select the current comment from the comment list. A click then pastes the comment under the click.",
+                "Select the current comment from the comment list. A click then pastes the comment under the click. Shift-click-drag-click draws a highlight-box (until end of drag) and then a line connected to the comment (on final click).",
             ],
             [
                 "End text edit",
