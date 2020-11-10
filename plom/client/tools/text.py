@@ -94,7 +94,7 @@ class TextItem(QGraphicsTextItem):
         self.thick = 0
         self.setDefaultTextColor(Qt.red)
         self.setPlainText("")
-        self.contents = ""
+        self._contents = ""
         font = QFont("Helvetica")
         font.setPointSizeF(fontsize)
         self.setFont(font)
@@ -107,17 +107,21 @@ class TextItem(QGraphicsTextItem):
         # for latex png
         self.state = "TXT"
 
+    # TODO: override toPlainText() to behave more like the super class
+    # def toPlainText():
+
     def getContents(self):
-        if len(self.contents) == 0:
+        # TODO: several different ways to check this: consolidate
+        if len(self._contents) == 0:
             return self.toPlainText()
         else:
-            return self.contents
+            return self._contents
 
     def focusInEvent(self, event):
         if self.state == "PNG":
             self.pngToText()
         else:
-            self.contents = self.toPlainText()
+            self._contents = self.toPlainText()
         super(TextItem, self).focusInEvent(event)
 
     def focusOutEvent(self, event):
@@ -130,13 +134,13 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         # if not PNG then update contents
         if self.state != "PNG":
-            self.contents = self.toPlainText()
+            self._contents = self.toPlainText()
         super(TextItem, self).focusOutEvent(event)
 
     def textToPng(self):
-        self.contents = self.toPlainText()
-        if self.contents[:4].upper() == "TEX:":
-            texIt = self.contents[4:]
+        self._contents = self.toPlainText()
+        if self._contents[:4].upper() == "TEX:":
+            texIt = self._contents[4:]
         else:
             # is not latex so we don't have to PNG-it
             return
@@ -150,8 +154,9 @@ class TextItem(QGraphicsTextItem):
             self.state = "PNG"
 
     def pngToText(self):
-        if self.contents != "":
-            self.setPlainText(self.contents)
+        # TODO: several different ways to check this: consolidate
+        if self._contents != "":
+            self.setPlainText(self._contents)
         self.state = "TXT"
 
     def keyPressEvent(self, event):
@@ -162,10 +167,12 @@ class TextItem(QGraphicsTextItem):
             tc.clearSelection()
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
-            self.contents = self.toPlainText()
-            if self.contents[:4].upper() == "TEX:":
+            self._contents = self.toPlainText()
+            if self._contents[:4].upper() == "TEX:":
                 self.textToPng()
 
+        # TODO: I don't understand how this differs from shift-enter?
+        # TODO: was ctrl-enter supposed to latex even without the "tex:"?
         # control-return latexs the comment and replaces the text with the resulting image.
         # ends the editor.
         if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Return:
@@ -219,9 +226,10 @@ class TextItem(QGraphicsTextItem):
         self.anim.start()
 
     def pickle(self):
-        if len(self.contents) == 0:
-            self.contents = self.toPlainText()
-        return ["Text", self.contents, self.scenePos().x(), self.scenePos().y()]
+        # TODO: several different ways to check this: consolidate
+        if len(self._contents) == 0:
+            self._contents = self.toPlainText()
+        return ["Text", self._contents, self.scenePos().x(), self.scenePos().y()]
 
     # For the animation of border
     @pyqtProperty(int)
