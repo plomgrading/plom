@@ -265,9 +265,9 @@ class PageScene(QGraphicsScene):
         self.boxFlag = 0
         self.deleteFlag = 0
         self.zoomFlag = 0
-        # for box-drag-comment thingy
-        # 0 = no comment in action
-        # 1 = drawing a box
+        # The box-drag-comment composite object is constructed in stages
+        # 0 = no box-drag-comment is currently in progress (default)
+        # 1 = drawing the box
         # 2 = drawing the line
         # 3 = drawing the comment - this should only be very briefly mid function.
         self.commentFlag = 0
@@ -1939,8 +1939,6 @@ class PageScene(QGraphicsScene):
                     self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
                 )
             )
-        # elif self.commentFlag == 3:
-        #     print("debugging....")
 
     def mouseMoveDelta(self, event):
         """
