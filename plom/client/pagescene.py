@@ -269,7 +269,7 @@ class PageScene(QGraphicsScene):
         # 0 = no comment in action
         # 1 = drawing a box
         # 2 = drawing the line
-        # 3 = drawing the comment
+        # 3 = drawing the comment - this should only be very briefly mid function.
         self.commentFlag = 0
 
         # Will need origin, current position, last position points.
@@ -414,9 +414,7 @@ class PageScene(QGraphicsScene):
         else:
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
-            # TODO: ask Colin why <3 is here.
-            if self.commentFlag > 0:  # and self.commentFlag < 3:
-                # TODO: colin unhappy with above fragile nonsense - sorry Colin.
+            if self.commentFlag > 0:
                 self.removeItem(self.lineItem)
                 self.commentFlag = 0
                 # also end the macro and then trigger an undo so box removed.
