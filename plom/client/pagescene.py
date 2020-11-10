@@ -664,15 +664,15 @@ class PageScene(QGraphicsScene):
             None, adds clicked comment to the page.
 
         """
-        # Find the object under the mouseclick.
-        under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a Delta or Text or GDT then do nothing.
-        if (
-            isinstance(under, DeltaItem)
-            or isinstance(under, TextItem)
-            or isinstance(under, GroupDTItem)
-        ):
-            return
+        # in comment mode the ghost is activated, so look for objects that intersect the ghost.
+        # if they are delta, text or GDT then do nothing.
+        for under in self.ghostItem.collidingItems():
+            if (
+                isinstance(under, DeltaItem)
+                or isinstance(under, TextItem)
+                or isinstance(under, GroupDTItem)
+            ):
+                return
 
         # check the commentFlag and if shift-key is pressed
         if self.commentFlag == 0:
