@@ -104,7 +104,7 @@ class ScoreBox(QGraphicsTextItem):
 
 class UnderlyingImages(QGraphicsItemGroup):
     """
-    A class for the image of the underlying pages being marked.
+    Group for the images of the underlying pages being marked.
     """
 
     def __init__(self, imageNames):
@@ -135,6 +135,12 @@ class UnderlyingImages(QGraphicsItemGroup):
 
 
 class UnderlyingRect(QGraphicsRectItem):
+    """
+    A simple white rectangle with dotted border
+
+    Used to put under the images, and also to add a nice white margin around everything.
+    """
+
     def __init__(self, rect):
         super(QGraphicsRectItem, self).__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
@@ -216,12 +222,12 @@ class PageScene(QGraphicsScene):
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.imageNames)
         # and build two underlyingrect
-        br = self.underImage.boundingRect()
-        self.underRectInner = UnderlyingRect(br)
-        ur = QRectF(br)
-        marg = max(512, min(br.height(), br.width())) / 2
-        ur.adjust(-marg, -marg, marg, marg)
-        self.underRect = UnderlyingRect(ur)
+        border_rect = self.underImage.boundingRect()
+        self.underRectInner = UnderlyingRect(border_rect)
+        margin_rect = QRectF(border_rect)
+        marg = max(512, min(border_rect.height(), border_rect.width())) / 2
+        margin_rect.adjust(-marg, -marg, marg, marg)
+        self.underRect = UnderlyingRect(margin_rect)
         self.addItem(self.underRect)
         self.addItem(self.underRectInner)
         self.addItem(self.underImage)
