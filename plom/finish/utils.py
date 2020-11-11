@@ -20,19 +20,23 @@ def my_hash(s, salt=None, digits=9):
         s (str): string to hash.
         salt (str, optional): Salt string for the hash. Defaults to None
         (but will raise an error).
+        digits (int): how many digits, defaults to 9.
 
     Raises:
-        ValueError -- if the given value for salt is None.
+        ValueError: the given value for salt is None.
 
     Returns:
-        str -- The hashed (and salted string) string.
+        str: The hashed and salted string.
     """
+    MAXDIGITS = 38
     if not salt:
         raise ValueError("You must set the Salt String")
     if digits < 2:
         raise ValueError("Not enough digits")
-    if digits > 38:
-        raise NotImplementedError("This implementation maxes out at 38 digits")
+    if digits > MAXDIGITS:
+        raise NotImplementedError(
+            "This implementation maxes out at {} digits".format(MAXDIGITS)
+        )
     hashthis = s + salt
     h = hashlib.md5(hashthis.encode("utf-8")).hexdigest()
     if digits == 12:
