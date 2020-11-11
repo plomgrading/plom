@@ -102,9 +102,26 @@ class ScoreBox(QGraphicsTextItem):
         super(ScoreBox, self).paint(painter, option, widget)
 
 
+class UnderlyingRect(QGraphicsRectItem):
+    """
+    A simple white rectangle with dotted border
+
+    Used to add a nice white margin with dotted border around everything.
+    """
+
+    def __init__(self, rect):
+        super(QGraphicsRectItem, self).__init__()
+        self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
+        self.setBrush(QBrush(Qt.white))
+        self.setRect(rect)
+        self.setZValue(-10)
+
+
 class UnderlyingImages(QGraphicsItemGroup):
     """
     Group for the images of the underlying pages being marked.
+
+    Puts a dotted border around all the images.
     """
 
     def __init__(self, imageNames):
@@ -132,21 +149,8 @@ class UnderlyingImages(QGraphicsItemGroup):
             # TODO: don't floor here if units of scene are large!
             x = int(x)
             self.addToGroup(self.images[n])
-
-
-class UnderlyingRect(QGraphicsRectItem):
-    """
-    A simple white rectangle with dotted border
-
-    Used to put under the images, and also to add a nice white margin around everything.
-    """
-
-    def __init__(self, rect):
-        super(QGraphicsRectItem, self).__init__()
-        self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
-        self.setBrush(QBrush(Qt.white))
-        self.setRect(rect)
-        self.setZValue(-10)
+        self.rect = UnderlyingRect(self.boundingRect())
+        self.addToGroup(self.rect)
 
 
 # Dictionaries to translate tool-modes into functions
@@ -221,15 +225,13 @@ class PageScene(QGraphicsScene):
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.imageNames)
-        # and build two underlyingrect
-        border_rect = self.underImage.boundingRect()
-        self.underRectInner = UnderlyingRect(border_rect)
-        margin_rect = QRectF(border_rect)
-        marg = max(512, min(border_rect.height(), border_rect.width())) / 2
+        # and an underlyingrect for the margin.
+        margin_rect = QRectF(self.underImage.boundingRect())
+        marg = max(512, min(margin_rect.height(), margin_rect.width())) / 2
         margin_rect.adjust(-marg, -marg, marg, marg)
         self.underRect = UnderlyingRect(margin_rect)
         self.addItem(self.underRect)
-        self.addItem(self.underRectInner)
+        # finally add the underimage
         self.addItem(self.underImage)
 
         # Build scene rectangle to fit the image, and place image into it.
