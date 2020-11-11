@@ -23,8 +23,20 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
-from plom.plom_exceptions import *
 from plom import Plom_API_Version, Default_Port
+from plom.plom_exceptions import PlomBenignException, PlomSeriousException
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomAPIException,
+    PlomExistingLoginException,
+    PlomConflict,
+    PlomTakenException,
+    PlomNoMoreException,
+    PlomRangeException,
+    PlomLatexException,
+    PlomTaskChangedError,
+    PlomTaskDeletedError,
+)
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
@@ -36,7 +48,7 @@ log = logging.getLogger("messenger")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class BaseMessenger(object):
+class BaseMessenger():
     """Basic communication with a Plom Server.
 
     Handles authentication and other common tasks; subclasses can add
@@ -850,7 +862,7 @@ class Messenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomNoMoreException(
-                    "Cannot find image file for {}.{}.".format(testNumber, pageGroup)
+                    "Cannot find image file for {}".format(task)
                 ) from None
             else:
                 raise PlomSeriousException(
@@ -935,7 +947,7 @@ class Messenger(BaseMessenger):
                 ) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(
-                    "Image file is corrupted. This should not happen".format(code)
+                    "Image file is corrupted. This should not happen"
                 ) from None
             else:
                 raise PlomSeriousException(
