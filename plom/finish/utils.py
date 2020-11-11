@@ -49,7 +49,39 @@ def my_hash(s, salt=None, digits=9):
     return str(int(h, 16) % b + l)
 
 
-def my_secret(digits=9):
+def salted_hex_hash_from_str(s, salt=None, digits=16):
+    """Hash a string to a hexdigit code with salt.
+
+    Combine the string with a salt string, compute the a secure hash,
+    grab the first few hexadecimal digits.
+
+    Args:
+        s (str): string to hash.
+        salt (str, optional): Salt string for the hash. Defaults to None
+            which will raise an error.
+        digits (int): how many digits, defaults to 16.
+
+    Raises:
+        ValueError: the given value for salt is None.
+
+    Returns:
+        str: The hashed and salted string.
+    """
+    MAXDIGITS = 128
+    if not salt:
+        raise ValueError("You must set the Salt String")
+    if digits < 2:
+        raise ValueError("Not enough digits")
+    if digits > MAXDIGITS:
+        raise NotImplementedError(
+            "This implementation maxes out at {} digits".format(MAXDIGITS)
+        )
+    hashthis = s + salt
+    h = hashlib.sha256(hashthis.encode("utf-8")).hexdigest()
+    return h[0:digits]
+
+
+def rand_integer_code(digits=9):
     """Proper random 9-digit code (between 100_000_000 and 999_999_999).
 
     Args:

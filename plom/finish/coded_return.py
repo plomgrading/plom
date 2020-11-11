@@ -45,13 +45,16 @@ def do_renaming(fromdir, todir, sns):
     return numfiles
 
 
-def main(use_hex, digits):
+def main(use_hex, digits, salt=None):
     """Make the secret codes and the return-code webpage.
 
     args:
         use_hex (bool): use random hex digits, otherwise an integer
             without leading zeros.
         digits (int): length of secret code.
+        salt (str): instead of random, hash from student ID salted
+            with this string.  Defaults to None, which means do not
+            do this, use random secret codes.
     """
     spec = SpecParser().spec
     shortname = spec["name"]
@@ -85,7 +88,7 @@ def main(use_hex, digits):
 
     print("Generating return codes spreadsheet...")
     sns = csv_add_return_codes(
-        CSVFilename, "return_codes.csv", "StudentID", use_hex, digits
+        CSVFilename, "return_codes.csv", "StudentID", use_hex, digits, salt
     )
     print('The return codes are in "return_codes.csv"')
 

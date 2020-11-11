@@ -120,6 +120,18 @@ spCodedReturn.add_argument(
     action="store",
     help="Length of the secret code.  Defaults to 9.",
 )
+spCodedReturn.add_argument(
+    "--salt",
+    type=str,
+    help="""
+        Instead of random codes, use a hash of the student ID, salted
+        with the string SALT.  The codes will then be reproducible by
+        anyone who knows this string (and the student IDs).
+        As its susceptible to offline attacks, a longer string is
+        recommended: you can put quotes around a phrase e.g.,
+        `--salt "Many a slip twixt the cup and the lip"`.
+    """,
+)
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
@@ -154,7 +166,7 @@ def main():
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main(args.hex, args.digits)
+        plom.finish.coded_return.main(args.hex, args.digits, args.salt)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

@@ -17,7 +17,8 @@ import os
 import pandas
 
 from plom.finish import CSVFilename
-from .utils import my_hash, my_secret, rand_hex
+from .utils import my_hash as salted_int_hash_from_str
+from .utils import rand_integer_code, rand_hex, salted_hex_hash_from_str
 
 
 def import_canvas_csv(canvas_fromfile):
@@ -156,8 +157,8 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
     return df
 
 
-def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits):
-    """Add random return_code column to a spreadsheet.
+def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
+    """Add random or hashed return_code column to a spreadsheet.
 
     Args:
         csvin: input file
@@ -165,6 +166,9 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits):
         idcol (str): column name for ID number
         use_hex (bool): use hex digits for secret code
         digits (int): how many digits for secret code
+        salt (str): instead of random, hash the return code from the
+            student ID, salted with this string.  Defaults to None
+            which gives random numbers.
 
     Returns:
         dict of the mapping from student number to secret code.
@@ -191,48 +195,19 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits):
         if not sn == "nan":
             assert isValidStudentNumber(sn), "Invalid student ID"
             if use_hex:
-                code = rand_hex(digits)
+                if salt:
+                    code = salted_hex_hash_from_str(sn, salt, digits)
+                else:
+                    code = rand_hex(digits)
             else:
-                code = my_secret(digits)
+                if salt:
+                    code = salted_int_hash_from_str(sn, salt, digits)
+                else:
+                    code = rand_integer_code(digits)
             df.loc[i, "Return Code"] = code
             sns[sn] = code
 
     df = df.dropna()  # no empty rows
-    df.to_csv(csvout, index=False)
-    return sns
-
-
-def csv_add_salted_return_codes(csvin, csvout, saltstr, idcol):
-    """Add return_code column to a spreadsheet by hashing ID number.
-
-    You should think for yourself about the security implications
-    of using this code.
-
-    Args:
-        csvin: input file
-        csvout: output file
-        saltstr (str): very salty
-        idcol (str): column name for ID number
-
-    Returns:
-        dict of the mapping from student number to secret code.
-    """
-    from plom import isValidStudentNumber
-
-    df = pandas.read_csv(csvin, dtype="object")
-
-    assert idcol in df.columns, 'CSV file missing "{}" column'.format(idcol)
-
-    df.insert(2, "Return Code", "")
-    sns = {}
-    for i, row in df.iterrows():
-        sn = str(row[idcol])
-        # blanks, not ID'd yet for example
-        if not sn == "nan":
-            assert isValidStudentNumber(sn), "Invalid student ID"
-            code = my_hash(sn, saltstr)
-            df.loc[i, "Return Code"] = code
-            sns[sn] = code
     df.to_csv(csvout, index=False)
     return sns
 
