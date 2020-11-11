@@ -1804,6 +1804,10 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
+    def itemWithinBounds(self, item):
+        """Check if given item is within the margins or not."""
+        return item.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape)
+
     def checkAllObjectsInside(self):
         """
         Checks that all objects are within the boundary of the page.
@@ -1826,7 +1830,7 @@ class PageScene(QGraphicsScene):
             ):
                 continue
             # make sure is inside image
-            if not X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
+            if not self.itemWithinBounds(X):
                 return False
         return True
 

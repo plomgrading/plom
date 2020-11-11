@@ -159,6 +159,12 @@ class ImageItem(QGraphicsPixmapItem):
         """
         Paints the scene by adding a red border around the image if applicable.
         """
+        if not self.scene().itemWithinBounds(self):
+            # paint a bounding rectangle out-of-bounds warning
+            painter.setPen(QPen(QColor(255, 165, 0), 8))
+            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
+            painter.drawRoundedRect(option.rect, 10, 10)
+
         super().paint(painter, option, widget)
         if self.thick > 0:
             painter.save()

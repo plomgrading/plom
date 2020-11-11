@@ -95,8 +95,7 @@ class BoxItem(QGraphicsRectItem):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().underRect, mode=Qt.ContainsItemShape):
-            # paint a bounding rectangle out-of-bounds warning
+        if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
