@@ -131,7 +131,7 @@ class BaseMessenger(object):
         except requests.ConnectionError as err:
             raise PlomSeriousException(
                 "Cannot connect to server\n {}\n Please check details before trying again.".format(
-                    server
+                    self.server
                 )
             ) from None
         finally:
