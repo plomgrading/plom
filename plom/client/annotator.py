@@ -1544,6 +1544,14 @@ class Annotator(QWidget):
             msg.exec_()
             return False
 
+        # check annotations are inside the margins
+        if not self.scene.checkAllObjectsInside():
+            msg = ErrorMessage(
+                "Some annotations are outside the margins. Please move or delete them before saving."
+            )
+            msg.exec_()
+            return False
+
         # warn if points where lost but insufficient annotations
         if (
             self.commentWarn

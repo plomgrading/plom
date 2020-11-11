@@ -667,9 +667,7 @@ class PageScene(QGraphicsScene):
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
             blurb = TextItem(self, self.fontSize)  # build the textitem
             blurb.setPlainText(self.commentText)
-            blurb._contents = (
-                self.commentText
-            )  # for pickling, TODO: Colin doesn't like
+            blurb._contents = self.commentText  # for pickling, TODO: Colin doesn't like
             # move to correct point - update if only text no delta
             blurb.setPos(pt)
 
@@ -683,7 +681,9 @@ class PageScene(QGraphicsScene):
             # return blurb to previous state
             blurb.setTextInteractionFlags(prevState)
         else:
-            command = CommandGDT(self, pt, self.commentDelta, self.commentText, self.fontSize)
+            command = CommandGDT(
+                self, pt, self.commentDelta, self.commentText, self.fontSize
+            )
             self.undoStack.push(command)  # push the delta onto the undo stack.
 
     def mousePressCross(self, event):
@@ -1818,7 +1818,7 @@ class PageScene(QGraphicsScene):
             ):
                 continue
             # make sure is inside image
-            if not X.collidesWithItem(self.underImage, mode=Qt.ContainsItemShape):
+            if not X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
                 return False
         return True
 
@@ -2042,6 +2042,10 @@ class PageScene(QGraphicsScene):
 
         # build a delta-comment
         command = CommandGDT(
-            self, br.center() + br.topRight() / 8, delta, "NO ANSWER GIVEN", self.fontSize
+            self,
+            br.center() + br.topRight() / 8,
+            delta,
+            "NO ANSWER GIVEN",
+            self.fontSize,
         )
         self.undoStack.push(command)
