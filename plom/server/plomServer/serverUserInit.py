@@ -99,9 +99,9 @@ def reloadUsers(self, password):
 
 
 def checkPassword(self, user, password):
-    # Check the pwd and enabled. Get the hash from DB
-    passwordHash = self.DB.getUserPasswordHash(user)
-    return self.authority.check_password(password, passwordHash)
+    """Does user's password match the hashed one on file?"""
+    hashed_pwd = self.DB.getUserPasswordHash(user)
+    return self.authority.check_password(password, hashed_pwd)
 
 
 def checkUserEnabled(self, user):
