@@ -4,14 +4,11 @@
 
 import json
 import os
-import subprocess
 import sys
 from statistics import mean
 
 from pyzbar.pyzbar import decode
 from PIL import Image
-
-from plom.scan import rotateBitmap
 
 
 def findCorner(qr, dim):
@@ -39,20 +36,25 @@ def findCorner(qr, dim):
 def QRextract(imgName):
     """Decode qr codes from an image file, save them in .qr file.
 
-    Currently, those are written into a `imgName.qr` file but this could
-    change in the future.  TODO: document whether `imgName` is a full path
-    or just a filename and where the `.qr` file gets written.
+    args:
+        imgName (str/pathlib.Path): an image file, either in local dir
+            or specified e.g., using `pathlib.Path`.
+
+    returns:
+         None:
+
+    Currently, the results are written into a `imgName.qr` file (same
+    as input file with `.qr` appended), but this could change in the
+    future.  TODO: why do we use a file here?
+
+    TODO: currently this does not check if the QR codes are Plom codes:
+    e.g., some Android scanning apps place a QR code on each page.
+    Perhaps we should discard non-Plom codes before we look for corners?
     """
+
     qrname = "{}.qr".format(imgName)
     if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
         return
-
-    # First check if the image is in portrait or landscape by aspect ratio
-    # Should be in portrait.
-    cmd = ["identify", "-format", "%[fx:w/h]", imgName]
-    ratio = subprocess.check_output(cmd).decode().rstrip()
-    if float(ratio) > 1:  # landscape
-        rotateBitmap(imgName, 90)
 
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
@@ -60,7 +62,7 @@ def QRextract(imgName):
     qrlist = decode(img)
     for qr in qrlist:
         cnr = findCorner(qr, img.size)
-        if cnr in ["NW", "NE", "SW", "SE"]:
+        if cnr in cornerQR.keys():
             cornerQR[cnr].append(qr.data.decode())
 
     with open(qrname, "w") as fh:
