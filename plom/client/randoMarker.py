@@ -116,29 +116,40 @@ class SceneParent(QWidget):
         self.scene.undoStack.push(c(self.scene, pth))
 
     def GDT(self):
-        blurb = TextItem(self, AnnFontSizePts)
         dlt = random.choice([1, -1])
         if self.markStyle == 2:  # mark up
             dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
             if dlt <= 0:  # just text
+                blurb = TextItem(self, AnnFontSizePts)
                 blurb.setPlainText(random.choice(self.negComments))
                 blurb.setPos(self.rpt())
                 self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
             else:
-                blurb.setPlainText(random.choice(self.posComments))
                 self.scene.undoStack.push(
-                    CommandGDT(self.scene, self.rpt(), dlt, blurb, AnnFontSizePts)
+                    CommandGDT(
+                        self.scene,
+                        self.rpt(),
+                        dlt,
+                        random.choice(self.posComments),
+                        AnnFontSizePts,
+                    )
                 )
         else:  # mark up
             dlt *= random.randint(0, self.scene.score) // 2
             if dlt >= 0:  # just text
+                blurb = TextItem(self, AnnFontSizePts)
                 blurb.setPlainText(random.choice(self.posComments))
                 blurb.setPos(self.rpt())
                 self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
             else:
-                blurb.setPlainText(random.choice(self.negComments))
                 self.scene.undoStack.push(
-                    CommandGDT(self.scene, self.rpt(), dlt, blurb, AnnFontSizePts)
+                    CommandGDT(
+                        self.scene,
+                        self.rpt(),
+                        dlt,
+                        random.choice(self.negComments),
+                        AnnFontSizePts,
+                    )
                 )
 
     def doRandomAnnotations(self):
