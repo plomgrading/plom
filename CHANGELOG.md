@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
 
 ### Changed
+* Accept QR-coded pages that are landscape.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
