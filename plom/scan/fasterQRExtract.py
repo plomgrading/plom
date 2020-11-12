@@ -33,41 +33,42 @@ def findCorner(qr, dim):
     return NS + EW
 
 
-def QRextract(imgName):
+def QRextract(image_name, write_to_file=True):
     """Decode qr codes from an image file, save them in .qr file.
 
     args:
-        imgName (str/pathlib.Path): an image file, either in local dir
-            or specified e.g., using `pathlib.Path`.
+        image_name (str/pathlib.Path): an image file, either in local
+            dir or specified e.g., using `pathlib.Path`.
+        write_to_file (bool): by default, the results are written into
+            a file named `img_name.qr` (i.e., the same as input name
+            with `.qr` appended, so something like `foo.jpg.qr`).
 
     returns:
         dict: Keys "NW", "NE", "SW", "SE", which with a list of the
             strings extracted from QR codes, one string per code.
-
-    Currently, the results are written into a `imgName.qr` file (same
-    as input file with `.qr` appended), but this could change in the
-    future.
 
     TODO: currently this does not check if the QR codes are Plom codes:
     e.g., some Android scanning apps place a QR code on each page.
     Perhaps we should discard non-Plom codes before we look for corners?
     """
 
-    qrname = "{}.qr".format(imgName)
-    if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
-        return
+    if write_to_file:
+        qrname = "{}.qr".format(image_name)
+        if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
+            return
 
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
-    img = Image.open(imgName)
+    img = Image.open(image_name)
     qrlist = decode(img)
     for qr in qrlist:
         cnr = findCorner(qr, img.size)
         if cnr in cornerQR.keys():
             cornerQR[cnr].append(qr.data.decode())
 
-    with open(qrname, "w") as fh:
-        json.dump(cornerQR, fh)
+    if write_to_file:
+        with open(qrname, "w") as fh:
+            json.dump(cornerQR, fh)
     return cornerQR
 
 
