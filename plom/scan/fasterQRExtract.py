@@ -1,13 +1,12 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 import json
 import os
 import subprocess
 import sys
+from statistics import mean
 
 from pyzbar.pyzbar import decode
 from PIL import Image
@@ -16,25 +15,21 @@ from plom.scan import rotateBitmap
 
 
 def findCorner(qr, dim):
-    xc = []
-    yc = []
-    for p in qr.polygon:
-        xc.append(p.x)
-        yc.append(p.y)
-    mx = sum(xc) / len(xc)
-    my = sum(yc) / len(yc)
+    mx = mean([p.x for p in qr.polygon])
+    my = mean([p.y for p in qr.polygon])
+    width, height = dim
 
     NS = "?"
     EW = "?"
-    if my < dim[1] * 0.3:
+    if my < 0.4 * height:
         NS = "N"
-    elif my > dim[1] * 0.7:
+    elif my > 0.6 * height:
         NS = "S"
     else:
         return "??"
-    if mx < dim[0] * 0.3:
+    if mx < 0.4 * width:
         EW = "W"
-    elif mx > dim[0] * 0.7:
+    elif mx > 0.6 * width:
         EW = "E"
     else:
         return "??"
