@@ -46,10 +46,6 @@ def QRextract(image_name, write_to_file=True):
     returns:
         dict: Keys "NW", "NE", "SW", "SE", which with a list of the
             strings extracted from QR codes, one string per code.
-
-    TODO: currently this does not check if the QR codes are Plom codes:
-    e.g., some Android scanning apps place a QR code on each page.
-    Perhaps we should discard non-Plom codes before we look for corners?
     """
 
     if write_to_file:

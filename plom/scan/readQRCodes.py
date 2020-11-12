@@ -127,6 +127,10 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
         examsScannedNow: TODO?
 
     TODO: maybe we should split this function up a bit!
+
+    TODO: some Android scanning apps place a QR code on each page.
+    Perhaps we should discard non-Plom codes before other processing
+    instead of that being an error.
     """
     # go into page image directory of each bundle and look at each .qr file.
     for fnqr in (bundledir / "pageImages").glob("*.qr"):
