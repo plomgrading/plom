@@ -34,7 +34,7 @@ def findCorner(qr, dim):
 
 
 def QRextract(image_name, write_to_file=True):
-    """Decode qr codes from an image file, save them in .qr file.
+    """Decode QR codes in an image, return or save them in .qr file.
 
     args:
         image_name (str/pathlib.Path): an image file, either in local

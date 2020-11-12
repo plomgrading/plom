@@ -7,11 +7,9 @@ import getpass
 import json
 import os
 import shutil
-import subprocess
 from multiprocessing import Pool
 from pathlib import Path
 
-import toml
 from tqdm import tqdm
 
 from plom.tpv_utils import (
@@ -22,13 +20,13 @@ from plom.tpv_utils import (
     getPosition,
 )
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan import QRextract
 from plom.scan import rotateBitmap
 from plom import PlomImageExts
 
 
-def decodeQRs(where):
+def decode_QRs_in_image_files(where):
     """Find all bitmaps in pageImages dir and decode their QR codes.
 
     If their QRcodes have not been successfully decoded previously
@@ -41,7 +39,6 @@ def decodeQRs(where):
     for ext in PlomImageExts:
         stuff.extend(where.glob("*.{}".format(ext)))
     N = len(stuff)
-    # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
     # This does the same as the following serial loop but in parallel
@@ -350,7 +347,7 @@ def processBitmaps(bundle, server=None, password=None):
     scanMessenger.closeUser()
     scanMessenger.stop()
 
-    decodeQRs(bundle / "pageImages")
+    decode_QRs_in_image_files(bundle / "pageImages")
     checkQRsValid(bundle, spec, examsScannedNow)
     validateQRsAgainstSpec(spec, examsScannedNow)
     moveScansIntoPlace(examsScannedNow)
