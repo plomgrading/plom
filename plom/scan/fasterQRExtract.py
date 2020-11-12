@@ -41,11 +41,12 @@ def QRextract(imgName):
             or specified e.g., using `pathlib.Path`.
 
     returns:
-         None:
+        dict: Keys "NW", "NE", "SW", "SE", which with a list of the
+            strings extracted from QR codes, one string per code.
 
     Currently, the results are written into a `imgName.qr` file (same
     as input file with `.qr` appended), but this could change in the
-    future.  TODO: why do we use a file here?
+    future.
 
     TODO: currently this does not check if the QR codes are Plom codes:
     e.g., some Android scanning apps place a QR code on each page.
@@ -67,6 +68,7 @@ def QRextract(imgName):
 
     with open(qrname, "w") as fh:
         json.dump(cornerQR, fh)
+    return cornerQR
 
 
 if __name__ == "__main__":
