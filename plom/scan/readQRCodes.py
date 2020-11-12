@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 from collections import defaultdict
 import getpass
@@ -71,6 +67,11 @@ def reOrientPage(fname, qrs):
     Assuming reflection combined with missing QR codes is an unlikely
     scenario, we can orient even if we know only one corner.
 
+        1----4    4---3    3----2
+        |    |    |   |    |    |
+        2----3    |   |    4----1
+                  1---2
+
     Args:
        fname (str): the bitmap filename of this page.  Either its the FQN
                     or we are currently in the right directory.
@@ -83,31 +84,32 @@ def reOrientPage(fname, qrs):
              orientation or we have contradictory information.
 
     """
-    upright = [1, 2, 3, 4]  # [NE, NW, SW, SE]
-    flipped = [3, 4, 1, 2]
+    targets = {
+        "upright": [1, 2, 3, 4],  # [NE, NW, SW, SE]
+        "rot90cw": [2, 3, 4, 1],
+        "rot90cc": [4, 1, 2, 3],
+        "flipped": [3, 4, 1, 2],
+    }
+    actions = {
+        "upright": 0,
+        "rot90cw": -90,
+        "rot90cc": 90,
+        "flipped": 180,
+    }
     # fake a default_dict
-    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else None
     current = [g("NE"), g("NW"), g("SW"), g("SE")]
-    # now compare as much as possible of current against upright/flipped ignoring -1s
-    upFlag = True
-    flipFlag = True
-    for k in range(4):
-        if current[k] == -1:
-            continue
-        if upright[k] == current[k]:
-            flipFlag = False
-        if flipped[k] == current[k]:
-            upFlag = False
 
-    if upFlag and not flipFlag:
-        # is upright, no rotation needed
-        return True
-    if flipFlag and not upFlag:
-        rotateBitmap(fname, 180)
-        return True
-    else:
-        # either not enough info or conflicting info
+    def comp(A, B):
+        """compare two lists ignoring any positions with Nones"""
+        return all([x == y for x, y in zip(A, B) if x and y])
+
+    matches = {k: comp(v, current) for (k, v) in targets.items() if comp(v, current)}
+    if len(matches) != 1:
         return False
+    match_key, v = matches.popitem()
+    rotateBitmap(fname, actions[match_key])
+    return True
 
 
 def checkQRsValid(bundledir, spec, examsScannedNow):
