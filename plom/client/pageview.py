@@ -225,6 +225,9 @@ class PageView(QGraphicsView):
             None
 
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         self.resetTransform()
         self.scale(scale, scale)
         self.centerOn(self.paperWindow.center())
@@ -255,6 +258,9 @@ class PageView(QGraphicsView):
             None
 
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         if initRect is None:
             self.fitInView(self.scene().underImage, Qt.KeepAspectRatio)
         else:
@@ -278,6 +284,9 @@ class PageView(QGraphicsView):
         Returns:
             None
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         horizSliderPos = self.horizontalScrollBar().value()
         vertSliderPos = self.verticalScrollBar().value()
         # if not at bottom of view, step down via scrollbar
@@ -310,6 +319,9 @@ class PageView(QGraphicsView):
             None
 
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         horizSliderPos = self.horizontalScrollBar().value()
         verticalSliderPos = self.verticalScrollBar().value()
         # if not at bottom of view, step down via scrollbar
