@@ -17,7 +17,7 @@ import os
 import pandas
 
 from plom.finish import CSVFilename
-from .utils import my_hash as salted_int_hash_from_str
+from .utils import salted_int_hash_from_str
 from .utils import rand_integer_code, rand_hex, salted_hex_hash_from_str
 
 
@@ -260,7 +260,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=9):
         assert len(name) > 0, "Student name is empty"
         assert len(sn) == 8, "Student number is not 8 characters: row = " + str(row)
 
-        code = my_hash(sn, saltstr, digits=digits)
+        code = salted_int_hash_from_str(sn, saltstr, digits=digits)
 
         oldcode = row[rcode]
         if pandas.isnull(oldcode):

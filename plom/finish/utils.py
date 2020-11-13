@@ -9,7 +9,7 @@ import secrets
 import hashlib
 
 
-def my_hash(s, salt=None, digits=9):
+def salted_int_hash_from_str(s, salt=None, digits=9):
     """Hash a string to a 9-digit code
 
     Combine the string with a salt string, compute the md5sum, grab
