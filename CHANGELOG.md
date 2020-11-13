@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
+* Finishing tools: support salted hashes for return codes on the command line.
 
 ### Changed
 
