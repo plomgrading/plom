@@ -449,7 +449,7 @@ class PageScene(QGraphicsScene):
 
     def getSaveableRectangle(self):
         # the scenerect is set to the initial images
-        br = self.sceneRect()
+        br = self.underImage.mapRectToScene(self.underImage.boundingRect())
         # go through all saveable items
         for X in self.items():
             if hasattr(X, "saveable"):
