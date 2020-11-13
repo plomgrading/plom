@@ -461,6 +461,9 @@ class PageScene(QGraphicsScene):
                     )
         return br
 
+    def updateSceneRectangle(self):
+        self.setSceneRect(self.getSaveableRectangle())
+
     def save(self):
         """
         Save the annotated group-image.

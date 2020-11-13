@@ -157,6 +157,9 @@ class PageView(QGraphicsView):
             None
 
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         if (
             self.scene().height() / tempPaperWindow.height()
@@ -178,6 +181,9 @@ class PageView(QGraphicsView):
         Returns:
             None
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         ratio = tempPaperWindow.height() / self.scene().height()
         self.scale(ratio, ratio)
@@ -198,6 +204,9 @@ class PageView(QGraphicsView):
         Returns:
             None
         """
+        # first recompute the scene rect in case anything in the margins.
+        self.scene().updateSceneRectangle()
+
         crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         rat = crect.width() / self.scene().width()
         self.scale(rat, rat)
