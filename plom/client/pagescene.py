@@ -884,6 +884,8 @@ class PageScene(QGraphicsScene):
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
+        # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
+        self.updateSceneRectangle()
         self.update()
 
     def mouseReleasePan(self, event):
