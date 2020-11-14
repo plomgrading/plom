@@ -227,7 +227,7 @@ class PageScene(QGraphicsScene):
         self.underImage = UnderlyingImages(self.imageNames)
         # and an underlyingrect for the margin.
         margin_rect = QRectF(self.underImage.boundingRect())
-        marg = max(512, min(margin_rect.height(), margin_rect.width())) / 2
+        marg = 512  # at some point in future make some function of image width/height
         margin_rect.adjust(-marg, -marg, marg, marg)
         self.underRect = UnderlyingRect(margin_rect)
         self.addItem(self.underRect)
