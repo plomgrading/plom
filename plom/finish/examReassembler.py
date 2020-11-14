@@ -8,7 +8,9 @@ import os
 import sys
 import tempfile
 import subprocess
+from pathlib import Path
 
+from PIL import Image
 import fitz
 
 from plom import __version__
@@ -55,6 +57,18 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
 
     for img in imglist:
         # Rotate page not the image: we want landscape on screen
+        img_jpg = Path(img).with_suffix('.jpg')
+        im = Image.open(img)
+        im_jpg = im.convert("RGB")
+        im_jpg.save(img_jpg, quality=88, optimize=True)
+        jpeg_size = img_jpg.stat().st_size
+        png_size = Path(img).stat().st_size
+        if jpeg_size < 0.8*png_size:
+            print("USING JPEG:  png: {}, size={}, jpeg: {}, size={}".format(img, png_size, img_jpg, jpeg_size))
+            img = img_jpg
+        else:
+            print("KEEPING PNG: png: {}, size={}, jpeg: {}, size={}".format(img, png_size, img_jpg, jpeg_size))
+
         if is_wider(img):
             w, h = papersize_landscape
         else:
