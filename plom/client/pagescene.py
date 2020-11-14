@@ -463,6 +463,7 @@ class PageScene(QGraphicsScene):
 
     def updateSceneRectangle(self):
         self.setSceneRect(self.getSaveableRectangle())
+        self.update()
 
     def save(self):
         """
@@ -885,8 +886,8 @@ class PageScene(QGraphicsScene):
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
         # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
-        self.updateSceneRectangle()
-        self.update()
+        # self.updateSceneRectangle()
+        # self.update()
 
     def mouseReleasePan(self, event):
         """
@@ -1306,12 +1307,12 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
+            # normalise the rectangle to have positive width/height
+            nrect = self.boxItem.rect().normalized()
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
-            if (
-                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
-                > 24
-            ):
-                command = CommandBox(self, self.boxItem.rect())
+            # don't need abs if normalised.
+            if nrect.width() + nrect.height() > 24:
+                command = CommandBox(self, nrect)
                 self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)

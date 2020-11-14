@@ -158,9 +158,9 @@ class PageView(QGraphicsView):
 
         """
         # first recompute the scene rect in case anything in the margins.
-        self.scene().updateSceneRectangle()
 
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        self.scene().updateSceneRectangle()
         if (
             self.scene().height() / tempPaperWindow.height()
             > self.scene().width() / tempPaperWindow.width()
@@ -207,8 +207,8 @@ class PageView(QGraphicsView):
         # first recompute the scene rect in case anything in the margins.
         self.scene().updateSceneRectangle()
 
-        crect = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        rat = crect.width() / self.scene().width()
+        tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
+        rat = tempPaperWindow.width() / self.scene().width()
         self.scale(rat, rat)
         self.centerOn(self.paperWindow.center())
         if update:
@@ -296,7 +296,7 @@ class PageView(QGraphicsView):
             )
         else:
             # else move up to top of view
-            self.verticalScrollBar().setValue(0)
+            self.verticalScrollBar().setValue(self.verticalScrollBar().minimum())
             # if not at right of view, step right via scrollbar
             if horizSliderPos < self.horizontalScrollBar().maximum():
                 self.horizontalScrollBar().setValue(
@@ -304,7 +304,9 @@ class PageView(QGraphicsView):
                 )
             else:
                 # else move back to origin.
-                self.horizontalScrollBar().setValue(0)
+                self.horizontalScrollBar().setValue(
+                    self.horizontalScrollBar().minimum()
+                )
 
         self.setZoomSelector()
 
