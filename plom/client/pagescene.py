@@ -187,7 +187,40 @@ mouseRelease = {
     "pen": "mouseReleasePen",
     "pan": "mouseReleasePan",
     "zoom": "mouseReleaseZoom",
+    "comment": "mouseReleaseComment",
 }
+
+
+def getVertFromRect(a_rect):
+    """given a rectangle, return list of vertices in the middle of each side."""
+    return [
+        (a_rect.topLeft() + a_rect.topRight()) / 2,
+        (a_rect.bottomRight() + a_rect.topRight()) / 2,
+        (a_rect.bottomLeft() + a_rect.bottomRight()) / 2,
+        (a_rect.bottomLeft() + a_rect.topLeft()) / 2,
+    ]
+
+
+def sqrDistance(vect):
+    """given a 2d-vector return l2 norm of that vector"""
+    return vect.x() * vect.x() + vect.y() * vect.y()
+
+
+def whichLineToDraw(g_rect, b_rect):
+    """given two bounding rectangles, return shortest line between the midpoints of their sides"""
+    gvert = getVertFromRect(g_rect)
+    bvert = getVertFromRect(b_rect)
+    gp = gvert[0]
+    bp = bvert[0]
+    dd = sqrDistance(gp - bp)
+    for p in gvert:
+        for q in bvert:
+            dst = sqrDistance(p - q)
+            if dst < dd:
+                gp = p
+                bp = q
+                dd = dst
+    return QLineF(bp, gp)
 
 
 class PageScene(QGraphicsScene):
@@ -258,6 +291,12 @@ class PageScene(QGraphicsScene):
         self.boxFlag = 0
         self.deleteFlag = 0
         self.zoomFlag = 0
+        # The box-drag-comment composite object is constructed in stages
+        # 0 = no box-drag-comment is currently in progress (default)
+        # 1 = drawing the box
+        # 2 = drawing the line
+        # 3 = drawing the comment - this should only be very briefly mid function.
+        self.commentFlag = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -400,6 +439,14 @@ class PageScene(QGraphicsScene):
             pass
         else:
             self.hideGhost()
+            # also check if mid-line draw and then delete the line item
+            if self.commentFlag > 0:
+                self.removeItem(self.lineItem)
+                self.commentFlag = 0
+                # also end the macro and then trigger an undo so box removed.
+                self.undoStack.endMacro()
+                self.undo()
+
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
             self.views()[0].setDragMode(1)
@@ -646,31 +693,54 @@ class PageScene(QGraphicsScene):
     ###########
 
     def mousePressComment(self, event):
-        """
-        Handle when mouse is pressed on a given comment.
+        """Mouse press while holding comment tool.
 
-        Notes:
-            Create a marked-comment-item from whatever is the currently
-            selected comment. This creates a Delta-object and then also
-            a text-object. They should be side-by-side with the delta
-            appearing roughly at the mouse-click.
+        Usually this creates a rubric, an object consisting of a delta
+        grade and an associated text item.  With shift modifier key, it
+        instead starts the multi-stage creation of a box-line-rubric.
+        If a box-line-rubric is in-progress, it continues to the next
+        stage.
 
         Args:
             event (QMouseEvent): the given mouse click.
 
         Returns:
-            None, adds clicked comment to the page.
-
+            None
         """
-        # Find the object under the mouseclick.
-        under = self.itemAt(event.scenePos(), QTransform())
-        # If it is a Delta or Text or GDT then do nothing.
-        if (
-            isinstance(under, DeltaItem)
-            or isinstance(under, TextItem)
-            or isinstance(under, GroupDTItem)
-        ):
-            return
+        # in comment mode the ghost is activated, so look for objects that intersect the ghost.
+        # if they are delta, text or GDT then do nothing.
+        for under in self.ghostItem.collidingItems():
+            if (
+                isinstance(under, DeltaItem)
+                or isinstance(under, TextItem)
+                or isinstance(under, GroupDTItem)
+            ):
+                return
+
+        # check the commentFlag and if shift-key is pressed
+        if self.commentFlag == 0:
+            if (event.button() == Qt.RightButton) or (
+                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+            ):
+                self.commentFlag = 1
+                self.originPos = event.scenePos()
+                self.currentPos = self.originPos
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+                self.boxItem.setPen(self.ink)
+                self.boxItem.setBrush(self.lightBrush)
+                self.addItem(self.boxItem)
+                return
+        elif self.commentFlag == 2:
+            connectingLine = whichLineToDraw(
+                self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
+                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+            )
+            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
+            self.undoStack.push(command)
+            self.removeItem(self.lineItem)
+            self.commentFlag = 3
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
@@ -696,7 +766,14 @@ class PageScene(QGraphicsScene):
             command = CommandGDT(
                 self, pt, self.commentDelta, self.commentText, self.fontSize
             )
+            log.debug("Making a GDT: commentFlag is {}".format(self.commentFlag))
             self.undoStack.push(command)  # push the delta onto the undo stack.
+        if self.commentFlag > 0:
+            log.debug(
+                "commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro"
+            )
+            self.commentFlag = 0
+            self.undoStack.endMacro()
 
     def mousePressCross(self, event):
         """
@@ -1704,6 +1781,28 @@ class PageScene(QGraphicsScene):
             command = CommandDelete(self, item)
             self.undoStack.push(command)
 
+    def mouseReleaseComment(self, event):
+        if self.commentFlag == 0:
+            return
+        elif self.commentFlag == 1:
+            self.removeItem(self.boxItem)
+            self.undoStack.beginMacro("Click-Drag composite object")
+            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            # TODO: making a small object draws a line to nowhere... was this intended?
+            if (
+                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
+                > 24
+            ):
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
+
+            self.commentFlag = 2
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
+            self.lineItem.setPen(self.ink)
+            self.addItem(self.lineItem)
+
     def mouseReleaseDelete(self, event):
         """
         Handle when the mouse is released after drawing a new delete box.
@@ -1875,6 +1974,23 @@ class PageScene(QGraphicsScene):
         if not self.ghostItem.isVisible():
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
+
+        if self.commentFlag == 1:
+            self.currentPos = event.scenePos()
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        elif self.commentFlag == 2:
+            self.currentPos = event.scenePos()
+            self.lineItem.setLine(
+                whichLineToDraw(
+                    self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
+                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+                )
+            )
 
     def mouseMoveDelta(self, event):
         """

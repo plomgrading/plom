@@ -62,7 +62,7 @@ log = logging.getLogger("annotr")
 # Short descriptions of each tool to display to user.
 tipText = {
     "box": "Box: L = highlighted box, R/Shift = highlighted ellipse.",
-    "com": "Comment: L = paste comment and associated mark.",
+    "com": "Comment: L = paste comment and associated mark, R/Shift = labelled box",
     "com up": "Comment up: Select previous comment in list",
     "com down": "Comment down: Select next comment in list",
     "cross": "Cross: L = cross, M/Ctrl = ?-mark, R/Shift = checkmark.",
