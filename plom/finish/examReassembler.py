@@ -60,7 +60,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
         img_jpg = Path(img).with_suffix('.jpg')
         im = Image.open(img)
         im_jpg = im.convert("RGB")
-        im_jpg.save(img_jpg, quality=88, optimize=True)
+        im_jpg.save(img_jpg, quality=94, optimize=True)
         jpeg_size = img_jpg.stat().st_size
         png_size = Path(img).stat().st_size
         if jpeg_size < 0.8*png_size:
