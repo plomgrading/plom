@@ -7,7 +7,6 @@
 import os
 import sys
 import tempfile
-import subprocess
 from pathlib import Path
 
 from PIL import Image
@@ -19,24 +18,6 @@ from plom import __version__
 papersize_portrait = (612, 792)
 papersize_landscape = (792, 612)
 margin = 10
-
-
-def is_wider(f):
-    """True if image is wider than it is high.
-
-    Args:
-        f (str): The name of the file we are checking.
-
-    Returns:
-        boolean : True if the image is wider than it is tall, False otherwise.
-    """
-    # TODO: shell likely SLOW for this task...?
-    ratio = (
-        subprocess.check_output(["identify", "-format", "%[fx:w/h]", f])
-        .decode()
-        .rstrip()
-    )
-    return float(ratio) > 1
 
 
 def reassemble(outname, shortName, sid, coverfname, imglist):
@@ -55,27 +36,31 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
     if coverfname:
         exam.insertPDF(fitz.open(coverfname))
 
-    for img in imglist:
-        # Rotate page not the image: we want landscape on screen
-        img_jpg = Path(img).with_suffix('.jpg')
-        im = Image.open(img)
-        im_jpg = im.convert("RGB")
-        im_jpg.save(img_jpg, quality=94, optimize=True)
-        jpeg_size = img_jpg.stat().st_size
-        png_size = Path(img).stat().st_size
-        if jpeg_size < 0.8*png_size:
-            print("USING JPEG:  png: {}, size={}, jpeg: {}, size={}".format(img, png_size, img_jpg, jpeg_size))
-            img = img_jpg
-        else:
-            print("KEEPING PNG: png: {}, size={}, jpeg: {}, size={}".format(img, png_size, img_jpg, jpeg_size))
+    for img_name in imglist:
+        img_name = Path(img_name)
+        png_size = img_name.stat().st_size
+        im = Image.open(img_name)
 
-        if is_wider(img):
+        # Rotate page not the image: we want landscape on screen
+        if im.width > im.height:
             w, h = papersize_landscape
         else:
             w, h = papersize_portrait
         pg = exam.newPage(width=w, height=h)
         rec = fitz.Rect(margin, margin, w - margin, h - margin)
-        pg.insertImage(rec, filename=img)
+
+        # Make a jpeg in memory, and use that if its significantly smaller
+        with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
+            im.convert("RGB").save(
+                jpeg_file, format="jpeg", quality=94, optimize=True
+            )
+            jpeg_size = jpeg_file.tell()  # cannot use stat as above
+            if jpeg_size < 0.75 * png_size:
+                # print("Using smaller JPEG for {}".format(img_name))
+                jpeg_file.seek(0)
+                pg.insertImage(rec, stream=jpeg_file.read())
+            else:
+                pg.insertImage(rec, filename=img_name)
 
     exam.setMetadata(
         {
