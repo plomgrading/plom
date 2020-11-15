@@ -87,6 +87,10 @@ def main(use_hex, digits, salt=None):
     os.makedirs(codedReturnDir)
 
     print("Generating return codes spreadsheet...")
+    if salt:
+        print('Salt string "{}" can reproduce these return codes'.format(salt))
+    else:
+        print('These return codes will be random and non-reproducible'.format(salt))
     sns = csv_add_return_codes(
         CSVFilename, "return_codes.csv", "StudentID", use_hex, digits, salt
     )
