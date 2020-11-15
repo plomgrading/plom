@@ -185,7 +185,7 @@ class PageView(QGraphicsView):
         self.scene().updateSceneRectangle()
 
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        ratio = tempPaperWindow.height() / self.scene().height()
+        ratio = tempPaperWindow.height() / self.scene().height() * 0.98
         self.scale(ratio, ratio)
         self.centerOn(self.paperWindow.center())
         if update:
@@ -208,7 +208,7 @@ class PageView(QGraphicsView):
         self.scene().updateSceneRectangle()
 
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
-        rat = tempPaperWindow.width() / self.scene().width()
+        rat = tempPaperWindow.width() / self.scene().width() * 0.98
         self.scale(rat, rat)
         self.centerOn(self.paperWindow.center())
         if update:
