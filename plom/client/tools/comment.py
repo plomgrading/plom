@@ -20,6 +20,7 @@ class CommandGDT(QUndoCommand):
 
     Note: must change mark
     """
+
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super().__init__()
         self.scene = scene
@@ -47,12 +48,11 @@ class GroupDTItem(QGraphicsItemGroup):
     TODO: passing in scene is a workaround so the TextItem can talk to
     someone about building LaTeX... can we refactor that somehow?
     """
+
     def __init__(self, pt, delta, blurb_text, fontsize, scene):
         super().__init__()
         self.pt = pt
-        self.di = DeltaItem(
-            pt, delta, fontsize
-        )  # positioned so centre under click
+        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
         self.blurb = TextItem(scene, fontsize)
         self.blurb.setPlainText(blurb_text)
         self.blurb._contents = blurb_text  # TODO
@@ -103,9 +103,7 @@ class GroupDTItem(QGraphicsItemGroup):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
+        if not self.scene().itemWithinBounds(self):
             painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
