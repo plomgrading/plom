@@ -48,20 +48,18 @@ class Authority:
         """Getter for the masterToken"""
         return self.masterToken
 
-    def check_password(self, password, passwordHash):
-        """Check the password against the hashed one.
+    def check_password(self, password, expected_hash):
+        """Check the password against expected hashed password.
 
         Arguments:
-            password {str} -- Password to check.
-            passwordHash {hex} -- Hashed password.
+            password (str): password to check.
+            expected_hash (str): hashed password on file or None
+                if we have no such user on file.
 
         Returns:
-            bool -- True if passwords are the same, False otherwise.
+            bool: True on match, False otherwise.
         """
-
-        if passwordHash is None:  # if there is no hash, then always fail.
-            return False
-        return self.ctx.verify(password, passwordHash)
+        return self.ctx.verify(password, expected_hash)
 
     def create_token(self):
         """Create a token for a validated user, return that token as hex and int-xor'd version for storage.

@@ -62,10 +62,8 @@ class DeltaItem(QGraphicsTextItem):
         self.moveBy(0, self.offset)
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
-            if self.group() is None:
+        if not self.scene().itemWithinBounds(self):
+            if self.group() is None:  # make sure not part of a GDT
                 painter.setPen(QPen(QColor(255, 165, 0), 4))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
