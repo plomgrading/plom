@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
 
 ### Changed
+* Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
