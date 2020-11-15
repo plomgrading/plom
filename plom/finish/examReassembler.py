@@ -52,7 +52,7 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
         # Make a jpeg in memory, and use that if its significantly smaller
         with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
             im.convert("RGB").save(
-                jpeg_file, format="jpeg", quality=94, optimize=True
+                jpeg_file, format="jpeg", quality=90, optimize=True, subsampling=0
             )
             jpeg_size = jpeg_file.tell()  # cannot use stat as above
             if jpeg_size < 0.75 * png_size:
