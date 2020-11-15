@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
+* Server: more logging during authentication, including client version.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
