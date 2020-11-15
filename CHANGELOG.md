@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotator: page now has a margin to allow more space for annotations.  The additional space is cropped on submission.
 
 ### Changed
+* Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
