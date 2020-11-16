@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Finishing tools: support salted hashes for return codes on the command line.
 
 ### Changed
+* Accept QR-coded pages that are landscape.
 * Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
 * Server: more logging during authentication, including client version.
 

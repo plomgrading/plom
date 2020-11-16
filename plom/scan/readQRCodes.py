@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 from collections import defaultdict
 import getpass
 import json
 import os
 import shutil
-import subprocess
 from multiprocessing import Pool
 from pathlib import Path
 
-import toml
 from tqdm import tqdm
 
 from plom.tpv_utils import (
@@ -26,13 +20,13 @@ from plom.tpv_utils import (
     getPosition,
 )
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan import QRextract
 from plom.scan import rotateBitmap
 from plom import PlomImageExts
 
 
-def decodeQRs(where):
+def decode_QRs_in_image_files(where):
     """Find all bitmaps in pageImages dir and decode their QR codes.
 
     If their QRcodes have not been successfully decoded previously
@@ -45,7 +39,6 @@ def decodeQRs(where):
     for ext in PlomImageExts:
         stuff.extend(where.glob("*.{}".format(ext)))
     N = len(stuff)
-    # TODO: processes=8?  Seems its chosen automatically (?)
     with Pool() as p:
         r = list(tqdm(p.imap_unordered(QRextract, stuff), total=N))
     # This does the same as the following serial loop but in parallel
@@ -71,6 +64,11 @@ def reOrientPage(fname, qrs):
     Assuming reflection combined with missing QR codes is an unlikely
     scenario, we can orient even if we know only one corner.
 
+        1----4    4---3    3----2
+        |    |    |   |    |    |
+        2----3    |   |    4----1
+                  1---2
+
     Args:
        fname (str): the bitmap filename of this page.  Either its the FQN
                     or we are currently in the right directory.
@@ -83,31 +81,32 @@ def reOrientPage(fname, qrs):
              orientation or we have contradictory information.
 
     """
-    upright = [1, 2, 3, 4]  # [NE, NW, SW, SE]
-    flipped = [3, 4, 1, 2]
+    targets = {
+        "upright": [1, 2, 3, 4],  # [NE, NW, SW, SE]
+        "rot90cw": [2, 3, 4, 1],
+        "rot90cc": [4, 1, 2, 3],
+        "flipped": [3, 4, 1, 2],
+    }
+    actions = {
+        "upright": 0,
+        "rot90cw": -90,
+        "rot90cc": 90,
+        "flipped": 180,
+    }
     # fake a default_dict
-    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else -1
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else None
     current = [g("NE"), g("NW"), g("SW"), g("SE")]
-    # now compare as much as possible of current against upright/flipped ignoring -1s
-    upFlag = True
-    flipFlag = True
-    for k in range(4):
-        if current[k] == -1:
-            continue
-        if upright[k] == current[k]:
-            flipFlag = False
-        if flipped[k] == current[k]:
-            upFlag = False
 
-    if upFlag and not flipFlag:
-        # is upright, no rotation needed
-        return True
-    if flipFlag and not upFlag:
-        rotateBitmap(fname, 180)
-        return True
-    else:
-        # either not enough info or conflicting info
+    def comp(A, B):
+        """compare two lists ignoring any positions with Nones"""
+        return all([x == y for x, y in zip(A, B) if x and y])
+
+    matches = {k: comp(v, current) for (k, v) in targets.items() if comp(v, current)}
+    if len(matches) != 1:
         return False
+    match_key, v = matches.popitem()
+    rotateBitmap(fname, actions[match_key])
+    return True
 
 
 def checkQRsValid(bundledir, spec, examsScannedNow):
@@ -125,6 +124,10 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
         examsScannedNow: TODO?
 
     TODO: maybe we should split this function up a bit!
+
+    TODO: some Android scanning apps place a QR code on each page.
+    Perhaps we should discard non-Plom codes before other processing
+    instead of that being an error.
     """
     # go into page image directory of each bundle and look at each .qr file.
     for fnqr in (bundledir / "pageImages").glob("*.qr"):
@@ -344,7 +347,7 @@ def processBitmaps(bundle, server=None, password=None):
     scanMessenger.closeUser()
     scanMessenger.stop()
 
-    decodeQRs(bundle / "pageImages")
+    decode_QRs_in_image_files(bundle / "pageImages")
     checkQRsValid(bundle, spec, examsScannedNow)
     validateQRsAgainstSpec(spec, examsScannedNow)
     moveScansIntoPlace(examsScannedNow)

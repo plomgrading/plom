@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Colin B. Macdonald
 
 import os
 import subprocess
@@ -16,10 +12,13 @@ def rotateBitmap(fname, angle):
 
     args:
         filename (str): name of a file
-        angle (int): 90, 180, or 270 degree rotation
+        angle (int): 0, 90, 180, 270, or -90 degree rotation.
 
     TODO: think about multiples of 8/16 thing for jpeg.
     """
+    assert angle in (0, 90, 180, 270, -90), "Invalid rotation angle {}".format(angle)
+    if angle == 0:
+        return
     fnamebase, fnameext = os.path.splitext(fname)
     if fnameext.lower() in (".jpg", ".jpeg"):
         print("**** Doing JPEG rotation {} on {}".format(angle, fname))
