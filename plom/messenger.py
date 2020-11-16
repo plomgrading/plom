@@ -23,7 +23,7 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
-from plom import Plom_API_Version, Default_Port
+from plom import __version__, Plom_API_Version, Default_Port
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -120,7 +120,12 @@ class BaseMessenger():
         try:
             response = self.session.put(
                 "https://{}/users/{}".format(self.server, user),
-                json={"user": user, "pw": pw, "api": Plom_API_Version},
+                json={
+                    "user": user,
+                    "pw": pw,
+                    "api": Plom_API_Version,
+                    "client_ver": __version__,
+                },
                 verify=False,
                 timeout=5,
             )

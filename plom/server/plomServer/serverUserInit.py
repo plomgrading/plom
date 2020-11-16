@@ -108,7 +108,7 @@ def checkUserEnabled(self, user):
     return self.DB.isUserEnabled(user)
 
 
-def giveUserToken(self, user, password, clientAPI, remote_ip):
+def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
     """When a user requests authorisation
     They have sent their name and password
     first check if they are a valid user
@@ -128,8 +128,8 @@ def giveUserToken(self, user, password, clientAPI, remote_ip):
 
     if not self.checkPassword(user, password):
         log.warning(
-            'Invalid password-based login attempt by "{}" from {}'.format(
-                user, remote_ip
+            'Invalid password login attempt by "{}" from {}, client ver "{}"'.format(
+                user, remote_ip, client_ver
             )
         )
         return [False, "The name / password pair is not authorised"]
@@ -151,7 +151,11 @@ def giveUserToken(self, user, password, clientAPI, remote_ip):
     # On token request also make sure anything "out" with that user is reset as todo.
     # We keep this here in case of client crash - todo's get reset on login and logout.
     self.DB.resetUsersToDo(user)
-    log.info('Authorising user "{}" from {}'.format(user, remote_ip))
+    log.info(
+        'Authorising user "{}" from {}, client ver "{}"'.format(
+            user, remote_ip, client_ver
+        )
+    )
     return [True, clientToken]
 
 
