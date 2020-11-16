@@ -45,7 +45,7 @@ server_install_requires = [
     "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
     "weasyprint",
-    "aiohttp~=3.6.2",
+    "aiohttp~=3.7.2",
     "pypng",  # unlisted dep of pyqrcode
     "pyqrcode",
     "pyzbar",
