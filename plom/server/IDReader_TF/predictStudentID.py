@@ -28,7 +28,8 @@ class keras_dropout_prediction_object(object):
     def __init__(self, model):
         # setup a function to predict the digit with dropout (default is to predict without dropout)
         self.f = K.function(
-            [model.layers[0].input, K.symbolic_learning_phase()], [model.output],
+            [model.layers[0].input, K.symbolic_learning_phase()],
+            [model.output],
         )
 
     def predict_with_dropout(self, x, n_iter=20):

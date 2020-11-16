@@ -130,7 +130,8 @@ def uploadTestPage(
                 False,
                 "bundle image duplication error",
                 "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order, bundle_name,
+                    bundle_order,
+                    bundle_name,
                 ),
             ]
 
@@ -249,7 +250,8 @@ def uploadHWPage(
             False,
             "bundle image duplication error",
             "Image number {} from bundle {} uploaded previously".format(
-                bundle_order, bundle_name,
+                bundle_order,
+                bundle_name,
             ),
         ]
 
@@ -261,7 +263,11 @@ def createNewLPage(self, test_ref, order, image_ref):
     # can be called by an upload, but also by move-misc-to-tpage
     # create an Lpage
     with plomdb.atomic():
-        lref = LPage.create(test=test_ref, order=order, image=image_ref,)
+        lref = LPage.create(
+            test=test_ref,
+            order=order,
+            image=image_ref,
+        )
         # this needs to be appended to each qgroup
         for qref in test_ref.qgroups:
             gref = qref.group
@@ -304,7 +310,8 @@ def uploadLPage(
             False,
             "bundle image duplication error",
             "Image number {} from bundle {} uploaded previously".format(
-                bundle_order, bundle_name,
+                bundle_order,
+                bundle_name,
             ),
         ]
 
@@ -379,7 +386,8 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
             False,
             "bundle image duplication error",
             "Image number {} from bundle {} uploaded previously".format(
-                bundle_order, bundle_name,
+                bundle_order,
+                bundle_name,
             ),
         ]
 
@@ -422,7 +430,8 @@ def uploadUnknownPage(
                 False,
                 "bundle image duplication error",
                 "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order, bundle_name,
+                    bundle_order,
+                    bundle_name,
                 ),
             ]
         uref = UnknownPage.create(image=iref, order=order)
@@ -496,7 +505,8 @@ def uploadCollidingPage(
                 False,
                 "bundle image duplication error",
                 "Image number {} from bundle {} uploaded previously".format(
-                    bundle_order, bundle_name,
+                    bundle_order,
+                    bundle_name,
                 ),
             ]
         cref = CollidingPage.create(tpage=pref, image=iref)
@@ -864,7 +874,10 @@ def removeAllScannedPages(self, test_number):
             iref = pref.image
             DiscardedPage.create(
                 image=iref,
-                reason="Discarded scan of l.{}.{}".format(test_number, pref.order,),
+                reason="Discarded scan of l.{}.{}".format(
+                    test_number,
+                    pref.order,
+                ),
             )
             pref.delete_instance()
         # set all the groups as unscanned

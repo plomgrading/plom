@@ -86,7 +86,8 @@ class BaseMessenger():
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
         try:
             response = self.session.get(
-                "https://{}/Version".format(self.server), verify=False,
+                "https://{}/Version".format(self.server),
+                verify=False,
             )
             response.raise_for_status()
         except requests.ConnectionError as err:
@@ -224,7 +225,8 @@ class BaseMessenger():
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/info/spec".format(self.server), verify=False,
+                "https://{}/info/spec".format(self.server),
+                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -249,7 +251,8 @@ class BaseMessenger():
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/info/general".format(self.server), verify=False,
+                "https://{}/info/general".format(self.server),
+                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:

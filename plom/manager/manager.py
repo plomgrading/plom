@@ -578,7 +578,9 @@ class Manager(QWidget):
         if pvi[0].childCount() == 0:
             if pvi[0].text(3) == "scanned":
                 self.viewPage(
-                    int(pvi[0].parent().text(0)), pvi[0].text(1), int(pvi[0].text(2)),
+                    int(pvi[0].parent().text(0)),
+                    pvi[0].text(1),
+                    int(pvi[0].text(2)),
                 )
             return
         # else fire up the whole test.
@@ -931,7 +933,13 @@ class Manager(QWidget):
             with tempfile.NamedTemporaryFile() as ch:
                 oh.write(vop)
                 ch.write(vcp)
-                cvw = CollideViewWindow(self, oh.name, ch.name, test, page,)
+                cvw = CollideViewWindow(
+                    self,
+                    oh.name,
+                    ch.name,
+                    test,
+                    page,
+                )
                 if cvw.exec_() == QDialog.Accepted:
                     if cvw.action == "original":
                         self.collideModel.item(r, 1).setIcon(
@@ -977,7 +985,12 @@ class Manager(QWidget):
         self.ui.discardTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.discardTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.discardModel.setHorizontalHeaderLabels(
-            ["FullFile", "File", "Reason discarded", "Action to be taken",]
+            [
+                "FullFile",
+                "File",
+                "Reason discarded",
+                "Action to be taken",
+            ]
         )
         self.ui.discardTV.setIconSize(QSize(96, 96))
         self.ui.discardTV.activated.connect(self.viewDPage)

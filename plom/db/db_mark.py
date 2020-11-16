@@ -15,7 +15,11 @@ def McountAll(self, q, v):
         return (
             QGroup.select()
             .join(Group)
-            .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
+            .where(
+                QGroup.question == q,
+                QGroup.version == v,
+                Group.scanned == True,
+            )
             .count()
         )
     except QGroup.DoesNotExist:

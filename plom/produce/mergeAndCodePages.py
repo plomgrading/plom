@@ -373,7 +373,10 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
         save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
     # save with ID-number is making named papers = issue 790
     exam.save(
-        save_name, garbage=4, deflate=True, clean=True,
+        save_name,
+        garbage=4,
+        deflate=True,
+        clean=True,
     )
 
     return

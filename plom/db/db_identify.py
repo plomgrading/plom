@@ -27,7 +27,10 @@ def IDcountAll(self):
     try:
         return (
             Group.select()
-            .where(Group.group_type == "i", Group.scanned == True,)
+            .where(
+                Group.group_type == "i",
+                Group.scanned == True,
+            )
             .count()
         )
     except Group.DoesNotExist:
@@ -40,7 +43,10 @@ def IDcountIdentified(self):
         return (
             IDGroup.select()
             .join(Group)
-            .where(Group.scanned == True, IDGroup.identified == True,)
+            .where(
+                Group.scanned == True,
+                IDGroup.identified == True,
+            )
             .count()
         )
     except IDGroup.DoesNotExist:
@@ -54,7 +60,10 @@ def IDgetNextTask(self):
             iref = (
                 IDGroup.select()
                 .join(Group)
-                .where(IDGroup.status == "todo", Group.scanned == True,)
+                .where(
+                    IDGroup.status == "todo",
+                    Group.scanned == True,
+                )
                 .get()
             )
             # note - test need not be all scanned, just the ID pages.
@@ -279,7 +288,9 @@ def IDgetImageFromATest(self):
         IDGroup.select()
         .join(Group)
         .where(
-            Group.group_type == "i", Group.scanned == True, IDGroup.identified == False,
+            Group.group_type == "i",
+            Group.scanned == True,
+            IDGroup.identified == False,
         )
         .limit(1)  # we only need 1.
     )
@@ -304,7 +315,10 @@ def IDreviewID(self, test_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False]
-    iref = IDGroup.get_or_none(IDGroup.test == tref, IDGroup.identified == True,)
+    iref = IDGroup.get_or_none(
+        IDGroup.test == tref,
+        IDGroup.identified == True,
+    )
     if iref is None:
         return [False]
     with plomdb.atomic():

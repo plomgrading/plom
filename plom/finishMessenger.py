@@ -95,7 +95,10 @@ class FinishMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/identified".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -117,7 +120,10 @@ class FinishMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/completions".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -139,7 +145,10 @@ class FinishMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/coverPageInfo/{}".format(self.server, test),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()

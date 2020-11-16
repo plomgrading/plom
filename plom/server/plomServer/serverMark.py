@@ -263,7 +263,8 @@ def MreturnMarkedTask(
     for filename in [annotated_filename, plom_filename, comments_filename]:
         if os.path.isfile(filename):
             os.rename(
-                filename, filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+                filename,
+                filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
             )
 
     # now write in the files

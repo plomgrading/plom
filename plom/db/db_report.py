@@ -161,7 +161,11 @@ def RgetProgress(self, q, v):
     for qref in (
         QGroup.select()
         .join(Group)
-        .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
+        .where(
+            QGroup.question == q,
+            QGroup.version == v,
+            Group.scanned == True,
+        )
     ):
         NScanned += 1
         if qref.marked == True:
@@ -242,7 +246,11 @@ def RgetQuestionUserProgress(self, q, v):
     for qref in (
         QGroup.select()
         .join(Group)
-        .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
+        .where(
+            QGroup.question == q,
+            QGroup.version == v,
+            Group.scanned == True,
+        )
     ):
         number_scanned += 1
         if qref.marked == True:
