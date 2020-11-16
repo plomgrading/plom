@@ -159,12 +159,15 @@ class MarkHandler:
                 This request object will include the task code.
 
         Returns:
-            aiohttp.web_response.Response: A response object with includes the multipart objects
-                which wrap this task/question's images.
+            aiohttp.web_response.json_response: metadata about the images.
+                TODO: Currently, also the image data itself but this is
+                hopefully en route to removal.
         """
 
-        task_code = request.match_info["task"]  # Task/question code string.
-        # returns [True, tag, integrity_check, image_id_list, filename1, filename2,...] or [False]
+        task_code = request.match_info["task"]
+        # returns either
+        #   [True, tags, integrity_check, image_data, filename1, filename2,...]
+        #   [False]
         claimed_task = self.server.MclaimThisTask(data["user"], task_code)
 
         if not claimed_task[0]:
@@ -172,14 +175,15 @@ class MarkHandler:
 
         task_tags = claimed_task[1]
         task_integrity_check = claimed_task[2]
-        task_image_ids = claimed_task[3]
+        image_data = claimed_task[3]
+        # TODO: soon to be deprecated/unused (we hope)
         task_page_paths = claimed_task[4:]
 
         with MultipartWriter("imageAndTags") as multipart_writer:
             multipart_writer.append(task_tags)  # append tags as raw text.
             # append integrity_check as raw text.
             multipart_writer.append(task_integrity_check)
-            multipart_writer.append_json(task_image_ids)  # append as json
+            multipart_writer.append_json(image_data)
             for file_name in task_page_paths:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
@@ -336,8 +340,8 @@ class MarkHandler:
         )
         # Format is one of:
         # [False, error]
-        # [True, N, md5s, original_fname1, ..., original_fnameN]
-        # [True, N, md5s, original_fname1, ..., original_fnameN, annotated_fname, plom_file]
+        # [True, N, image_data, original_fname1, ..., original_fnameN]
+        # [True, N, image_data, original_fname1, ..., original_fnameN, annotated_fname, plom_file]
         if not results[0]:
             if results[1] == "owner":
                 return web.Response(status=409)  # someone else has that task_image
@@ -350,13 +354,13 @@ class MarkHandler:
 
         with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
             num_images = results[1]
-            image_md5s = results[2]
-            assert len(image_md5s) == num_images
+            image_metadata = results[2]
+            assert len(image_metadata) == num_images
             images = results[3:]
             assert len(images) in (num_images, num_images + 2)
 
             multipart_writer.append(str(num_images))
-            multipart_writer.append_json(image_md5s)
+            multipart_writer.append_json(image_metadata)
             for file_name in images:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)

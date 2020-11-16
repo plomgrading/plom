@@ -136,10 +136,11 @@ class BackgroundDownloader(QThread):
             try:
                 (
                     imageList,
-                    image_md5s,
+                    image_metadata,
                     tags,
                     integrity_check,
                 ) = messenger.MclaimThisTask(task)
+                image_md5s = [x[1] for x in image_metadata]
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1254,7 +1255,7 @@ class MarkerClient(QWidget):
             return True
 
         try:
-            [imageList, md5List, anImage, plImage] = messenger.MrequestImages(
+            [imageList, image_metadata, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1284,6 +1285,7 @@ class MarkerClient(QWidget):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
+        md5List = [x[1] for x in image_metadata]
         self.examModel.setOriginalFilesAndMD5s(task, inames, md5List)
 
         if anImage is None:
@@ -1390,10 +1392,11 @@ class MarkerClient(QWidget):
             try:
                 (
                     imageList,
-                    image_md5_list,
+                    image_metadata,
                     tags,
                     integrity_check,
                 ) = messenger.MclaimThisTask(task)
+                image_md5_list = [x[1] for x in image_metadata]
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))

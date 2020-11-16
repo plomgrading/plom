@@ -701,6 +701,16 @@ class Messenger(BaseMessenger):
         return tgv
 
     def MclaimThisTask(self, code):
+        """Claim a task from server and get back metadata (and image data).
+
+        args:
+            code (str): a task code such as `"q0123g2"`.
+
+        returns:
+            list: Consisting of image_bytes, image_metadata,
+                tags, integrity_check.
+        """
+
         self.SRmutex.acquire()
         try:
             response = self.session.patch(
@@ -722,20 +732,19 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        # should be multipart = [tags, integrity_check, image_id_list, image1, image2, ....]
-        imageList = []
+        image_bytes = []
         for i, img in enumerate(MultipartDecoder.from_response(response).parts):
             if i == 0:
                 tags = img.text
             elif i == 1:
                 integrity_check = img.text
             elif i == 2:
-                image_id_list = json.loads(img.text)
+                image_metadata = json.loads(img.text)
             else:
-                imageList.append(
+                image_bytes.append(
                     BytesIO(img.content).getvalue()
                 )  # pass back image as bytes
-        return imageList, image_id_list, tags, integrity_check
+        return image_bytes, image_metadata, tags, integrity_check
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()
@@ -770,10 +779,10 @@ class Messenger(BaseMessenger):
             code (str): the task code such as "q1234g9".
 
         Returns:
-            4-tuple: `(image_list, md5_list, annotated_image, plom_file)`
-                `image_list` is a list of images (e.g., png files to be
-                written to disc).
-                `md5_list` is their md5sums
+            4-tuple: `(image_bytes, image_metadata, annotated_image, plom_file)`
+                `image_bytes` is a list of images (the byte data of png files
+                to be written to disc).
+                `image_metadata` has various stuff: DB ids, md5sums, etc
                 `annotated_image` and `plom_file` are the png file and
                 and data associated with a previous annotations, or None.
 
@@ -799,8 +808,8 @@ class Messenger(BaseMessenger):
             # response is either [n, md5s, image1,..,image.n] or [n, md5s, image1,...,image.n, annotatedImage, plom-data]
             imagesAnnotAndPlom = MultipartDecoder.from_response(response).parts
             n = int(imagesAnnotAndPlom[0].content)  # 'n' sent as string
-            md5_list = json.loads(imagesAnnotAndPlom[1].text)
-            imageList = [
+            image_metadata = json.loads(imagesAnnotAndPlom[1].text)
+            image_bytes = [
                 BytesIO(imagesAnnotAndPlom[i + 2].content).getvalue() for i in range(n)
             ]
             if len(imagesAnnotAndPlom) == n + 2:
@@ -847,7 +856,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        return [imageList, md5_list, anImage, plDat]
+        return [image_bytes, image_metadata, anImage, plDat]
 
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()
