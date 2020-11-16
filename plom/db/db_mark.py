@@ -10,13 +10,16 @@ log = logging.getLogger("DB")
 
 
 def McountAll(self, q, v):
-    """Count all the scanned q/v groups.
-    """
+    """Count all the scanned q/v groups."""
     try:
         return (
             QGroup.select()
             .join(Group)
-            .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
+            .where(
+                QGroup.question == q,
+                QGroup.version == v,
+                Group.scanned == True,
+            )
             .count()
         )
     except QGroup.DoesNotExist:
@@ -24,8 +27,7 @@ def McountAll(self, q, v):
 
 
 def McountMarked(self, q, v):
-    """Count all the q/v groups that have been marked.
-    """
+    """Count all the q/v groups that have been marked."""
     try:
         return (
             QGroup.select()
@@ -72,8 +74,7 @@ def MgetDoneTasks(self, user_name, q, v):
 
 
 def MgetNextTask(self, q, v):
-    """Find unmarked (but scanned) q/v-group and send the group-id back to client.
-    """
+    """Find unmarked (but scanned) q/v-group and send the group-id back to client."""
     with plomdb.atomic():
         try:
             qref = (
@@ -508,8 +509,7 @@ def MgetWholePaper(self, test_number, question):
 
 
 def MreviewQuestion(self, test_number, question, version):
-    """Give ownership of the given marking task to the reviewer.
-    """
+    """Give ownership of the given marking task to the reviewer."""
     # shift ownership to "reviewer"
     revref = User.get(name="reviewer")  # should always be there
 
@@ -533,8 +533,7 @@ def MreviewQuestion(self, test_number, question, version):
 
 
 def MrevertTask(self, task):
-    """This needs work. The qgroup is set back to its original state, the annotations (and images) are deleted, and the corresponding to-delete-filenames are returned to the server which does the actual deleting of files. In future we should probably not delete any files and just move the references within the system?
-    """
+    """This needs work. The qgroup is set back to its original state, the annotations (and images) are deleted, and the corresponding to-delete-filenames are returned to the server which does the actual deleting of files. In future we should probably not delete any files and just move the references within the system?"""
     gref = Group.get_or_none(Group.gid == task)
     if gref is None:
         return [False, "NST"]  # no such task

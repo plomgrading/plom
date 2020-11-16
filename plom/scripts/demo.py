@@ -25,7 +25,8 @@ from plom import __version__
 
 
 parser = argparse.ArgumentParser(
-    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 parser.add_argument(

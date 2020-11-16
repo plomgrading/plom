@@ -106,7 +106,10 @@ spC = sub.add_parser(
 )
 group = spC.add_mutually_exclusive_group(required=False)
 group.add_argument(
-    "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
+    "specFile",
+    nargs="?",
+    default="testSpec.toml",
+    help="defaults to '%(default)s'.",
 )
 group.add_argument(
     "--demo",
@@ -128,7 +131,10 @@ spP = sub.add_parser(
     description="Parse and verify the test-specification toml file.",
 )
 spP.add_argument(
-    "specFile", nargs="?", default="testSpec.toml", help="defaults to '%(default)s'.",
+    "specFile",
+    nargs="?",
+    default="testSpec.toml",
+    help="defaults to '%(default)s'.",
 )
 
 #

@@ -32,7 +32,10 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
 
     with open(CSVFilename, "w") as csvfile:
         testWriter = csv.DictWriter(
-            csvfile, fieldnames=head, quotechar='"', quoting=csv.QUOTE_NONNUMERIC,
+            csvfile,
+            fieldnames=head,
+            quotechar='"',
+            quoting=csv.QUOTE_NONNUMERIC,
         )
         testWriter.writeheader()
         existsUnmarked = False

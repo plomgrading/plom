@@ -173,7 +173,10 @@ def resetUsersToDo(self, uname):
             x.save()
             log.info("Reset user {} ID task {}".format(uname, x.group.gid))
     with plomdb.atomic():
-        query = QGroup.select().where(QGroup.user == uref, QGroup.status == "out",)
+        query = QGroup.select().where(
+            QGroup.user == uref,
+            QGroup.status == "out",
+        )
         for x in query:
             x.status = "todo"
             x.user = None

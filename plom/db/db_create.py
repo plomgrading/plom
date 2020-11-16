@@ -112,7 +112,11 @@ def addTPages(self, tref, gref, t, pages, v):
         for p in pages:
             try:
                 TPage.create(
-                    test=tref, group=gref, page_number=p, version=v, scanned=False,
+                    test=tref,
+                    group=gref,
+                    page_number=p,
+                    version=v,
+                    scanned=False,
                 )
             except pw.IntegrityError as e:
                 log.error("Adding page {} for test {} error - {}".format(p, t, e))

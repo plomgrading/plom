@@ -91,7 +91,8 @@ class MarkHandler:
         """
         # return the completed list
         return web.json_response(
-            self.server.MgetDoneTasks(data["user"], data["q"], data["v"]), status=200,
+            self.server.MgetDoneTasks(data["user"], data["q"], data["v"]),
+            status=200,
         )
 
     # @routes.get("/MK/tasks/available")

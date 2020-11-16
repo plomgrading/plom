@@ -42,7 +42,9 @@ def getTPageImage(self, test_number, page_number, version):
     if tref is None:
         return [False]
     pref = TPage.get_or_none(
-        TPage.test == tref, TPage.page_number == page_number, TPage.version == version,
+        TPage.test == tref,
+        TPage.page_number == page_number,
+        TPage.version == version,
     )
     if pref is None:
         return [False]

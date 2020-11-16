@@ -176,7 +176,11 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/ID/classlist".format(self.server),
-                json={"user": self.user, "token": self.token, "classlist": classdict,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "classlist": classdict,
+                },
                 verify=False,
             )
             response.raise_for_status()
@@ -570,7 +574,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/admin/scannedPages".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "test": test_number,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": test_number,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -598,7 +606,10 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/admin/unknownPageNames".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -754,7 +765,12 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/admin/scannedLPage".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "test": t, "order": o,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": t,
+                    "order": o,
+                },
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
@@ -778,7 +794,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/admin/unknownImage".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "fileName": fname,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                },
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
@@ -801,7 +821,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/admin/discardImage".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "fileName": fname,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                },
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
@@ -824,7 +848,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/admin/collidingImage".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "fileName": fname,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                },
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
@@ -847,7 +875,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/admin/unknownImage".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "fileName": fname,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -869,7 +901,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/admin/collidingImage".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "fileName": fname,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -930,7 +966,11 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/testImages".format(self.server),
-                json={"user": self.user, "token": self.token, "test": testNumber,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": testNumber,
+                },
                 verify=False,
             )
             response.raise_for_status()
@@ -1132,7 +1172,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.put(
                 "https://{}/admin/discardToUnknown".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token, "fileName": fname,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": fname,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1154,7 +1198,10 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/ID/predictedID".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -1208,7 +1255,10 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/identified".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -1230,7 +1280,10 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/userList".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -1252,7 +1305,10 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/userDetails".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -1302,7 +1358,10 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/idReview".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
