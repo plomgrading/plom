@@ -48,7 +48,7 @@ log = logging.getLogger("messenger")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class BaseMessenger():
+class BaseMessenger:
     """Basic communication with a Plom Server.
 
     Handles authentication and other common tasks; subclasses can add
