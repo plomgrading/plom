@@ -123,8 +123,7 @@ def RgetMissingHWQ(self):
 
 
 def RgetUnusedTests(self):
-    """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned, no loose pages scanned.
-    """
+    """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned, no loose pages scanned."""
     unused_list = []
     for tref in Test.select().where(Test.used == False):
         unused_list.append(tref.test_number)
@@ -192,8 +191,7 @@ def RgetProgress(self, q, v):
 
 
 def RgetMarkHistogram(self, q, v):
-    """Return a dict of dicts containing histogram of marks for the given q/v as hist[user][question][mark]=count.
-    """
+    """Return a dict of dicts containing histogram of marks for the given q/v as hist[user][question][mark]=count."""
     histogram = {}
     for qref in (
         QGroup.select()
@@ -218,8 +216,7 @@ def RgetMarkHistogram(self, q, v):
 
 
 def RgetMarked(self, q, v):
-    """Return a list of all marked tasks with that q/v.
-    """
+    """Return a list of all marked tasks with that q/v."""
     marked_list = []
     for qref in (
         QuestionData.select()
@@ -261,8 +258,7 @@ def RgetQuestionUserProgress(self, q, v):
 
 
 def RgetCompletionStatus(self):
-    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, number_of_questions_marked]
-    """
+    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, number_of_questions_marked]"""
     progress = {}
     for tref in Test.select().where(Test.scanned == True):
         number_marked = (
@@ -354,8 +350,7 @@ def RgetStatus(self, test_number):
 
 
 def RgetSpreadsheet(self):
-    """Return a dict that contains all the information needed to build the spreadsheet.
-    """
+    """Return a dict that contains all the information needed to build the spreadsheet."""
     # build a spreadsheet dict indexed by test_number
     # each value that dict is a dict which contains the info about that test
     sheet = {}
@@ -387,8 +382,7 @@ def RgetSpreadsheet(self):
 
 
 def RgetOriginalFiles(self, test_number):
-    """Return list of the filenames for the original (unannotated) page images for the given test.
-    """
+    """Return list of the filenames for the original (unannotated) page images for the given test."""
     page_files = []
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
@@ -427,8 +421,7 @@ def RgetCoverPageInfo(self, test_number):
 
 
 def RgetAnnotatedFiles(self, test_number):
-    """For the given test return a list of the image file names for the idgroup, dnmgroup and the (marked) questions.
-    """
+    """For the given test return a list of the image file names for the idgroup, dnmgroup and the (marked) questions."""
     # todo - put in sanity / safety checks - making sure questions are marked.
 
     image_list = []
@@ -486,8 +479,7 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
 
 
 def RgetAnnotatedImage(self, test_number, question, version):
-    """Return the filename of the annotated image for the given test/question/version.
-    """
+    """Return the filename of the annotated image for the given test/question/version."""
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:  # sanity check
         return [False]

@@ -1303,8 +1303,7 @@ class Manager(QWidget):
         self.ui.filterB.clicked.connect(self.filterReview)
 
     def refreshMRev(self):
-        """Refresh the user list in the marking review tab.
-        """
+        """Refresh the user list in the marking review tab."""
         # clean out the combox box and then rebuild it.
         self.ui.userCB.clear()
         ulist = managerMessenger.getUserList()

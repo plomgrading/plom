@@ -651,8 +651,7 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, 8, tdir)
 
     def getOriginalFiles(self, task):
-        """
-        Return filename for original un-annotated image as string. """
+        """Return filename for original un-annotated image as string."""
         return eval(self._getDataByTask(task, 5))
 
     def _setOriginalFiles(self, task, fnames):

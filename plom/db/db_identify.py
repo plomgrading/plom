@@ -35,8 +35,7 @@ def IDcountAll(self):
 
 
 def IDcountIdentified(self):
-    """Count all tests in which ID pages are scanned and student has been identified.
-    """
+    """Count all tests in which ID pages are scanned and student has been identified."""
     try:
         return (
             IDGroup.select()
@@ -68,8 +67,7 @@ def IDgetNextTask(self):
 
 
 def IDgiveTaskToClient(self, user_name, test_number):
-    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image-list].
-    """
+    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image-list]."""
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
     with plomdb.atomic():
@@ -121,8 +119,7 @@ def IDgetDoneTasks(self, user_name):
 
 
 def IDgetImage(self, user_name, test_number):
-    """ Return ID page images (+ Lpages) of test #test_number to user.
-    """
+    """Return ID page images (+ Lpages) of test #test_number to user."""
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
@@ -277,8 +274,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
 
 
 def IDgetImageFromATest(self):
-    """Returns ID images from the first unid'd test.
-    """
+    """Returns ID images from the first unid'd test."""
     query = (  # look for scanned ID groups which are not IDd yet.
         IDGroup.select()
         .join(Group)
@@ -301,8 +297,7 @@ def IDgetImageFromATest(self):
 
 
 def IDreviewID(self, test_number):
-    """Replace the owner of the ID task for test test_number, with the reviewer.
-    """
+    """Replace the owner of the ID task for test test_number, with the reviewer."""
     # shift ownership to "reviewer"
     revref = User.get(name="reviewer")  # should always be there
 

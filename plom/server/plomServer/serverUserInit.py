@@ -184,8 +184,7 @@ def createModifyUser(self, username, password):
 
 
 def closeUser(self, user):
-    """Client is closing down their app, so remove the authorisation token
-    """
+    """Client is closing down their app, so remove the authorisation token"""
     log.info("Revoking auth token from user {}".format(user))
     self.DB.clearUserToken(user)
     # make sure all their out tasks are returned to "todo"
