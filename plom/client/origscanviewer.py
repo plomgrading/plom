@@ -37,6 +37,14 @@ import sys
 
 
 class SourceList(QListWidget):
+    """An immutable ordered list of possible pages from the server.
+
+    Some of them may be hidden at any time (e.g., when they are in
+    the other Sink List), but they cannot currently be removed or
+    added too.  In particular, no changes in the Adjust Pages dialog
+    directly make it back to the server.
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
@@ -111,6 +119,13 @@ class SourceList(QListWidget):
 
 
 class SinkList(QListWidget):
+    """An ordered list of pages for this task.
+
+    This holds the current view of pages we're considering for this
+    task.  They can be reordered, removed (and visually put back in
+    the SourceList), rotated, etc.
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
