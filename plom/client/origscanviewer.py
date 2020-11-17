@@ -78,10 +78,11 @@ class SourceList(QListWidget):
         self.parent.update()
 
     def removeItem(self, name=None):
+        """Removes single named item from source-list"""
         if name:
             ci = self.item(self.item_positions[name])
         else:
-            ci = self.currentItem()
+            return
 
         if ci is None:
             return None
@@ -89,20 +90,14 @@ class SourceList(QListWidget):
         self.setCurrentItem(None)
         return ci.text()
 
-    def removeItems(self):
+    def hideSelectedItems(self):
+        """Hides the selected items and passes back name list."""
         name_list = []
         for ci in self.selectedItems():
             ci.setHidden(True)
             name_list.append(ci.text())
         self.setCurrentItem(None)
         return name_list
-
-    def returnItem(self, name):
-        if name is None:  # Issue #1200 workaround
-            return
-        ci = self.item(self.item_positions[name])
-        if ci:
-            ci.setHidden(False)
 
     def returnItems(self, name_list):
         if len(name_list) == 0:
@@ -142,19 +137,8 @@ class SinkList(QListWidget):
         self.item_files[name] = pfile
         self.item_belongs[name] = belongs
 
-    def removeItem(self):
-        cr = self.currentRow()
-        ci = self.currentItem()
-        if ci is None:
-            return None
-        elif self.count() == 1:  # cannot remove all pages
-            return None
-        else:
-            ci = self.takeItem(cr)
-            self.setCurrentItem(None)
-            return ci.text()
-
-    def removeItems(self):
+    def removeSelectedItems(self):
+        """Remove the selected items and pass back a name list"""
         name_list = []
         # make sure not trying to remove everything.
         if len(self.selectedIndexes()) == self.count():
@@ -430,7 +414,7 @@ class RearrangementViewer(QDialog):
 
         """
         if self.listA.selectionModel().hasSelection():
-            self.listB.appendItems(self.listA.removeItems())
+            self.listB.appendItems(self.listA.hideSelectedItems())
         else:
             pass
 
@@ -447,7 +431,7 @@ class RearrangementViewer(QDialog):
             None
         """
         if self.listB.selectionModel().hasSelection():
-            self.listA.returnItems(self.listB.removeItems())
+            self.listA.returnItems(self.listB.removeSelectedItems())
         else:
             pass
 
