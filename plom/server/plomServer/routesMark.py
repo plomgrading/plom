@@ -164,19 +164,13 @@ class MarkHandler:
 
         task_code = request.match_info["task"]
         # returns either
-        #   [True, tags, integrity_check, image_metadata]
+        #   [True, image_metadata, tags, integrity_check]
         #   [False]
-        claimed_task = self.server.MclaimThisTask(data["user"], task_code)
+        retvals = self.server.MclaimThisTask(data["user"], task_code)
 
-        if not claimed_task[0]:
+        if not retvals[0]:
             return web.Response(status=204)  # that task already taken.
-
-        task_tags = claimed_task[1]
-        task_integrity_check = claimed_task[2]
-        image_data = claimed_task[3]
-        return web.json_response(
-            [image_data, task_tags, task_integrity_check], status=200
-        )
+        return web.json_response(retvals[1:], status=200)
 
     # @routes.delete("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])

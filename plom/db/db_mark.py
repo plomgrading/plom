@@ -106,7 +106,7 @@ def MgiveTaskToClient(self, user_name, group_id):
     Return:
         list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
             Otherwise, the list is
-                `[True, tags, integrity_check, metadata]`
+                `[True, metadata, tags, integrity_check]`
             where each row of `metadata` consists of
                 `[DB_id, md5_sum, server_filename]`
             Note: `server_filename` is implementation-dependent, could change
@@ -160,7 +160,7 @@ def MgiveTaskToClient(self, user_name, group_id):
                 group_id, user_name, aref.integrity_check
             )
         )
-        return [True, aref.tags, aref.integrity_check, image_metadata]
+        return [True, image_metadata, aref.tags, aref.integrity_check]
 
 
 def MdidNotFinish(self, user_name, group_id):
