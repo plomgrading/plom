@@ -1359,7 +1359,7 @@ class MarkerClient(QWidget):
         """
         Ask server for unmarked paper, get file, add to list, update view.
 
-        Retry a view times in case two clients are asking for same.
+        Retry a few times in case two clients are asking for same.
         Notes:
             Side effects: on success, updates the table of tasks
             TODO: return value on success?  Currently None.
