@@ -99,7 +99,8 @@ class SourceList(QListWidget):
         self.setCurrentItem(None)
         return name_list
 
-    def returnItems(self, name_list):
+    def unhideNamedItems(self, name_list):
+        """Unhide the name list of items."""
         for name in name_list:
             ci = self.item(self.item_positions[name])
             if ci:
@@ -425,7 +426,7 @@ class RearrangementViewer(QDialog):
             None
         """
         if self.listB.selectionModel().hasSelection():
-            self.listA.returnItems(self.listB.removeSelectedItems())
+            self.listA.unhideNamedItems(self.listB.removeSelectedItems())
         else:
             pass
 
