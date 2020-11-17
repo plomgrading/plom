@@ -86,11 +86,14 @@ class SourceList(QListWidget):
         self.parent.update()
 
     def removeItem(self, name=None):
-        """Removes single named item from source-list"""
-        if name:
-            ci = self.item(self.item_positions[name])
-        else:
-            return
+        """Removes (hides) a single named item from source-list.
+
+        Returns:
+            str: The name of the item we just hid.
+        """
+        if name is None:
+            return None
+        ci = self.item(self.item_positions[name])
 
         if ci is None:
             return None
