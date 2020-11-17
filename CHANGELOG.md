@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
+* API: refactoring for simpler image download code.
 
 
 ## [0.5.7] - 2020-11-07
