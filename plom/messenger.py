@@ -23,8 +23,20 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
-from plom.plom_exceptions import *
-from plom import Plom_API_Version, Default_Port
+from plom import __version__, Plom_API_Version, Default_Port
+from plom.plom_exceptions import PlomBenignException, PlomSeriousException
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomAPIException,
+    PlomExistingLoginException,
+    PlomConflict,
+    PlomTakenException,
+    PlomNoMoreException,
+    PlomRangeException,
+    PlomLatexException,
+    PlomTaskChangedError,
+    PlomTaskDeletedError,
+)
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
@@ -36,7 +48,7 @@ log = logging.getLogger("messenger")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-class BaseMessenger(object):
+class BaseMessenger:
     """Basic communication with a Plom Server.
 
     Handles authentication and other common tasks; subclasses can add
@@ -74,7 +86,8 @@ class BaseMessenger(object):
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
         try:
             response = self.session.get(
-                "https://{}/Version".format(self.server), verify=False,
+                "https://{}/Version".format(self.server),
+                verify=False,
             )
             response.raise_for_status()
         except requests.ConnectionError as err:
@@ -108,7 +121,12 @@ class BaseMessenger(object):
         try:
             response = self.session.put(
                 "https://{}/users/{}".format(self.server, user),
-                json={"user": user, "pw": pw, "api": Plom_API_Version},
+                json={
+                    "user": user,
+                    "pw": pw,
+                    "api": Plom_API_Version,
+                    "client_ver": __version__,
+                },
                 verify=False,
                 timeout=5,
             )
@@ -131,7 +149,7 @@ class BaseMessenger(object):
         except requests.ConnectionError as err:
             raise PlomSeriousException(
                 "Cannot connect to server\n {}\n Please check details before trying again.".format(
-                    server
+                    self.server
                 )
             ) from None
         finally:
@@ -212,7 +230,8 @@ class BaseMessenger(object):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/info/spec".format(self.server), verify=False,
+                "https://{}/info/spec".format(self.server),
+                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -237,7 +256,8 @@ class BaseMessenger(object):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/info/general".format(self.server), verify=False,
+                "https://{}/info/general".format(self.server),
+                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -850,7 +870,7 @@ class Messenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 404:
                 raise PlomNoMoreException(
-                    "Cannot find image file for {}.{}.".format(testNumber, pageGroup)
+                    "Cannot find image file for {}".format(task)
                 ) from None
             else:
                 raise PlomSeriousException(
@@ -935,7 +955,7 @@ class Messenger(BaseMessenger):
                 ) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(
-                    "Image file is corrupted. This should not happen".format(code)
+                    "Image file is corrupted. This should not happen"
                 ) from None
             else:
                 raise PlomSeriousException(

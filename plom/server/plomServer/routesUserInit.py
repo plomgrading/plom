@@ -103,13 +103,16 @@ class UserInitHandler:
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         log_request("giveUserToken", request)
+        ip = request.remote
         data = await request.json()
-        if not validate_required_fields(data, ["user", "pw", "api"]):
+        if not validate_required_fields(data, ["user", "pw", "api", "client_ver"]):
             return web.Response(status=400)  # malformed request.
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
 
-        rmsg = self.server.giveUserToken(data["user"], data["pw"], data["api"])
+        rmsg = self.server.giveUserToken(
+            data["user"], data["pw"], data["api"], data["client_ver"], ip
+        )
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)  # all good, return the token
         elif rmsg[1].startswith("API"):

@@ -347,14 +347,23 @@ class UploadHandler:
 
     async def removeAllScannedPages(self, request):
         data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test",],):
+        if not validate_required_fields(
+            data,
+            [
+                "user",
+                "token",
+                "test",
+            ],
+        ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rval = self.server.removeAllScannedPages(data["test"],)
+        rval = self.server.removeAllScannedPages(
+            data["test"],
+        )
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:

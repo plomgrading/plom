@@ -435,7 +435,8 @@ spA = sub.add_parser(
     help="Process and upload all PDFs in 'submittedHWByQ' directory and upload to server",
 )
 spM = sub.add_parser(
-    "missing", help="Replace missing answers with 'not submitted' pages.",
+    "missing",
+    help="Replace missing answers with 'not submitted' pages.",
 )
 spS = sub.add_parser("status", help="Get scanning status report from server")
 spC = sub.add_parser(
@@ -516,10 +517,16 @@ g.add_argument(
 )
 
 spA.add_argument(
-    "-y", "--yes", action="store_true", help="Answer yes to prompts.",
+    "-y",
+    "--yes",
+    action="store_true",
+    help="Answer yes to prompts.",
 )
 spM.add_argument(
-    "-y", "--yes", action="store_true", help="Answer yes to prompts.",
+    "-y",
+    "--yes",
+    action="store_true",
+    help="Answer yes to prompts.",
 )
 
 

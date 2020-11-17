@@ -190,7 +190,10 @@ class ReviewView(QGraphicsView):
         # Set sensible sizes and put into the view, and fit view to the image.
         br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
-            0, 0, max(1000, br.width()), max(1000, br.height()),
+            0,
+            0,
+            max(1000, br.width()),
+            max(1000, br.height()),
         )
         self.setScene(self.scene)
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)

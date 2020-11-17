@@ -111,7 +111,11 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/sidToTest".format(self.server),
-                json={"user": self.user, "token": self.token, "sid": student_id,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "sid": student_id,
+                },
                 verify=False,
             )
             response.raise_for_status()

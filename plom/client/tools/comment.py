@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
 
@@ -12,18 +12,19 @@ from plom.client.tools.move import CommandMoveItem
 from plom.client.tools.text import GhostText, TextItem
 
 
-class CommandGDT(QUndoCommand):
-    """GDT is group of delta and text.
+class CommandGroupDeltaText(QUndoCommand):
+    """A group of delta and text.
 
     Command to do a delta and a textitem together (a "rubric" or
     "saved comment").
 
     Note: must change mark
     """
+
     def __init__(self, scene, pt, delta, blurb, fontsize):
         super().__init__()
         self.scene = scene
-        self.gdt = GroupDTItem(pt, delta, blurb, fontsize, scene)
+        self.gdt = GroupDeltaTextItem(pt, delta, blurb, fontsize, scene)
         self.setText("GroupDeltaText")
 
     def redo(self):
@@ -41,18 +42,17 @@ class CommandGDT(QUndoCommand):
         self.gdt.di.flash_undo()
 
 
-class GroupDTItem(QGraphicsItemGroup):
+class GroupDeltaTextItem(QGraphicsItemGroup):
     """A group of Delta and Text presenting a rubric.
 
     TODO: passing in scene is a workaround so the TextItem can talk to
     someone about building LaTeX... can we refactor that somehow?
     """
+
     def __init__(self, pt, delta, blurb_text, fontsize, scene):
         super().__init__()
         self.pt = pt
-        self.di = DeltaItem(
-            pt, delta, fontsize
-        )  # positioned so centre under click
+        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
         self.blurb = TextItem(scene, fontsize)
         self.blurb.setPlainText(blurb_text)
         self.blurb._contents = blurb_text  # TODO
@@ -103,9 +103,7 @@ class GroupDTItem(QGraphicsItemGroup):
         ]
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
+        if not self.scene().itemWithinBounds(self):
             painter.setPen(QPen(QColor(255, 165, 0), 4))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())

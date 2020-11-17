@@ -42,8 +42,7 @@ def doFiling(rmsg, bundle, shortName, fname):
 
 
 def extractOrder(fname):
-    """filename is of the form blah-n.png, extract the 'n' and return it as an integer
-    """
+    """filename is of the form blah-n.png, extract the 'n' and return it as an integer"""
     npng = fname.split("-")[-1]
     n = npng.split(".")[0]
     return int(n)

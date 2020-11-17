@@ -27,7 +27,10 @@ def IDcountAll(self):
     try:
         return (
             Group.select()
-            .where(Group.group_type == "i", Group.scanned == True,)
+            .where(
+                Group.group_type == "i",
+                Group.scanned == True,
+            )
             .count()
         )
     except Group.DoesNotExist:
@@ -35,13 +38,15 @@ def IDcountAll(self):
 
 
 def IDcountIdentified(self):
-    """Count all tests in which ID pages are scanned and student has been identified.
-    """
+    """Count all tests in which ID pages are scanned and student has been identified."""
     try:
         return (
             IDGroup.select()
             .join(Group)
-            .where(Group.scanned == True, IDGroup.identified == True,)
+            .where(
+                Group.scanned == True,
+                IDGroup.identified == True,
+            )
             .count()
         )
     except IDGroup.DoesNotExist:
@@ -55,7 +60,10 @@ def IDgetNextTask(self):
             iref = (
                 IDGroup.select()
                 .join(Group)
-                .where(IDGroup.status == "todo", Group.scanned == True,)
+                .where(
+                    IDGroup.status == "todo",
+                    Group.scanned == True,
+                )
                 .get()
             )
             # note - test need not be all scanned, just the ID pages.
@@ -68,8 +76,7 @@ def IDgetNextTask(self):
 
 
 def IDgiveTaskToClient(self, user_name, test_number):
-    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image-list].
-    """
+    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image-list]."""
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
     with plomdb.atomic():
@@ -121,8 +128,7 @@ def IDgetDoneTasks(self, user_name):
 
 
 def IDgetImage(self, user_name, test_number):
-    """ Return ID page images (+ Lpages) of test #test_number to user.
-    """
+    """Return ID page images (+ Lpages) of test #test_number to user."""
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
@@ -277,13 +283,14 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
 
 
 def IDgetImageFromATest(self):
-    """Returns ID images from the first unid'd test.
-    """
+    """Returns ID images from the first unid'd test."""
     query = (  # look for scanned ID groups which are not IDd yet.
         IDGroup.select()
         .join(Group)
         .where(
-            Group.group_type == "i", Group.scanned == True, IDGroup.identified == False,
+            Group.group_type == "i",
+            Group.scanned == True,
+            IDGroup.identified == False,
         )
         .limit(1)  # we only need 1.
     )
@@ -301,15 +308,17 @@ def IDgetImageFromATest(self):
 
 
 def IDreviewID(self, test_number):
-    """Replace the owner of the ID task for test test_number, with the reviewer.
-    """
+    """Replace the owner of the ID task for test test_number, with the reviewer."""
     # shift ownership to "reviewer"
     revref = User.get(name="reviewer")  # should always be there
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return [False]
-    iref = IDGroup.get_or_none(IDGroup.test == tref, IDGroup.identified == True,)
+    iref = IDGroup.get_or_none(
+        IDGroup.test == tref,
+        IDGroup.identified == True,
+    )
     if iref is None:
         return [False]
     with plomdb.atomic():

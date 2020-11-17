@@ -152,7 +152,9 @@ class BlankIDBox(QDialog):
         self.noB.clicked.connect(self.reject)
         grid.addWidget(QLabel("Please check to confirm!"), 1, 2)
         grid.addWidget(
-            QLabel("There is writing on other this or other pages."), 2, 2,
+            QLabel("There is writing on other this or other pages."),
+            2,
+            2,
         )
         grid.addWidget(self.blankB, 1, 1)
         grid.addWidget(self.noIDB, 2, 1)

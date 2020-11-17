@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QEvent, QRectF
+from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
     QCursor,
     QFont,
@@ -102,9 +102,26 @@ class ScoreBox(QGraphicsTextItem):
         super(ScoreBox, self).paint(painter, option, widget)
 
 
+class UnderlyingRect(QGraphicsRectItem):
+    """
+    A simple white rectangle with dotted border
+
+    Used to add a nice white margin with dotted border around everything.
+    """
+
+    def __init__(self, rect):
+        super(QGraphicsRectItem, self).__init__()
+        self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
+        self.setBrush(QBrush(Qt.white))
+        self.setRect(rect)
+        self.setZValue(-10)
+
+
 class UnderlyingImages(QGraphicsItemGroup):
     """
-    A class for the image of the underlying pages being marked.
+    Group for the images of the underlying pages being marked.
+
+    Puts a dotted border around all the images.
     """
 
     def __init__(self, imageNames):
@@ -132,6 +149,8 @@ class UnderlyingImages(QGraphicsItemGroup):
             # TODO: don't floor here if units of scene are large!
             x = int(x)
             self.addToGroup(self.images[n])
+        self.rect = UnderlyingRect(self.boundingRect())
+        self.addToGroup(self.rect)
 
 
 # Dictionaries to translate tool-modes into functions
@@ -239,6 +258,13 @@ class PageScene(QGraphicsScene):
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.imageNames)
+        # and an underlyingrect for the margin.
+        margin_rect = QRectF(self.underImage.boundingRect())
+        marg = 512  # at some point in future make some function of image width/height
+        margin_rect.adjust(-marg, -marg, marg, marg)
+        self.underRect = UnderlyingRect(margin_rect)
+        self.addItem(self.underRect)
+        # finally add the underimage
         self.addItem(self.underImage)
 
         # Build scene rectangle to fit the image, and place image into it.
@@ -468,6 +494,24 @@ class PageScene(QGraphicsScene):
         # no pickle-able items means no annotations.
         return False
 
+    def getSaveableRectangle(self):
+        # the scenerect is set to the initial images
+        br = self.underImage.mapRectToScene(self.underImage.boundingRect())
+        # go through all saveable items
+        for X in self.items():
+            if hasattr(X, "saveable"):
+                # now check it is inside the UnderlyingRect
+                if X.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape):
+                    # add a little padding around things.
+                    br = br.united(
+                        X.mapRectToScene(X.boundingRect()).adjusted(-16, -16, 16, 16)
+                    )
+        return br
+
+    def updateSceneRectangle(self):
+        self.setSceneRect(self.getSaveableRectangle())
+        self.update()
+
     def save(self):
         """
         Save the annotated group-image.
@@ -479,7 +523,8 @@ class PageScene(QGraphicsScene):
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
         # Get the width and height of the image
-        br = self.sceneRect()
+        br = self.getSaveableRectangle()
+        self.setSceneRect(br)
         w = br.width()
         h = br.height()
         MINWIDTH = 1024  # subject to maxheight
@@ -668,7 +713,7 @@ class PageScene(QGraphicsScene):
             if (
                 isinstance(under, DeltaItem)
                 or isinstance(under, TextItem)
-                or isinstance(under, GroupDTItem)
+                or isinstance(under, GroupDeltaTextItem)
             ):
                 return
 
@@ -718,10 +763,12 @@ class PageScene(QGraphicsScene):
             # return blurb to previous state
             blurb.setTextInteractionFlags(prevState)
         else:
-            command = CommandGDT(
+            command = CommandGroupDeltaText(
                 self, pt, self.commentDelta, self.commentText, self.fontSize
             )
-            log.debug("Making a GDT: commentFlag is {}".format(self.commentFlag))
+            log.debug(
+                "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
+            )
             self.undoStack.push(command)  # push the delta onto the undo stack.
         if self.commentFlag > 0:
             log.debug(
@@ -852,8 +899,8 @@ class PageScene(QGraphicsScene):
         under = self.itemAt(event.scenePos(), QTransform())
         # If something is there... (fixes bug reported by MattC)
         if under is not None:
-            # If it is part of groupDTitem then do nothing
-            if isinstance(under.group(), GroupDTItem):
+            # If it is part of a group then do nothing
+            if isinstance(under.group(), GroupDeltaTextItem):
                 return
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
@@ -917,7 +964,9 @@ class PageScene(QGraphicsScene):
         self.views()[0].setCursor(Qt.OpenHandCursor)
         super(PageScene, self).mouseReleaseEvent(event)
         # refresh view after moving objects
-        self.update()
+        # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
+        # self.updateSceneRectangle()
+        # self.update()
 
     def mouseReleasePan(self, event):
         """
@@ -1082,6 +1131,7 @@ class PageScene(QGraphicsScene):
                         ScoreBox,
                         QGraphicsPixmapItem,
                         UnderlyingImages,
+                        UnderlyingRect,
                         GhostComment,
                         GhostDelta,
                         GhostText,
@@ -1172,11 +1222,13 @@ class PageScene(QGraphicsScene):
             )
 
     def unpickleGroupDeltaText(self, X):
-        """ Unpickle an GroupDTItemObject and add it to scene. """
+        """Unpickle an GroupDeltaTextItemObject and add it to scene."""
         if len(X) == 4:
             # knows to latex it if needed.
             self.undoStack.push(
-                CommandGDT(self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize)
+                CommandGroupDeltaText(
+                    self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize
+                )
             )
 
     def unpicklePen(self, X):
@@ -1336,12 +1388,12 @@ class PageScene(QGraphicsScene):
             return
         elif self.boxFlag == 1:
             self.removeItem(self.boxItem)
+            # normalise the rectangle to have positive width/height
+            nrect = self.boxItem.rect().normalized()
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
-            if (
-                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
-                > 24
-            ):
-                command = CommandBox(self, self.boxItem.rect())
+            # don't need abs if normalised.
+            if nrect.width() + nrect.height() > 24:
+                command = CommandBox(self, nrect)
                 self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)
@@ -1829,7 +1881,7 @@ class PageScene(QGraphicsScene):
         False otherwise.
         """
         for X in self.items():
-            if isinstance(X, (TextItem, GroupDTItem)):
+            if isinstance(X, (TextItem, GroupDeltaTextItem)):
                 return True
         return False
 
@@ -1861,6 +1913,10 @@ class PageScene(QGraphicsScene):
                     return False
         return True
 
+    def itemWithinBounds(self, item):
+        """Check if given item is within the margins or not."""
+        return item.collidesWithItem(self.underRect, mode=Qt.ContainsItemShape)
+
     def checkAllObjectsInside(self):
         """
         Checks that all objects are within the boundary of the page.
@@ -1883,7 +1939,7 @@ class PageScene(QGraphicsScene):
             ):
                 continue
             # make sure is inside image
-            if not X.collidesWithItem(self.underImage, mode=Qt.ContainsItemShape):
+            if not self.itemWithinBounds(X):
                 return False
         return True
 
@@ -2123,7 +2179,7 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
         # build a delta-comment
-        command = CommandGDT(
+        command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
             delta,

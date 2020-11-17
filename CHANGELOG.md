@@ -10,8 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
+* Annotator: page now has a margin to allow more space for annotations.  The additional space is cropped on submission.
+* Finishing tools: support salted hashes for return codes on the command line.
 
 ### Changed
+* Accept QR-coded pages that are landscape.
+* Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
+* Server: more logging during authentication, including client version.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
