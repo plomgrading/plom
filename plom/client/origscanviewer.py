@@ -43,7 +43,7 @@ class SourceList(QListWidget):
         self.setViewMode(QListWidget.IconMode)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setFlow(QListView.LeftToRight)
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
@@ -51,7 +51,7 @@ class SourceList(QListWidget):
         self.itemDoubleClicked.connect(self.viewImage)
         self.item_positions = {}
         self.item_files = {}
-        self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SingleSelection)
 
     def addImageItem(self, p, pfile, belongs):
         current_row = self.count()
@@ -89,12 +89,28 @@ class SourceList(QListWidget):
         self.setCurrentItem(None)
         return ci.text()
 
+    def removeItems(self):
+        name_list = []
+        for ci in self.selectedItems():
+            ci.setHidden(True)
+            name_list.append(ci.text())
+        self.setCurrentItem(None)
+        return name_list
+
     def returnItem(self, name):
         if name is None:  # Issue #1200 workaround
             return
         ci = self.item(self.item_positions[name])
         if ci:
             ci.setHidden(False)
+
+    def returnItems(self, name_list):
+        if len(name_list) == 0:
+            return
+        for name in name_list:
+            ci = self.item(self.item_positions[name])
+            if ci:
+                ci.setHidden(False)
 
     def viewImage(self, qi):
         self.parent.viewImage(self.item_files[qi.text()])
@@ -108,7 +124,7 @@ class SinkList(QListWidget):
         self.setFlow(QListView.LeftToRight)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
         self.setIconSize(QSize(320, 320))
@@ -119,7 +135,7 @@ class SinkList(QListWidget):
         )  # whether or not the item 'officially' belongs to the question
         self.item_files = {}
         self.itemDoubleClicked.connect(self.viewImage)
-        self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SingleSelection)
 
     def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
@@ -138,6 +154,21 @@ class SinkList(QListWidget):
             self.setCurrentItem(None)
             return ci.text()
 
+    def removeItems(self):
+        name_list = []
+        # make sure not trying to remove everything.
+        if len(self.selectedIndexes()) == self.count():
+            return []
+
+        # be careful removing things as list indices update as you delete.
+        sel_rows = [x.row() for x in self.selectedIndexes()]
+        for cr in reversed(sorted(sel_rows)):
+            ci = self.takeItem(cr)
+            name_list.append(ci.text())
+
+        self.setCurrentItem(None)
+        return name_list
+
     def appendItem(self, name):
         if name is None:
             return
@@ -145,6 +176,16 @@ class SinkList(QListWidget):
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
+        self.setCurrentItem(ci)
+
+    def appendItems(self, name_list):
+        if len(name_list) == 0:
+            return
+        for name in name_list:
+            ci = QListWidgetItem(QIcon(self.item_files[name]), name)
+            if self.item_belongs[name]:
+                ci.setBackground(QBrush(Qt.darkGreen))
+            self.addItem(ci)
         self.setCurrentItem(ci)
 
     def shuffleLeft(self):
@@ -389,7 +430,7 @@ class RearrangementViewer(QDialog):
 
         """
         if self.listA.selectionModel().hasSelection():
-            self.listB.appendItem(self.listA.removeItem())
+            self.listB.appendItems(self.listA.removeItems())
         else:
             pass
 
@@ -406,7 +447,7 @@ class RearrangementViewer(QDialog):
             None
         """
         if self.listB.selectionModel().hasSelection():
-            self.listA.returnItem(self.listB.removeItem())
+            self.listA.returnItems(self.listB.removeItems())
         else:
             pass
 
