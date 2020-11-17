@@ -140,6 +140,7 @@ class BackgroundDownloader(QThread):
                     tags,
                     integrity_check,
                 ) = messenger.MclaimThisTask(task)
+                assert len(imageList) == len(image_metadata)
                 image_md5s = [x[1] for x in image_metadata]
                 break
             except PlomTakenException as err:
@@ -150,13 +151,17 @@ class BackgroundDownloader(QThread):
                 self.quit()
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        for i in range(len(imageList)):
+        image_fnames = []
+        for i, row in enumerate(image_metadata):
+            # try-except? how does this fail?
+            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
+            # TODO: stop downloading twice
+            assert im_bytes == imageList[i]
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            inames.append(tmp)
+            image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
-        self.downloadSuccess.emit(task, inames, image_md5s, tags, integrity_check)
+                fh.write(im_bytes)
+        self.downloadSuccess.emit(task, image_fnames, image_md5s, tags, integrity_check)
         self.quit()
 
 
@@ -1396,6 +1401,7 @@ class MarkerClient(QWidget):
                     tags,
                     integrity_check,
                 ) = messenger.MclaimThisTask(task)
+                assert len(imageList) == len(image_metadata)
                 image_md5_list = [x[1] for x in image_metadata]
                 break
             except PlomTakenException as err:
@@ -1403,17 +1409,22 @@ class MarkerClient(QWidget):
                 continue
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        for i in range(len(imageList)):
+        image_fnames = []
+        for i, row in enumerate(image_metadata):
+            # try-except? how does this fail?
+            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
+            # TODO: stop downloading twice
+            assert im_bytes == imageList[i]
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            inames.append(tmp)
+            image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
+                fh.write(im_bytes)
+
 
         self.examModel.addPaper(
             ExamQuestion(
                 task,
-                inames,
+                image_fnames,
                 image_md5s=image_md5_list,
                 tags=tags,
                 integrity_check=integrity_check,
