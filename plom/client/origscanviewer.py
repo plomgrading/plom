@@ -85,7 +85,7 @@ class SourceList(QListWidget):
         ci.setIcon(QIcon(rfile))
         self.parent.update()
 
-    def removeItem(self, name=None):
+    def hideItemByName(self, name=None):
         """Removes (hides) a single named item from source-list.
 
         Returns:
@@ -413,7 +413,7 @@ class RearrangementViewer(QDialog):
             if row[2] and row[3]:
                 move_order[row[3]] = row[0]
         for k in sorted(move_order.keys()):
-            self.listB.appendItem(self.listA.removeItem(name=move_order[k]))
+            self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
 
     def sourceToSink(self):
         """
