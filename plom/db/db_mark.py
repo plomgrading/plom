@@ -104,11 +104,11 @@ def MgiveTaskToClient(self, user_name, group_id):
         group_id (TODO): somehow tells the task (?).
 
     Return:
-        list: `[False]` on error.  TODO: different cases handled?
-            Otherwise, a list starting with True:
-            `[True, tags, integrity_check, metadata, image0, image1, ...].`
+        list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
+            Otherwise, the list is
+                `[True, tags, integrity_check, metadata]`
             where each row of `metadata` consists of
-            `[DB_id, md5_sum, server_filename]`
+                `[DB_id, md5_sum, server_filename]`
             Note: `server_filename` is implementation-dependent, could change
             without notice, etc.  Clients could use this to get hints for a
             a local file name for example.
@@ -155,17 +155,12 @@ def MgiveTaskToClient(self, user_name, group_id):
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, tags, integrity_check, image-md5-list,  page1, page2, etc]
-        rval = [True, aref.tags, aref.integrity_check, image_metadata]
-        for p in aref.apages.order_by(APage.order):
-            # TODO: remove: its in the metadata above
-            rval.append(p.image.file_name)
         log.debug(
             'Giving marking task {} to user "{}" with integrity_check {}'.format(
                 group_id, user_name, aref.integrity_check
             )
         )
-        return rval
+        return [True, aref.tags, aref.integrity_check, image_metadata]
 
 
 def MdidNotFinish(self, user_name, group_id):
@@ -352,9 +347,9 @@ def MgetImages(self, user_name, task, integrity_check):
     Returns:
         list: On error, return `[False, msg]`, maybe details in 3rd entry.
             On success it can be:
-            `[True, N, metadata, page1, ..., pageN]`
+            `[True, metadata]`
             Or if annotated already:
-            `[True, N, metadata, page1, ..., pageN, annotatedFile, plom_file]`
+            `[True, metadata, annotatedFile, plom_file]`
 
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -380,12 +375,9 @@ def MgetImages(self, user_name, task, integrity_check):
         if aref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
         metadata = []
-        pp = []
         for p in aref.apages.order_by(APage.order):
             metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
-            pp.append(p.image.file_name)
-        rval = [True, len(pp), metadata]
-        rval.extend(pp)
+        rval = [True, metadata]
         if aref.aimage is not None:
             rval.extend([aref.aimage.file_name, aref.plom_file])
         return rval

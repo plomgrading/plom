@@ -166,7 +166,7 @@ class MarkHandler:
 
         task_code = request.match_info["task"]
         # returns either
-        #   [True, tags, integrity_check, image_data, filename1, filename2,...]
+        #   [True, tags, integrity_check, image_metadata]
         #   [False]
         claimed_task = self.server.MclaimThisTask(data["user"], task_code)
 
@@ -176,15 +176,14 @@ class MarkHandler:
         task_tags = claimed_task[1]
         task_integrity_check = claimed_task[2]
         image_data = claimed_task[3]
-        # TODO: soon to be deprecated/unused (we hope)
-        task_page_paths = claimed_task[4:]
+        files = [x[-1] for x in image_data]
 
         with MultipartWriter("imageAndTags") as multipart_writer:
             multipart_writer.append(task_tags)  # append tags as raw text.
             # append integrity_check as raw text.
             multipart_writer.append(task_integrity_check)
             multipart_writer.append_json(image_data)
-            for file_name in task_page_paths:
+            for file_name in files:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
@@ -340,8 +339,8 @@ class MarkHandler:
         )
         # Format is one of:
         # [False, error]
-        # [True, N, image_data, original_fname1, ..., original_fnameN]
-        # [True, N, image_data, original_fname1, ..., original_fnameN, annotated_fname, plom_file]
+        # [True, N, image_data]
+        # [True, N, image_data, annotated_fname, plom_filename]
         if not results[0]:
             if results[1] == "owner":
                 return web.Response(status=409)  # someone else has that task_image
@@ -353,15 +352,15 @@ class MarkHandler:
                 return web.Response(status=400)  # some other error
 
         with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-            num_images = results[1]
-            image_metadata = results[2]
-            assert len(image_metadata) == num_images
-            images = results[3:]
-            assert len(images) in (num_images, num_images + 2)
+            image_metadata = results[1]
+            num_images = len(image_metadata)
+            files = [x[-1] for x in image_metadata]
+            # append the annotated_fname, plom_filename if present
+            files.extend(results[2:])
 
             multipart_writer.append(str(num_images))
             multipart_writer.append_json(image_metadata)
-            for file_name in images:
+            for file_name in files:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
