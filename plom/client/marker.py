@@ -134,14 +134,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                (
-                    imageList,
-                    image_metadata,
-                    tags,
-                    integrity_check,
-                ) = messenger.MclaimThisTask(task)
-                assert len(imageList) == len(image_metadata)
-                image_md5s = [x[1] for x in image_metadata]
+                image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -150,13 +143,12 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
+        image_md5s = [x[1] for x in image_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(image_metadata):
             # try-except? how does this fail?
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
-            # TODO: stop downloading twice
-            assert im_bytes == imageList[i]
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
@@ -1395,31 +1387,22 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                (
-                    imageList,
-                    image_metadata,
-                    tags,
-                    integrity_check,
-                ) = messenger.MclaimThisTask(task)
-                assert len(imageList) == len(image_metadata)
-                image_md5_list = [x[1] for x in image_metadata]
+                image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
+        image_md5_list = [x[1] for x in image_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(image_metadata):
             # try-except? how does this fail?
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
-            # TODO: stop downloading twice
-            assert im_bytes == imageList[i]
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-
 
         self.examModel.addPaper(
             ExamQuestion(

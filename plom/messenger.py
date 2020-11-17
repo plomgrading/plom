@@ -701,14 +701,13 @@ class Messenger(BaseMessenger):
         return tgv
 
     def MclaimThisTask(self, code):
-        """Claim a task from server and get back metadata (and image data).
+        """Claim a task from server and get back metadata.
 
         args:
             code (str): a task code such as `"q0123g2"`.
 
         returns:
-            list: Consisting of image_bytes, image_metadata,
-                tags, integrity_check.
+            list: Consisting of image_metadata, tags, integrity_check.
         """
 
         self.SRmutex.acquire()
@@ -721,7 +720,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
             if response.status_code == 204:
                 raise PlomTakenException("Task taken by another user.")
-
+            ret = response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -731,20 +730,7 @@ class Messenger(BaseMessenger):
                 ) from None
         finally:
             self.SRmutex.release()
-
-        image_bytes = []
-        for i, img in enumerate(MultipartDecoder.from_response(response).parts):
-            if i == 0:
-                tags = img.text
-            elif i == 1:
-                integrity_check = img.text
-            elif i == 2:
-                image_metadata = json.loads(img.text)
-            else:
-                image_bytes.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
-        return image_bytes, image_metadata, tags, integrity_check
+        return ret
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()

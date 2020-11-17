@@ -149,7 +149,7 @@ class MarkHandler:
     # @routes.patch("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MclaimThisTask(self, data, request):
-        """Take task number in request and return the task/question's images as a response.
+        """Take task number in request and return the task/question's image data as a response.
 
         Respond with status 200/204.
 
@@ -160,8 +160,6 @@ class MarkHandler:
 
         Returns:
             aiohttp.web_response.json_response: metadata about the images.
-                TODO: Currently, also the image data itself but this is
-                hopefully en route to removal.
         """
 
         task_code = request.match_info["task"]
@@ -176,16 +174,9 @@ class MarkHandler:
         task_tags = claimed_task[1]
         task_integrity_check = claimed_task[2]
         image_data = claimed_task[3]
-        files = [x[-1] for x in image_data]
-
-        with MultipartWriter("imageAndTags") as multipart_writer:
-            multipart_writer.append(task_tags)  # append tags as raw text.
-            # append integrity_check as raw text.
-            multipart_writer.append(task_integrity_check)
-            multipart_writer.append_json(image_data)
-            for file_name in files:
-                multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+        return web.json_response(
+            [image_data, task_tags, task_integrity_check], status=200
+        )
 
     # @routes.delete("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
