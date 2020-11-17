@@ -99,6 +99,7 @@ class SourceList(QListWidget):
             return None
         ci.setHidden(True)
         self.setCurrentItem(None)
+        # TODO: seems that ci.text() is always `name`
         return ci.text()
 
     def hideSelectedItems(self):
