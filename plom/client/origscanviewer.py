@@ -100,8 +100,6 @@ class SourceList(QListWidget):
         return name_list
 
     def returnItems(self, name_list):
-        if len(name_list) == 0:
-            return
         for name in name_list:
             ci = self.item(self.item_positions[name])
             if ci:
