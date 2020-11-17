@@ -140,10 +140,6 @@ class SinkList(QListWidget):
     def removeSelectedItems(self):
         """Remove the selected items and pass back a name list"""
         name_list = []
-        # make sure not trying to remove everything.
-        if len(self.selectedIndexes()) == self.count():
-            return []
-
         # be careful removing things as list indices update as you delete.
         sel_rows = [x.row() for x in self.selectedIndexes()]
         for cr in reversed(sorted(sel_rows)):
@@ -493,6 +489,12 @@ class RearrangementViewer(QDialog):
         Returns:
 
         """
+        if self.listB.count() == 0:
+            msg = ErrorMessage(
+                "You must have at least one page in the bottom list."
+            )
+            msg.exec()
+            return
         if self.need_to_confirm:
             msg = SimpleMessage(
                 "Are you sure you want to save this page order? This will erase "
