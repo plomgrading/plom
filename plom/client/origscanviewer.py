@@ -30,7 +30,7 @@ from PyQt5.QtWidgets import (
 
 from .examviewwindow import ExamViewWindow
 from .uiFiles.ui_test_view import Ui_TestView
-from .useful_classes import SimpleMessage
+from .useful_classes import ErrorMessage, SimpleMessage
 
 import os
 import sys
@@ -490,9 +490,7 @@ class RearrangementViewer(QDialog):
 
         """
         if self.listB.count() == 0:
-            msg = ErrorMessage(
-                "You must have at least one page in the bottom list."
-            )
+            msg = ErrorMessage("You must have at least one page in the bottom list.")
             msg.exec()
             return
         if self.need_to_confirm:
