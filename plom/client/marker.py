@@ -1252,7 +1252,7 @@ class MarkerClient(QWidget):
             return True
 
         try:
-            [imageList, image_metadata, anImage, plImage] = messenger.MrequestImages(
+            [image_metadata, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1276,14 +1276,15 @@ class MarkerClient(QWidget):
         log.debug("create paperDir {} for already-graded download".format(paperDir))
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        for i in range(len(imageList)):
+        image_fnames = []
+        for i, row in enumerate(image_metadata):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            inames.append(tmp)
+            image_fnames.append(tmp)
+            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
+                fh.write(im_bytes)
         md5List = [x[1] for x in image_metadata]
-        self.examModel.setOriginalFilesAndMD5s(task, inames, md5List)
+        self.examModel.setOriginalFilesAndMD5s(task, image_fnames, md5List)
 
         if anImage is None:
             return True

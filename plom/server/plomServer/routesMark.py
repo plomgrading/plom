@@ -303,7 +303,7 @@ class MarkHandler:
     # @routes.get("/MK/images/{task}")
     @authenticate_by_token_required_fields(["user", "integrity_check"])
     def MgetImages(self, data, request):
-        """Return the image of a question/task to the client.
+        """Return underlying image data and annotations of a question/task.
 
         Main API call for the client to get the image data (original and annotated).
         Respond with status 200/409.
@@ -324,8 +324,8 @@ class MarkHandler:
         )
         # Format is one of:
         # [False, error]
-        # [True, N, image_data]
-        # [True, N, image_data, annotated_fname, plom_filename]
+        # [True, image_data]
+        # [True, image_data, annotated_fname, plom_filename]
         if not results[0]:
             if results[1] == "owner":
                 return web.Response(status=409)  # someone else has that task_image
@@ -338,12 +338,10 @@ class MarkHandler:
 
         with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
             image_metadata = results[1]
-            num_images = len(image_metadata)
-            files = [x[-1] for x in image_metadata]
+            files = []
             # append the annotated_fname, plom_filename if present
             files.extend(results[2:])
 
-            multipart_writer.append(str(num_images))
             multipart_writer.append_json(image_metadata)
             for file_name in files:
                 multipart_writer.append(open(file_name, "rb"))
