@@ -92,14 +92,15 @@ class SourceList(QListWidget):
             str: The name of the item we just hid.
         """
         if name is None:
-            return None
+            raise ValueError("You must provide the 'name' argument")
+
         ci = self.item(self.item_positions[name])
 
         if ci is None:
             return None
         ci.setHidden(True)
         self.setCurrentItem(None)
-        # TODO: seems that ci.text() is always `name`
+        assert ci.text() == name, "Something has gone very wrong: expect match"
         return ci.text()
 
     def hideSelectedItems(self):
