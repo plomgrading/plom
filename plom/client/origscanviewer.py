@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QMargins
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -151,6 +151,13 @@ class SinkList(QListWidget):
         self.item_files = {}
         self.itemDoubleClicked.connect(self.viewImage)
         # self.setSelectionMode(QListView.SingleSelection)
+
+    def resizeEvent(self, whatev):
+        print("=== RESIZE EVENT SINKLIST ===")
+        print(whatev)
+        A = self.iconSize()
+        print("TODO: do something reasonable here, for now GROW  G R O W ! !  !   !")
+        self.setIconSize(A.grownBy(QMargins(2, 2, 2, 2)))
 
     def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
