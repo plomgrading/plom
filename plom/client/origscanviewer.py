@@ -30,20 +30,28 @@ from PyQt5.QtWidgets import (
 
 from .examviewwindow import ExamViewWindow
 from .uiFiles.ui_test_view import Ui_TestView
-from .useful_classes import SimpleMessage
+from .useful_classes import ErrorMessage, SimpleMessage
 
 import os
 import sys
 
 
 class SourceList(QListWidget):
+    """An immutable ordered list of possible pages from the server.
+
+    Some of them may be hidden at any time (e.g., when they are in
+    the other Sink List), but they cannot currently be removed or
+    added too.  In particular, no changes in the Adjust Pages dialog
+    directly make it back to the server.
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setFlow(QListView.LeftToRight)
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
@@ -51,7 +59,7 @@ class SourceList(QListWidget):
         self.itemDoubleClicked.connect(self.viewImage)
         self.item_positions = {}
         self.item_files = {}
-        self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SingleSelection)
 
     def addImageItem(self, p, pfile, belongs):
         current_row = self.count()
@@ -77,30 +85,52 @@ class SourceList(QListWidget):
         ci.setIcon(QIcon(rfile))
         self.parent.update()
 
-    def removeItem(self, name=None):
-        if name:
-            ci = self.item(self.item_positions[name])
-        else:
-            ci = self.currentItem()
+    def hideItemByName(self, name=None):
+        """Removes (hides) a single named item from source-list.
+
+        Returns:
+            str: The name of the item we just hid.
+        """
+        if name is None:
+            raise ValueError("You must provide the 'name' argument")
+
+        ci = self.item(self.item_positions[name])
 
         if ci is None:
             return None
         ci.setHidden(True)
         self.setCurrentItem(None)
+        assert ci.text() == name, "Something has gone very wrong: expect match"
         return ci.text()
 
-    def returnItem(self, name):
-        if name is None:  # Issue #1200 workaround
-            return
-        ci = self.item(self.item_positions[name])
-        if ci:
-            ci.setHidden(False)
+    def hideSelectedItems(self):
+        """Hides the selected items and passes back name list."""
+        name_list = []
+        for ci in self.selectedItems():
+            ci.setHidden(True)
+            name_list.append(ci.text())
+        self.setCurrentItem(None)
+        return name_list
+
+    def unhideNamedItems(self, name_list):
+        """Unhide the name list of items."""
+        for name in name_list:
+            ci = self.item(self.item_positions[name])
+            if ci:
+                ci.setHidden(False)
 
     def viewImage(self, qi):
         self.parent.viewImage(self.item_files[qi.text()])
 
 
 class SinkList(QListWidget):
+    """An ordered list of pages for this task.
+
+    This holds the current view of pages we're considering for this
+    task.  They can be reordered, removed (and visually put back in
+    the SourceList), rotated, etc.
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
@@ -108,7 +138,7 @@ class SinkList(QListWidget):
         self.setFlow(QListView.LeftToRight)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
         self.setIconSize(QSize(320, 320))
@@ -119,24 +149,24 @@ class SinkList(QListWidget):
         )  # whether or not the item 'officially' belongs to the question
         self.item_files = {}
         self.itemDoubleClicked.connect(self.viewImage)
-        self.setSelectionMode(QListView.SingleSelection)
+        # self.setSelectionMode(QListView.SingleSelection)
 
     def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
         self.item_files[name] = pfile
         self.item_belongs[name] = belongs
 
-    def removeItem(self):
-        cr = self.currentRow()
-        ci = self.currentItem()
-        if ci is None:
-            return None
-        elif self.count() == 1:  # cannot remove all pages
-            return None
-        else:
+    def removeSelectedItems(self):
+        """Remove the selected items and pass back a name list"""
+        name_list = []
+        # be careful removing things as list indices update as you delete.
+        sel_rows = [x.row() for x in self.selectedIndexes()]
+        for cr in reversed(sorted(sel_rows)):
             ci = self.takeItem(cr)
-            self.setCurrentItem(None)
-            return ci.text()
+            name_list.append(ci.text())
+
+        self.setCurrentItem(None)
+        return name_list
 
     def appendItem(self, name):
         if name is None:
@@ -145,6 +175,16 @@ class SinkList(QListWidget):
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
+        self.setCurrentItem(ci)
+
+    def appendItems(self, name_list):
+        if len(name_list) == 0:
+            return
+        for name in name_list:
+            ci = QListWidgetItem(QIcon(self.item_files[name]), name)
+            if self.item_belongs[name]:
+                ci.setBackground(QBrush(Qt.darkGreen))
+            self.addItem(ci)
         self.setCurrentItem(ci)
 
     def shuffleLeft(self):
@@ -375,7 +415,7 @@ class RearrangementViewer(QDialog):
             if row[2] and row[3]:
                 move_order[row[3]] = row[0]
         for k in sorted(move_order.keys()):
-            self.listB.appendItem(self.listA.removeItem(name=move_order[k]))
+            self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
 
     def sourceToSink(self):
         """
@@ -389,7 +429,7 @@ class RearrangementViewer(QDialog):
 
         """
         if self.listA.selectionModel().hasSelection():
-            self.listB.appendItem(self.listA.removeItem())
+            self.listB.appendItems(self.listA.hideSelectedItems())
         else:
             pass
 
@@ -406,7 +446,7 @@ class RearrangementViewer(QDialog):
             None
         """
         if self.listB.selectionModel().hasSelection():
-            self.listA.returnItem(self.listB.removeItem())
+            self.listA.unhideNamedItems(self.listB.removeSelectedItems())
         else:
             pass
 
@@ -468,6 +508,10 @@ class RearrangementViewer(QDialog):
         Returns:
 
         """
+        if self.listB.count() == 0:
+            msg = ErrorMessage("You must have at least one page in the bottom list.")
+            msg.exec()
+            return
         if self.need_to_confirm:
             msg = SimpleMessage(
                 "Are you sure you want to save this page order? This will erase "

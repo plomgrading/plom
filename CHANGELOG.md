@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Accept QR-coded pages that are landscape.
 * Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
 * Server: more logging during authentication, including client version.
+* Adjust Pages: dialog allows multiple selections for add/remove.
+* Adjust Pages: you can have no pages transiently while re-arranging.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
