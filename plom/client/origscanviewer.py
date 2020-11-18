@@ -262,10 +262,12 @@ class RearrangementViewer(QDialog):
 
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
+        self.listA.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollA.setWidget(self.listA)
         self.scrollA.setWidgetResizable(True)
         self.scrollB = QScrollArea()
         self.listB = SinkList(self)
+        self.listB.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
 
@@ -390,6 +392,17 @@ class RearrangementViewer(QDialog):
                 if x[1] not in bottom_md5_list:
                     new_pageData.append(x)
         return new_pageData
+
+    def show_relevant_tools(self):
+        """Hide/show tools based on current selections."""
+        if self.listB.selectionModel().hasSelection():
+            self.removeB.setEnabled(True)
+        else:
+            self.removeB.setEnabled(False)
+        if self.listA.selectionModel().hasSelection():
+            self.appendB.setEnabled(True)
+        else:
+            self.appendB.setEnabled(False)
 
     def populateList(self):
         """
