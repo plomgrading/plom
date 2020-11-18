@@ -9,6 +9,7 @@ from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
+    QFrame,
     QFormLayout,
     QHBoxLayout,
     QGridLayout,
@@ -314,14 +315,18 @@ class RearrangementViewer(QDialog):
         hb1.addWidget(self.removeB)
 
         hb3 = QHBoxLayout()
-
-        hb3.addWidget(self.rotateB_ccw)
-        hb3.addWidget(self.rotateB_cw)
-        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb3.addWidget(self.sLeftB)
-        hb3.addWidget(self.sRightB)
-        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb3.addWidget(self.reverseB)
+        self.tools = QFrame()
+        hb = QHBoxLayout()
+        self.tools.setLayout(hb)
+        hb.setContentsMargins(0, 0, 0, 0)
+        hb.addWidget(self.rotateB_ccw)
+        hb.addWidget(self.rotateB_cw)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.sLeftB)
+        hb.addWidget(self.sRightB)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.reverseB)
+        hb3.addWidget(self.tools)
         hb3.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
@@ -397,8 +402,10 @@ class RearrangementViewer(QDialog):
         """Hide/show tools based on current selections."""
         if self.listB.selectionModel().hasSelection():
             self.removeB.setEnabled(True)
+            self.tools.setEnabled(True)
         else:
             self.removeB.setEnabled(False)
+            self.tools.setEnabled(False)
         if self.listA.selectionModel().hasSelection():
             self.appendB.setEnabled(True)
         else:
