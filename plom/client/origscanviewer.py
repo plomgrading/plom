@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSplitter,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -375,11 +376,27 @@ class RearrangementViewer(QDialog):
         hb1.setStretch(2, 1)
 
         vb0 = QVBoxLayout()
-        vb0.addWidget(allPages)
-        vb0.addWidget(self.scrollA)
-        vb0.addLayout(hb1)
-        vb0.addWidget(self.scrollB)
-        vb0.addLayout(hb3)
+        s = QSplitter()
+        s.setOrientation(Qt.Vertical)
+        # s.setOpaqueResize(False)
+        s.setChildrenCollapsible(False)
+        # s.setHandleWidth(40)
+        vb0.addWidget(s)
+        f = QFrame()
+        s.addWidget(f)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(vb)
+        vb.addWidget(allPages)
+        vb.addWidget(self.scrollA)
+        f = QFrame()
+        s.addWidget(f)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(vb)
+        vb.addLayout(hb1)
+        vb.addWidget(self.scrollB)
+        vb.addLayout(hb3)
 
         self.setLayout(vb0)
         self.resize(QSize(self.parent.width() / 2, self.parent.height() * 2 / 3))
