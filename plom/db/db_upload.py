@@ -798,11 +798,16 @@ def updateTestAfterUpload(self, tref):
 
 def processUpdatedTests(self):
     """Update the groups of tests in response to new uploads.
+
+    Returns:
+        int: how many groups updated.
+
     The recent_upload flag is set either for the whole test or for a given group.
     If the whole test then we must update every group - this happens when lpages are uploaded.
     If a group is flagged, then we update just that group - this happens when tpages or hwpages are uploaded.
+
     """
-    update_count = 0  # how many groups updated
+    update_count = 0
     # process whole tests first
     for tref in Test.select().where(Test.recent_upload == True):
         update_count += self.updateTestAfterUpload(tref)
@@ -822,7 +827,7 @@ def processUpdatedTests(self):
                 log.info("Test {} is scanned".format(tref.test_number))
                 tref.save()
 
-    return [True, update_count]
+    return update_count
 
 
 def removeAllScannedPages(self, test_number):

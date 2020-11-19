@@ -716,6 +716,10 @@ class UploadHandler:
             return web.Response(status=404)
 
     async def processHWUploads(self, request):
+        """Trigger any updates that are appropriate after some uploads.
+
+        This is probably similar to :py:meth:`processTUploads`
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -724,12 +728,14 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.processHWUploads()
-        return web.json_response(
-            rval[1], status=200
-        )  # all fine - report number of tests updated
+        update_count = self.server.processHWUploads()
+        return web.json_response(update_count, status=200)
 
     async def processLUploads(self, request):
+        """Trigger any updates that are appropriate after some uploads.
+
+        This is probably similar to :py:meth:`processTUploads`
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -738,10 +744,8 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.processLUploads()
-        return web.json_response(
-            rval[1], status=200
-        )  # all fine - report number of tests updated
+        update_count = self.server.processLUploads()
+        return web.json_response(update_count, status=200)
 
     async def processTUploads(self, request):
         """Trigger any updates that are appropriate after some uploads.
@@ -777,8 +781,8 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=403)
 
-        rval = self.server.processTUploads()
-        return web.json_response(rval[1], status=200)
+        update_count = self.server.processTUploads()
+        return web.json_response(update_count, status=200)
 
     @authenticate_by_token_required_fields(["user"])
     def populateExamDatabase(self, data, request):
