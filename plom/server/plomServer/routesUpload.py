@@ -126,6 +126,7 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
+        # TODO: no it might not be "all good"!  Issue #1271
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadHWPage(self, request):
@@ -171,6 +172,7 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
+        # TODO: no it might not be "all good"!  Issue #1271
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadLPage(self, request):
@@ -214,6 +216,7 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
+        # TODO: no it might not be "all good"!  Issue #1271
         return web.json_response(rmsg, status=200)  # all good
 
     async def uploadUnknownPage(self, request):

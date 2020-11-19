@@ -224,12 +224,13 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
         rmsg = msgr.uploadHWPage(
             sid, q, n, shortName, fname, md5, bundle_name, bundle_order
         )
-        if rmsg[0]:  # was successful upload
-            fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
-            # be careful of workingdir.
-            SIDQ[sid].append(q)
-        else:
-            print("TODO - file unsuccesful hw upload.")
+        if not rmsg[0]:
+            raise RuntimeError(
+                "Unsuccessful HW upload, with server returning:\n{}".format(rmsg[1:])
+            )
+        fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
+        # be careful of workingdir.
+        SIDQ[sid].append(q)
     return SIDQ
 
 
@@ -273,12 +274,13 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
         rmsg = msgr.uploadLPage(
             sid, n, shortName, fname, md5, bundle_name, bundle_order
         )
-        if rmsg[0]:  # was successful upload
-            fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
-            # be careful of workingdir.
-            JSID[sid] = True
-        else:
-            print("TODO - file unsuccesful l upload.")
+        if not rmsg[0]:
+            raise RuntimeError(
+                "Unsuccessful HW upload, with server returning:\n{}".format(rmsg[1:])
+            )
+        fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
+        # be careful of workingdir.
+        JSID[sid] = True
     return JSID
 
 
