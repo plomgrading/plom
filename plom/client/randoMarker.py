@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+
+"""Randomly scribble on papers to mark them for testing purposes.
+
+This is a very very cut-down version of Annotator, used to
+automate some random marking of papers.
+"""
+
+__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and others"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import argparse
 import getpass
@@ -24,16 +31,9 @@ from plom.client.pageview import PageView
 from plom.client.pagescene import PageScene
 from plom import AnnFontSizePts
 
-from plom.client.tools.delete import CommandDelete
 from plom.client.tools import *
 
-from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
-
-
-# -------------------------------------------
-# This is a very very cut-down version of annotator
-# So we can automate some random marking of papers
 
 
 class SceneParent(QWidget):

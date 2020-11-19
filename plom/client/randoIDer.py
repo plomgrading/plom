@@ -1,28 +1,23 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+
+"""Randomly ID papers for testing purposes."""
+
+__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and others"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import argparse
-import csv
 import getpass
-import json
-import os
 import random
-import sys
-import tempfile
-import toml
 
 from plom.plom_exceptions import (
     PlomConflict,
     PlomExistingLoginException,
     PlomTakenException,
 )
-from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
 
 # -------------------------------------------
