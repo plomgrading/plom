@@ -210,11 +210,15 @@ def startMarking(question, version):
         # print("Trying to claim next ask = ", task)
         try:
             print("Marking task ", task)
-            imageList, image_ids, tags, integrity_check = messenger.MclaimThisTask(task)
+            image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
         except PlomTakenException as e:
             print("Another user got that task. Trying again.")
             continue
 
+        image_md5s = [row[1] for row in image_metadata]
+        imageList = []
+        for row in image_metadata:
+            imageList.append(messenger.MrequestOneImage(task, row[0], row[1]))
         with tempfile.TemporaryDirectory() as td:
             aFile = os.path.join(td, "argh.png")
             plomFile = aFile[:-3] + "plom"
@@ -232,7 +236,7 @@ def startMarking(question, version):
                 plomFile,
                 commentFile,
                 integrity_check,
-                image_ids,
+                image_md5s,
             )
 
 
