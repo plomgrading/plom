@@ -881,9 +881,25 @@ class Annotator(QWidget):
         rearrangeView = RearrangementViewer(self, testNumber, page_data, is_dirty)
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
-                self.tgvID, rearrangeView.permute
-            )
+            perm = rearrangeView.permute
+            print(perm)
+            md5_tmp = [x[0] for x in perm]
+            if len(set(md5_tmp)) != len(md5_tmp):
+                s = dedent(
+                    """
+                    Unexpectedly repeated md5sums: did Adjust Pages somehow
+                    a page?  This should not happen!\n
+                    Please file an issue with this info!\n
+                    perm = {}\n
+                    annotr image_md5_list = {}\n
+                    page_data = {}
+                    """.format(
+                        perm, self.image_md5_list, page_data
+                    )
+                ).strip()
+                log.error(s)
+                ErrorMessage(s).exec_()
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.tgvID, perm)
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
