@@ -82,7 +82,8 @@ class SceneParent(QWidget):
         # save pickled file as <blah>.plom
         plomFile = self.saveName[:-3] + "plom"
         with open(plomFile, "w") as fh:
-            json.dump(plomDict, fh)
+            json.dump(plomDict, fh, indent="  ")
+            fh.write("\n")
 
     def rpt(self):
         return QPointF(

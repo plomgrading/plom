@@ -1785,7 +1785,8 @@ class Annotator(QWidget):
         # save pickled file as <blah>.plom
         plomFile = self.saveName[:-3] + "plom"
         with open(plomFile, "w") as fh:
-            json.dump(plomData, fh)
+            json.dump(plomData, fh, indent="  ")
+            fh.write("\n")
 
     def unpickleIt(self, plomData):
         """
