@@ -99,7 +99,8 @@ class SourceList(QListWidget):
         """Removes (hides) a single named item from source-list.
 
         Returns:
-            str: The name of the item we just hid.
+            str: The name of the item we just hid.  If the item was
+                already hidden, we still return name here.
         """
         if name is None:
             raise ValueError("You must provide the 'name' argument")
@@ -254,7 +255,9 @@ class SinkList(QListWidget):
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, page_data, need_to_confirm=False):
+    def __init__(
+        self, parent, testNumber, current_pages, page_data, need_to_confirm=False
+    ):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
@@ -263,7 +266,10 @@ class RearrangementViewer(QDialog):
         page_data = self.temp_dedupe_filter(page_data)
         self.pageData = page_data
         self.nameToIrefNFile = {}
-        self.populateList()
+        if current_pages:
+            self.populateListTwo(current_pages)
+        else:
+            self.populateList()
 
     def _setupUI(self):
         """
@@ -477,6 +483,25 @@ class RearrangementViewer(QDialog):
                 move_order[row[3]] = row[0]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
+
+    def populateListTwo(self, current):
+        """
+        Populates the QListWidgets with exam pages.
+
+        Returns:
+            None
+        """
+        for row in self.pageData:
+            self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
+            # add every page image to list A
+            self.listA.addImageItem(row[0], row[-1], row[2])
+            # add the potential for every page to listB
+            self.listB.addPotentialItem(row[0], row[-1], row[2])
+        for k in current:
+            match = [row[0] for row in self.pageData if row[1] == k]
+            assert len(match) == 1, "Oh no!"
+            (match,) = match
+            self.listB.appendItem(self.listA.hideItemByName(match))
 
     def sourceToSink(self):
         """

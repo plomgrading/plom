@@ -878,7 +878,9 @@ class Annotator(QWidget):
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
-        rearrangeView = RearrangementViewer(self, testNumber, page_data, is_dirty)
+        rearrangeView = RearrangementViewer(
+            self, testNumber, self.image_md5_list, page_data, is_dirty
+        )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
             perm = rearrangeView.permute
