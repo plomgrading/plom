@@ -177,8 +177,7 @@ class SceneParent(QWidget):
 
 
 def annotatePaper(maxMark, task, imageList, aname, tags):
-    print("Do stuff to task ", task)
-    print("Tags are ", tags)
+    print("Starting random marking to task {}".format(task))
     # Image names = "<task>.<imagenumber>.<ext>"
     try:
         with tempfile.TemporaryDirectory() as td:
@@ -198,10 +197,7 @@ def annotatePaper(maxMark, task, imageList, aname, tags):
 
 
 def startMarking(question, version):
-    print("Start work on question {} version {}".format(question, version))
     maxMark = messenger.MgetMaxMark(question, version)
-    print("Maximum mark = ", maxMark)
-    k = 0
     while True:
         task = messenger.MaskNextTask(question, version)
         if task is None:
@@ -209,10 +205,9 @@ def startMarking(question, version):
             break
         # print("Trying to claim next ask = ", task)
         try:
-            print("Marking task ", task)
             imageList, image_ids, tags, integrity_check = messenger.MclaimThisTask(task)
         except PlomTakenException as e:
-            print("Another user got that task. Trying again.")
+            print("Another user got task {}. Trying again...".format(task))
             continue
 
         with tempfile.TemporaryDirectory() as td:
