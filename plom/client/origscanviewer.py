@@ -397,13 +397,7 @@ class RearrangementViewer(QDialog):
 
         Returns:
             None
-
         """
-        # each entry in pagedata = 4-tuple of []
-        # page-code = t.pageNumber, h.questionNumber.order, e.questionNumber.order, or l.order
-        # image-id-reference number,
-        # true/false - if belongs to the given question or not.
-        # position in current annotation (or none if not)
         move_order = {}
         for row in self.pageData:
             self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
