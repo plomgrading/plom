@@ -149,7 +149,7 @@ class MarkHandler:
     # @routes.patch("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def MclaimThisTask(self, data, request):
-        """Take task number in request and return the task/question's images as a response.
+        """Take task number in request and return the task/question's image data as a response.
 
         Respond with status 200/204.
 
@@ -159,30 +159,18 @@ class MarkHandler:
                 This request object will include the task code.
 
         Returns:
-            aiohttp.web_response.Response: A response object with includes the multipart objects
-                which wrap this task/question's images.
+            aiohttp.web_response.json_response: metadata about the images.
         """
 
-        task_code = request.match_info["task"]  # Task/question code string.
-        # returns [True, tag, integrity_check, image_id_list, filename1, filename2,...] or [False]
-        claimed_task = self.server.MclaimThisTask(data["user"], task_code)
+        task_code = request.match_info["task"]
+        # returns either
+        #   [True, image_metadata, tags, integrity_check]
+        #   [False]
+        retvals = self.server.MclaimThisTask(data["user"], task_code)
 
-        if not claimed_task[0]:
+        if not retvals[0]:
             return web.Response(status=204)  # that task already taken.
-
-        task_tags = claimed_task[1]
-        task_integrity_check = claimed_task[2]
-        task_image_ids = claimed_task[3]
-        task_page_paths = claimed_task[4:]
-
-        with MultipartWriter("imageAndTags") as multipart_writer:
-            multipart_writer.append(task_tags)  # append tags as raw text.
-            # append integrity_check as raw text.
-            multipart_writer.append(task_integrity_check)
-            multipart_writer.append_json(task_image_ids)  # append as json
-            for file_name in task_page_paths:
-                multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+        return web.json_response(retvals[1:], status=200)
 
     # @routes.delete("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
@@ -315,7 +303,7 @@ class MarkHandler:
     # @routes.get("/MK/images/{task}")
     @authenticate_by_token_required_fields(["user", "integrity_check"])
     def MgetImages(self, data, request):
-        """Return the image of a question/task to the client.
+        """Return underlying image data and annotations of a question/task.
 
         Main API call for the client to get the image data (original and annotated).
         Respond with status 200/409.
@@ -336,8 +324,8 @@ class MarkHandler:
         )
         # Format is one of:
         # [False, error]
-        # [True, N, md5s, original_fname1, ..., original_fnameN]
-        # [True, N, md5s, original_fname1, ..., original_fnameN, annotated_fname, plom_file]
+        # [True, image_data]
+        # [True, image_data, annotated_fname, plom_filename]
         if not results[0]:
             if results[1] == "owner":
                 return web.Response(status=409)  # someone else has that task_image
@@ -349,15 +337,13 @@ class MarkHandler:
                 return web.Response(status=400)  # some other error
 
         with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-            num_images = results[1]
-            image_md5s = results[2]
-            assert len(image_md5s) == num_images
-            images = results[3:]
-            assert len(images) in (num_images, num_images + 2)
+            image_metadata = results[1]
+            files = []
+            # append the annotated_fname, plom_filename if present
+            files.extend(results[2:])
 
-            multipart_writer.append(str(num_images))
-            multipart_writer.append_json(image_md5s)
-            for file_name in images:
+            multipart_writer.append_json(image_metadata)
+            for file_name in files:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 

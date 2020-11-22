@@ -9,6 +9,7 @@ from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
+    QFrame,
     QFormLayout,
     QHBoxLayout,
     QGridLayout,
@@ -262,20 +263,22 @@ class RearrangementViewer(QDialog):
 
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
+        self.listA.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollA.setWidget(self.listA)
         self.scrollA.setWidgetResizable(True)
         self.scrollB = QScrollArea()
         self.listB = SinkList(self)
+        self.listB.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
 
         self.appendB = QToolButton()
-        self.appendB.setText("Add Page")
+        self.appendB.setText("Add Page(s)")
         self.appendB.setArrowType(Qt.DownArrow)
         self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.UpArrow)
-        self.removeB.setText("Remove Page")
+        self.removeB.setText("Remove Page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.LeftArrow)
@@ -307,19 +310,19 @@ class RearrangementViewer(QDialog):
 
         self.permute = [False]
 
-        hb1 = QHBoxLayout()
-        hb1.addWidget(self.appendB)
-        hb1.addWidget(self.removeB)
-
         hb3 = QHBoxLayout()
-
-        hb3.addWidget(self.rotateB_ccw)
-        hb3.addWidget(self.rotateB_cw)
-        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb3.addWidget(self.sLeftB)
-        hb3.addWidget(self.sRightB)
-        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb3.addWidget(self.reverseB)
+        self.tools = QFrame()
+        hb = QHBoxLayout()
+        self.tools.setLayout(hb)
+        hb.setContentsMargins(0, 0, 0, 0)
+        hb.addWidget(self.rotateB_ccw)
+        hb.addWidget(self.rotateB_cw)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.sLeftB)
+        hb.addWidget(self.sRightB)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.reverseB)
+        hb3.addWidget(self.tools)
         hb3.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
@@ -327,15 +330,33 @@ class RearrangementViewer(QDialog):
         hb3.addWidget(self.closeB)
 
         allPages = QLabel("Other Pages in Exam")
-        allPages.setAlignment(Qt.AlignCenter)
         thisQuestion = QLabel("Pages for this Question")
-        thisQuestion.setAlignment(Qt.AlignCenter)
+
+        # center add/remove buttons on label row
+        hb1 = QHBoxLayout()
+        hb1.addWidget(thisQuestion)
+        hb = QHBoxLayout()
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb.addWidget(self.appendB)
+        hb.addItem(QSpacerItem(32, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.removeB)
+        hb.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb1.addLayout(hb)
+        hb1.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb1.setStretch(0, 1)
+        hb1.setStretch(1, 1)
+        hb1.setStretch(2, 1)
 
         vb0 = QVBoxLayout()
         vb0.addWidget(allPages)
         vb0.addWidget(self.scrollA)
         vb0.addLayout(hb1)
-        vb0.addWidget(thisQuestion)
         vb0.addWidget(self.scrollB)
         vb0.addLayout(hb3)
 
@@ -391,19 +412,26 @@ class RearrangementViewer(QDialog):
                     new_pageData.append(x)
         return new_pageData
 
+    def show_relevant_tools(self):
+        """Hide/show tools based on current selections."""
+        if self.listB.selectionModel().hasSelection():
+            self.removeB.setEnabled(True)
+            self.tools.setEnabled(True)
+        else:
+            self.removeB.setEnabled(False)
+            self.tools.setEnabled(False)
+        if self.listA.selectionModel().hasSelection():
+            self.appendB.setEnabled(True)
+        else:
+            self.appendB.setEnabled(False)
+
     def populateList(self):
         """
         Populates the QListWidgets with exam pages.
 
         Returns:
             None
-
         """
-        # each entry in pagedata = 4-tuple of []
-        # page-code = t.pageNumber, h.questionNumber.order, e.questionNumber.order, or l.order
-        # image-id-reference number,
-        # true/false - if belongs to the given question or not.
-        # position in current annotation (or none if not)
         move_order = {}
         for row in self.pageData:
             self.nameToIrefNFile[row[0]] = [row[1], row[-1]]

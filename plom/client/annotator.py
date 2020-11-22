@@ -13,6 +13,7 @@ import logging
 import os
 import sys
 import tempfile
+from textwrap import dedent
 
 from PyQt5.QtCore import (
     Qt,
@@ -802,65 +803,103 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
         # TODO: maybe download should happen in Marker?
-        if True:
-            log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-            page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
-            if len(set(self.image_md5_list)) != len(self.image_md5_list):
-                log.warn(
-                    "unexpected repeated md5: do you have two identical pages in the current annotator?  Is that allowed?"
+        if len(set(self.image_md5_list)) != len(self.image_md5_list):
+            s = dedent(
+                """
+                Unexpectedly repeated md5sums: are there two identical pages
+                in the current annotator?  Is it allowed?  How did it happen?\n
+                Annotator's image_md5_list is {}\n
+                Consider filing a bug with this info!
+                """.format(
+                    self.image_md5_list
                 )
-            # note we'll md5 match within one paper only: low birthday probability
-            md5_to_file_map = {
-                k: v for k, v in zip(self.image_md5_list, self.imageFiles)
-            }
-            log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
-            # Crawl over the page_data, append a filename for each file
-            # download what's needed but avoid re-downloading duplicate files
-            # TODO: could defer downloading to background thread of dialog
-            page_adjuster_downloads = []
-            for (i, p) in enumerate(page_data):
-                md5 = p[1]
-                image_id = p[-1]
-                fname = md5_to_file_map.get(md5)
-                if fname:
-                    log.info(
-                        "adjustpgs: not downloading image id={}; we have it already at i={}, {}".format(
-                            image_id, i, fname
-                        )
+            ).strip()
+            log.error(s)
+            ErrorMessage(s).exec_()
+        log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
+        page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
+        for x in self.image_md5_list:
+            if x not in [p[1] for p in page_data]:
+                s = dedent(
+                    """
+                    Unexpectedly situation!\n
+                    There is an image being annotated that is not present in
+                    the server's page data.  Probably that is not allowed(?)
+                    How did it happen?\n
+                    Annotator's image_md5_list is: {}\n
+                    Server page_data is:
+                      {}\n
+                    Consider filing a bug with this info!
+                    """.format(
+                        self.image_md5_list, page_data
                     )
-                else:
-                    tmp = self.parentMarkerUI.downloadOneImage(
-                        self.tgvID, image_id, md5
+                ).strip()
+                log.error(s)
+                ErrorMessage(s).exec_()
+        # note we'll md5 match within one paper only: low birthday probability
+        md5_to_file_map = {k: v for k, v in zip(self.image_md5_list, self.imageFiles)}
+        log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
+        # Crawl over the page_data, append a filename for each file
+        # download what's needed but avoid re-downloading duplicate files
+        # TODO: could defer downloading to background thread of dialog
+        page_adjuster_downloads = []
+        for (i, p) in enumerate(page_data):
+            md5 = p[1]
+            image_id = p[-1]
+            fname = md5_to_file_map.get(md5)
+            if fname:
+                log.info(
+                    "adjustpgs: not downloading image id={}; we have it already at i={}, {}".format(
+                        image_id, i, fname
                     )
-                    # TODO: wrong to put these in the paperdir (?)
-                    # Maybe Marker should be doing this downloading
-                    workdir = self.parentMarkerUI.workingDirectory
-                    fname = tempfile.NamedTemporaryFile(
-                        dir=workdir,
-                        prefix="adj_pg_{}_".format(i),
-                        suffix=".image",
-                        delete=False,
-                    ).name
-                    log.info(
-                        'adjustpages: writing "{}" from id={}, md5={}'.format(
-                            fname, image_id, md5
-                        )
+                )
+            else:
+                tmp = self.parentMarkerUI.downloadOneImage(self.tgvID, image_id, md5)
+                # TODO: wrong to put these in the paperdir (?)
+                # Maybe Marker should be doing this downloading
+                workdir = self.parentMarkerUI.workingDirectory
+                fname = tempfile.NamedTemporaryFile(
+                    dir=workdir,
+                    prefix="adj_pg_{}_".format(i),
+                    suffix=".image",
+                    delete=False,
+                ).name
+                log.info(
+                    'adjustpages: writing "{}" from id={}, md5={}'.format(
+                        fname, image_id, md5
                     )
-                    with open(fname, "wb") as f:
-                        f.write(tmp)
-                    assert md5_to_file_map.get(md5) is None
-                    md5_to_file_map[md5] = fname
-                    page_adjuster_downloads.append(fname)
-                p.append(fname)
+                )
+                with open(fname, "wb") as f:
+                    f.write(tmp)
+                assert md5_to_file_map.get(md5) is None
+                md5_to_file_map[md5] = fname
+                page_adjuster_downloads.append(fname)
+            p.append(fname)
 
-        # build a rearrangeviewer. - don't keep ref, so is deleted when goes out of scope
         is_dirty = self.scene.areThereAnnotations()
+        log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(self, testNumber, page_data, is_dirty)
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(
-                self.tgvID, rearrangeView.permute
-            )
+            perm = rearrangeView.permute
+            print(perm)
+            md5_tmp = [x[0] for x in perm]
+            if len(set(md5_tmp)) != len(md5_tmp):
+                s = dedent(
+                    """
+                    Unexpectedly repeated md5sums: did Adjust Pages somehow
+                    a page?  This should not happen!\n
+                    Please file an issue with this info!\n
+                    perm = {}\n
+                    annotr image_md5_list = {}\n
+                    page_data = {}
+                    """.format(
+                        perm, self.image_md5_list, page_data
+                    )
+                ).strip()
+                log.error(s)
+                ErrorMessage(s).exec_()
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.tgvID, perm)
             ## TODO: do we need to do this?
             ## TODO: before or after stuff = ...?
             # closeCurrentTGV(self)

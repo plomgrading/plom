@@ -134,12 +134,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                (
-                    imageList,
-                    image_md5s,
-                    tags,
-                    integrity_check,
-                ) = messenger.MclaimThisTask(task)
+                image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -148,14 +143,17 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
+        image_md5s = [x[1] for x in image_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        for i in range(len(imageList)):
+        image_fnames = []
+        for i, row in enumerate(image_metadata):
+            # try-except? how does this fail?
+            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            inames.append(tmp)
+            image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
-        self.downloadSuccess.emit(task, inames, image_md5s, tags, integrity_check)
+                fh.write(im_bytes)
+        self.downloadSuccess.emit(task, image_fnames, image_md5s, tags, integrity_check)
         self.quit()
 
 
@@ -1254,7 +1252,7 @@ class MarkerClient(QWidget):
             return True
 
         try:
-            [imageList, md5List, anImage, plImage] = messenger.MrequestImages(
+            [image_metadata, anImage, plImage] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1278,13 +1276,15 @@ class MarkerClient(QWidget):
         log.debug("create paperDir {} for already-graded download".format(paperDir))
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        for i in range(len(imageList)):
+        image_fnames = []
+        for i, row in enumerate(image_metadata):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            inames.append(tmp)
+            image_fnames.append(tmp)
+            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
-        self.examModel.setOriginalFilesAndMD5s(task, inames, md5List)
+                fh.write(im_bytes)
+        md5List = [x[1] for x in image_metadata]
+        self.examModel.setOriginalFilesAndMD5s(task, image_fnames, md5List)
 
         if anImage is None:
             return True
@@ -1388,29 +1388,27 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                (
-                    imageList,
-                    image_md5_list,
-                    tags,
-                    integrity_check,
-                ) = messenger.MclaimThisTask(task)
+                image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
+        image_md5_list = [x[1] for x in image_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
-        inames = []
-        for i in range(len(imageList)):
+        image_fnames = []
+        for i, row in enumerate(image_metadata):
+            # try-except? how does this fail?
+            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            inames.append(tmp)
+            image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
+                fh.write(im_bytes)
 
         self.examModel.addPaper(
             ExamQuestion(
                 task,
-                inames,
+                image_fnames,
                 image_md5s=image_md5_list,
                 tags=tags,
                 integrity_check=integrity_check,
