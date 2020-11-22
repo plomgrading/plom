@@ -64,15 +64,11 @@ class SourceList(QListWidget):
         # self.setSelectionMode(QListView.SingleSelection)
 
     def resizeEvent(self, whatev):
-        print("=== RESIZE EVENT SOURCELIST ===")
-        print(whatev)
         A = self.size()
-        print(A)
         x = min(A.width(), A.height())
         # TODO: must be a way to not hardcode 50 here
         # TODO: also compensate for scrollbars or not
         B = QSize(x - 50, x - 50)
-        print(B)
         self.setIconSize(B)
 
     def addImageItem(self, p, pfile, belongs):
@@ -166,14 +162,10 @@ class SinkList(QListWidget):
         # self.setSelectionMode(QListView.SingleSelection)
 
     def resizeEvent(self, whatev):
-        print("=== RESIZE EVENT SINKLIST ===")
-        print(whatev)
         A = self.size()
-        print(A)
         x = min(A.width(), A.height())
         # TODO: must be a way to not hardcode 50 here
         B = QSize(x - 50, x - 50)
-        print(B)
         self.setIconSize(B)
 
     def addPotentialItem(self, p, pfile, belongs):
