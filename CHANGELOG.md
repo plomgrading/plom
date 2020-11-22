@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Server: more logging during authentication, including client version.
 * Adjust Pages: dialog allows multiple selections for add/remove.
 * Adjust Pages: you can have no pages transiently while re-arranging.
+* Adjust Pages: icons resize automatically on dialog resize.
+* Adjust Pages: middle bar can be dragged to resize top or bottom list.
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
