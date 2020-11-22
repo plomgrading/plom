@@ -263,20 +263,22 @@ class RearrangementViewer(QDialog):
 
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
+        self.listA.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollA.setWidget(self.listA)
         self.scrollA.setWidgetResizable(True)
         self.scrollB = QScrollArea()
         self.listB = SinkList(self)
+        self.listB.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
 
         self.appendB = QToolButton()
-        self.appendB.setText("Add Page")
+        self.appendB.setText("Add Page(s)")
         self.appendB.setArrowType(Qt.DownArrow)
         self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.UpArrow)
-        self.removeB.setText("Remove Page")
+        self.removeB.setText("Remove Page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.LeftArrow)
@@ -309,14 +311,18 @@ class RearrangementViewer(QDialog):
         self.permute = [False]
 
         hb3 = QHBoxLayout()
-
-        hb3.addWidget(self.rotateB_ccw)
-        hb3.addWidget(self.rotateB_cw)
-        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb3.addWidget(self.sLeftB)
-        hb3.addWidget(self.sRightB)
-        hb3.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb3.addWidget(self.reverseB)
+        self.tools = QFrame()
+        hb = QHBoxLayout()
+        self.tools.setLayout(hb)
+        hb.setContentsMargins(0, 0, 0, 0)
+        hb.addWidget(self.rotateB_ccw)
+        hb.addWidget(self.rotateB_cw)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.sLeftB)
+        hb.addWidget(self.sRightB)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.reverseB)
+        hb3.addWidget(self.tools)
         hb3.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
@@ -405,6 +411,19 @@ class RearrangementViewer(QDialog):
                 if x[1] not in bottom_md5_list:
                     new_pageData.append(x)
         return new_pageData
+
+    def show_relevant_tools(self):
+        """Hide/show tools based on current selections."""
+        if self.listB.selectionModel().hasSelection():
+            self.removeB.setEnabled(True)
+            self.tools.setEnabled(True)
+        else:
+            self.removeB.setEnabled(False)
+            self.tools.setEnabled(False)
+        if self.listA.selectionModel().hasSelection():
+            self.appendB.setEnabled(True)
+        else:
+            self.appendB.setEnabled(False)
 
     def populateList(self):
         """
