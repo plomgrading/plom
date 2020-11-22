@@ -386,6 +386,8 @@ class RearrangementViewer(QDialog):
         vb = QVBoxLayout()
         vb.setContentsMargins(0, 0, 0, 0)
         f.setLayout(vb)
+        # TODO: it would be nicer if there was visible grip and perhaps add/remove
+        #       buttons inside the splitter bar itself.
         vb.addLayout(hb1)
         vb.addWidget(self.scrollB)
         vb.addLayout(hb3)
