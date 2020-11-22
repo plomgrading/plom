@@ -97,9 +97,26 @@ def MgetNextTask(self, q, v):
 
 
 def MgiveTaskToClient(self, user_name, group_id):
-    """Assign question/version #group_id as a task to the given user, unless has been taken by another user.
+    """Assign a marking task to a certain user, and give them back needed data.
+
+    args:
+        user_name (str): the user name who is claiming the task.
+        group_id (TODO): somehow tells the task (?).
+
+    Return:
+        list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
+            Otherwise, the list is
+                `[True, metadata, tags, integrity_check]`
+            where each row of `metadata` consists of
+                `[DB_id, md5_sum, server_filename]`
+            Note: `server_filename` is implementation-dependent, could change
+            without notice, etc.  Clients could use this to get hints for a
+            a local file name for example.
+
+    question/version via group_id as a task to the given user, unless has been
+    taken by another user.
+
     Create new annotation by copying the last one for that qdata - pages created when returned.
-    Return [True, tags, integrity_check, [image-ids], image0, image1, image2,...].
     """
 
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -131,23 +148,19 @@ def MgiveTaskToClient(self, user_name, group_id):
             log.error("qref={}, group_id={}".format(qref, group_id))
             return [False]
         aref = qref.annotations[-1]  # are these in right order (TODO?)
-        image_md5_list = []
+        image_metadata = []
         for p in aref.apages.order_by(APage.order):
-            image_md5_list.append(p.image.md5sum)
+            image_metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
         # update user activity
         uref.last_action = "Took M task {}".format(group_id)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, tags, integrity_check, image-md5-list,  page1, page2, etc]
-        rval = [True, aref.tags, aref.integrity_check, image_md5_list]
-        for p in aref.apages.order_by(APage.order):
-            rval.append(p.image.file_name)
         log.debug(
             'Giving marking task {} to user "{}" with integrity_check {}'.format(
                 group_id, user_name, aref.integrity_check
             )
         )
-        return rval
+        return [True, image_metadata, aref.tags, aref.integrity_check]
 
 
 def MdidNotFinish(self, user_name, group_id):
@@ -334,9 +347,9 @@ def MgetImages(self, user_name, task, integrity_check):
     Returns:
         list: On error, return `[False, msg]`, maybe details in 3rd entry.
             On success it can be:
-            `[True, N, md5s, page1, ..., pageN]`
+            `[True, metadata]`
             Or if annotated already:
-            `[True, N, md5s, page1, ..., pageN, annotatedFile, plom_file]`
+            `[True, metadata, annotatedFile, plom_file]`
 
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
@@ -361,15 +374,13 @@ def MgetImages(self, user_name, task, integrity_check):
         aref = qref.annotations[-1]
         if aref.integrity_check != integrity_check:
             return [False, "integrity_fail"]
-        pp = []
-        md5s = []
+        metadata = []
         for p in aref.apages.order_by(APage.order):
-            pp.append(p.image.file_name)
-            md5s.append(p.image.md5sum)
+            metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
+        rval = [True, metadata]
         if aref.aimage is not None:
-            return [True, len(pp), md5s] + pp + [aref.aimage.file_name, aref.plom_file]
-        else:
-            return [True, len(pp), md5s] + pp
+            rval.extend([aref.aimage.file_name, aref.plom_file])
+        return rval
 
 
 def MgetOriginalImages(self, task):
