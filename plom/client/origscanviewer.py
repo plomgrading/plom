@@ -353,8 +353,9 @@ class RearrangementViewer(QDialog):
         hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
+        # TODO: force equal width for both buttons
         hb.addWidget(self.appendB)
-        hb.addItem(QSpacerItem(32, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
         hb.addWidget(self.removeB)
         hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
