@@ -519,7 +519,7 @@ class RearrangementViewer(QDialog):
             self.listB.addPotentialItem(row[0], row[-1], row[2])
         for k in current:
             match = [row[0] for row in self.pageData if row[1] == k]
-            assert len(match) == 1, "Oh no!"
+            assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
 
