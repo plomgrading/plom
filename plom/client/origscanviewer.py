@@ -293,12 +293,13 @@ class RearrangementViewer(QDialog):
         self.scrollB.setWidgetResizable(True)
 
         self.appendB = QToolButton()
-        self.appendB.setText("Add Page(s)")
+        # TODO: move &A here and use alt-Enter to Accept dialog?
+        self.appendB.setText("Add &Page(s)")
         self.appendB.setArrowType(Qt.DownArrow)
         self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.UpArrow)
-        self.removeB.setText("Remove Page(s)")
+        self.removeB.setText("&Remove Page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.LeftArrow)
