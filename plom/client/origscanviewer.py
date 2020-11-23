@@ -267,9 +267,9 @@ class RearrangementViewer(QDialog):
         self.pageData = page_data
         self.nameToIrefNFile = {}
         if current_pages:
-            self.populateListTwo(current_pages)
+            self.populateListWithCurrent(current_pages)
         else:
-            self.populateList()
+            self.populateListOriginal()
 
     def _setupUI(self):
         """
@@ -367,9 +367,19 @@ class RearrangementViewer(QDialog):
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
         hb1.addLayout(hb)
-        hb1.addItem(
+
+        f = QFrame()
+        hb1.addWidget(f)
+        hb = QHBoxLayout()
+        hb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(hb)
+        hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
+        btn = QPushButton("Revert to original state")
+        btn.clicked.connect(self.populateListOriginal)
+        hb.addWidget(btn)
+
         hb1.setStretch(0, 1)
         hb1.setStretch(1, 1)
         hb1.setStretch(2, 1)
@@ -464,13 +474,16 @@ class RearrangementViewer(QDialog):
         else:
             self.appendB.setEnabled(False)
 
-    def populateList(self):
+    def populateListOriginal(self):
         """
-        Populates the QListWidgets with exam pages.
+        Populates the QListWidgets with exam pages, using original server view.
 
         Returns:
-            None
+            None: but changes the state of self.
         """
+        self.nameToIrefNFile = {}
+        self.listA.clear()
+        self.listB.clear()
         move_order = {}
         for row in self.pageData:
             self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
@@ -484,13 +497,19 @@ class RearrangementViewer(QDialog):
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
 
-    def populateListTwo(self, current):
+    def populateListWithCurrent(self, current):
         """
-        Populates the QListWidgets with exam pages.
+        Populates the QListWidgets with pages, with current state highlighted.
+
+        Args:
+            current (list): md5sums of the pages currently selected.
 
         Returns:
-            None
+            None: but changes the state of self.
         """
+        self.nameToIrefNFile = {}
+        self.listA.clear()
+        self.listB.clear()
         for row in self.pageData:
             self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
             # add every page image to list A
