@@ -380,7 +380,8 @@ class RearrangementViewer(QDialog):
         s.setOrientation(Qt.Vertical)
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
-        # s.setHandleWidth(40)
+        s.setHandleWidth(40)
+        s.setFixedWidth(40)
         vb0.addWidget(s)
         f = QFrame()
         s.addWidget(f)
@@ -396,9 +397,20 @@ class RearrangementViewer(QDialog):
         f.setLayout(vb)
         # TODO: it would be nicer if there was visible grip and perhaps add/remove
         #       buttons inside the splitter bar itself.
-        vb.addLayout(hb1)
+        #vb.addLayout(hb1)
         vb.addWidget(self.scrollB)
         vb.addLayout(hb3)
+
+        handle = s.handle(1)
+        print(handle)
+        f = QFrame()
+        # #handle.addWidget(f)
+        #vb = QVBoxLayout(handle)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        # f.setLayout(vb)
+        #vb.addLayout(hb1)
+        handle.setLayout(hb1)
 
         self.setLayout(vb0)
         self.resize(QSize(self.parent.width() * 2 / 3, self.parent.height() * 7 / 8))
