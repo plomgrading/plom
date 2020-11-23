@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QMargins
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSplitter,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -61,6 +62,14 @@ class SourceList(QListWidget):
         self.item_positions = {}
         self.item_files = {}
         # self.setSelectionMode(QListView.SingleSelection)
+
+    def resizeEvent(self, whatev):
+        A = self.size()
+        x = min(A.width(), A.height())
+        # TODO: must be a way to not hardcode 50 here
+        # TODO: also compensate for scrollbars or not
+        B = QSize(x - 50, x - 50)
+        self.setIconSize(B)
 
     def addImageItem(self, p, pfile, belongs):
         current_row = self.count()
@@ -151,6 +160,13 @@ class SinkList(QListWidget):
         self.item_files = {}
         self.itemDoubleClicked.connect(self.viewImage)
         # self.setSelectionMode(QListView.SingleSelection)
+
+    def resizeEvent(self, whatev):
+        A = self.size()
+        x = min(A.width(), A.height())
+        # TODO: must be a way to not hardcode 50 here
+        B = QSize(x - 50, x - 50)
+        self.setIconSize(B)
 
     def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
@@ -258,9 +274,7 @@ class RearrangementViewer(QDialog):
 
         Returns:
             None
-
         """
-
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
         self.listA.itemSelectionChanged.connect(self.show_relevant_tools)
@@ -339,8 +353,9 @@ class RearrangementViewer(QDialog):
         hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
+        # TODO: force equal width for both buttons
         hb.addWidget(self.appendB)
-        hb.addItem(QSpacerItem(32, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
         hb.addWidget(self.removeB)
         hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
@@ -354,14 +369,32 @@ class RearrangementViewer(QDialog):
         hb1.setStretch(2, 1)
 
         vb0 = QVBoxLayout()
-        vb0.addWidget(allPages)
-        vb0.addWidget(self.scrollA)
-        vb0.addLayout(hb1)
-        vb0.addWidget(self.scrollB)
-        vb0.addLayout(hb3)
+        s = QSplitter()
+        s.setOrientation(Qt.Vertical)
+        # s.setOpaqueResize(False)
+        s.setChildrenCollapsible(False)
+        # s.setHandleWidth(40)
+        vb0.addWidget(s)
+        f = QFrame()
+        s.addWidget(f)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(vb)
+        vb.addWidget(allPages)
+        vb.addWidget(self.scrollA)
+        f = QFrame()
+        s.addWidget(f)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(vb)
+        # TODO: it would be nicer if there was visible grip and perhaps add/remove
+        #       buttons inside the splitter bar itself.
+        vb.addLayout(hb1)
+        vb.addWidget(self.scrollB)
+        vb.addLayout(hb3)
 
         self.setLayout(vb0)
-        self.resize(QSize(self.parent.width() / 2, self.parent.height() * 2 / 3))
+        self.resize(QSize(self.parent.width() * 2 / 3, self.parent.height() * 7 / 8))
 
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
