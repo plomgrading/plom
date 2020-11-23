@@ -393,7 +393,7 @@ class RearrangementViewer(QDialog):
         vb.addLayout(hb3)
 
         self.setLayout(vb0)
-        self.resize(QSize(self.parent.width() * 2 / 3, self.parent.height() * 4 / 5))
+        self.resize(QSize(self.parent.width() * 2 / 3, self.parent.height() * 7 / 8))
 
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
