@@ -456,10 +456,10 @@ class RearrangementViewer(QDialog):
         new_pageData = []
         for x in pageData:
             if x[2]:
-                new_pageData.append(x)
+                new_pageData.append(x.copy())
             else:
                 if x[1] not in bottom_md5_list:
-                    new_pageData.append(x)
+                    new_pageData.append(x.copy())
         return new_pageData
 
     def show_relevant_tools(self):
