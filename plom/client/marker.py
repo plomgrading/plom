@@ -1086,10 +1086,13 @@ class MarkerClient(QWidget):
 
         self.prxM.setSourceModel(self.examModel)
         self.ui.tableView.setModel(self.prxM)
-        self.ui.tableView.hideColumn(5)  # hide original filename
-        self.ui.tableView.hideColumn(6)  # hide annotated filename
-        self.ui.tableView.hideColumn(7)  # hide plom filename
-        self.ui.tableView.hideColumn(8)  # hide paperdir
+        # hide various columns without end-user useful info
+        self.ui.tableView.hideColumn(5)
+        self.ui.tableView.hideColumn(6)
+        self.ui.tableView.hideColumn(7)
+        self.ui.tableView.hideColumn(8)
+        self.ui.tableView.hideColumn(9)
+        self.ui.tableView.hideColumn(10)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
