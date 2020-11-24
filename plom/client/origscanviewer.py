@@ -230,8 +230,9 @@ class SinkList(QListWidget):
             npix.save(rfile, format="PNG")
 
             ci.setIcon(QIcon(rfile))
-        # TODO: visual artifacts here, Issue #1164
         self.parent.update()
+        # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
+        self.setFlow(QListView.LeftToRight)
 
     def viewImage(self, qi):
         self.parent.viewImage(self.item_files[qi.text()])
