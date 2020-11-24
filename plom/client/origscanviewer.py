@@ -216,18 +216,21 @@ class SinkList(QListWidget):
             self.insertItem(n, ri)
             self.insertItem(rc - n - 1, li)
 
-    def rotateImage(self, angle=90):
-        ci = self.currentItem()
-        name = ci.text()
-        rot = QTransform()
-        rot.rotate(angle)
-        rfile = self.item_files[name]
+    def rotateSelectedImages(self, angle=90):
+        """Iterate over selection, rotating each image"""
+        for i in self.selectedIndexes():
+            ci = self.item(i.row())
+            name = ci.text()
+            rot = QTransform()
+            rot.rotate(angle)
+            rfile = self.item_files[name]
 
-        cpix = QPixmap(rfile)
-        npix = cpix.transformed(rot)
-        npix.save(rfile, format="PNG")
+            cpix = QPixmap(rfile)
+            npix = cpix.transformed(rot)
+            npix.save(rfile, format="PNG")
 
-        ci.setIcon(QIcon(rfile))
+            ci.setIcon(QIcon(rfile))
+        # TODO: visual artifacts here, Issue #1164
         self.parent.update()
 
     def viewImage(self, qi):
@@ -403,8 +406,8 @@ class RearrangementViewer(QDialog):
         self.sLeftB.clicked.connect(self.shuffleLeft)
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
-        self.rotateB_cw.clicked.connect(lambda: self.rotateImage(90))
-        self.rotateB_ccw.clicked.connect(lambda: self.rotateImage(-90))
+        self.rotateB_cw.clicked.connect(lambda: self.rotateImages(90))
+        self.rotateB_ccw.clicked.connect(lambda: self.rotateImages(-90))
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
@@ -580,11 +583,9 @@ class RearrangementViewer(QDialog):
         """
         self.listB.reverseOrder()
 
-    def rotateImage(self, angle=90):
+    def rotateImages(self, angle=90):
         """ Rotates the currently selected page by 90 degrees."""
-        if self.listB.selectionModel().hasSelection():
-            # TODO: do multiple selections
-            self.listB.rotateImage(angle)
+        self.listB.rotateSelectedImages(angle)
 
     def viewImage(self, fname):
         """ Shows a larger view of the currently selected page."""
