@@ -80,6 +80,24 @@ class UploadHandler:
         return web.json_response(rval, status=200)
 
     async def uploadTestPage(self, request):
+        """A test page has known page, known paper number, usually QR-coded.
+
+        Typically the page is QR coded, and thus we know precisely what
+        paper number, what question and what page.  We may not know the
+        student depending on whether it was prenamed or not.
+
+        Args:
+            request (aiohttp.web_request.Request)
+
+        Returns:
+            aiohttp.web_response.Response: JSON data directly from the
+                database call.
+
+        Note: this uses the `status=200` success return code for some
+        kinds of failures: it simply returns whatever data the DB gave
+        back as blob of json for the client to deal with.  Thus, this
+        API call is not recommended outside of Plom.
+        """
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -126,9 +144,32 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
-        return web.json_response(rmsg, status=200)  # all good
+        # note 200 used here for errors too
+        return web.json_response(rmsg, status=200)
 
     async def uploadHWPage(self, request):
+        """A homework page is self-scanned, known student, and known question.
+
+        Typically the page is without QR codes.  The uploader knows what
+        student it belongs to and what question.  The order within the
+        question is somewhat known too, at least within its upload bundle.
+
+        Args:
+            request (aiohttp.web_request.Request)
+
+        Returns:
+            aiohttp.web_response.Response: JSON data directly from the
+                database call.
+
+        The requests data has a `question` field, which must be a scalar
+        for the question we wish to upload this too.  It may change to
+        support uploading to more than one question in the future.
+
+        Note: this uses the `status=200` success return code for some
+        kinds of failures: it simply returns whatever data the DB gave
+        back as blob of json for the client to deal with.  Thus, this
+        API call is not recommended outside of Plom.
+        """
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -171,9 +212,30 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
-        return web.json_response(rmsg, status=200)  # all good
+        # note 200 used here for errors too
+        return web.json_response(rmsg, status=200)
 
     async def uploadLPage(self, request):
+        """A loose page is self-scanned, known student, but unknown question.
+
+        Typically the page is without QR codes.  The uploader knows what
+        student it belongs to but not what question.
+
+        DEPRECATED? Perhaps on its way to deprecation if HW Pages become
+        more general in the future.
+
+        Args:
+            request (aiohttp.web_request.Request)
+
+        Returns:
+            aiohttp.web_response.Response: JSON data directly from the
+                database call.
+
+        Note: this uses the `status=200` success return code for some
+        kinds of failures: it simply returns whatever data the DB gave
+        back as blob of json for the client to deal with.  Thus, this
+        API call is not recommended outside of Plom.
+        """
         reader = MultipartReader.from_response(request)
 
         part0 = await reader.next()  # should be parameters
@@ -214,7 +276,8 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
-        return web.json_response(rmsg, status=200)  # all good
+        # note 200 used here for errors too
+        return web.json_response(rmsg, status=200)
 
     async def uploadUnknownPage(self, request):
         reader = MultipartReader.from_response(request)
@@ -247,7 +310,8 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
-        return web.json_response(rmsg, status=200)  # all good
+        # note 200 used here for errors too
+        return web.json_response(rmsg, status=200)
 
     async def uploadCollidingPage(self, request):
         reader = MultipartReader.from_response(request)
@@ -296,7 +360,8 @@ class UploadHandler:
             param["bundle"],
             param["bundle_order"],
         )
-        return web.json_response(rmsg, status=200)  # all good
+        # note 200 used here for errors too
+        return web.json_response(rmsg, status=200)
 
     async def replaceMissingTestPage(self, request):
         data = await request.json()
@@ -713,6 +778,10 @@ class UploadHandler:
             return web.Response(status=404)
 
     async def processHWUploads(self, request):
+        """Trigger any updates that are appropriate after some uploads.
+
+        This is probably similar to :py:meth:`processTUploads`
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -721,12 +790,14 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.processHWUploads()
-        return web.json_response(
-            rval[1], status=200
-        )  # all fine - report number of tests updated
+        update_count = self.server.processHWUploads()
+        return web.json_response(update_count, status=200)
 
     async def processLUploads(self, request):
+        """Trigger any updates that are appropriate after some uploads.
+
+        This is probably similar to :py:meth:`processTUploads`
+        """
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
@@ -735,10 +806,8 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=401)
 
-        rval = self.server.processLUploads()
-        return web.json_response(
-            rval[1], status=200
-        )  # all fine - report number of tests updated
+        update_count = self.server.processLUploads()
+        return web.json_response(update_count, status=200)
 
     async def processTUploads(self, request):
         """Trigger any updates that are appropriate after some uploads.
@@ -774,8 +843,8 @@ class UploadHandler:
         if data["user"] != "manager" and data["user"] != "scanner":
             return web.Response(status=403)
 
-        rval = self.server.processTUploads()
-        return web.json_response(rval[1], status=200)
+        update_count = self.server.processTUploads()
+        return web.json_response(update_count, status=200)
 
     @authenticate_by_token_required_fields(["user"])
     def populateExamDatabase(self, data, request):

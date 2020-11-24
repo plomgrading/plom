@@ -225,23 +225,22 @@ def processHWScans(
     ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
     IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
-        print("File name has wrong format - should be 'blah.sid.q.pdf'. Stopping.")
-        return
+        raise ValueError(
+            "File name has wrong format - should be 'blah.sid.q.pdf'. Stopping."
+        )
     sid, q = IDQ[1:]
     if sid != student_id:
-        print(
+        raise ValueError(
             "Student ID supplied {} does not match that in filename {}. Stopping.".format(
                 student_id, sid
             )
         )
-        return
     if int(q) != question:
-        print(
+        raise ValueError(
             "Question supplied {} does not match that in filename {}. Stopping.".format(
                 question, q
             )
         )
-        return
     print(
         "Process and upload file {} as answer to question {} for sid {}".format(
             pdf_fname.name, question, student_id
@@ -249,8 +248,7 @@ def processHWScans(
     )
     test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
     if test_number is None:
-        print("No test has student ID = {}. Skipping.".format(student_id))
-        return
+        raise ValueError("No test has student ID = {}. Skipping.".format(student_id))
     else:
         print("Student ID {} is test_number {}".format(student_id, test_number))
 
@@ -258,17 +256,15 @@ def processHWScans(
     # should be [False] [True, name] [True,md5sum], [True, both]
     if bundle_exists[0]:
         if bundle_exists[1] == "name":
-            print(
+            raise ValueError(
                 "The bundle name {} has been used previously for a different bundle. Stopping".format(
                     pdf_fname
                 )
             )
-            return
         elif bundle_exists[1] == "md5sum":
-            print(
+            raise ValueError(
                 "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
-            return
         elif bundle_exists[1] == "both":
             print(
                 "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
@@ -302,8 +298,7 @@ def processHWScans(
             print(
                 "A bundle with matching md5sum but different name was uploaded previously."
             )
-        print("Stopping.")
-        return
+        raise RuntimeError("Stopping, see above")
 
     # send the images to the server
     sendPagesToServer.uploadHWPages(

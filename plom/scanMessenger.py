@@ -9,7 +9,11 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartEncoder
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomSeriousException,
+    PlomTakenException,
+)
 from plom.messenger import BaseMessenger
 
 # TODO: how to do this in subclass?
