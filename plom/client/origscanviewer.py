@@ -81,20 +81,6 @@ class SourceList(QListWidget):
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
 
-    def rotateImage(self, angle=90):
-        ci = self.currentItem()
-        name = ci.text()
-        rot = QTransform()
-        rot.rotate(angle)
-        rfile = self.item_files[name]
-
-        cpix = QPixmap(rfile)
-        npix = cpix.transformed(rot)
-        npix.save(rfile, format="PNG")
-
-        ci.setIcon(QIcon(rfile))
-        self.parent.update()
-
     def hideItemByName(self, name=None):
         """Removes (hides) a single named item from source-list.
 
@@ -596,12 +582,9 @@ class RearrangementViewer(QDialog):
 
     def rotateImage(self, angle=90):
         """ Rotates the currently selected page by 90 degrees."""
-        if self.listA.selectionModel().hasSelection():
-            self.listA.rotateImage(angle)
-        elif self.listB.selectionModel().hasSelection():
+        if self.listB.selectionModel().hasSelection():
+            # TODO: do multiple selections
             self.listB.rotateImage(angle)
-        else:
-            pass
 
     def viewImage(self, fname):
         """ Shows a larger view of the currently selected page."""
