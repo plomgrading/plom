@@ -388,7 +388,7 @@ class MarkerExamModel(QStandardItemModel):
                 "Task",
                 "Status",
                 "Mark",
-                "Time",
+                "Time (s)",
                 "Tag",
                 "OriginalFiles",
                 "AnnotatedFile",
