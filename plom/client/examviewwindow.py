@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
@@ -65,6 +65,10 @@ class ExamViewWindow(QWidget):
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
         self.view.verticalScrollBar().setValue(self.dy)
+
+    def resizeEvent(self, whatev):
+        """Seems to ensure image gets resize on window resize."""
+        self.view.resetView()
 
 
 class ExamView(QGraphicsView):
