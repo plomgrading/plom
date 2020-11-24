@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Adjust Pages: you can have no pages transiently while re-arranging.
 * Adjust Pages: icons resize automatically on dialog resize.
 * Adjust Pages: middle bar can be dragged to resize top or bottom list.
+* Client generates log files by default (disable under More Options).
 
 ### Fixed
 * Misc fixes and refactoring of the `pagescene` code.
