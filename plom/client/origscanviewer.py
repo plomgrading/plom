@@ -99,7 +99,8 @@ class SourceList(QListWidget):
         """Removes (hides) a single named item from source-list.
 
         Returns:
-            str: The name of the item we just hid.
+            str: The name of the item we just hid.  If the item was
+                already hidden, we still return name here.
         """
         if name is None:
             raise ValueError("You must provide the 'name' argument")
@@ -254,7 +255,9 @@ class SinkList(QListWidget):
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, page_data, need_to_confirm=False):
+    def __init__(
+        self, parent, testNumber, current_pages, page_data, need_to_confirm=False
+    ):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
@@ -263,7 +266,10 @@ class RearrangementViewer(QDialog):
         page_data = self.temp_dedupe_filter(page_data)
         self.pageData = page_data
         self.nameToIrefNFile = {}
-        self.populateList()
+        if current_pages:
+            self.populateListWithCurrent(current_pages)
+        else:
+            self.populateListOriginal()
 
     def _setupUI(self):
         """
@@ -287,12 +293,13 @@ class RearrangementViewer(QDialog):
         self.scrollB.setWidgetResizable(True)
 
         self.appendB = QToolButton()
-        self.appendB.setText("Add Page(s)")
+        # TODO: move &A here and use alt-Enter to Accept dialog?
+        self.appendB.setText("Add &Page(s)")
         self.appendB.setArrowType(Qt.DownArrow)
         self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.removeB = QToolButton()
         self.removeB.setArrowType(Qt.UpArrow)
-        self.removeB.setText("Remove Page(s)")
+        self.removeB.setText("&Remove Page(s)")
         self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.sLeftB = QToolButton()
         self.sLeftB.setArrowType(Qt.LeftArrow)
@@ -361,9 +368,19 @@ class RearrangementViewer(QDialog):
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
         hb1.addLayout(hb)
-        hb1.addItem(
+
+        f = QFrame()
+        hb1.addWidget(f)
+        hb = QHBoxLayout()
+        hb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(hb)
+        hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
+        btn = QPushButton("Revert to original state")
+        btn.clicked.connect(self.populateListOriginal)
+        hb.addWidget(btn)
+
         hb1.setStretch(0, 1)
         hb1.setStretch(1, 1)
         hb1.setStretch(2, 1)
@@ -439,10 +456,10 @@ class RearrangementViewer(QDialog):
         new_pageData = []
         for x in pageData:
             if x[2]:
-                new_pageData.append(x)
+                new_pageData.append(x.copy())
             else:
                 if x[1] not in bottom_md5_list:
-                    new_pageData.append(x)
+                    new_pageData.append(x.copy())
         return new_pageData
 
     def show_relevant_tools(self):
@@ -458,13 +475,16 @@ class RearrangementViewer(QDialog):
         else:
             self.appendB.setEnabled(False)
 
-    def populateList(self):
+    def populateListOriginal(self):
         """
-        Populates the QListWidgets with exam pages.
+        Populates the QListWidgets with exam pages, using original server view.
 
         Returns:
-            None
+            None: but changes the state of self.
         """
+        self.nameToIrefNFile = {}
+        self.listA.clear()
+        self.listB.clear()
         move_order = {}
         for row in self.pageData:
             self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
@@ -477,6 +497,31 @@ class RearrangementViewer(QDialog):
                 move_order[row[3]] = row[0]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
+
+    def populateListWithCurrent(self, current):
+        """
+        Populates the QListWidgets with pages, with current state highlighted.
+
+        Args:
+            current (list): md5sums of the pages currently selected.
+
+        Returns:
+            None: but changes the state of self.
+        """
+        self.nameToIrefNFile = {}
+        self.listA.clear()
+        self.listB.clear()
+        for row in self.pageData:
+            self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
+            # add every page image to list A
+            self.listA.addImageItem(row[0], row[-1], row[2])
+            # add the potential for every page to listB
+            self.listB.addPotentialItem(row[0], row[-1], row[2])
+        for k in current:
+            match = [row[0] for row in self.pageData if row[1] == k]
+            assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
+            (match,) = match
+            self.listB.appendItem(self.listA.hideItemByName(match))
 
     def sourceToSink(self):
         """
