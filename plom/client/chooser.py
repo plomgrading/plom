@@ -48,6 +48,7 @@ def readLastTime():
     """
     global lastTime
     # set some reasonable defaults.
+    lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
     lastTime["question"] = 1
