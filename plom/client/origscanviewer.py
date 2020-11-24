@@ -679,6 +679,11 @@ class ShowExamPage(QDialog):
         grid.addWidget(self.closeButton, 7, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
+        self.resize(QSize(self.parent().width() * 2 / 3, self.parent().height() * 7 / 8))
+        # TODO: trying to get the bloody thing to redraw after this sizing
+        # TODO: need some QTimer bullshit workaround?
+        # self.testImg.resizeEvent(None)
+        # self.testImg.view.resetView()
         self.show()
 
     def closeEvent(self, event):
