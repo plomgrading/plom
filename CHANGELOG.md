@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.5.8] - 2020-11-25
 
 ### Added
 * Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
@@ -303,7 +303,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.7...master
+[0.5.8]: https://gitlab.com/plom/plom/compare/v0.5.7...v0.5.8
 [0.5.7]: https://gitlab.com/plom/plom/compare/v0.5.6...v0.5.7
 [0.5.6]: https://gitlab.com/plom/plom/compare/v0.5.5...v0.5.6
 [0.5.5]: https://gitlab.com/plom/plom/compare/v0.5.3...v0.5.5
