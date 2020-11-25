@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
 __license__ = "AGPLv3"
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
@@ -69,6 +69,17 @@ class ExamViewWindow(QWidget):
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
         self.view.resetView()
+
+    def forceRedrawOrSomeBullshit(self):
+        """Horrid workaround when we cannot get proper redraws.
+
+        Colin (and Andrew) will be very happy with this function is
+        refactored away by a Qt expert.  Or even a Qt novice.  Anyone
+        with a pulse really.
+
+        # TODO: will crash if I close the dialog before timer fires?
+        """
+        QTimer.singleShot(100, self.view.resetView)
 
 
 class ExamView(QGraphicsView):
