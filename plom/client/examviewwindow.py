@@ -77,9 +77,10 @@ class ExamViewWindow(QWidget):
         refactored away by a Qt expert.  Or even a Qt novice.  Anyone
         with a pulse really.
 
-        # TODO: will crash if I close the dialog before timer fires?
+        This does not seem to crash if you close the dialog before the
+        timer fires.  That's the only positive thing I can say about it.
         """
-        QTimer.singleShot(100, self.view.resetView)
+        QTimer.singleShot(32, self.view.resetView)
 
 
 class ExamView(QGraphicsView):
