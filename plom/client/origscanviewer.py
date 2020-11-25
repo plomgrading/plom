@@ -742,12 +742,14 @@ class OriginalScansViewer(QWidget):
         if t >= self.ui.groupViewTabWidget.count():
             t = 0
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.ui.groupViewTabWidget.currentIndex() - 1
         if t < 0:
             t = self.ui.groupViewTabWidget.count() - 1
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
