@@ -664,7 +664,9 @@ class ShowExamPage(QDialog):
         grid.addWidget(self.closeButton, 7, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
-        self.resize(QSize(self.parent().width() * 2 / 3, self.parent().height() * 7 / 8))
+        self.resize(
+            QSize(self.parent().width() * 2 / 3, self.parent().height() * 7 / 8)
+        )
         self.testImg.forceRedrawOrSomeBullshit()
         self.show()
 
