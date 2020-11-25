@@ -841,12 +841,14 @@ class WholeTestView(QDialog):
         if t >= self.pageTabs.count():
             t = 0
         self.pageTabs.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.pageTabs.currentIndex() - 1
         if t < 0:
             t = self.pageTabs.count() - 1
         self.pageTabs.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def buildTabs(self):
         for k in range(0, self.numberOfPages):
