@@ -1320,7 +1320,7 @@ class MarkerClient(QWidget):
             self.testImg.updateImage(self.prxM.getAnnotatedFile(pr))
         else:
             self.testImg.updateImage(self.prxM.getOriginalFiles(pr))
-        QTimer.singleShot(100, self.testImg.view.resetView)
+        self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
 
     def updateProgress(self, val=None, maxm=None):

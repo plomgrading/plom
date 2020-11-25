@@ -664,6 +664,8 @@ class ShowExamPage(QDialog):
         grid.addWidget(self.closeButton, 7, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
+        self.resize(QSize(self.parent().width() * 2 / 3, self.parent().height() * 7 / 8))
+        self.testImg.forceRedrawOrSomeBullshit()
         self.show()
 
     def closeEvent(self, event):
@@ -725,12 +727,14 @@ class OriginalScansViewer(QWidget):
         if t >= self.ui.groupViewTabWidget.count():
             t = 0
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.ui.groupViewTabWidget.currentIndex() - 1
         if t < 0:
             t = self.ui.groupViewTabWidget.count() - 1
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
@@ -822,12 +826,14 @@ class WholeTestView(QDialog):
         if t >= self.pageTabs.count():
             t = 0
         self.pageTabs.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.pageTabs.currentIndex() - 1
         if t < 0:
             t = self.pageTabs.count() - 1
         self.pageTabs.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def buildTabs(self):
         for k in range(0, self.numberOfPages):
