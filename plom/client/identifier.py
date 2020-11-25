@@ -245,8 +245,7 @@ class IDClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selChanged)
         self.requestNext()
         # make sure exam view window's view is reset....
-        # very slight delay to ensure things loaded first
-        QTimer.singleShot(100, self.testImg.view.resetView)
+        self.testImg.forceRedrawOrSomeBullshit()
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
