@@ -438,7 +438,15 @@ class RearrangementViewer(QDialog):
         ['h2.2', '97521f4122df24ca012a12930391195a', False, 2, 41, '/tmp/plom_zq/tmpd5g.image]
         ```
         (Possibily filenames are repeated for repeat md5: not required by this code.)
+
+        From this we want something like:
+        ```
+        ['h1.1 (& h2.1)', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
+        ['h1.2 (& h2.2)', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
+        ```
+        where the names of duplicates are shown in parentheses.
         """
+        # server originally these are in the question (TODO: maybe not, True/False here generated on API call)
         bottom_md5_list = []
         for x in pageData:
             if x[2]:
@@ -450,6 +458,18 @@ class RearrangementViewer(QDialog):
             else:
                 if x[1] not in bottom_md5_list:
                     new_pageData.append(x.copy())
+
+        extra_names = {y[1]: [] for y in new_pageData}
+        for x in pageData:
+            md5 = x[1]
+            for y in new_pageData:
+                if md5 == y[1]:
+                    if y[0] != x[0]:
+                        extra_names[md5].append(x[0])
+        for y in new_pageData:
+            if extra_names[y[1]]:
+                y[0] = y[0] + " (& {})".format(", ".join(extra_names[y[1]]))
+
         return new_pageData
 
     def show_relevant_tools(self):
