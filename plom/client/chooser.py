@@ -12,7 +12,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import os
-import datetime
+from datetime import datetime
 import logging
 import toml
 
@@ -89,11 +89,10 @@ class Chooser(QDialog):
         readLastTime()
 
         if lastTime.get("LogToFile"):
-            now = datetime.datetime.now().isoformat("T", "seconds")
             logging.basicConfig(
                 format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
                 datefmt="%b%d %H:%M:%S",
-                filename="plom-{}.log".format(now),
+                filename=datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log"),
             )
         else:
             logging.basicConfig(

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Fixed a platform-specific crash on start-up due to invalid chars in log filename.
 
 
 ## [0.5.8] - 2020-11-25
