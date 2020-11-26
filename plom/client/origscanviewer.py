@@ -408,7 +408,7 @@ class RearrangementViewer(QDialog):
         vb.setContentsMargins(0, 0, 0, 0)
         vb.setSpacing(0)
         # f.setLayout(vb)
-        #vb.addLayout(hb1)
+        # vb.addLayout(hb1)
         handle.setLayout(hb1)
         hb1.setContentsMargins(0, 0, 0, 0)
         # Buttons inside the splitter bar, disable drag
