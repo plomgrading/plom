@@ -300,6 +300,8 @@ class RearrangementViewer(QDialog):
         self.sRightB.setText("Shift Right")
         self.sRightB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.reverseB = QPushButton("Reverse Order")
+        self.revertB = QPushButton("Revert to original state")
+        self.revertB.clicked.connect(self.populateListOriginal)
 
         try:
             base_path = sys._MEIPASS
@@ -320,6 +322,39 @@ class RearrangementViewer(QDialog):
         self.acceptB = QPushButton("&Accept")
 
         self.permute = [False]
+
+        def GrippyMcGrab():
+            """Grippy bars to spice-up QSplitterHandles."""
+            width = 64
+            pad = 20
+            hb = QHBoxLayout()
+            hb.addItem(
+                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            )
+            vb = QVBoxLayout()
+            hb.addLayout(vb)
+            hb.addItem(
+                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            )
+
+            vb.setContentsMargins(0, 1, 0, 1)
+            vb.setSpacing(2)
+            vb.addItem(
+                QSpacerItem(
+                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                )
+            )
+            for i in range(3):
+                f = QFrame()
+                f.setFrameShape(QFrame.HLine)
+                f.setFrameShadow(QFrame.Sunken)
+                vb.addWidget(f)
+            vb.addItem(
+                QSpacerItem(
+                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                )
+            )
+            return hb
 
         hb3 = QHBoxLayout()
         self.tools = QFrame()
@@ -346,73 +381,14 @@ class RearrangementViewer(QDialog):
         # center add/remove buttons on label row
         hb1 = QHBoxLayout()
         hb1.addWidget(thisQuestion)
+        hb1.addLayout(GrippyMcGrab())
         hb = QHBoxLayout()
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
-        )
-        vb = QVBoxLayout()
-        vb.setContentsMargins(0, 10, 0, 10)
-        vb.setSpacing(1)
-        vb.addItem(
-            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-        )
-        for i in range(3):
-            f = QFrame()
-            # from PyQt5.QtCore import QRect
-            # f.setGeometry(QRect(50, 1, 1, 1))
-            f.setFrameShape(QFrame.HLine)
-            f.setFrameShadow(QFrame.Sunken)
-            #f.setContentsMargins(0, 0, 0, 0)
-            #f.setFrameStyle(QFrame.Panel | QFrame.Raised)
-            vb.addWidget(f)
-        vb.addItem(
-            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-        )
-        hb1.addLayout(vb)
-        # TODO: force equal width for both buttons
         hb.addWidget(self.appendB)
         hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
         hb.addWidget(self.removeB)
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
-        )
         hb1.addLayout(hb)
-
-        vb = QVBoxLayout()
-        vb.setContentsMargins(0, 10, 0, 10)
-        vb.setSpacing(1)
-        vb.addItem(
-            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-        )
-        for i in range(3):
-            f = QFrame()
-            # from PyQt5.QtCore import QRect
-            # f.setGeometry(QRect(50, 1, 1, 1))
-            f.setFrameShape(QFrame.HLine)
-            f.setFrameShadow(QFrame.Sunken)
-            #f.setContentsMargins(0, 0, 0, 0)
-            #f.setFrameStyle(QFrame.Panel | QFrame.Raised)
-            vb.addWidget(f)
-        vb.addItem(
-            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-        )
-        hb1.addLayout(vb)
-
-        f = QFrame()
-        hb1.addWidget(f)
-        hb = QHBoxLayout()
-        hb.setContentsMargins(0, 0, 0, 0)
-        f.setLayout(hb)
-        hb.addItem(
-            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
-        )
-        self.revertB = QPushButton("Revert to original state")
-        self.revertB.clicked.connect(self.populateListOriginal)
-        hb.addWidget(self.revertB)
-
-        hb1.setStretch(0, 1)
-        hb1.setStretch(1, 1)
-        hb1.setStretch(2, 1)
+        hb1.addLayout(GrippyMcGrab())
+        hb1.addWidget(self.revertB)
 
         vb0 = QVBoxLayout()
         s = QSplitter()
@@ -437,17 +413,10 @@ class RearrangementViewer(QDialog):
         vb.addWidget(self.scrollB)
         vb.addLayout(hb3)
 
-        # TODO: add more visible drag grips
         handle = s.handle(1)
-        # print(handle)
-        # f = QFrame()
-        # #handle.addWidget(f)
-        # vb = QVBoxLayout(handle)
         vb = QVBoxLayout()
         vb.setContentsMargins(0, 0, 0, 0)
         vb.setSpacing(0)
-        # f.setLayout(vb)
-        # vb.addLayout(hb1)
         handle.setLayout(hb1)
         hb1.setContentsMargins(0, 0, 0, 0)
         # Buttons inside the splitter bar, disable drag
