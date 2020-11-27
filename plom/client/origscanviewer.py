@@ -350,6 +350,25 @@ class RearrangementViewer(QDialog):
         hb.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 10, 0, 10)
+        vb.setSpacing(1)
+        vb.addItem(
+            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        )
+        for i in range(3):
+            f = QFrame()
+            # from PyQt5.QtCore import QRect
+            # f.setGeometry(QRect(50, 1, 1, 1))
+            f.setFrameShape(QFrame.HLine)
+            f.setFrameShadow(QFrame.Sunken)
+            #f.setContentsMargins(0, 0, 0, 0)
+            #f.setFrameStyle(QFrame.Panel | QFrame.Raised)
+            vb.addWidget(f)
+        vb.addItem(
+            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        )
+        hb1.addLayout(vb)
         # TODO: force equal width for both buttons
         hb.addWidget(self.appendB)
         hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
@@ -358,6 +377,26 @@ class RearrangementViewer(QDialog):
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
         hb1.addLayout(hb)
+
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 10, 0, 10)
+        vb.setSpacing(1)
+        vb.addItem(
+            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        )
+        for i in range(3):
+            f = QFrame()
+            # from PyQt5.QtCore import QRect
+            # f.setGeometry(QRect(50, 1, 1, 1))
+            f.setFrameShape(QFrame.HLine)
+            f.setFrameShadow(QFrame.Sunken)
+            #f.setContentsMargins(0, 0, 0, 0)
+            #f.setFrameStyle(QFrame.Panel | QFrame.Raised)
+            vb.addWidget(f)
+        vb.addItem(
+            QSpacerItem(16, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        )
+        hb1.addLayout(vb)
 
         f = QFrame()
         hb1.addWidget(f)
