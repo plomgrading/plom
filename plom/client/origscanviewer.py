@@ -396,7 +396,6 @@ class RearrangementViewer(QDialog):
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
         s.setHandleWidth(50)  # TODO: better not to hardcode, take from children?
-        # s.setFixedWidth(40)
         vb0.addWidget(s)
         f = QFrame()
         s.addWidget(f)
@@ -419,11 +418,10 @@ class RearrangementViewer(QDialog):
         vb.setSpacing(0)
         handle.setLayout(hb1)
         hb1.setContentsMargins(0, 0, 0, 0)
-        # Buttons inside the splitter bar, disable drag
-        # TODO: disable mouse cursor change too
-        self.removeB.mouseMoveEvent = lambda *args: None
-        self.appendB.mouseMoveEvent = lambda *args: None
-        self.revertB.mouseMoveEvent = lambda *args: None
+        # TODO: Buttons inside the splitter bar, disable drag and custom cursor
+        for b in (self.removeB, self.appendB, self.revertB):
+            b.mouseMoveEvent = lambda *args: None
+            b.setCursor(Qt.ArrowCursor)
 
         self.setLayout(vb0)
         self.resize(QSize(self.parent.width() * 2 / 3, self.parent.height() * 7 / 8))
