@@ -367,8 +367,8 @@ class RearrangementViewer(QDialog):
         hb.addWidget(self.sLeftB)
         hb.addWidget(self.sRightB)
         hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
-        hb.addWidget(self.reverseB)
         hb3.addWidget(self.tools)
+        hb3.addWidget(self.reverseB)
         hb3.addItem(
             QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         )
