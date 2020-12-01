@@ -48,7 +48,9 @@ if __name__ == "__main__":
         """
     *** Warning: this script is "pre-alpha" software ***
 
-    This script looks for "{}",
+    This scripts reads in `marks.csv` created by `plom-finish`.
+
+    This script then looks for "{}",
     which you should have exported from Canvas.
     This file must have an existing column which will be filled with
     to.  Canvas columns have names like "XXXX (<number>)".
