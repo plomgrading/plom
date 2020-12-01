@@ -692,6 +692,17 @@ class PageScene(QGraphicsScene):
     # more permanent graphics item.
     ###########
 
+    def textUnderneathGhost(self):
+        """Check to see if any text-like object under current ghost-text"""
+        for under in self.ghostItem.collidingItems():
+            if (
+                isinstance(under, DeltaItem)
+                or isinstance(under, TextItem)
+                or isinstance(under, GroupDeltaTextItem)
+            ):
+                return True
+        return False
+
     def mousePressComment(self, event):
         """Mouse press while holding comment tool.
 
@@ -709,13 +720,17 @@ class PageScene(QGraphicsScene):
         """
         # in comment mode the ghost is activated, so look for objects that intersect the ghost.
         # if they are delta, text or GDT then do nothing.
-        for under in self.ghostItem.collidingItems():
-            if (
-                isinstance(under, DeltaItem)
-                or isinstance(under, TextItem)
-                or isinstance(under, GroupDeltaTextItem)
-            ):
-                return
+
+        if self.textUnderneathGhost():  # something underneath
+            if self.commentFlag == 0:  # starting a comment
+                if (event.button() == Qt.RightButton) or (
+                    QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                ):  # starting a drag - so ignore the intersection
+                    pass
+                else:
+                    return  # intersection - don't stamp anything, just return
+            elif self.commentFlag == 2:  # finishing the comment stamp
+                return  # intersection - so don't stamp anything.
 
         # check the commentFlag and if shift-key is pressed
         if self.commentFlag == 0:
