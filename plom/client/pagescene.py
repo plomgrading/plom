@@ -12,7 +12,13 @@ from PyQt5.QtGui import (
     QPixmap,
     QTransform,
 )
-from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QUndoStack, QMessageBox
+from PyQt5.QtWidgets import (
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsSceneDragDropEvent,
+    QUndoStack,
+    QMessageBox,
+)
 
 from plom import AnnFontSizePts, ScenePixelHeight
 
@@ -733,7 +739,10 @@ class PageScene(QGraphicsScene):
                 return  # intersection - so don't stamp anything.
 
         # check the commentFlag and if shift-key is pressed
-        if self.commentFlag == 0:
+        if isinstance(event, QGraphicsSceneDragDropEvent):  # is a comment drag event.
+            pass  # no rectangle-drag-comment, only comment-stamp
+        elif self.commentFlag == 0:
+            # check if drag event
             if (event.button() == Qt.RightButton) or (
                 QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
             ):
@@ -1046,6 +1055,10 @@ class PageScene(QGraphicsScene):
 
     def dropEvent(self, e):
         """ Handles drop events."""
+        # all drop events should copy
+        # - even if user is trying to remove comment from comment-list make sure is copy-action.
+        e.setDropAction(Qt.CopyAction)
+
         if e.mimeData().hasFormat("text/plain"):
             # Simulate a comment click.
             self.commentText = e.mimeData().text()
