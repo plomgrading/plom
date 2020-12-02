@@ -33,7 +33,8 @@ class CommandGroupDeltaText(QUndoCommand):
 
         TODO: could this comandFoo.__init__() take a FooItem?
         """
-        assert X.pop(0) == "GroupDeltaText"
+        assert X[0] == "GroupDeltaText"
+        X = X[1:]
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.

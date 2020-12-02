@@ -1213,17 +1213,6 @@ class PageScene(QGraphicsScene):
         if len(X) == 4:
             self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
 
-    def unpickleText(self, X):
-        """ Unpickle a TextItemObject and add it to scene. """
-        if len(X) == 3:
-            blurb = TextItem(self, self.fontSize)
-            blurb.setPlainText(X[0])
-            blurb._contents = X[0]  # TODO
-            blurb.setPos(QPointF(X[1], X[2]))
-            blurb.setTextInteractionFlags(Qt.NoTextInteraction)
-            # knows to latex it if needed.
-            self.undoStack.push(CommandText(self, blurb, self.ink))
-
     def unpickleDelta(self, X):
         """ Unpickle a DeltaItemObject and add it to scene. """
         if len(X) == 3:

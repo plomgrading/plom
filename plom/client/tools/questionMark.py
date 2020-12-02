@@ -27,7 +27,8 @@ class CommandQMark(QUndoCommand):
     @classmethod
     def from_pickle(cls, X, *, scene):
         """Construct a CommandQMark from a pickled QMarkItem."""
-        assert X.pop(0) == "QMark"
+        assert X[0] == "QMark"
+        X = X[1:]
         if len(X) != 2:
             raise ValueError("wrong length of pickle data")
         return cls(scene, QPointF(X[0], X[1]))
