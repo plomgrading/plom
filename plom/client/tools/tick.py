@@ -27,8 +27,9 @@ class CommandTick(QUndoCommand):
     @classmethod
     def from_pickle(cls, X, *, scene):
         """Construct a CommandTick from a pickled TickItem."""
+        assert X.pop(0) == "Tick"
         if len(X) != 2:
-            raise RuntimeError("wrong length of pickle data")
+            raise ValueError("wrong length of pickle data")
         return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):

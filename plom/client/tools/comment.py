@@ -31,11 +31,11 @@ class CommandGroupDeltaText(QUndoCommand):
     def from_pickle(cls, X, *, scene):
         """Construct a CommandGroupDeltaText from a pickled GroupDeltaTextItem.
 
-        TODO: maybe we should not remove the head of X?
-
-        TODO: could this comandFoo.__init__() take a FooItem?xs"""
+        TODO: could this comandFoo.__init__() take a FooItem?
+        """
+        assert X.pop(0) == "GroupDeltaText"
         if len(X) != 4:
-            raise RuntimeError("wrong length of pickle data")
+            raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
         return cls(scene, QPointF(X[0], X[1]), X[2], X[3], scene.fontSize)
 

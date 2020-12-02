@@ -1136,6 +1136,8 @@ class PageScene(QGraphicsScene):
         Returns:
             None, adds pickled items to the scene.
 
+        Raises:
+            ValueError: invalid pickle data.
         """
         # clear all items from scene.
         for X in self.items():
@@ -1172,22 +1174,13 @@ class PageScene(QGraphicsScene):
             CmdCls = globals().get("Command{}".format(X[0]), None)
             if CmdCls and getattr(CmdCls, "from_pickle", None):
                 # TODO: use try-except here?
-                self.undoStack.push(CmdCls.from_pickle(X[1:], scene=self))
+                self.undoStack.push(CmdCls.from_pickle(X, scene=self))
                 continue
-            log.error("Unpickle error - What is {}".format(X))
+            log.error("Could not unpickle whatever this is:\n  {}".format(X))
+            raise ValueError("Could not unpickle whatever this is:\n  {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
             X.setFocus(False)
-
-    def unpickleCross(self, X):
-        """ Unpickle a CrossItemObject and add it to scene. """
-        if len(X) == 2:
-            self.undoStack.push(CommandCross(self, QPointF(X[0], X[1])))
-
-    def unpickleQMark(self, X):
-        """ Unpickle a QMarkItemObject(question mark) and add it to scene. """
-        if len(X) == 2:
-            self.undoStack.push(CommandQMark(self, QPointF(X[0], X[1])))
 
     def unpickleArrow(self, X):
         """ Unpickle an ArrowItemObject and add it to scene. """

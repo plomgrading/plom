@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
+from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -23,6 +23,14 @@ class CommandQMark(QUndoCommand):
         self.pt = pt
         self.qm = QMarkItemObject(self.pt)
         self.setText("QMark")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandQMark from a pickled QMarkItem."""
+        assert X.pop(0) == "QMark"
+        if len(X) != 2:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):
         self.qm.flash_redo()
