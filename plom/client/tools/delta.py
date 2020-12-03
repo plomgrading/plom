@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty
+from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty, QPointF
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsTextItem, QGraphicsItem
 
