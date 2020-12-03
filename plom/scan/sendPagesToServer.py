@@ -158,9 +158,11 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
 
 
 def extractIDQO(fileName):  # get ID, Question and Order
-    """Expecting filename of the form blah.SID.Q-N.pdf - return SID Q and N"""
-    splut = fileName.split(".")  # easy to get SID, and Q
+    """Expecting filename of the form blah.SID.Q-N.ext - return SID Q and N.
 
+    `ext` is something like `png`.
+    """
+    splut = fileName.split(".")  # easy to get SID, and Q
     sid = splut[-3]
     # split again, now on "-" to separate Q and N
     resplut = splut[-2].split("-")
@@ -171,8 +173,10 @@ def extractIDQO(fileName):  # get ID, Question and Order
 
 
 def extractJIDO(fileName):  # get just ID, Order
-    """Expecting filename of the form blah.SID-N.pdf - return SID and N"""
+    """Expecting filename of the form blah.SID-N.ext - return SID and N.
 
+    `ext` is something like `png`.
+    """
     splut = fileName.split(".")  # easy to get SID-N
     # split again, now on "-" to separate SID and N
     resplut = splut[-2].split("-")
