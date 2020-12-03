@@ -9,6 +9,7 @@ from PyQt5.QtGui import (
     QFont,
     QGuiApplication,
     QPainter,
+    QPainterPath,
     QPixmap,
     QTransform,
 )
@@ -1188,45 +1189,6 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(
                 CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
             )
-
-    def unpicklePen(self, X):
-        """ Unpickle a PenItemObject and add it to scene. """
-        if len(X) == 1:
-            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
-            # Just assume (for moment) the above format - ie no format checks.
-            pth = QPainterPath()
-            # ['m',x,y]
-            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
-            for Y in X[0][1:]:
-                # ['l',x,y]
-                pth.lineTo(QPointF(Y[1], Y[2]))
-            self.undoStack.push(CommandPen(self, pth))
-
-    def unpicklePenArrow(self, X):
-        """ Unpickle an PenArrowItemObject and add it to scene. """
-        if len(X) == 1:
-            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
-            # Just assume (for moment) the above format - ie no format checks.
-            pth = QPainterPath()
-            # ['m',x,y]
-            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
-            for Y in X[0][1:]:
-                # ['l',x,y]
-                pth.lineTo(QPointF(Y[1], Y[2]))
-            self.undoStack.push(CommandPenArrow(self, pth))
-
-    def unpickleHighlight(self, X):
-        """ Unpickle a HighlightObjectItem and add it to scene. """
-        if len(X) == 1:
-            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
-            # Just assume (for moment) the above format.
-            pth = QPainterPath()
-            # ['m',x,y]
-            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
-            for Y in X[0][1:]:
-                # ['l',x,y]
-                pth.lineTo(QPointF(Y[1], Y[2]))
-            self.undoStack.push(CommandHighlight(self, pth))
 
     def unpickleImage(self, X):
         """ Unpickle an ImageItemObject and add it to scene. """

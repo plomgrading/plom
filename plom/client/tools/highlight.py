@@ -3,8 +3,8 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
-from PyQt5.QtGui import QPen, QColor, QBrush
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
+from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
     QGraphicsObject,
@@ -12,8 +12,7 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
 )
 
-from plom.client.tools import log
-from plom.client.tools.move import CommandMoveItem
+from plom.client.tools import CommandMoveItem, log
 
 
 class CommandHighlight(QUndoCommand):
@@ -24,6 +23,37 @@ class CommandHighlight(QUndoCommand):
         self.path = path
         self.highLightItem = HighLightItemObject(self.path)
         self.setText("Highlight")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandHighlight from a serialized form.
+
+        Raises:
+            ValueError: malformed or otherwise incorrect data
+            AssertionError: there is a bug somewhere.
+
+        TODO: all these Pen-like annotations should subclass pen
+        and inherit this function.
+        """
+        assert X[0] == "Highlight"
+        X = X[1:]
+        if len(X) != 1:
+            raise ValueError("wrong length of pickle data")
+        # Format is X = [['m',x,y], ['l',x,y], ['l',x,y], ...]
+        X = X[0]
+        pth = QPainterPath()
+        # unpack ['m', x, y] or ValueError
+        cmd, x, y = X[0]
+        if cmd != "m":
+            raise ValueError("malformed start of Pen-like annotation")
+        pth.moveTo(QPointF(x, y))
+        for pt in X[1:]:
+            # unpack ['l', x, y] or ValueError
+            cmd, x, y = pt
+            if cmd != "l":
+                raise ValueError("malformed Pen-like annotation in interior")
+            pth.lineTo(QPointF(x, y))
+        return cls(scene, pth)
 
     def redo(self):
         self.highLightItem.flash_redo()
