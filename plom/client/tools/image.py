@@ -71,10 +71,7 @@ class CommandImage(QUndoCommand):
             bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
         )
         img = QImage()
-        # TODO: double call here?
-        if img.loadFromData(data):
-            img.loadFromData(data)
-        else:
+        if not img.loadFromData(data):
             log.error("Encountered a problem loading image.")
             raise ValueError("Encountered a problem loading image.")
         return cls(scene, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
