@@ -1184,22 +1184,6 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             X.setFocus(False)
 
-    def unpickleImage(self, X):
-        """ Unpickle an ImageItemObject and add it to scene. """
-        if len(X) == 5:
-            # extract data from encoding
-            data = QByteArray().fromBase64(
-                bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
-            )
-            img = QImage()
-            if img.loadFromData(data):
-                img.loadFromData(data)
-            else:
-                log.error("Encountered a problem loading image.")
-            self.undoStack.push(
-                CommandImage(self, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
-            )
-
     def mousePressBox(self, event):
         """
         Handle mouse presses when box tool is selected.
