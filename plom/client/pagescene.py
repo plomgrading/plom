@@ -1166,13 +1166,12 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
-            # in some cases, often legacy reasons, we do the unpickling
-            functionName = "unpickle{}".format(X[0])
-            fcn = getattr(self, functionName, None)
-            if fcn:
-                fcn(X[1:])
-                continue
-            # check if the object knows how to unpickle itself
+            # We used to unpickle things ourselves but this is deprecated
+            # functionName = "unpickle{}".format(X[0])
+            # fcn = getattr(self, functionName, None)
+            # if fcn:
+            #    fcn(X[1:])
+            #    continue
             CmdCls = globals().get("Command{}".format(X[0]), None)
             if CmdCls and getattr(CmdCls, "from_pickle", None):
                 # TODO: use try-except here?
