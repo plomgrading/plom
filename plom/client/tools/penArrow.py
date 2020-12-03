@@ -27,6 +27,37 @@ class CommandPenArrow(QUndoCommand):
         self.penItem = PenArrowItemObject(self.path)
         self.setText("PenArrow")
 
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandPenArrow from a serialized form.
+
+        Raises:
+            ValueError: malformed or otherwise incorrect data
+            AssertionError: there is a bug somewhere.
+
+        TODO: all these Pen-like annotations should subclass pen
+        and inherit this function.
+        """
+        assert X[0] == "PenArrow"
+        X = X[1:]
+        if len(X) != 1:
+            raise ValueError("wrong length of pickle data")
+        # Format is X = [['m',x,y], ['l',x,y], ['l',x,y], ...]
+        X = X[0]
+        pth = QPainterPath()
+        # unpack ['m', x, y] or ValueError
+        cmd, x, y = X[0]
+        if cmd != "m":
+            raise ValueError("malformed start of Pen-like annotation")
+        pth.moveTo(QPointF(x, y))
+        for pt in X[1:]:
+            # unpack ['l', x, y] or ValueError
+            cmd, x, y = pt
+            if cmd != "l":
+                raise ValueError("malformed Pen-like annotation in interior")
+            pth.lineTo(QPointF(x, y))
+        return cls(scene, pth)
+
     def redo(self):
         self.penItem.flash_redo()
         self.scene.addItem(self.penItem.pi)

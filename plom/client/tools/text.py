@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, pyqtProperty
+from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
 
@@ -69,6 +69,21 @@ class CommandText(QUndoCommand):
             QTimer.singleShot(2, self.blurb.clearFocus)
             QTimer.singleShot(5, self.blurb.textToPng)
         self.setText("Text")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandText from a serialized form."""
+        assert X[0] == "Text"
+        X = X[1:]
+        if len(X) != 3:
+            raise ValueError("wrong length of pickle data")
+        blurb = TextItem(scene, scene.fontSize)
+        blurb.setPlainText(X[0])
+        blurb._contents = X[0]  # TODO
+        blurb.setPos(QPointF(X[1], X[2]))
+        blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        # knows to latex it if needed.
+        return cls(scene, blurb, scene.ink)
 
     def redo(self):
         self.blurb.flash_redo()

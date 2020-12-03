@@ -5,10 +5,12 @@
 
 from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
+    QBrush,
     QCursor,
     QFont,
     QGuiApplication,
     QPainter,
+    QPainterPath,
     QPixmap,
     QTransform,
 )
@@ -1149,6 +1151,8 @@ class PageScene(QGraphicsScene):
         Returns:
             None, adds pickled items to the scene.
 
+        Raises:
+            ValueError: invalid pickle data.
         """
         # clear all items from scene.
         for X in self.items():
@@ -1175,144 +1179,22 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
-            functionName = "unpickle{}".format(X[0])
-            fcn = getattr(self, functionName, None)
-            if fcn:
-                fcn(X[1:])
+            # We used to unpickle things ourselves but this is deprecated
+            # functionName = "unpickle{}".format(X[0])
+            # fcn = getattr(self, functionName, None)
+            # if fcn:
+            #    fcn(X[1:])
+            #    continue
+            CmdCls = globals().get("Command{}".format(X[0]), None)
+            if CmdCls and getattr(CmdCls, "from_pickle", None):
+                # TODO: use try-except here?
+                self.undoStack.push(CmdCls.from_pickle(X, scene=self))
                 continue
-            log.error("Unpickle error - What is {}".format(X))
+            log.error("Could not unpickle whatever this is:\n  {}".format(X))
+            raise ValueError("Could not unpickle whatever this is:\n  {}".format(X))
         # now make sure focus is cleared from every item
         for X in self.items():
             X.setFocus(False)
-
-    def unpickleCross(self, X):
-        """ Unpickle a CrossItemObject and add it to scene. """
-        if len(X) == 2:
-            self.undoStack.push(CommandCross(self, QPointF(X[0], X[1])))
-
-    def unpickleQMark(self, X):
-        """ Unpickle a QMarkItemObject(question mark) and add it to scene. """
-        if len(X) == 2:
-            self.undoStack.push(CommandQMark(self, QPointF(X[0], X[1])))
-
-    def unpickleTick(self, X):
-        """ Unpickle a TickItemObject and add it to scene. """
-        if len(X) == 2:
-            self.undoStack.push(CommandTick(self, QPointF(X[0], X[1])))
-
-    def unpickleArrow(self, X):
-        """ Unpickle an ArrowItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(
-                CommandArrow(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-            )
-
-    def unpickleArrowDouble(self, X):
-        """ Unpickle an ArrowDoubleItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(
-                CommandArrowDouble(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-            )
-
-    def unpickleLine(self, X):
-        """ Unpickle a LineItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(
-                CommandLine(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-            )
-
-    def unpickleBox(self, X):
-        """ Unpickle a BoxItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
-
-    def unpickleEllipse(self, X):
-        """ Unpickle a EllipseItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
-
-    def unpickleText(self, X):
-        """ Unpickle a TextItemObject and add it to scene. """
-        if len(X) == 3:
-            blurb = TextItem(self, self.fontSize)
-            blurb.setPlainText(X[0])
-            blurb._contents = X[0]  # TODO
-            blurb.setPos(QPointF(X[1], X[2]))
-            blurb.setTextInteractionFlags(Qt.NoTextInteraction)
-            # knows to latex it if needed.
-            self.undoStack.push(CommandText(self, blurb, self.ink))
-
-    def unpickleDelta(self, X):
-        """ Unpickle a DeltaItemObject and add it to scene. """
-        if len(X) == 3:
-            self.undoStack.push(
-                CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
-            )
-
-    def unpickleGroupDeltaText(self, X):
-        """Unpickle an GroupDeltaTextItemObject and add it to scene."""
-        if len(X) == 4:
-            # knows to latex it if needed.
-            self.undoStack.push(
-                CommandGroupDeltaText(
-                    self, QPointF(X[0], X[1]), X[2], X[3], self.fontSize
-                )
-            )
-
-    def unpicklePen(self, X):
-        """ Unpickle a PenItemObject and add it to scene. """
-        if len(X) == 1:
-            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
-            # Just assume (for moment) the above format - ie no format checks.
-            pth = QPainterPath()
-            # ['m',x,y]
-            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
-            for Y in X[0][1:]:
-                # ['l',x,y]
-                pth.lineTo(QPointF(Y[1], Y[2]))
-            self.undoStack.push(CommandPen(self, pth))
-
-    def unpicklePenArrow(self, X):
-        """ Unpickle an PenArrowItemObject and add it to scene. """
-        if len(X) == 1:
-            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
-            # Just assume (for moment) the above format - ie no format checks.
-            pth = QPainterPath()
-            # ['m',x,y]
-            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
-            for Y in X[0][1:]:
-                # ['l',x,y]
-                pth.lineTo(QPointF(Y[1], Y[2]))
-            self.undoStack.push(CommandPenArrow(self, pth))
-
-    def unpickleHighlight(self, X):
-        """ Unpickle a HighlightObjectItem and add it to scene. """
-        if len(X) == 1:
-            # Format is X = [ [['m',x,y], ['l',x,y], ['l',x,y],....] ]
-            # Just assume (for moment) the above format.
-            pth = QPainterPath()
-            # ['m',x,y]
-            pth.moveTo(QPointF(X[0][0][1], X[0][0][2]))
-            for Y in X[0][1:]:
-                # ['l',x,y]
-                pth.lineTo(QPointF(Y[1], Y[2]))
-            self.undoStack.push(CommandHighlight(self, pth))
-
-    def unpickleImage(self, X):
-        """ Unpickle an ImageItemObject and add it to scene. """
-        if len(X) == 5:
-            # extract data from encoding
-            data = QByteArray().fromBase64(
-                bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
-            )
-            img = QImage()
-            if img.loadFromData(data):
-                img.loadFromData(data)
-            else:
-                log.error("Encountered a problem loading image.")
-            self.undoStack.push(
-                CommandImage(self, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
-            )
 
     def mousePressBox(self, event):
         """

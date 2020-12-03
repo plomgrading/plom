@@ -9,9 +9,10 @@ from PyQt5.QtCore import (
     QBuffer,
     QIODevice,
     QPoint,
+    QPointF,
     pyqtProperty,
 )
-from PyQt5.QtGui import QImage, QPixmap, QPen, QColor
+from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QPen
 from PyQt5.QtWidgets import (
     QUndoCommand,
     QGraphicsItem,
@@ -56,6 +57,22 @@ class CommandImage(QUndoCommand):
         self.image = image
         self.imageItem = ImageItemObject(self.midPt, self.image, scale, border, data)
         self.setText("Image")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandImage from a serialized form."""
+        assert X[0] == "Image"
+        X = X[1:]
+        if len(X) != 5:
+            raise ValueError("wrong length of pickle data")
+        # extract data from encoding
+        # TODO: sus arithmetic here
+        data = QByteArray().fromBase64(bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8"))
+        img = QImage()
+        if not img.loadFromData(data):
+            log.error("Encountered a problem loading image.")
+            raise ValueError("Encountered a problem loading image.")
+        return cls(scene, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
 
     def redo(self):
         """ Redoes adding the image to the scene. """

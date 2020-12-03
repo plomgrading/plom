@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QLineF
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QLineF, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -25,6 +25,15 @@ class CommandLine(QUndoCommand):
         # A line from pti(nitial) to ptf(inal)
         self.lineItem = LineItemObject(self.pti, self.ptf)
         self.setText("Line")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandLine from a serialized form."""
+        assert X[0] == "Line"
+        X = X[1:]
+        if len(X) != 4:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
     def redo(self):
         self.lineItem.flash_redo()
