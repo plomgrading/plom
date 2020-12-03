@@ -11,7 +11,7 @@ from PyQt5.QtCore import (
     QPoint,
     pyqtProperty,
 )
-from PyQt5.QtGui import QImage, QPixmap, QPen, QColor
+from PyQt5.QtGui import QBrush, QColor, QPixmap, QPen
 from PyQt5.QtWidgets import (
     QUndoCommand,
     QGraphicsItem,

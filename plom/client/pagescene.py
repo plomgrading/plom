@@ -5,6 +5,7 @@
 
 from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
+    QBrush,
     QCursor,
     QFont,
     QGuiApplication,
