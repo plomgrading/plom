@@ -67,9 +67,7 @@ class CommandImage(QUndoCommand):
             raise ValueError("wrong length of pickle data")
         # extract data from encoding
         # TODO: sus arithmetic here
-        data = QByteArray().fromBase64(
-            bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8")
-        )
+        data = QByteArray().fromBase64(bytes(X[2][2 : len(X[2]) - 2], encoding="utf-8"))
         img = QImage()
         if not img.loadFromData(data):
             log.error("Encountered a problem loading image.")
