@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QRectF
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -23,6 +23,15 @@ class CommandEllipse(QUndoCommand):
         self.rect = rect
         self.ellipseItem = EllipseItemObject(self.rect)
         self.setText("Ellipse")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandEllipse from a serialized form."""
+        assert X[0] == "Ellipse"
+        X = X[1:]
+        if len(X) != 4:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QRectF(X[0], X[1], X[2], X[3]))
 
     def redo(self):
         self.ellipseItem.flash_redo()

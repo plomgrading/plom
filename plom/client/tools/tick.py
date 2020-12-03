@@ -26,7 +26,7 @@ class CommandTick(QUndoCommand):
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandTick from a pickled TickItem."""
+        """Construct a CommandTick from a serialized form."""
         assert X[0] == "Tick"
         X = X[1:]
         if len(X) != 2:

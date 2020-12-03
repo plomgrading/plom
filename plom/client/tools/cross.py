@@ -26,7 +26,7 @@ class CommandCross(QUndoCommand):
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandCross from a pickled CrossItem ."""
+        """Construct a CommandCross from a serialized form."""
         assert X[0] == "Cross"
         X = X[1:]
         if len(X) != 2:

@@ -1182,37 +1182,6 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             X.setFocus(False)
 
-    def unpickleArrow(self, X):
-        """ Unpickle an ArrowItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(
-                CommandArrow(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-            )
-
-    def unpickleArrowDouble(self, X):
-        """ Unpickle an ArrowDoubleItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(
-                CommandArrowDouble(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-            )
-
-    def unpickleLine(self, X):
-        """ Unpickle a LineItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(
-                CommandLine(self, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-            )
-
-    def unpickleBox(self, X):
-        """ Unpickle a BoxItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(CommandBox(self, QRectF(X[0], X[1], X[2], X[3])))
-
-    def unpickleEllipse(self, X):
-        """ Unpickle a EllipseItemObject and add it to scene. """
-        if len(X) == 4:
-            self.undoStack.push(CommandEllipse(self, QRectF(X[0], X[1], X[2], X[3])))
-
     def unpickleDelta(self, X):
         """ Unpickle a DeltaItemObject and add it to scene. """
         if len(X) == 3:

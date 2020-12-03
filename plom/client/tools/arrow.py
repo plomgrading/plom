@@ -28,6 +28,15 @@ class CommandArrow(QUndoCommand):
         self.arrowItem = ArrowItemObject(self.pti, self.ptf)
         self.setText("Arrow")
 
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandArrow from a serialized form."""
+        assert X[0] == "Arrow"
+        X = X[1:]
+        if len(X) != 4:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
+
     def redo(self):
         # arrow item knows how to highlight on undo and redo.
         self.arrowItem.flash_redo()
@@ -161,6 +170,15 @@ class CommandArrowDouble(QUndoCommand):
         # create an arrow item
         self.arrowItem = ArrowDoubleItemObject(self.pti, self.ptf)
         self.setText("ArrowDouble")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandArrowDouble from a serialized form."""
+        assert X[0] == "ArrowDouble"
+        X = X[1:]
+        if len(X) != 4:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
     def redo(self):
         # arrow item knows how to highlight on undo and redo.

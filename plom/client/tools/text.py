@@ -72,7 +72,7 @@ class CommandText(QUndoCommand):
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandText from a pickled TextItem."""
+        """Construct a CommandText from a serialized form."""
         assert X[0] == "Text"
         X = X[1:]
         if len(X) != 3:

@@ -29,7 +29,7 @@ class CommandGroupDeltaText(QUndoCommand):
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandGroupDeltaText from a pickled GroupDeltaTextItem.
+        """Construct a CommandGroupDeltaText from a serialized GroupDeltaTextItem.
 
         TODO: could this comandFoo.__init__() take a FooItem?
         """

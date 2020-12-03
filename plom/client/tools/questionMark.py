@@ -26,7 +26,7 @@ class CommandQMark(QUndoCommand):
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandQMark from a pickled QMarkItem."""
+        """Construct a CommandQMark from a serialized form."""
         assert X[0] == "QMark"
         X = X[1:]
         if len(X) != 2:

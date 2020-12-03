@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPen
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -23,6 +23,15 @@ class CommandBox(QUndoCommand):
         self.rect = rect
         self.boxItem = BoxItemObject(self.rect)
         self.setText("Box")
+
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandBox from a serialized form."""
+        assert X[0] == "Box"
+        X = X[1:]
+        if len(X) != 4:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QRectF(X[0], X[1], X[2], X[3]))
 
     def redo(self):
         self.boxItem.flash_redo()
