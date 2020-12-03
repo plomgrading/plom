@@ -21,6 +21,15 @@ class CommandDelta(QUndoCommand):
         self.delItem = DeltaItem(self.pt, self.delta, fontsize)
         self.setText("Delta")
 
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandDelta from a serialized form."""
+        assert X[0] == "Delta"
+        X = X[1:]
+        if len(X) != 3:
+            raise ValueError("wrong length of pickle data")
+        return cls(scene, QPointF(X[1], X[2]), X[0], scene.fontSize)
+
     def redo(self):
         # Mark increased by delta
         self.scene.changeTheMark(self.delta, undo=False)

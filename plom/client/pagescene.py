@@ -1183,13 +1183,6 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             X.setFocus(False)
 
-    def unpickleDelta(self, X):
-        """ Unpickle a DeltaItemObject and add it to scene. """
-        if len(X) == 3:
-            self.undoStack.push(
-                CommandDelta(self, QPointF(X[1], X[2]), X[0], self.fontSize)
-            )
-
     def unpickleImage(self, X):
         """ Unpickle an ImageItemObject and add it to scene. """
         if len(X) == 5:
