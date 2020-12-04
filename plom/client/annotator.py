@@ -373,7 +373,7 @@ class Annotator(QWidget):
         self.maxMark = maxMark
         del maxMark
 
-        log.debug("plomdict = {}".format(plomDict))
+        log.debug("Plom data (truncated):\n{}".format(str(plomDict)[:255]))
         if plomDict:
             self.markStyle = plomDict["markStyle"]
         else:
