@@ -2160,9 +2160,9 @@ class MarkerClient(QWidget):
         pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
         pd.setWindowModality(Qt.WindowModal)
         pd.setMinimumDuration(0)
-        pd.setAutoClose(True)
         # Start caching.
         c = 0
+        pd.setValue(c)
         n = int(self.question)
         exam_name = self.exam_spec["name"]
 
@@ -2181,7 +2181,9 @@ class MarkerClient(QWidget):
                 pd.setValue(c)
             else:
                 c += 2
+                pd.setLabelText("Caching:\nno tex")
                 pd.setValue(c)
+        pd.close()
 
     def latexAFragment(self, txt):
         """
