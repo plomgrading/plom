@@ -266,7 +266,7 @@ class Annotator(QWidget):
             None
 
         """
-        print("TODO: menu placeholder 1")
+        log.info("TODO: menu placeholder 1")
 
     def closeCurrentTGV(self):
         """
@@ -357,7 +357,7 @@ class Annotator(QWidget):
         self.tgvID = tgvID
         self.testName = testName
         self.setWindowTitle("Annotator: {} of test {}".format(tgvID, testName))
-        print("========= Annotator: {} of test {}".format(tgvID, testName))
+        log.info("========= Annotator: {} of test {}".format(tgvID, testName))
         self.paperDir = paperdir
         self.imageFiles = fnames
         self.saveName = saveName
@@ -373,7 +373,7 @@ class Annotator(QWidget):
         self.maxMark = maxMark
         del maxMark
 
-        log.debug("plomdict = {}".format(plomDict))
+        log.debug("Plom data (truncated):\n{}".format(str(plomDict)[:255]))
         if plomDict:
             self.markStyle = plomDict["markStyle"]
         else:
@@ -884,7 +884,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
             perm = rearrangeView.permute
-            print(perm)
+            log.debug("adjust pages permutation output is: {}".format(perm))
             md5_tmp = [x[0] for x in perm]
             if len(set(md5_tmp)) != len(md5_tmp):
                 s = dedent(
@@ -1751,7 +1751,7 @@ class Annotator(QWidget):
         Returns:
             None: modifies many instance vars.
         """
-        print("========CLOSE EVENT======: {}".format(self))
+        log.debug("========CLOSE EVENT======: {}".format(self))
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
