@@ -249,7 +249,7 @@ def uploadHWPage(
             ),
         ]
 
-    log.warn('upload: db going to loop over questions="{}"'.format(questions))
+    log.info('upload: db going to loop over questions="{}"'.format(questions))
     if not isinstance(questions, list):
         questions = [questions]
     for question in questions:
@@ -268,9 +268,19 @@ def uploadHWPage(
                 .where(HWPage.test == tref, HWPage.group == gref)
                 .scalar()
             )
-            order = lastOrder + 1
+            log.info(
+                "hwpage order collision: question={}, order={}; changing to lastOrder+1={})".format(
+                    question, order, lastOrder + 1
+                )
+            )
+            tmp_order = lastOrder + 1
+        else:
+            tmp_order = order
 
-        self.createNewHWPage(tref, qref, order, image_ref)
+        log.info(
+            "creating new hwpage question={}, order={}".format(question, tmp_order)
+        )
+        self.createNewHWPage(tref, qref, tmp_order, image_ref)
     return [True]
 
 
