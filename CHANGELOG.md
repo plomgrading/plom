@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Sometimes the latex-caching dialog did not disappear.
 
 
 ## [0.5.9] - 2020-11-27
