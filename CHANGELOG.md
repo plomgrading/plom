@@ -6,14 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
-
-### Added
-
-### Changed
+## [0.5.10] - 2020-12-06
 
 ### Fixed
-* Sometimes the latex-caching dialog did not disappear.
+* Various fixes and minor refactoring.
+
 
 
 ## [0.5.9] - 2020-11-27
@@ -323,8 +320,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.8...master
-[0.5.9]: https://gitlab.com/plom/plom/compare/v0.5.7...v0.5.9
+[0.5.10]: https://gitlab.com/plom/plom/compare/v0.5.9...v0.5.10
+[0.5.9]: https://gitlab.com/plom/plom/compare/v0.5.8...v0.5.9
 [0.5.8]: https://gitlab.com/plom/plom/compare/v0.5.7...v0.5.8
 [0.5.7]: https://gitlab.com/plom/plom/compare/v0.5.6...v0.5.7
 [0.5.6]: https://gitlab.com/plom/plom/compare/v0.5.5...v0.5.6
