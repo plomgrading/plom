@@ -138,6 +138,7 @@ def MgiveTaskToClient(self, user_name, group_id):
         # update status, username
         qref.status = "out"
         qref.user = uref
+        qref.time = datetime.now()
         qref.save()
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
@@ -185,6 +186,7 @@ def MdidNotFinish(self, user_name, group_id):
         qref.status = "todo"
         qref.user = None
         qref.marked = False
+        qref.time = datetime.now()
         # now clean up the qgroup
         qref.test.marked = False
         qref.test.save()
@@ -310,6 +312,7 @@ def MtakeTaskFromClient(
         # update status, mark, annotate-file-name, time, and
         # time spent marking the image
         qref.status = "done"
+        qref.time = datetime.now()
         qref.marked = True
         # the bundle for this image is given by the (fixed) bundle for the parent qgroup.
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
@@ -563,6 +566,7 @@ def MrevertTask(self, task):
         # clean up the qgroup
         qref.marked = False
         qref.status = "todo"
+        qref.time = datetime.now()
         qref.user = None
         qref.save()
         rval = [True]  # keep list of files to delete.

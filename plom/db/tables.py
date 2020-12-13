@@ -76,6 +76,7 @@ class QGroup(BaseModel):
     version = pw.IntegerField(null=False, default=1)
     user = pw.ForeignKeyField(User, backref="qgroups", null=True)
     status = pw.CharField(default="")
+    time = pw.DateTimeField(null=True)
     marked = pw.BooleanField(default=False)
 
 
