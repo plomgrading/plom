@@ -39,8 +39,16 @@ docker-image:
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - echo $DOCKER_USE_CACHE
-    - docker pull $IM_LATEST || true
-    - docker build --cache-from $IM_LATEST --tag $IM .
+    - >
+      if [ "$DOCKER_USE_CACHE" == "1" ]; then
+        docker pull $IM_LATEST || true
+      fi
+    - >
+      if [ "$DOCKER_USE_CACHE" == "1" ]; then
+        docker build --cache-from $IM_LATEST --tag $IM .
+      else
+        docker build --tag $IM .
+      fi
     - docker push $IM
 
 
