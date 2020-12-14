@@ -424,10 +424,10 @@ linuxbin_ubuntu1804:
 
 
 # TODO: consider doing only on the master branch and only when tests pass
-linuxbin_ubuntu1910:
+linuxbin_ubuntu2004:
   stage: final
   needs: []
-  image: ubuntu:19.10
+  image: ubuntu:20.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -440,7 +440,7 @@ linuxbin_ubuntu1910:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
     - mv dist/PlomClient*.bin .
-    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1910.bin}"; done;
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu2004.bin}"; done;
     - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
