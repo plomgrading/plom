@@ -253,6 +253,10 @@ def main():
         cl = process_class_list(args.classlist, args.demo)
         msgr = get_messenger(args.server, args.password)
         upload_classlist(classlist=cl, msgr=msgr)
+        print("Imported classlist of length {}.".format(len(cl)))
+        print("First student = {}.".format(cl[0]))
+        print("Last student = {}.".format(cl[-1]))
+
     elif args.command == "make":
         buildDatabaseAndPapers(args.server, args.password)
     elif args.command == "clear":
