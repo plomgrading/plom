@@ -253,7 +253,7 @@ class RearrangementViewer(QDialog):
         self.testNumber = testNumber
         self.need_to_confirm = need_to_confirm
         self._setupUI()
-        page_data = self.temp_dedupe_filter(page_data)
+        page_data = self.dedupe_by_md5sum(page_data)
         self.pageData = page_data
         self.nameToIrefNFile = {}
         if current_pages:
@@ -445,53 +445,71 @@ class RearrangementViewer(QDialog):
             lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
         )
 
-    def temp_dedupe_filter(self, pageData):
-        """A temporary hack for a side branch.  Usually should be a no-op.
+    def dedupe_by_md5sum(self, pageData):
+        """Collapse entries in the pagedata with duplicated md5sums.
 
-        This supports [1] and hopefully does nothing in other cases.
+        In the future [1], pages will be shared between questions but we
+        only want to show one copy of each such duplicated page in the
+        "Adjust pages" dialog.
 
         [1] https://gitlab.com/plom/plom/-/merge_requests/698
 
-        The data looks like the following.  We want to remove False rows that
-        have their md5 in one of the True rows:
+        The data looks like the following.  We want to compress rows that
+        have duplicated md5sums:
         ```
         ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
         ['h1.2', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
         ['h2.1', 'e224c22eda93456143fbac94beb0ffbd', False, 1, 40, '/tmp/plom_zq/tmpx0s.image]
         ['h2.2', '97521f4122df24ca012a12930391195a', False, 2, 41, '/tmp/plom_zq/tmpd5g.image]
+        ['h2.3', 'abcd1234abcd12314717621412412444', False, 3, 42, '/tmp/plom_zq/tmp012.image]
+        ['h3.1', 'abcd1234abcd12314717621412412444', False, 1, 42, '/tmp/plom_zq/tmp012.image]
         ```
-        (Possibily filenames are repeated for repeat md5: not required by this code.)
+        (Possibly filenames are repeated for repeat md5: not required by this code.)
 
         From this we want something like:
         ```
         ['h1.1 (& h2.1)', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
         ['h1.2 (& h2.2)', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
+        ['h2.3 (& h3.1)', 'abcd1234abcd12314717621412412444', False, 3, 42, '/tmp/plom_zq/tmp012.image]
         ```
         where the names of duplicates are shown in parentheses.
-        """
-        # server originally these are in the question (TODO: maybe not, True/False here generated on API call)
-        bottom_md5_list = []
-        for x in pageData:
-            if x[2]:
-                bottom_md5_list.append(x[1])
-        new_pageData = []
-        for x in pageData:
-            if x[2]:
-                new_pageData.append(x.copy())
-            else:
-                if x[1] not in bottom_md5_list:
-                    new_pageData.append(x.copy())
 
-        extra_names = {y[1]: [] for y in new_pageData}
+        It seems we need to keep the order as much as possible in this file, which complicates this.
+        May not be completely well-posed.  Probably better to refactor before this.  E.g., factor out
+        a dict of md5sum to filenames before we get here.
+
+        "Included" (column 3): include these in the question or maybe server
+        originally had these in the question (TODO: maybe not, True/False
+        generated on API call).
+
+        TODO: if order does not have `h1,1` first, should we move it first?
+              that is, before the parenthetical?  Probably by re-ordering
+              the list.
+        """
+        # List of lists, preserving original order within each list
+        tmp_data = []
         for x in pageData:
             md5 = x[1]
-            for y in new_pageData:
-                if md5 == y[1]:
-                    if y[0] != x[0]:
-                        extra_names[md5].append(x[0])
-        for y in new_pageData:
-            if extra_names[y[1]]:
-                y[0] = y[0] + " (& {})".format(", ".join(extra_names[y[1]]))
+            md5s_so_far = [y[0][1] for y in tmp_data]
+            if md5 in md5s_so_far:
+                i = md5s_so_far.index(md5)
+                tmp_data[i].append(x.copy())
+            else:
+                tmp_data.append([x.copy()])
+
+        # Compress each list down to a single item, packing the names
+        new_pageData = []
+        # warn/log if True not in first?
+        for y in tmp_data:
+            z = y[0].copy()
+            other_names = [_[0] for _ in y[1:]]
+            if other_names:
+                z[0] = z[0] + " (& {})".format(", ".join(other_names))
+            # If any entry had True for "included", include this row
+            # TODO: or should we reorder the list, moving True to front?
+            # TODO: depends what is done with the other data
+            z[2] = any([_[2] for _ in y])
+            new_pageData.append(z)
 
         return new_pageData
 
