@@ -76,8 +76,8 @@ def parseAndVerifySpecification(fname):
         '\nSee "plom-server --help" for more information on how to get the server up and running.\n'
     )
 
-    sp = SpecVerifier.load_verified()
-    if sp.spec["numberToName"] > 0:
+    spec = SpecVerifier.load_verified()
+    if spec["numberToName"] > 0:
         print(
             ">>> Note <<<\n"
             'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-build class ".\n'

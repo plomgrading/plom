@@ -56,7 +56,7 @@ def main(use_hex, digits, salt=None):
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
     """
-    spec = SpecVerifier.load_verified().spec
+    spec = SpecVerifier.load_verified()
     shortname = spec["name"]
     longname = spec["longName"]
     codedReturnDir = Path("codedReturn")

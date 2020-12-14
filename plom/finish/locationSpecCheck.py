@@ -23,7 +23,7 @@ def checkDirectories():
 def checkSpec(spec):
     # This runs after directory check, so we can try to load the local spec file.
     try:
-        localSpec = SpecVerifier.load_verified().spec
+        localSpec = SpecVerifier.load_verified()
     except:
         print("Problem finding local spec file. Aborting.")
         return False

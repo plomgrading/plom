@@ -97,7 +97,11 @@ class SpecVerifier:
 
     @classmethod
     def create_demo_template(cls, fname="demoSpec.toml", *, num_to_produce=None):
-        """Create a documented demo exam specification."""
+        """Create a documented demo exam specification.
+
+        This does not create a Spec object, but rather saves the
+        template to disc.
+        """
         s = cls._template_as_string()
         if num_to_produce:
             from plom.produce.demotools import getDemoClassListLength
@@ -120,6 +124,10 @@ class SpecVerifier:
             fh.write(s)
 
     @classmethod
+    def demo(cls):
+        return cls(toml.loads(cls._template_as_string()))
+
+    @classmethod
     def from_toml_file(cls, fname="testSpec.toml"):
         """Initialize a SpecVerifier from a toml file."""
         return cls(toml.load(fname))
@@ -129,6 +137,15 @@ class SpecVerifier:
         """Initialize a SpecVerifier from the default verified toml file."""
         # TODO: maybe we should do some testing here?
         return cls(toml.load(fname))
+
+    # this allows spec.number_to_produce
+    @property
+    def number_to_produce(self):
+        return self.spec['numberToProduce']
+
+    # this allows spec["numberToProduce"] for all
+    def __getitem__(self, what):
+        return self.spec[what]
 
     def __str__(self):
         s = "Plom exam specification:\n  "

@@ -264,7 +264,7 @@ def launch(masterToken=None):
     get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
     # TODO: might be nice to do a sanity spec verification, once we have a quiet one
-    spec = SpecVerifier.from_toml_file(Path(specdir) / "verifiedSpec.toml").spec
+    spec = SpecVerifier.from_toml_file(Path(specdir) / "verifiedSpec.toml")
     build_directories()
     peon = Server(spec, examDB, masterToken)
     userIniter = UserInitHandler(peon)

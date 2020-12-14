@@ -36,7 +36,7 @@ archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
 
 if __name__ == "__main__":
-    spec = SpecVerifier.load_verified().spec
+    spec = SpecVerifier.load_verified()
     basename = spec["name"]
     archivename = archivename.replace("{SHORTNAME}", basename)
 
