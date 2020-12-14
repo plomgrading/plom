@@ -249,7 +249,7 @@ def uploadHWPage(
             ),
         ]
 
-    log.info('upload: db going to loop over questions="{}"'.format(questions))
+    log.info('upload: tef={} going to loop over questions="{}"'.format(tref, questions))
     if not isinstance(questions, list):
         questions = [questions]
     for question in questions:
@@ -278,7 +278,7 @@ def uploadHWPage(
             tmp_order = order
 
         log.info(
-            "creating new hwpage question={}, order={}".format(question, tmp_order)
+            "creating new hwpage tref={}, question={}, order={}".format(tref, question, tmp_order)
         )
         self.createNewHWPage(tref, qref, tmp_order, image_ref)
     return [True]
