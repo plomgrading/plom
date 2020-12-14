@@ -38,8 +38,17 @@ docker-image:
   needs: []
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker pull $IM_LATEST || true
-    - docker build --cache-from $IM_LATEST --tag $IM .
+    - echo $DOCKER_USE_CACHE
+    - >
+      if [ "$DOCKER_USE_CACHE" == "1" ]; then
+        docker pull $IM_LATEST || true
+      fi
+    - >
+      if [ "$DOCKER_USE_CACHE" == "1" ]; then
+        docker build --cache-from $IM_LATEST --tag $IM .
+      else
+        docker build --tag $IM .
+      fi
     - docker push $IM
 
 
@@ -415,10 +424,10 @@ linuxbin_ubuntu1804:
 
 
 # TODO: consider doing only on the master branch and only when tests pass
-linuxbin_ubuntu1910:
+linuxbin_ubuntu2004:
   stage: final
   needs: []
-  image: ubuntu:19.10
+  image: ubuntu:20.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -431,7 +440,7 @@ linuxbin_ubuntu1910:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
     - mv dist/PlomClient*.bin .
-    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1910.bin}"; done;
+    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu2004.bin}"; done;
     - md5sum PlomClient*.bin > md5sum
   artifacts:
     paths:
