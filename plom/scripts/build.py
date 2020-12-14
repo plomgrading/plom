@@ -58,17 +58,6 @@ def checkTomlExtension(fname):
         )
 
 
-def createSpecificationFile(fname):
-    print('Creating specification file from template: "{}"'.format(fname))
-    print('  * Please edit the template spec "{}"'.format(fname))
-    template = pkg_resources.resource_string("plom", "templateTestSpec.toml")
-    with open(fname, "wb") as fh:
-        fh.write(template)
-    print('Creating "sourceVersions" directory for your test source PDFs.')
-    os.makedirs("sourceVersions", exist_ok=True)
-    print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
-
-
 def parseAndVerifySpecification(fname):
     os.makedirs(specdir, exist_ok=True)
     os.makedirs("sourceVersions", exist_ok=True)
@@ -221,35 +210,25 @@ def main():
             fname = "demoSpec.toml"
         else:
             fname = checkTomlExtension(args.specFile)
-        # copy the template spec into place
-        createSpecificationFile(fname)
+
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
-            classlist_len = pandas.read_csv(
-                io.BytesIO(pkg_resources.resource_string("plom", "demoClassList.csv"))
-            ).shape[0]
-            if args.demo_num_papers > classlist_len:
-                # TODO: could make longer classlist on the fly?  Or checkin longer list?
-                raise ValueError(
-                    "Demo size capped at classlist length of {}".format(classlist_len)
-                )
-            print("DEMO MODE: adjustng spec for {} tests".format(args.demo_num_papers))
-            # TODO: use specParser eventually, or put in createSpecification above
-            with open(fname, "r") as f:
-                spec = f.read()
-            spec = spec.replace(
-                "numberToProduce = 20",
-                "numberToProduce = {}".format(args.demo_num_papers),
-            )
-            # half of them, up to length of demo classlist
-            num_to_name = min(args.demo_num_papers // 2, classlist_len)
-            spec = spec.replace(
-                "numberToName = 10", "numberToName = {}".format(num_to_name)
-            )
-            with open(fname, "w") as f:
-                f.write(spec)
         if args.demo:
-            print("DEMO MODE: building source files")
+            print("DEMO MODE: creating demo specification file")
+            SpecVerifier.create_demo_template(
+                fname, num_to_produce=args.demo_num_papers
+            )
+        else:
+            print('Creating specification file from template: "{}"'.format(fname))
+            print('  * Please edit the template spec "{}"'.format(fname))
+            SpecVerifier.create_template(fname)
+
+        print('Creating "sourceVersions" directory for your test source PDFs.')
+        os.makedirs("sourceVersions", exist_ok=True)
+        if not args.demo:
+            print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
+        if args.demo:
+            print("DEMO MODE: building source files: version1.pdf, version2.pdf")
             if not buildDemoSourceFiles():
                 exit(1)
             print('DEMO MODE: continuing as if "parse" command was run...')

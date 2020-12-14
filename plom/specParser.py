@@ -1,5 +1,6 @@
 import random
 from pathlib import Path
+import pkg_resources
 
 import toml
 
@@ -77,6 +78,46 @@ class SpecVerifier:
             d (dict): an exam specification.
         """
         self.spec = d
+
+    @classmethod
+    def _template_as_bytes(cls):
+        return pkg_resources.resource_string("plom", "templateTestSpec.toml")
+
+    @classmethod
+    def _template_as_string(cls):
+        # TODO: or just use a triple-quoted inline string
+        return cls._template_as_bytes().decode()
+
+    @classmethod
+    def create_template(cls, fname="testSpec.toml"):
+        """Create a documented example exam specification."""
+        template = cls._template_as_bytes()
+        with open(fname, "wb") as fh:
+            fh.write(template)
+
+    @classmethod
+    def create_demo_template(cls, fname="demoSpec.toml", *, num_to_produce=None):
+        """Create a documented demo exam specification."""
+        s = cls._template_as_string()
+        if num_to_produce:
+            from plom.produce.demotools import getDemoClassListLength
+
+            # TODO: 20 and 10 in source file hardcoded here, use regex instead
+            s = s.replace(
+                "numberToProduce = 20",
+                "numberToProduce = {}".format(num_to_produce),
+            )
+            classlist_len = getDemoClassListLength()
+            if num_to_produce > classlist_len:
+                raise ValueError(
+                    "Demo size capped at classlist length of {}".format(classlist_len)
+                )
+            s = s.replace(
+                "numberToName = 10",
+                "numberToName = {}".format(min(num_to_produce // 2, classlist_len)),
+            )
+        with open(fname, "w") as fh:
+            fh.write(s)
 
     @classmethod
     def from_toml_file(cls, fname="testSpec.toml"):
