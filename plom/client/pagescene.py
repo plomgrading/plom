@@ -145,19 +145,25 @@ class UnderlyingImages(QGraphicsItemGroup):
     Puts a dotted border around all the images.
     """
 
-    def __init__(self, imageNames):
+    def __init__(self, image_data):
         """
         Initialize a new series of underlying images.
 
         Args:
-            imageNames(list[str]): List containing the names of the images.
+            image_data (list[dict]): each dict has keys 'filename'
+                and 'orientation' (and possibly others).  Currently
+                every image is used and the list order determines
+                the order.  That is subject to change.
         """
         super(QGraphicsItemGroup, self).__init__()
-        self.imageNames = imageNames
         self.images = {}
         x = 0
-        for (n, img) in enumerate(self.imageNames):
-            pix = QPixmap(img)
+        for (n, img) in enumerate(image_data):
+            pix = QPixmap(img['filename'])
+            angle = img['orientation']
+            if angle != 0:
+                print("TODO "*20)
+                print("do angles")
             self.images[n] = QGraphicsPixmapItem(pix)
             self.images[n].setTransformationMode(Qt.SmoothTransformation)
             self.images[n].setPos(x, 0)
@@ -250,14 +256,17 @@ class PageScene(QGraphicsScene):
     QTextItems.
     """
 
-    def __init__(self, parent, imgNames, saveName, maxMark, score, question, markStyle):
+    def __init__(
+        self, parent, src_img_data, saveName, maxMark, score, question, markStyle
+    ):
         """
         Initialize a new PageScene.
 
         Args:
             parent (SceneParent): the parent of the scene.
-            imgNames (list[str]): list containing the names of the paper
-                images.
+            src_img_data (list[dict]): metadata for the underlying
+                source images.  Each dict has (at least) keys for
+               `filename` and `orientation`.
             saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
             score (int): current score
@@ -272,7 +281,7 @@ class PageScene(QGraphicsScene):
         super().__init__(parent)
         self.parent = parent
         # Grab filename of groupimage
-        self.imageNames = imgNames
+        self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.saveName = saveName
         self.maxMark = maxMark
         self.score = score
@@ -280,7 +289,7 @@ class PageScene(QGraphicsScene):
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
-        self.underImage = UnderlyingImages(self.imageNames)
+        self.underImage = UnderlyingImages(self.src_img_data)
         # and an underlyingrect for the margin.
         margin_rect = QRectF(self.underImage.boundingRect())
         marg = 512  # at some point in future make some function of image width/height
@@ -380,7 +389,7 @@ class PageScene(QGraphicsScene):
         in one long row) but future revisions might support alternate
         layouts.
         """
-        return len(self.imageNames)
+        return len(self.src_img_data)
 
     def how_many_underlying_images_high(self):
         """How many images high is the bottom layer?

@@ -123,7 +123,7 @@ class Annotator(QWidget):
                     question. ie - is it mark up/down, where are all the objects, how to
                     rebuild those objects, etc.
                 integrity_check (str): integrity_check of the underlying task.
-                image_md5_list (list[str]): list of image md5sums of underlying images
+                src_img_data (list[dict]): image md5sums etc of underlying images.
                 }
         """
         super(Annotator, self).__init__()
@@ -155,6 +155,7 @@ class Annotator(QWidget):
         self.testName = None
         self.paperDir = None
         self.imageFiles = None
+        self.src_img_data = None
         self.saveName = None
         self.score = None
         self.maxMark = None
@@ -315,6 +316,7 @@ class Annotator(QWidget):
         self.setWindowTitle("Annotator")
         self.paperDir = None
         self.imageFiles = None
+        self.src_img_data = None
         self.saveName = None
         # self.destroyMarkHandler()
 
@@ -329,7 +331,7 @@ class Annotator(QWidget):
         markStyle,
         plomDict,
         integrity_check,
-        image_md5_list,
+        src_img_data,
     ):
         """Loads new Data into the Toggle View window for marking.
 
@@ -355,7 +357,7 @@ class Annotator(QWidget):
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
             integrity_check (str): integrity check string
-            image_md5_list (list[str]): list of image md5sums
+            src_img_data (list[dict]): image md5sums etc.
 
         Returns:
             None: Modifies many instance vars.
@@ -371,10 +373,10 @@ class Annotator(QWidget):
         self.imageFiles = fnames
         self.saveName = saveName
         self.integrity_check = integrity_check
-        self.image_md5_list = image_md5_list
-        if len(self.image_md5_list) != len(self.imageFiles):
+        self.src_img_data = src_img_data
+        if len(self.src_img_data) != len(self.imageFiles):
             log.error(
-                "Marker is shortchanging us on md5sums: probably something bad will happen soon!"
+                "Marker is shortchanging us on source image data: probably something bad will happen soon!"
             )
 
         if getattr(self, "maxMark", None) != maxMark:
@@ -822,7 +824,9 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
         # TODO: maybe download should happen in Marker?
-        if len(set(self.image_md5_list)) != len(self.image_md5_list):
+        # TODO: all ripe for refactoring as the src_img_data improves
+        image_md5_list = [x['md5'] for x in self.src_img_data]
+        if len(set(image_md5_list)) != len(image_md5_list):
             s = dedent(
                 """
                 Unexpectedly repeated md5sums: are there two identical pages
@@ -830,14 +834,14 @@ class Annotator(QWidget):
                 Annotator's image_md5_list is {}\n
                 Consider filing a bug with this info!
                 """.format(
-                    self.image_md5_list
+                    image_md5_list
                 )
             ).strip()
             log.error(s)
             ErrorMessage(s).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
-        for x in self.image_md5_list:
+        for x in image_md5_list:
             if x not in [p[1] for p in page_data]:
                 s = dedent(
                     """
@@ -845,18 +849,18 @@ class Annotator(QWidget):
                     There is an image being annotated that is not present in
                     the server's page data.  Probably that is not allowed(?)
                     How did it happen?\n
-                    Annotator's image_md5_list is: {}\n
+                    Annotator's src img data is: {}\n
                     Server page_data is:
                       {}\n
                     Consider filing a bug with this info!
                     """.format(
-                        self.image_md5_list, page_data
+                        self.src_img_data, page_data
                     )
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec_()
         # note we'll md5 match within one paper only: low birthday probability
-        md5_to_file_map = {k: v for k, v in zip(self.image_md5_list, self.imageFiles)}
+        md5_to_file_map = {k: v for k, v in zip(image_md5_list, self.imageFiles)}
         log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
         # Crawl over the page_data, append a filename for each file
         # download what's needed but avoid re-downloading duplicate files
@@ -898,7 +902,7 @@ class Annotator(QWidget):
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.image_md5_list, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data, is_dirty
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
@@ -916,13 +920,13 @@ class Annotator(QWidget):
                 s = dedent(
                     """
                     Unexpectedly repeated md5sums: did Adjust Pages somehow
-                    a page?  This should not happen!\n
+                    dupe a page?  This should not happen!\n
                     Please file an issue with this info!\n
                     perm = {}\n
-                    annotr image_md5_list = {}\n
+                    annotr src_img_data = {}\n
                     page_data = {}
                     """.format(
-                        perm, self.image_md5_list, page_data
+                        perm, self.src_img_data, page_data
                     )
                 ).strip()
                 log.error(s)
@@ -980,9 +984,13 @@ class Annotator(QWidget):
         Returns:
             None: modifies self.scene from None to a pagescene object and connects it to a pageview object.
         """
+        # TODO: just keep file with other metadata!
+        tmp = self.src_img_data.copy()
+        for x, y in zip(tmp, self.imageFiles):
+            x['filename'] = y
         self.scene = PageScene(
             self,
-            self.imageFiles,
+            tmp,
             self.saveName,
             self.maxMark,
             self.score,
@@ -1673,7 +1681,7 @@ class Annotator(QWidget):
             plomFile,
             commentFile,
             self.integrity_check,
-            self.image_md5_list,
+            self.src_img_data,
         ]
         self.annotator_upload.emit(self.tgvID, stuff)
         return True
@@ -1841,8 +1849,10 @@ class Annotator(QWidget):
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
+        # TODO: interleave the underlay filenames and their metadata
         plomData = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
+            "orientations": [x['orientation'] for x in self.src_img_data],
             "saveName": os.path.basename(self.saveName),
             "markStyle": self.markStyle,
             "maxMark": self.maxMark,

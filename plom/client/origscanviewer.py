@@ -61,6 +61,7 @@ class SourceList(QListWidget):
         self.itemDoubleClicked.connect(self.viewImage)
         self.item_positions = {}
         self.item_files = {}
+        self.item_orientation = {}
         # self.setSelectionMode(QListView.SingleSelection)
 
     def resizeEvent(self, whatev):
@@ -80,6 +81,7 @@ class SourceList(QListWidget):
         self.addItem(it)  # item is added at current_row
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
+        self.item_orientation[name] = 0
 
     def hideItemByName(self, name=None):
         """Removes (hides) a single named item from source-list.
@@ -145,6 +147,7 @@ class SinkList(QListWidget):
             {}
         )  # whether or not the item 'officially' belongs to the question
         self.item_files = {}
+        self.item_orientation = {}
         self.itemDoubleClicked.connect(self.viewImage)
         # self.setSelectionMode(QListView.SingleSelection)
 
@@ -158,6 +161,7 @@ class SinkList(QListWidget):
     def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
         self.item_files[name] = pfile
+        self.item_orientation[name] = 0  # TODO
         self.item_belongs[name] = belongs
 
     def removeSelectedItems(self):
@@ -221,15 +225,17 @@ class SinkList(QListWidget):
         for i in self.selectedIndexes():
             ci = self.item(i.row())
             name = ci.text()
+            cur_angle = self.item_orientation[name]
+            cur_angle = (cur_angle + angle) % 360
+            self.item_orientation[name] = cur_angle
             rot = QTransform()
-            rot.rotate(angle)
+            rot.rotate(cur_angle)
             rfile = self.item_files[name]
-
             cpix = QPixmap(rfile)
             npix = cpix.transformed(rot)
-            npix.save(rfile, format="PNG")
-
-            ci.setIcon(QIcon(rfile))
+            ci.setIcon(QIcon(npix))
+            # rotpixmap = ci.getIcon().pixmap().transformed(rot)
+            # ci.setIcon(QIcon(rotpixmap))
         self.parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
         self.setFlow(QListView.LeftToRight)
@@ -538,11 +544,11 @@ class RearrangementViewer(QDialog):
         self.listB.clear()
         move_order = {}
         for row in self.pageData:
-            self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
+            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
             # add every page image to list A
-            self.listA.addImageItem(row[0], row[-1], row[2])
+            self.listA.addImageItem(row[0], row[5], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[-1], row[2])
+            self.listB.addPotentialItem(row[0], row[5], row[2])
             # if position in current annot is non-null then add to list of pages to move between lists.
             if row[2] and row[3]:
                 move_order[row[3]] = row[0]
@@ -554,7 +560,7 @@ class RearrangementViewer(QDialog):
         Populates the QListWidgets with pages, with current state highlighted.
 
         Args:
-            current (list): md5sums of the pages currently selected.
+            current (list): dicts with 'md5' and 'orientation' keys.
 
         Returns:
             None: but changes the state of self.
@@ -563,16 +569,18 @@ class RearrangementViewer(QDialog):
         self.listA.clear()
         self.listB.clear()
         for row in self.pageData:
-            self.nameToIrefNFile[row[0]] = [row[1], row[-1]]
+            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
             # add every page image to list A
-            self.listA.addImageItem(row[0], row[-1], row[2])
+            self.listA.addImageItem(row[0], row[5], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[-1], row[2])
-        for k in current:
-            match = [row[0] for row in self.pageData if row[1] == k]
+            self.listB.addPotentialItem(row[0], row[5], row[2])
+        for kv in current:
+            match = [row[0] for row in self.pageData if row[1] == kv['md5']]
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
+            if kv["orientation"] != 0:
+                log.error('TODO apply "orientation" of {}'.format(kv["orientation"]))
 
     def sourceToSink(self):
         """
@@ -674,8 +682,9 @@ class RearrangementViewer(QDialog):
 
         self.permute = []
         for n in self.listB.getNameList():
-            self.permute.append(self.nameToIrefNFile[n])
-            # return pairs of [iref, file]
+            tmp = self.nameToIrefNFile[n]
+            self.permute.append((*tmp, self.listB.item_orientation[n]))
+            # return triples of [iref, file, angle]
         self.accept()
 
     def singleSelect(self, currentList, allPages):

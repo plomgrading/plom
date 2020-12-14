@@ -343,13 +343,13 @@ class ExamQuestion:
     def __init__(
         self,
         task,
-        fnames=[],
+        fnames=[], *,
+        src_img_data=[],
         stat="untouched",
         mrk="-1",
         mtime="0",
         tags="",
         integrity_check="",
-        image_md5s=[],
     ):
         """
         Initializes an exam question.
@@ -364,7 +364,9 @@ class ExamQuestion:
             mtime (int): marking time spent on that page in seconds.
             tags (str): Tags corresponding to the exam.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
-            image_md5s (list[str]): a list containing the md5sums of the images for the test question.
+            src_img_metadata (list[dict]): a list of dicts of md5sums
+                and other metadata of the images for the test question.
+                TODO: move filenames here too?
 
         Notes:
             By default set mark to be negative (since 0 is a possible mark)
@@ -373,7 +375,7 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.originalFiles = fnames
-        self.image_md5s = image_md5s
+        self.src_img_data = src_img_data
         self.annotatedFile = ""  # The filename for the (future) annotated image
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
@@ -405,7 +407,7 @@ class MarkerExamModel(QStandardItemModel):
                 "PlomFile",
                 "PaperDir",
                 "integrity_check",
-                "image_md5s",
+                "src_img_data",
             ]
         )
 
@@ -449,7 +451,7 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem("placeholder"),
                 # todo - reorder these?
                 QStandardItem(paper.integrity_check),
-                QStandardItem(json.dumps(paper.image_md5s)),  # json (list[str] -> str)
+                QStandardItem(repr(paper.src_img_data)),
             ]
         )
         return r
@@ -666,15 +668,16 @@ class MarkerExamModel(QStandardItemModel):
         """Set the original un-annotated image filenames."""
         self._setDataByTask(task, 5, repr(fnames))
 
-    def _setImageMD5s(self, task, image_md5s):
-        """Set the md5sums of the original image files."""
-        self._setDataByTask(task, 10, json.dumps(image_md5s))
+    def _setImageData(self, task, src_img_data):
+        """Set the md5sums etc of the original image files."""
+        print("DEBUG: setting img data type={} data={}".format(type(src_img_data), src_img_data))
+        self._setDataByTask(task, 10, repr(src_img_data))
 
-    def setOriginalFilesAndMD5s(self, task, fnames, image_md5s):
-        """Set the original un-annotated image filenames and their md5sums."""
+    def setOriginalFilesAndData(self, task, fnames, src_img_data):
+        """Set the original un-annotated image filenames and their metadata."""
         # TODO: better to store these in zipped pairs!
         self._setOriginalFiles(task, fnames)
-        self._setImageMD5s(task, image_md5s)
+        self._setImageData(task, src_img_data)
 
     def setAnnotatedFile(self, task, aname, pname):
         """Set the annotated image and .plom file names."""
@@ -685,9 +688,12 @@ class MarkerExamModel(QStandardItemModel):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
 
-    def getImageMD5List(self, task):
+    def getImageMetaList(self, task):
         """Return image_md5sum list for task as a string."""
-        return self._getDataByTask(task, 10)
+        print("DEBUG: getting meta type={}, data={}".format(type(self._getDataByTask(task, 10)), self._getDataByTask(task, 10)))
+        # dangerous eval? json better?
+        r = eval(self._getDataByTask(task, 10))
+        return r
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
         """
@@ -1237,12 +1243,12 @@ class MarkerClient(QWidget):
                 ExamQuestion(
                     x[0],
                     fnames=[],
+                    src_img_data=[],
                     stat="marked",
                     mrk=x[1],
                     mtime=x[2],
                     tags=x[3],
                     integrity_check=x[4],
-                    image_md5s=[],
                 )
             )
 
@@ -1296,8 +1302,8 @@ class MarkerClient(QWidget):
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        md5List = [x[1] for x in image_metadata]
-        self.examModel.setOriginalFilesAndMD5s(task, image_fnames, md5List)
+        src_img_data = [{'md5': x[1], 'orientation': 0} for x in image_metadata]
+        self.examModel.setOriginalFilesAndData(task, image_fnames, src_img_data)
 
         if anImage is None:
             return True
@@ -1407,7 +1413,7 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        image_md5_list = [x[1] for x in image_metadata]
+        src_img_meta_dict = [{'md5':x[1], 'orientation':0} for x in image_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(image_metadata):
@@ -1422,7 +1428,7 @@ class MarkerClient(QWidget):
             ExamQuestion(
                 task,
                 image_fnames,
-                image_md5s=image_md5_list,
+                src_img_data=src_img_meta_dict,
                 tags=tags,
                 integrity_check=integrity_check,
             )
@@ -1485,7 +1491,7 @@ class MarkerClient(QWidget):
             ExamQuestion(
                 task,
                 fnames,
-                image_md5s=image_md5s,
+                src_img_data=image_md5s,
                 tags=tags,
                 integrity_check=integrity_check,
             )
@@ -1728,8 +1734,16 @@ class MarkerClient(QWidget):
         tgv = task[1:]
         # get the integrity_check code and image_md5_list of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
-        # convert back to list[int]
-        image_md5_list = json.loads(self.examModel.getImageMD5List(task))
+        image_md5_list = self.examModel.getImageMetaList(task)
+        print("="*80)
+        print(fnames)
+        print(image_md5_list)
+        print(type(image_md5_list))
+        # why not already (x[0], 0)?
+        if isinstance(image_md5_list[0], list):
+            image_md5_list = [x['md5'] for x in image_md5_list]
+        print(image_md5_list)
+        print("="*80)
         return (
             tgv,
             exam_name,
@@ -1917,7 +1931,7 @@ class MarkerClient(QWidget):
         Args:
             task (str): the task ID of the current test.
             imageList (list[str]): list of image names to which are being
-                rearranged.
+                rearranged.  Each row looks like `[md5, filename, angle]`.
 
         Returns:
             initialData (as described by getDataForAnnotator)
@@ -1927,9 +1941,10 @@ class MarkerClient(QWidget):
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
         image_names = []
-        image_md5s = []
+        image_meta = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
         # TODO: something with tempfile instead
+        # TODO: but why not keep using old name once they are static
         rand6hex = secrets.token_hex(3)
         for i in range(len(imageList)):
             tmp = os.path.join(
@@ -1937,10 +1952,10 @@ class MarkerClient(QWidget):
             )
             shutil.copyfile(imageList[i][1], tmp)
             image_names.append(tmp)
-            image_md5s.append(imageList[i][0])
-
+            image_meta.append({'md5': imageList[i][0], 'orientation': imageList[i][2]})
+        print(image_meta)
         task = "q" + task
-        self.examModel.setOriginalFilesAndMD5s(task, image_names, image_md5s)
+        self.examModel.setOriginalFilesAndData(task, image_names, image_meta)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
         # finally relaunch the annotator
