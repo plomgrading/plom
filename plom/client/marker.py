@@ -1734,15 +1734,10 @@ class MarkerClient(QWidget):
         tgv = task[1:]
         # get the integrity_check code and image_md5_list of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
-        image_md5_list = self.examModel.getImageMetaList(task)
+        src_img_data = self.examModel.getImageMetaList(task)
         print("="*80)
         print(fnames)
-        print(image_md5_list)
-        print(type(image_md5_list))
-        # why not already (x[0], 0)?
-        if isinstance(image_md5_list[0], list):
-            image_md5_list = [x['md5'] for x in image_md5_list]
-        print(image_md5_list)
+        print(src_img_data)
         print("="*80)
         return (
             tgv,
@@ -1754,7 +1749,7 @@ class MarkerClient(QWidget):
             markStyle,
             pdict,
             integrity_check,
-            image_md5_list,
+            src_img_data,
         )
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
@@ -1817,7 +1812,7 @@ class MarkerClient(QWidget):
                 plomFileName(str): the name of thee .plom file
                 commentFileName(str): the name of the comment file.
                 integrity_check(str): the integrity_check string of the task.
-                image_md5_list(list[str]): the list of image md5sums
+                src_img_data (list[dict]): image data, md5sums, etc
 
         Returns:
             None
@@ -1832,7 +1827,7 @@ class MarkerClient(QWidget):
             plomFileName,
             commentFileName,
             integrity_check,
-            image_md5_list,
+            src_img_data,
         ) = stuff
 
         if not (0 <= gr and gr <= self.maxMark):
@@ -1855,6 +1850,7 @@ class MarkerClient(QWidget):
         # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask("q" + task)
         tags = self.examModel.getTagsByTask("q" + task)
+        # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
             "q" + task,  # current task
@@ -1869,7 +1865,7 @@ class MarkerClient(QWidget):
             self.version,
             tags,
             integrity_check,
-            image_md5_list,
+            [x['md5'] for x in src_img_data],
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
