@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Adjust-Pages: fix deduping when shared page not included in current question.
+* Fixed some times in manager tool.
 
 
 ## [0.5.10] - 2020-12-06
