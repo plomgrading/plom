@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* `plom-build make` now outputs a csv file showing the test numbers, question/page versions and student-info if named paper."
 
 ### Fixed
 * Adjust-Pages: fix deduping when shared page not included in current question.
