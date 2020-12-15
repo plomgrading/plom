@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import secrets
+import io
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 # To test platform
@@ -1302,7 +1303,16 @@ class MarkerClient(QWidget):
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        src_img_data = [{'md5': x[1], 'orientation': 0} for x in image_metadata]
+        # Parse PlomFile early for orientation data: but PageScene is going
+        # to parse it later.  TODO: seems like duplication of effort.
+        plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
+        ori = plomdata.get('orientations')
+        if not ori:
+            log.warn("plom file has no orientation data: substituting zeros")
+            src_img_data = [{'md5': x[1], 'orientation': 0} for x in image_metadata]
+        else:
+            log.info("importing orientations from plom file")
+            src_img_data = [{'md5': x[1], 'orientation': y} for (x,y) in zip(image_metadata, ori)]
         self.examModel.setOriginalFilesAndData(task, image_fnames, src_img_data)
 
         if anImage is None:
