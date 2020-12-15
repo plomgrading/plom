@@ -393,7 +393,6 @@ def make_PDF(
     extra=None,
     test_mode=False,
     test_folder=None,
-    fakepdf=False,
 ):
     """A function that makes the PDFs and saves the modified exam files.
 
@@ -450,7 +449,6 @@ def make_PDF(
     save_PDFs(extra, exam, test)
 
 
-# TODO: Complete the test mode functionality
 def make_fakePDF(
     name,
     code,
@@ -461,8 +459,8 @@ def make_fakePDF(
     extra=None,
     test_mode=False,
     test_folder=None,
-    fakepdf=False,
 ):
+    """Twin to the real make_pdf command - makes empty files."""
     if extra:
         save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
             str(test).zfill(4), extra["id"]

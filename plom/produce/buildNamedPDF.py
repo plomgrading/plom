@@ -22,9 +22,8 @@ def _make_PDF(x):
     Arguments:
         x (tuple): this is expanded as the arguments to :func:`make_PDF`.
     """
-    fakepdf = x[-1]  # drop the last argument
-    # look at last arg - x[-1] = fakepdf
-    y = x[:-1]
+    fakepdf = x[-1]  # look at last arg - x[-1] = fakepdf
+    y = x[:-1]  # drop the last argument = fakepdf
     if fakepdf:
         make_fakePDF(*y)
     else:
@@ -45,8 +44,8 @@ def build_all_papers(spec, global_page_version_map, classlist, fakepdf=False):
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
-        fakepdf (bool): when true, the build empty pdfs for use when
-            students upload homework or similar.
+        fakepdf (bool): when true, the build empty pdfs (actually empty files)
+            for use when students upload homework or similar (and only 1 version).
 
     Raises:
         ValueError: classlist is invalid in some way.

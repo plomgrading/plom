@@ -183,7 +183,7 @@ spB = sub.add_parser(
 spB.add_argument(
     "--fakepdf",
     action="store_true",
-    help="Do not generate real PDFs. Use when students submitting uploaded work.",
+    help="Do not generate real PDFs. Use when students submitting uploaded work and only 1 version.",
 )
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
