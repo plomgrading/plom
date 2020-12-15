@@ -84,6 +84,7 @@ def create_exam_and_insert_QR(
     qr_file,
     test_mode=False,
     test_folder=None,
+    noQR=False,
 ):
     """Creates the exam objects and insert the QR codes.
 
@@ -104,6 +105,7 @@ def create_exam_and_insert_QR(
     Keyword Arguments:
         test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
         test_folder {Str} -- String for where to place the generated test files. (default: {None})
+        noQR {bool} -- Boolean to determine whether or not to paste in qr-codes (default: False)
 
     Returns:
         fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
@@ -168,7 +170,7 @@ def create_exam_and_insert_QR(
             align=1,
         )
         exam[page_index].drawRect(rect, color=[0, 0, 0])
-        assert insertion_confirmed > 0
+        # assert insertion_confirmed > 0
 
         # stamp DNW near staple: even/odd pages different
         # Top Left for even pages, Top Right for odd pages
@@ -205,20 +207,25 @@ def create_exam_and_insert_QR(
             insertion_confirmed > 0
         ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-        # Grab the tpv QRcodes for current page and put them on the pdf
-        # Remember that we only add 3 of the 4 QR codes for each page since
-        # we always have a corner section for staples and such
-        qr_code = {}
-        for corner_index in range(1, 5):
-            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
-        if page_index % 2 == 0:
-            exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
-            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
-            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
-        else:
-            exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
-            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
-            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+        if noQR:  # no qr-codes
+            pass
+        else:  # paste in the QR-codes
+            # Grab the tpv QRcodes for current page and put them on the pdf
+            # Remember that we only add 3 of the 4 QR codes for each page since
+            # we always have a corner section for staples and such
+            qr_code = {}
+            for corner_index in range(1, 5):
+                qr_code[corner_index] = fitz.Pixmap(
+                    qr_file[page_index + 1][corner_index]
+                )
+            if page_index % 2 == 0:
+                exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
+                exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+                exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+            else:
+                exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
+                exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+                exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
 
     return exam
 
@@ -391,6 +398,7 @@ def make_PDF(
     test,
     page_versions,
     extra=None,
+    noQR=False,
     test_mode=False,
     test_folder=None,
 ):
@@ -409,6 +417,7 @@ def make_PDF(
         versions {int} -- Number of version of this Document.
         test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
         page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
+        noQR {bool} -- Boolean to determine whether or not to paste in qr-codes
 
     Keyword Arguments:
         extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
@@ -437,6 +446,7 @@ def make_PDF(
             qr_file,
             test_mode,
             test_folder,
+            noQR=noQR,
         )
 
         # If we are provided with the student number and student id,
@@ -457,10 +467,12 @@ if __name__ == "__main__":
     # 4 = number of versions
     # 5 = the test test number
     # 6 = dict of the version number for each page
+    # 7 = noQR = boolean - when false = paste QRs
     name = sys.argv[1]
     code = sys.argv[2]
     length = int(sys.argv[3])
     versions = int(sys.argv[4])
     test = int(sys.argv[5])
     page_versions = eval(sys.argv[6])
-    make_PDF(name, code, length, versions, test, page_versions)
+    noQR = eval(sys.argv[7])
+    make_PDF(name, code, length, versions, test, page_versions, noQR)

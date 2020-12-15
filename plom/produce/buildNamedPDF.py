@@ -25,7 +25,7 @@ def _make_PDF(x):
     make_PDF(*x)
 
 
-def build_all_papers(spec, global_page_version_map, classlist):
+def build_all_papers(spec, global_page_version_map, classlist, noQR=False):
     """Builds the papers using _make_PDF.
 
     Based on `numberToName` this uses `_make_PDF` to create some
@@ -71,6 +71,7 @@ def build_all_papers(spec, global_page_version_map, classlist):
                 paper_index,
                 page_version,
                 student_info,
+                noQR,
             )
         )
 
