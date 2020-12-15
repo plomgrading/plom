@@ -825,7 +825,7 @@ class Annotator(QWidget):
         testNumber = self.tgvID[:4]
         # TODO: maybe download should happen in Marker?
         # TODO: all ripe for refactoring as the src_img_data improves
-        image_md5_list = [x['md5'] for x in self.src_img_data]
+        image_md5_list = [x["md5"] for x in self.src_img_data]
         if len(set(image_md5_list)) != len(image_md5_list):
             s = dedent(
                 """
@@ -987,7 +987,7 @@ class Annotator(QWidget):
         # TODO: just keep file with other metadata!
         tmp = self.src_img_data.copy()
         for x, y in zip(tmp, self.imageFiles):
-            x['filename'] = y
+            x["filename"] = y
         self.scene = PageScene(
             self,
             tmp,
@@ -1852,7 +1852,7 @@ class Annotator(QWidget):
         # TODO: interleave the underlay filenames and their metadata
         plomData = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
-            "orientations": [x['orientation'] for x in self.src_img_data],
+            "orientations": [x["orientation"] for x in self.src_img_data],
             "saveName": os.path.basename(self.saveName),
             "markStyle": self.markStyle,
             "maxMark": self.maxMark,

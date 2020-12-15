@@ -159,9 +159,9 @@ class UnderlyingImages(QGraphicsItemGroup):
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
-            pix = QPixmap(data['filename'])
+            pix = QPixmap(data["filename"])
             rot = QTransform()
-            rot.rotate(data['orientation'])
+            rot.rotate(data["orientation"])
             pix = pix.transformed(rot)
             img = QGraphicsPixmapItem(pix)
             img.setTransformationMode(Qt.SmoothTransformation)

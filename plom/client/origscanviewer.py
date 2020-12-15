@@ -577,7 +577,7 @@ class RearrangementViewer(QDialog):
             # add the potential for every page to listB
             self.listB.addPotentialItem(row[0], row[5], row[2])
         for kv in current:
-            match = [row[0] for row in self.pageData if row[1] == kv['md5']]
+            match = [row[0] for row in self.pageData if row[1] == kv["md5"]]
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))

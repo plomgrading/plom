@@ -344,7 +344,8 @@ class ExamQuestion:
     def __init__(
         self,
         task,
-        fnames=[], *,
+        fnames=[],
+        *,
         src_img_data=[],
         stat="untouched",
         mrk="-1",
@@ -671,8 +672,14 @@ class MarkerExamModel(QStandardItemModel):
 
     def _setImageData(self, task, src_img_data):
         """Set the md5sums etc of the original image files."""
-        print("DEBUG: setting img data type={} data={}".format(type(src_img_data), src_img_data))
+        log.debug("Setting img data to {}".format(src_img_data))
         self._setDataByTask(task, 10, repr(src_img_data))
+
+    def get_source_image_data(self, task):
+        """Return the image data (as a list of dicts) for task."""
+        # dangerous repr/eval pair?  Is json safer/better?
+        r = eval(self._getDataByTask(task, 10))
+        return r
 
     def setOriginalFilesAndData(self, task, fnames, src_img_data):
         """Set the original un-annotated image filenames and their metadata."""
@@ -688,13 +695,6 @@ class MarkerExamModel(QStandardItemModel):
     def getIntegrityCheck(self, task):
         """Return integrity_check for task as string."""
         return self._getDataByTask(task, 9)
-
-    def getImageMetaList(self, task):
-        """Return image_md5sum list for task as a string."""
-        print("DEBUG: getting meta type={}, data={}".format(type(self._getDataByTask(task, 10)), self._getDataByTask(task, 10)))
-        # dangerous eval? json better?
-        r = eval(self._getDataByTask(task, 10))
-        return r
 
     def markPaperByTask(self, task, mrk, aname, pname, mtime, tdir):
         """
@@ -1109,7 +1109,8 @@ class MarkerClient(QWidget):
         self.ui.tableView.hideColumn(7)
         self.ui.tableView.hideColumn(8)
         self.ui.tableView.hideColumn(9)
-        self.ui.tableView.hideColumn(10)
+        # TODO: temporarily shown for debugging
+        # self.ui.tableView.hideColumn(10)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
@@ -1306,13 +1307,15 @@ class MarkerClient(QWidget):
         # Parse PlomFile early for orientation data: but PageScene is going
         # to parse it later.  TODO: seems like duplication of effort.
         plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
-        ori = plomdata.get('orientations')
+        ori = plomdata.get("orientations")
         if not ori:
             log.warn("plom file has no orientation data: substituting zeros")
-            src_img_data = [{'md5': x[1], 'orientation': 0} for x in image_metadata]
+            src_img_data = [{"md5": x[1], "orientation": 0} for x in image_metadata]
         else:
             log.info("importing orientations from plom file")
-            src_img_data = [{'md5': x[1], 'orientation': y} for (x,y) in zip(image_metadata, ori)]
+            src_img_data = [
+                {"md5": x[1], "orientation": y} for (x, y) in zip(image_metadata, ori)
+            ]
         self.examModel.setOriginalFilesAndData(task, image_fnames, src_img_data)
 
         if anImage is None:
@@ -1423,7 +1426,7 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        src_img_meta_dict = [{'md5':x[1], 'orientation':0} for x in image_metadata]
+        src_img_meta_dict = [{"md5": x[1], "orientation": 0} for x in image_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(image_metadata):
@@ -1744,11 +1747,7 @@ class MarkerClient(QWidget):
         tgv = task[1:]
         # get the integrity_check code and image_md5_list of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
-        src_img_data = self.examModel.getImageMetaList(task)
-        print("="*80)
-        print(fnames)
-        print(src_img_data)
-        print("="*80)
+        src_img_data = self.examModel.get_source_image_data(task)
         return (
             tgv,
             exam_name,
@@ -1875,7 +1874,7 @@ class MarkerClient(QWidget):
             self.version,
             tags,
             integrity_check,
-            [x['md5'] for x in src_img_data],
+            [x["md5"] for x in src_img_data],
         )
         if self.allowBackgroundOps:
             # the actual upload will happen in another thread
@@ -1958,8 +1957,7 @@ class MarkerClient(QWidget):
             )
             shutil.copyfile(imageList[i][1], tmp)
             image_names.append(tmp)
-            image_meta.append({'md5': imageList[i][0], 'orientation': imageList[i][2]})
-        print(image_meta)
+            image_meta.append({"md5": imageList[i][0], "orientation": imageList[i][2]})
         task = "q" + task
         self.examModel.setOriginalFilesAndData(task, image_names, image_meta)
         # set the status back to untouched so that any old plom files ignored
