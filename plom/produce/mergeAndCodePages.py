@@ -393,6 +393,7 @@ def make_PDF(
     extra=None,
     test_mode=False,
     test_folder=None,
+    fakepdf=False,
 ):
     """A function that makes the PDFs and saves the modified exam files.
 
@@ -449,6 +450,28 @@ def make_PDF(
     save_PDFs(extra, exam, test)
 
 
+# TODO: Complete the test mode functionality
+def make_fakePDF(
+    name,
+    code,
+    length,
+    versions,
+    test,
+    page_versions,
+    extra=None,
+    test_mode=False,
+    test_folder=None,
+    fakepdf=False,
+):
+    if extra:
+        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
+            str(test).zfill(4), extra["id"]
+        )
+    else:
+        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+    save_name.touch()
+
+
 if __name__ == "__main__":
     # Take command line parameters
     # 1 = name
@@ -463,4 +486,4 @@ if __name__ == "__main__":
     versions = int(sys.argv[4])
     test = int(sys.argv[5])
     page_versions = eval(sys.argv[6])
-    make_PDF(name, code, length, versions, test, page_versions)
+    # make_PDF(name, code, length, versions, test, page_versions)

@@ -180,6 +180,11 @@ spB = sub.add_parser(
         spec, some of the papers may have names printed on them from the
         classlist ("pre-named") and the remainder will be blank.""",
 )
+spB.add_argument(
+    "--fakepdf",
+    action="store_true",
+    help="Do not generate real PDFs. Use when students submitting uploaded work.",
+)
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
@@ -254,7 +259,7 @@ def main():
         msgr = get_messenger(args.server, args.password)
         upload_classlist(classlist=cl, msgr=msgr)
     elif args.command == "make":
-        buildDatabaseAndPapers(args.server, args.password)
+        buildDatabaseAndPapers(args.server, args.password, args.fakepdf)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
