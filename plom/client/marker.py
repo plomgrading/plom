@@ -91,9 +91,7 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(
-        str, list, list, str, str
-    )  # [task, files, image_md5s, tags, integrity_check]
+    downloadSuccess = pyqtSignal(str, list, list, str, str)
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -145,7 +143,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
+                page_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -154,17 +152,20 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        image_md5s = [x[1] for x in image_metadata]
+        # TODO: hardcoding orientation to 0, Issue #1306
+        img_src_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
-        for i, row in enumerate(image_metadata):
+        for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        self.downloadSuccess.emit(task, image_fnames, image_md5s, tags, integrity_check)
+        self.downloadSuccess.emit(
+            task, image_fnames, img_src_data, tags, integrity_check
+        )
         self.quit()
 
 
@@ -446,7 +447,6 @@ class MarkerExamModel(QStandardItemModel):
                 QStandardItem(str(paper.mark)),
                 QStandardItem(str(paper.markingTime)),
                 QStandardItem(paper.tags),
-                # TODO - work out how to store list more directly rather than as a string-rep of the list of file names - maybe json? similarly for image_md5s
                 QStandardItem(repr(paper.originalFiles)),
                 QStandardItem(paper.annotatedFile),
                 QStandardItem(paper.plomFile),
@@ -1273,7 +1273,7 @@ class MarkerClient(QWidget):
 
         # TODO: plom file is lovely json: why we pack it around as binary bytes?
         try:
-            [image_metadata, anImage, plomfile_data] = messenger.MrequestImages(
+            [page_metadata, anImage, plomfile_data] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1298,7 +1298,7 @@ class MarkerClient(QWidget):
 
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
-        for i, row in enumerate(image_metadata):
+        for i, row in enumerate(page_metadata):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             image_fnames.append(tmp)
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
@@ -1310,11 +1310,12 @@ class MarkerClient(QWidget):
         ori = plomdata.get("orientations")
         if not ori:
             log.warn("plom file has no orientation data: substituting zeros")
-            src_img_data = [{"md5": x[1], "orientation": 0} for x in image_metadata]
+            # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
+            src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
         else:
             log.info("importing orientations from plom file")
             src_img_data = [
-                {"md5": x[1], "orientation": y} for (x, y) in zip(image_metadata, ori)
+                {"md5": x[1], "orientation": y} for (x, y) in zip(page_metadata, ori)
             ]
         self.examModel.setOriginalFilesAndData(task, image_fnames, src_img_data)
 
@@ -1420,16 +1421,17 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
+                page_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        src_img_meta_dict = [{"md5": x[1], "orientation": 0} for x in image_metadata]
+        # TODO: hardcoding orientation to 0, Issue #1306
+        src_img_meta_dict = [{"md5": x[1], "orientation": 0} for x in page_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
-        for i, row in enumerate(image_metadata):
+        for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
@@ -1484,7 +1486,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, fnames, image_md5s, tags, integrity_check
+        self, task, fnames, src_img_data, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1492,7 +1494,7 @@ class MarkerClient(QWidget):
         Args:
             task (str): the task name for the next test.
             fnames (list[str]): the file names for next test
-            image_md5s (list[str]): the md5sums for the images
+            src_img_data (list[dict]): the md5sums, etc for the images.
             tags (str): tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
@@ -1504,7 +1506,7 @@ class MarkerClient(QWidget):
             ExamQuestion(
                 task,
                 fnames,
-                src_img_data=image_md5s,
+                src_img_data=src_img_data,
                 tags=tags,
                 integrity_check=integrity_check,
             )
@@ -1745,7 +1747,7 @@ class MarkerClient(QWidget):
         exam_name = self.exam_spec["name"]
         markStyle = self.ui.markStyleGroup.checkedId()
         tgv = task[1:]
-        # get the integrity_check code and image_md5_list of the task
+        # get the integrity_check code and image data of the task
         integrity_check = self.examModel.getIntegrityCheck(task)
         src_img_data = self.examModel.get_source_image_data(task)
         return (
