@@ -1252,9 +1252,9 @@ class MarkerClient(QWidget):
                 )
             )
 
-    def loadOriginalFiles(self, task):
+    def get_files_for_previously_annotated(self, task):
         """
-        Loads the original image files for a given task.
+        Loads the annotated image, the plom file, and the original source images.
 
         Args:
             task (str): the task for the image files to be loaded from.
@@ -1264,14 +1264,14 @@ class MarkerClient(QWidget):
             True/False
 
         Raises:
-            SeriousError if requesting images throws a PlomSeriousException
-
+            Uses error dialogs; not currently expected to throw exceptions
         """
         if len(self.examModel.getOriginalFiles(task)) > 0:
             return True
 
+        # TODO: plom file is lovely json: why we pack it around as binary bytes?
         try:
-            [image_metadata, anImage, plImage] = messenger.MrequestImages(
+            [image_metadata, anImage, plomfile_data] = messenger.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1314,7 +1314,7 @@ class MarkerClient(QWidget):
         with open(aname, "wb+") as fh:
             fh.write(anImage)
         with open(pname, "wb+") as fh:
-            fh.write(plImage)
+            fh.write(plomfile_data)
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
@@ -1329,7 +1329,7 @@ class MarkerClient(QWidget):
             None
 
         """
-        if not self.loadOriginalFiles(self.prxM.getPrefix(pr)):
+        if not self.get_files_for_previously_annotated(self.prxM.getPrefix(pr)):
             return
 
         if self.prxM.getStatus(pr) in ("marked", "uploading...", "???"):
