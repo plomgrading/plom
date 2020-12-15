@@ -230,6 +230,8 @@ class SinkList(QListWidget):
             self.item_orientation[name] = cur_angle
             rot = QTransform()
             rot.rotate(cur_angle)
+            # TODO: instead of loading pixmap again, can we tranform the QIcon?
+            # Also, docs warned QPixmap.transformed() is slow
             rfile = self.item_files[name]
             cpix = QPixmap(rfile)
             npix = cpix.transformed(rot)

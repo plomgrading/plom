@@ -158,23 +158,26 @@ class UnderlyingImages(QGraphicsItemGroup):
         super(QGraphicsItemGroup, self).__init__()
         self.images = {}
         x = 0
-        for (n, img) in enumerate(image_data):
-            pix = QPixmap(img['filename'])
-            angle = img['orientation']
-            if angle != 0:
-                print("TODO "*20)
-                print("do angles")
-            self.images[n] = QGraphicsPixmapItem(pix)
-            self.images[n].setTransformationMode(Qt.SmoothTransformation)
-            self.images[n].setPos(x, 0)
+        for (n, data) in enumerate(image_data):
+            pix = QPixmap(data['filename'])
+            rot = QTransform()
+            rot.rotate(data['orientation'])
+            pix = pix.transformed(rot)
+            img = QGraphicsPixmapItem(pix)
+            img.setTransformationMode(Qt.SmoothTransformation)
+            # works but need to adjust the origin of rotation, probably faster
+            # img.setTransformOriginPoint(..., ...)
+            # img.setRotation(img['orientation'])
+            img.setPos(x, 0)
             sf = float(ScenePixelHeight) / float(pix.height())
-            self.images[n].setScale(sf)
+            img.setScale(sf)
             # TODO: why not?
-            # x += self.images[n].boundingRect().width()
+            # x += img.boundingRect().width()
             # help prevent hairline: subtract one pixel before converting
             x += sf * (pix.width() - 1.0)
             # TODO: don't floor here if units of scene are large!
             x = int(x)
+            self.images[n] = img
             self.addToGroup(self.images[n])
         self.rect = UnderlyingRect(self.boundingRect())
         self.addToGroup(self.rect)
