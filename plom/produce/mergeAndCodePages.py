@@ -457,3 +457,24 @@ def make_PDF(
 
     # Finally save the resulting pdf.
     save_PDFs(extra, exam, test)
+
+
+def make_fakePDF(
+    name,
+    code,
+    length,
+    versions,
+    test,
+    page_versions,
+    extra=None,
+    test_mode=False,
+    test_folder=None,
+):
+    """Twin to the real make_pdf command - makes empty files."""
+    if extra:
+        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
+            str(test).zfill(4), extra["id"]
+        )
+    else:
+        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+    save_name.touch()

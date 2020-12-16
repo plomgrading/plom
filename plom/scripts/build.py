@@ -181,6 +181,11 @@ spB = sub.add_parser(
         classlist ("pre-named") and the remainder will be blank.""",
 )
 spB.add_argument(
+    "--no-pdf",
+    action="store_true",
+    help="Do not generate real PDFs - instead generate empty files.",
+)
+spB.add_argument(
     "--without-qr",
     action="store_true",
     help="Produce PDFs without QR codes and staple-corner indicators.",
@@ -263,7 +268,7 @@ def main():
         print("Last student = {}.".format(cl[-1]))
 
     elif args.command == "make":
-        buildDatabaseAndPapers(args.server, args.password, args.without_qr)
+        buildDatabaseAndPapers(args.server, args.password, args.no_pdf, args.without_qr)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

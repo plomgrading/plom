@@ -10,7 +10,7 @@ from multiprocessing import Pool
 from tqdm import tqdm
 import csv
 
-from .mergeAndCodePages import make_PDF
+from .mergeAndCodePages import make_PDF, make_fakePDF
 from . import paperdir
 
 
@@ -23,7 +23,12 @@ def _make_PDF(x):
     Arguments:
         x (tuple): this is expanded as the arguments to :func:`make_PDF`.
     """
-    make_PDF(*x)
+    fakepdf = x[-1]  # look at last arg - x[-1] = fakepdf
+    y = x[:-1]  # drop the last argument = fakepdf
+    if fakepdf:
+        make_fakePDF(*y)
+    else:
+        make_PDF(*y)
 
 
 def outputProductionCSV(spec, make_PDF_args):
@@ -67,7 +72,9 @@ def outputProductionCSV(spec, make_PDF_args):
             csv_writer.writerow(row)
 
 
-def build_all_papers(spec, global_page_version_map, classlist, no_qr=False):
+def build_all_papers(
+    spec, global_page_version_map, classlist, fakepdf=False, no_qr=False
+):
     """Builds the papers using _make_PDF.
 
     Based on `numberToName` this uses `_make_PDF` to create some
@@ -81,6 +88,8 @@ def build_all_papers(spec, global_page_version_map, classlist, no_qr=False):
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
+        fakepdf (bool): when true, the build empty pdfs (actually empty files)
+            for use when students upload homework or similar (and only 1 version).
 
     Raises:
         ValueError: classlist is invalid in some way.
@@ -114,6 +123,7 @@ def build_all_papers(spec, global_page_version_map, classlist, no_qr=False):
                 page_version,
                 student_info,
                 no_qr,
+                fakepdf,  # should be last
             )
         )
 
