@@ -194,9 +194,7 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
         files (list of pathlib.Path): the page images to upload.
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
-        question (int): the question being uploaded
-            TODO: this can be overwritten by something dumb like the
-            contents of the filename.  TODO: fix.
+        question (int/list): the question or questions being uploaded.
         skip_list (list of int): the bundle-orders of pages already in
             the system and so can be skipped.
 
@@ -221,8 +219,8 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
             )
             continue
 
-        # HACKING out question check from filename
-        if sid != student_id:  # or q != question:
+        if not (sid == student_id and (q == question or q == "_")):
+            # TODO: why isn't this an exception?
             print("Problem with file {} - skipping".format(fname))
             continue
         q = question
