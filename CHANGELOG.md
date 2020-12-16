@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * `plom-build make` now outputs a csv file showing the test numbers, question/page versions and student-info if named paper.
-* `plom-build make --noqr` builds pdf files without QR codes stamped on them.
+* `plom-build make --without-qr` builds pdf files without QR codes stamped on them.
+* `plom-build make --no-pdf` builds everything but the PDF files are 0-length files.
 
 ### Fixed
 * Adjust-Pages: fix deduping when shared page not included in current question.
