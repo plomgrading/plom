@@ -172,6 +172,10 @@ def create_exam_and_insert_QR(
         exam[page_index].drawRect(rect, color=[0, 0, 0])
         assert insertion_confirmed > 0
 
+        if noQR:
+            # no more processing of this page if QR codes unwanted
+            continue
+
         # stamp DNW near staple: even/odd pages different
         # Top Left for even pages, Top Right for odd pages
         # TODO: Perhaps this process could be improved by putting
@@ -207,25 +211,21 @@ def create_exam_and_insert_QR(
             insertion_confirmed > 0
         ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-        if noQR:  # no qr-codes
-            pass
-        else:  # paste in the QR-codes
-            # Grab the tpv QRcodes for current page and put them on the pdf
-            # Remember that we only add 3 of the 4 QR codes for each page since
-            # we always have a corner section for staples and such
-            qr_code = {}
-            for corner_index in range(1, 5):
-                qr_code[corner_index] = fitz.Pixmap(
-                    qr_file[page_index + 1][corner_index]
-                )
-            if page_index % 2 == 0:
-                exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
-                exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
-                exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
-            else:
-                exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
-                exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
-                exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+        # paste in the QR-codes
+        # Grab the tpv QRcodes for current page and put them on the pdf
+        # Remember that we only add 3 of the 4 QR codes for each page since
+        # we always have a corner section for staples and such
+        qr_code = {}
+        for corner_index in range(1, 5):
+            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
+        if page_index % 2 == 0:
+            exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
+            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+        else:
+            exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
+            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
 
     return exam
 
