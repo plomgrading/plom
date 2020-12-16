@@ -326,7 +326,7 @@ def processHWScans(
 
 
 def processAllHWByQ(server, password, yes_flag):
-    """Procees and upload all HW by Q bundles in submission directory.
+    """Process and upload all HW by Q bundles in submission directory.
 
     Scan through the submittedHWByQ directory and process/upload
     each PDF in turn. User will be prompted for each unless the
@@ -338,7 +338,8 @@ def processAllHWByQ(server, password, yes_flag):
         IDQ = IDQorIDorBad(file_name)
         if len(IDQ) == 3:
             sid, q = IDQ[1:]
-            submissions[sid].append([q, file_name])
+            if q != "_":
+                submissions[sid].append([q, file_name])
 
     print("Submission summary: ")
     for sid in submissions:
