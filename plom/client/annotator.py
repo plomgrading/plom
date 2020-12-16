@@ -1402,10 +1402,9 @@ class Annotator(QWidget):
 
         """
         # Set the model to text and change cursor.
-        # self.setMode("comment", self.cursorComment)
         self.setToolMode("comment", QCursor(Qt.IBeamCursor))
-        # Grab the delta from the arguments
-        self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
+        if self.scene:  # TODO: not sure why, Issue #1283 workaround
+            self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
 
     def totalMarkSet(self, tm):
         """
