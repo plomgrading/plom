@@ -477,9 +477,12 @@ g.add_argument(
     action="store",
     help="""
         Which question(s) are answered in file.
-        You can pass a list like `-q 1,2,3` or ranges or TODO
-        or keyword `all` (TODO: maybe?) or...  TODO decide interface.
-    """,
+        You can pass a single integer, in which case it should match
+        the filename `foo_bar.<sid>.N.pdf` as documented elsewhere.
+        You can also pass a list like `-q 1,2,3` in which case your
+        filename must be of the form `foo_bar.<sid>._.pdf` (a single
+        underscore).
+    """,  # TODO: add support for special string `-q all`, issue #1308.
 )
 g = spP.add_mutually_exclusive_group(required=False)
 g.add_argument(
