@@ -438,6 +438,11 @@ spP = sub.add_parser(
 spA = sub.add_parser(
     "allbyq",
     help="Process and upload all PDFs in 'submittedHWByQ' directory and upload to server",
+    description="""
+        Process and upload all PDFs in 'submittedHWByQ' directory.
+        Look at the `q` in `foo_bar.12345678.q.pdf` to determine which
+        question.  Upload to server.
+    """,
 )
 spM = sub.add_parser(
     "missing",
