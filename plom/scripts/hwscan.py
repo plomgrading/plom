@@ -246,7 +246,8 @@ def processHWScans(
                 student_id, sid
             )
         )
-    if not (q == "_" or int(q) == questions):
+    # either we're dealing with multiquestions or we have exactly one question
+    if not (q == "_" or [int(q)] == questions):
         raise ValueError(
             "Question supplied {} does not match that in filename {}. Stopping.".format(
                 questions, q
