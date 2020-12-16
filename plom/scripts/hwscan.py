@@ -219,6 +219,12 @@ def processHWScans(
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
+    if not isinstance(questions, list):
+        raise ValueError("You must pass a list of ints for `questions`")
+    for q in questions:
+        if not isinstance(q, int):
+            raise ValueError("You must pass a list of ints for `questions`")
+
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
         print("Cannot find file {} - skipping".format(pdf_fname))
@@ -355,7 +361,7 @@ def processAllHWByQ(server, password, yes_flag):
     for sid in submissions:
         print("Processing id {}:".format(sid))
         for question, file_name in submissions[sid]:
-            processHWScans(server, password, file_name, sid, question)
+            processHWScans(server, password, file_name, sid, [int(question)])
 
 
 def processMissing(server, password, yes_flag):
