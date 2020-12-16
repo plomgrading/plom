@@ -233,7 +233,7 @@ def processHWScans(
         raise ValueError(
             "File name has wrong format - should be 'blah.sid.q.pdf'. Stopping."
         )
-    sid, q = IDQ[1:]
+    _, sid, q = IDQ
     if sid != student_id:
         raise ValueError(
             "Student ID supplied {} does not match that in filename {}. Stopping.".format(
