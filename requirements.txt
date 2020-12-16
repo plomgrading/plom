@@ -24,7 +24,7 @@ pycparser==2.20
 cffi==1.14.4
 jpegtran-cffi==0.5.2
 weasyprint==52.1
-aiohttp==3.6.3
+aiohttp==3.7.3
 # unlisted dep of pyqrcode
 pypng==0.0.20
 pyqrcode==1.2.1
