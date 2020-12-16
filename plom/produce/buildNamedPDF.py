@@ -26,7 +26,6 @@ def _make_PDF(x):
     make_PDF(*x)
 
 
-=======
 def outputProductionCSV(spec, make_PDF_args):
     """Output a csv with info on produced papers. Take the make_PDF_args that were used and dump them in a csv
 
@@ -67,7 +66,7 @@ def outputProductionCSV(spec, make_PDF_args):
                 row.append(paper[5][p])
             csv_writer.writerow(row)
 
-            
+
 def build_all_papers(spec, global_page_version_map, classlist, noQR=False):
     """Builds the papers using _make_PDF.
 

@@ -457,22 +457,3 @@ def make_PDF(
 
     # Finally save the resulting pdf.
     save_PDFs(extra, exam, test)
-
-
-if __name__ == "__main__":
-    # Take command line parameters
-    # 1 = name
-    # 2 = code
-    # 3 = length (ie number of pages)
-    # 4 = number of versions
-    # 5 = the test test number
-    # 6 = dict of the version number for each page
-    # 7 = noQR = boolean - when false = paste QRs
-    name = sys.argv[1]
-    code = sys.argv[2]
-    length = int(sys.argv[3])
-    versions = int(sys.argv[4])
-    test = int(sys.argv[5])
-    page_versions = eval(sys.argv[6])
-    noQR = eval(sys.argv[7])
-    make_PDF(name, code, length, versions, test, page_versions, noQR)
