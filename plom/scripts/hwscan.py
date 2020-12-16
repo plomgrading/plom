@@ -228,7 +228,6 @@ def processHWScans(
         "submittedHWByQ",
         "./submittedHWByQ",
     ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
-    # TODO: relax!
     IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
         raise ValueError(
@@ -241,13 +240,12 @@ def processHWScans(
                 student_id, sid
             )
         )
-    # TODO:
-    # if int(q) != question:
-    #     raise ValueError(
-    #         "Question supplied {} does not match that in filename {}. Stopping.".format(
-    #             question, q
-    #         )
-    #     )
+    if not (q == "_" or int(q) == questions):
+        raise ValueError(
+            "Question supplied {} does not match that in filename {}. Stopping.".format(
+                questions, q
+            )
+        )
     if len(questions) == 1:
         qlabel = "question"
     else:
@@ -578,7 +576,6 @@ def main():
         else:
             questions = args.question[0]  # args passes '[q]' rather than just 'q'
             questions = [int(x) for x in questions.split(",")]
-            print('TEMP DEBUG: questions="{}"'.format(questions))
             processHWScans(
                 args.server,
                 args.password,
