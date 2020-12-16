@@ -194,7 +194,8 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
         files (list of pathlib.Path): the page images to upload.
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
-        question (int/list): the question or questions being uploaded.
+        question (int/list): the question (int) or questions (list of
+            ints) being uploaded.
         skip_list (list of int): the bundle-orders of pages already in
             the system and so can be skipped.
 
@@ -219,7 +220,7 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
             )
             continue
 
-        if not (sid == student_id and (q == question or q == "_")):
+        if sid != student_id or q not in ("_", question):
             # TODO: why isn't this an exception?
             print("Problem with file {} - skipping".format(fname))
             continue
