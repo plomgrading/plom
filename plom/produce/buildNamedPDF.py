@@ -67,7 +67,7 @@ def outputProductionCSV(spec, make_PDF_args):
             csv_writer.writerow(row)
 
 
-def build_all_papers(spec, global_page_version_map, classlist):
+def build_all_papers(spec, global_page_version_map, classlist, no_qr=False):
     """Builds the papers using _make_PDF.
 
     Based on `numberToName` this uses `_make_PDF` to create some
@@ -113,6 +113,7 @@ def build_all_papers(spec, global_page_version_map, classlist):
                 paper_index,
                 page_version,
                 student_info,
+                no_qr,
             )
         )
 
