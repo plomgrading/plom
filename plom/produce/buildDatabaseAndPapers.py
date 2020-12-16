@@ -14,7 +14,7 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 
 
-def buildDatabaseAndPapers(server=None, password=None, fakepdf=False):
+def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=False):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -68,7 +68,7 @@ def buildDatabaseAndPapers(server=None, password=None, fakepdf=False):
                     spec["numberToProduce"], paperdir
                 )
             )
-        build_all_papers(spec, pvmap, classlist, fakepdf)
+        build_all_papers(spec, pvmap, classlist, fakepdf, no_qr=no_qr)
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist)

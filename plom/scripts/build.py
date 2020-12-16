@@ -185,6 +185,11 @@ spB.add_argument(
     action="store_true",
     help="Do not generate real PDFs - instead generate empty files.",
 )
+spB.add_argument(
+    "--without-qr",
+    action="store_true",
+    help="Produce PDFs without QR codes and staple-corner indicators.",
+)
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
@@ -258,8 +263,12 @@ def main():
         cl = process_class_list(args.classlist, args.demo)
         msgr = get_messenger(args.server, args.password)
         upload_classlist(classlist=cl, msgr=msgr)
+        print("Imported classlist of length {}.".format(len(cl)))
+        print("First student = {}.".format(cl[0]))
+        print("Last student = {}.".format(cl[-1]))
+
     elif args.command == "make":
-        buildDatabaseAndPapers(args.server, args.password, args.no_pdf)
+        buildDatabaseAndPapers(args.server, args.password, args.no_pdf, args.without_qr)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

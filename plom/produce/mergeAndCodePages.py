@@ -84,6 +84,7 @@ def create_exam_and_insert_QR(
     qr_file,
     test_mode=False,
     test_folder=None,
+    no_qr=False,
 ):
     """Creates the exam objects and insert the QR codes.
 
@@ -104,6 +105,7 @@ def create_exam_and_insert_QR(
     Keyword Arguments:
         test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
         test_folder {Str} -- String for where to place the generated test files. (default: {None})
+        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes (default: False)
 
     Returns:
         fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
@@ -170,6 +172,10 @@ def create_exam_and_insert_QR(
         exam[page_index].drawRect(rect, color=[0, 0, 0])
         assert insertion_confirmed > 0
 
+        if no_qr:
+            # no more processing of this page if QR codes unwanted
+            continue
+
         # stamp DNW near staple: even/odd pages different
         # Top Left for even pages, Top Right for odd pages
         # TODO: Perhaps this process could be improved by putting
@@ -205,6 +211,7 @@ def create_exam_and_insert_QR(
             insertion_confirmed > 0
         ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
+        # paste in the QR-codes
         # Grab the tpv QRcodes for current page and put them on the pdf
         # Remember that we only add 3 of the 4 QR codes for each page since
         # we always have a corner section for staples and such
@@ -391,6 +398,7 @@ def make_PDF(
     test,
     page_versions,
     extra=None,
+    no_qr=False,
     test_mode=False,
     test_folder=None,
 ):
@@ -409,6 +417,7 @@ def make_PDF(
         versions {int} -- Number of version of this Document.
         test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
         page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
+        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes
 
     Keyword Arguments:
         extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
@@ -437,6 +446,7 @@ def make_PDF(
             qr_file,
             test_mode,
             test_folder,
+            no_qr=no_qr,
         )
 
         # If we are provided with the student number and student id,
@@ -468,20 +478,3 @@ def make_fakePDF(
     else:
         save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
     save_name.touch()
-
-
-if __name__ == "__main__":
-    # Take command line parameters
-    # 1 = name
-    # 2 = code
-    # 3 = length (ie number of pages)
-    # 4 = number of versions
-    # 5 = the test test number
-    # 6 = dict of the version number for each page
-    name = sys.argv[1]
-    code = sys.argv[2]
-    length = int(sys.argv[3])
-    versions = int(sys.argv[4])
-    test = int(sys.argv[5])
-    page_versions = eval(sys.argv[6])
-    # make_PDF(name, code, length, versions, test, page_versions)
