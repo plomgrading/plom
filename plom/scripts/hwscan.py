@@ -236,9 +236,7 @@ def processHWScans(
     ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
     IDQ = IDQorIDorBad(pdf_fname.name)
     if len(IDQ) != 3:  # should return [IDQ, sid, q]
-        raise ValueError(
-            "File name has wrong format - should be 'blah.sid.q.pdf'. Stopping."
-        )
+        raise ValueError("File name has wrong format - should be 'blah.sid.q.pdf'.")
     _, sid, q = IDQ
     if sid != student_id:
         raise ValueError(
@@ -265,7 +263,7 @@ def processHWScans(
 
     test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
     if test_number is None:
-        raise ValueError("No test has student ID = {}. Skipping.".format(student_id))
+        raise ValueError("No test has student ID = {}.".format(student_id))
     else:
         print("Student ID {} is test_number {}".format(student_id, test_number))
 
@@ -274,13 +272,13 @@ def processHWScans(
     if bundle_exists[0]:
         if bundle_exists[1] == "name":
             raise ValueError(
-                "The bundle name {} has been used previously for a different bundle. Stopping".format(
+                "The bundle name {} has been used previously for a different bundle.".format(
                     pdf_fname
                 )
             )
         elif bundle_exists[1] == "md5sum":
             raise ValueError(
-                "A bundle with matching md5sum is already in system with a different name. Stopping"
+                "A bundle with matching md5sum is already in system with a different name."
             )
         elif bundle_exists[1] == "both":
             print(
