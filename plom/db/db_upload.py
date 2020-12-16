@@ -214,28 +214,22 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
 
 
 def uploadHWPage(
-    self, sid, question, order, original_name, file_name, md5, bundle_name, bundle_order
+    self,
+    sid,
+    questions,
+    order,
+    original_name,
+    file_name,
+    md5,
+    bundle_name,
+    bundle_order,
 ):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
         return [False, "SID does not correspond to any test on file."]
     tref = iref.test
-    qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:  # should not happen.
-        return [False, "Test/Question does not correspond to anything on file."]
 
-    gref = qref.group
-    href = HWPage.get_or_none(test=tref, group=gref, order=order)
-    # the href should be none - but could exist if uploading HW in two bundles
-    if href is not None:
-        # we found a page with that order, so we need to put the uploaded page at the end.
-        lastOrder = (
-            HWPage.select(fn.MAX(HWPage.order))
-            .where(HWPage.test == tref, HWPage.group == gref)
-            .scalar()
-        )
-        order = lastOrder + 1
     # we need the bundle.
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
@@ -255,7 +249,45 @@ def uploadHWPage(
             ),
         ]
 
-    self.createNewHWPage(tref, qref, order, image_ref)
+    if not isinstance(questions, list):
+        questions = [questions]
+    if len(questions) >= 1:
+        log.info(
+            'upload: tef={} going to loop over questions="{}"'.format(tref, questions)
+        )
+    qref_list = []
+    for question in questions:
+        qref = QGroup.get_or_none(test=tref, question=question)
+        if qref is None:  # should not happen.
+            return [False, "Test/Question does not correspond to anything on file."]
+        qref_list.append(qref)
+
+    for question, qref in zip(questions, qref_list):
+        gref = qref.group
+        href = HWPage.get_or_none(test=tref, group=gref, order=order)
+        if href is not None:
+            # we found a page with that order, so we need to put the uploaded page at the end.
+            lastOrder = (
+                HWPage.select(fn.MAX(HWPage.order))
+                .where(HWPage.test == tref, HWPage.group == gref)
+                .scalar()
+            )
+            log.info(
+                "hwpage order collision: question={}, order={}; changing to lastOrder+1={})".format(
+                    question, order, lastOrder + 1
+                )
+            )
+            tmp_order = lastOrder + 1
+        else:
+            # no page at that order so ok to insert using user-specified order.
+            tmp_order = order
+
+        log.info(
+            "creating new hwpage tref={}, question={}, order={}".format(
+                tref, question, tmp_order
+            )
+        )
+        self.createNewHWPage(tref, qref, tmp_order, image_ref)
     return [True]
 
 

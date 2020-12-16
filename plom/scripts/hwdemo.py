@@ -79,6 +79,19 @@ def main():
     # this creates two batches of fake hw - prefixes = hwA and hwB
     subprocess.check_call(split("plom-fake-hwscribbles -w 1234"))
 
+    print("Processing some individually")
+    # TODO: this is fragile, should not hardcode these student numbers!
+    subprocess.check_call(
+        split(
+            "plom-hwscan process submittedHWByQ/semiloose.11015491._.pdf 11015491 -q 1,2,3 -w 4567"
+        )
+    )
+    subprocess.check_call(
+        split(
+            "plom-hwscan process submittedHWByQ/semiloose.11135153._.pdf 11135153 -q 1,2,3 -w 4567"
+        )
+    )
+
     print("Processing all hw by question submissions.")
     subprocess.check_call(split("plom-hwscan allbyq -w 4567 -y"))
     print("Replacing all missing questions.")

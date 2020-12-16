@@ -148,10 +148,10 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)
 
     async def uploadHWPage(self, request):
-        """A homework page is self-scanned, known student, and known question.
+        """A homework page is self-scanned, known student, and known questions.
 
         Typically the page is without QR codes.  The uploader knows what
-        student it belongs to and what question.  The order within the
+        student it belongs to and what question(s).  The order within the
         question is somewhat known too, at least within its upload bundle.
 
         Args:
@@ -161,9 +161,10 @@ class UploadHandler:
             aiohttp.web_response.Response: JSON data directly from the
                 database call.
 
-        The requests data has a `question` field, which must be a scalar
-        for the question we wish to upload this too.  It may change to
-        support uploading to more than one question in the future.
+        The requests data has a `question` field, which can be a scalar
+        or a list of questions we wish to upload too.  Maybe the scalar
+        is deprecated?
+        TODO: force it to always be a list?
 
         Note: this uses the `status=200` success return code for some
         kinds of failures: it simply returns whatever data the DB gave

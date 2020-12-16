@@ -56,7 +56,11 @@ def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
-    prefix = "s{}q{}o{}".format(sid, q, o)
+    if isinstance(q, list):
+        qstr = "_".join([str(x) for x in q])
+    else:
+        qstr = str(q)
+    prefix = "s{}q{}o{}".format(sid, qstr, o)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
         newName = "pages/originalPages/" + prefix + unique + ext

@@ -95,6 +95,26 @@ def makeFakeHW(
     for q in doneQ:
         fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, studentID, q)
         doc = fitz.open()
+        scribble_doc(doc, studentID, studentName, maximum_pages, q)
+        doc.save(fname)
+
+
+def makeFakeHW2(
+    numberOfQuestions, paperNumber, studentID, studentName, prefix, maximum_pages
+):
+    did = random.randint(
+        numberOfQuestions - 1, numberOfQuestions
+    )  # some subset of questions.
+    doneQ = sorted(random.sample(list(range(1, 1 + numberOfQuestions)), did))
+    fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, studentID, "_")
+    doc = fitz.open()
+    for q in doneQ:
+        scribble_doc(doc, studentID, studentName, maximum_pages, q)
+    doc.save(fname)
+
+
+def scribble_doc(doc, studentID, studentName, maximum_pages, q):
+    if True:
         # construct pages
         for pn in range(random.randint(1, maximum_pages)):
             page = doc.newPage(-1, 612, 792)  # page at end
@@ -126,7 +146,6 @@ def makeFakeHW(
                 align=0,
             )
             assert rc > 0
-        doc.save(fname)
 
 
 def download_classlist_and_spec(server=None, password=None):
@@ -204,10 +223,11 @@ def main():
 
     print("NumberNamed = {}".format(numberNamed))
 
+    num_all_q_one_bundle = 2
     prefixes = ["hwA", "hwB"]  # we'll make two batches one bigger than other.
     for prefix in prefixes:
         if prefix == "hwA":
-            for k in range(numberNamed):
+            for k in range(numberNamed - num_all_q_one_bundle):
                 makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 3)
         else:
             for k in range(numberNamed // 2):  # fewer in second batch
@@ -216,6 +236,10 @@ def main():
         # give a few loose pages to the first two students in both batches
         for k in range(5):
             makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
+
+    # a few more for "all questions in one" bundling
+    for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
+        makeFakeHW2(numberOfQuestions, k, sid[k][0], sid[k][1], "semiloose", 3)
 
 
 if __name__ == "__main__":
