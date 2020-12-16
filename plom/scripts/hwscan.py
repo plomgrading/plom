@@ -340,6 +340,7 @@ def processAllHWByQ(server, password, yes_flag):
             sid, q = IDQ[1:]
             submissions[sid].append([q, file_name])
 
+    print(submissions)
     print("Submission summary: ")
     for sid in submissions:
         sub_list = sorted([int(x[0]) for x in submissions[sid]])
