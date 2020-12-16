@@ -249,9 +249,12 @@ def uploadHWPage(
             ),
         ]
 
-    log.info('upload: tef={} going to loop over questions="{}"'.format(tref, questions))
     if not isinstance(questions, list):
         questions = [questions]
+    if len(questions) >= 1:
+        log.info(
+            'upload: tef={} going to loop over questions="{}"'.format(tref, questions)
+        )
     qref_list = []
     for question in questions:
         qref = QGroup.get_or_none(test=tref, question=question)
@@ -280,7 +283,9 @@ def uploadHWPage(
             tmp_order = order
 
         log.info(
-            "creating new hwpage tref={}, question={}, order={}".format(tref, question, tmp_order)
+            "creating new hwpage tref={}, question={}, order={}".format(
+                tref, question, tmp_order
+            )
         )
         self.createNewHWPage(tref, qref, tmp_order, image_ref)
     return [True]
