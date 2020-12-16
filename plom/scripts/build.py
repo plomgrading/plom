@@ -183,7 +183,7 @@ spB = sub.add_parser(
 spB.add_argument(
     "--noqr",
     action="store_true",
-    help="Produce PDFs without qr-codes.",
+    help="Produce PDFs without QR codes and staple-corner indicators.",
 )
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
