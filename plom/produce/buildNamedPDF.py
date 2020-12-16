@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 from multiprocessing import Pool
 from tqdm import tqdm
+import csv
 
 from .mergeAndCodePages import make_PDF
 from . import paperdir
@@ -23,6 +24,47 @@ def _make_PDF(x):
         x (tuple): this is expanded as the arguments to :func:`make_PDF`.
     """
     make_PDF(*x)
+
+
+def outputProductionCSV(spec, make_PDF_args):
+    """Output a csv with info on produced papers. Take the make_PDF_args that were used and dump them in a csv
+
+    Arguments:
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        make_PDF_args (list): a list of tuples of info for each paper
+    """
+    # a tuple in make_pdf_args is a tuple
+    # 0 - spec["name"],
+    # 1 - spec["publicCode"],
+    # 2 - spec["numberOfPages"],
+    # 3 - spec["numberOfVersions"],
+    # 4 - paper_index,
+    # 5 - page_version = dict(page:version)
+    # 6 - student_info = dict(id:sid ,name:sname)
+    # we only need the last 3 of these
+    numberOfPages = spec["numberOfPages"]
+    numberOfQuestions = spec["numberOfQuestions"]
+
+    header = ["test_number", "sID", "sname"]
+    for q in range(1, numberOfQuestions + 1):
+        header.append("q{}.version".format(q))
+    for p in range(1, numberOfPages + 1):
+        header.append("p{}.version".format(p))
+    with open("produced_papers.csv", "w") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(header)
+        for paper in make_PDF_args:
+            if paper[6]:  # if named paper then give id and name
+                row = [paper[4], paper[6]["id"], paper[6]["name"]]
+            else:  # just skip those columns
+                row = [paper[4], None, None]
+            for q in range(1, numberOfQuestions + 1):
+                # get first page of question to infer version
+                p = spec["question"]["{}".format(q)]["pages"][0]
+                row.append(paper[5][p])
+            for p in range(1, numberOfPages + 1):
+                row.append(paper[5][p])
+            csv_writer.writerow(row)
 
 
 def build_all_papers(spec, global_page_version_map, classlist):
@@ -80,6 +122,9 @@ def build_all_papers(spec, global_page_version_map, classlist):
     num_PDFs = len(make_PDF_args)
     with Pool() as pool:
         r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
+    # output CSV with all this info in it
+    print("Writing produced_papers.csv.")
+    outputProductionCSV(spec, make_PDF_args)
 
 
 def confirm_processed(spec, msgr, classlist):
