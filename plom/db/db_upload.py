@@ -252,15 +252,16 @@ def uploadHWPage(
     log.info('upload: tef={} going to loop over questions="{}"'.format(tref, questions))
     if not isinstance(questions, list):
         questions = [questions]
+    qref_list = []
     for question in questions:
         qref = QGroup.get_or_none(test=tref, question=question)
-        # TODO: consider factoring out before creating
         if qref is None:  # should not happen.
             return [False, "Test/Question does not correspond to anything on file."]
+        qref_list.append(qref)
 
-        gref = qref.group  # loop
+    for question, qref in zip(questions, qref_list):
+        gref = qref.group
         href = HWPage.get_or_none(test=tref, group=gref, order=order)
-        # the href should be none - but could exist if uploading HW in two bundles
         if href is not None:
             # we found a page with that order, so we need to put the uploaded page at the end.
             lastOrder = (
@@ -275,6 +276,7 @@ def uploadHWPage(
             )
             tmp_order = lastOrder + 1
         else:
+            # no page at that order so ok to insert using user-specified order.
             tmp_order = order
 
         log.info(
