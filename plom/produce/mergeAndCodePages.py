@@ -170,7 +170,7 @@ def create_exam_and_insert_QR(
             align=1,
         )
         exam[page_index].drawRect(rect, color=[0, 0, 0])
-        # assert insertion_confirmed > 0
+        assert insertion_confirmed > 0
 
         # stamp DNW near staple: even/odd pages different
         # Top Left for even pages, Top Right for odd pages
