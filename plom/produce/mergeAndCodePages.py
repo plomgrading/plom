@@ -84,7 +84,7 @@ def create_exam_and_insert_QR(
     qr_file,
     test_mode=False,
     test_folder=None,
-    noQR=False,
+    no_qr=False,
 ):
     """Creates the exam objects and insert the QR codes.
 
@@ -105,7 +105,7 @@ def create_exam_and_insert_QR(
     Keyword Arguments:
         test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
         test_folder {Str} -- String for where to place the generated test files. (default: {None})
-        noQR {bool} -- Boolean to determine whether or not to paste in qr-codes (default: False)
+        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes (default: False)
 
     Returns:
         fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
@@ -172,7 +172,7 @@ def create_exam_and_insert_QR(
         exam[page_index].drawRect(rect, color=[0, 0, 0])
         assert insertion_confirmed > 0
 
-        if noQR:
+        if no_qr:
             # no more processing of this page if QR codes unwanted
             continue
 
@@ -398,7 +398,7 @@ def make_PDF(
     test,
     page_versions,
     extra=None,
-    noQR=False,
+    no_qr=False,
     test_mode=False,
     test_folder=None,
 ):
@@ -417,7 +417,7 @@ def make_PDF(
         versions {int} -- Number of version of this Document.
         test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
         page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
-        noQR {bool} -- Boolean to determine whether or not to paste in qr-codes
+        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes
 
     Keyword Arguments:
         extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
@@ -446,7 +446,7 @@ def make_PDF(
             qr_file,
             test_mode,
             test_folder,
-            noQR=noQR,
+            no_qr=no_qr,
         )
 
         # If we are provided with the student number and student id,
