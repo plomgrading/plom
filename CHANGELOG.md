@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* `plom-hwscan` can now upload pages to multiple questions, for use with self-scanned work.
 
 ### Changed
 * `plom-build make` now outputs a csv file showing the test numbers, question/page versions and student-info if named paper."
