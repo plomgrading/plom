@@ -18,13 +18,13 @@ numpy==1.18.4
 toml==0.10.2
 tqdm==4.54.1
 passlib==1.7.4
-pymupdf==1.18.2
+pymupdf==1.18.4
 Pillow==8.0.1
 pycparser==2.20
 cffi==1.14.4
 jpegtran-cffi==0.5.2
 weasyprint==52.1
-aiohttp==3.6.3
+aiohttp==3.7.3
 # unlisted dep of pyqrcode
 pypng==0.0.20
 pyqrcode==1.2.1
@@ -37,6 +37,6 @@ lapsolver==1.1.0
 requests==2.25.0
 requests-toolbelt==0.9.1
 urllib3==1.26.2
-packaging==20.7
+packaging==20.8
 # For rando forest model
 scikit-learn==0.23.2
