@@ -211,7 +211,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 basename, z, "; ".join(msgs)
             )
         )
-        pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
+        pix = p.getPixmap(matrix=fitz.Matrix(z, z), annots=True)
         if pix.height != ScenePixelHeight:
             warnings.warn(
                 "rounding error: height of {} instead of {}".format(
