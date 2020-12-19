@@ -1131,8 +1131,8 @@ class MarkerClient(QWidget):
         try:
             self.maxMark = messenger.MgetMaxMark(self.question, self.version)
         except PlomRangeException as err:
-            log.error(err.args[1])
-            ErrorMessage(err.args[1]).exec_()
+            log.error(err)
+            ErrorMessage(str(err)).exec_()
             self.shutDownError()
             return False
         except PlomSeriousException as err:
