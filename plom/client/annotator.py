@@ -1442,9 +1442,9 @@ class Annotator(QWidget):
             None: Modifies self.scene
 
         """
-        # Change the mode to delta
+        if not self.scene:
+            return
         self.setToolMode("delta", QCursor(Qt.IBeamCursor))
-        # Try changing the delta in the scene
         if not self.scene.changeTheDelta(dm, annotatorUpdate=True):
             # If it is out of range then change mode to "move" so that
             # the user cannot paste in that delta.
