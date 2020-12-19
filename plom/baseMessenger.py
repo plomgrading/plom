@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 
 import ssl
@@ -56,6 +56,17 @@ class BaseMessenger:
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
         # base = "https://{}:{}/".format(s, mp)
+
+    @classmethod
+    def clone(cls, m):
+        """Clone an existing messenger, keeps token."""
+        log.debug("cloning a messeger, but building new session...")
+        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1])
+        x.start()
+        log.debug("copying user/token into cloned messenger")
+        x.user = m.user
+        x.token = m.token
+        return x
 
     def whoami(self):
         return self.user
