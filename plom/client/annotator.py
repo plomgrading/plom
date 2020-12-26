@@ -39,6 +39,7 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QToolButton,
     QFileDialog,
+    QColorDialog,
 )
 
 from .comment_list import CommentWidget
@@ -243,6 +244,10 @@ class Annotator(QWidget):
         m.addAction(
             "Decrease annotation scale\tshift-]",
             lambda: self.change_annot_scale(1.0 / 1.1),
+        )
+        m.addAction(
+            "Change annotation colour...",
+            self.change_annotation_colour,
         )
         m.addSeparator()
         m.addAction("Help", self.menuDummy).setEnabled(False)
@@ -465,6 +470,16 @@ class Annotator(QWidget):
             self._reset_scale_menu_text
             + "\t{:.0%}".format(self.scene.get_scale_factor())
         )
+
+    def change_annotation_colour(self):
+        """Ask user for a new colour for the annotations."""
+        if not self.scene:
+            return
+        c = self.scene.ink.color()
+        c = QColorDialog.getColor(c)
+        if c.isValid():
+            self.scene.set_annotation_color(c)
+        # TODO: save to settings
 
     def setCurrentMarkMode(self):
         """
