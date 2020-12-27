@@ -780,7 +780,7 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of comment is non-zero then create a
         # delta-object with a different offset, else just place the comment.
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
-            blurb = TextItem(self, self.fontSize)  # build the textitem
+            blurb = TextItem(self, self.fontSize, self.ink.color())
             blurb.setPlainText(self.commentText)
             blurb._contents = self.commentText  # for pickling, TODO: Colin doesn't like
             # move to correct point - update if only text no delta
@@ -791,7 +791,7 @@ class PageScene(QGraphicsScene):
             blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text - the ghostitem has it right
             blurb.moveBy(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, blurb, self.ink)
+            command = CommandText(self, blurb)
             self.undoStack.push(command)
             # return blurb to previous state
             blurb.setTextInteractionFlags(prevState)
@@ -949,12 +949,12 @@ class PageScene(QGraphicsScene):
         # Now we construct a text object, give it focus (which fires up the
         # editor on that object), and then push it onto the undo-stack.
         self.originPos = event.scenePos()
-        blurb = TextItem(self, self.fontSize)
+        blurb = TextItem(self, self.fontSize, self.ink.color())
         # move so centred under cursor
         self.originPos -= QPointF(0, blurb.boundingRect().height() / 2)
         blurb.setPos(self.originPos)
         blurb.setFocus()
-        command = CommandText(self, blurb, self.ink)
+        command = CommandText(self, blurb)
         self.undoStack.push(command)
 
     def mousePressTick(self, event):

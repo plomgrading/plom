@@ -50,7 +50,7 @@ class CommandMoveText(QUndoCommand):
 
 
 class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb, ink):
+    def __init__(self, scene, blurb):
         super(CommandText, self).__init__()
         self.scene = scene
         # set no interaction on scene's textitem - this avoids button-mashing
@@ -77,13 +77,13 @@ class CommandText(QUndoCommand):
         X = X[1:]
         if len(X) != 3:
             raise ValueError("wrong length of pickle data")
-        blurb = TextItem(scene, scene.fontSize)
+        blurb = TextItem(scene, scene.fontSize, scene.ink.color())
         blurb.setPlainText(X[0])
         blurb._contents = X[0]  # TODO
         blurb.setPos(QPointF(X[1], X[2]))
         blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # knows to latex it if needed.
-        return cls(scene, blurb, scene.ink)
+        return cls(scene, blurb)
 
     def redo(self):
         self.blurb.flash_redo()
@@ -98,7 +98,7 @@ class TextItem(QGraphicsTextItem):
     # Textitem is a qgraphicstextitem, has to handle
     # textinput and double-click to start editing etc.
     # Shift-return ends the editor
-    def __init__(self, parent, fontsize=10):
+    def __init__(self, parent, fontsize=10, color=Qt.red):
         super(TextItem, self).__init__()
         self.saveable = True
         self.animator = [self]
@@ -107,7 +107,7 @@ class TextItem(QGraphicsTextItem):
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
         self.thick = 0
-        self.setDefaultTextColor(Qt.red)
+        self.setDefaultTextColor(color)
         self.setPlainText("")
         self._contents = ""
         font = QFont("Helvetica")
