@@ -36,7 +36,7 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, fontsize=10, maxScore=1, score=0):
+    def __init__(self, style, fontsize=10, maxScore=1, score=0):
         """
         Initialize a new ScoreBox.
 
@@ -45,10 +45,11 @@ class ScoreBox(QGraphicsTextItem):
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
         """
-        super(ScoreBox, self).__init__()
+        super().__init__()
         self.score = score
         self.maxScore = maxScore
-        self.setDefaultTextColor(Qt.red)
+        self.style = style
+        self.setDefaultTextColor(self.style["annot_color"])
         font = QFont("Helvetica")
         font.setPointSizeF(1.25 * fontsize)
         self.setFont(font)
@@ -104,10 +105,10 @@ class ScoreBox(QGraphicsTextItem):
         Returns:
             None
         """
-        painter.setPen(QPen(Qt.red, 2))
+        painter.setPen(QPen(self.style["annot_color"], self.style["pen_width"]))
         painter.setBrush(QBrush(Qt.white))
         painter.drawRoundedRect(option.rect, 10, 10)
-        super(ScoreBox, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
 
 class UnderlyingRect(QGraphicsRectItem):
@@ -335,7 +336,8 @@ class PageScene(QGraphicsScene):
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
-        self.scoreBox = ScoreBox(self.fontSize, self.maxMark, self.score)
+        style = {"annot_color": self.ink.color(), "pen_width": 2}
+        self.scoreBox = ScoreBox(style, self.fontSize, self.maxMark, self.score)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
 
