@@ -210,7 +210,7 @@ class TextItem(QGraphicsTextItem):
         else:
             # paint a bounding rectangle for undo/redo highlighting
             if self.thick > 0:
-                painter.setPen(QPen(Qt.red, self.thick))
+                painter.setPen(QPen(self.defaultTextColor(), self.thick))
                 painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super(TextItem, self).paint(painter, option, widget)

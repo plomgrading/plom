@@ -69,7 +69,9 @@ class TickItemObject(QGraphicsObject):
 
     @thickness.setter
     def thickness(self, value):
-        self.tickitem.setPen(QPen(Qt.red, value))
+        pen = self.tickitem.pen()
+        pen.setWidthF(value)
+        self.tickitem.setPen(pen)
 
 
 class TickItem(QGraphicsPathItem):

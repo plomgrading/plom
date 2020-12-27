@@ -42,7 +42,7 @@ class ScoreBox(QGraphicsTextItem):
 
         Args:
             fontsize (int): A non-zero, positive font value.
-            maxScore (int) : A non-zero, positive maximum score.
+            maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
         """
         super(ScoreBox, self).__init__()
