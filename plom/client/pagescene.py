@@ -336,8 +336,7 @@ class PageScene(QGraphicsScene):
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
-        style = {"annot_color": self.ink.color(), "pen_width": 2}
-        self.scoreBox = ScoreBox(style, self.fontSize, self.maxMark, self.score)
+        self.scoreBox = ScoreBox(self.style, self.fontSize, self.maxMark, self.score)
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
 
@@ -427,7 +426,7 @@ class PageScene(QGraphicsScene):
         # self.ghostItem.tweakPositions()
 
     def set_annotation_color(self, c):
-        self.annot_color = c
+        self.style = {"annot_color": c, "pen_width": 2}
         self.ink = QPen(c, 2)
         # TODO: loop over existing items to update?  Or QPalette?
 

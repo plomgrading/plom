@@ -21,7 +21,7 @@ class CommandBox(QUndoCommand):
         super(CommandBox, self).__init__()
         self.scene = scene
         self.rect = rect
-        self.boxItem = BoxItemObject(self.rect)
+        self.boxItem = BoxItemObject(self.rect, scene.style)
         self.setText("Box")
 
     @classmethod
@@ -44,9 +44,9 @@ class CommandBox(QUndoCommand):
 
 class BoxItemObject(QGraphicsObject):
     # As per the ArrowItemObject, except animate the opacity of the box.
-    def __init__(self, rect):
-        super(BoxItemObject, self).__init__()
-        self.bi = BoxItem(rect, self)
+    def __init__(self, rect, style):
+        super().__init__()
+        self.bi = BoxItem(rect, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"opacity")
 
     def flash_undo(self):
@@ -76,14 +76,14 @@ class BoxItemObject(QGraphicsObject):
 
 class BoxItem(QGraphicsRectItem):
     # Very similar to the arrowitem but simpler to draw the box.
-    def __init__(self, rect, parent=None):
-        super(BoxItem, self).__init__()
+    def __init__(self, rect, style, parent=None):
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
-        self.setPen(QPen(Qt.red, 2))
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setBrush(QBrush(QColor(255, 255, 0, 16)))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)

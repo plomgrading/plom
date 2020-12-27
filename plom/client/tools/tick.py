@@ -21,7 +21,7 @@ class CommandTick(QUndoCommand):
         super().__init__()
         self.scene = scene
         self.pt = pt
-        self.tickItem = TickItemObject(self.pt)
+        self.tickItem = TickItemObject(self.pt, scene.style)
         self.setText("Tick")
 
     @classmethod
@@ -44,9 +44,9 @@ class CommandTick(QUndoCommand):
 
 class TickItemObject(QGraphicsObject):
     # As per the ArrowItemObject
-    def __init__(self, pt):
+    def __init__(self, pt, style):
         super().__init__()
-        self.tickitem = TickItem(pt, self)
+        self.tickitem = TickItem(pt, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -76,7 +76,7 @@ class TickItemObject(QGraphicsObject):
 
 class TickItem(QGraphicsPathItem):
     # Very similar to the arrowitem
-    def __init__(self, pt, parent=None):
+    def __init__(self, pt, style, parent=None):
         super().__init__()
         self.saveable = True
         self.animator = [parent]
@@ -88,7 +88,7 @@ class TickItem(QGraphicsPathItem):
         self.path.lineTo(pt.x(), pt.y())
         self.path.lineTo(pt.x() + 20, pt.y() - 20)
         self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 3))
+        self.setPen(QPen(style["annot_color"], 3 * style["pen_width"] / 2))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
