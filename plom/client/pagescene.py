@@ -287,7 +287,7 @@ class PageScene(QGraphicsScene):
         self._scale = 1.0
 
         # Define standard pen, highlight, fill, light-fill
-        self.set_annotation_color(Qt.red)
+        self.set_annotation_color(Qt.magenta)
         self.highlight = QPen(QColor(255, 255, 0, 64), 50)
         self.brush = QBrush(self.ink.color())
         self.lightBrush = QBrush(QColor(255, 255, 0, 16))
