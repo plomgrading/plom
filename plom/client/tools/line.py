@@ -18,12 +18,12 @@ from plom.client.tools import CommandMoveItem
 class CommandLine(QUndoCommand):
     # Very similar to CommandArrow
     def __init__(self, scene, pti, ptf):
-        super(CommandLine, self).__init__()
+        super().__init__()
         self.scene = scene
         self.pti = pti
         self.ptf = ptf
         # A line from pti(nitial) to ptf(inal)
-        self.lineItem = LineItemObject(self.pti, self.ptf)
+        self.lineItem = LineItemObject(self.pti, self.ptf, scene.style)
         self.setText("Line")
 
     @classmethod
@@ -46,9 +46,9 @@ class CommandLine(QUndoCommand):
 
 class LineItemObject(QGraphicsObject):
     # As per the ArrowItemObject
-    def __init__(self, pti, ptf):
-        super(LineItemObject, self).__init__()
-        self.li = LineItem(pti, ptf, self)
+    def __init__(self, pti, ptf, style):
+        super().__init__()
+        self.li = LineItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -71,20 +71,22 @@ class LineItemObject(QGraphicsObject):
 
     @thickness.setter
     def thickness(self, value):
-        self.li.setPen(QPen(Qt.red, value))
+        pen = self.li.pen()
+        pen.setWidthF(value)
+        self.li.setPen(pen)
 
 
 class LineItem(QGraphicsLineItem):
     # Very similar to the arrowitem, but no arrowhead
-    def __init__(self, pti, ptf, parent=None):
-        super(LineItem, self).__init__()
+    def __init__(self, pti, ptf, style, parent=None):
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))
-        self.setPen(QPen(Qt.red, 2))
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
@@ -109,4 +111,4 @@ class LineItem(QGraphicsLineItem):
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(option.rect, 10, 10)
-        super(LineItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
