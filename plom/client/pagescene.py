@@ -36,7 +36,7 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, fontsize=10, maxScore=1, score=0):
+    def __init__(self, fontsize=10, maxScore=1, score=0, question=None):
         """
         Initialize a new ScoreBox.
 
@@ -44,10 +44,13 @@ class ScoreBox(QGraphicsTextItem):
             fontsize (int): A non-zero, positive font value.
             maxScore (int) : A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
+            question (int): question number to display, or `None` to
+                not display "Qn:" at the beginning of the score box.
         """
         super(ScoreBox, self).__init__()
         self.score = score
         self.maxScore = maxScore
+        self.question = question
         self.setDefaultTextColor(Qt.red)
         font = QFont("Helvetica")
         font.setPointSizeF(1.25 * fontsize)
@@ -59,9 +62,13 @@ class ScoreBox(QGraphicsTextItem):
 
     def _update_text(self):
         """Update the displayed text."""
-        self.setPlainText(
-            "{} out of {}".format(str(self.score).zfill(2), str(self.maxScore).zfill(2))
+        s = ""
+        if self.question:
+            s += "Q{}: ".format(self.question)
+        s += "{} out of {}".format(
+            str(self.score).zfill(2), str(self.maxScore).zfill(2)
         )
+        self.setPlainText(s)
 
     def changeScore(self, x):
         """
