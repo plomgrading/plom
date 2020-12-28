@@ -55,7 +55,13 @@ class ScoreBox(QGraphicsTextItem):
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setPos(4, 4)
-        self.changeScore(self.score)
+        self._update_text()
+
+    def _update_text(self):
+        """Update the displayed text."""
+        self.setPlainText(
+            "{} out of {}".format(str(self.score).zfill(2), str(self.maxScore).zfill(2))
+        )
 
     def changeScore(self, x):
         """
@@ -68,9 +74,7 @@ class ScoreBox(QGraphicsTextItem):
             None
         """
         self.score = x
-        self.setPlainText(
-            "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
-        )
+        self._update_text()
 
     def changeMax(self, x):
         """
@@ -85,9 +89,7 @@ class ScoreBox(QGraphicsTextItem):
         """
         # set the max-mark.
         self.maxScore = x
-        self.setPlainText(
-            "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
-        )
+        self._update_text()
 
     def paint(self, painter, option, widget):
         """
