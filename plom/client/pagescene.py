@@ -65,9 +65,7 @@ class ScoreBox(QGraphicsTextItem):
         s = ""
         if self.question:
             s += "Q{}: ".format(self.question)
-        s += "{} out of {}".format(
-            str(self.score).zfill(2), str(self.maxScore).zfill(2)
-        )
+        s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)
 
     def changeScore(self, x):
