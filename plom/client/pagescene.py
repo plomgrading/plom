@@ -57,7 +57,7 @@ class ScoreBox(QGraphicsTextItem):
         self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.setPos(4, 4)
+        self.setPos(0, 0)
         self._update_text()
 
     def _update_text(self):
