@@ -105,7 +105,7 @@ class ScoreBox(QGraphicsTextItem):
             None
         """
         painter.setPen(QPen(Qt.red, 2))
-        painter.setBrush(QBrush(Qt.white))
+        painter.setBrush(QBrush(QColor(255, 255, 255, 192)))
         painter.drawRoundedRect(option.rect, 10, 10)
         super(ScoreBox, self).paint(painter, option, widget)
 
