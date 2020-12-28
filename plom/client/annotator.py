@@ -1828,6 +1828,7 @@ class Annotator(QWidget):
         """
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
+        # TODO: consider saving colour only if not red?
         plomData = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
             "saveName": os.path.basename(self.saveName),
@@ -1835,6 +1836,7 @@ class Annotator(QWidget):
             "maxMark": self.maxMark,
             "currentMark": self.score,
             "sceneScale": self.scene.get_scale_factor(),
+            "annotationColor": self.scene.ink.color().getRgb()[:3],
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
@@ -1859,6 +1861,8 @@ class Annotator(QWidget):
         self.view.setHidden(True)
         if plomData.get("sceneScale", None):
             self.scene.set_scale_factor(plomData["sceneScale"])
+        if plomData.get("annotationColor", None):
+            self.scene.set_annotation_color(plomData["annotationColor"])
         self.scene.unpickleSceneItems(plomData["sceneItems"])
         # if markstyle is "Total", then click appropriate button
         if self.markStyle == 1:

@@ -6,6 +6,7 @@
 from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
     QBrush,
+    QColor,
     QCursor,
     QFont,
     QGuiApplication,
@@ -426,6 +427,16 @@ class PageScene(QGraphicsScene):
         # self.ghostItem.tweakPositions()
 
     def set_annotation_color(self, c):
+        """Set the colour of annotations.
+
+        args:
+            c (QColor/tuple): a QColor or an RGB triplet describing
+                athe new colour.
+        """
+        try:
+            c = QColor(c)
+        except TypeError:
+            c = QColor.fromRgb(*c)
         self.style = {"annot_color": c, "pen_width": 2}
         self.ink = QPen(c, 2)
         # TODO: loop over existing items to update?  Or QPalette?
