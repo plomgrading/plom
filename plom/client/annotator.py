@@ -411,7 +411,7 @@ class Annotator(QWidget):
             self.maxMark  # TODO: add helper?  combine with changeMark?
         )
         self.comment_widget.changeMark(self.score)
-        self.comment_widget.setQuestionNumberFromTGV(tgvID)
+        self.comment_widget.setQuestionNumber(self.question_num)
         self.comment_widget.setTestname(testName)
 
         if not self.markHandler:
