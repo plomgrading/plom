@@ -11,6 +11,7 @@ __license__ = "AGPLv3"
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 from textwrap import dedent
@@ -355,9 +356,11 @@ class Annotator(QWidget):
 
         """
         self.tgvID = tgvID
+        self.question_num = int(re.split(r"\D+", tgvID)[-1])
         self.testName = testName
-        self.setWindowTitle("Annotator: {} of test {}".format(tgvID, testName))
-        log.info("========= Annotator: {} of test {}".format(tgvID, testName))
+        s = "Q{} of {}: {}".format(self.question_num, testName, tgvID)
+        self.setWindowTitle("{} - Plom Annotator".format(s))
+        log.info("Annotating {}".format(s))
         self.paperDir = paperdir
         self.imageFiles = fnames
         self.saveName = saveName
@@ -960,6 +963,7 @@ class Annotator(QWidget):
             self.saveName,
             self.maxMark,
             self.score,
+            self.question_num,
             self.markStyle,
         )
         # connect view to scene
