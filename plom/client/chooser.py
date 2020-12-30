@@ -163,10 +163,11 @@ class Chooser(QDialog):
 
     def validate(self):
         # Check username is a reasonable string
-        user = self.ui.userLE.text()
+        user = self.ui.userLE.text().strip()
         if (not user.isalnum()) or (not user):
             return
         # check password at least 4 char long
+        # Don't strip whitespace from passwords
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
             log.warning("Password too short")
@@ -261,7 +262,7 @@ class Chooser(QDialog):
         self.validate()
 
     def saveDetails(self):
-        lastTime["user"] = self.ui.userLE.text()
+        lastTime["user"] = self.ui.userLE.text().strip()
         lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text().strip(), self.ui.mportSB.value()
         )
