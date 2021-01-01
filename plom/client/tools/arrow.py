@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
@@ -48,6 +48,23 @@ class ArrowItem(QGraphicsPathItem):
         self.animateFlag = False
         self.ptf = ptf
         self.pti = pti
+        self.path = self._make_path(pti, ptf)
+        self.setPath(self.path)
+        self.setPen(
+            QPen(
+                style["annot_color"],
+                style["pen_width"],
+                cap=Qt.RoundCap,
+                join=Qt.RoundJoin,
+            )
+        )
+        # fill in the arrowhead
+        self.setBrush(QBrush(style["annot_color"]))
+        # The line is moveable and should signal any changes
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def _make_path(self, pti, ptf):
         # vector direction of line
         delta = ptf - pti
         # length of the line
@@ -66,31 +83,17 @@ class ArrowItem(QGraphicsPathItem):
         self.arRight = self.arBase + 10 * northog - 4 * ndelta
         self.path = QPainterPath()
         # put a small ball at start of arrow.
-        self.path.addEllipse(self.pti.x() - 6, self.pti.y() - 6, 12, 12)
+        self.path.addEllipse(pti.x() - 6, pti.y() - 6, 12, 12)
         # draw line from pti to ptf
-        self.path.moveTo(self.pti)
-        self.path.lineTo(self.ptf)
+        self.path.moveTo(pti)
+        self.path.lineTo(ptf)
         # line to left-barb then to base of arrowhead, then to right barb
         self.path.lineTo(self.arLeft)
         self.path.lineTo(self.arBase)
         self.path.lineTo(self.arRight)
         # then back to the end of the line.
-        self.path.lineTo(self.ptf)
-        self.setPath(self.path)
-        # style the line.
-        self.setPen(
-            QPen(
-                style["annot_color"],
-                style["pen_width"],
-                cap=Qt.RoundCap,
-                join=Qt.RoundJoin,
-            )
-        )
-        # fill in the arrowhead
-        self.setBrush(QBrush(style["annot_color"]))
-        # The line is moveable and should signal any changes
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.path.lineTo(ptf)
+        return self.path
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -132,18 +135,9 @@ class ArrowDoubleItemObject(LineItemObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
 
-class ArrowDoubleItem(QGraphicsPathItem):
-    def __init__(self, pti, ptf, style, parent=None):
-        """Creates an double-headed arrow from pti to ptf.
-        Some manipulations required to draw the arrow head.
-        """
-        super().__init__()
-        self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
-        self.ptf = ptf
-        self.pti = pti
-        self.path = QPainterPath()
+class ArrowDoubleItem(ArrowItem):
+    def _make_path(self, pti, ptf):
+        path = QPainterPath()
         # Some vectors:
         delta = ptf - pti
         el = sqrt(delta.x() ** 2 + delta.y() ** 2)
@@ -155,62 +149,22 @@ class ArrowDoubleItem(QGraphicsPathItem):
         arLeft = arBase + 10 * northog + 4 * ndelta
         arRight = arBase - 10 * northog + 4 * ndelta
         # draw first arrow.
-        self.path.moveTo(self.pti)
-        self.path.lineTo(arLeft)
-        self.path.lineTo(arBase)
-        self.path.lineTo(arRight)
-        self.path.lineTo(self.pti)
+        path.moveTo(pti)
+        path.lineTo(arLeft)
+        path.lineTo(arBase)
+        path.lineTo(arRight)
+        path.lineTo(pti)
         # draw line from pti to ptf
-        self.path.lineTo(self.ptf)
+        path.lineTo(ptf)
         # other arrowhead
         arBase = ptf - 16 * ndelta
         arTip = ptf + 8 * ndelta
         arLeft = arBase - 10 * northog - 4 * ndelta
         arRight = arBase + 10 * northog - 4 * ndelta
         # line to left-barb then to base of arrowhead, then to right barb
-        self.path.lineTo(arLeft)
-        self.path.lineTo(arBase)
-        self.path.lineTo(arRight)
+        path.lineTo(arLeft)
+        path.lineTo(arBase)
+        path.lineTo(arRight)
         # then back to the end of the line.
-        self.path.lineTo(self.ptf)
-        self.setPath(self.path)
-        self.setPen(
-            QPen(
-                style["annot_color"],
-                style["pen_width"],
-                cap=Qt.RoundCap,
-                join=Qt.RoundJoin,
-            )
-        )
-        # fill in the arrowheads
-        self.setBrush(QBrush(style["annot_color"]))
-        # The line is moveable and should signal any changes
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionChange and self.scene():
-            # If the position changes then do so with an redo/undo command
-            command = CommandMoveItem(self, value)
-            # Push the command onto the stack.
-            self.scene().undoStack.push(command)
-        # Exec the parent class change command.
-        return QGraphicsPathItem.itemChange(self, change, value)
-
-    def pickle(self):
-        return [
-            "ArrowDouble",
-            self.pti.x() + self.x(),
-            self.pti.y() + self.y(),
-            self.ptf.x() + self.x(),
-            self.ptf.y() + self.y(),
-        ]
-
-    def paint(self, painter, option, widget):
-        if not self.scene().itemWithinBounds(self):
-            # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
-            painter.drawRoundedRect(option.rect, 10, 10)
-        # paint the normal item with the default 'paint' method
-        super(ArrowDoubleItem, self).paint(painter, option, widget)
+        path.lineTo(ptf)
+        return path
