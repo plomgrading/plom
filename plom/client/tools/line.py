@@ -16,7 +16,6 @@ from plom.client.tools import CommandMoveItem
 
 
 class CommandLine(QUndoCommand):
-    # Very similar to CommandArrow
     def __init__(self, scene, pti, ptf):
         super().__init__()
         self.scene = scene
@@ -28,30 +27,34 @@ class CommandLine(QUndoCommand):
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandLine from a serialized form."""
-        assert X[0] == "Line"
+        """Reconstruct from a serialized form."""
+        assert cls.__name__.endswith(X[0]), 'Type "{}" mismatch: "{}"'.format(X[0], cls)
         X = X[1:]
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
     def redo(self):
+        """Item knows how to highlight on undo and redo."""
         self.lineItem.flash_redo()
         self.scene.addItem(self.lineItem.li)
 
     def undo(self):
+        """Undo animation takes 0.5s, so trigger removal after 0.5s."""
         self.lineItem.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.lineItem.li))
 
 
 class LineItemObject(QGraphicsObject):
-    # As per the ArrowItemObject
+    """An object wrapper around LineItem (or subclass) to handle animation."""
+
     def __init__(self, pti, ptf, style):
         super().__init__()
         self.li = LineItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
+        """Animate thin -> thick -> none."""
         self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 6)
@@ -59,6 +62,7 @@ class LineItemObject(QGraphicsObject):
         self.anim.start()
 
     def flash_redo(self):
+        """Animate thin -> med -> thin."""
         self.anim.setDuration(200)
         self.anim.setStartValue(2)
         self.anim.setKeyValueAt(0.5, 4)
@@ -77,7 +81,6 @@ class LineItemObject(QGraphicsObject):
 
 
 class LineItem(QGraphicsLineItem):
-    # Very similar to the arrowitem, but no arrowhead
     def __init__(self, pti, ptf, style, parent=None):
         super().__init__()
         self.saveable = True
@@ -92,13 +95,14 @@ class LineItem(QGraphicsLineItem):
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
+            # If the position changes then do so with an redo/undo command
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsLineItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def pickle(self):
         return [
-            "Line",
+            self.__class__.__name__.replace("Item", ""),  # i.e., "Line",
             self.pti.x() + self.x(),
             self.pti.y() + self.y(),
             self.ptf.x() + self.x(),

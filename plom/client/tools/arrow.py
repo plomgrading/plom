@@ -13,82 +13,36 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
 )
 
+from plom.client.tools.line import CommandLine, LineItemObject, LineItem
 from plom.client.tools.move import CommandMoveItem
 
 
-class CommandArrow(QUndoCommand):
-    # Command to create/remove an arrow object
+class CommandArrow(CommandLine):
     def __init__(self, scene, pti, ptf):
-        super(CommandArrow, self).__init__()
+        super(CommandLine, self).__init__()
         self.scene = scene
         # line starts at pti(nitial) and ends at ptf(inal).
         self.pti = pti
         self.ptf = ptf
-        # create an arrow item
-        self.arrowItem = ArrowItemObject(self.pti, self.ptf)
+        self.lineItem = ArrowItemObject(self.pti, self.ptf, scene.style)
         self.setText("Arrow")
 
-    @classmethod
-    def from_pickle(cls, X, *, scene):
-        """Construct a CommandArrow from a serialized form."""
-        assert X[0] == "Arrow"
-        X = X[1:]
-        if len(X) != 4:
-            raise ValueError("wrong length of pickle data")
-        return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
-    def redo(self):
-        # arrow item knows how to highlight on undo and redo.
-        self.arrowItem.flash_redo()
-        self.scene.addItem(self.arrowItem.ai)
-
-    def undo(self):
-        # the undo animation takes 0.5s
-        # so trigger its removal after 0.5s.
-        self.arrowItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.arrowItem.ai))
-
-
-class ArrowItemObject(QGraphicsObject):
-    # An object wrapper around the arrowitem to handle the
-    # animation of its thickness
-    def __init__(self, pti, ptf):
-        super(ArrowItemObject, self).__init__()
-        self.ai = ArrowItem(pti, ptf, self)
+class ArrowItemObject(LineItemObject):
+    def __init__(self, pti, ptf, style):
+        # TODO: use a ABC here?
+        super(LineItemObject, self).__init__()
+        self.li = ArrowItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
-    def flash_undo(self):
-        # thin -> thick -> none.
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(0)
-        self.anim.start()
 
-    def flash_redo(self):
-        # thin -> med -> thin.
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
-        self.anim.start()
-
-    # Set and get thickness of the pen to draw the arrow.
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.ai.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        self.ai.setPen(QPen(Qt.red, value))
-
-
+# TODO: LineItem is a QGraphicsLineItem, so cannot inherit (?)
 class ArrowItem(QGraphicsPathItem):
-    def __init__(self, pti, ptf, parent=None):
+    def __init__(self, pti, ptf, style, parent=None):
         """Creates an arrow from pti to ptf.
         Some manipulations required to draw the arrow head.
         """
-        super(ArrowItem, self).__init__()
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
@@ -124,9 +78,16 @@ class ArrowItem(QGraphicsPathItem):
         self.path.lineTo(self.ptf)
         self.setPath(self.path)
         # style the line.
-        self.setPen(QPen(Qt.red, 2, cap=Qt.RoundCap, join=Qt.RoundJoin))
-        # fill in the arrow with a red brush
-        self.setBrush(QBrush(Qt.red))
+        self.setPen(
+            QPen(
+                style["annot_color"],
+                style["pen_width"],
+                cap=Qt.RoundCap,
+                join=Qt.RoundJoin,
+            )
+        )
+        # fill in the arrowhead
+        self.setBrush(QBrush(style["annot_color"]))
         # The line is moveable and should signal any changes
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
@@ -135,103 +96,48 @@ class ArrowItem(QGraphicsPathItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             # If the position changes then do so with an redo/undo command
             command = CommandMoveItem(self, value)
-            # Push the command onto the stack.
             self.scene().undoStack.push(command)
-        # Exec the parent class change command.
-        return QGraphicsPathItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
-    def pickle(self):
-        return [
-            "Arrow",
-            self.pti.x() + self.x(),
-            self.pti.y() + self.y(),
-            self.ptf.x() + self.x(),
-            self.ptf.y() + self.y(),
-        ]
+    # poorman's inheritance!
+    pickle = LineItem.pickle
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(self.scene().underRect, mode=Qt.ContainsItemShape):
+        if not self.scene().itemWithinBounds(self):
             # paint a bounding rectangle out-of-bounds warning
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(ArrowItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
 
-class CommandArrowDouble(QUndoCommand):
-    # Command to create/remove an arrow object
+class CommandArrowDouble(CommandLine):
     def __init__(self, scene, pti, ptf):
-        super(CommandArrowDouble, self).__init__()
+        super(CommandLine, self).__init__()
         self.scene = scene
         # line starts at pti(nitial) and ends at ptf(inal).
         self.pti = pti
         self.ptf = ptf
-        # create an arrow item
-        self.arrowItem = ArrowDoubleItemObject(self.pti, self.ptf)
+        self.lineItem = ArrowDoubleItemObject(self.pti, self.ptf, scene.style)
         self.setText("ArrowDouble")
 
-    @classmethod
-    def from_pickle(cls, X, *, scene):
-        """Construct a CommandArrowDouble from a serialized form."""
-        assert X[0] == "ArrowDouble"
-        X = X[1:]
-        if len(X) != 4:
-            raise ValueError("wrong length of pickle data")
-        return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
-    def redo(self):
-        # arrow item knows how to highlight on undo and redo.
-        self.arrowItem.flash_redo()
-        self.scene.addItem(self.arrowItem.ai)
-
-    def undo(self):
-        # the undo animation takes 0.5s
-        # so trigger its removal after 0.5s.
-        self.arrowItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.arrowItem.ai))
-
-
-class ArrowDoubleItemObject(QGraphicsObject):
+class ArrowDoubleItemObject(LineItemObject):
     # An object wrapper around the arrowitem to handle the
     # animation of its thickness
-    def __init__(self, pti, ptf):
-        super(ArrowDoubleItemObject, self).__init__()
-        self.ai = ArrowDoubleItem(pti, ptf, self)
+    def __init__(self, pti, ptf, style):
+        super(LineItemObject, self).__init__()
+        self.li = ArrowDoubleItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        # thin -> thick -> none.
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        # thin -> med -> thin.
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
-        self.anim.start()
-
-    # Set and get thickness of the pen to draw the arrow.
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.ai.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        self.ai.setPen(QPen(Qt.red, value))
 
 
 class ArrowDoubleItem(QGraphicsPathItem):
-    def __init__(self, pti, ptf, parent=None):
+    def __init__(self, pti, ptf, style, parent=None):
         """Creates an double-headed arrow from pti to ptf.
         Some manipulations required to draw the arrow head.
         """
-        super(ArrowDoubleItem, self).__init__()
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
@@ -268,10 +174,16 @@ class ArrowDoubleItem(QGraphicsPathItem):
         # then back to the end of the line.
         self.path.lineTo(self.ptf)
         self.setPath(self.path)
-        # style the line.
-        self.setPen(QPen(Qt.red, 2, cap=Qt.RoundCap, join=Qt.RoundJoin))
-        # fill in the arrow with a red brush
-        self.setBrush(QBrush(Qt.red))
+        self.setPen(
+            QPen(
+                style["annot_color"],
+                style["pen_width"],
+                cap=Qt.RoundCap,
+                join=Qt.RoundJoin,
+            )
+        )
+        # fill in the arrowheads
+        self.setBrush(QBrush(style["annot_color"]))
         # The line is moveable and should signal any changes
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
