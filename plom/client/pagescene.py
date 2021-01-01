@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QEvent, QRectF, QPointF
@@ -58,6 +58,10 @@ class ScoreBox(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setPos(4, 4)
         self.changeScore(self.score)
+
+    def update_style(self):
+        self.style = self.scene().style
+        self.setDefaultTextColor(self.style["annot_color"])
 
     def changeScore(self, x):
         """
@@ -287,6 +291,7 @@ class PageScene(QGraphicsScene):
         self.fontSize = AnnFontSizePts
         self._scale = 1.0
 
+        self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
         self.set_annotation_color(Qt.magenta)
         self.highlight = QPen(QColor(255, 255, 0, 64), 50)
@@ -440,6 +445,9 @@ class PageScene(QGraphicsScene):
         self.style = {"annot_color": c, "pen_width": 2}
         self.ink = QPen(c, 2)
         # TODO: loop over existing items to update?  Or QPalette?
+        # for now, just rough fix for ScoreBox
+        if self.scoreBox:
+            self.scoreBox.update_style()
 
     def setToolMode(self, mode):
         """
