@@ -23,8 +23,7 @@ class CommandPenArrow(CommandPen):
     def __init__(self, scene, path):
         super(CommandPen, self).__init__()
         self.scene = scene
-        self.path = path
-        self.penItem = PenArrowItemObject(self.path, scene.style)
+        self.penItem = PenArrowItemObject(path, scene.style)
         self.setText("PenArrow")
 
 

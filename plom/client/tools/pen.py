@@ -17,8 +17,7 @@ class CommandPen(QUndoCommand):
     def __init__(self, scene, path):
         super().__init__()
         self.scene = scene
-        self.path = path
-        self.penItem = PenItemObject(self.path, scene.style)
+        self.penItem = PenItemObject(path, scene.style)
         self.setText("Pen")
 
     @classmethod

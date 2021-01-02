@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QRectF
@@ -20,8 +20,7 @@ class CommandBox(QUndoCommand):
     def __init__(self, scene, rect):
         super(CommandBox, self).__init__()
         self.scene = scene
-        self.rect = rect
-        self.boxItem = BoxItemObject(self.rect, scene.style)
+        self.boxItem = BoxItemObject(rect, scene.style)
         self.setText("Box")
 
     @classmethod

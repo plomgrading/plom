@@ -22,9 +22,7 @@ class CommandArrow(CommandLine):
         super(CommandLine, self).__init__()
         self.scene = scene
         # line starts at pti(nitial) and ends at ptf(inal).
-        self.pti = pti
-        self.ptf = ptf
-        self.lineItem = ArrowItemObject(self.pti, self.ptf, scene.style)
+        self.lineItem = ArrowItemObject(pti, ptf, scene.style)
         self.setText("Arrow")
 
 

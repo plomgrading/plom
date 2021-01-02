@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QLineF, QPointF
@@ -19,10 +19,8 @@ class CommandLine(QUndoCommand):
     def __init__(self, scene, pti, ptf):
         super().__init__()
         self.scene = scene
-        self.pti = pti
-        self.ptf = ptf
         # A line from pti(nitial) to ptf(inal)
-        self.lineItem = LineItemObject(self.pti, self.ptf, scene.style)
+        self.lineItem = LineItemObject(pti, ptf, scene.style)
         self.setText("Line")
 
     @classmethod

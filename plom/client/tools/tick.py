@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
@@ -20,8 +20,7 @@ class CommandTick(QUndoCommand):
     def __init__(self, scene, pt):
         super().__init__()
         self.scene = scene
-        self.pt = pt
-        self.tickItem = TickItemObject(self.pt, scene.style)
+        self.tickItem = TickItemObject(pt, scene.style)
         self.setText("Tick")
 
     @classmethod
