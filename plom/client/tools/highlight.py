@@ -3,10 +3,9 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
-from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
+from PyQt5.QtCore import QPropertyAnimation, pyqtProperty
+from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import (
-    QUndoCommand,
     QGraphicsObject,
     QGraphicsPathItem,
     QGraphicsItem,

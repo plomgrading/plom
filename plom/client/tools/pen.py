@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -70,17 +70,21 @@ class PenItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
+        """Undo animation: thin -> thick -> none."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 3 * t)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        """Redo animation: thin -> med -> thin."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 2 * t)
+        self.anim.setEndValue(t)
         self.anim.start()
 
     @pyqtProperty(int)
@@ -102,6 +106,7 @@ class PenItem(QGraphicsPathItem):
         self.animateFlag = False
         self.path = path
         self.setPath(self.path)
+        self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)

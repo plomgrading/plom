@@ -3,20 +3,19 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QPointF, QTimer, QPropertyAnimation, pyqtProperty
+from PyQt5.QtCore import QPointF, QTimer, QPropertyAnimation
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
-    QGraphicsObject,
     QGraphicsPathItem,
     QGraphicsItem,
 )
 
 from plom.client.tools import CommandMoveItem
+from plom.client.tools.tick import TickItemObject
 
 
 class CommandCross(QUndoCommand):
-    # Very similar to CommandArrow.
     def __init__(self, scene, pt):
         super().__init__()
         self.scene = scene
@@ -41,35 +40,11 @@ class CommandCross(QUndoCommand):
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
 
 
-class CrossItemObject(QGraphicsObject):
+class CrossItemObject(TickItemObject):
     def __init__(self, pt, style):
-        super().__init__()
+        super(TickItemObject, self).__init__()
         self.item = CrossItem(pt, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        self.anim.setDuration(200)
-        self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5, 8)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        self.anim.setDuration(200)
-        self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(3)
-        self.anim.start()
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.item.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        pen = self.item.pen()
-        pen.setWidthF(value)
-        self.item.setPen(pen)
 
 
 class CrossItem(QGraphicsPathItem):
@@ -86,7 +61,8 @@ class CrossItem(QGraphicsPathItem):
         self.path.moveTo(pt.x() - 12, pt.y() + 12)
         self.path.lineTo(pt.x() + 12, pt.y() - 12)
         self.setPath(self.path)
-        self.setPen(QPen(style["annot_color"], 3 * style["pen_width"] / 2))
+        self.normal_thick = 3 * style["pen_width"] / 2
+        self.setPen(QPen(style["annot_color"], self.normal_thick))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # self.dump()

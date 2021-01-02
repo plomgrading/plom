@@ -5,11 +5,9 @@
 
 from math import sqrt
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
+from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import (
-    QUndoCommand,
-    QGraphicsObject,
     QGraphicsItemGroup,
     QGraphicsPathItem,
     QGraphicsItem,
@@ -100,6 +98,7 @@ class PenArrowItem(QGraphicsItemGroup):
         self.endf.setPath(self.arf)
         # put everything together
         self.pi.setPath(self.path)
+        self.normal_thick = style["pen_width"]
         self.pi.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.endi.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.endf.setPen(QPen(style["annot_color"], style["pen_width"]))

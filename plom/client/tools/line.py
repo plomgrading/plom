@@ -35,12 +35,12 @@ class CommandLine(QUndoCommand):
     def redo(self):
         """Item knows how to highlight on undo and redo."""
         self.lineItem.flash_redo()
-        self.scene.addItem(self.lineItem.li)
+        self.scene.addItem(self.lineItem.item)
 
     def undo(self):
         """Undo animation takes 0.5s, so trigger removal after 0.5s."""
         self.lineItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.lineItem.li))
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.lineItem.item))
 
 
 class LineItemObject(QGraphicsObject):
@@ -48,34 +48,36 @@ class LineItemObject(QGraphicsObject):
 
     def __init__(self, pti, ptf, style):
         super().__init__()
-        self.li = LineItem(pti, ptf, style=style, parent=self)
+        self.item = LineItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        """Animate thin -> thick -> none."""
+        """Undo animation: thin -> thick -> none."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 3 * t)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        """Animate thin -> med -> thin."""
+        """Redo animation: thin -> med -> thin."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 2 * t)
+        self.anim.setEndValue(t)
         self.anim.start()
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.li.pen().width()
+        return self.item.pen().width()
 
     @thickness.setter
     def thickness(self, value):
-        pen = self.li.pen()
+        pen = self.item.pen()
         pen.setWidthF(value)
-        self.li.setPen(pen)
+        self.item.setPen(pen)
 
 
 class LineItem(QGraphicsLineItem):
@@ -87,6 +89,7 @@ class LineItem(QGraphicsLineItem):
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))
+        self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)

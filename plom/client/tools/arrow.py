@@ -4,14 +4,10 @@
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
+
+from PyQt5.QtCore import QPropertyAnimation, Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
-from PyQt5.QtWidgets import (
-    QUndoCommand,
-    QGraphicsObject,
-    QGraphicsPathItem,
-    QGraphicsItem,
-)
+from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.line import CommandLine, LineItemObject, LineItem
 from plom.client.tools.move import CommandMoveItem
@@ -30,7 +26,7 @@ class ArrowItemObject(LineItemObject):
     def __init__(self, pti, ptf, style):
         # TODO: use a ABC here?
         super(LineItemObject, self).__init__()
-        self.li = ArrowItem(pti, ptf, style=style, parent=self)
+        self.item = ArrowItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
 
@@ -48,6 +44,7 @@ class ArrowItem(QGraphicsPathItem):
         self.pti = pti
         self.path = self._make_path(pti, ptf)
         self.setPath(self.path)
+        self.normal_thick = style["pen_width"]
         self.setPen(
             QPen(
                 style["annot_color"],
@@ -129,7 +126,7 @@ class ArrowDoubleItemObject(LineItemObject):
     # animation of its thickness
     def __init__(self, pti, ptf, style):
         super(LineItemObject, self).__init__()
-        self.li = ArrowDoubleItem(pti, ptf, style=style, parent=self)
+        self.item = ArrowDoubleItem(pti, ptf, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
 

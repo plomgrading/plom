@@ -47,17 +47,21 @@ class TickItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
+        """Undo animation: thin -> thick -> none."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 3 * t)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        """Redo animation: thin -> med -> thin."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(3)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(3)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 2 * t)
+        self.anim.setEndValue(t)
         self.anim.start()
 
     @pyqtProperty(int)
@@ -84,7 +88,8 @@ class TickItem(QGraphicsPathItem):
         self.path.lineTo(pt.x(), pt.y())
         self.path.lineTo(pt.x() + 20, pt.y() - 20)
         self.setPath(self.path)
-        self.setPen(QPen(style["annot_color"], 3 * style["pen_width"] / 2))
+        self.normal_thick = 3 * style["pen_width"] / 2
+        self.setPen(QPen(style["annot_color"], self.normal_thick))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 

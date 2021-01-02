@@ -442,7 +442,7 @@ class PageScene(QGraphicsScene):
         style = {
             "annot_color": c,
             "pen_width": 2,
-            "highlight_color": QColor(255, 255, 0, 64),
+            "highlight_color": QColor(255, 255, 0, 64),  # TODO: 64 hardcoded elsewhere
             "highlight_width": 50,
             "box_tint": QColor(255, 255, 0, 16),  # light highlight for backgrounds
         }

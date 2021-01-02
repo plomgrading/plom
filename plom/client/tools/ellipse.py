@@ -48,17 +48,21 @@ class EllipseItemObject(QGraphicsObject):
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
+        """Undo animation: thin -> thick -> none."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 4 * t)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        """Redo animation: thin -> med -> thin."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(2)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 3 * t)
+        self.anim.setEndValue(t)
         self.anim.start()
 
     @pyqtProperty(int)
@@ -80,6 +84,7 @@ class EllipseItem(QGraphicsEllipseItem):
         self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
+        self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setBrush(QBrush(style["box_tint"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)

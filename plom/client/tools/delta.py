@@ -51,7 +51,8 @@ class DeltaItem(QGraphicsTextItem):
         self.saveable = True
         self.animator = [self]
         self.animateFlag = False
-        self.thick = style["pen_width"]
+        self.normal_thick = style["pen_width"]
+        self.thick = self.normal_thick
         self.delta = delta
         self.setDefaultTextColor(style["annot_color"])
         self.setPlainText(" {} ".format(self.delta))
@@ -95,17 +96,17 @@ class DeltaItem(QGraphicsTextItem):
     def flash_undo(self):
         # Animate border when undo thin->thick->none
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setStartValue(self.normal_thick)
+        self.anim.setKeyValueAt(0.5, 4 * self.normal_thick)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
         # Animate border when undo thin->med->thin
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
+        self.anim.setStartValue(self.normal_thick)
+        self.anim.setKeyValueAt(0.5, 2 * self.normal_thick)
+        self.anim.setEndValue(self.normal_thick)
         self.anim.start()
 
     def pickle(self):
