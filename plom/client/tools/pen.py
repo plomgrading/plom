@@ -14,26 +14,24 @@ from plom.client.tools import CommandMoveItem, log
 
 
 class CommandPen(QUndoCommand):
-    # Very similar to CommandArrow
     def __init__(self, scene, path):
-        super(CommandPen, self).__init__()
+        super().__init__()
         self.scene = scene
         self.path = path
-        self.penItem = PenItemObject(self.path)
+        self.penItem = PenItemObject(self.path, scene.style)
         self.setText("Pen")
 
     @classmethod
     def from_pickle(cls, X, *, scene):
-        """Construct a CommandPen from a serialized form.
+        """Reconstruct from a serialized form.
 
         Raises:
             ValueError: malformed or otherwise incorrect data
             AssertionError: there is a bug somewhere.
 
-        TODO: all these Pen-like annotations should subclass pen
-        and inherit this function.
+        Other Pen-like annotations subclasses inherit this function.
         """
-        assert X[0] == "Pen"
+        assert cls.__name__.endswith(X[0]), 'Type "{}" mismatch: "{}"'.format(X[0], cls)
         X = X[1:]
         if len(X) != 1:
             raise ValueError("wrong length of pickle data")
@@ -54,19 +52,20 @@ class CommandPen(QUndoCommand):
         return cls(scene, pth)
 
     def redo(self):
+        """Item knows how to highlight on undo and redo."""
         self.penItem.flash_redo()
         self.scene.addItem(self.penItem.pi)
 
     def undo(self):
+        """Undo animation takes 0.5s, so trigger removal after 0.5s."""
         self.penItem.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.penItem.pi))
 
 
 class PenItemObject(QGraphicsObject):
-    # As per the ArrowItemObject
-    def __init__(self, path):
-        super(PenItemObject, self).__init__()
-        self.pi = PenItem(path, self)
+    def __init__(self, path, style):
+        super().__init__()
+        self.pi = PenItem(path, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -89,29 +88,32 @@ class PenItemObject(QGraphicsObject):
 
     @thickness.setter
     def thickness(self, value):
-        self.pi.setPen(QPen(Qt.red, value))
+        pen = self.pi.pen()
+        pen.setWidthF(value)
+        self.pi.setPen(pen)
 
 
 class PenItem(QGraphicsPathItem):
-    # Very similar to the arrowitem, but much simpler
-    def __init__(self, path, parent=None):
-        super(PenItem, self).__init__()
+    def __init__(self, path, style, parent=None):
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.path = path
         self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 2))
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
+            # If the position changes then do so with an redo/undo command
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsPathItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def pickle(self):
+        name = self.__class__.__name__.replace("Item", "")  # i.e., "Pen",
         pth = []
         for k in range(self.path.elementCount()):
             # e should be either a moveTo or a lineTo
@@ -122,8 +124,8 @@ class PenItem(QGraphicsPathItem):
                 if e.isLineTo():
                     pth.append(["l", e.x + self.x(), e.y + self.y()])
                 else:
-                    log.error("Problem pickling penitem path {}".format(self.path))
-        return ["Pen", pth]
+                    log.error("Problem pickling Pen-like path {}".format(self.path))
+        return [name, pth]
 
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
@@ -132,4 +134,4 @@ class PenItem(QGraphicsPathItem):
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(PenItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
