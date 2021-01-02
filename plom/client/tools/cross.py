@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
+from PyQt5.QtCore import QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -18,10 +18,9 @@ from plom.client.tools import CommandMoveItem
 class CommandCross(QUndoCommand):
     # Very similar to CommandArrow.
     def __init__(self, scene, pt):
-        super(CommandCross, self).__init__()
+        super().__init__()
         self.scene = scene
-        self.pt = pt
-        self.crossItem = CrossItemObject(self.pt)
+        self.obj = CrossItemObject(pt, scene.style)
         self.setText("Cross")
 
     @classmethod
@@ -34,19 +33,18 @@ class CommandCross(QUndoCommand):
         return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):
-        self.crossItem.flash_redo()
-        self.scene.addItem(self.crossItem.ci)
+        self.obj.flash_redo()
+        self.scene.addItem(self.obj.item)
 
     def undo(self):
-        self.crossItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.crossItem.ci))
+        self.obj.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
 
 
 class CrossItemObject(QGraphicsObject):
-    # As per the ArrowItemObject
-    def __init__(self, pt):
-        super(CrossItemObject, self).__init__()
-        self.ci = CrossItem(pt, self)
+    def __init__(self, pt, style):
+        super().__init__()
+        self.item = CrossItem(pt, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -65,16 +63,17 @@ class CrossItemObject(QGraphicsObject):
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.ci.pen().width()
+        return self.item.pen().width()
 
     @thickness.setter
     def thickness(self, value):
-        self.ci.setPen(QPen(Qt.red, value))
+        pen = self.item.pen()
+        pen.setWidthF(value)
+        self.item.setPen(pen)
 
 
 class CrossItem(QGraphicsPathItem):
-    # Very similar to the arrowitem.
-    def __init__(self, pt, parent=None):
+    def __init__(self, pt, style, parent=None):
         super(CrossItem, self).__init__()
         self.saveable = True
         self.animator = [parent]
@@ -87,7 +86,7 @@ class CrossItem(QGraphicsPathItem):
         self.path.moveTo(pt.x() - 12, pt.y() + 12)
         self.path.lineTo(pt.x() + 12, pt.y() - 12)
         self.setPath(self.path)
-        self.setPen(QPen(Qt.red, 3))
+        self.setPen(QPen(style["annot_color"], 3 * style["pen_width"] / 2))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # self.dump()
@@ -96,7 +95,7 @@ class CrossItem(QGraphicsPathItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsPathItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def pickle(self):
         return ["Cross", self.pt.x() + self.x(), self.pt.y() + self.y()]
@@ -107,5 +106,5 @@ class CrossItem(QGraphicsPathItem):
             painter.setPen(QPen(QColor(255, 165, 0), 8))
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(option.rect, 10, 10)
-            # paint the normal item with the default 'paint' method
-        super(CrossItem, self).paint(painter, option, widget)
+        # paint the normal item with the default 'paint' method
+        super().paint(painter, option, widget)

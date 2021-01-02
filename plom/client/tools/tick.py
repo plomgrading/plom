@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
+from PyQt5.QtCore import QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -16,11 +16,10 @@ from plom.client.tools import CommandMoveItem
 
 
 class CommandTick(QUndoCommand):
-    # Very similar to CommandArrow
     def __init__(self, scene, pt):
         super().__init__()
         self.scene = scene
-        self.tickItem = TickItemObject(pt, scene.style)
+        self.obj = TickItemObject(pt, scene.style)
         self.setText("Tick")
 
     @classmethod
@@ -33,19 +32,18 @@ class CommandTick(QUndoCommand):
         return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):
-        self.tickItem.flash_redo()
-        self.scene.addItem(self.tickItem.tickitem)
+        self.obj.flash_redo()
+        self.scene.addItem(self.obj.item)
 
     def undo(self):
-        self.tickItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.tickItem.tickitem))
+        self.obj.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
 
 
 class TickItemObject(QGraphicsObject):
-    # As per the ArrowItemObject
     def __init__(self, pt, style):
         super().__init__()
-        self.tickitem = TickItem(pt, style=style, parent=self)
+        self.item = TickItem(pt, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -64,17 +62,16 @@ class TickItemObject(QGraphicsObject):
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.tickitem.pen().width()
+        return self.item.pen().width()
 
     @thickness.setter
     def thickness(self, value):
-        pen = self.tickitem.pen()
+        pen = self.item.pen()
         pen.setWidthF(value)
-        self.tickitem.setPen(pen)
+        self.item.setPen(pen)
 
 
 class TickItem(QGraphicsPathItem):
-    # Very similar to the arrowitem
     def __init__(self, pt, style, parent=None):
         super().__init__()
         self.saveable = True
