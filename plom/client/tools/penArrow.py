@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
 )
 
-from plom.client.tools import CommandPen, PenItemObject, PenItem
+from plom.client.tools.pen import CommandPen, PenItemObject, PenItem
 from plom.client.tools import CommandMoveItem, log
 
 
@@ -23,28 +23,28 @@ class CommandPenArrow(CommandPen):
     def __init__(self, scene, path):
         super(CommandPen, self).__init__()
         self.scene = scene
-        self.penItem = PenArrowItemObject(path, scene.style)
+        self.penobj = PenArrowItemObject(path, scene.style)
         self.setText("PenArrow")
 
 
 class PenArrowItemObject(PenItemObject):
     def __init__(self, path, style):
         super(PenItemObject, self).__init__()
-        self.pi = PenArrowItem(path, style=style, parent=self)
+        self.item = PenArrowItem(path, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.pi.pi.pen().width()
+        return self.item.pi.pen().width()
 
     # TODO: Item could have a method for these, avoiding this custom method here
     @thickness.setter
     def thickness(self, value):
-        pen = self.pi.pi.pen()
+        pen = self.item.pi.pen()
         pen.setWidthF(value)
-        self.pi.pi.setPen(pen)
-        self.pi.endi.setPen(pen)
-        self.pi.endf.setPen(pen)
+        self.item.pi.setPen(pen)
+        self.item.endi.setPen(pen)
+        self.item.endf.setPen(pen)
 
 
 class PenArrowItem(QGraphicsItemGroup):

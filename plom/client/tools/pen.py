@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
@@ -17,7 +19,7 @@ class CommandPen(QUndoCommand):
     def __init__(self, scene, path):
         super().__init__()
         self.scene = scene
-        self.penItem = PenItemObject(path, scene.style)
+        self.penobj = PenItemObject(path, scene.style)
         self.setText("Pen")
 
     @classmethod
@@ -52,19 +54,19 @@ class CommandPen(QUndoCommand):
 
     def redo(self):
         """Item knows how to highlight on undo and redo."""
-        self.penItem.flash_redo()
-        self.scene.addItem(self.penItem.pi)
+        self.penobj.flash_redo()
+        self.scene.addItem(self.penobj.item)
 
     def undo(self):
         """Undo animation takes 0.5s, so trigger removal after 0.5s."""
-        self.penItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.penItem.pi))
+        self.penobj.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.penobj.item))
 
 
 class PenItemObject(QGraphicsObject):
     def __init__(self, path, style):
         super().__init__()
-        self.pi = PenItem(path, style=style, parent=self)
+        self.item = PenItem(path, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
@@ -83,13 +85,13 @@ class PenItemObject(QGraphicsObject):
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.pi.pen().width()
+        return self.item.pen().width()
 
     @thickness.setter
     def thickness(self, value):
-        pen = self.pi.pen()
+        pen = self.item.pen()
         pen.setWidthF(value)
-        self.pi.setPen(pen)
+        self.item.setPen(pen)
 
 
 class PenItem(QGraphicsPathItem):
