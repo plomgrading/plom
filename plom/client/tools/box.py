@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QRectF
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPen
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -16,11 +16,10 @@ from plom.client.tools import CommandMoveItem
 
 
 class CommandBox(QUndoCommand):
-    # Very similar to CommandArrow.
     def __init__(self, scene, rect):
-        super(CommandBox, self).__init__()
+        super().__init__()
         self.scene = scene
-        self.boxItem = BoxItemObject(rect, scene.style)
+        self.obj = BoxItemObject(rect, scene.style)
         self.setText("Box")
 
     @classmethod
@@ -33,23 +32,23 @@ class CommandBox(QUndoCommand):
         return cls(scene, QRectF(X[0], X[1], X[2], X[3]))
 
     def redo(self):
-        self.boxItem.flash_redo()
-        self.scene.addItem(self.boxItem.bi)
+        self.obj.flash_redo()
+        self.scene.addItem(self.obj.item)
 
     def undo(self):
-        self.boxItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.boxItem.bi))
+        self.obj.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
 
 
 class BoxItemObject(QGraphicsObject):
     # As per the ArrowItemObject, except animate the opacity of the box.
     def __init__(self, rect, style):
         super().__init__()
-        self.bi = BoxItem(rect, style=style, parent=self)
+        self.item = BoxItem(rect, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"opacity")
 
     def flash_undo(self):
-        # translucent -> opaque -> clear.
+        """translucent -> opaque -> clear."""
         self.anim.setDuration(200)
         self.anim.setStartValue(16)
         self.anim.setKeyValueAt(0.5, 192)
@@ -57,7 +56,7 @@ class BoxItemObject(QGraphicsObject):
         self.anim.start()
 
     def flash_redo(self):
-        # translucent -> opaque -> translucent.
+        """translucent -> opaque -> translucent."""
         self.anim.setDuration(200)
         self.anim.setStartValue(16)
         self.anim.setKeyValueAt(0.5, 64)
@@ -66,15 +65,14 @@ class BoxItemObject(QGraphicsObject):
 
     @pyqtProperty(int)
     def opacity(self):
-        return self.bi.brush().color().alpha()
+        return self.item.brush().color().alpha()
 
     @opacity.setter
     def opacity(self, value):
-        self.bi.setBrush(QBrush(QColor(255, 255, 0, value)))
+        self.item.setBrush(QBrush(QColor(255, 255, 0, value)))
 
 
 class BoxItem(QGraphicsRectItem):
-    # Very similar to the arrowitem but simpler to draw the box.
     def __init__(self, rect, style, parent=None):
         super().__init__()
         self.saveable = True
@@ -91,7 +89,7 @@ class BoxItem(QGraphicsRectItem):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsRectItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def pickle(self):
         return [
@@ -111,4 +109,4 @@ class BoxItem(QGraphicsRectItem):
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(BoxItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
