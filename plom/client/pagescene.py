@@ -804,7 +804,7 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of comment is non-zero then create a
         # delta-object with a different offset, else just place the comment.
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
-            blurb = TextItem(self, self.fontSize, self.ink.color())
+            blurb = TextItem(self, fontsize=self.fontSize, color=self.ink.color())
             blurb.setPlainText(self.commentText)
             blurb._contents = self.commentText  # for pickling, TODO: Colin doesn't like
             # move to correct point - update if only text no delta
@@ -973,7 +973,7 @@ class PageScene(QGraphicsScene):
         # Now we construct a text object, give it focus (which fires up the
         # editor on that object), and then push it onto the undo-stack.
         self.originPos = event.scenePos()
-        blurb = TextItem(self, self.fontSize, self.ink.color())
+        blurb = TextItem(self, fontsize=self.fontSize, color=self.ink.color())
         # move so centred under cursor
         self.originPos -= QPointF(0, blurb.boundingRect().height() / 2)
         blurb.setPos(self.originPos)

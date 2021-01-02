@@ -21,10 +21,10 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, delta, blurb, fontsize):
+    def __init__(self, scene, pt, delta, text, fontsize):
         super().__init__()
         self.scene = scene
-        self.gdt = GroupDeltaTextItem(pt, delta, blurb, fontsize, scene)
+        self.gdt = GroupDeltaTextItem(pt, delta, text, fontsize, scene)
         self.setText("GroupDeltaText")
 
     @classmethod
@@ -65,9 +65,12 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     def __init__(self, pt, delta, blurb_text, fontsize, scene):
         super().__init__()
         self.pt = pt
+        self.style = scene.style
         # centre under click
         self.di = DeltaItem(pt, delta, style=scene.style, fontsize=fontsize)
-        self.blurb = TextItem(scene, fontsize)
+        self.blurb = TextItem(
+            scene, fontsize=fontsize, color=scene.style["annot_color"]
+        )
         self.blurb.setPlainText(blurb_text)
         self.blurb._contents = blurb_text  # TODO
         self.blurb.setPos(pt)
@@ -86,7 +89,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
-        self.thick = 1
+        self.thick = self.style["pen_width"] / 2
 
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
@@ -126,7 +129,9 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # paint the normal item with the default 'paint' method
         else:
             # paint a bounding rectangle for undo/redo highlighting
-            painter.setPen(QPen(QColor(255, 0, 0), self.thick, style=Qt.DotLine))
+            painter.setPen(
+                QPen(self.style["annot_color"], self.thick, style=Qt.DotLine)
+            )
             painter.drawRoundedRect(option.rect, 10, 10)
             pass
         super().paint(painter, option, widget)

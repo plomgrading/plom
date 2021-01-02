@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
@@ -14,7 +14,7 @@ class CommandMoveText(QUndoCommand):
     # Don't use this for moving other graphics items
     # Graphicsitems are separate from graphicsTEXTitems
     def __init__(self, xitem, new_pos):
-        super(CommandMoveText, self).__init__()
+        super().__init__()
         self.xitem = xitem
         self.old_pos = xitem.pos()
         self.new_pos = new_pos
@@ -51,7 +51,7 @@ class CommandMoveText(QUndoCommand):
 
 class CommandText(QUndoCommand):
     def __init__(self, scene, blurb):
-        super(CommandText, self).__init__()
+        super().__init__()
         self.scene = scene
         # set no interaction on scene's textitem - this avoids button-mashing
         # issues where text can be added during pasting in of text
@@ -99,7 +99,7 @@ class TextItem(QGraphicsTextItem):
     # textinput and double-click to start editing etc.
     # Shift-return ends the editor
     def __init__(self, parent, fontsize=10, color=Qt.red):
-        super(TextItem, self).__init__()
+        super().__init__()
         self.saveable = True
         self.animator = [self]
         self.animateFlag = False
@@ -137,7 +137,7 @@ class TextItem(QGraphicsTextItem):
             self.pngToText()
         else:
             self._contents = self.toPlainText()
-        super(TextItem, self).focusInEvent(event)
+        super().focusInEvent(event)
 
     def focusOutEvent(self, event):
         # When object loses the focus, need to make sure that
@@ -150,7 +150,7 @@ class TextItem(QGraphicsTextItem):
         # if not PNG then update contents
         if self.state != "PNG":
             self._contents = self.toPlainText()
-        super(TextItem, self).focusOutEvent(event)
+        super().focusOutEvent(event)
 
     def textToPng(self):
         self._contents = self.toPlainText()
@@ -197,7 +197,7 @@ class TextItem(QGraphicsTextItem):
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
 
-        super(TextItem, self).keyPressEvent(event)
+        super().keyPressEvent(event)
 
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
@@ -213,28 +213,28 @@ class TextItem(QGraphicsTextItem):
                 painter.setPen(QPen(self.defaultTextColor(), self.thick))
                 painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
-        super(TextItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
     def itemChange(self, change, value):
         if change == QGraphicsTextItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)
             # Notice that the value here is the new position, not the delta.
             self.scene().undoStack.push(command)
-        return QGraphicsTextItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def flash_undo(self):
-        # When undo-ing, draw a none->thick->none border around text.
+        """Undo animation: thin -> thick -> none border around text"""
         self.anim.setDuration(200)
         self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setKeyValueAt(0.5, 8)  # TODO: should be 4*style["pen_width"]
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
-        # When redo-ing, draw a none->med->none border around text.
+        """Redo animation: thin -> med -> thin border around text."""
         self.anim.setDuration(200)
         self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 4)
+        self.anim.setKeyValueAt(0.5, 4)  # TODO: should be 2*style["pen_width"]
         self.anim.setEndValue(0)
         self.anim.start()
 
@@ -261,7 +261,7 @@ class GhostText(QGraphicsTextItem):
     # textinput and double-click to start editing etc.
     # Shift-return ends the editor
     def __init__(self, txt, fontsize=10):
-        super(GhostText, self).__init__()
+        super().__init__()
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(txt)
         font = QFont("Helvetica")
