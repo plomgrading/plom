@@ -52,7 +52,10 @@ class HighlightItemObject(QGraphicsObject):
 
     @opacity.setter
     def opacity(self, value):
-        self.item.setPen(QPen(QColor(255, 255, 0, value), 50))
+        c = self.item.pen().color()
+        w = self.item.pen().widthF()
+        c.setAlpha(value)
+        self.item.setPen(QPen(c, w))
 
 
 class HighlightItem(QGraphicsPathItem):
@@ -63,7 +66,7 @@ class HighlightItem(QGraphicsPathItem):
         self.animateFlag = False
         self.path = path
         self.setPath(self.path)
-        self.setPen(QPen(QColor(255, 255, 0, 64), 50))
+        self.setPen(QPen(style["highlight_color"], style["highlight_width"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 

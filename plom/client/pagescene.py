@@ -294,9 +294,6 @@ class PageScene(QGraphicsScene):
         self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
         self.set_annotation_color(Qt.magenta)
-        self.highlight = QPen(QColor(255, 255, 0, 64), 50)
-        self.brush = QBrush(self.ink.color())
-        self.lightBrush = QBrush(QColor(255, 255, 0, 16))
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
         # Flags to indicate if drawing an arrow (vs line), highlight (vs
@@ -442,8 +439,17 @@ class PageScene(QGraphicsScene):
             c = QColor(c)
         except TypeError:
             c = QColor.fromRgb(*c)
-        self.style = {"annot_color": c, "pen_width": 2}
-        self.ink = QPen(c, 2)
+        style = {
+            "annot_color": c,
+            "pen_width": 2,
+            "highlight_color": QColor(255, 255, 0, 64),
+            "highlight_width": 50,
+            "box_tint": QColor(255, 255, 0, 16),  # light highlight for backgrounds
+        }
+        self.ink = QPen(style["annot_color"], style["pen_width"])
+        self.lightBrush = QBrush(style["box_tint"])
+        self.highlight = QPen(style["highlight_color"], style["highlight_width"])
+        self.style = style
         # TODO: loop over existing items to update?  Or QPalette?
         # for now, just rough fix for ScoreBox
         if self.scoreBox:

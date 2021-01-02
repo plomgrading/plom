@@ -69,7 +69,9 @@ class BoxItemObject(QGraphicsObject):
 
     @opacity.setter
     def opacity(self, value):
-        self.item.setBrush(QBrush(QColor(255, 255, 0, value)))
+        c = self.item.brush().color()
+        c.setAlpha(value)
+        self.item.setBrush(QColor(c))
 
 
 class BoxItem(QGraphicsRectItem):
@@ -81,7 +83,7 @@ class BoxItem(QGraphicsRectItem):
         self.rect = rect
         self.setRect(self.rect)
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
-        self.setBrush(QBrush(QColor(255, 255, 0, 16)))
+        self.setBrush(QBrush(style["box_tint"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
