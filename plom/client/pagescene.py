@@ -898,7 +898,7 @@ class PageScene(QGraphicsScene):
             command = CommandQMark(self, pt)
         else:
             if self.isLegalDelta(self.markDelta):
-                command = CommandDelta(self, pt, self.markDelta, self.fontSize)
+                command = CommandDelta(self, pt, self.markDelta)
             else:
                 return
         self.undoStack.push(command)  # push command onto undoStack.

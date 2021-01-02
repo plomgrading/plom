@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, Qt, QPointF
@@ -65,7 +65,8 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     def __init__(self, pt, delta, blurb_text, fontsize, scene):
         super().__init__()
         self.pt = pt
-        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
+        # centre under click
+        self.di = DeltaItem(pt, delta, style=scene.style, fontsize=fontsize)
         self.blurb = TextItem(scene, fontsize)
         self.blurb.setPlainText(blurb_text)
         self.blurb._contents = blurb_text  # TODO
