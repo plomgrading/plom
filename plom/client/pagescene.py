@@ -963,7 +963,7 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.setTextInteractionFlags(Qt.TextEditorInteraction)
                 self.setFocusItem(under, Qt.MouseFocusReason)
-                super(PageScene, self).mousePressEvent(event)
+                super().mousePressEvent(event)
                 return
             # check if a textitem currently has focus and clear it.
             under = self.focusItem()

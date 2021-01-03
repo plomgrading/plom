@@ -126,14 +126,13 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             painter.drawRoundedRect(option.rect, 10, 10)
-        # paint the normal item with the default 'paint' method
         else:
             # paint a bounding rectangle for undo/redo highlighting
             painter.setPen(
                 QPen(self.style["annot_color"], self.thick, style=Qt.DotLine)
             )
             painter.drawRoundedRect(option.rect, 10, 10)
-            pass
+        # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
 
 
