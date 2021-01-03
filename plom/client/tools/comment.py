@@ -179,6 +179,7 @@ class GhostComment(QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
+        # TODO: pen width hardcoded
         painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
