@@ -165,8 +165,11 @@ class TextItem(QGraphicsTextItem):
         assert len(c) == 4
         c = ",".join(str(x) for x in c[0:3])
         texIt = (
-            r"\definecolor{annot}{RGB}{" + c + "}\n" +
-            r"\color{annot}" + "\n" + texIt.strip()
+            r"\definecolor{annot}{RGB}{"
+            + c
+            + "}\n"
+            + "\\color{annot}\n"
+            + texIt.strip()
         )
         fragfilename = self.parent.latexAFragment(texIt)
         if fragfilename:
