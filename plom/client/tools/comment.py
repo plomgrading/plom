@@ -64,17 +64,13 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, blurb_text, scene, style, fontsize):
+    def __init__(self, pt, delta, text, scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
-        self.blurb = TextItem(scene, fontsize=fontsize, color=style["annot_color"])
-        self.blurb.setPlainText(blurb_text)
-        self.blurb._contents = blurb_text  # TODO
-        self.blurb.setPos(pt)
-        self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.blurb = TextItem(pt, text, scene, fontsize=fontsize, color=style["annot_color"], editable=False)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
         self.di.saveable = False

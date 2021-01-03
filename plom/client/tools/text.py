@@ -50,25 +50,34 @@ class CommandMoveText(QUndoCommand):
 
 
 class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb):
+    def __init__(self, scene, pt, text, editable=True):
         super().__init__()
         self.scene = scene
-        # set no interaction on scene's textitem - this avoids button-mashing
+        self.blurb = TextItem(pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"], editable=editable)
+        if editable:
+            self.blurb.enable_interactive()
+        self.setText("Text")
+
+    @classmethod
+    def from_existing_item(cls, scene, blurb):
+        inst = cls(scene, blurb.pos(), "", editable=False)
+        # set no interaction on incoming TextItem - this avoids button-mashing
         # issues where text can be added during pasting in of text
         iflags = blurb.textInteractionFlags()
         blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # copy that textitem to one for this comment
-        self.blurb = blurb
+        # TODO: more like link, this is just a pointer!...
+        inst.blurb = blurb
         # set the interaction flags back
         blurb.setTextInteractionFlags(iflags)
         # if the textitem has contents already then we
         # have to do some cleanup - give it focus and then
         # drop focus - correctly sets the text interaction flags
-        if len(self.blurb.toPlainText()) > 0:
-            QTimer.singleShot(1, self.blurb.setFocus)
-            QTimer.singleShot(2, self.blurb.clearFocus)
-            QTimer.singleShot(5, self.blurb.textToPng)
-        self.setText("Text")
+        if len(inst.blurb.toPlainText()) > 0:
+            QTimer.singleShot(1, inst.blurb.setFocus)
+            QTimer.singleShot(2, inst.blurb.clearFocus)
+            QTimer.singleShot(5, inst.blurb.textToPng)
+        return inst
 
     @classmethod
     def from_pickle(cls, X, *, scene):
@@ -77,13 +86,8 @@ class CommandText(QUndoCommand):
         X = X[1:]
         if len(X) != 3:
             raise ValueError("wrong length of pickle data")
-        blurb = TextItem(scene, scene.fontSize, scene.ink.color())
-        blurb.setPlainText(X[0])
-        blurb._contents = X[0]  # TODO
-        blurb.setPos(QPointF(X[1], X[2]))
-        blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # knows to latex it if needed.
-        return cls(scene, blurb)
+        return cls(scene, QPointF(X[1], X[2]), X[0])
 
     def redo(self):
         self.blurb.flash_redo()
@@ -98,29 +102,43 @@ class TextItem(QGraphicsTextItem):
     # Textitem is a qgraphicstextitem, has to handle
     # textinput and double-click to start editing etc.
     # Shift-return ends the editor
-    def __init__(self, parent, fontsize=10, color=Qt.red):
+    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red, editable=True):
+        """
+
+        TODO: it will be built initially with no interaction, until you set it so
+        """
         super().__init__()
         self.saveable = True
         self.animator = [self]
         self.animateFlag = False
+        # TODO: really this is PageScene or Marker: someone who can TeX for us
+        # TODO: its different from e.g., BoxItem (where parent is the animator)
         self.parent = parent
         # Thick is thickness of bounding box hightlight used
         # to highlight the object when undo / redo happens.
         self.thick = 0
         self.setDefaultTextColor(color)
-        self.setPlainText("")
-        self._contents = ""
+        self.setPlainText(text)
+        self._contents = text
         font = QFont("Helvetica")
         font.setPointSizeF(fontsize)
         self.setFont(font)
+        if not editable:
+            self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        # Set it as editably with the text-editor
-        self.setTextInteractionFlags(Qt.TextEditorInteraction)
         # Undo/redo animates via the thickness property
         self.anim = QPropertyAnimation(self, b"thickness")
+        self.setPos(pt)
+        #cr = self.boundingRect()
+        #self.offset = -cr.height() / 2
+        #self.moveBy(0, self.offset)
         # for latex png
         self.state = "TXT"
+
+    def enable_interactive(self):
+        """Set it as editable with the text-editor."""
+        self.setTextInteractionFlags(Qt.TextEditorInteraction)
 
     # TODO: override toPlainText() to behave more like the super class
     # def toPlainText():
