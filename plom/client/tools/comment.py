@@ -21,10 +21,12 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, delta, text, fontsize):
+    def __init__(self, scene, pt, delta, text):
         super().__init__()
         self.scene = scene
-        self.gdt = GroupDeltaTextItem(pt, delta, text, fontsize, scene)
+        self.gdt = GroupDeltaTextItem(
+            pt, delta, text, scene, style=scene.style, fontsize=scene.fontSize
+        )
         self.setText("GroupDeltaText")
 
     @classmethod
@@ -38,7 +40,7 @@ class CommandGroupDeltaText(QUndoCommand):
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], scene.fontSize)
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3])
 
     def redo(self):
         # Mark increased by delta
@@ -62,15 +64,13 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, blurb_text, fontsize, scene):
+    def __init__(self, pt, delta, blurb_text, scene, style, fontsize):
         super().__init__()
         self.pt = pt
-        self.style = scene.style
+        self.style = style
         # centre under click
-        self.di = DeltaItem(pt, delta, style=scene.style, fontsize=fontsize)
-        self.blurb = TextItem(
-            scene, fontsize=fontsize, color=scene.style["annot_color"]
-        )
+        self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
+        self.blurb = TextItem(scene, fontsize=fontsize, color=style["annot_color"])
         self.blurb.setPlainText(blurb_text)
         self.blurb._contents = blurb_text  # TODO
         self.blurb.setPos(pt)

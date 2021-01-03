@@ -127,7 +127,6 @@ class SceneParent(QWidget):
                         self.rpt(),
                         dlt,
                         random.choice(self.posComments),
-                        AnnFontSizePts,
                     )
                 )
         else:  # mark up
@@ -144,7 +143,6 @@ class SceneParent(QWidget):
                         self.rpt(),
                         dlt,
                         random.choice(self.negComments),
-                        AnnFontSizePts,
                     )
                 )
 

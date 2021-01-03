@@ -821,7 +821,7 @@ class PageScene(QGraphicsScene):
             blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.commentDelta, self.commentText, self.fontSize
+                self, pt, self.commentDelta, self.commentText
             )
             log.debug(
                 "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
@@ -2125,6 +2125,5 @@ class PageScene(QGraphicsScene):
             br.center() + br.topRight() / 8,
             delta,
             "NO ANSWER GIVEN",
-            self.fontSize,
         )
         self.undoStack.push(command)
