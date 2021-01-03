@@ -293,7 +293,7 @@ class PageScene(QGraphicsScene):
 
         self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
-        self.set_annotation_color(Qt.magenta)
+        self.set_annotation_color(Qt.red)
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
         # Flags to indicate if drawing an arrow (vs line), highlight (vs
