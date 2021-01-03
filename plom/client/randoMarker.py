@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """Randomly scribble on papers to mark them for testing purposes.
@@ -119,7 +119,7 @@ class SceneParent(QWidget):
                 blurb = TextItem(self, AnnFontSizePts)
                 blurb.setPlainText(random.choice(self.negComments))
                 blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
+                self.scene.undoStack.push(CommandText(self.scene, blurb))
             else:
                 self.scene.undoStack.push(
                     CommandGroupDeltaText(
@@ -135,7 +135,7 @@ class SceneParent(QWidget):
                 blurb = TextItem(self, AnnFontSizePts)
                 blurb.setPlainText(random.choice(self.posComments))
                 blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
+                self.scene.undoStack.push(CommandText(self.scene, blurb))
             else:
                 self.scene.undoStack.push(
                     CommandGroupDeltaText(
@@ -159,7 +159,7 @@ class SceneParent(QWidget):
         blurb = TextItem(self, AnnFontSizePts)
         blurb.setPlainText("Random annotations for testing only.")
         blurb.setPos(QPointF(200, 100))
-        self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
+        self.scene.undoStack.push(CommandText(self.scene, blurb))
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
