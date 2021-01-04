@@ -59,27 +59,6 @@ class CommandText(QUndoCommand):
             QTimer.singleShot(5, self.blurb.textToPng)
 
     @classmethod
-    def from_existing_item(cls, scene, blurb):
-        inst = cls(scene, blurb.pos(), "")
-        # set no interaction on incoming TextItem - this avoids button-mashing
-        # issues where text can be added during pasting in of text
-        iflags = blurb.textInteractionFlags()
-        blurb.setTextInteractionFlags(Qt.NoTextInteraction)
-        # copy that textitem to one for this comment
-        # TODO: more like "link": this is just a pointer!
-        inst.blurb = blurb
-        # set the interaction flags back
-        blurb.setTextInteractionFlags(iflags)
-        # if the textitem has contents already then we
-        # have to do some cleanup - give it focus and then
-        # drop focus - correctly sets the text interaction flags
-        if len(inst.blurb.toPlainText()) > 0:
-            QTimer.singleShot(1, inst.blurb.setFocus)
-            QTimer.singleShot(2, inst.blurb.clearFocus)
-            QTimer.singleShot(5, inst.blurb.textToPng)
-        return inst
-
-    @classmethod
     def from_pickle(cls, X, *, scene):
         """Construct a CommandText from a serialized form."""
         assert X[0] == "Text"
@@ -99,15 +78,23 @@ class CommandText(QUndoCommand):
 
 
 class TextItem(QGraphicsTextItem):
-    # Textitem is a qgraphicstextitem, has to handle
-    # textinput and double-click to start editing etc.
-    # Shift-return ends the editor
-    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
-        """
-        
+    """A multiline text annotation with optional LaTeX rendering.
 
-        TODO: It will be built initially with no interaction, until you set it so
-        """
+    Textitem has to handle textinput and double-click to start editing etc.
+
+    TODO: check the double-click thing!
+
+    Shift-return ends the editor.
+
+    Has special handling for text that begins with `tex:` which is rendered
+    to an image using LaTeX via a call to the server.
+
+    The TextItem is built with no text-field interaction (editor) disabled.
+    Call `enable_interactive()` to enable it: if you also want the editor
+    to open right away, call `setFocus()`.
+    """
+
+    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
         super().__init__()
         self.saveable = True
         self.animator = [self]
@@ -124,9 +111,9 @@ class TextItem(QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPointSizeF(fontsize)
         self.setFont(font)
-        # self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
         # Undo/redo animates via the thickness property
         self.anim = QPropertyAnimation(self, b"thickness")
         self.setPos(pt)

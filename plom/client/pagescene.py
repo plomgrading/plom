@@ -971,17 +971,14 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        # Now we construct a text object, give it focus (which fires up the
-        # editor on that object), and then push it onto the undo-stack.
+        # Construct empty text object, give focus to start editor
         pt = event.scenePos()
-        blurb = TextItem(pt, "", parent=self, fontsize=self.fontSize, color=self.ink.color())
-        # move so centred under cursor
-        # TODO: move into class!
-        pt -= QPointF(0, blurb.boundingRect().height() / 2)
-        blurb.setPos(pt)
-        blurb.enable_interactive()
-        blurb.setFocus()
-        command = CommandText.from_existing_item(self, blurb)
+        command = CommandText(self, pt, "")
+        # move so centred under cursor   TODO: move into class!
+        pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
+        command.blurb.setPos(pt)
+        command.blurb.enable_interactive()
+        command.blurb.setFocus()
         self.undoStack.push(command)
 
     def mousePressTick(self, event):
