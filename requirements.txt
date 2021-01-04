@@ -39,3 +39,6 @@ toml==0.10.2
 tqdm==4.61.0
 urllib3==1.26.5
 weasyprint==52.5
+
+# Need oauth for canvas integration
+oauthlib==3.1.0
