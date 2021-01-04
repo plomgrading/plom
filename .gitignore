@@ -148,5 +148,4 @@ plomBuzzword/
 *.db
 
 # API secrets
-**/api-secrets*
 **/api_secrets*
