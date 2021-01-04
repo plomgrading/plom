@@ -50,23 +50,23 @@ class CommandMoveText(QUndoCommand):
 
 
 class CommandText(QUndoCommand):
-    def __init__(self, scene, pt, text, editable=True):
+    def __init__(self, scene, pt, text):
         super().__init__()
         self.scene = scene
-        self.blurb = TextItem(pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"], editable=editable)
-        if editable:
-            self.blurb.enable_interactive()
+        self.blurb = TextItem(pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"])
         self.setText("Text")
+        if len(text) > 0:
+            QTimer.singleShot(5, self.blurb.textToPng)
 
     @classmethod
     def from_existing_item(cls, scene, blurb):
-        inst = cls(scene, blurb.pos(), "", editable=False)
+        inst = cls(scene, blurb.pos(), "")
         # set no interaction on incoming TextItem - this avoids button-mashing
         # issues where text can be added during pasting in of text
         iflags = blurb.textInteractionFlags()
         blurb.setTextInteractionFlags(Qt.NoTextInteraction)
         # copy that textitem to one for this comment
-        # TODO: more like link, this is just a pointer!...
+        # TODO: more like "link": this is just a pointer!
         inst.blurb = blurb
         # set the interaction flags back
         blurb.setTextInteractionFlags(iflags)
@@ -102,10 +102,11 @@ class TextItem(QGraphicsTextItem):
     # Textitem is a qgraphicstextitem, has to handle
     # textinput and double-click to start editing etc.
     # Shift-return ends the editor
-    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red, editable=True):
+    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
         """
+        
 
-        TODO: it will be built initially with no interaction, until you set it so
+        TODO: It will be built initially with no interaction, until you set it so
         """
         super().__init__()
         self.saveable = True
@@ -123,8 +124,7 @@ class TextItem(QGraphicsTextItem):
         font = QFont("Helvetica")
         font.setPointSizeF(fontsize)
         self.setFont(font)
-        if not editable:
-            self.setTextInteractionFlags(Qt.NoTextInteraction)
+        # self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # Undo/redo animates via the thickness property

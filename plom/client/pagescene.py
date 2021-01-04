@@ -818,7 +818,7 @@ class PageScene(QGraphicsScene):
             # Update position of text - the ghostitem has it right
             # TODO: move this calc into the item
             pt2 = QPointF(pt.x(), pt.y()+self.ghostItem.blurb.pos().y())
-            command = CommandText(self, pt2, self.commentText, editable=False)
+            command = CommandText(self, pt2, self.commentText)
             self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
@@ -974,7 +974,7 @@ class PageScene(QGraphicsScene):
         # Now we construct a text object, give it focus (which fires up the
         # editor on that object), and then push it onto the undo-stack.
         pt = event.scenePos()
-        blurb = TextItem(pt, "", parent=self, fontsize=self.fontSize, color=self.ink.color(), editable=False)
+        blurb = TextItem(pt, "", parent=self, fontsize=self.fontSize, color=self.ink.color())
         # move so centred under cursor
         # TODO: move into class!
         pt -= QPointF(0, blurb.boundingRect().height() / 2)
