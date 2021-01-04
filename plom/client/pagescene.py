@@ -817,8 +817,8 @@ class PageScene(QGraphicsScene):
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
             # Update position of text - the ghostitem has it right
             # TODO: move this calc into the item
-            pt2 = QPointF(pt.x(), pt.y()+self.ghostItem.blurb.pos().y())
-            command = CommandText(self, pt2, self.commentText)
+            pt += QPointF(0, self.ghostItem.blurb.pos().y())
+            command = CommandText(self, pt, self.commentText)
             self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
