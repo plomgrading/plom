@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
 
+
 class CommandMoveText(QUndoCommand):
     # Moves the textitem. we give it an ID so it can be merged with other
     # commandmoves on the undo-stack.
@@ -175,7 +176,7 @@ class TextItem(QGraphicsTextItem):
         src = self.toPlainText()
         if not src.casefold().startswith("tex:"):
             if force:
-                src = "tex:" + src
+                src = "tex: " + src
             else:
                 return
         texIt = src[4:].strip()
@@ -208,22 +209,24 @@ class TextItem(QGraphicsTextItem):
         self._tex_src_cache = None
 
     def keyPressEvent(self, event):
-        # Shift-return ends the editor and releases the object
-        if event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Return:
+        """Shift/Ctrl-Return ends the editor, and renders with latex.
+
+        Shift-Return will render if the string starts with the magic
+        prefix `tex:`.  Ctrl-Return adds the prefix if necessary.
+        """
+        if (
+            event.modifiers() in (Qt.ShiftModifier, Qt.ControlModifier)
+            and event.key() == Qt.Key_Return
+        ):
             # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
-            self.textToPng()
-        # control-return forces latex by ensuring the "tex:" prefix
-        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Return:
-            # Clear any highlighted text and release.
-            tc = self.textCursor()
-            tc.clearSelection()
-            self.setTextCursor(tc)
-            self.setTextInteractionFlags(Qt.NoTextInteraction)
-            self.textToPng(force=True)
+            if event.modifiers() == Qt.ControlModifier:
+                self.textToPng(force=True)
+            else:
+                self.textToPng()
         super().keyPressEvent(event)
 
     def paint(self, painter, option, widget):
