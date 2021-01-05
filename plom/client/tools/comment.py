@@ -70,7 +70,9 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.style = style
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
-        self.blurb = TextItem(pt, text, scene, fontsize=fontsize, color=style["annot_color"])
+        self.blurb = TextItem(
+            pt, text, scene, fontsize=fontsize, color=style["annot_color"]
+        )
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
         self.di.saveable = False

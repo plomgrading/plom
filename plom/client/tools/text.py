@@ -53,9 +53,13 @@ class CommandText(QUndoCommand):
     def __init__(self, scene, pt, text):
         super().__init__()
         self.scene = scene
-        self.blurb = TextItem(pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"])
+        self.blurb = TextItem(
+            pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
+        )
         self.setText("Text")
         if len(text) > 0:
+            # Works without timer but maybe feels more responsive with b/c
+            # during the api call, source text will be displayed.
             QTimer.singleShot(5, self.blurb.textToPng)
 
     @classmethod
@@ -117,9 +121,6 @@ class TextItem(QGraphicsTextItem):
         # Undo/redo animates via the thickness property
         self.anim = QPropertyAnimation(self, b"thickness")
         self.setPos(pt)
-        #cr = self.boundingRect()
-        #self.offset = -cr.height() / 2
-        #self.moveBy(0, self.offset)
         # for latex png
         self.state = "TXT"
 
@@ -273,9 +274,8 @@ class TextItem(QGraphicsTextItem):
 
 
 class GhostText(QGraphicsTextItem):
-    # Textitem is a qgraphicstextitem, has to handle
-    # textinput and double-click to start editing etc.
-    # Shift-return ends the editor
+    """Blue "ghost" of text indicating what text will be placed in scene."""
+
     def __init__(self, txt, fontsize=10):
         super().__init__()
         self.setDefaultTextColor(Qt.blue)
@@ -284,7 +284,6 @@ class GhostText(QGraphicsTextItem):
         font.setPointSizeF(fontsize)
         self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
-        # Set it as editably with the text-editor
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         # If we're displaying png-rendered-latex then we will store the
         # original text here
