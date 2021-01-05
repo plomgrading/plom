@@ -164,14 +164,20 @@ class TextItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         super().focusOutEvent(event)
 
-    def textToPng(self):
-        """Try to switch to rendering via latex."""
+    def textToPng(self, force=False):
+        """Try to switch to rendering via latex.
+
+        args:
+            force (bool): If True, add the `tex:` prefix if not present.
+        """
         if self.is_rendered():
             return
         src = self.toPlainText()
         if not src.casefold().startswith("tex:"):
-            # is not latex so we don't have to PNG-it
-            return
+            if force:
+                src = "tex:" + src
+            else:
+                return
         texIt = src[4:].strip()
 
         # TODO: maybe nicer/more generally useful to provide access to preamble
@@ -210,18 +216,14 @@ class TextItem(QGraphicsTextItem):
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
             self.textToPng()
-
-        # TODO: I don't understand how this differs from shift-enter?
-        # TODO: was ctrl-enter supposed to latex even without the "tex:"?
-        # control-return latexs the comment and replaces the text with the resulting image.
-        # ends the editor.
+        # control-return forces latex by ensuring the "tex:" prefix
         if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Return:
-            self.textToPng()
+            # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
-
+            self.textToPng(force=True)
         super().keyPressEvent(event)
 
     def paint(self, painter, option, widget):
