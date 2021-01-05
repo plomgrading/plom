@@ -164,19 +164,21 @@ class TextItem(QGraphicsTextItem):
             # is not latex so we don't have to PNG-it
             self.state = "TXT"  # should be TXT anyway, but doesn't hurt
             return
-        texIt = self._contents[4:]
+        texIt = self._contents[4:].strip()
 
         # TODO: maybe nicer/more generally useful to provide access to preamble
         c = self.defaultTextColor().getRgb()
         assert len(c) == 4
-        c = ",".join(str(x) for x in c[0:3])
-        texIt = (
-            r"\definecolor{annot}{RGB}{"
-            + c
-            + "}\n"
-            + "\\color{annot}\n"
-            + texIt.strip()
-        )
+        if c != (255, 0, 0, 0):
+            # Careful: red is default, using this would cause a cache miss
+            # TODO: maybe its nicer to pass the colour to latexAFragment?
+            texIt = (
+                r"\definecolor{annot}{RGB}{"
+                + ",".join(str(x) for x in c[:3])
+                + "}\n"
+                + "\\color{annot}\n"
+                + texIt
+            )
         fragfilename = self.parent.latexAFragment(texIt)
         if fragfilename:
             self.setPlainText("")
