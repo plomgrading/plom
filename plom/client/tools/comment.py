@@ -154,7 +154,7 @@ class GhostComment(QGraphicsItemGroup):
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
             # check if blurb is empty, move accordingly to hide it
-            if not self.blurb.is_displaying_png() and self.blurb.toPlainText() == "":
+            if not self.blurb.is_rendered() and self.blurb.toPlainText() == "":
                 self.blurb.moveBy(0, -cr.height() / 2)
             else:
                 self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
