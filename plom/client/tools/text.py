@@ -160,11 +160,11 @@ class TextItem(QGraphicsTextItem):
 
     def textToPng(self):
         self._contents = self.toPlainText()
-        if self._contents[:4].upper() == "TEX:":
-            texIt = self._contents[4:]
-        else:
+        if not self._contents.casefold().startswith("tex:"):
             # is not latex so we don't have to PNG-it
+            self.state = "TXT"  # should be TXT anyway, but doesn't hurt
             return
+        texIt = self._contents[4:]
 
         # TODO: maybe nicer/more generally useful to provide access to preamble
         c = self.defaultTextColor().getRgb()
@@ -184,6 +184,8 @@ class TextItem(QGraphicsTextItem):
             qi = QImage(fragfilename)
             tc.insertImage(qi)
             self.state = "PNG"
+        else:
+            self.state = "TXT"  # should be TXT anyway, but doesn't hurt
 
     def pngToText(self):
         # TODO: several different ways to check this: consolidate
@@ -200,8 +202,7 @@ class TextItem(QGraphicsTextItem):
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
             self._contents = self.toPlainText()
-            if self._contents[:4].upper() == "TEX:":
-                self.textToPng()
+            self.textToPng()
 
         # TODO: I don't understand how this differs from shift-enter?
         # TODO: was ctrl-enter supposed to latex even without the "tex:"?
@@ -296,7 +297,7 @@ class GhostText(QGraphicsTextItem):
     def changeText(self, txt):
         self._png_tex_cache = None
         self.setPlainText(txt)
-        if self.scene() is not None and txt[:4].upper() == "TEX:":
+        if self.scene() and txt.casefold().startswith("tex:"):
             texIt = (
                 "\\color{blue}\n" + txt[4:].strip()
             )  # make color blue for ghost rendering
