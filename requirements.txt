@@ -42,3 +42,4 @@ weasyprint==52.5
 
 # Need oauth for canvas integration
 oauthlib==3.1.0
+canvasapi==2.0.0

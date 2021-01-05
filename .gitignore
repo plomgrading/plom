@@ -149,3 +149,9 @@ plomBuzzword/
 
 # API secrets
 **/api_secrets*
+
+# Local plom settings
+plomConfig.toml
+
+# Poetry lockfile
+poetry.lock
