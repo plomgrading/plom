@@ -442,10 +442,10 @@ linuxbin_ubuntu1804:
     - md5sum PlomClient*.bin > md5sum
     - ls $NAME
     - echo $CI_COMMIT_TAG
-    # TODO: just testing for now
+    # TODO: failure here will not stop the run: grep the result for success string?
     - >
-      if [ "x$CI_COMMIT_TAG" == "x" ]; then
-        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.$VER/$NAME"
+      if [ "x$CI_COMMIT_TAG" != "x" ]; then
+        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$NAME"
       fi
   artifacts:
     paths:
@@ -494,9 +494,18 @@ linuxbin_centos:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - mv dist/PlomClient*.bin .
-    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-centos7.bin}"; done;
+    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - echo "Extracted version string '$VER'"
+    - export NAME=PlomClient-$VER-linux-centos7.bin
+    - mv dist/PlomClient*.bin $NAME
     - md5sum PlomClient*.bin > md5sum
+    - ls $NAME
+    - echo $CI_COMMIT_TAG
+    # TODO: failure here will not stop the run: grep the result for success string?
+    - >
+      if [ "x$CI_COMMIT_TAG" != "x" ]; then
+        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$NAME"
+      fi
   artifacts:
     paths:
     - PlomClient*.bin
