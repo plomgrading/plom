@@ -421,7 +421,10 @@ newest_deps:
     - popd
 
 
+# Build Client Binaries on Ubuntu 18.04
 # this one is built from our official docker image
+# Before extracting the version, we did:
+# for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
 linuxbin_ubuntu1804:
   stage: final
   needs: ["docker-image"]
@@ -432,14 +435,17 @@ linuxbin_ubuntu1804:
     - python3 -m pip install pyinstaller
   script:
     - pyinstaller client.linux.spec
-    - mv dist/PlomClient*.bin .
-    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
+    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - echo "Extracted version string '$VER'"
+    - export NAME=PlomClient-$VER-linux-ubuntu1804.bin
+    - mv dist/PlomClient*.bin $NAME
     - md5sum PlomClient*.bin > md5sum
+    - ls $NAME
     - echo $CI_COMMIT_TAG
     # TODO: just testing for now
     - >
       if [ "x$CI_COMMIT_TAG" == "x" ]; then
-        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file PlomClient-*.bin "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.2/tempfile.bin"
+        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.$VER/$NAME"
       fi
   artifacts:
     paths:
