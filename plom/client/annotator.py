@@ -885,6 +885,13 @@ class Annotator(QWidget):
         if rearrangeView.exec_() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
+        else:
+            perm = None
+        # Workaround for memory leak Issue #1322, TODO better fix
+        rearrangeView.listA.clear()
+        rearrangeView.listB.clear()
+        del rearrangeView
+        if perm:
             md5_tmp = [x[0] for x in perm]
             if len(set(md5_tmp)) != len(md5_tmp):
                 s = dedent(
