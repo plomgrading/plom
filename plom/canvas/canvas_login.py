@@ -12,17 +12,16 @@ OAuth
 from canvasapi import Canvas
 
 # Canvas API URL
-# TODO: Make this general
+# TODO: Make this general?
 API_URL = "https://canvas.ubc.ca"
 
 # Get my API key out of the secrets file
 # TODO: Make this general
-from .api_secrets import fk_key as API_KEY
-from .api_secrets import sbox_id as sbox_id
+from .api_secrets import my_key as API_KEY
 
 canvas = Canvas(API_URL, API_KEY)
 
-# Delete API_KEY so that it can't be accessed outside of this call
+# Delete API_KEY so that it can't be accessed after this
 del API_KEY
 
 # Uncomment to get a list of courses. Note, canvas.get_courses()
@@ -32,11 +31,8 @@ del API_KEY
 # clist = list(courses)
 # print(clist)
 
-## The part below is really just hard-coded for the purposes of making
-## an example. Really, we want to get the userid / etc. by doing the
-## OAuth login stuff.
-
-# Get Colin's Sandbox
-sbox = canvas.get_course(sbox_id)
+# The part below is really just hard-coded for the purposes of making
+# an example. Really, we want to get the userid / etc. by doing the
+# OAuth login stuff.
 
 user = canvas.get_current_user()
