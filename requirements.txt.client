@@ -9,7 +9,7 @@
 # These should be kept lock-step with `requirements.txt`
 PyQt5==5.15.2
 PyQt5-sip==12.8.1
-toml==0.10.2
-requests==2.25.0
+requests==2.25.1
 requests-toolbelt==0.9.1
+toml==0.10.2
 urllib3==1.26.2
