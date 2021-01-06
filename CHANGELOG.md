@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Patched a memory leak when using the "adjust pages" dialog.
 * Small fixes for various crashes.
 
 
