@@ -435,6 +435,12 @@ linuxbin_ubuntu1804:
     - mv dist/PlomClient*.bin .
     - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
     - md5sum PlomClient*.bin > md5sum
+    - echo $CI_COMMIT_TAG
+    # TODO: just testing for now
+    - >
+      if [ "x$CI_COMMIT_TAG" != "x" ]; then
+        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file PlomClient-*.bin "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.2/tempfile.bin"
+      fi
   artifacts:
     paths:
     - PlomClient*.bin
