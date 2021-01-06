@@ -527,13 +527,13 @@ winpyinst:
   stage: final
   needs: []
   script:
-  - choco install -y python3 --version 3.7.9
+  - choco install -y python3 --version 3.9
   - refreshenv
-  - C:\Python37\Scripts\pip install -r requirements.txt.client
-  - C:\Python37\Scripts\pip install pyinstaller
+  - C:\Python39\Scripts\pip install -r requirements.txt.client
+  - C:\Python39\Scripts\pip install pyinstaller
   - refreshenv
-  - c:\Python37\python -m plom.scripts.client -h
-  - c:\Python37\Scripts\pyinstaller client.windows.spec
+  - c:\Python39\python -m plom.scripts.client -h
+  - c:\Python39\Scripts\pyinstaller client.windows.spec
   - ls dist
   - move dist\PlomClient*.exe .\
   - ls
