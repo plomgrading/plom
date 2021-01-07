@@ -539,6 +539,8 @@ winmintest:
   - c:\Python39\python -m plom.scripts.client -h
 
 
+# Build Windows client binaries
+# This section written in PowerShell
 # TODO: consider doing this only on the master branch
 winpyinst:
   extends:
@@ -547,6 +549,7 @@ winpyinst:
   needs: []
   before_script:
   - choco install -y python3 --version 3.9
+  - choco install -y curl
   - refreshenv
   script:
   - C:\Python39\Scripts\pip install -r requirements.txt.client
@@ -554,17 +557,20 @@ winpyinst:
   - refreshenv
   - c:\Python39\python -m plom.scripts.client -h
   - c:\Python39\Scripts\pyinstaller client.windows.spec
-  - c:\Python39\python -c "exec(open('plom\version.py').read()); print(__version__)" > temp.txt
-  - set /p VER=<temp.txt
-  - echo "Extracted version string '%VER' '$VER'"
-  - set /p NAME=PlomClient-%VER-windows.exe
-  - echo %NAME
-  - ls dist
-  - move dist\PlomClient*.exe .\%NAME
-  - ls
-  - CertUtil -hashfile %NAME MD5 > md5sum.txt
+  - echo $Env:CI_COMMIT_TAG
+  - echo $Env:CI_COMMIT_SHA
+  - $VER = &"c:\Python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - echo "Extracted version string '$VER'"
+  - $NAME = "PlomClient-$VER-windows.exe"
+  - echo $NAME
+  - move dist\PlomClient*.exe $NAME
+  - CertUtil -hashfile $NAME MD5 > md5sum.txt
+  - ls $NAME
+  - type md5sum.txt
   # TODO: deliberately backwards logic in testing
-  - if defined %CI_COMMIT_TAG curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/TMP-PlomClient-windows/0.0.1/$NAME"
+  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {echo hello}
+  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {"echo hello"}
+  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {curl -H "JOB-TOKEN:$Env:CI_JOB_TOKEN" -T $NAME "$Env:CI_API_V4_URL/projects/$Env:CI_PROJECT_ID/packages/generic/TMP-PlomClient-windows/0.0.1/$NAME"}
   artifacts:
     paths:
     - PlomClient*.exe
