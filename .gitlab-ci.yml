@@ -570,7 +570,10 @@ winpyinst:
   # TODO: deliberately backwards logic in testing
   - if ("x$Env:CI_COMMIT_TAG" -eq "x") {echo hello}
   - if ("x$Env:CI_COMMIT_TAG" -eq "x") {"echo hello"}
-  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {curl -H "JOB-TOKEN:$Env:CI_JOB_TOKEN" -T $NAME "$Env:CI_API_V4_URL/projects/$Env:CI_PROJECT_ID/packages/generic/TMP-PlomClient-windows/0.0.1/$NAME"}
+  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {"echo $Env:ChocolateyInstall"}
+  - ls $Env:ChocolateyInstall\bin
+  - $Env:ChocolateyInstall\bin\curl.exe --help
+  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {$Env:ChocolateyInstall\bin\curl.exe -H "JOB-TOKEN:$Env:CI_JOB_TOKEN" -T $NAME "$Env:CI_API_V4_URL/projects/$Env:CI_PROJECT_ID/packages/generic/TMP-PlomClient-windows/0.0.1/$NAME"}
   artifacts:
     paths:
     - PlomClient*.exe
