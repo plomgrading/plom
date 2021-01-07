@@ -108,7 +108,7 @@ release_job:
     tag_name: '$CI_COMMIT_TAG'                                       # elsewhere in the pipeline.
     ref: '$CI_COMMIT_TAG'
     milestones:
-      - '$CI_COMMIT_TAG'  # we typically have a milestone for each version
+      - 0.5.12  # TODO: strip the leading "v" from the commit tag
 
 
 black:

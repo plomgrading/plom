@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.5.12] - 2021-01-06
+## [0.5.13] - 2021-01-06
 
 ### Fixed
 * Patched a memory leak when using the "adjust pages" dialog.
@@ -341,7 +341,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[0.5.12]: https://gitlab.com/plom/plom/compare/v0.5.11...v0.5.12
+[0.5.13]: https://gitlab.com/plom/plom/compare/v0.5.11...v0.5.13
 [0.5.11]: https://gitlab.com/plom/plom/compare/v0.5.10...v0.5.11
 [0.5.10]: https://gitlab.com/plom/plom/compare/v0.5.9...v0.5.10
 [0.5.9]: https://gitlab.com/plom/plom/compare/v0.5.8...v0.5.9
