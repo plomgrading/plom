@@ -556,14 +556,15 @@ winpyinst:
   - c:\Python39\Scripts\pyinstaller client.windows.spec
   - c:\Python39\python -c "exec(open('plom\version.py').read()); print(__version__)" > temp.txt
   - set /p VER=<temp.txt
-  - echo "Extracted version string '$VER'"
+  - echo "Extracted version string '%VER' '$VER'"
   - set /p NAME=PlomClient-%VER-windows.exe
   - echo %NAME
   - ls dist
   - move dist\PlomClient*.exe .\%NAME
   - ls
   - CertUtil -hashfile %NAME MD5 > md5sum.txt
-  - ls
+  # TODO: deliberately backwards logic in testing
+  - if defined %CI_COMMIT_TAG curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/TMP-PlomClient-windows/0.0.1/$NAME"
   artifacts:
     paths:
     - PlomClient*.exe
