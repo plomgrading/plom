@@ -562,20 +562,14 @@ winpyinst:
   - $VER = &"c:\Python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER-windows.exe"
-  - echo $NAME
   - move dist\PlomClient*.exe $NAME
   - CertUtil -hashfile $NAME MD5 > md5sum.txt
   - ls $NAME
   - type md5sum.txt
-  # TODO: deliberately backwards logic in testing
-  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {echo hello}
-  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {"echo hello"}
-  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {"echo $Env:ChocolateyInstall"}
-  - ls $Env:ChocolateyInstall\bin
   - $exe = "$Env:ChocolateyInstall\bin\curl.exe"
   - $token = "JOB-TOKEN:$Env:CI_JOB_TOKEN"
-  - $url = "$Env:CI_API_V4_URL/projects/$Env:CI_PROJECT_ID/packages/generic/TMP-PlomClient-windows/0.0.1/$NAME"
-  - if ("x$Env:CI_COMMIT_TAG" -eq "x") {& $exe -H $token -T $NAME $url}
+  - $url = "$Env:CI_API_V4_URL/projects/$Env:CI_PROJECT_ID/packages/generic/PlomClient-windows/$VER/$NAME"
+  - if ("x$Env:CI_COMMIT_TAG" -ne "x") {& $exe -H $token -T $NAME $url}
   artifacts:
     paths:
     - PlomClient*.exe
