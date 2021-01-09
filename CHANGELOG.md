@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Untested scikit-learn used by default for digit recognition.  Tensorflow code still present and could return as default, after someone tests both on real data.
 
 ### Fixed
 
