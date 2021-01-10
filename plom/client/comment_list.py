@@ -5,14 +5,15 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-import os
 import re
 import time
 import logging
+from pathlib import Path
 
 import toml
+import appdirs
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QDropEvent, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -24,13 +25,11 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QGridLayout,
     QItemDelegate,
-    QMessageBox,
     QPushButton,
     QSpinBox,
     QTableView,
     QTextEdit,
     QLineEdit,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -86,10 +85,19 @@ tags = "Q2 foo bar"
         "modified": time.gmtime(0),
     }
     # TODO: don't save empty tags/testnames/etc to file
-    if os.path.exists("plomComments.toml"):
-        cdict = toml.load("plomComments.toml")
-    else:
-        cdict = toml.loads(clist_defaults)
+    local_comfile = Path("plomComments.toml")
+    comfile = Path(appdirs.user_data_dir("plom")) / "plomComments.toml"
+    try:
+        cdict = toml.load(local_comfile)
+        # Note: on save, this central comfile
+        log.info("Loaded a LOCAL comment file: %s", local_comfile)
+    except (FileNotFoundError, PermissionError):
+        try:
+            cdict = toml.load(comfile)
+            log.info("Loaded comment file: %s", comfile)
+        except FileNotFoundError:
+            cdict = toml.loads(clist_defaults)
+            log.info("Starting from scratch, no comment file %s", comfile)
     # should be a dict = {"comment": [list of stuff]}
     assert "comment" in cdict
     clist = cdict["comment"]
@@ -101,9 +109,11 @@ tags = "Q2 foo bar"
 
 def commentSaveList(clist):
     """Export comment list to toml file."""
-    # toml wants a dictionary
-    with open("plomComments.toml", "w") as fname:
+    comfile = Path(appdirs.user_data_dir("plom")) / "plomComments.toml"
+    with open(comfile, "w") as fname:
+        # toml wants a dictionary
         toml.dump({"comment": clist}, fname)
+    log.info("Saved comment file: %s", comfile)
 
 
 # Eventually there may be more "state" to the filters and something like a dict
