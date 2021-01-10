@@ -31,7 +31,6 @@ pyzbar==0.1.8
 peewee==3.14.0
 imutils==0.5.3
 opencv-python==4.4.0.46
-tensorflow==2.2.1
 lapsolver==1.1.0
 requests==2.25.1
 requests-toolbelt==0.9.1

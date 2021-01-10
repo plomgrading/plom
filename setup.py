@@ -52,7 +52,6 @@ server_install_requires = [
     "peewee>=3.13.3",
     "imutils",
     "opencv-python",
-    "tensorflow~=2.2.0",
     "scikit-learn>=0.23.1",
     "lapsolver",  # ID reading
     "requests",
