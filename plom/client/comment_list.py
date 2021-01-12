@@ -111,6 +111,7 @@ tags = "Q2 foo bar"
 def commentSaveList(clist):
     """Export comment list to toml file."""
     comfile = comment_dir / "plomComments.toml"
+    comment_dir.mkdir(exist_ok=True)
     with open(comfile, "w") as fname:
         # toml wants a dictionary
         toml.dump({"comment": clist}, fname)
