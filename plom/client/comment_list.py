@@ -36,6 +36,7 @@ from PyQt5.QtWidgets import (
 
 
 log = logging.getLogger("annotr")
+comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
 
 
 def commentLoadAll():
@@ -86,7 +87,7 @@ tags = "Q2 foo bar"
     }
     # TODO: don't save empty tags/testnames/etc to file
     local_comfile = Path("plomComments.toml")
-    comfile = Path(appdirs.user_data_dir("plom")) / "plomComments.toml"
+    comfile = comment_dir / "plomComments.toml"
     try:
         cdict = toml.load(local_comfile)
         # Note: on save, this central comfile
@@ -109,7 +110,7 @@ tags = "Q2 foo bar"
 
 def commentSaveList(clist):
     """Export comment list to toml file."""
-    comfile = Path(appdirs.user_data_dir("plom")) / "plomComments.toml"
+    comfile = comment_dir / "plomComments.toml"
     with open(comfile, "w") as fname:
         # toml wants a dictionary
         toml.dump({"comment": clist}, fname)

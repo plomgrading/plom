@@ -42,6 +42,8 @@ global tempDirectory, directoryPath
 lastTime = {}
 
 log = logging.getLogger("client")
+logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
+cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
 
 
 def readLastTime():
@@ -62,10 +64,7 @@ def readLastTime():
     lastTime["MarkWarnings"] = True
     # If config file exists, use it to update the defaults
     # prefer a local file, else try standard config location
-    for cfg in (
-        Path("plomConfig.toml"),
-        Path(appdirs.user_config_dir("plom")) / "plomConfig.toml",
-    ):
+    for cfg in (Path("plomConfig.toml"), cfgdir / "plomConfig.toml"):
         if cfg.exists():
             # too early to log: log.info("Loading config file %s", cfg)
             with open(cfg) as data_file:
@@ -75,7 +74,7 @@ def readLastTime():
 
 def writeLastTime():
     """Write the options to the config file."""
-    cfg = Path(appdirs.user_config_dir("plom")) / "plomConfig.toml"
+    cfg = cfgdir / "plomConfig.toml"
     log.info("Saving config file %s", cfg)
     try:
         cfg.parent.mkdir(exist_ok=True)
@@ -101,13 +100,12 @@ class Chooser(QDialog):
         kwargs = {}
         if lastTime.get("LogToFile"):
             logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
-            logdir = Path(appdirs.user_log_dir("Plom"))
             try:
                 logdir.mkdir(parents=True, exist_ok=True)
                 logfile = logdir / logfile
             except PermissionError:
                 pass
-            kwargs = {"filename":logfile}
+            kwargs = {"filename": logfile}
         logging.basicConfig(
             format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
             datefmt="%b%d %H:%M:%S",
