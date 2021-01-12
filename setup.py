@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -34,6 +34,7 @@ for fn in glob("plom/client/cursors/*.png"):
 client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
 
 server_install_requires = [
+    "appdirs>=1.4.3",
     "toml>=0.10.0",
     "tqdm",
     "numpy>=1.16.0",  # for tensorflow
