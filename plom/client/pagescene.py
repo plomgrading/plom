@@ -36,7 +36,7 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, fontsize=10, maxScore=1, score=0):
+    def __init__(self, fontsize=10, maxScore=1, score=0, question=None):
         """
         Initialize a new ScoreBox.
 
@@ -44,18 +44,29 @@ class ScoreBox(QGraphicsTextItem):
             fontsize (int): A non-zero, positive font value.
             maxScore (int) : A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
+            question (int): question number to display, or `None` to
+                not display "Qn:" at the beginning of the score box.
         """
         super(ScoreBox, self).__init__()
         self.score = score
         self.maxScore = maxScore
+        self.question = question
         self.setDefaultTextColor(Qt.red)
         font = QFont("Helvetica")
         font.setPointSizeF(1.25 * fontsize)
         self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.setPos(4, 4)
-        self.changeScore(self.score)
+        self.setPos(0, 0)
+        self._update_text()
+
+    def _update_text(self):
+        """Update the displayed text."""
+        s = ""
+        if self.question:
+            s += "Q{}: ".format(self.question)
+        s += "{} out of {}".format(self.score, self.maxScore)
+        self.setPlainText(s)
 
     def changeScore(self, x):
         """
@@ -68,9 +79,7 @@ class ScoreBox(QGraphicsTextItem):
             None
         """
         self.score = x
-        self.setPlainText(
-            "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
-        )
+        self._update_text()
 
     def changeMax(self, x):
         """
@@ -85,9 +94,7 @@ class ScoreBox(QGraphicsTextItem):
         """
         # set the max-mark.
         self.maxScore = x
-        self.setPlainText(
-            "{} out of {}".format(str(x).zfill(2), str(self.maxScore).zfill(2))
-        )
+        self._update_text()
 
     def paint(self, painter, option, widget):
         """
@@ -105,7 +112,7 @@ class ScoreBox(QGraphicsTextItem):
             None
         """
         painter.setPen(QPen(Qt.red, 2))
-        painter.setBrush(QBrush(Qt.white))
+        painter.setBrush(QBrush(QColor(255, 255, 255, 192)))
         painter.drawRoundedRect(option.rect, 10, 10)
         super(ScoreBox, self).paint(painter, option, widget)
 
@@ -237,7 +244,7 @@ class PageScene(QGraphicsScene):
     QTextItems.
     """
 
-    def __init__(self, parent, imgNames, saveName, maxMark, score, markStyle):
+    def __init__(self, parent, imgNames, saveName, maxMark, score, question, markStyle):
         """
         Initialize a new PageScene.
 
@@ -248,13 +255,15 @@ class PageScene(QGraphicsScene):
             saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
             score (int): current score
+            question (int): what question number is this scene?  Or None
+                if that is not relevant.
             markStyle (int): marking style.
                     1 = mark total = user clicks the total-mark (will be
                     deprecated in future.)
                     2 = mark-up = mark starts at 0 and user increments it
                     3 = mark-down = mark starts at max and user decrements it
         """
-        super(PageScene, self).__init__(parent)
+        super().__init__(parent)
         self.parent = parent
         # Grab filename of groupimage
         self.imageNames = imgNames
@@ -335,7 +344,9 @@ class PageScene(QGraphicsScene):
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
-        self.scoreBox = ScoreBox(self.fontSize, self.maxMark, self.score)
+        self.scoreBox = ScoreBox(
+            self.fontSize, self.maxMark, self.score, question=question
+        )
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
 
