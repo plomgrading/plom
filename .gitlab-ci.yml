@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -138,15 +138,15 @@ unittests:
     - pytest-3 -l --pyargs plom
 
 
+# Notes:
+# masked out some stuff that deps on tensorflow
 doctests:
   stage: test
   needs: ["docker-image"]
   image: $IM
   script:
-    # TODO: need to recursively do this instead of specifying files
-    # pytest-3 --doctest-modules plom
-    - python3 -m doctest plom/specVerifier.py
-    - echo "no news is good news"
+    # TODO how to run only doctests?  here we just ignore-glib on "test_*"
+    pytest-3 -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
 demoserver:
