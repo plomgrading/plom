@@ -48,19 +48,14 @@ def InfoShortName(self):
 def info_spec(self):
     """Return the exam specification.
 
-    TODO: why not return None if no spec (yet)?
-
     Returns:
-        tuple: first item flags success, second is the spec dict,
-            see :func:`plom.specarser`.  Can fail when the server
+        dict/None: the spec dict or None, e.g., when the server
             does not yet have a spec.  This function is not
-            authenticated so strip the `privateSeed`.
+            authenticated so ask for the public parts of the spec.
     """
     if not self.testSpec:
-        return False, None
-    d = self.testSpec.copy()
-    d.pop("privateSeed")
-    return True, d
+        return None
+    return self.testSpec.get_public_spec_dict()
 
 
 def reloadUsers(self, password):

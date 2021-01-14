@@ -141,7 +141,7 @@ class SpecVerifier:
     # this allows spec.number_to_produce
     @property
     def number_to_produce(self):
-        return self.spec['numberToProduce']
+        return self.spec["numberToProduce"]
 
     # this allows spec["numberToProduce"] for all
     def __getitem__(self, what):
@@ -181,6 +181,12 @@ class SpecVerifier:
             )
         s += "  Test total = {} marks".format(tot)
         return s
+
+    def get_public_spec_dict(self):
+        """Return a copy of the spec dict with private info removed."""
+        d = self.spec.copy()
+        d.pop("privateSeed")
+        return d
 
     def verifySpec(self):
         """Check that spec contains required attributes.
