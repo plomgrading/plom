@@ -198,11 +198,6 @@ class CommentWidget(QWidget):
         self.questnum = n
         self.CL.populateTable()
 
-    def setQuestionNumberFromTGV(self, tgv):
-        """Extract question number from TGV, set, and refresh view."""
-        n = int(self.parent.tgvID[5:7])
-        self.setQuestionNumber(n)
-
     def setStyle(self, markStyle):
         # The list needs a style-delegate because the display
         # of the delta-mark will change depending on

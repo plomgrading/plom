@@ -11,6 +11,7 @@ __license__ = "AGPLv3"
 import json
 import logging
 import os
+import re
 import sys
 import tempfile
 from textwrap import dedent
@@ -360,9 +361,11 @@ class Annotator(QWidget):
 
         """
         self.tgvID = tgvID
+        self.question_num = int(re.split(r"\D+", tgvID)[-1])
         self.testName = testName
-        self.setWindowTitle("Annotator: {} of test {}".format(tgvID, testName))
-        log.info("========= Annotator: {} of test {}".format(tgvID, testName))
+        s = "Q{} of {}: {}".format(self.question_num, testName, tgvID)
+        self.setWindowTitle("{} - Plom Annotator".format(s))
+        log.info("Annotating {}".format(s))
         self.paperDir = paperdir
         self.imageFiles = fnames
         self.saveName = saveName
@@ -413,7 +416,7 @@ class Annotator(QWidget):
             self.maxMark  # TODO: add helper?  combine with changeMark?
         )
         self.comment_widget.changeMark(self.score)
-        self.comment_widget.setQuestionNumberFromTGV(tgvID)
+        self.comment_widget.setQuestionNumber(self.question_num)
         self.comment_widget.setTestname(testName)
 
         if not self.markHandler:
@@ -900,6 +903,13 @@ class Annotator(QWidget):
         if rearrangeView.exec_() == QDialog.Accepted:
             perm = rearrangeView.permute
             log.debug("adjust pages permutation output is: {}".format(perm))
+        else:
+            perm = None
+        # Workaround for memory leak Issue #1322, TODO better fix
+        rearrangeView.listA.clear()
+        rearrangeView.listB.clear()
+        del rearrangeView
+        if perm:
             md5_tmp = [x[0] for x in perm]
             if len(set(md5_tmp)) != len(md5_tmp):
                 s = dedent(
@@ -975,6 +985,7 @@ class Annotator(QWidget):
             self.saveName,
             self.maxMark,
             self.score,
+            self.question_num,
             self.markStyle,
         )
         # connect view to scene

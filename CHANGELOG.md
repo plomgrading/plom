@@ -12,8 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotation colour defaults to red but can be changed in the Annotator menu.
 
 ### Changed
+* Untested scikit-learn used by default for digit recognition.  Tensorflow code still present and could return as default, after someone tests both on real data.
 
 ### Fixed
+
+
+## [0.5.13] - 2021-01-06
+
+### Fixed
+* Patched a memory leak when using the "adjust pages" dialog.
 * Small fixes for various crashes.
 
 
@@ -345,7 +352,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.11...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.13...master
+[0.5.13]: https://gitlab.com/plom/plom/compare/v0.5.11...v0.5.13
 [0.5.11]: https://gitlab.com/plom/plom/compare/v0.5.10...v0.5.11
 [0.5.10]: https://gitlab.com/plom/plom/compare/v0.5.9...v0.5.10
 [0.5.9]: https://gitlab.com/plom/plom/compare/v0.5.8...v0.5.9

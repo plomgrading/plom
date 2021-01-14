@@ -55,7 +55,7 @@ class SceneParent(QWidget):
             self.score = maxMark
 
         self.scene = PageScene(
-            self, imageNames, saveName, maxMark, self.score, markStyle
+            self, imageNames, saveName, maxMark, self.score, None, markStyle
         )
         self.view.connectScene(self.scene)
 

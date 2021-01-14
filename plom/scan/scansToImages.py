@@ -3,6 +3,7 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Andreas Buttenschoen
 
 import hashlib
 import os

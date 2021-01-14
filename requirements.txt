@@ -15,15 +15,14 @@ PyQt5-sip==12.8.1
 pandas==0.25.3
 numpy==1.18.4
 
-toml==0.10.2
-tqdm==4.54.1
+tqdm==4.55.1
 passlib==1.7.4
-pymupdf==1.18.4
-Pillow==8.0.1
+pymupdf==1.18.5
+Pillow==8.1.0
 pycparser==2.20
 cffi==1.14.4
 jpegtran-cffi==0.5.2
-weasyprint==52.1
+weasyprint==52.2
 aiohttp==3.7.3
 # unlisted dep of pyqrcode
 pypng==0.0.20
@@ -32,10 +31,10 @@ pyzbar==0.1.8
 peewee==3.14.0
 imutils==0.5.3
 opencv-python==4.4.0.46
-tensorflow==2.2.1
 lapsolver==1.1.0
-requests==2.25.0
+requests==2.25.1
 requests-toolbelt==0.9.1
+toml==0.10.2
 urllib3==1.26.2
 packaging==20.8
 # For rando forest model

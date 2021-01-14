@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 
 """Plom is Paperless Open Marking.
@@ -8,7 +8,7 @@ Plom creates multi-versioned tests, scans them, coordinates online
 marking/grading, and returns them online.
 """
 
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer, Colin Macdonald and others"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 

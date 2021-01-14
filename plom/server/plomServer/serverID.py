@@ -203,7 +203,7 @@ def IDreviewID(self, test_number):
 # TODO: The use tensorflow model is the keyword to use for choosing the model.
 # BIG BIG TODO, ADD KEYWORDS TO SPECS AS SOON AS THE MODEL IS CONFIRMED.
 def IDrunPredictions(
-    self, rectangle, database_reference_number, ignore_stamp, use_tensorflow_model=True
+    self, rectangle, database_reference_number, ignore_stamp, use_tensorflow_model=False
 ):
     """Run the ML prediction model on the papers and saves the information.
 
