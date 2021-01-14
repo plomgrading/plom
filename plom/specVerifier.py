@@ -33,7 +33,7 @@ class SpecVerifier:
 
     Here `sv` is an object representing a Plom exam specification:
     >>> sv   # doctest: +ELLIPSIS
-    <specParser.SpecVerifier object at 0x...>
+    <specVerifier.SpecVerifier object at 0x...>
 
     >>> print(sv)
     Plom exam specification:
