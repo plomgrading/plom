@@ -10,18 +10,15 @@ __license__ = "AGPLv3"
 
 # TODO - directory structure!
 
-import hashlib
-import toml
 import json
 import os
 import ssl
 import subprocess
-import sys
 import tempfile
-import uuid
 import logging
 from pathlib import Path
 
+import toml
 from aiohttp import web
 
 from plom import __version__
@@ -42,6 +39,8 @@ from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
 from .plomServer.routesReport import ReportHandler
 
+
+confdir = Path("serverConfiguration")
 
 # 5 is to keep debug/info lined up
 logging.basicConfig(
@@ -104,8 +103,8 @@ class Server(object):
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
 
-        if os.path.exists("serverConfiguration/userList.json"):
-            with open("serverConfiguration/userList.json") as data_file:
+        if (confdir / "userList.json").exists():
+            with open(confdir / "userList.json") as data_file:
                 # load list of users + pwd hashes
                 userList = json.load(data_file)
                 # for each name check if in DB by asking for the hash of its pwd
@@ -235,7 +234,7 @@ def get_server_info():
 
     global serverInfo
     try:
-        with open("serverConfiguration/serverDetails.toml") as data_file:
+        with open(confdir / "serverDetails.toml") as data_file:
             serverInfo = toml.load(data_file)
             logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
             log.debug("Server details loaded: {}".format(serverInfo))
@@ -267,24 +266,20 @@ def launch(masterToken=None):
     marker = MarkHandler(peon)
     reporter = ReportHandler(peon)
 
+    # construct the web server
+    app = web.Application()
+    log.info("Setting up routes")
+    userIniter.setUpRoutes(app.router)
+    uploader.setUpRoutes(app.router)
+    ider.setUpRoutes(app.router)
+    marker.setUpRoutes(app.router)
+    reporter.setUpRoutes(app.router)
+    log.info("Loading ssl context")
+    sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+    sslContext.check_hostname = False
+    sslContext.load_cert_chain(confdir / "plom-selfsigned.crt", confdir / "plom.key")
+    log.info("Start the server!")
     try:
-        # construct the web server
-        app = web.Application()
-        # add the routes
-        log.info("Setting up routes")
-        userIniter.setUpRoutes(app.router)
-        uploader.setUpRoutes(app.router)
-        ider.setUpRoutes(app.router)
-        marker.setUpRoutes(app.router)
-        reporter.setUpRoutes(app.router)
-        log.info("Loading ssl context")
-        sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-        sslContext.check_hostname = False
-        sslContext.load_cert_chain(
-            "serverConfiguration/plom-selfsigned.crt", "serverConfiguration/plom.key"
-        )
-        log.info("Start the server!")
         web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
     except KeyboardInterrupt:
-        log.info("Closing down")  # TODO: I never see this!
-        pass
+        log.info("Closing down via keyboard interrupt")  # TODO: I never see this!
