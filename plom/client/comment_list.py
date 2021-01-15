@@ -42,7 +42,7 @@ log = logging.getLogger("annotr")
 def commentLoadAll():
     """Grab comments from the toml file or return defaults."""
 
-    clist_defaults = """
+    clist_defaults = r"""
 [[comment]]
 delta = -1
 text = "algebra"
@@ -57,7 +57,7 @@ text = "meh"
 
 [[comment]]
 delta = 0
-text = r"tex: you can write \LaTeX, $e^{i\pi}+1=0$"
+text = "tex: you can write \LaTeX, $e^{i\pi}+1=0$"
 
 [[comment]]
 delta = 0
