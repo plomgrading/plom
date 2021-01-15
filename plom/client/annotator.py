@@ -154,7 +154,6 @@ class Annotator(QWidget):
         self.cursorDoubleArrow = None
         self.testName = None
         self.paperDir = None
-        self.imageFiles = None
         self.src_img_data = None
         self.saveName = None
         self.score = None
@@ -315,7 +314,6 @@ class Annotator(QWidget):
         self.testName = None
         self.setWindowTitle("Annotator")
         self.paperDir = None
-        self.imageFiles = None
         self.src_img_data = None
         self.saveName = None
         # self.destroyMarkHandler()
@@ -370,14 +368,18 @@ class Annotator(QWidget):
         self.setWindowTitle("{} - Plom Annotator".format(s))
         log.info("Annotating {}".format(s))
         self.paperDir = paperdir
-        self.imageFiles = fnames
         self.saveName = saveName
         self.integrity_check = integrity_check
-        self.src_img_data = src_img_data
-        if len(self.src_img_data) != len(self.imageFiles):
+        # TODO: just keep file with other metadata upstream of here
+        # self.src_img_data = src_img_data
+        if len(src_img_data) != len(fnames):
             log.error(
                 "Marker is shortchanging us on source image data: probably something bad will happen soon!"
             )
+        tmp = src_img_data.copy()
+        for x, y in zip(tmp, fnames):
+            x["filename"] = y
+        self.src_img_data = tmp
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
@@ -826,6 +828,9 @@ class Annotator(QWidget):
         # TODO: maybe download should happen in Marker?
         # TODO: all ripe for refactoring as the src_img_data improves
         image_md5_list = [x["md5"] for x in self.src_img_data]
+        # note we'll md5 match within one paper only: low birthday probability
+        md5_to_file_map = {x["md5"]: x["filename"] for x in self.src_img_data}
+        log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
         if len(set(image_md5_list)) != len(image_md5_list):
             s = dedent(
                 """
@@ -859,9 +864,6 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec_()
-        # note we'll md5 match within one paper only: low birthday probability
-        md5_to_file_map = {k: v for k, v in zip(image_md5_list, self.imageFiles)}
-        log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
         # Crawl over the page_data, append a filename for each file
         # download what's needed but avoid re-downloading duplicate files
         # TODO: could defer downloading to background thread of dialog
@@ -984,13 +986,9 @@ class Annotator(QWidget):
         Returns:
             None: modifies self.scene from None to a pagescene object and connects it to a pageview object.
         """
-        # TODO: just keep file with other metadata!
-        tmp = self.src_img_data.copy()
-        for x, y in zip(tmp, self.imageFiles):
-            x["filename"] = y
         self.scene = PageScene(
             self,
-            tmp,
+            self.src_img_data,
             self.saveName,
             self.maxMark,
             self.score,
@@ -1676,7 +1674,6 @@ class Annotator(QWidget):
             self.score,
             tim,
             self.paperDir,
-            self.imageFiles,
             self.saveName,
             plomFile,
             commentFile,
@@ -1849,9 +1846,10 @@ class Annotator(QWidget):
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
+        # TODO: someday src_img_data may have other images not used
         # TODO: interleave the underlay filenames and their metadata
         plomData = {
-            "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
+            "fileNames": [os.path.basename(x["filename"]) for x in self.src_img_data],
             "orientations": [x["orientation"] for x in self.src_img_data],
             "saveName": os.path.basename(self.saveName),
             "markStyle": self.markStyle,

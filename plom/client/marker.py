@@ -1818,7 +1818,6 @@ class MarkerClient(QWidget):
                 grade(int): grade given by marker.
                 markingTime(int): total time spent marking.
                 paperDir(dir): Working directory for the current task
-                fnames(str): original file name (unannotated)
                 aname(str): annotated file name
                 plomFileName(str): the name of thee .plom file
                 commentFileName(str): the name of the comment file.
@@ -1833,7 +1832,6 @@ class MarkerClient(QWidget):
             gr,
             markingTime,
             paperDir,
-            fnames,
             aname,
             plomFileName,
             commentFileName,
