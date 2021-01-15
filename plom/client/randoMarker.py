@@ -46,6 +46,9 @@ class SceneParent(QWidget):
 
     def doStuff(self, imageNames, saveName, maxMark, markStyle):
         self.saveName = saveName
+        src_img_data = []
+        for f in imageNames:
+            src_img_data.append({"filename": f, "orientation": 0})
         self.imageFiles = imageNames
         self.markStyle = markStyle
         self.maxMark = maxMark
@@ -55,7 +58,7 @@ class SceneParent(QWidget):
             self.score = maxMark
 
         self.scene = PageScene(
-            self, imageNames, saveName, maxMark, self.score, None, markStyle
+            self, src_img_data, saveName, maxMark, self.score, None, markStyle
         )
         self.view.connectScene(self.scene)
 
