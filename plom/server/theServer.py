@@ -277,4 +277,5 @@ def launch(masterToken=None):
     try:
         web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
     except KeyboardInterrupt:
-        log.info("Closing down via keyboard interrupt")  # TODO: I never see this!
+        # Above seems to have its own Ctrl-C handler so this never happens?
+        log.info("Closing down via keyboard interrupt")
