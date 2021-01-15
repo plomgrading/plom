@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
@@ -57,7 +57,7 @@ text = "meh"
 
 [[comment]]
 delta = 0
-text = 'tex: you can write \LaTeX, $e^{i\pi}+1=0$'
+text = r"tex: you can write \LaTeX, $e^{i\pi}+1=0$"
 
 [[comment]]
 delta = 0
@@ -125,7 +125,7 @@ def commentVisibleInQuestion(com, n):
     Qn = "Q{}".format(n)
     tags = com["tags"].split()
     return any([t == Qn for t in tags]) or not any(
-        [re.match("^Q\d+$", t) for t in tags]
+        [re.match(r"^Q\d+$", t) for t in tags]
     )
 
 
@@ -153,7 +153,7 @@ def commentTaggedQn(com, n):
 
 def commentHasMultipleQTags(com):
     tags = com["tags"].split()
-    x = [1 if re.match("^Q\d+$", t) else 0 for t in tags]
+    x = [1 if re.match(r"^Q\d+$", t) else 0 for t in tags]
     return sum(x) >= 2
 
 
