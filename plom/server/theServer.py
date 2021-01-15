@@ -1,17 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
 # TODO - directory structure!
 
 import json
-import os
 import ssl
 import subprocess
 import tempfile
@@ -57,7 +56,7 @@ def build_directories():
     """Build the directories that this script needs"""
 
     # the list of directories. Might need updating.
-    lst = [
+    for d in (
         "pages",
         "pages/discardedPages",
         "pages/collidingPages",
@@ -66,13 +65,9 @@ def build_directories():
         "markedQuestions",
         "markedQuestions/plomFiles",
         "markedQuestions/commentFiles",
-    ]
-    for dir in lst:
-        try:
-            os.mkdir(dir)
-            log.debug("Building directory {}".format(dir))
-        except FileExistsError:
-            pass
+    ):
+        Path(d).mkdir(exist_ok=True)
+        log.debug("Building directory {}".format(d))
 
 
 # ----------------------
