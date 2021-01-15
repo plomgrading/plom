@@ -116,10 +116,13 @@ class SceneParent(QWidget):
         if self.markStyle == 2:  # mark up
             dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
             if dlt <= 0:  # just text
-                blurb = TextItem(self, AnnFontSizePts)
-                blurb.setPlainText(random.choice(self.negComments))
-                blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb))
+                self.scene.undoStack.push(
+                    CommandText(
+                        self.scene,
+                        self.rpt(),
+                        random.choice(self.negComments),
+                    )
+                )
             else:
                 self.scene.undoStack.push(
                     CommandGroupDeltaText(
@@ -132,10 +135,13 @@ class SceneParent(QWidget):
         else:  # mark up
             dlt *= random.randint(0, self.scene.score) // 2
             if dlt >= 0:  # just text
-                blurb = TextItem(self, AnnFontSizePts)
-                blurb.setPlainText(random.choice(self.posComments))
-                blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb))
+                self.scene.undoStack.push(
+                    CommandText(
+                        self.scene,
+                        self.rpt(),
+                        random.choice(self.posComments),
+                    )
+                )
             else:
                 self.scene.undoStack.push(
                     CommandGroupDeltaText(
@@ -155,11 +161,11 @@ class SceneParent(QWidget):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
         for k in range(5):
             self.GDT()
-        # add comment about radom annotations
-        blurb = TextItem(self, AnnFontSizePts)
-        blurb.setPlainText("Random annotations for testing only.")
-        blurb.setPos(QPointF(200, 100))
-        self.scene.undoStack.push(CommandText(self.scene, blurb))
+        self.scene.undoStack.push(
+            CommandText(
+                self.scene, QPointF(200, 100), "Random annotations for testing only."
+            )
+        )
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
