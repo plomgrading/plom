@@ -184,21 +184,17 @@ class SceneParent(QWidget):
 def annotatePaper(maxMark, task, imageList, aname, tags):
     print("Starting random marking to task {}".format(task))
     # Image names = "<task>.<imagenumber>.<ext>"
-    try:
-        with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "{}.{}.image".format(task, i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            annot = SceneParent()
-            annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
-            annot.doRandomAnnotations()
-            return annot.doneAnnotating()
-    except Exception as e:
-        print("Error making random annotations to task {} = {}".format(task, e))
-        exit(1)
+    with tempfile.TemporaryDirectory() as td:
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(td, "{}.{}.image".format(task, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+        annot = SceneParent()
+        annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
+        annot.doRandomAnnotations()
+        return annot.doneAnnotating()
 
 
 def startMarking(question, version):
@@ -299,11 +295,7 @@ if __name__ == "__main__":
     for q in range(1, spec["numberOfQuestions"] + 1):
         for v in range(1, spec["numberOfVersions"] + 1):
             print("Annotating question {} version {}".format(q, v))
-            try:
-                startMarking(q, v)
-            except Exception as e:
-                print("Error marking q.v {}.{}: {}".format(q, v, e))
-                exit(1)
+            startMarking(q, v)
 
     messenger.closeUser()
     messenger.stop()
