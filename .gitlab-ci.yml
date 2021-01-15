@@ -144,9 +144,12 @@ doctests:
   stage: test
   needs: ["docker-image"]
   image: $IM
+  before_script:
+    - pip3 install --upgrade pytest
   script:
     # TODO how to run only doctests?  here we just ignore-glib on "test_*"
-    pytest-3 -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
+    - pytest --version
+    - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
 demoserver:
