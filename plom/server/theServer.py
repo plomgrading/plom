@@ -34,12 +34,6 @@ from plom.db import PlomDB
 from .authenticate import Authority
 
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
-# ----------------------
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-sslContext.load_cert_chain(
-    "serverConfiguration/plom-selfsigned.crt", "serverConfiguration/plom.key"
-)
 
 
 from .plomServer.routesUserInit import UserInitHandler
@@ -283,7 +277,12 @@ def launch(masterToken=None):
         ider.setUpRoutes(app.router)
         marker.setUpRoutes(app.router)
         reporter.setUpRoutes(app.router)
-        # run the web server
+        log.info("Loading ssl context")
+        sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+        sslContext.check_hostname = False
+        sslContext.load_cert_chain(
+            "serverConfiguration/plom-selfsigned.crt", "serverConfiguration/plom.key"
+        )
         log.info("Start the server!")
         web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
     except KeyboardInterrupt:
