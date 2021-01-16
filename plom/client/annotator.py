@@ -246,8 +246,9 @@ class Annotator(QWidget):
             "Decrease annotation scale\tshift-]",
             lambda: self.change_annot_scale(1.0 / 1.1),
         )
+        # Issue #1350: temporarily?
         m.addAction(
-            "Change annotation colour...",
+            "Temporarily change annot. colour",
             self.change_annotation_colour,
         )
         m.addSeparator()
