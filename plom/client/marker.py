@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """
@@ -1871,7 +1871,7 @@ class MarkerClient(QWidget):
             self.backgroundUploader.enqueueNewUpload(*_data)
         else:
             upload(
-                messenger,
+                self.msgr,
                 *_data,
                 knownFailCallback=self.backgroundUploadFailedServerChanged,
                 unknownFailCallback=self.backgroundUploadFailed,
