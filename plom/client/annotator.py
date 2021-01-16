@@ -102,29 +102,7 @@ class Annotator(QWidget):
             mouseHand (int): The location of the grader's mouse hand. (
                 Right = 0, Left != 0)
             parentMarkerUI (MarkerClient): the parent of annotator UI.
-            initialData (dict): contains
-                {
-                tgvID (Str):  Test-Group-Version ID.
-                    For Example: for Test # 0027, group # 13,
-                    Version #2, tgvID = t0027g13v2
-                testname (str): test name
-                paperdir (dir): Working directory for the
-                    current task
-                fnames (str): original file name (unannotated)
-                aname (str): annotated file name
-                maxMark (int): maximum possible score for that test question
-                markStyle (int): marking style
-                    1 = mark total = user clicks the total-mark
-                    2 = mark-up = mark starts at 0 and user increments it
-                    3 = mark-down = mark starts at max and user decrements it
-                plomDict (dict): a dictionary of annotation information.
-                    A dict that contains sufficient information to recreate the
-                    annotation objects on the page if you go back to continue annotating a
-                    question. ie - is it mark up/down, where are all the objects, how to
-                    rebuild those objects, etc.
-                integrity_check (str): integrity_check of the underlying task.
-                src_img_data (list[dict]): image md5sums etc of underlying images.
-                }
+            initialData (dict): as documented by the arguments to "loadNewTGV"
         """
         super(Annotator, self).__init__()
 
@@ -323,7 +301,6 @@ class Annotator(QWidget):
         tgvID,
         testName,
         paperdir,
-        fnames,
         saveName,
         maxMark,
         markStyle,
@@ -341,7 +318,6 @@ class Annotator(QWidget):
                                          tgv = t0027g13v2
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
-            fnames (str): original file names (unannotated)
             saveName (str): name the tgv is saved as
             maxMark (int): maximum possible score for that test question
             markStyle (int): marking style
@@ -355,7 +331,7 @@ class Annotator(QWidget):
                                 question. ie - is it mark up/down, where are all the objects, how to
                                 rebuild those objects, etc.
             integrity_check (str): integrity check string
-            src_img_data (list[dict]): image md5sums etc.
+            src_img_data (list[dict]): image md5sums, filenames etc.
 
         Returns:
             None: Modifies many instance vars.
@@ -371,13 +347,6 @@ class Annotator(QWidget):
         self.saveName = saveName
         self.integrity_check = integrity_check
         self.src_img_data = src_img_data
-        if len(src_img_data) != len(fnames):
-            log.error(
-                "Marker is shortchanging us on source image data: probably something bad will happen soon!"
-            )
-        tmp = src_img_data.copy()
-        for x, y in zip(tmp, fnames):
-            assert x["filename"] == y
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
