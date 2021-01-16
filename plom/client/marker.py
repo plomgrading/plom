@@ -153,18 +153,19 @@ class BackgroundDownloader(QThread):
                 self.quit()
 
         # TODO: hardcoding orientation to 0, Issue #1306
-        img_src_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            src_img_data[i]["filename"] = tmp
             image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
         self.downloadSuccess.emit(
-            task, image_fnames, img_src_data, tags, integrity_check
+            task, image_fnames, src_img_data, tags, integrity_check
         )
         self.quit()
 
@@ -1296,11 +1297,15 @@ class MarkerClient(QWidget):
         paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperDir {} for already-graded download".format(paperDir))
 
+        # TODO: keep more image_id, md5, server_path_filename
+        src_img_data = [{"md5": x[1]} for x in page_metadata]
+
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(page_metadata):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             image_fnames.append(tmp)
+            src_img_data[i]["filename"] = tmp
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
@@ -1311,12 +1316,12 @@ class MarkerClient(QWidget):
         if not ori:
             log.warn("plom file has no orientation data: substituting zeros")
             # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
-            src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+            for d in src_img_data:
+                d["orientation"] = 0
         else:
             log.info("importing orientations from plom file")
-            src_img_data = [
-                {"md5": x[1], "orientation": y} for (x, y) in zip(page_metadata, ori)
-            ]
+            for i, d in enumerate(src_img_data):
+                d["orientation"] = ori[i]
         self.examModel.setOriginalFilesAndData(task, image_fnames, src_img_data)
 
         if anImage is None:
@@ -1428,13 +1433,14 @@ class MarkerClient(QWidget):
                 continue
 
         # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_meta_dict = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
         # Image names = "<task>.<imagenumber>.<extension>"
         image_fnames = []
         for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
             im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            src_img_data[i]["filename"] = tmp
             image_fnames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
@@ -1443,7 +1449,7 @@ class MarkerClient(QWidget):
             ExamQuestion(
                 task,
                 image_fnames,
-                src_img_data=src_img_meta_dict,
+                src_img_data=src_img_data,
                 tags=tags,
                 integrity_check=integrity_check,
             )
@@ -1946,7 +1952,7 @@ class MarkerClient(QWidget):
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
         image_names = []
-        image_meta = []
+        img_src_data = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
         # TODO: something with tempfile instead
         # TODO: but why not keep using old name once they are static
@@ -1957,9 +1963,15 @@ class MarkerClient(QWidget):
             )
             shutil.copyfile(imageList[i][1], tmp)
             image_names.append(tmp)
-            image_meta.append({"md5": imageList[i][0], "orientation": imageList[i][2]})
+            img_src_data.append(
+                {
+                    "md5": imageList[i][0],
+                    "filename": tmp,
+                    "orientation": imageList[i][2],
+                }
+            )
         task = "q" + task
-        self.examModel.setOriginalFilesAndData(task, image_names, image_meta)
+        self.examModel.setOriginalFilesAndData(task, image_names, img_src_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
         # finally relaunch the annotator

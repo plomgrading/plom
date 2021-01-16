@@ -370,16 +370,14 @@ class Annotator(QWidget):
         self.paperDir = paperdir
         self.saveName = saveName
         self.integrity_check = integrity_check
-        # TODO: just keep file with other metadata upstream of here
-        # self.src_img_data = src_img_data
+        self.src_img_data = src_img_data
         if len(src_img_data) != len(fnames):
             log.error(
                 "Marker is shortchanging us on source image data: probably something bad will happen soon!"
             )
         tmp = src_img_data.copy()
         for x, y in zip(tmp, fnames):
-            x["filename"] = y
-        self.src_img_data = tmp
+            assert x["filename"] == y
 
         if getattr(self, "maxMark", None) != maxMark:
             log.warn("Is changing maxMark supported?  we just did it...")
