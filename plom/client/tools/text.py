@@ -144,8 +144,9 @@ class TextItem(QGraphicsTextItem):
         if self.is_rendered():
             self.retex()
 
-    def retex(self):  # TODO - make this work
-        pass
+    def retex(self):
+        self.pngToText()
+        self.textToPng()
 
     def toPlainText(self):
         """The text itself or underlying source if displaying latex."""
