@@ -84,11 +84,9 @@ class CommandText(QUndoCommand):
 class TextItem(QGraphicsTextItem):
     """A multiline text annotation with optional LaTeX rendering.
 
-    Textitem has to handle textinput and double-click to start editing etc.
-
-    TODO: check the double-click thing!
-
-    Shift-return ends the editor.
+    Textitem has to handle textinput.  Shift-return ends the editor.
+    Ctrl-return ends the editor and forces LaTeX rendering by prepending
+    with `tex:`.
 
     Has special handling for text that begins with `tex:` which is rendered
     to an image using LaTeX via a call to the server.  A TextItem knows
