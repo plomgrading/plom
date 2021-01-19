@@ -144,7 +144,8 @@ doctests:
   image: $IM
   script:
     # TODO: need to recursively do this instead of specifying files
-    - python3 -m doctest plom/specParser.py
+    # pytest-3 --doctest-modules plom
+    - python3 -m doctest plom/specVerifier.py
     - echo "no news is good news"
 
 

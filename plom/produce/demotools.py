@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-"""Build pdf files for a demo test"""
+"""Build pdf files for a demo test and provide demo classlists"""
 
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer, Colin B. Macdonald and others"
 __credits__ = "The Plom Project Developers"
@@ -11,10 +11,28 @@ __license__ = "AGPL-3.0-or-later"
 
 import os
 from pathlib import Path
-
+import io
 import pkg_resources
 
+import pandas
+
 from plom.textools import buildLaTeX
+
+
+def getDemoClassList():
+    """A classlist for demos.
+
+    returns:
+        pandas.dataframe: the classlist as a Pandas dataframe.
+    """
+    return pandas.read_csv(
+        io.BytesIO(pkg_resources.resource_string("plom", "demoClassList.csv"))
+    )
+
+
+def getDemoClassListLength():
+    """How long is the built-in demo classlist."""
+    return getDemoClassList().shape[0]
 
 
 def buildDemoSourceFiles():

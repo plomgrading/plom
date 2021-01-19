@@ -27,7 +27,7 @@ from aiohttp import web
 from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
-from plom import SpecParser
+from plom import SpecVerifier
 from plom import specdir
 from plom.db import PlomDB
 
@@ -263,7 +263,8 @@ def launch(masterToken=None):
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
-    spec = SpecParser(Path(specdir) / "verifiedSpec.toml").spec
+    # TODO: might be nice to do a sanity spec verification, once we have a quiet one
+    spec = SpecVerifier.from_toml_file(Path(specdir) / "verifiedSpec.toml")
     build_directories()
     peon = Server(spec, examDB, masterToken)
     userIniter = UserInitHandler(peon)

@@ -3,11 +3,8 @@
 # Copyright (C) 2020 Colin B. Macdonald
 
 import os
-import sys
 from getpass import getpass
 
-from plom import SpecParser
-from plom import specdir
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
 from plom.produce import paperdir
 from plom.messenger import ManagerMessenger

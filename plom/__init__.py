@@ -17,8 +17,7 @@ import sys
 if sys.version_info[0] == 2:
     raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
 
-specdir = "specAndDatabase"
-from .specParser import SpecVerifier, SpecParser
+from .specVerifier import SpecVerifier, specdir
 from .version import __version__
 
 Plom_API_Version = "25"
