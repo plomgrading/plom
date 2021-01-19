@@ -124,6 +124,13 @@ class TextItem(QGraphicsTextItem):
 
     # TODO: override toPlainText() to behave more like the super class
     # def toPlainText():
+    def restyle(self, style):
+        self.setDefaultTextColor(style["annot_color"])
+        if self.state == "PNG":
+            self.retex()
+
+    def retex(self):  # TODO - make this work
+        pass
 
     def getContents(self):
         # TODO: several different ways to check this: consolidate

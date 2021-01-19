@@ -111,7 +111,7 @@ class PenItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
-    def resetStyle(self, style):
+    def restyle(self, style):
         self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
 

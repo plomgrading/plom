@@ -72,6 +72,9 @@ class DeltaItem(QGraphicsTextItem):
         self.offset = -cr.height() / 2
         self.moveBy(0, self.offset)
 
+    def restyle(self, style):
+        self.setDefaultTextColor(style["annot_color"])
+
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             if self.group() is None:  # make sure not part of a GDT

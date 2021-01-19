@@ -96,6 +96,12 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
+    def restyle(self, style):
+        self.style = style
+        # force a relatexing of the textitem in case it is a latex png
+        self.blurb.restyle(style)
+        self.di.restyle(style)
+
     def tweakPositions(self, dlt):
         pt = self.di.pos()
         self.blurb.setPos(pt)

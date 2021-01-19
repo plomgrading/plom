@@ -59,7 +59,7 @@ class ArrowItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
-    def resetStyle(self, style):
+    def restyle(self, style):
         self.setPen(
             QPen(
                 style["annot_color"],

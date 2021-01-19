@@ -93,7 +93,7 @@ class TickItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
-    def resetStyle(self, style):
+    def restyle(self, style):
         self.normal_thick = 3 * style["pen_width"] / 2
         self.setPen(QPen(style["annot_color"], self.normal_thick))
 
