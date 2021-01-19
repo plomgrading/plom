@@ -1,27 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
 # TODO - directory structure!
 
-import hashlib
-import toml
 import json
-import os
 import ssl
 import subprocess
-import sys
 import tempfile
-import uuid
 import logging
 from pathlib import Path
 
+import toml
 from aiohttp import web
 
 from plom import __version__
@@ -34,12 +30,6 @@ from plom.db import PlomDB
 from .authenticate import Authority
 
 serverInfo = {"server": "127.0.0.1", "port": Default_Port}
-# ----------------------
-sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-sslContext.check_hostname = False
-sslContext.load_cert_chain(
-    "serverConfiguration/plom-selfsigned.crt", "serverConfiguration/plom.key"
-)
 
 
 from .plomServer.routesUserInit import UserInitHandler
@@ -48,6 +38,8 @@ from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
 from .plomServer.routesReport import ReportHandler
 
+
+confdir = Path("serverConfiguration")
 
 # 5 is to keep debug/info lined up
 logging.basicConfig(
@@ -64,7 +56,7 @@ def build_directories():
     """Build the directories that this script needs"""
 
     # the list of directories. Might need updating.
-    lst = [
+    for d in (
         "pages",
         "pages/discardedPages",
         "pages/collidingPages",
@@ -73,13 +65,9 @@ def build_directories():
         "markedQuestions",
         "markedQuestions/plomFiles",
         "markedQuestions/commentFiles",
-    ]
-    for dir in lst:
-        try:
-            os.mkdir(dir)
-            log.debug("Building directory {}".format(dir))
-        except FileExistsError:
-            pass
+    ):
+        Path(d).mkdir(exist_ok=True)
+        log.debug("Building directory {}".format(d))
 
 
 # ----------------------
@@ -110,8 +98,8 @@ class Server(object):
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
 
-        if os.path.exists("serverConfiguration/userList.json"):
-            with open("serverConfiguration/userList.json") as data_file:
+        if (confdir / "userList.json").exists():
+            with open(confdir / "userList.json") as data_file:
                 # load list of users + pwd hashes
                 userList = json.load(data_file)
                 # for each name check if in DB by asking for the hash of its pwd
@@ -241,7 +229,7 @@ def get_server_info():
 
     global serverInfo
     try:
-        with open("serverConfiguration/serverDetails.toml") as data_file:
+        with open(confdir / "serverDetails.toml") as data_file:
             serverInfo = toml.load(data_file)
             logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
             log.debug("Server details loaded: {}".format(serverInfo))
@@ -273,19 +261,21 @@ def launch(masterToken=None):
     marker = MarkHandler(peon)
     reporter = ReportHandler(peon)
 
+    # construct the web server
+    app = web.Application()
+    log.info("Setting up routes")
+    userIniter.setUpRoutes(app.router)
+    uploader.setUpRoutes(app.router)
+    ider.setUpRoutes(app.router)
+    marker.setUpRoutes(app.router)
+    reporter.setUpRoutes(app.router)
+    log.info("Loading ssl context")
+    sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+    sslContext.check_hostname = False
+    sslContext.load_cert_chain(confdir / "plom-selfsigned.crt", confdir / "plom.key")
+    log.info("Start the server!")
     try:
-        # construct the web server
-        app = web.Application()
-        # add the routes
-        log.info("Setting up routes")
-        userIniter.setUpRoutes(app.router)
-        uploader.setUpRoutes(app.router)
-        ider.setUpRoutes(app.router)
-        marker.setUpRoutes(app.router)
-        reporter.setUpRoutes(app.router)
-        # run the web server
-        log.info("Start the server!")
         web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
     except KeyboardInterrupt:
-        log.info("Closing down")  # TODO: I never see this!
-        pass
+        # Above seems to have its own Ctrl-C handler so this never happens?
+        log.info("Closing down via keyboard interrupt")
