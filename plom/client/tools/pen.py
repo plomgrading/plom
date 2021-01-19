@@ -111,6 +111,10 @@ class PenItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
+    def resetStyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
+
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             # If the position changes then do so with an redo/undo command

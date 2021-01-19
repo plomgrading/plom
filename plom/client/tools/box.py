@@ -49,18 +49,20 @@ class BoxItemObject(QGraphicsObject):
 
     def flash_undo(self):
         """translucent -> opaque -> clear."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(16)
-        self.anim.setKeyValueAt(0.5, 192)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 4 * t)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
         """translucent -> opaque -> translucent."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(16)
-        self.anim.setKeyValueAt(0.5, 64)
-        self.anim.setEndValue(16)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 3 * t)
+        self.anim.setEndValue(t)
         self.anim.start()
 
     @pyqtProperty(int)
@@ -82,10 +84,16 @@ class BoxItem(QGraphicsRectItem):
         self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
+        self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setBrush(QBrush(style["box_tint"]))
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def resetStyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.setBrush(QBrush(style["box_tint"]))
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():

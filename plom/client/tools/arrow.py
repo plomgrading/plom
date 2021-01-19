@@ -59,6 +59,17 @@ class ArrowItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
+    def resetStyle(self, style):
+        self.setPen(
+            QPen(
+                style["annot_color"],
+                style["pen_width"],
+                cap=Qt.RoundCap,
+                join=Qt.RoundJoin,
+            )
+        )
+        self.setBrush(QBrush(style["annot_color"]))
+
     def _make_path(self, pti, ptf):
         # vector direction of line
         delta = ptf - pti
