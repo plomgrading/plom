@@ -154,6 +154,8 @@ def create_exam_and_insert_QR(
     )
 
     for page_index in range(length):
+        # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
+        exam[page_index].clean_contents()
         # test/page stamp in top-centre of page
         # Rectangle size hacked by hand. TODO = do this more algorithmically
         # VALA SAYS: TODO still tands given that the pages are all the same
