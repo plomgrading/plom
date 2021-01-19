@@ -110,7 +110,7 @@ class PenArrowItem(QGraphicsItemGroup):
         self.addToGroup(self.endi)
         self.addToGroup(self.endf)
 
-    def resetStyle(self, style):
+    def restyle(self, style):
         self.normal_thick = style["pen_width"]
         self.pi.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.endi.setPen(QPen(style["annot_color"], style["pen_width"]))

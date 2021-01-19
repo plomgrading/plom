@@ -137,6 +137,16 @@ class TextItem(QGraphicsTextItem):
         """
         return self._tex_src_cache is not None
 
+    # TODO: override toPlainText() to behave more like the super class
+    # def toPlainText():
+    def restyle(self, style):
+        self.setDefaultTextColor(style["annot_color"])
+        if self.is_rendered():
+            self.retex()
+
+    def retex(self):  # TODO - make this work
+        pass
+
     def toPlainText(self):
         """The text itself or underlying source if displaying latex."""
         if self.is_rendered():

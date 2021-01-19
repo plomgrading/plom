@@ -69,7 +69,7 @@ class HighlightItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
-    def resetStyle(self, style):
+    def restyle(self, style):
         self.setPen(QPen(style["highlight_color"], style["highlight_width"]))
 
     def itemChange(self, change, value):
