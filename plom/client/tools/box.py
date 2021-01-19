@@ -45,10 +45,10 @@ class BoxItemObject(QGraphicsObject):
     def __init__(self, rect, style):
         super().__init__()
         self.item = BoxItem(rect, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"opacity")
+        self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
-        """translucent -> opaque -> clear."""
+        """Undo animation: thin -> thick -> none."""
         t = self.item.normal_thick
         self.anim.setDuration(200)
         self.anim.setStartValue(t)
@@ -57,7 +57,7 @@ class BoxItemObject(QGraphicsObject):
         self.anim.start()
 
     def flash_redo(self):
-        """translucent -> opaque -> translucent."""
+        """Redo animation: thin -> med -> thin."""
         t = self.item.normal_thick
         self.anim.setDuration(200)
         self.anim.setStartValue(t)
@@ -66,14 +66,14 @@ class BoxItemObject(QGraphicsObject):
         self.anim.start()
 
     @pyqtProperty(int)
-    def opacity(self):
-        return self.item.brush().color().alpha()
+    def thickness(self):
+        return self.item.pen().width()
 
-    @opacity.setter
-    def opacity(self, value):
-        c = self.item.brush().color()
-        c.setAlpha(value)
-        self.item.setBrush(QColor(c))
+    @thickness.setter
+    def thickness(self, value):
+        pen = self.item.pen()
+        pen.setWidthF(value)
+        self.item.setPen(pen)
 
 
 class BoxItem(QGraphicsRectItem):
