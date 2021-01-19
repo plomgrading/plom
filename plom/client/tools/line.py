@@ -89,8 +89,8 @@ class LineItem(QGraphicsLineItem):
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))
-        self.normal_thick = style["pen_width"]
-        self.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 

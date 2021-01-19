@@ -73,6 +73,8 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.blurb = TextItem(
             pt, text, scene, fontsize=fontsize, color=style["annot_color"]
         )
+        # set style
+        self.restyle(style)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
         self.di.saveable = False
@@ -87,7 +89,6 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
-        self.thick = self.style["pen_width"] / 2
 
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
@@ -96,6 +97,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
 
     def restyle(self, style):
         self.style = style
+        self.thick = self.style["pen_width"] / 2
         # force a relatexing of the textitem in case it is a latex png
         self.blurb.restyle(style)
         self.di.restyle(style)

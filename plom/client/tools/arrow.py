@@ -44,22 +44,14 @@ class ArrowItem(QGraphicsPathItem):
         self.pti = pti
         self.path = self._make_path(pti, ptf)
         self.setPath(self.path)
-        self.normal_thick = style["pen_width"]
-        self.setPen(
-            QPen(
-                style["annot_color"],
-                style["pen_width"],
-                cap=Qt.RoundCap,
-                join=Qt.RoundJoin,
-            )
-        )
-        # fill in the arrowhead
-        self.setBrush(QBrush(style["annot_color"]))
+        self.restyle(style)
+
         # The line is moveable and should signal any changes
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
     def restyle(self, style):
+        self.normal_thick = style["pen_width"]
         self.setPen(
             QPen(
                 style["annot_color"],

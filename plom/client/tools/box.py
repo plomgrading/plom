@@ -84,9 +84,8 @@ class BoxItem(QGraphicsRectItem):
         self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
-        self.normal_thick = style["pen_width"]
-        self.setPen(QPen(style["annot_color"], style["pen_width"]))
-        self.setBrush(QBrush(style["box_tint"]))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 

@@ -65,8 +65,8 @@ class QMarkItem(QGraphicsPathItem):
         self.path.moveTo(pt.x(), pt.y() + 12)
         self.path.lineTo(pt.x(), pt.y() + 10)
         self.setPath(self.path)
-        self.normal_thick = 3 * style["pen_width"] / 2
-        self.setPen(QPen(style["annot_color"], self.normal_thick))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 

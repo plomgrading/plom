@@ -51,10 +51,8 @@ class DeltaItem(QGraphicsTextItem):
         self.saveable = True
         self.animator = [self]
         self.animateFlag = False
-        self.normal_thick = style["pen_width"]
-        self.thick = self.normal_thick
         self.delta = delta
-        self.setDefaultTextColor(style["annot_color"])
+        self.restyle(style)
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
@@ -73,6 +71,8 @@ class DeltaItem(QGraphicsTextItem):
         self.moveBy(0, self.offset)
 
     def restyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.thick = self.normal_thick
         self.setDefaultTextColor(style["annot_color"])
 
     def paint(self, painter, option, widget):

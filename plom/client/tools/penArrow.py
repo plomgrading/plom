@@ -98,12 +98,8 @@ class PenArrowItem(QGraphicsItemGroup):
         self.endf.setPath(self.arf)
         # put everything together
         self.pi.setPath(self.path)
-        self.normal_thick = style["pen_width"]
-        self.pi.setPen(QPen(style["annot_color"], style["pen_width"]))
-        self.endi.setPen(QPen(style["annot_color"], style["pen_width"]))
-        self.endf.setPen(QPen(style["annot_color"], style["pen_width"]))
-        self.endi.setBrush(QBrush(style["annot_color"]))
-        self.endf.setBrush(QBrush(style["annot_color"]))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.addToGroup(self.pi)
