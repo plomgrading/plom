@@ -815,21 +815,11 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of comment is non-zero then create a
         # delta-object with a different offset, else just place the comment.
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
-            blurb = TextItem(self, fontsize=self.fontSize, color=self.ink.color())
-            blurb.setPlainText(self.commentText)
-            blurb._contents = self.commentText  # for pickling, TODO: Colin doesn't like
-            # move to correct point - update if only text no delta
-            blurb.setPos(pt)
-
-            # make sure blurb has text interaction turned off
-            prevState = blurb.textInteractionFlags()
-            blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text - the ghostitem has it right
-            blurb.moveBy(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, blurb)
+            # TODO: move this calc into the item
+            pt += QPointF(0, self.ghostItem.blurb.pos().y())
+            command = CommandText(self, pt, self.commentText)
             self.undoStack.push(command)
-            # return blurb to previous state
-            blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGroupDeltaText(
                 self, pt, self.commentDelta, self.commentText
@@ -981,15 +971,14 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        # Now we construct a text object, give it focus (which fires up the
-        # editor on that object), and then push it onto the undo-stack.
-        self.originPos = event.scenePos()
-        blurb = TextItem(self, fontsize=self.fontSize, color=self.ink.color())
-        # move so centred under cursor
-        self.originPos -= QPointF(0, blurb.boundingRect().height() / 2)
-        blurb.setPos(self.originPos)
-        blurb.setFocus()
-        command = CommandText(self, blurb)
+        # Construct empty text object, give focus to start editor
+        pt = event.scenePos()
+        command = CommandText(self, pt, "")
+        # move so centred under cursor   TODO: move into class!
+        pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
+        command.blurb.setPos(pt)
+        command.blurb.enable_interactive()
+        command.blurb.setFocus()
         self.undoStack.push(command)
 
     def mousePressTick(self, event):

@@ -28,7 +28,7 @@ import os
 import sys
 import shutil
 
-from plom import SpecParser
+from plom import SpecVerifier
 from plom.finish import CSVFilename
 
 
@@ -36,7 +36,7 @@ archivename = "{COURSE}_{YEAR}{TERM}_{SHORTNAME}"
 
 
 if __name__ == "__main__":
-    spec = SpecParser().spec
+    spec = SpecVerifier.load_verified()
     basename = spec["name"]
     archivename = archivename.replace("{SHORTNAME}", basename)
 

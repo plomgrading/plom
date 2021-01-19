@@ -16,7 +16,7 @@ import sys
 import shutil
 from pathlib import Path
 
-from plom import SpecParser
+from plom import SpecVerifier
 from plom.rules import isValidStudentNumber, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
@@ -56,7 +56,7 @@ def main(use_hex, digits, salt=None):
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
     """
-    spec = SpecParser().spec
+    spec = SpecVerifier.load_verified()
     shortname = spec["name"]
     longname = spec["longName"]
     codedReturnDir = Path("codedReturn")

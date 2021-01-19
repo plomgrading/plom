@@ -44,7 +44,17 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomRangeException,
+    PlomSeriousException,
+    PlomTakenException,
+    PlomTaskChangedError,
+    PlomTaskDeletedError,
+    PlomConflict,
+    PlomException,
+    PlomLatexException,
+    PlomNoMoreException,
+)
 from .annotator import Annotator
 from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
 from .examviewwindow import ExamViewWindow
@@ -414,7 +424,7 @@ class MarkerExamModel(QStandardItemModel):
         # **but** be careful - if annotation in progress then ??
         try:
             r = self._findTask(paper.prefix)
-        except ValueError as err:
+        except ValueError:
             pass
         else:
             ErrorMessage(
@@ -2276,7 +2286,7 @@ class MarkerClient(QWidget):
         task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
         try:
             imageList = messenger.MrequestOriginalImages(task)
-        except PlomNoMoreException as err:
+        except PlomNoMoreException:
             msg = ErrorMessage("No image corresponding to task {}".format(task))
             msg.exec_()
             return

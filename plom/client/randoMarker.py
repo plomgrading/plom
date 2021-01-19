@@ -116,10 +116,13 @@ class SceneParent(QWidget):
         if self.markStyle == 2:  # mark up
             dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
             if dlt <= 0:  # just text
-                blurb = TextItem(self, AnnFontSizePts)
-                blurb.setPlainText(random.choice(self.negComments))
-                blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb))
+                self.scene.undoStack.push(
+                    CommandText(
+                        self.scene,
+                        self.rpt(),
+                        random.choice(self.negComments),
+                    )
+                )
             else:
                 self.scene.undoStack.push(
                     CommandGroupDeltaText(
@@ -132,10 +135,13 @@ class SceneParent(QWidget):
         else:  # mark up
             dlt *= random.randint(0, self.scene.score) // 2
             if dlt >= 0:  # just text
-                blurb = TextItem(self, AnnFontSizePts)
-                blurb.setPlainText(random.choice(self.posComments))
-                blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb))
+                self.scene.undoStack.push(
+                    CommandText(
+                        self.scene,
+                        self.rpt(),
+                        random.choice(self.posComments),
+                    )
+                )
             else:
                 self.scene.undoStack.push(
                     CommandGroupDeltaText(
@@ -155,11 +161,11 @@ class SceneParent(QWidget):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
         for k in range(5):
             self.GDT()
-        # add comment about radom annotations
-        blurb = TextItem(self, AnnFontSizePts)
-        blurb.setPlainText("Random annotations for testing only.")
-        blurb.setPos(QPointF(200, 100))
-        self.scene.undoStack.push(CommandText(self.scene, blurb))
+        self.scene.undoStack.push(
+            CommandText(
+                self.scene, QPointF(200, 100), "Random annotations for testing only."
+            )
+        )
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
@@ -178,21 +184,17 @@ class SceneParent(QWidget):
 def annotatePaper(maxMark, task, imageList, aname, tags):
     print("Starting random marking to task {}".format(task))
     # Image names = "<task>.<imagenumber>.<ext>"
-    try:
-        with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "{}.{}.image".format(task, i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            annot = SceneParent()
-            annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
-            annot.doRandomAnnotations()
-            return annot.doneAnnotating()
-    except Exception as e:
-        print("Error making random annotations to task {} = {}".format(task, e))
-        exit(1)
+    with tempfile.TemporaryDirectory() as td:
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(td, "{}.{}.image".format(task, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+        annot = SceneParent()
+        annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
+        annot.doRandomAnnotations()
+        return annot.doneAnnotating()
 
 
 def startMarking(question, version):
@@ -293,11 +295,7 @@ if __name__ == "__main__":
     for q in range(1, spec["numberOfQuestions"] + 1):
         for v in range(1, spec["numberOfVersions"] + 1):
             print("Annotating question {} version {}".format(q, v))
-            try:
-                startMarking(q, v)
-            except Exception as e:
-                print("Error marking q.v {}.{}: {}".format(q, v, e))
-                exit(1)
+            startMarking(q, v)
 
     messenger.closeUser()
     messenger.stop()

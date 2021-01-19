@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from io import StringIO, BytesIO
 
@@ -8,8 +8,15 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
 
-from plom.plom_exceptions import *
-from plom.messenger import BaseMessenger
+from plom.plom_exceptions import PlomBenignException, PlomSeriousException
+from plom.plom_exceptions import (
+    PlomAuthenticationException,
+    PlomConflict,
+    PlomTakenException,
+    PlomNoMoreException,
+    PlomRangeException,
+)
+from plom.baseMessenger import BaseMessenger
 
 
 # If we use unverified ssl certificates we get lots of warnings,

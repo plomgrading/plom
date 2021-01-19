@@ -64,17 +64,15 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, blurb_text, scene, style, fontsize):
+    def __init__(self, pt, delta, text, scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
-        self.blurb = TextItem(scene, fontsize=fontsize, color=style["annot_color"])
-        self.blurb.setPlainText(blurb_text)
-        self.blurb._contents = blurb_text  # TODO
-        self.blurb.setPos(pt)
-        self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.blurb = TextItem(
+            pt, text, scene, fontsize=fontsize, color=style["annot_color"]
+        )
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
         self.di.saveable = False
@@ -156,7 +154,7 @@ class GhostComment(QGraphicsItemGroup):
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
             # check if blurb is empty, move accordingly to hide it
-            if not self.blurb.is_displaying_png() and self.blurb.toPlainText() == "":
+            if not self.blurb.is_rendered() and self.blurb.toPlainText() == "":
                 self.blurb.moveBy(0, -cr.height() / 2)
             else:
                 self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
