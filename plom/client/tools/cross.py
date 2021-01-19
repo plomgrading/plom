@@ -67,6 +67,10 @@ class CrossItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         # self.dump()
 
+    def resetStyle(self, style):
+        self.normal_thick = 3 * style["pen_width"] / 2
+        self.setPen(QPen(style["annot_color"], self.normal_thick))
+
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)

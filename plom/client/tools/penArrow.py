@@ -110,6 +110,14 @@ class PenArrowItem(QGraphicsItemGroup):
         self.addToGroup(self.endi)
         self.addToGroup(self.endf)
 
+    def resetStyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.pi.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.endi.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.endf.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.endi.setBrush(QBrush(style["annot_color"]))
+        self.endf.setBrush(QBrush(style["annot_color"]))
+
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
