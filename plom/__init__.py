@@ -12,8 +12,12 @@ __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-specdir = "specAndDatabase"
-from .specParser import SpecVerifier, SpecParser
+import sys
+
+if sys.version_info[0] == 2:
+    raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
+
+from .specVerifier import SpecVerifier, specdir
 from .version import __version__
 
 Plom_API_Version = "25"

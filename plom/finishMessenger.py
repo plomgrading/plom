@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import urllib3
 import requests
 
-from plom.plom_exceptions import *
-from plom.messenger import BaseMessenger
+from plom.plom_exceptions import PlomSeriousException, PlomAuthenticationException
+from plom.baseMessenger import BaseMessenger
 
 # TODO: how to do this in subclass?
 # TODO: set username method?

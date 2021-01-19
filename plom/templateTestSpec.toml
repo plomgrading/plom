@@ -15,7 +15,7 @@ numberOfVersions = 2
 numberOfPages = 6
 # total number of papers to produce
 numberToProduce = 20
-# how many of those should be preprinted with names from a classlist - typically 0.
+# how many of those should be preprinted with names from a classlist
 numberToName = 10
 # how many questions to mark
 numberOfQuestions = 3

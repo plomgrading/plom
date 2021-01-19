@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 import os
@@ -144,11 +144,10 @@ class UserInitHandler:
     # @routes.get("/info/spec")
     @no_authentication_only_log_request
     async def info_spec(self, request):
-        r, spec = self.server.info_spec()
-        if r:
-            return web.json_response(spec, status=200)
-        else:  # server does not have a spec
+        spec = self.server.info_spec()
+        if not spec:
             return web.Response(status=404)
+        return web.json_response(spec, status=200)
 
     # @routes.get("/info/shortName")
     @no_authentication_only_log_request
