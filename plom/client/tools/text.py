@@ -192,6 +192,7 @@ class TextItem(QGraphicsTextItem):
 
         # TODO: maybe nicer/more generally useful to provide access to preamble
         c = self.defaultTextColor().getRgb()
+
         assert len(c) == 4
         if c != (255, 0, 0, 0):
             # Careful: red is default, using this would cause a cache miss
