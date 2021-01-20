@@ -1667,7 +1667,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.delBoxItem.setPen(self.ink)
+        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
@@ -1692,7 +1692,7 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
-                self.delBoxItem.setPen(self.ink)
+                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
