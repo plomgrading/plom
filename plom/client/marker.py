@@ -2219,7 +2219,8 @@ class MarkerClient(QWidget):
             testNumber (int): the test number.
 
         Returns:
-            (tuple) containing pageData and viewFiles
+            list: the "page_data" list of dicts, documented elsewhere.
+                TODO: link here or doc here!
         """
         pageData = self.msgr.MrequestWholePaperMetadata(testNumber, self.question)
         return pageData

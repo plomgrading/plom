@@ -679,7 +679,7 @@ class Annotator(QWidget):
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
         for x in image_md5_list:
-            if x not in [p[1] for p in page_data]:
+            if x not in [p["md5"] for p in page_data]:
                 s = dedent(
                     """
                     Unexpectedly situation!\n
@@ -700,9 +700,9 @@ class Annotator(QWidget):
         # download what's needed but avoid re-downloading duplicate files
         # TODO: could defer downloading to background thread of dialog
         page_adjuster_downloads = []
-        for (i, p) in enumerate(page_data):
-            md5 = p[1]
-            image_id = p[-1]
+        for (i, pg) in enumerate(page_data):
+            md5 = pg["md5"]
+            image_id = pg["id"]
             fname = md5_to_file_map.get(md5)
             if fname:
                 log.info(
@@ -731,12 +731,26 @@ class Annotator(QWidget):
                 assert md5_to_file_map.get(md5) is None
                 md5_to_file_map[md5] = fname
                 page_adjuster_downloads.append(fname)
-            p.append(fname)
+            # TODO: I think this should already be there!?
+            pg["local_filename"] = fname
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
+        # pull stuff out of dict (TODO: for now)
+        page_data_list = []
+        for d in page_data:
+            page_data_list.append(
+                [
+                    d["pagename"],
+                    d["md5"],
+                    d["included"],
+                    d["order"],
+                    d["id"],
+                    d["local_filename"],
+                ]
+            )
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data_list, is_dirty
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:

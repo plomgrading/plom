@@ -489,26 +489,31 @@ class MarkHandler:
             aiohttp.web_response.Response: JSON data, a list of lists
                 where each list in the form documented below.
 
-        Each row of the data looks like:
-           `[name, md5, true/false, pos_in_current_annotation, image_id]`
+        Each row of the data is dict with keys:
+           `"name", "md5", "included", "order", "id"`
+
+        TODO: add "server_filename", others?
         """
         test_number = request.match_info["number"]
-        # TODO: who cares about this?
+        # TODO: this is used to determine the true/false column
         question_number = request.match_info["question"]
 
         # return [True, pageData, f1, f2, f3, ...] or [False]
         # 1. True/False for operation status.
-        # 2. A list of lists, documented elsewhere (TODO: I hope)
+        # 2. A list of lists, as doc'd above
         # 3. 3rd element onward: paths for each page of the paper in server.
         r = self.server.MgetWholePaper(test_number, question_number)
 
         if not r[0]:
             return web.Response(status=404)
 
-        pages_data = r[1]
         # We just discard this, its legacy from previous API call
         # TODO: fold into the pages_data; then we can sanity check it when it comes back!
         all_pages_paths = r[2:]
+        rownames = ("pagename", "md5", "included", "order", "id")
+        pages_data = []
+        for row in r[1]:
+            pages_data.append({k: v for k, v in zip(rownames, row)})
         return web.json_response(pages_data, status=200)
 
     # @routes.get("/MK/allMax")
