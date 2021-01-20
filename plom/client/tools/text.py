@@ -137,6 +137,15 @@ class TextItem(QGraphicsTextItem):
         """
         return self._tex_src_cache is not None
 
+    def restyle(self, style):
+        self.setDefaultTextColor(style["annot_color"])
+        if self.is_rendered():
+            self.retex()
+
+    def retex(self):
+        self.pngToText()
+        self.textToPng()
+
     def toPlainText(self):
         """The text itself or underlying source if displaying latex."""
         if self.is_rendered():
@@ -181,6 +190,7 @@ class TextItem(QGraphicsTextItem):
 
         # TODO: maybe nicer/more generally useful to provide access to preamble
         c = self.defaultTextColor().getRgb()
+
         assert len(c) == 4
         if c != (255, 0, 0, 0):
             # Careful: red is default, using this would cause a cache miss

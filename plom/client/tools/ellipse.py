@@ -84,11 +84,15 @@ class EllipseItem(QGraphicsEllipseItem):
         self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
+        self.restyle(style)
+
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def restyle(self, style):
         self.normal_thick = style["pen_width"]
         self.setPen(QPen(style["annot_color"], style["pen_width"]))
         self.setBrush(QBrush(style["box_tint"]))
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():

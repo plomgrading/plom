@@ -65,9 +65,13 @@ class HighlightItem(QGraphicsPathItem):
         self.animateFlag = False
         self.path = path
         self.setPath(self.path)
-        self.setPen(QPen(style["highlight_color"], style["highlight_width"]))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def restyle(self, style):
+        self.setPen(QPen(style["highlight_color"], style["highlight_width"]))
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():

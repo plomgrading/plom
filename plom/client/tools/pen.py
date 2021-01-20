@@ -106,10 +106,14 @@ class PenItem(QGraphicsPathItem):
         self.animateFlag = False
         self.path = path
         self.setPath(self.path)
-        self.normal_thick = style["pen_width"]
-        self.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def restyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():

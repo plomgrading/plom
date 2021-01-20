@@ -461,8 +461,10 @@ class PageScene(QGraphicsScene):
         self.lightBrush = QBrush(style["box_tint"])
         self.highlight = QPen(style["highlight_color"], style["highlight_width"])
         self.style = style
-        # TODO: loop over existing items to update?  Or QPalette?
-        # for now, just rough fix for ScoreBox
+        for X in self.items():
+            # check if object has "restyle" function and if so then use it to set the colour
+            if getattr(X, "restyle", False):
+                X.restyle(self.style)
         if self.scoreBox:
             self.scoreBox.update_style()
 
