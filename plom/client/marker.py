@@ -162,9 +162,7 @@ class BackgroundDownloader(QThread):
             src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        self.downloadSuccess.emit(
-            task, src_img_data, tags, integrity_check
-        )
+        self.downloadSuccess.emit(task, src_img_data, tags, integrity_check)
         self.quit()
 
 
