@@ -40,6 +40,7 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QToolButton,
     QFileDialog,
+    QColorDialog,
 )
 
 from .comment_list import CommentWidget
@@ -244,6 +245,11 @@ class Annotator(QWidget):
         m.addAction(
             "Decrease annotation scale\tshift-]",
             lambda: self.change_annot_scale(1.0 / 1.1),
+        )
+        # Issue #1350: temporarily?
+        m.addAction(
+            "Temporarily change annot. colour",
+            self.change_annotation_colour,
         )
         m.addSeparator()
         m.addAction("Help", self.menuDummy).setEnabled(False)
@@ -468,6 +474,16 @@ class Annotator(QWidget):
             self._reset_scale_menu_text
             + "\t{:.0%}".format(self.scene.get_scale_factor())
         )
+
+    def change_annotation_colour(self):
+        """Ask user for a new colour for the annotations."""
+        if not self.scene:
+            return
+        c = self.scene.ink.color()
+        c = QColorDialog.getColor(c)
+        if c.isValid():
+            self.scene.set_annotation_color(c)
+        # TODO: save to settings
 
     def setCurrentMarkMode(self):
         """
@@ -1824,6 +1840,7 @@ class Annotator(QWidget):
         """
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
+        # TODO: consider saving colour only if not red?
         plomData = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
             "saveName": os.path.basename(self.saveName),
@@ -1831,6 +1848,7 @@ class Annotator(QWidget):
             "maxMark": self.maxMark,
             "currentMark": self.score,
             "sceneScale": self.scene.get_scale_factor(),
+            "annotationColor": self.scene.ink.color().getRgb()[:3],
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
@@ -1855,6 +1873,8 @@ class Annotator(QWidget):
         self.view.setHidden(True)
         if plomData.get("sceneScale", None):
             self.scene.set_scale_factor(plomData["sceneScale"])
+        if plomData.get("annotationColor", None):
+            self.scene.set_annotation_color(plomData["annotationColor"])
         self.scene.unpickleSceneItems(plomData["sceneItems"])
         # if markstyle is "Total", then click appropriate button
         if self.markStyle == 1:

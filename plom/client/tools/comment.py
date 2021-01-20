@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, Qt, QPointF
@@ -21,10 +21,12 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, delta, blurb, fontsize):
+    def __init__(self, scene, pt, delta, text):
         super().__init__()
         self.scene = scene
-        self.gdt = GroupDeltaTextItem(pt, delta, blurb, fontsize, scene)
+        self.gdt = GroupDeltaTextItem(
+            pt, delta, text, scene, style=scene.style, fontsize=scene.fontSize
+        )
         self.setText("GroupDeltaText")
 
     @classmethod
@@ -38,7 +40,7 @@ class CommandGroupDeltaText(QUndoCommand):
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], scene.fontSize)
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3])
 
     def redo(self):
         # Mark increased by delta
@@ -62,15 +64,17 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, blurb_text, fontsize, scene):
+    def __init__(self, pt, delta, text, scene, style, fontsize):
         super().__init__()
         self.pt = pt
-        self.di = DeltaItem(pt, delta, fontsize)  # positioned so centre under click
-        self.blurb = TextItem(scene, fontsize)
-        self.blurb.setPlainText(blurb_text)
-        self.blurb._contents = blurb_text  # TODO
-        self.blurb.setPos(pt)
-        self.blurb.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.style = style
+        # centre under click
+        self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
+        self.blurb = TextItem(
+            pt, text, scene, fontsize=fontsize, color=style["annot_color"]
+        )
+        # set style
+        self.restyle(style)
         # Set the underlying delta and text to not pickle - since the GDTI will handle that
         self.saveable = True
         self.di.saveable = False
@@ -85,12 +89,18 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
-        self.thick = 1
 
         self.addToGroup(self.di)
         self.addToGroup(self.blurb)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def restyle(self, style):
+        self.style = style
+        self.thick = self.style["pen_width"] / 2
+        # force a relatexing of the textitem in case it is a latex png
+        self.blurb.restyle(style)
+        self.di.restyle(style)
 
     def tweakPositions(self, dlt):
         pt = self.di.pos()
@@ -122,12 +132,13 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             painter.drawRoundedRect(option.rect, 10, 10)
-        # paint the normal item with the default 'paint' method
         else:
             # paint a bounding rectangle for undo/redo highlighting
-            painter.setPen(QPen(QColor(255, 0, 0), self.thick, style=Qt.DotLine))
+            painter.setPen(
+                QPen(self.style["annot_color"], self.thick, style=Qt.DotLine)
+            )
             painter.drawRoundedRect(option.rect, 10, 10)
-            pass
+        # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
 
 
@@ -151,7 +162,7 @@ class GhostComment(QGraphicsItemGroup):
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
             # check if blurb is empty, move accordingly to hide it
-            if not self.blurb.is_displaying_png() and self.blurb.toPlainText() == "":
+            if not self.blurb.is_rendered() and self.blurb.toPlainText() == "":
                 self.blurb.moveBy(0, -cr.height() / 2)
             else:
                 self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
@@ -174,6 +185,7 @@ class GhostComment(QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
+        # TODO: pen width hardcoded
         painter.setPen(QPen(Qt.blue, 0.5, style=Qt.DotLine))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method

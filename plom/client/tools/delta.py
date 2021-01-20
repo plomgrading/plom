@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty, QPointF
@@ -11,14 +11,16 @@ from plom.client.tools.text import CommandMoveText
 
 
 class CommandDelta(QUndoCommand):
-    # Very similar to CommandArrow
-    # But must send new mark to scene
-    def __init__(self, scene, pt, delta, fontsize):
-        super(CommandDelta, self).__init__()
+    """Handle the placing and undoing/redoing of Deltas.
+
+    Very similar to CommandLine et al, but undo/redo
+    must send new mark to scene.
+    """
+
+    def __init__(self, scene, pt, delta):
+        super().__init__()
         self.scene = scene
-        self.pt = pt
-        self.delta = delta
-        self.delItem = DeltaItem(self.pt, self.delta, fontsize)
+        self.item = DeltaItem(pt, delta, style=scene.style, fontsize=scene.fontSize)
         self.setText("Delta")
 
     @classmethod
@@ -28,31 +30,29 @@ class CommandDelta(QUndoCommand):
         X = X[1:]
         if len(X) != 3:
             raise ValueError("wrong length of pickle data")
-        return cls(scene, QPointF(X[1], X[2]), X[0], scene.fontSize)
+        return cls(scene, QPointF(X[1], X[2]), X[0])
 
     def redo(self):
         # Mark increased by delta
-        self.scene.changeTheMark(self.delta, undo=False)
-        self.delItem.flash_redo()
-        self.scene.addItem(self.delItem)
+        self.scene.changeTheMark(self.item.delta, undo=False)
+        self.item.flash_redo()
+        self.scene.addItem(self.item)
 
     def undo(self):
         # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.delta, undo=True)
-        self.delItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
+        self.scene.changeTheMark(self.item.delta, undo=True)
+        self.item.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.item))
 
 
 class DeltaItem(QGraphicsTextItem):
-    # Similar to textitem
-    def __init__(self, pt, delta, fontsize=10):
-        super(DeltaItem, self).__init__()
+    def __init__(self, pt, delta, style, fontsize=10):
+        super().__init__()
         self.saveable = True
         self.animator = [self]
         self.animateFlag = False
-        self.thick = 2
         self.delta = delta
-        self.setDefaultTextColor(Qt.red)
+        self.restyle(style)
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
@@ -70,6 +70,11 @@ class DeltaItem(QGraphicsTextItem):
         self.offset = -cr.height() / 2
         self.moveBy(0, self.offset)
 
+    def restyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.thick = self.normal_thick
+        self.setDefaultTextColor(style["annot_color"])
+
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):
             if self.group() is None:  # make sure not part of a GDT
@@ -80,31 +85,31 @@ class DeltaItem(QGraphicsTextItem):
                 painter.drawRoundedRect(option.rect, 10, 10)
         else:
             # paint the background
-            painter.setPen(QPen(Qt.red, self.thick))
+            painter.setPen(QPen(self.defaultTextColor(), self.thick))
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
-        super(DeltaItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsTextItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def flash_undo(self):
         # Animate border when undo thin->thick->none
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setStartValue(self.normal_thick)
+        self.anim.setKeyValueAt(0.5, 4 * self.normal_thick)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
         # Animate border when undo thin->med->thin
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
+        self.anim.setStartValue(self.normal_thick)
+        self.anim.setKeyValueAt(0.5, 2 * self.normal_thick)
+        self.anim.setEndValue(self.normal_thick)
         self.anim.start()
 
     def pickle(self):
@@ -128,9 +133,8 @@ class DeltaItem(QGraphicsTextItem):
 
 
 class GhostDelta(QGraphicsTextItem):
-    # Similar to textitem
     def __init__(self, delta, fontsize=10):
-        super(GhostDelta, self).__init__()
+        super().__init__()
         self.delta = delta
         self.setDefaultTextColor(Qt.blue)
         self.setPlainText(" {} ".format(self.delta))

@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QRectF
+from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, QRectF
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -16,12 +16,10 @@ from plom.client.tools import CommandMoveItem
 
 
 class CommandEllipse(QUndoCommand):
-    # Very similar to CommandArrow
     def __init__(self, scene, rect):
-        super(CommandEllipse, self).__init__()
+        super().__init__()
         self.scene = scene
-        self.rect = rect
-        self.ellipseItem = EllipseItemObject(self.rect)
+        self.obj = EllipseItemObject(rect, scene.style)
         self.setText("Ellipse")
 
     @classmethod
@@ -34,63 +32,73 @@ class CommandEllipse(QUndoCommand):
         return cls(scene, QRectF(X[0], X[1], X[2], X[3]))
 
     def redo(self):
-        self.ellipseItem.flash_redo()
-        self.scene.addItem(self.ellipseItem.ei)
+        self.obj.flash_redo()
+        self.scene.addItem(self.obj.item)
 
     def undo(self):
-        self.ellipseItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.ellipseItem.ei))
+        self.obj.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
 
 
 class EllipseItemObject(QGraphicsObject):
     # As per the ArrowItemObject - animate thickness of boundary
-    def __init__(self, rect):
-        super(EllipseItemObject, self).__init__()
-        self.ei = EllipseItem(rect, self)
+    def __init__(self, rect, style):
+        super().__init__()
+        self.item = EllipseItem(rect, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
 
     def flash_undo(self):
+        """Undo animation: thin -> thick -> none."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 4 * t)
         self.anim.setEndValue(0)
         self.anim.start()
 
     def flash_redo(self):
+        """Redo animation: thin -> med -> thin."""
+        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(2)
+        self.anim.setStartValue(t)
+        self.anim.setKeyValueAt(0.5, 3 * t)
+        self.anim.setEndValue(t)
         self.anim.start()
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.ei.pen().width()
+        return self.item.pen().width()
 
     @thickness.setter
     def thickness(self, value):
-        self.ei.setPen(QPen(Qt.red, value))
+        pen = self.item.pen()
+        pen.setWidthF(value)
+        self.item.setPen(pen)
 
 
 class EllipseItem(QGraphicsEllipseItem):
-    # Very similar to the arrowitem
-    def __init__(self, rect, parent=None):
-        super(EllipseItem, self).__init__()
+    def __init__(self, rect, style, parent=None):
+        super().__init__()
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
-        self.setPen(QPen(Qt.red, 2))
-        self.setBrush(QBrush(QColor(255, 255, 0, 16)))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
+
+    def restyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.setBrush(QBrush(style["box_tint"]))
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsEllipseItem.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
     def pickle(self):
         return [
@@ -110,4 +118,4 @@ class EllipseItem(QGraphicsEllipseItem):
             painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(EllipseItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)

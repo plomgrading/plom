@@ -1,106 +1,52 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QPointF
+from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import (
-    QUndoCommand,
-    QGraphicsObject,
     QGraphicsItemGroup,
     QGraphicsPathItem,
     QGraphicsItem,
 )
 
+from plom.client.tools.pen import CommandPen, PenItemObject, PenItem
 from plom.client.tools import CommandMoveItem, log
 
 
-class CommandPenArrow(QUndoCommand):
-    # Very similar to CommandArrow
+class CommandPenArrow(CommandPen):
     def __init__(self, scene, path):
-        super(CommandPenArrow, self).__init__()
+        super(CommandPen, self).__init__()
         self.scene = scene
-        self.path = path
-        self.penItem = PenArrowItemObject(self.path)
+        self.penobj = PenArrowItemObject(path, scene.style)
         self.setText("PenArrow")
 
-    @classmethod
-    def from_pickle(cls, X, *, scene):
-        """Construct a CommandPenArrow from a serialized form.
 
-        Raises:
-            ValueError: malformed or otherwise incorrect data
-            AssertionError: there is a bug somewhere.
-
-        TODO: all these Pen-like annotations should subclass pen
-        and inherit this function.
-        """
-        assert X[0] == "PenArrow"
-        X = X[1:]
-        if len(X) != 1:
-            raise ValueError("wrong length of pickle data")
-        # Format is X = [['m',x,y], ['l',x,y], ['l',x,y], ...]
-        X = X[0]
-        pth = QPainterPath()
-        # unpack ['m', x, y] or ValueError
-        cmd, x, y = X[0]
-        if cmd != "m":
-            raise ValueError("malformed start of Pen-like annotation")
-        pth.moveTo(QPointF(x, y))
-        for pt in X[1:]:
-            # unpack ['l', x, y] or ValueError
-            cmd, x, y = pt
-            if cmd != "l":
-                raise ValueError("malformed Pen-like annotation in interior")
-            pth.lineTo(QPointF(x, y))
-        return cls(scene, pth)
-
-    def redo(self):
-        self.penItem.flash_redo()
-        self.scene.addItem(self.penItem.pi)
-
-    def undo(self):
-        self.penItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.penItem.pi))
-
-
-class PenArrowItemObject(QGraphicsObject):
-    # As per the ArrowItemObject
-    def __init__(self, path):
-        super(PenArrowItemObject, self).__init__()
-        self.pi = PenArrowItem(path, self)
+class PenArrowItemObject(PenItemObject):
+    def __init__(self, path, style):
+        super(PenItemObject, self).__init__()
+        self.item = PenArrowItem(path, style=style, parent=self)
         self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 6)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
-        self.anim.start()
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.pi.pi.pen().width()
+        return self.item.pi.pen().width()
 
+    # TODO: Item could have a method for these, avoiding this custom method here
     @thickness.setter
     def thickness(self, value):
-        self.pi.pi.setPen(QPen(Qt.red, value))
-        self.pi.endi.setPen(QPen(Qt.red, value))
-        self.pi.endf.setPen(QPen(Qt.red, value))
+        pen = self.item.pi.pen()
+        pen.setWidthF(value)
+        self.item.pi.setPen(pen)
+        self.item.endi.setPen(pen)
+        self.item.endf.setPen(pen)
 
 
 class PenArrowItem(QGraphicsItemGroup):
-    def __init__(self, path, parent=None):
+    def __init__(self, path, style, parent=None):
         super(PenArrowItem, self).__init__()
         self.saveable = True
         self.pi = QGraphicsPathItem()
@@ -152,36 +98,30 @@ class PenArrowItem(QGraphicsItemGroup):
         self.endf.setPath(self.arf)
         # put everything together
         self.pi.setPath(self.path)
-        self.pi.setPen(QPen(Qt.red, 2))
-        self.endi.setPen(QPen(Qt.red, 2))
-        self.endi.setBrush(QBrush(Qt.red))
-        self.endf.setPen(QPen(Qt.red, 2))
-        self.endf.setBrush(QBrush(Qt.red))
+        self.restyle(style)
+
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.addToGroup(self.pi)
         self.addToGroup(self.endi)
         self.addToGroup(self.endf)
 
+    def restyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.pi.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.endi.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.endf.setPen(QPen(style["annot_color"], style["pen_width"]))
+        self.endi.setBrush(QBrush(style["annot_color"]))
+        self.endf.setBrush(QBrush(style["annot_color"]))
+
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveItem(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsItemGroup.itemChange(self, change, value)
+        return super().itemChange(change, value)
 
-    def pickle(self):
-        pth = []
-        for k in range(self.path.elementCount()):
-            # e should be either a moveTo or a lineTo
-            e = self.path.elementAt(k)
-            if e.isMoveTo():
-                pth.append(["m", e.x + self.x(), e.y + self.y()])
-            else:
-                if e.isLineTo():
-                    pth.append(["l", e.x + self.x(), e.y + self.y()])
-                else:
-                    log.error("Problem pickling penarrowitem path {}".format(self.path))
-        return ["PenArrow", pth]
+    # poorman's inheritance!
+    pickle = PenItem.pickle
 
     def paint(self, painter, option, widget):
         if not self.scene().itemWithinBounds(self):

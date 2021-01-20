@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
     QBrush,
+    QColor,
     QCursor,
     QFont,
     QGuiApplication,
@@ -36,22 +37,23 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, fontsize=10, maxScore=1, score=0, question=None):
+    def __init__(self, style, fontsize=10, maxScore=1, score=0, question=None):
         """
         Initialize a new ScoreBox.
 
         Args:
             fontsize (int): A non-zero, positive font value.
-            maxScore (int) : A non-zero, positive maximum score.
+            maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
             question (int): question number to display, or `None` to
                 not display "Qn:" at the beginning of the score box.
         """
-        super(ScoreBox, self).__init__()
+        super().__init__()
         self.score = score
         self.maxScore = maxScore
         self.question = question
-        self.setDefaultTextColor(Qt.red)
+        self.style = style
+        self.setDefaultTextColor(self.style["annot_color"])
         font = QFont("Helvetica")
         font.setPointSizeF(1.25 * fontsize)
         self.setFont(font)
@@ -67,6 +69,10 @@ class ScoreBox(QGraphicsTextItem):
             s += "Q{}: ".format(self.question)
         s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)
+
+    def update_style(self):
+        self.style = self.scene().style
+        self.setDefaultTextColor(self.style["annot_color"])
 
     def changeScore(self, x):
         """
@@ -111,10 +117,10 @@ class ScoreBox(QGraphicsTextItem):
         Returns:
             None
         """
-        painter.setPen(QPen(Qt.red, 2))
+        painter.setPen(QPen(self.style["annot_color"], self.style["pen_width"]))
         painter.setBrush(QBrush(QColor(255, 255, 255, 192)))
         painter.drawRoundedRect(option.rect, 10, 10)
-        super(ScoreBox, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
 
 class UnderlyingRect(QGraphicsRectItem):
@@ -294,11 +300,9 @@ class PageScene(QGraphicsScene):
         self.fontSize = AnnFontSizePts
         self._scale = 1.0
 
+        self.scoreBox = None
         # Define standard pen, highlight, fill, light-fill
-        self.ink = QPen(Qt.red, 2)
-        self.highlight = QPen(QColor(255, 255, 0, 64), 50)
-        self.brush = QBrush(self.ink.color())
-        self.lightBrush = QBrush(QColor(255, 255, 0, 16))
+        self.set_annotation_color(Qt.red)
         self.deleteBrush = QBrush(QColor(255, 0, 0, 16))
         self.zoomBrush = QBrush(QColor(0, 0, 255, 16))
         # Flags to indicate if drawing an arrow (vs line), highlight (vs
@@ -345,7 +349,7 @@ class PageScene(QGraphicsScene):
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
         self.scoreBox = ScoreBox(
-            self.fontSize, self.maxMark, self.score, question=question
+            self.style, self.fontSize, self.maxMark, self.score, question=question
         )
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
@@ -434,6 +438,35 @@ class PageScene(QGraphicsScene):
         self.ghostItem.di.setFont(font)
         # TODO: position within dotted line, but breaks overall position
         # self.ghostItem.tweakPositions()
+
+    def set_annotation_color(self, c):
+        """Set the colour of annotations.
+
+        args:
+            c (QColor/tuple): a QColor or an RGB triplet describing
+                athe new colour.
+        """
+        try:
+            c = QColor(c)
+        except TypeError:
+            c = QColor.fromRgb(*c)
+        style = {
+            "annot_color": c,
+            "pen_width": 2,
+            "highlight_color": QColor(255, 255, 0, 64),  # TODO: 64 hardcoded elsewhere
+            "highlight_width": 50,
+            "box_tint": QColor(255, 255, 0, 16),  # light highlight for backgrounds
+        }
+        self.ink = QPen(style["annot_color"], style["pen_width"])
+        self.lightBrush = QBrush(style["box_tint"])
+        self.highlight = QPen(style["highlight_color"], style["highlight_width"])
+        self.style = style
+        for X in self.items():
+            # check if object has "restyle" function and if so then use it to set the colour
+            if getattr(X, "restyle", False):
+                X.restyle(self.style)
+        if self.scoreBox:
+            self.scoreBox.update_style()
 
     def setToolMode(self, mode):
         """
@@ -784,24 +817,14 @@ class PageScene(QGraphicsScene):
         # If the mark-delta of comment is non-zero then create a
         # delta-object with a different offset, else just place the comment.
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
-            blurb = TextItem(self, self.fontSize)  # build the textitem
-            blurb.setPlainText(self.commentText)
-            blurb._contents = self.commentText  # for pickling, TODO: Colin doesn't like
-            # move to correct point - update if only text no delta
-            blurb.setPos(pt)
-
-            # make sure blurb has text interaction turned off
-            prevState = blurb.textInteractionFlags()
-            blurb.setTextInteractionFlags(Qt.NoTextInteraction)
             # Update position of text - the ghostitem has it right
-            blurb.moveBy(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, blurb, self.ink)
+            # TODO: move this calc into the item
+            pt += QPointF(0, self.ghostItem.blurb.pos().y())
+            command = CommandText(self, pt, self.commentText)
             self.undoStack.push(command)
-            # return blurb to previous state
-            blurb.setTextInteractionFlags(prevState)
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.commentDelta, self.commentText, self.fontSize
+                self, pt, self.commentDelta, self.commentText
             )
             log.debug(
                 "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
@@ -878,7 +901,7 @@ class PageScene(QGraphicsScene):
             command = CommandQMark(self, pt)
         else:
             if self.isLegalDelta(self.markDelta):
-                command = CommandDelta(self, pt, self.markDelta, self.fontSize)
+                command = CommandDelta(self, pt, self.markDelta)
             else:
                 return
         self.undoStack.push(command)  # push command onto undoStack.
@@ -943,22 +966,21 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.setTextInteractionFlags(Qt.TextEditorInteraction)
                 self.setFocusItem(under, Qt.MouseFocusReason)
-                super(PageScene, self).mousePressEvent(event)
+                super().mousePressEvent(event)
                 return
             # check if a textitem currently has focus and clear it.
             under = self.focusItem()
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        # Now we construct a text object, give it focus (which fires up the
-        # editor on that object), and then push it onto the undo-stack.
-        self.originPos = event.scenePos()
-        blurb = TextItem(self, self.fontSize)
-        # move so centred under cursor
-        self.originPos -= QPointF(0, blurb.boundingRect().height() / 2)
-        blurb.setPos(self.originPos)
-        blurb.setFocus()
-        command = CommandText(self, blurb, self.ink)
+        # Construct empty text object, give focus to start editor
+        pt = event.scenePos()
+        command = CommandText(self, pt, "")
+        # move so centred under cursor   TODO: move into class!
+        pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
+        command.blurb.setPos(pt)
+        command.blurb.enable_interactive()
+        command.blurb.setFocus()
         self.undoStack.push(command)
 
     def mousePressTick(self, event):
@@ -1647,7 +1669,7 @@ class PageScene(QGraphicsScene):
         self.originPos = event.scenePos()
         self.currentPos = self.originPos
         self.delBoxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-        self.delBoxItem.setPen(self.ink)
+        self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
         self.delBoxItem.setBrush(self.deleteBrush)
         self.addItem(self.delBoxItem)
 
@@ -1672,7 +1694,7 @@ class PageScene(QGraphicsScene):
                 self.delBoxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
-                self.delBoxItem.setPen(self.ink)
+                self.delBoxItem.setPen(QPen(Qt.red, self.style["pen_width"]))
                 self.delBoxItem.setBrush(self.deleteBrush)
                 self.addItem(self.delBoxItem)
             else:
@@ -2105,6 +2127,5 @@ class PageScene(QGraphicsScene):
             br.center() + br.topRight() / 8,
             delta,
             "NO ANSWER GIVEN",
-            self.fontSize,
         )
         self.undoStack.push(command)
