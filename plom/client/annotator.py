@@ -804,9 +804,10 @@ class Annotator(QWidget):
                 Unexpectedly repeated md5sums: are there two identical pages
                 in the current annotator?  Is it allowed?  How did it happen?\n
                 Annotator's image_md5_list is {}\n
+                The src_img_data is {}\n
                 Consider filing a bug with this info!
                 """.format(
-                    image_md5_list
+                    image_md5_list, self.src_img_data
                 )
             ).strip()
             log.error(s)
