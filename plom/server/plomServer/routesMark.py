@@ -509,11 +509,16 @@ class MarkHandler:
 
         # We just discard this, its legacy from previous API call
         # TODO: fold into the pages_data; then we can sanity check it when it comes back!
+        # TODO: redo upstream call to include filepath directly
         all_pages_paths = r[2:]
-        rownames = ("pagename", "md5", "included", "order", "id")
+        assert len(r[1]) == len(all_pages_paths)
+        rownames = ("pagename", "md5", "included", "order", "id", "server_path")
         pages_data = []
-        for row in r[1]:
+        for i, row in enumerate(r[1]):
             pages_data.append({k: v for k, v in zip(rownames, row)})
+            pages_data[i]["server_path"] = all_pages_paths[i]
+            # For now, server has no orientation data but callers expect it
+            pages_data[i]["orientation"] = 0
         return web.json_response(pages_data, status=200)
 
     # @routes.get("/MK/allMax")
