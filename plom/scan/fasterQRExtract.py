@@ -8,6 +8,7 @@ import sys
 from statistics import mean
 
 from pyzbar.pyzbar import decode
+from pyzbar.pyzbar import ZBarSymbol
 from PIL import Image
 
 
@@ -56,7 +57,7 @@ def QRextract(image_name, write_to_file=True):
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
     img = Image.open(image_name)
-    qrlist = decode(img)
+    qrlist = decode(img, symbols=[ZBarSymbol.QRCODE])
     for qr in qrlist:
         cnr = findCorner(qr, img.size)
         if cnr in cornerQR.keys():
@@ -64,7 +65,7 @@ def QRextract(image_name, write_to_file=True):
 
     # try again on smaller image: avoids random CI failures #967
     img = img.reduce(2)
-    qrlist = decode(img)
+    qrlist = decode(img, symbols=[ZBarSymbol.QRCODE])
     for qr in qrlist:
         cnr = findCorner(qr, img.size)
         if cnr in cornerQR.keys():
