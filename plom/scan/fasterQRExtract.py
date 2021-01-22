@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import json
 import os
@@ -61,6 +61,22 @@ def QRextract(image_name, write_to_file=True):
         cnr = findCorner(qr, img.size)
         if cnr in cornerQR.keys():
             cornerQR[cnr].append(qr.data.decode())
+
+    # try again on smaller image: avoids random CI failures #967
+    img = img.reduce(2)
+    qrlist = decode(img)
+    for qr in qrlist:
+        cnr = findCorner(qr, img.size)
+        if cnr in cornerQR.keys():
+            s = qr.data.decode()
+            if s not in cornerQR[cnr]:
+                # TODO: log instead of printing
+                print(
+                    'Found QR-code "{}" at {} on reduced image, not found at original size'.format(
+                        s, cnr
+                    )
+                )
+                cornerQR[cnr].append(s)
 
     if write_to_file:
         with open(qrname, "w") as fh:
