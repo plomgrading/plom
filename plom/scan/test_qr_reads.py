@@ -2,7 +2,6 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 from pathlib import Path
-from io import BytesIO
 import pkg_resources
 from shutil import copyfile
 import json
@@ -12,19 +11,33 @@ from PIL import Image
 from plom.scan import QRextract
 
 
-# TODO:
-f = Path("plom/scan") / Path("test_zbar_fails.png")
-
-
 def test_qr_reads_from_image():
-    im = Image.open(
-        BytesIO(pkg_resources.resource_string("plom.scan", "test_zbar_fails.png"))
-    )
+    im = Image.open(pkg_resources.resource_stream("plom.scan", "test_zbar_fails.png"))
     p = QRextract(im, write_to_file=False)
     assert not p["NE"]  # staple
     assert p["NW"] == ["00002806012823730"]
     assert p["SE"] == ["00002806014823730"]
     assert p["SW"] == ["00002806013823730"]
+
+
+def test_qr_reads_slight_rotate():
+    im = Image.open(pkg_resources.resource_stream("plom.scan", "test_zbar_fails.png"))
+    im = im.rotate(10, expand=True)
+    p = QRextract(im, write_to_file=False)
+    assert not p["NE"]
+    assert p["NW"] == ["00002806012823730"]
+    assert p["SE"] == ["00002806014823730"]
+    assert p["SW"] == ["00002806013823730"]
+
+
+def test_qr_reads_upside_down():
+    im = Image.open(pkg_resources.resource_stream("plom.scan", "test_zbar_fails.png"))
+    im = im.rotate(180)
+    p = QRextract(im, write_to_file=False)
+    assert not p["SW"]
+    assert p["SE"] == ["00002806012823730"]
+    assert p["NW"] == ["00002806014823730"]
+    assert p["NE"] == ["00002806013823730"]
 
 
 def test_qr_reads_from_file():
@@ -37,8 +50,6 @@ def test_qr_reads_from_file():
 
 
 def test_qr_reads_write_dot_qr(tmp_path):
-    # with tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
-    print(tmp_path)
     oldf = Path(pkg_resources.resource_filename("plom.scan", "test_zbar_fails.png"))
     f = tmp_path / oldf.name
     copyfile(oldf, f)
@@ -56,5 +67,6 @@ def test_qr_reads_one_fails():
 
     Test could be removed if issue is fixed in the future.
     """
-    p = QRextract(f, write_to_file=False, try_harder=False)
+    im = Image.open(pkg_resources.resource_stream("plom.scan", "test_zbar_fails.png"))
+    p = QRextract(im, write_to_file=False, try_harder=False)
     assert len([x for x in p.values() if x != []]) == 2  # only 2 not 3
