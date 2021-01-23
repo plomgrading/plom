@@ -38,19 +38,23 @@ def QRextract(image_name, write_to_file=True, try_harder=True):
     """Decode QR codes in an image, return or save them in .qr file.
 
     args:
-        image_name (str/pathlib.Path): an image file, either in local
-            dir or specified e.g., using `pathlib.Path`.
+        image (str/pathlib.Path/PIL.Image): an image filename, either in
+            the local dir or specified e.g., using `pathlib.Path`.  Can
+            also be an instance of Pillow's `Image`.
         write_to_file (bool): by default, the results are written into
             a file named `img_name.qr` (i.e., the same as input name
             with `.qr` appended, so something like `foo.jpg.qr`).
+            If this `.qr` file exists and is non-empty, then no action
+            is taken.
         try_harder (bool): Try to find QRs on a smaller resolution.
             Defaults to True.  Sometimes this seems work around high
             failure rates in the synthetic images used in CI testing.
             Details blow.
 
     returns:
-        dict: Keys "NW", "NE", "SW", "SE", which with a list of the
+        dict: Keys "NW", "NE", "SW", "SE", each with a list of the
             strings extracted from QR codes, one string per code.
+            List is empty if no QR codes found in that corner.
 
     Without the `try_harder` flag, we observe high failure rates when
     the vertical resolution is near 2000 pixels (our current default).
@@ -89,11 +93,15 @@ def QRextract(image_name, write_to_file=True, try_harder=True):
     if write_to_file:
         qrname = "{}.qr".format(image_name)
         if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
-            return
+            return None
 
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
-    img = Image.open(image_name)
+    if isinstance(image_name, Image.Image):
+        img = image_name
+    else:
+        img = Image.open(image_name)
+
     qrlist = decode(img, symbols=[ZBarSymbol.QRCODE])
     for qr in qrlist:
         cnr = findCorner(qr, img.size)
