@@ -3,8 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 import json
-import os
-import sys
+from pathlib import Path
 from statistics import mean
 
 from pyzbar.pyzbar import decode
@@ -34,7 +33,7 @@ def findCorner(qr, dim):
     return NS + EW
 
 
-def QRextract(image_name, write_to_file=True, try_harder=True):
+def QRextract(image, write_to_file=True, try_harder=True):
     """Decode QR codes in an image, return or save them in .qr file.
 
     args:
@@ -42,19 +41,19 @@ def QRextract(image_name, write_to_file=True, try_harder=True):
             the local dir or specified e.g., using `pathlib.Path`.  Can
             also be an instance of Pillow's `Image`.
         write_to_file (bool): by default, the results are written into
-            a file named `img_name.qr` (i.e., the same as input name
+            a file named `image.qr` (i.e., the same as input name
             with `.qr` appended, so something like `foo.jpg.qr`).
-            If this `.qr` file exists and is non-empty, then no action
-            is taken.
+            If this `.qr` file already exists and is non-empty, then no
+            action is taken, and None is returned.
         try_harder (bool): Try to find QRs on a smaller resolution.
             Defaults to True.  Sometimes this seems work around high
             failure rates in the synthetic images used in CI testing.
             Details blow.
 
     returns:
-        dict: Keys "NW", "NE", "SW", "SE", each with a list of the
-            strings extracted from QR codes, one string per code.
-            List is empty if no QR codes found in that corner.
+        dict/None: Keys "NW", "NE", "SW", "SE", each with a list of the
+            strings extracted from QR codes, one string per code.  The
+            list is empty if no QR codes found in that corner.
 
     Without the `try_harder` flag, we observe high failure rates when
     the vertical resolution is near 2000 pixels (our current default).
@@ -89,31 +88,29 @@ def QRextract(image_name, write_to_file=True, try_harder=True):
 
     [1] https://gitlab.com/plom/plom/-/issues/967
     """
-
     if write_to_file:
-        qrname = "{}.qr".format(image_name)
-        if os.path.exists(qrname) and os.path.getsize(qrname) != 0:
+        image = Path(image)
+        qrfile = image.with_suffix("{}.qr".format(image.suffix))
+        if qrfile.exists() and qrfile.stat().st_size > 0:
             return None
 
     cornerQR = {"NW": [], "NE": [], "SW": [], "SE": []}
 
-    if isinstance(image_name, Image.Image):
-        img = image_name
-    else:
-        img = Image.open(image_name)
+    if not isinstance(image, Image.Image):
+        image = Image.open(image)
 
-    qrlist = decode(img, symbols=[ZBarSymbol.QRCODE])
+    qrlist = decode(image, symbols=[ZBarSymbol.QRCODE])
     for qr in qrlist:
-        cnr = findCorner(qr, img.size)
+        cnr = findCorner(qr, image.size)
         if cnr in cornerQR.keys():
             cornerQR[cnr].append(qr.data.decode())
 
     if try_harder:
         # try again on smaller image: avoids random CI failures #967?
-        img = img.reduce(2)
-        qrlist = decode(img, symbols=[ZBarSymbol.QRCODE])
+        image = image.reduce(2)
+        qrlist = decode(image, symbols=[ZBarSymbol.QRCODE])
         for qr in qrlist:
-            cnr = findCorner(qr, img.size)
+            cnr = findCorner(qr, image.size)
             if cnr in cornerQR.keys():
                 s = qr.data.decode()
                 if s not in cornerQR[cnr]:
@@ -126,12 +123,6 @@ def QRextract(image_name, write_to_file=True, try_harder=True):
                     cornerQR[cnr].append(s)
 
     if write_to_file:
-        with open(qrname, "w") as fh:
+        with open(qrfile, "w") as fh:
             json.dump(cornerQR, fh)
     return cornerQR
-
-
-if __name__ == "__main__":
-    # Take the bitmap file name as argument.
-    imgName = sys.argv[1]
-    QRextract(imgName)
