@@ -114,7 +114,6 @@ release_job:
 
 black:
   stage: static_analysis
-  needs: []
   image: "python:3.9"
   before_script:
     - pip3 install "black~=20.8b"
@@ -310,7 +309,6 @@ fullworkflow:
 backgroundTest:
   image: alpine
   stage: static_analysis
-  needs: []
   script:
     - sleep 60 &
     - jobs -l
@@ -326,7 +324,6 @@ backgroundTest:
 
 appstreamValid:
   stage: static_analysis
-  needs: []
   image: alpine
   before_script:
     - apk add appstream-glib
