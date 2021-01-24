@@ -30,7 +30,7 @@ stages:
   - nodocker
   - build
   - test
-  - final
+  - packaging
   - release
 
 
@@ -66,7 +66,7 @@ quick-pytests:
 
 # If we are on the master branch, we tag the above as "latest"
 docker-image-master:
-  stage: final
+  stage: packaging
   needs: ["docker-image"]
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -82,7 +82,7 @@ docker-image-master:
 # Debug: `upload -r testpypi`, comment `only`, change and unprotect token
 pypi:
   image: $IM
-  stage: final
+  stage: packaging
   needs: ["docker-image"]
   cache: {}
   script:
@@ -431,7 +431,7 @@ newest_deps:
 # Before extracting the version, we did:
 # for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
 linuxbin_ubuntu1804:
-  stage: final
+  stage: packaging
   needs: ["docker-image"]
   image: $IM
   before_script:
@@ -461,7 +461,7 @@ linuxbin_ubuntu1804:
 
 # TODO: consider doing only on the master branch and only when tests pass
 linuxbin_ubuntu2004:
-  stage: final
+  stage: packaging
   needs: []
   image: ubuntu:20.04
   before_script:
@@ -488,7 +488,7 @@ linuxbin_ubuntu2004:
 
 # TODO: consider doing only on the master branch and only when tests pass
 linuxbin_centos:
-  stage: final
+  stage: packaging
   needs: []
   image: centos:7
   before_script:
@@ -550,7 +550,7 @@ winmintest:
 winpyinst:
   extends:
   - .shared_windows_runners
-  stage: final
+  stage: packaging
   needs: []
   before_script:
   - choco install -y python3 --version 3.9
