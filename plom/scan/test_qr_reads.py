@@ -49,8 +49,9 @@ def test_qr_reads_from_file():
     assert p["SW"]
 
 
-def test_qr_reads_write_dot_qr(tmp_path):
+def test_qr_reads_write_dot_qr(tmpdir):
     oldf = Path(pkg_resources.resource_filename("plom.scan", "test_zbar_fails.png"))
+    tmp_path = Path(tmpdir)
     f = tmp_path / oldf.name
     copyfile(oldf, f)
     qrfile = f.with_suffix(".png.qr")  # has funny extension
