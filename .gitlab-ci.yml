@@ -11,14 +11,14 @@
 #
 # TODO list
 # ---------
-#   * use our Dockerfile instead of apt-get
-#       - I think this is "dind"
-#   * test on latest versions of deps with Docker pinned on req.txt
+#   * bump docker image to 20.10.2
+#     https://docs.docker.com/engine/release-notes/
+#   * bump Ubuntu 18.04 to 20.04 (and in Dockerfile)
 
-image: docker:19.03.11
+image: docker:19.03.14
 
 services:
-  - docker:19.03.11-dind
+  - docker:19.03.14-dind
 
 variables:
   DOCKER_DRIVER: overlay2
