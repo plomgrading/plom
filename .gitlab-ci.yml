@@ -31,6 +31,7 @@ stages:
   - build
   - test
   - packaging
+  - prep
   - release
 
 
@@ -104,8 +105,8 @@ release_job:
     - export EXTRA_DESCRIPTION="TODO EDIT"
   release:
     name: 'Release $CI_COMMIT_TAG'
-    description: 'Created using the release-cli $EXTRA_DESCRIPTION'  # $EXTRA_DESCRIPTION must be defined
-    tag_name: '$CI_COMMIT_TAG'                                       # elsewhere in the pipeline.
+    description: 'Created using the release-cli $EXTRA_DESCRIPTION'
+    tag_name: '$CI_COMMIT_TAG'
     ref: '$CI_COMMIT_TAG'
     milestones:
       # ${CI_COMMIT_TAG:1} might strip the leading v
@@ -458,6 +459,19 @@ linuxbin_ubuntu1804:
     - PlomClient*.bin
     - md5sum
 
+binary_upload:
+  stage: prep
+  image: alpine
+  # TURN ON ONCE READY
+  #rules:
+  # - if: $CI_COMMIT_TAG
+  script:
+    - ls
+    - md5sum PlomClient*
+    - export AA=`md5sum PlomClient*`
+    - echo $AA
+    - export BB="Checksums:\n$AA"
+    - echo $BB
 
 # TODO: consider doing only on the master branch and only when tests pass
 linuxbin_ubuntu2004:
