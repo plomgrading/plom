@@ -57,12 +57,12 @@ def QRextract(image, write_to_file=True, try_harder=True):
 
     Without the `try_harder` flag, we observe high failure rates when
     the vertical resolution is near 2000 pixels (our current default).
-    This is Issue #967 [1].  Its is not prevelant in real-life images,
-    but causes a roughly 5% to 10% failure rate in our CI runs.
+    This is Issue #967 [1].  It is not prevelant in real-life images,
+    but causes a roughly 5%-10% failure rate in our synthetic CI runs.
     The workaround (on by default) uses Pillow's `.reduce()` to quickly
     downscale the image.  This does increase the run time (have not
     checked by how much: I assume between 25% and 50%) so if that is
-    more of a concern that error rate, turn off this flag.
+    more of a concern than error rate, turn off this flag.
 
     TODO: this issue should be reported to the ZBar project.
 
@@ -90,6 +90,7 @@ def QRextract(image, write_to_file=True, try_harder=True):
     """
     if write_to_file:
         image = Path(image)
+        # foo.jpg to foo.jpg.qr
         qrfile = image.with_suffix("{}.qr".format(image.suffix))
         if qrfile.exists() and qrfile.stat().st_size > 0:
             return None
