@@ -475,6 +475,8 @@ linuxbin_ubuntu1804:
 binary_upload:
   stage: prep
   image: curlimages/curl:latest
+  # TODO: temporary during dev
+  needs: ['linuxbin_ubuntu2004']
   # TURN ON ONCE READY
   #rules:
   # - if: $CI_COMMIT_TAG
@@ -485,7 +487,7 @@ binary_upload:
     - echo $AA
     - export BB="Checksums:\n$AA"
     - echo $BB
-    - export NAME=`ls PlomClient-*-linux-ubuntu1804.bin`
+    - export NAME=`ls PlomClient-*-linux-ubuntu2004.bin`
     - export TODO_FROM_CI_COMMIT_TAG="v0.0.1"
     - export VER=${TODO_FROM_CI_COMMIT_TAG:1}
     - echo $NAME
