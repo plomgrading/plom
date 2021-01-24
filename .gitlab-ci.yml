@@ -112,9 +112,25 @@ release_job:
       - $CI_COMMIT_TAG
 
 
+# block release unless tag matches in-source version
+tag_matches_ver:
+  stage: static_analysis
+  image: python:3.9
+  rules:
+   - if: $CI_COMMIT_TAG
+  script:
+    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - echo "Extracted version string '$VER'"
+    - echo "Now comparing to CI_COMMIT_TAG '$CI_COMMIT_TAG'"
+    - echo $VER
+    - echo $CI_COMMIT_TAG
+    # note reversed logic and extra "v"
+    - python -c "exit(not 'v$VER' == '$CI_COMMIT_TAG')"
+
+
 black:
   stage: static_analysis
-  image: "python:3.9"
+  image: python:3.9
   before_script:
     - pip3 install "black~=20.8b"
   script:
