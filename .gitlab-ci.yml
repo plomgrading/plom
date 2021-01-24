@@ -471,9 +471,10 @@ linuxbin_ubuntu1804:
     - PlomClient*.bin
     - md5sum
 
+
 binary_upload:
   stage: prep
-  image: alpine
+  image: curlimages/curl:latest
   # TURN ON ONCE READY
   #rules:
   # - if: $CI_COMMIT_TAG
@@ -484,6 +485,14 @@ binary_upload:
     - echo $AA
     - export BB="Checksums:\n$AA"
     - echo $BB
+    - export NAME=`ls PlomClient-*-linux-ubuntu1804.bin`
+    - export TODO_FROM_CI_COMMIT_TAG="v0.0.1"
+    - export VER=${TODO_FROM_CI_COMMIT_TAG:1}
+    - echo $NAME
+    - echo $VER
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $NAME "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$NAME"
+
 
 # TODO: consider doing only on the master branch and only when tests pass
 linuxbin_ubuntu2004:
