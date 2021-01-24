@@ -513,26 +513,30 @@ binary_upload:
     - export LINKNAME1="Compiled client for GNU/Linux (compiled on Ubuntu 18.04)"
     - export LINKNAME2="Compiled client for GNU/Linux (compiled on CentOS 7)"
     - export LINKNAME3="Compiled client for Windows"
+    - export LINKNAME4="Compiled client for macOS (for macOS ≥ 10.13.6)"
     - export FILENAME1=`ls PlomClient-*-linux-ubuntu2004.bin`
     - export FILENAME2=`ls PlomClient-*-linux-centos*.bin`
     - export FILENAME3=`ls PlomClient-*.exe`
+    - export FILENAME4="PlomClient-$VER-macos.bin"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
     - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME3"
+    - export URL4="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME4"
     # actually do the uploads
     - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME1 "URL1"
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME1 "$URL1"
     - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "URL2"
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "$URL2"
     - |
-      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "URL3"
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
     # TODO: we can either use release cli binary to push these or wait for gitlab
-    # TODO: but for now, just paste into release descript for manual edits
+    # TODO: but for now, just write into release description for manual edits
     - echo "" >> release_desc.md
     - echo "TODO copy-paste these links as release assets, type Package" >> release_desc.md
     - echo "$URL1  $LINKNAME1" >> release_desc.md
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
+    - echo "$URL4  $LINKNAME4" >> release_desc.md
     - echo "TODO and these are type Other" >> release_desc.md
     - cat release_desc.md
   artifacts:
