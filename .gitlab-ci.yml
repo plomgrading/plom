@@ -27,7 +27,6 @@ variables:
 
 stages:
   - static_analysis
-  - nodocker
   - build
   - test
   - packaging
@@ -335,10 +334,10 @@ appstreamValid:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
 
 
-# get latest pip deps for stuff
+# get latest pip deps, doesn't use docker, closer to user install
 # TODO: use newer ubuntu too?
-newest_deps:
-  stage: nodocker
+no_dock_new_deps:
+  stage: build
   needs: []
   image: ubuntu:18.04
   allow_failure: true
