@@ -101,7 +101,7 @@ release_job:
     - if: $CI_COMMIT_TAG
   script:
     - echo 'running release_job'
-    - echo "Draft of release notes follows"
+    - echo "Draft of release notes follows (newlines eaten)"
     - cat release_desc.md
   release:
     name: 'Release $CI_COMMIT_TAG'
@@ -482,7 +482,7 @@ binary_upload:
       ## Installation instructions
 
       Please see [plomgrading.org](https://plomgrading.org).
-      If you're here looking for Clients, see \"Compiled client for ...\" links above.
+      If you're here looking for Clients, see "Compiled client" packages above.
 
       #### md5sum of compiled clients and other artifacts
 
@@ -513,16 +513,16 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
-    - echo -e "\n" >> release_desc.md
+    - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Package\"" >> release_desc.md
-    - echo -e "\n" >> release_desc.md
+    - echo "" >> release_desc.md
     - echo "$URL1  $LINKNAME1" >> release_desc.md
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
     - echo "$URL4  $LINKNAME4" >> release_desc.md
-    - echo -e "\n" >> release_desc.md
+    - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
-    - echo -e "\n" >> release_desc.md
+    - echo "" >> release_desc.md
     - echo "https://pypi.org/project/plom/$VER  Find Plom on PyPI" >> release_desc.md
     - echo "https://flathub.org/apps/details/org.plomgrading.PlomClient  Install Plom Client from Flathub (GNU/Linux)" >> release_desc.md
     - echo "https://hub.docker.com/r/plomgrading/server  Plom Server on DockerHub" >> release_desc.md
