@@ -629,7 +629,7 @@ winpyinst:
   - c:\Python39\Scripts\pyinstaller client.windows.spec
   - $VER = &"c:\Python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
-  - $NAME = "PlomClient-$VER-windows.exe"
+  - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
   - CertUtil -hashfile $NAME MD5 > md5sum.txt
   - ls $NAME
