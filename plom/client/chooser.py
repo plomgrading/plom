@@ -1,20 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
 
 """Chooser dialog"""
 
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import os
 from datetime import datetime
 import logging
+from pathlib import Path
+
 import toml
+import appdirs
 
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
@@ -40,6 +42,8 @@ global tempDirectory, directoryPath
 lastTime = {}
 
 log = logging.getLogger("client")
+logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
+cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
 
 
 def readLastTime():
@@ -59,25 +63,30 @@ def readLastTime():
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
     # If config file exists, use it to update the defaults
-    if os.path.isfile("plomConfig.toml"):
-        with open("plomConfig.toml") as data_file:
-            lastTime.update(toml.load(data_file))
+    # prefer a local file, else try standard config location
+    for cfg in (Path("plomConfig.toml"), cfgdir / "plomConfig.toml"):
+        if cfg.exists():
+            # too early to log: log.info("Loading config file %s", cfg)
+            with open(cfg) as data_file:
+                lastTime.update(toml.load(data_file))
+            return
 
 
 def writeLastTime():
     """Write the options to the config file."""
-    log.info("Saving config file: plomConfig.toml")
+    cfg = cfgdir / "plomConfig.toml"
+    log.info("Saving config file %s", cfg)
     try:
-        with open("plomConfig.toml", "w") as fh:
+        cfg.parent.mkdir(exist_ok=True)
+        with open(cfg, "w") as fh:
             fh.write(toml.dumps(lastTime))
     except PermissionError as e:
         ErrorMessage(
-            "Cannot write config file!\n\n"
-            "Try moving the Plom client to somewhere else on your"
-            "system where you have write permissions.\n\n"
-            "{}.".format(e)
+            "Cannot write config file:\n"
+            "    {}\n\n"
+            "Any settings will not be saved for future sessions.\n\n"
+            "Error msg: {}.".format(cfg, e)
         ).exec_()
-        QApplication.exit(1)
 
 
 class Chooser(QDialog):
@@ -88,17 +97,20 @@ class Chooser(QDialog):
 
         readLastTime()
 
+        kwargs = {}
         if lastTime.get("LogToFile"):
-            logging.basicConfig(
-                format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-                datefmt="%b%d %H:%M:%S",
-                filename=datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log"),
-            )
-        else:
-            logging.basicConfig(
-                format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-                datefmt="%m-%d %H:%M:%S",
-            )
+            logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
+            try:
+                logdir.mkdir(parents=True, exist_ok=True)
+                logfile = logdir / logfile
+            except PermissionError:
+                pass
+            kwargs = {"filename": logfile}
+        logging.basicConfig(
+            format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
+            datefmt="%b%d %H:%M:%S",
+            **kwargs,
+        )
         # Default to INFO log level
         logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper())
 

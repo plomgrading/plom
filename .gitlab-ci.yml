@@ -601,11 +601,9 @@ winmintest:
   stage: test
   needs: []
   script:
-  - choco install -y python3
+  - choco install -y python3 --version 3.9
   - refreshenv
-  - c:\Python39\Scripts\pip install toml
-  - c:\Python39\Scripts\pip install requests-toolbelt
-  - c:\Python39\Scripts\pip install pyqt5
+  - c:\Python39\Scripts\pip install -r requirements.txt.client
   - refreshenv
   - echo $Env:Path
   - c:\Python39\python -m plom.scripts.client -h

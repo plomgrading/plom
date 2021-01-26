@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: FSFAP
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -7,6 +7,7 @@
 # without any warranty.
 
 # These should be kept lock-step with `requirements.txt`
+appdirs==1.4.4
 PyQt5==5.15.2
 PyQt5-sip==12.8.1
 requests==2.25.1
