@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.5.14] - 2021-01-25
 
 ### Added
 * Annotation colour defaults to red but can be changed in the Annotator menu.
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Flatpak client can save config and comment files.
+* Fixed paper generation by working around a bug present in certain versions of `pymupdf` library.
 
 
 ## [0.5.13] - 2021-01-06
@@ -354,8 +355,7 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.13...master
+[0.5.14]: https://gitlab.com/plom/plom/compare/v0.5.13...v0.5.14
 [0.5.13]: https://gitlab.com/plom/plom/compare/v0.5.11...v0.5.13
 [0.5.11]: https://gitlab.com/plom/plom/compare/v0.5.10...v0.5.11
 [0.5.10]: https://gitlab.com/plom/plom/compare/v0.5.9...v0.5.10

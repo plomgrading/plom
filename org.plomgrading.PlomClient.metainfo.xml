@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (C) 2020 Colin B. Macdonald
+  Copyright (C) 2020-2021 Colin B. Macdonald
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -43,6 +43,7 @@
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2021-01-25" version="0.5.14"/>
     <release date="2021-01-06" version="0.5.13"/>
     <release date="2020-12-16" version="0.5.11"/>
     <release date="2020-12-06" version="0.5.10"/>
