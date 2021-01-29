@@ -14,7 +14,7 @@
 
 appdirs==1.4.3
 aiohttp==3.7.2
-#Pillow==???
+Pillow==7.0.0
 numpy==1.16.0
 peewee==3.13.3
 pymupdf==1.16.14

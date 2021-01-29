@@ -43,7 +43,7 @@ server_install_requires = [
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
-    "Pillow",
+    "Pillow>=7.0.0",
     "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
     "weasyprint",
