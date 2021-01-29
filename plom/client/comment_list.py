@@ -57,7 +57,7 @@ text = "meh"
 
 [[comment]]
 delta = 0
-text = "tex: you can write \LaTeX, $e^{i\pi}+1=0$"
+text = "tex: you can write \\LaTeX, $e^{i\pi}+1=0$"
 
 [[comment]]
 delta = 0
