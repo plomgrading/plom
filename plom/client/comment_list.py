@@ -150,10 +150,10 @@ def commentLoadAll():
     return clist
 
 
-def commentSaveList(clist):
+def comments_save_list(clist, comment_dir=comment_dir, filename="plomComments.toml"):
     """Export comment list to toml file."""
     # TODO: don't save empty tags/testnames/etc to file?
-    comfile = comment_dir / "plomComments.toml"
+    comfile = comment_dir / filename
     comment_dir.mkdir(exist_ok=True)
     with open(comfile, "w") as fname:
         # toml wants a dictionary
@@ -610,7 +610,7 @@ class SimpleCommentTable(QTableView):
             )
 
     def saveCommentList(self):
-        commentSaveList(self.clist)
+        comments_save_list(self.clist)
 
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
