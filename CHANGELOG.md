@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Rotations in the adjust-pages dialog are now done in metadata.
 
 ### Fixed
 * Client: fixed regression loading the default comment file.
@@ -23,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotation colour defaults to red but can be changed in the Annotator menu.
 
 ### Changed
-* Rotations in the adjust-pages dialog are now done in metadata.
 * Untested scikit-learn used by default for digit recognition.  Tensorflow code still present and could return as default, after someone tests both on real data.
 * Client: Ctrl-return forces LaTeX rendering of text annotations.
 * Client: saves config file and comments in a central location.
