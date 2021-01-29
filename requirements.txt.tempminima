@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2021 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+#
+# This is used by a CI run to test minimum versions of dependencies.
+# It should list the min-pinned versions in setup.py, and must be kept
+# up-to-date with setup.py
+#
+# TODO: hopefully just temporary, until we can lift these values from setup.py
+
+appdirs==1.4.3
+aiohttp==3.7.2
+#Pillow==???
+numpy==1.16.0
+peewee==3.13.3
+pymupdf==1.16.14
+scikit-learn==0.23.1
+toml==0.10.0

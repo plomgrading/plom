@@ -31,6 +31,8 @@ cursorList = []
 for fn in glob("plom/client/cursors/*.png"):
     cursorList.append(fn)
 
+# TODO: CI requires requirements.txt.tempminima synced with mins here:
+
 client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
 
 server_install_requires = [
