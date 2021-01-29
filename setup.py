@@ -37,8 +37,7 @@ server_install_requires = [
     "appdirs>=1.4.3",
     "toml>=0.10.0",
     "tqdm",
-    "numpy>=1.16.0",  # for tensorflow
-    "requests>=2.21.0",  # for tensorflow
+    "numpy",
     "pandas",
     "passlib",
     "pymupdf>=1.16.14",
