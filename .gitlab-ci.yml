@@ -463,7 +463,7 @@ no_dock_min_deps:
       python3-cffi python3-passlib python3-pandas python3-pyqt5
       python3-pyqrcode python3-png python3-dev
       python3-requests-toolbelt python3-pil python3-tqdm
-      python3-defusedxml python3-jsmin python3-cairosvg python3-packaging
+      python3-defusedxml python3-jsmin python3-packaging
       iproute2 psmisc file
     - pip3 install --upgrade pip
     - python3 -m pip -V
