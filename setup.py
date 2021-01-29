@@ -31,18 +31,19 @@ cursorList = []
 for fn in glob("plom/client/cursors/*.png"):
     cursorList.append(fn)
 
+# TODO: CI requires requirements.txt.tempminima synced with mins here:
+
 client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
 
 server_install_requires = [
     "appdirs>=1.4.3",
     "toml>=0.10.0",
     "tqdm",
-    "numpy>=1.16.0",  # for tensorflow
-    "requests>=2.21.0",  # for tensorflow
+    "numpy",
     "pandas",
     "passlib",
-    "pymupdf>=1.16.14",
-    "Pillow",
+    "pymupdf>=1.18.5",
+    "Pillow>=7.0.0",
     "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
     "weasyprint",

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Client: fixed regression loading the default comment file.
+* Improve testing of minimum versions of dependencies.
 
 
 ## [0.5.15] - 2021-01-25
