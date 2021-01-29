@@ -17,6 +17,6 @@ aiohttp==3.7.2
 Pillow==7.0.0
 numpy==1.16.0
 peewee==3.13.3
-pymupdf==1.16.14
+pymupdf==1.18.5
 scikit-learn==0.23.1
 toml==0.10.0
