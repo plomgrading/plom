@@ -349,8 +349,9 @@ appstreamValid:
 
 
 # get latest pip deps, doesn't use docker, closer to user install
+# allowed to fail (some pip stuff might be new) but we want to know
 # TODO: use newer ubuntu too?
-no_dock_new_deps:
+nodock_newdeps:
   stage: build
   needs: []
   image: ubuntu:18.04
@@ -445,11 +446,10 @@ no_dock_new_deps:
 # 2. take python deps from package manager
 # 3. force the minimum version from setup.py
 # Goal here is to catch changes that need newer features of a dependency.
-no_dock_min_deps:
+nodock_mindeps:
   stage: build
   needs: []
   image: ubuntu:18.04
-  allow_failure: true
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
