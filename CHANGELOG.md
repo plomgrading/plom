@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Client: fixed regression loading the default comment file.
 
 
 ## [0.5.15] - 2021-01-25
