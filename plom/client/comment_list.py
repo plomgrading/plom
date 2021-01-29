@@ -39,10 +39,12 @@ log = logging.getLogger("annotr")
 comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
 
 
-def commentLoadAll():
-    """Grab comments from the toml file or return defaults."""
+def comments_new_default_list():
+    """Make a default list of comments."""
 
-    clist_defaults = r"""
+    # string-escaping here must match toml.dumps
+    cdict = toml.loads(
+        r"""
 [[comment]]
 delta = -1
 text = "algebra"
@@ -57,7 +59,7 @@ text = "meh"
 
 [[comment]]
 delta = 0
-text = "tex: you can write \LaTeX, $e^{i\pi}+1=0$"
+text = "tex: you can write \\LaTeX, $e^{i\\pi}+1=0$"
 
 [[comment]]
 delta = 0
@@ -78,6 +80,23 @@ delta = -1
 text = "Quest. 2 specific comment"
 tags = "Q2 foo bar"
 """
+    )
+    # should be a dict = {"comment": [list of stuff]}
+    assert "comment" in cdict
+    clist = cdict["comment"]
+    return comments_apply_default_fields(clist)
+
+
+def comments_apply_default_fields(comlist):
+    """Add missing fields with defaults to list of comments.
+
+    Args:
+        comlist (list): list of dicts.  Copies will not be made so
+            keep a deep copy if you need the original.
+
+    Returns:
+        list: updated list of dicts.
+    """
     comment_defaults = {
         "tags": "",
         "testname": "",
@@ -85,32 +104,56 @@ tags = "Q2 foo bar"
         "created": time.gmtime(0),
         "modified": time.gmtime(0),
     }
-    # TODO: don't save empty tags/testnames/etc to file
+    for d in comlist:
+        for k, v in comment_defaults.items():
+            d.setdefault(k, comment_defaults[k])
+    return comlist
+
+
+def comments_load_from_file(f):
+    """Grab comments from a toml file.
+
+    Args:
+        f (str/pathlib.Path): filename of a toml file.
+
+    Returns:
+        list: list of dicts, one for each comments.
+
+    Raises:
+        FileNotFoundError:
+        PermissionError:
+    """
+    cdict = toml.load(f)
+    clist = cdict["comment"]
+    return comments_apply_default_fields(clist)
+
+
+def commentLoadAll():
+    """Grab comments from the toml file or return defaults."""
     local_comfile = Path("plomComments.toml")
     comfile = comment_dir / "plomComments.toml"
     try:
-        cdict = toml.load(local_comfile)
-        # Note: on save, this central comfile
+        clist = comments_load_from_file(local_comfile)
+        # Note: on save, central file overwritten, Issue #1355
         log.info("Loaded a LOCAL comment file: %s", local_comfile)
+        return clist
     except (FileNotFoundError, PermissionError):
-        try:
-            cdict = toml.load(comfile)
-            log.info("Loaded comment file: %s", comfile)
-        except FileNotFoundError:
-            cdict = toml.loads(clist_defaults)
-            log.info("Starting from scratch, no comment file %s", comfile)
-    # should be a dict = {"comment": [list of stuff]}
-    assert "comment" in cdict
-    clist = cdict["comment"]
-    for d in clist:
-        for k, v in comment_defaults.items():
-            d.setdefault(k, comment_defaults[k])
+        pass
+    try:
+        clist = comments_load_from_file(comfile)
+        log.info("Loaded comment file: %s", comfile)
+        return clist
+    except FileNotFoundError:
+        pass
+    clist = comments_new_default_list()
+    log.info("Starting from scratch (no comment file %s)", comfile)
     return clist
 
 
-def commentSaveList(clist):
+def comments_save_list(clist, comment_dir=comment_dir, filename="plomComments.toml"):
     """Export comment list to toml file."""
-    comfile = comment_dir / "plomComments.toml"
+    # TODO: don't save empty tags/testnames/etc to file?
+    comfile = comment_dir / filename
     comment_dir.mkdir(exist_ok=True)
     with open(comfile, "w") as fname:
         # toml wants a dictionary
@@ -567,7 +610,7 @@ class SimpleCommentTable(QTableView):
             )
 
     def saveCommentList(self):
-        commentSaveList(self.clist)
+        comments_save_list(self.clist)
 
     def deleteItem(self):
         # Remove the selected row (or do nothing if no selection)
