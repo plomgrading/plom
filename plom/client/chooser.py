@@ -176,6 +176,7 @@ class Chooser(QDialog):
     def validate(self):
         # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
+        self.ui.userLE.setText(user)
         if (not user.isalnum()) or (not user):
             return
         # check password at least 4 char long
@@ -185,6 +186,7 @@ class Chooser(QDialog):
             log.warning("Password too short")
             return
         server = self.ui.serverLE.text().strip()
+        self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
@@ -340,6 +342,7 @@ class Chooser(QDialog):
 
     def getInfo(self):
         server = self.ui.serverLE.text().strip()
+        self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
