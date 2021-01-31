@@ -36,3 +36,14 @@ df = pd.read_csv(in_csv, dtype="object")
 
 df.apply(lambda row: do_renaming(row), axis=1)
 
+html = r"""<html>
+<body>
+<p>Nothing to see here</p>
+<!-- You may want to configure your webserver to ensure there is more than
+     this file stopping folks from getting a directory listing! -->
+</body>
+</html>
+"""
+
+with open(dist_pdf / "index.html", "w") as f:
+    f.write(html)
