@@ -1,17 +1,42 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import getpass
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
+
+
+def get_number_of_questions(server=None, pwd=None):
+    """Contact server for number of questions."""
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ScanMessenger(s, port=p)
+    else:
+        msgr = ScanMessenger(server)
+    msgr.start()
+
+    if not pwd:
+        pwd = getpass.getpass("Please enter the 'scanner' password:")
+
+    try:
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        exit(-1)
+
+    spec = msgr.get_spec()
+    msgr.closeUser()
+    msgr.stop()
+    return spec["numberOfQuestions"]
 
 
 def checkStatus(server=None, password=None):
