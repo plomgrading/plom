@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* `plom-hwscan -q all` will upload a paper to all questions, a common operation for self-scanned work.
 
 ### Changed
 
