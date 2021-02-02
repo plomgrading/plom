@@ -17,6 +17,7 @@ from pathlib import Path
 
 import toml
 import appdirs
+import re
 
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
@@ -185,12 +186,15 @@ class Chooser(QDialog):
         if len(pwd) < 4:
             log.warning("Password too short")
             return
+
         server = self.ui.serverLE.text().strip()
+        server = self.checkServerAddress(server)
         self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
+
         # save those settings
         self.saveDetails()
 
@@ -341,12 +345,15 @@ class Chooser(QDialog):
         messenger = None
 
     def getInfo(self):
+
         server = self.ui.serverLE.text().strip()
+        server = self.checkServerAddress(server)
         self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
+
         # save those settings
         # self.saveDetails()   # TODO?
 
@@ -400,6 +407,30 @@ class Chooser(QDialog):
             self.ui.passwordLE.setFocus(True)
         else:
             self.ui.userLE.setFocus(True)
+
+    def checkServerAddress(self, address):
+
+        # Checks to see if the address inputted is of valid structure.
+        # If there's a colon in the address (maybe the user didn't see the port SB):
+        # - Sets value after colon to port if valid
+        # - Sends error message if invalid
+
+        colon = ':'
+        containsColon = address.find(colon)
+        if containsColon != -1:
+            if containsColon != address.rfind(colon):
+                ErrorMessage("Your server address contained an invalid format.\n "
+                             "Perhaps you included too many colons?").exec_()
+                return
+            try:
+                self.ui.mportSB.setValue(int(address.partition(colon)[2]))
+            except ValueError:
+                ErrorMessage("Your server address contained an invalid format.\n"
+                             "Your port should consist of numbers.").exec_()
+                return address
+            return address.partition(colon)[0]
+        return address
+
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
