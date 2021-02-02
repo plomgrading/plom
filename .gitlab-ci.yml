@@ -717,7 +717,7 @@ winpyinst:
   script:
   - C:\Python39\Scripts\pip install -r requirements.txt.client
   # temporarily limit to 4.1 for Issue #1353
-  - C:\Python39\Scripts\pip install pyinstaller
+  - C:\Python39\Scripts\pip install pyinstaller==4.1
   - refreshenv
   - c:\Python39\python -m plom.scripts.client -h
   - c:\Python39\Scripts\pyinstaller client.windows.spec
