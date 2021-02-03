@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-from PyQt5.QtCore import Qt, QSize, QMargins
+import os
+import sys
+import logging
+
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -34,8 +38,8 @@ from .examviewwindow import ExamViewWindow
 from .uiFiles.ui_test_view import Ui_TestView
 from .useful_classes import ErrorMessage, SimpleMessage
 
-import os
-import sys
+
+log = logging.getLogger("viewerdialog")
 
 
 class SourceList(QListWidget):
