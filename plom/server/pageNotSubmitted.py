@@ -13,32 +13,50 @@ from plom.textools import buildLaTeX
 
 
 question_not_submitted_text = r"""
-    \documentclass[12pt,letterpaper]{article}
-    \usepackage[]{fullpage}
-    \usepackage{xcolor}
-    \usepackage[printwatermark]{xwatermark}
-    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Question not submitted}
-    \pagestyle{empty}
-    \begin{document}
-    \emph{This question was not submitted.}
-    \vfill
-    \emph{This question was not submitted.}
-    \end{document}
-    """
+\documentclass[12pt,letterpaper]{article}
+\usepackage[]{fullpage}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{lmodern} % Get a font that can actually be scaled
+\newcommand{\watermark}{
+  \fontseries{m}
+  \fontsize{60}{1}\selectfont
+  \color{red!30!white}
+  \put(125,-550){
+    \rotatebox{45}{Page not submitted}
+  }
+}
+\AddToHook{shipout/background}{\watermark}
+\pagestyle{empty}
+\begin{document}
+\emph{This question was not submitted.}
+\vfill
+\emph{This question was not submitted.}
+\end{document}
+"""
 
 page_not_submitted_text = r"""
-    \documentclass[12pt,letterpaper]{article}
-    \usepackage[]{fullpage}
-    \usepackage{xcolor}
-    \usepackage[printwatermark]{xwatermark}
-    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
-    \pagestyle{empty}
-    \begin{document}
-    \emph{This page of the test was not submitted.}
-    \vfill
-    \emph{This page of the test was not submitted.}
-    \end{document}
-    """
+\documentclass[12pt,letterpaper]{article}
+\usepackage[]{fullpage}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{lmodern} % Get a font that can actually be scaled
+\newcommand{\watermark}{
+  \fontseries{m}
+  \fontsize{60}{1}\selectfont
+  \color{red!30!white}
+  \put(125,-550){
+    \rotatebox{45}{Page not submitted}
+  }
+}
+\AddToHook{shipout/background}{\watermark}
+\pagestyle{empty}
+\begin{document}
+\emph{This page of the test was not submitted.}
+\vfill
+\emph{This page of the test was not submitted.}
+\end{document}
+"""
 
 
 image_scale = 200 / 72
