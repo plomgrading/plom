@@ -12,21 +12,32 @@ from plom import specdir
 from plom.textools import buildLaTeX
 
 
+# See https://github.com/latex3/latex2e/issues/411 for why we need to
+# add this hack based on the version numbers
 question_not_submitted_text = r"""
 \documentclass[12pt,letterpaper]{article}
 \usepackage[]{fullpage}
 \usepackage{xcolor}
-\usepackage{graphicx}
-\usepackage{lmodern} % Get a font that can actually be scaled
-\newcommand{\watermark}{
-  \fontseries{m}
-  \fontsize{60}{1}\selectfont
-  \color{red!30!white}
-  \put(125,-550){
-    \rotatebox{45}{Page not submitted}
+\makeatletter
+\newcommand*\@iflatexlater{\@ifl@t@r\fmtversion}
+\@iflatexlater{2020/10/01}{% Check the LaTeX version
+  \usepackage{graphicx}
+  \usepackage{lmodern} % Get a font that can actually be scaled
+  \newcommand{\watermark}{
+    \fontseries{b}
+    \fontsize{58.5}{1}\selectfont
+    \color{red!30!white}
+    \put(.112\paperwidth,-.31\paperheight){
+      \rotatebox{-45}{Page not submitted}
+    }
   }
+  \AddToHook{shipout/background}{\watermark} % Not in older releases
+}{
+  \usepackage[printwatermark]{xwatermark}
+  \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
 }
-\AddToHook{shipout/background}{\watermark}
+\makeatother
+
 \pagestyle{empty}
 \begin{document}
 \emph{This question was not submitted.}
@@ -39,17 +50,25 @@ page_not_submitted_text = r"""
 \documentclass[12pt,letterpaper]{article}
 \usepackage[]{fullpage}
 \usepackage{xcolor}
-\usepackage{graphicx}
-\usepackage{lmodern} % Get a font that can actually be scaled
-\newcommand{\watermark}{
-  \fontseries{m}
-  \fontsize{60}{1}\selectfont
-  \color{red!30!white}
-  \put(125,-550){
-    \rotatebox{45}{Page not submitted}
+\makeatletter
+\newcommand*\@iflatexlater{\@ifl@t@r\fmtversion}
+\@iflatexlater{2020/10/01}{% Check the LaTeX version
+  \usepackage{graphicx}
+  \usepackage{lmodern} % Get a font that can actually be scaled
+  \newcommand{\watermark}{
+    \fontseries{b}
+    \fontsize{58.5}{1}\selectfont
+    \color{red!30!white}
+    \put(.112\paperwidth,-.31\paperheight){
+      \rotatebox{-45}{Page not submitted}
+    }
   }
+  \AddToHook{shipout/background}{\watermark} % Not in older releases
+}{
+  \usepackage[printwatermark]{xwatermark}
+  \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
 }
-\AddToHook{shipout/background}{\watermark}
+\makeatother
 \pagestyle{empty}
 \begin{document}
 \emph{This page of the test was not submitted.}
