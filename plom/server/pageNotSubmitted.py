@@ -11,9 +11,8 @@ import fitz
 from plom import specdir
 from plom.textools import buildLaTeX
 
-
-# See https://github.com/latex3/latex2e/issues/411 for why we need to
-# add this hack based on the version numbers
+# See https://github.com/latex3/latex2e/issues/411 for why this
+# version-dependent hack is necessary
 question_not_submitted_text = r"""
 \documentclass[12pt,letterpaper]{article}
 \usepackage[]{fullpage}
@@ -27,7 +26,7 @@ question_not_submitted_text = r"""
     \fontseries{b}
     \fontsize{58.5}{1}\selectfont
     \color{red!30!white}
-    \put(.112\paperwidth,-.31\paperheight){
+    \put(70,-245){
       \rotatebox{-45}{Page not submitted}
     }
   }
@@ -37,7 +36,6 @@ question_not_submitted_text = r"""
   \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
 }
 \makeatother
-
 \pagestyle{empty}
 \begin{document}
 \emph{This question was not submitted.}
@@ -50,9 +48,9 @@ page_not_submitted_text = r"""
 \documentclass[12pt,letterpaper]{article}
 \usepackage[]{fullpage}
 \usepackage{xcolor}
-\makeatletter
+\makeatletter   % if not in a package
 \newcommand*\@iflatexlater{\@ifl@t@r\fmtversion}
-\@iflatexlater{2020/10/01}{% Check the LaTeX version
+\@iflatexlater{2020/10/01}{%
   \usepackage{graphicx}
   \usepackage{lmodern} % Get a font that can actually be scaled
   \newcommand{\watermark}{
@@ -63,18 +61,19 @@ page_not_submitted_text = r"""
       \rotatebox{-45}{Page not submitted}
     }
   }
-  \AddToHook{shipout/background}{\watermark} % Not in older releases
+  \AddToHook{shipout/background}{\watermark}
 }{
   \usepackage[printwatermark]{xwatermark}
   \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
 }
-\makeatother
+\makeatother   % if not in a package
 \pagestyle{empty}
 \begin{document}
 \emph{This page of the test was not submitted.}
 \vfill
 \emph{This page of the test was not submitted.}
 \end{document}
+
 """
 
 
