@@ -187,8 +187,7 @@ class Chooser(QDialog):
             log.warning("Password too short")
             return
 
-        server = self.ui.serverLE.text().strip()
-        server = self.checkServerAddress(server)
+        server = self.partial_parse_address(self.ui.serverLE.text())
         self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
@@ -346,8 +345,7 @@ class Chooser(QDialog):
 
     def getInfo(self):
 
-        server = self.ui.serverLE.text().strip()
-        server = self.checkServerAddress(server)
+        server = self.partial_parse_address(self.ui.serverLE.text())
         self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
@@ -408,20 +406,21 @@ class Chooser(QDialog):
         else:
             self.ui.userLE.setFocus(True)
 
-    def checkServerAddress(self, address):
+    def partial_parse_address(self, address):
 
-        # Checks to see if the address inputted is of valid structure.
-        # If there's a colon in the address (maybe the user didn't see the port SB):
-        # - Sets value after colon to port if valid
-        # - Sends error message if invalid
+        """
+        Checks to see if the address inputted is of valid structure.
+        If there's a colon in the address (maybe the user didn't see the port SB):
+        - Sets value after colon to port if valid
+        - Sends error message if invalid
+        """
 
+        address = address.strip()
         colon = ':'
         containsColon = address.find(colon)
         if containsColon != -1:
             if containsColon != address.rfind(colon):
-                ErrorMessage("Your server address contained an invalid format.\n "
-                             "Perhaps you included too many colons?").exec_()
-                return
+                return address
             try:
                 self.ui.mportSB.setValue(int(address.partition(colon)[2]))
             except ValueError:
