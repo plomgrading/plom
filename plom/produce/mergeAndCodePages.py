@@ -219,7 +219,10 @@ def create_exam_and_insert_QR(
         # we always have a corner section for staples and such
         qr_code = {}
         for corner_index in range(1, 5):
-            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
+            # TODO: can remove str() once minimum pymupdf is 1.18.9
+            qr_code[corner_index] = fitz.Pixmap(
+                str(qr_file[page_index + 1][corner_index])
+            )
         if page_index % 2 == 0:
             exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
             exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
