@@ -16,6 +16,7 @@ import csv
 import string
 import subprocess
 import os
+from tqdm import tqdm as tqdm
 
 
 def get_relevant_courses():
@@ -219,10 +220,15 @@ def initialize(server_dir="../../server-test"):
         # launch the server as a background process
         plom_server = subprocess.Popen(["plom-server", "launch"])
 
+        print("\n\n")
+        print("by the way, manager password is ", totally_insecure_nonsense[1][1])
+        print("\n\n")
+
         build_class = subprocess.Popen(["plom-build", "class", "classlist.csv"])
+        build_class.wait(timeout=10)
         # Pass the manager password into the prompt
-        build_class.stdin.write(totally_insecure_nonsense[1][1] + "\n")
-        build_class.stdin.flush()
+        # build_class.stdin.write(totally_insecure_nonsense[1][1] + "\n")
+        # build_class.stdin.flush()
 
     except:
         pass
@@ -232,5 +238,41 @@ def initialize(server_dir="../../server-test"):
     return plom_server
 
 
-def get_submissions(assignment):
-    pass
+def get_submissions(assignment, server_dir="../../server-test"):
+    o_dir = os.getcwd()
+    # try:
+    os.chdir(server_dir)
+
+    if not os.path.exists("upload"):
+        os.mkdir("upload")
+
+    os.chdir("upload")
+
+    subs = list(assignment.get_submissions())
+
+    unsubmitted = []
+    for sub in tqdm(subs):
+        sub_name = f"{sub.user_id}.pdf"
+        if not (sub.url is None):
+            sub_url = sub.url
+            subprocess.run(
+                ["curl", "-L", sub_url, "--output", sub_name], capture_output=True
+            )
+        else:
+            try:
+                for obj in sub.attachments:
+                    if type(obj) == dict:
+                        sub_url = obj["url"]
+                subprocess.run(["curl", "-L", sub_url, "--output", sub_name])
+            except AttributeError:
+                unsubmitted += [sub]
+                continue
+
+    for sub in unsubmitted:
+        print(f"No submission from user_id {sub.user_id}")
+
+        # subprocess.run(["plom-scan", "process"])
+        # subprocess.run(["plom-scan", "read"])
+    # except:
+    #     pass
+    os.chdir(o_dir)
