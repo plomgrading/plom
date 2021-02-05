@@ -33,6 +33,7 @@ df = pd.read_csv(in_csv, dtype="object")
 # *** IMPORTANT TO CHANGE
 name = "quiz1"
 # TODO take from spec instead?
+input('WARNING: "name" hardcoded to "quiz1": is that correct? Ctrl-C to cancel, Enter to continue ')
 
 NN = 6  # 12 hex digits
 
