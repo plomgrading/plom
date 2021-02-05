@@ -93,19 +93,25 @@ def create_exam_and_insert_QR(
     (We create 4 QR codes but only add 3 of them because of the staple side, see below).
 
     Arguments:
-        name {Str} -- Document Name.
-        code {Str} -- 6 digit distinguished code for the document.
-        length {int} -- Length of the document or number of pages.
-        versions {int} -- Number of version of this Document.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests .
-        page_versions {dict} -- (int,int) dictionary representing the version of each page for this test.
-        qr_file {dict} -- dict(int: dict(int: Str)) Dictionary that has another embedded dictionary for each page.
-                          The embedded dictionary has a string for QR code paths saved for each corner.
+        name (str): Document Name.
+        code (str): 6 digits distinguishing this document from others.
+        length (int): length of the document, number of pages.
+        versions (int): Number of version of this document.
+        test (int): the test number.
+        page_versions (dict): version number for each page of this test.
+        qr_file (dict): a dict of dicts.  The outer keys are integer
+            page numbers.  The inner keys index the corners with ints,
+            the meaning of which is hopefully documented elsewhere.  The
+            inner values are strings/pathlib.Path for images of the
+            QR codes for each corner.
 
     Keyword Arguments:
-        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
-        test_folder {Str} -- String for where to place the generated test files. (default: {None})
-        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes (default: False)
+        test_mode (bool): used for testing, not sure details
+            (default: False).
+        test_folder (test): used with `test_mode`, where to place the
+            generated test files. (default: None)
+        no_qr (bool): whether to paste in QR-codes (default: False)
+            Note backward logic: False means yes to QR-codes.
 
     Returns:
         fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
@@ -219,15 +225,18 @@ def create_exam_and_insert_QR(
         # we always have a corner section for staples and such
         qr_code = {}
         for corner_index in range(1, 5):
-            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
+            # TODO: can remove str() once minimum pymupdf is 1.18.9
+            qr_code[corner_index] = fitz.Pixmap(
+                str(qr_file[page_index + 1][corner_index])
+            )
         if page_index % 2 == 0:
-            exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
-            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
-            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insert_image(rTR, pixmap=qr_code[1], overlay=True)
+            exam[page_index].insert_image(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insert_image(rBL, pixmap=qr_code[3], overlay=True)
         else:
-            exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
-            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
-            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insert_image(rTL, pixmap=qr_code[2], overlay=True)
+            exam[page_index].insert_image(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insert_image(rBR, pixmap=qr_code[4], overlay=True)
 
     return exam
 

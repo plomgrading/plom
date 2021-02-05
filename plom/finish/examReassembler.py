@@ -64,9 +64,10 @@ def reassemble(outname, shortName, sid, coverfname, img_list):
             if jpeg_size < 0.75 * png_size:
                 # print("Using smaller JPEG for {}".format(img_name))
                 jpeg_file.seek(0)
-                pg.insertImage(rec, stream=jpeg_file.read())
+                pg.insert_image(rec, stream=jpeg_file.read())
             else:
-                pg.insertImage(rec, filename=img_name)
+                # TODO: can remove str() once minimum pymupdf is 1.18.9
+                pg.insert_image(rec, filename=str(img_name))
 
     exam.setMetadata(
         {

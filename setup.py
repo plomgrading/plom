@@ -42,7 +42,7 @@ server_install_requires = [
     "numpy",
     "pandas",
     "passlib",
-    "pymupdf>=1.18.5",
+    "pymupdf>=1.18.5,!=1.18.7",
     "Pillow>=7.0.0",
     "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
     "jpegtran-cffi",
