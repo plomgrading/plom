@@ -161,7 +161,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                     + random.randrange(number_of_digits)
                 ]  # uu-encoded png
                 img_BString = base64.b64decode(uuImg)
-                front_page.insertImage(rect1, stream=img_BString, keep_proportion=True)
+                front_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
                 # TODO - there should be an assert or something here?
 
             digit_rectangle = fitz.Rect(228, 335, 550, 450)
