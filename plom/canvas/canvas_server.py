@@ -9,6 +9,8 @@ import csv
 import string
 import subprocess
 import os
+import fitz
+import PIL
 from tqdm import tqdm as tqdm
 
 
@@ -193,7 +195,7 @@ def get_toml(assignment, server_dir="."):
         f.write(toml)
 
 
-def initialize(course, assignment, server_dir="server-test"):
+def initialize(course, assignment, server_dir="./"):
     """
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
@@ -203,7 +205,7 @@ def initialize(course, assignment, server_dir="server-test"):
 
     o_dir = os.getcwd()  # original directory
 
-    print("Getting enrollment data from canvas and building `classlist.csv`...")
+    print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
     get_classlist(course, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
@@ -221,7 +223,7 @@ def initialize(course, assignment, server_dir="server-test"):
     print("Autogenerating users...")
     subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
 
-    print("Temporarily exporting manager passwo...")
+    print("Temporarily exporting manager password...")
     user_list = []
     with open("serverConfiguration/userListRaw.csv", "r") as csvfile:
         reader = csv.reader(csvfile)
@@ -262,7 +264,7 @@ def initialize(course, assignment, server_dir="server-test"):
     return plom_server
 
 
-def get_conversion_table(server_dir="server-test"):
+def get_conversion_table(server_dir="./"):
     conversion = {}
     with open(f"{server_dir}/conversion.csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",", quotechar='"')
@@ -274,7 +276,7 @@ def get_conversion_table(server_dir="server-test"):
     return conversion
 
 
-def get_submissions(assignment, server_dir="server-test", name_by_info=True):
+def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=False):
     """
     get the submission pdfs out of Canvas
 
@@ -299,7 +301,7 @@ def get_submissions(assignment, server_dir="server-test", name_by_info=True):
 
     os.chdir("submittedHWByQ")
 
-    print("Moved into server-test/upload/submittedHWByQ")
+    print("Moved into .//upload/submittedHWByQ")
 
     print("Fetching submissions...")
     subs = list(assignment.get_submissions())
@@ -311,26 +313,91 @@ def get_submissions(assignment, server_dir="server-test", name_by_info=True):
             sub_id = sub.user_id
             stud_name, stud_sis_id = conversion[str(sub_id)]
             last_name, first_name = [name.strip() for name in stud_name.split(",")]
-            sub_name = f"{last_name}_{first_name}.{stud_sis_id}._.pdf"
+            sub_name = f"{last_name}_{first_name}.{stud_sis_id}._.pdf".replace(" ", "_")
         else:
             sub_name = f"{sub.user_id}.pdf"
 
-        if not (sub.url is None):
-            sub_url = sub.url
-            subprocess.run(
-                ["curl", "-L", sub_url, "--output", sub_name], capture_output=True
-            )
-        else:
-            try:
-                for obj in sub.attachments:
-                    if type(obj) == dict:
-                        sub_url = obj["url"]
-                subprocess.run(
-                    ["curl", "-L", sub_url, "--output", sub_name], capture_output=True
-                )
-            except AttributeError:  # Catches if student didn't submit
-                unsubmitted += [sub]
-                continue
+        # need_to_download_manuall = []
+        # if not (sub.url is None):
+        #     sub_url = sub.url
+        #     # subprocess.run(
+        #     #     ["curl", "-L", sub_url, "--output", sub_name], capture_output=True
+        #     # )
+        #     subprocess.run(
+        #         ["aria2c", sub_url, "-o", sub_name, "-t", "240"],
+        #         capture_output=True,
+        #     )
+        # else:
+        try:
+            # If the student submitted multiple times, get _all_
+            # the submissions.
+            version = 0
+            sub_subs = []
+            for obj in sub.attachments:
+                # sub-submission name --- prepend with a version
+                # number to make stitching them together easier
+                if type(obj) == dict:
+                    # TODO: Test which of these cases are actually
+                    # relevant
+                    suffix = None
+                    if obj["content-type"] == "null":
+                        continue
+                    elif obj["content-type"] == "application/pdf":
+                        sub_sub_name = f"{version:02}-{sub_name}"
+                    elif obj["content-type"] == "image/png":
+                        suffix = ".png"
+                        sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+                    elif obj["content-type"] == "image/jpg":
+                        suffix = ".jpg"
+                        sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+                    elif obj["content-type"] == "image/jpeg":
+                        suffix = ".jpeg"
+                        sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+
+                    version += 1
+
+                    sub_url = obj["url"]
+                    if not dry_run:
+                        subprocess.run(
+                            ["aria2c", sub_url, "-o", sub_sub_name, "-t", "240"],
+                            capture_output=True,
+                        )
+                    else:
+                        subprocess.run(
+                            ["touch", sub_sub_name],
+                            capture_output=True,
+                        )
+
+                    # subprocess.run(
+                    #     ["curl", "-L", sub_url, "--output", sub_sub_name],
+                    #     capture_output=True,
+                    # )
+
+                    if suffix is not None:
+                        pdfname = f"{sub_sub_name}"[: -len(suffix)] + ".pdf"
+                        if not dry_run:
+                            img = PIL.Image.open(sub_sub_name)
+                            img = img.convert("RGB")
+                            img.save(pdfname)
+                            sub_sub_name = pdfname
+                        else:
+                            subprocess.run(["touch", pdfname])
+
+                    sub_subs += [sub_sub_name]
+
+            if sub_subs and not dry_run:
+                # Stitch together
+                doc = fitz.Document()
+                for sub_sub in sub_subs:
+                    to_insert = fitz.open(sub_sub)
+                    doc.insert_pdf(to_insert)
+                doc.save(sub_name)
+                # Clean up temporary files
+                for sub_sub in sub_subs:
+                    subprocess.run(["rm", sub_sub])
+        except AttributeError:  # Catches if student didn't submit
+            unsubmitted += [sub]
+            continue
 
     for sub in unsubmitted:
         print(f"No submission from user_id {sub.user_id}")
@@ -338,7 +405,7 @@ def get_submissions(assignment, server_dir="server-test", name_by_info=True):
     os.chdir(o_dir)
 
 
-def scan_submissions(server_dir="server-test"):
+def scan_submissions(server_dir="./"):
     """
     Apply `plom-scan` to all the pdfs we've just pulled from canvas
     """
@@ -391,33 +458,180 @@ def stupid_preamble():
     del API_KEY
     user = canvas.get_current_user()
 
-    courses = list(user.get_courses())
+    # courses = list(user.get_courses())
 
-    # Hard coded some courses of interest here for now
-    for course in courses:
+    courses_teaching = []
+    for course in user.get_courses():
+
         try:
-            if "Colin" in course.name:
-                to_mark = course
-            # if "340 202" in course.name:
-            #     m340 = course
-        except:
+            enrollees = course.enrollments
+
+            for enrollee in course.enrollments:
+
+                if enrollee["user_id"] == user.id:
+                    if enrollee["type"] in ["teacher", "ta"]:
+                        courses_teaching += [course]
+                    else:
+                        continue
+
+        except AttributeError:
+            # OK for some reason a requester object is being included
+            # as a course??????
+            #
+            # TODO: INvestigate further?
+            # print(f"WARNING: At least one course is missing some expected attributes")
             pass
 
-    assignments = list(to_mark.get_assignments())
-
-    assignment = assignments[0]
-
-    return to_mark, assignment
+    return courses_teaching
 
 
 if __name__ == "__main__":
 
-    course, assignment = stupid_preamble()
+    o_dir = os.getcwd()
+
+    # Hang on, why do I switch the loop variable to true instead of
+    # just doing the sensible thing and breaking?
+    courses_teaching = stupid_preamble()
+
+    print("\nSelect a course to mark.\n")
+    print("  Available courses:")
+    print("  --------------------------------------------------------------------")
+    for (i, course) in enumerate(courses_teaching):
+        print(f"    {i}: {course.name}")
+
+    course_chosen = False
+    while not course_chosen:
+        choice = input("\n  Choice [0-n]: ")
+
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(courses_teaching):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+
+            selection = courses_teaching[choice]
+            print(f"  You selected {choice}: {selection.name}")
+            confirmation = input("  Confirm choice? [y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                course_chosen = True
+                course = selection
+                break
+
+    # print("\n  ==================================================================  ")
+    print("\n\n")
+
+    print(f"\nSelect an assignment to mark from {course}.\n")
+    print("  Available assignments:")
+    print("  --------------------------------------------------------------------")
+
+    assignments = list(course.get_assignments())
+    for (i, assignment) in enumerate(assignments):
+        print(f"    {i}: {assignment.name}")
+
+    assignment_chosen = False
+    while not assignment_chosen:
+        choice = input("\n  Choice [0-n]: ")
+
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(assignments):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            selection = assignments[choice]
+            print(f"  You selected {choice}: {selection.name}")
+            confirmation = input("  Confirm choice? [y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                assignment_chosen = True
+                assignment = selection
+
+    print(
+        "\n======================================================================\n\n\n\n"
+    )
+
+    # TODO: Make this give an `os.listdir()`
+    print("Setting up the workspace now.\n")
+    print("  Current subdirectories:")
+    print("  --------------------------------------------------------------------")
+    subdirs = [subdir for subdir in os.listdir() if os.path.isdir(subdir)]
+    for subdir in subdirs:
+        print(f"    `./{subdir}`")
+
+    classdir_selected = False
+    while not classdir_selected:
+
+        classdir_name = input(
+            "\n  Name of dir to use for this class (will create if not found): "
+        )
+
+        if not classdir_name:
+            print("    Please provide a non-empty name.\n")
+            continue
+
+        print(f"  You selected `{classdir_name}`")
+        confirmation = input("  Confirm choice? [y/n] ")
+        if confirmation in ["", "\n", "y", "Y"]:
+            classdir_selected = True
+            classdir = classdir_name
+
+    print(f"\n  cding into {classdir}...")
+    if os.path.exists(classdir_name):
+        os.chdir(classdir)
+    else:
+        os.mkdir(classdir)
+        os.chdir(classdir)
+
+    print(f"  working directory is now `{os.getcwd()}`")
+
+    print("\n\n\n")
+
+    print("  Current subdirectories:")
+    print("  --------------------------------------------------------------------")
+    subdirs = [subdir for subdir in os.listdir() if os.path.isdir(subdir)]
+    # subdirs = [_ for _ in os.listdir if os.path.isdir(_)]
+    for subdir in subdirs:
+        print(f"    `./{subdir}`")
+
+    # Directory for this particular assignment
+    hwdir_selected = False
+    while not hwdir_selected:
+
+        hwdir_name = input(
+            "\n\n\n  Name of dir to use for this assignment (will create if not found): "
+        )
+
+        print(f"  You selected `{hwdir_name}`")
+        confirmation = input("  Confirm choice? [y/n] ")
+        if confirmation in ["", "\n", "y", "Y"]:
+            hwdir_selected = True
+            hwdir = hwdir_name
+
+    print(f"\n  cding into {hwdir}...")
+    if os.path.exists(hwdir_name):
+        os.chdir(hwdir)
+    else:
+        os.mkdir(hwdir)
+        os.chdir(hwdir)
+
+    print(f"  working directory is now `{os.getcwd()}`")
 
     plom_server = initialize(course, assignment)
 
-    # print("getting submissions from canvas...")
-    # get_submissions(assignment)
+    print("\n\ngetting submissions from canvas...")
+    get_submissions(assignment)
 
     print("scanning submissions...")
     scan_submissions()
+
+    # Return to starting directory
+    os.chdir(o_dir)
+
+    # To update grades:
+    # submission.edit(submission={"posted grade": grade})
