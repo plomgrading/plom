@@ -18,6 +18,7 @@ from pathlib import Path
 
 from plom import __version__
 from plom.scan import bundle_name_and_md5
+from plom.scan import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 
 
@@ -491,7 +492,9 @@ g.add_argument(
         You can also pass a list like `-q 1,2,3` in which case your
         filename must be of the form `foo_bar.<sid>._.pdf` (a single
         underscore).
-    """,  # TODO: add support for special string `-q all`, issue #1308.
+        You can also pass the special string `-q all` which uploads
+        this file to all questions.
+    """,
 )
 g = spP.add_mutually_exclusive_group(required=False)
 g.add_argument(
@@ -586,7 +589,11 @@ def main():
             )
         else:
             questions = args.question[0]  # args passes '[q]' rather than just 'q'
-            questions = [int(x) for x in questions.split(",")]
+            if questions == "all":
+                N = get_number_of_questions(args.server, args.password)
+                questions = list(range(1, N + 1))
+            else:
+                questions = [int(x) for x in questions.split(",")]
             processHWScans(
                 args.server,
                 args.password,

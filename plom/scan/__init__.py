@@ -25,3 +25,4 @@ from .sendCollisionsToServer import (
     bundle_has_nonuploaded_collisions,
 )
 from .sendPagesToServer import bundle_name_from_filename, bundle_name_and_md5
+from .checkScanStatus import get_number_of_questions
