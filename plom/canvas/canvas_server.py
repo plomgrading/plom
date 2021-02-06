@@ -13,6 +13,28 @@ import fitz
 import PIL
 from tqdm import tqdm as tqdm
 
+# For making sure the server dies with the python script if we kill
+# the python script.
+#
+# LINUX ONLY I think. See https://stackoverflow.com/a/19448096
+import signal
+import ctypes
+
+libc = ctypes.CDLL("libc.so.6")
+
+
+def _set_pdeathsig(sig=signal.SIGTERM):
+    """
+    For killing subprocess.Popen() things when python dies
+
+    See https://stackoverflow.com/a/19448096
+    """
+
+    def callable():
+        return libc.prctl(1, sig)
+
+    return callable
+
 
 def get_classlist(course, server_dir="."):
     """
@@ -195,7 +217,7 @@ def get_toml(assignment, server_dir="."):
         f.write(toml)
 
 
-def initialize(course, assignment, server_dir="./"):
+def initialize(course, assignment, server_dir="."):
     """
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
@@ -240,8 +262,13 @@ def initialize(course, assignment, server_dir="./"):
         capture_output=True,
     )
 
-    print("Launching plom server temporarily.")
-    plom_server = subprocess.Popen(["plom-server", "launch"], stdout=subprocess.DEVNULL)
+    print("Launching plom server.")
+    # plom_server = subprocess.Popen(["plom-server", "launch"], stdout=subprocess.DEVNULL)
+    plom_server = subprocess.Popen(
+        ["plom-server", "launch"],
+        stdout=subprocess.DEVNULL,
+        preexec_fn=_set_pdeathsig(signal.SIGTERM),  # Linux only?
+    )
 
     print(
         "Server *should* be running now (although hopefully you can't because theoretically output should be suppressed). In light of this, be extra sure to explicitly kill the server (e.g., `pkill plom-server`) before trying to start a new one --- it can persist even after the original python process has been killed.\n\nTo verify if the server is running, you can try the command\n  ss -lntu\nto check if the 41984 port has a listener.\n"
@@ -264,7 +291,7 @@ def initialize(course, assignment, server_dir="./"):
     return plom_server
 
 
-def get_conversion_table(server_dir="./"):
+def get_conversion_table(server_dir="."):
     conversion = {}
     with open(f"{server_dir}/conversion.csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=",", quotechar='"')
@@ -276,7 +303,9 @@ def get_conversion_table(server_dir="./"):
     return conversion
 
 
-def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=False):
+def get_submissions(
+    assignment, server_dir=".", name_by_info=True, dry_run=False, replace_existing=False
+):
     """
     get the submission pdfs out of Canvas
 
@@ -301,7 +330,7 @@ def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=Fals
 
     os.chdir("submittedHWByQ")
 
-    print("Moved into .//upload/submittedHWByQ")
+    print("Moved into ./upload/submittedHWByQ")
 
     print("Fetching & preprocessing submissions...")
     subs = list(assignment.get_submissions())
@@ -317,17 +346,9 @@ def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=Fals
         else:
             sub_name = f"{sub.user_id}.pdf"
 
-        # need_to_download_manuall = []
-        # if not (sub.url is None):
-        #     sub_url = sub.url
-        #     # subprocess.run(
-        #     #     ["curl", "-L", sub_url, "--output", sub_name], capture_output=True
-        #     # )
-        #     subprocess.run(
-        #         ["aria2c", sub_url, "-o", sub_name, "-t", "240"],
-        #         capture_output=True,
-        #     )
-        # else:
+        if not replace_existing:
+            print(f"Skipping submission {sub_name} --- exists already")
+            continue
         try:
             # If the student submitted multiple times, get _all_
             # the submissions.
@@ -389,8 +410,14 @@ def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=Fals
                 # Stitch together
                 doc = fitz.Document()
                 for sub_sub in sub_subs:
-                    to_insert = fitz.open(sub_sub)
-                    doc.insert_pdf(to_insert)
+                    try:
+                        to_insert = fitz.open(sub_sub)
+                        doc.insert_pdf(to_insert)
+                    except RuntimeError:
+                        print(f"Could not find {sub_sub}.")
+                        print(f"Current directory: {os.getcwd()}")
+                        print(f"Contents:", os.listdir())
+
                 doc.save(sub_name)
                 # Clean up temporary files
                 for sub_sub in sub_subs:
@@ -405,7 +432,7 @@ def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=Fals
     os.chdir(o_dir)
 
 
-def scan_submissions(server_dir="./"):
+def scan_submissions(server_dir="."):
     """
     Apply `plom-scan` to all the pdfs we've just pulled from canvas
     """
@@ -560,9 +587,14 @@ if __name__ == "__main__":
     print("Setting up the workspace now.\n")
     print("  Current subdirectories:")
     print("  --------------------------------------------------------------------")
-    subdirs = [subdir for subdir in os.listdir() if os.path.isdir(subdir)]
+    excluded_dirs = ["__pycache__"]
+    subdirs = [
+        subdir
+        for subdir in os.listdir()
+        if os.path.isdir(subdir) and subdir not in excluded_dirs
+    ]
     for subdir in subdirs:
-        print(f"    `./{subdir}`")
+        print(f"    ./{subdir}")
 
     classdir_selected = False
     while not classdir_selected:
@@ -594,10 +626,14 @@ if __name__ == "__main__":
 
     print("  Current subdirectories:")
     print("  --------------------------------------------------------------------")
-    subdirs = [subdir for subdir in os.listdir() if os.path.isdir(subdir)]
+    subdirs = [
+        subdir
+        for subdir in os.listdir()
+        if os.path.isdir(subdir) and subdir not in excluded_dirs
+    ]
     # subdirs = [_ for _ in os.listdir if os.path.isdir(_)]
     for subdir in subdirs:
-        print(f"    `./{subdir}`")
+        print(f"    ./{subdir}")
 
     # Directory for this particular assignment
     hwdir_selected = False
@@ -632,6 +668,3 @@ if __name__ == "__main__":
 
     # Return to starting directory
     os.chdir(o_dir)
-
-    # To update grades:
-    # submission.edit(submission={"posted grade": grade})
