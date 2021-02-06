@@ -303,7 +303,7 @@ def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=Fals
 
     print("Moved into .//upload/submittedHWByQ")
 
-    print("Fetching submissions...")
+    print("Fetching & preprocessing submissions...")
     subs = list(assignment.get_submissions())
 
     # TODO: Parallelize requests

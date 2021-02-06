@@ -155,3 +155,6 @@ plomConfig.toml
 
 # Poetry lockfile
 poetry.lock
+
+# Course testing directories
+plom/canvas/**/
