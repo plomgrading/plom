@@ -310,8 +310,8 @@ def get_submissions(assignment, server_dir="./", name_by_info=True, dry_run=Fals
     unsubmitted = []
     for sub in tqdm(subs):  # TODO: is `aria2c` actually faster here lol??
         if name_by_info:
-            sub_id = sub.user_id
-            stud_name, stud_sis_id = conversion[str(sub_id)]
+            canvas_id = sub.user_id
+            stud_name, stud_sis_id = conversion[str(canvas_id)]
             last_name, first_name = [name.strip() for name in stud_name.split(",")]
             sub_name = f"{last_name}_{first_name}.{stud_sis_id}._.pdf".replace(" ", "_")
         else:
