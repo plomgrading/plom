@@ -408,15 +408,18 @@ class Chooser(QDialog):
 
     def partial_parse_address(self, address):
 
-        """
-        Checks to see if the address inputted is of valid structure.
+        """If address has a port number in it, extract and move to the port textedit.
+
+        args:
+            address (str): the address
+
         If there's a colon in the address (maybe the user didn't see the port SB):
         - Sets value after colon to port if valid
         - Sends error message if invalid
         """
 
         address = address.strip()
-        colon = ':'
+        colon = ":"
         containsColon = address.find(colon)
         if containsColon != -1:
             if containsColon != address.rfind(colon):
@@ -424,12 +427,9 @@ class Chooser(QDialog):
             try:
                 self.ui.mportSB.setValue(int(address.partition(colon)[2]))
             except ValueError:
-                ErrorMessage("Your server address contained an invalid format.\n"
-                             "Your port should consist of numbers.").exec_()
                 return address
             return address.partition(colon)[0]
         return address
-
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
