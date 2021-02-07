@@ -230,8 +230,8 @@ def initialize(course, assignment, server_dir="."):
     print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
     get_classlist(course, server_dir=server_dir)
 
-    print("Generating `canvasSpec.toml`...")
-    get_toml(assignment, server_dir=server_dir)
+    # print("Generating `canvasSpec.toml`...")
+    # get_toml(assignment, server_dir=server_dir)
 
     os.chdir(server_dir)
     print("\nSwitched into test server directory.\n")
