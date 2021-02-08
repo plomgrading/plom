@@ -352,6 +352,78 @@ class MarkHandler:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
+
+    # @routes.get("/MK/annotations/{number}/{question}/{epoch}")
+    @authenticate_by_token_required_fields([])
+    def MgetAnnotations(self, data, request):
+        """Get the annotations of a marked question as JSON.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): A GET request with url
+                "/MK/annotations/{number}/{question}/{epoch}".
+                `number` and `question` identify which question.
+                `epoch` can be used to get a particular annotation from
+                the history of all annotations.  If `epoch` is omitted,
+                return the latest annotations.
+
+        Returns:
+            aiohttp.json_response.Response: JSON of the annotations with
+                status 200, or a 404 if no such image, or 400/401 for
+                authentication problems.
+
+        Note: if you want the annotated image corresponding to these
+        annotations, extract the epoch from the JSON, then call
+        "GET:/MK/annotations_image/" with that epoch.
+
+        Ownership: note that you need not be the "owner" of this task.
+        Getting data back from this function does not imply permission
+        to submit to this task.
+        """
+        number = request.match_info["number"]
+        question = request.match_info["question"]
+        # TODO: how to make optional?
+        epoch = request.match_info["epoch"]
+        raise NotImplementedError("TODO")
+
+
+    # @routes.get("/MK/annotations_image/{number}/{question}/{epoch}")
+    @authenticate_by_token_required_fields([])
+    def MgetAnnotationsImage(self, data, request):
+        """Get the image of an annotated question (a marked question).
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): A GET request with url
+                "/MK/annotations_image/{number}/{question}/{epoch}"
+                `number` and `question` identify which question we want.
+                `epoch` can be used to get a particular annotation from
+                the history of all annotations.  If `epoch` is omitted,
+                return the latest annotated image.
+
+        Returns:
+            aiohttp.web_response.Response: the binary image data with
+                status 200, or a 404 if no such image, or 400/401 for
+                authentication problems.
+
+        Note: if you want *both* the latest annotated image and the
+        latest annotations (in `.plom` format), do not simply omit the
+        epoch in both calls: someone might upload a new annotation
+        between your calls!  Instead, call "GET:/MK/annotations/"
+        first (without epoch), then extract the epoch from the `.plom`
+        data.  Finally, call this with that epoch.
+
+        Ownership: note that you need not be the "owner" of this task.
+        Getting data back from this function does not imply permission
+        to submit to this task.
+        """
+        number = request.match_info["number"]
+        question = request.match_info["question"]
+        # TODO: how to make optional?
+        epoch = request.match_info["epoch"]
+        raise NotImplementedError("TODO")
+
+
     # @routes.get(...)
     @authenticate_by_token_required_fields(["user"])
     def MgetOneImage(self, data, request):
@@ -664,5 +736,7 @@ class MarkHandler:
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
+        router.add_get("/MK/annotations/{number}/{question}/{epoch}", self.MgetAnnotations)
+        router.add_get("/MK/annotations_image/{number}/{question}/{epoch}", self.MgetAnnotationsImage)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
