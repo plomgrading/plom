@@ -187,17 +187,13 @@ class SinkList(QListWidget):
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
+        # TODO: workaround force re-orientation on entry to Sink list
+        self.rotateForceRefresh(name)
         self.setCurrentItem(ci)
 
     def appendItems(self, name_list):
-        if len(name_list) == 0:
-            return
         for name in name_list:
-            ci = QListWidgetItem(QIcon(self.item_files[name]), name)
-            if self.item_belongs[name]:
-                ci.setBackground(QBrush(Qt.darkGreen))
-            self.addItem(ci)
-        self.setCurrentItem(ci)
+            self.appendItem(name)
 
     def shuffleLeft(self):
         cr = self.currentRow()
@@ -233,6 +229,18 @@ class SinkList(QListWidget):
         self.parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
         self.setFlow(QListView.LeftToRight)
+
+    def rotateForceRefresh(self, name):
+        """Force an item to visually update its rotate.
+
+        TODO: make this unnecessary and remove it!  Icons should know
+        how to display themselves properly.
+        """
+        angle = self.item_orientation[name]
+        if angle == 0:
+            return
+        log.info("Forcing orientation to %s", format(angle))
+        self.rotateItemTo(name, angle)
 
     def rotateItemBy(self, name, delta_angle):
         """Rotate image by an angle relative to its current state.
