@@ -11,6 +11,8 @@ import subprocess
 import os
 import fitz
 import PIL
+import random
+import time
 from tqdm import tqdm as tqdm
 
 # For making sure the server dies with the python script if we kill
@@ -190,8 +192,12 @@ def get_toml(assignment, server_dir="."):
 
     numberOfVersions = 1  # TODO: Make this not hardcoded
     numberOfPages = 20  # TODO: Make this not hardcoded
-    numberToProduce = len([_ for _ in assignment.get_gradeable_students()])
-    numberToName = assignment.needs_grading_count  # This is bad form
+
+    # TODO: TEst whether we really need to overshoot numberToProduce
+    # and numberToName
+    numberToProduce = len([_ for _ in assignment.get_gradeable_students()]) + 10
+    # numberToName = assignment.needs_grading_count  # This is bad form
+    numberToName = len([_ for _ in assignment.get_gradeable_students()])
 
     # What a beautiful wall of +='s
     toml = ""
@@ -230,8 +236,8 @@ def initialize(course, assignment, server_dir="."):
     print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
     get_classlist(course, server_dir=server_dir)
 
-    # print("Generating `canvasSpec.toml`...")
-    # get_toml(assignment, server_dir=server_dir)
+    print("Generating `canvasSpec.toml`...")
+    get_toml(assignment, server_dir=server_dir)
 
     os.chdir(server_dir)
     print("\nSwitched into test server directory.\n")
@@ -337,7 +343,12 @@ def get_submissions(
 
     # TODO: Parallelize requests
     unsubmitted = []
-    for sub in tqdm(subs):  # TODO: is `aria2c` actually faster here lol??
+    timeouts = []
+    for sub in tqdm(subs):
+        # Try to avoid overheating the canvas api (this is soooooo dumb lol)
+        time.sleep(random.random())
+        # TODO: is `aria2c` actually faster here lol??
+        # time.sleep(random.uniform(0.5, 1.5))
         if name_by_info:
             canvas_id = sub.user_id
             stud_name, stud_sis_id = conversion[str(canvas_id)]
@@ -346,9 +357,10 @@ def get_submissions(
         else:
             sub_name = f"{sub.user_id}.pdf"
 
-        if not replace_existing:
-            print(f"Skipping submission {sub_name} --- exists already")
+        if (not replace_existing) and (os.path.exists(sub_name)):
+            # print(f"Skipping submission {sub_name} --- exists already")
             continue
+
         try:
             # If the student submitted multiple times, get _all_
             # the submissions.
@@ -379,6 +391,7 @@ def get_submissions(
 
                     sub_url = obj["url"]
                     if not dry_run:
+                        time.sleep(random.uniform(2.5, 6.5))
                         subprocess.run(
                             ["aria2c", sub_url, "-o", sub_sub_name, "-t", "240"],
                             capture_output=True,
@@ -661,7 +674,7 @@ if __name__ == "__main__":
     plom_server = initialize(course, assignment)
 
     print("\n\ngetting submissions from canvas...")
-    get_submissions(assignment)
+    get_submissions(assignment, dry_run=False)
 
     print("scanning submissions...")
     scan_submissions()

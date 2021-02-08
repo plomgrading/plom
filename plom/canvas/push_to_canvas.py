@@ -4,6 +4,8 @@ import os
 import csv
 import subprocess
 import string
+import time
+import random
 from tqdm import tqdm as tqdm
 
 # TODO: Refactor this into a separate canvas methods file
@@ -330,22 +332,24 @@ if __name__ == "__main__":
 
     print("  Constructing SIS_ID to canvasapi submission conversion table...")
     sis_id_to_sub_and_name = get_sis_id_to_sub_and_name_table(subs)
-    print("  Done.")
+    print("  Done.\n")
 
     print("  Constructing SIS_ID to canvasapi submission conversion table...")
     # We only need this second one for double-checking everything is
     # in order
     sis_id_to_canvas = get_sis_id_to_canvas_id_table(server_dir=".")
-    print("  Done.")
+    print("  Done.\n")
 
     print("  Finally, getting SIS_ID to marks conversion table.")
     sis_id_to_marks = get_sis_id_to_marks()
-    print("  Done.")
+    print("  Done.\n")
 
     print("\n\n\nPushing grades to Canvas...")
     print("  --------------------------------------------------------------------")
     os.chdir("reassembled")
     pdfs = [fname for fname in os.listdir() if fname[-4:] == ".pdf"]
+
+    dry_run = False
     timeouts = []
     for pdf in tqdm(pdfs):
         sis_id = (pdf.split("_")[1]).split(".")[0]
@@ -363,14 +367,17 @@ if __name__ == "__main__":
         # except AttributeError:
         #     print("no")
         #     pass
-        try:
-            sub.upload_comment(pdf)
-        except:  # Can get a `CanvasException` here from timeouts
+        if dry_run:
             timeouts += [(pdf, name)]
-        # timeouts += [(pdf, name)]
+        else:
+            try:
+                sub.upload_comment(pdf)
+                time.sleep(random.uniform(2, 6))
+            except:  # Can get a `CanvasException` here from timeouts
+                timeouts += [(pdf, name)]
 
-        # Push the grade change
-        sub.edit(submission={"posted_grade": mark})
+            # Push the grade change
+            sub.edit(submission={"posted_grade": mark})
 
     # Ones we'll have to upload manually
     print(f"  Done. There were {len(timeouts)} timeouts.")
