@@ -319,6 +319,8 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: A response which includes the multipart writer object
                 wrapping the task images.
+
+        DEPRECATED: remove in 0.6.0?
         """
 
         task_code = request.match_info["task"]
@@ -656,7 +658,7 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
-        router.add_get("/MK/images/{task}", self.MgetImages)
+        router.add_get("/MK/images/{task}", self.MgetImages)  # deprecate
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)

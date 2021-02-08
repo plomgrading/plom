@@ -1274,6 +1274,11 @@ class MarkerClient(QWidget):
             return True
 
         # TODO: plom file is lovely json: why we pack it around as binary bytes?
+        # TODO:
+        # - [ ] new api calls
+        # - [ ] put annotation_id inside the .plom data
+        # - [ ] use new api in marker
+        #     - [ ] uncertain about Task{Changed/Deleted}Error: separate API for that?
         try:
             [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)

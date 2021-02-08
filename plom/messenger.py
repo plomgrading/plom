@@ -501,6 +501,8 @@ class Messenger(BaseMessenger):
             PlomTaskChangedError: you no longer own this task.
             PlomTaskDeletedError
             PlomSeriousException
+
+        Deprecated: remove in 0.6.0?
         """
         self.SRmutex.acquire()
         try:
