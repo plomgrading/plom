@@ -1,10 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-from PyQt5.QtCore import Qt, QSize, QMargins
+import os
+import sys
+import logging
+
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -34,8 +38,8 @@ from .examviewwindow import ExamViewWindow
 from .uiFiles.ui_test_view import Ui_TestView
 from .useful_classes import ErrorMessage, SimpleMessage
 
-import os
-import sys
+
+log = logging.getLogger("viewerdialog")
 
 
 class SourceList(QListWidget):
@@ -183,17 +187,13 @@ class SinkList(QListWidget):
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
+        # TODO: workaround to force re-orientation on entry to Sink list
+        self.rotateForceRefresh(name)
         self.setCurrentItem(ci)
 
     def appendItems(self, name_list):
-        if len(name_list) == 0:
-            return
         for name in name_list:
-            ci = QListWidgetItem(QIcon(self.item_files[name]), name)
-            if self.item_belongs[name]:
-                ci.setBackground(QBrush(Qt.darkGreen))
-            self.addItem(ci)
-        self.setCurrentItem(ci)
+            self.appendItem(name)
 
     def shuffleLeft(self):
         cr = self.currentRow()
@@ -225,22 +225,58 @@ class SinkList(QListWidget):
         for i in self.selectedIndexes():
             ci = self.item(i.row())
             name = ci.text()
-            cur_angle = self.item_orientation[name]
-            cur_angle = (cur_angle + angle) % 360
-            self.item_orientation[name] = cur_angle
-            rot = QTransform()
-            rot.rotate(cur_angle)
-            # TODO: instead of loading pixmap again, can we tranform the QIcon?
-            # Also, docs warned QPixmap.transformed() is slow
-            rfile = self.item_files[name]
-            cpix = QPixmap(rfile)
-            npix = cpix.transformed(rot)
-            ci.setIcon(QIcon(npix))
-            # rotpixmap = ci.getIcon().pixmap().transformed(rot)
-            # ci.setIcon(QIcon(rotpixmap))
+            self.rotateItemBy(name, angle)
         self.parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
         self.setFlow(QListView.LeftToRight)
+
+    def rotateForceRefresh(self, name):
+        """Force an item to visually update its rotate.
+
+        TODO: make this unnecessary and remove it!  Icons should know
+        how to display themselves properly.
+        """
+        angle = self.item_orientation[name]
+        if angle == 0:
+            return
+        log.info("Forcing orientation to %s", format(angle))
+        self.rotateItemTo(name, angle)
+
+    def rotateItemBy(self, name, delta_angle):
+        """Rotate image by an angle relative to its current state.
+
+        args:
+            name (str)
+            delta_angle (int)
+        """
+        angle = self.item_orientation[name]
+        angle = (angle + delta_angle) % 360
+        self.rotateItemTo(name, angle)
+
+    def rotateItemTo(self, name, angle):
+        """Rotate image to a particular orientation.
+
+        args:
+            name (str)
+            angle (int)
+        """
+        self.item_orientation[name] = angle
+        rot = QTransform()
+        rot.rotate(angle)
+        # TODO: instead of loading pixmap again, can we tranform the QIcon?
+        # Also, docs warned QPixmap.transformed() is slow
+        rfile = self.item_files[name]
+        cpix = QPixmap(rfile)
+        npix = cpix.transformed(rot)
+        # ci = self.item(self.item_positions[name])
+        # TODO: instead we get `ci` with a dumb loop
+        for i in range(self.count()):
+            ci = self.item(i)
+            if ci.text() == name:
+                break
+        ci.setIcon(QIcon(npix))
+        # rotpixmap = ci.getIcon().pixmap().transformed(rot)
+        # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
         self.parent.viewImage(self.item_files[qi.text()])
@@ -582,7 +618,10 @@ class RearrangementViewer(QDialog):
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
             if kv["orientation"] != 0:
-                log.error('TODO apply "orientation" of {}'.format(kv["orientation"]))
+                log.info("Applying orientation of %s", kv["orientation"])
+                # always display unrotated in source ListA
+                # TODO: should reflect server static info (currently always orientation = 0 but...)
+                self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
         """
