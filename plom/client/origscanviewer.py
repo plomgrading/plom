@@ -187,7 +187,7 @@ class SinkList(QListWidget):
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
-        # TODO: workaround force re-orientation on entry to Sink list
+        # TODO: workaround to force re-orientation on entry to Sink list
         self.rotateForceRefresh(name)
         self.setCurrentItem(ci)
 
@@ -269,7 +269,7 @@ class SinkList(QListWidget):
         cpix = QPixmap(rfile)
         npix = cpix.transformed(rot)
         # ci = self.item(self.item_positions[name])
-        # TODO: instead we `ci` with a dumb loop
+        # TODO: instead we get `ci` with a dumb loop
         for i in range(self.count()):
             ci = self.item(i)
             if ci.text() == name:
@@ -619,7 +619,8 @@ class RearrangementViewer(QDialog):
             self.listB.appendItem(self.listA.hideItemByName(match))
             if kv["orientation"] != 0:
                 log.info("Applying orientation of %s", kv["orientation"])
-                # Always display them unrotated in Source ListA... why?
+                # always display unrotated in source ListA
+                # TODO: should reflect server static info (currently always orientation = 0 but...)
                 self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
