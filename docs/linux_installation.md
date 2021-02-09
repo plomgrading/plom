@@ -36,11 +36,11 @@ in the remaining dependencies.  Alternatively, you can do something like:
 ```
   # pip3 install --upgrade --user pyqrcode pyzbar pymupdf jpegtran-cffi
 ```
-There are additional dependencies for the tensorflow-based ID reader:
+There are additional dependencies for the machine-learning-based ID Reader:
 ```
   # sudo dnf install python3-termcolor python3-wheel python3-grpcio \
                      python3-markdown python3-h5py
-  # pip3 install --user imutils lapsolver opencv-python tensorflow
+  # pip3 install --user imutils lapsolver opencv-python scikit-learn
 ```
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
@@ -79,10 +79,13 @@ Other stuff we get from pip:
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
         aiohttp pyzbar jpegtran-cffi peewee
-  # python3 -m pip install --upgrade --user imutils lapsolver opencv-python tensorflow
+  # python3 -m pip install --user imutils lapsolver opencv-python
+  # python3 -m pip install --user scikit-learn
 ```
-Note `python3 -m pip` to use the newly upgraded pip.  On Ubuntu 18.04, the
-`--upgrade` is required for tensorflow b/c the system numpy is too old.
+Note `python3 -m pip` uses the newly upgraded pip (necessary at least on Ubuntu 18.04).
+
+If you're using the TensorFlow-based ID-Reader, you'll also need
+`python3 -m pip install --upgrade --user tensorflow`.
 
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
