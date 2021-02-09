@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Fix a crash with rearranger dialog revisiting a view with re-orientated pages.
+* Rearranger dialog can load previously re-oriented pages.
 
 
 ## [0.5.16] - 2021-01-29
