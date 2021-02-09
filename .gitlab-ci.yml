@@ -578,6 +578,10 @@ binary_upload:
       Please see [plomgrading.org](https://plomgrading.org).
       If you're here looking for Clients, see "Compiled client" packages above.
 
+      #### Changes in this release
+
+      See [the Changelog](https://gitlab.com/plom/plom/-/blob/$CI_COMMIT_TAG/CHANGELOG.md).
+
       #### md5sum of compiled clients and other artifacts
 
       *TODO* indent four spaces
