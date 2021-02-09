@@ -104,3 +104,8 @@ comment out the `pattern="PDF"` part:
 +  <!--<policy domain="coder" rights="none" pattern="PDF" />-->
    <policy domain="coder" rights="none" pattern="XPS" />
 ```
+
+Another thing to watch out for (at least on Ubuntu 18.04) is that
+`pip install --user ...` commands will install binaries in
+`${HOME}/.local/bin` but this is not in your `$PATH` by default.
+You may need to update your path in a file such as `.bashrc`.
