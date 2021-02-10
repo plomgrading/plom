@@ -140,7 +140,8 @@ def main():
     window = Chooser(app)
     window.show()
 
-    window.ui.userLE.setText(args.user)
+    if args.user:
+        window.ui.userLE.setText(args.user)
     window.ui.passwordLE.setText(args.password)
     if args.server:
         window.setServer(args.server)
