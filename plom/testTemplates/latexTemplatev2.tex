@@ -48,7 +48,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % A simple warning for your Do-Not-Mark pages
-\newcommand{\dnm}{\flushleft \emph{Please do not write on this page --- it will not be marked.}}
+\newcommand{\dnm}{\noindent \emph{Please do not write on this page --- it will not be marked.}}
 
 % Here are some handy commands for adding spacing / blank pages / answerboxes
 % when printing with or without solns.
@@ -68,7 +68,7 @@
 \newcommand{\blankpage}[1][\thequestion]{
 \ifthenelse{\boolean{space}}{
 \pagebreak
-\flushleft \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
+\noindent \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
 \pagebreak
 }{} }
 
