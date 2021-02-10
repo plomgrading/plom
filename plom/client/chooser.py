@@ -419,16 +419,15 @@ class Chooser(QDialog):
         """
 
         address = address.strip()
-        colon = ":"
-        containsColon = address.find(colon)
+        containsColon = address.find(":")
         if containsColon != -1:
-            if containsColon != address.rfind(colon):
+            if containsColon != address.rfind(":"):
                 return address
             try:
-                self.ui.mportSB.setValue(int(address.partition(colon)[2]))
+                self.ui.mportSB.setValue(int(address.partition(":")[2]))
             except ValueError:
                 return address
-            return address.partition(colon)[0]
+            return address.partition(":")[0]
         return address
 
     @pyqtSlot(int)
