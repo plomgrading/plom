@@ -26,7 +26,7 @@ packaging==20.9
 pandas==1.2.2
 passlib==1.7.4
 peewee==3.14.1
-pymupdf==1.18.6
+pymupdf==1.18.8
 # unlisted dep of pyqrcode
 pypng==0.0.20
 pyqrcode==1.2.1
