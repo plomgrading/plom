@@ -79,6 +79,10 @@ class BaseMessenger:
             raise PlomBenignException(
                 "Cannot connect to server. Please check server details."
             ) from None
+        except requests.exceptions.InvalidURL as err:
+            raise PlomBenignException(
+                "The URL format was invalid. Please try again."
+            ) from None
         r = response.text
         return r
 

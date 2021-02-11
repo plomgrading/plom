@@ -17,6 +17,7 @@ from pathlib import Path
 
 import toml
 import appdirs
+import re
 
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
@@ -176,6 +177,7 @@ class Chooser(QDialog):
     def validate(self):
         # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
+        self.ui.userLE.setText(user)
         if (not user.isalnum()) or (not user):
             return
         # check password at least 4 char long
@@ -184,11 +186,14 @@ class Chooser(QDialog):
         if len(pwd) < 4:
             log.warning("Password too short")
             return
-        server = self.ui.serverLE.text().strip()
+
+        server = self.partial_parse_address(self.ui.serverLE.text())
+        self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
+
         # save those settings
         self.saveDetails()
 
@@ -339,11 +344,14 @@ class Chooser(QDialog):
         messenger = None
 
     def getInfo(self):
-        server = self.ui.serverLE.text().strip()
+
+        server = self.partial_parse_address(self.ui.serverLE.text())
+        self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
+
         # save those settings
         # self.saveDetails()   # TODO?
 
@@ -397,6 +405,30 @@ class Chooser(QDialog):
             self.ui.passwordLE.setFocus(True)
         else:
             self.ui.userLE.setFocus(True)
+
+    def partial_parse_address(self, address):
+
+        """If address has a port number in it, extract and move to the port textedit.
+
+        args:
+            address (str): the address
+
+        If there's a colon in the address (maybe the user didn't see the port SB):
+        - Sets value after colon to port if valid
+        - Sends error message if invalid
+        """
+
+        address = address.strip()
+        containsColon = address.find(":")
+        if containsColon != -1:
+            if containsColon != address.rfind(":"):
+                return address
+            try:
+                self.ui.mportSB.setValue(int(address.partition(":")[2]))
+            except ValueError:
+                return address
+            return address.partition(":")[0]
+        return address
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
