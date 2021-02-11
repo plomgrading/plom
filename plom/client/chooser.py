@@ -413,9 +413,8 @@ class Chooser(QDialog):
             address (str): the address
 
         If there's a colon in the address (maybe user did not see port
-        box or is pasting in a string):
-        - Sets value after colon to port if valid
-        - Sends error message if invalid
+        entry box or is pasting in a string), then try to extract a port
+        number and put it into the entry box.
         """
         address = address.strip()
         containsColon = address.find(":")
