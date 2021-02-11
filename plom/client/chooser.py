@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
+# Copyright (C) 2021 Peter Lee
 
 """Chooser dialog"""
 
