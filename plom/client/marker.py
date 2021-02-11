@@ -104,9 +104,9 @@ class BackgroundDownloader(QThread):
             question (str): question number
             version (str): version number.
             msgr_clone (Messenger): use this for the actual downloads.
-                TODO: note Messenger is not multithreaded and blocks
-                using mutexes, so you may want to pass a clone of your
-                Messenger, rather than the one you are using youself.
+                Note Messenger is not multithreaded and blocks using
+                mutexes, so you may want to pass a clone of your
+                Messenger, rather than the one you are using youself!
 
         Notes:
             question/version may be able to be type int as well.
@@ -115,7 +115,6 @@ class BackgroundDownloader(QThread):
         self.question = question
         self.version = version
         self.workingDirectory = directoryPath
-        # self._msgr = Messenger.clone(msgr)
         self._msgr = msgr_clone
 
     def run(self):
@@ -181,6 +180,15 @@ class BackgroundUploader(QThread):
     uploadUnknownFail = pyqtSignal(str, str)
 
     def __init__(self, msgr):
+        """Initialize a new uploader
+
+        args:
+            msgr (Messenger):
+                Note Messenger is not multithreaded and blocks using
+                mutexes.  Here we make our own private clone so caller
+                can keep using their's.
+                TODO: have caller do clone, for symmetry with downloader?
+        """
         super().__init__()
         self._msgr = Messenger.clone(msgr)
 
@@ -985,8 +993,9 @@ class MarkerClient(QWidget):
             None
         """
         self.msgr = markerMessenger
-        # TODO: BackgroundDownloaders come and go: would like them to share a single cloned Messenger (?)
-        self._bgdownloader_msgr = Messenger.clone(markerMessenger)
+        # BackgroundDownloaders come and go but share a single cloned Messenger
+        # Note: BackgroundUploader is persistent and makes its own clone.
+        self._bgdownloader_msgr = Messenger.clone(self.msgr)
         self.question = question
         self.version = version
 
@@ -1462,8 +1471,7 @@ class MarkerClient(QWidget):
             )
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
-        # TODO: we keep making new bgdouwnloaders so the clone messengers cannot re-use connections?
-        # TODO: so instead self keeps the cloned Messenger and gives it to each bgdownloader instance
+        # New downloader but reuse the existing Messenger clone
         self.backgroundDownloader = BackgroundDownloader(
             self.question, self.version, self._bgdownloader_msgr
         )
