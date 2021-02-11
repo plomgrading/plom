@@ -6,12 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.5.17] - 2021-02-10
 
 ### Added
 * `plom-hwscan -q all` will upload a paper to all questions, a common operation for self-scanned work.
-
-### Changed
 
 ### Fixed
 * Fix a crash with rearranger dialog revisiting a view with re-orientated pages.
@@ -379,7 +377,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.16...master
+[0.5.17]: https://gitlab.com/plom/plom/compare/v0.5.16...v0.5.17
 [0.5.16]: https://gitlab.com/plom/plom/compare/v0.5.15...v0.5.16
 [0.5.15]: https://gitlab.com/plom/plom/compare/v0.5.13...v0.5.15
 [0.5.13]: https://gitlab.com/plom/plom/compare/v0.5.11...v0.5.13
