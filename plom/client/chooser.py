@@ -19,15 +19,20 @@ import tempfile
 
 import toml
 import appdirs
-import re
 
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomAPIException,
+    PlomAuthenticationException,
+    PlomExistingLoginException,
+)
 from plom.messenger import Messenger
 from plom.client.comment_list import comment_file
 
@@ -378,7 +383,7 @@ class Chooser(QDialog):
         except PlomSeriousException:
             try:
                 spec = messenger.getInfoGeneral()
-            except:
+            except PlomSeriousException:
                 ErrorMessage("Could not connect to server.").exec_()
                 return
 
