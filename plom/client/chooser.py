@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Forest Kobayashi
+# Copyright (C) 2021 Peter Lee
 
 """Chooser dialog"""
 
@@ -407,17 +408,15 @@ class Chooser(QDialog):
             self.ui.userLE.setFocus(True)
 
     def partial_parse_address(self, address):
-
-        """If address has a port number in it, extract and move to the port textedit.
+        """If address has a port number in it, extract and move to the port box.
 
         args:
             address (str): the address
 
-        If there's a colon in the address (maybe the user didn't see the port SB):
-        - Sets value after colon to port if valid
-        - Sends error message if invalid
+        If there's a colon in the address (maybe user did not see port
+        entry box or is pasting in a string), then try to extract a port
+        number and put it into the entry box.
         """
-
         address = address.strip()
         containsColon = address.find(":")
         if containsColon != -1:
