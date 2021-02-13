@@ -214,8 +214,8 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
-    def __init__(self, s):
-        super(QDialog, self).__init__()
+    def __init__(self, s, logdir, cfgfile, tmpdir):
+        super().__init__()
         # self.parent = parent
         self.setWindowTitle("Plom client options")
 
@@ -235,6 +235,7 @@ class ClientSettingsDialog(QDialog):
             Qt.Checked if s.get("LogToFile") else Qt.Unchecked
         )
         flay.addWidget(self.checkLogFile)
+        flay.addWidget(QLabel("(Logs stored in {})".format(logdir)))
 
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -292,6 +293,19 @@ class ClientSettingsDialog(QDialog):
         if not s.get("POWERUSER"):
             self.checkWarnCom.setEnabled(False)
             self.checkWarnMark.setEnabled(False)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+        flay.addRow("File locations", QLabel("config: {}".format(cfgfile)))
+        tempdir_prefix = "plom_"
+        flay.addWidget(
+            QLabel(
+                "Plom creates temporary files in {},\n"
+                'in subfolders of the form "{}*"'.format(tmpdir, tempdir_prefix)
+            )
+        )
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 

@@ -15,6 +15,7 @@ __license__ = "AGPL-3.0-or-later"
 from datetime import datetime
 import logging
 from pathlib import Path
+import tempfile
 
 import toml
 import appdirs
@@ -46,6 +47,7 @@ lastTime = {}
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
 cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
+cfgfilename = "plomConfig.toml"
 
 
 def readLastTime():
@@ -66,7 +68,7 @@ def readLastTime():
     lastTime["MarkWarnings"] = True
     # If config file exists, use it to update the defaults
     # prefer a local file, else try standard config location
-    for cfg in (Path("plomConfig.toml"), cfgdir / "plomConfig.toml"):
+    for cfg in (Path(cfgfilename), cfgdir / cfgfilename):
         if cfg.exists():
             # too early to log: log.info("Loading config file %s", cfg)
             with open(cfg) as data_file:
@@ -76,7 +78,7 @@ def readLastTime():
 
 def writeLastTime():
     """Write the options to the config file."""
-    cfg = cfgdir / "plomConfig.toml"
+    cfg = cfgdir / cfgfilename
     log.info("Saving config file %s", cfg)
     try:
         cfg.parent.mkdir(exist_ok=True)
@@ -162,7 +164,8 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(lastTime)
+        cfg = cfgdir / cfgfilename
+        d = ClientSettingsDialog(lastTime, logdir, cfg, tempfile.gettempdir())
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
