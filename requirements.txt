@@ -20,10 +20,10 @@ pycparser==2.20
 cffi==1.14.4
 jpegtran-cffi==0.5.2
 lapsolver==1.1.0
-numpy==1.20.1
+numpy==1.19.5
 opencv-python==4.5.1.48
 packaging==20.9
-pandas==1.2.2
+pandas==1.1.5
 passlib==1.7.4
 peewee==3.14.1
 pymupdf==1.18.8
