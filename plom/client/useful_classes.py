@@ -214,7 +214,7 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
-    def __init__(self, s, logdir, cfgfile, tmpdir):
+    def __init__(self, s, logdir, cfgfile, tmpdir, comment_file):
         super().__init__()
         # self.parent = parent
         self.setWindowTitle("Plom client options")
@@ -298,14 +298,13 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
         flay.addRow(line)
-        flay.addRow("File locations", QLabel("config: {}".format(cfgfile)))
+        flay.addRow("Config file:", QLabel("{}".format(cfgfile)))
+        flay.addRow("Rubrics:", QLabel("{}".format(comment_file)))
         tempdir_prefix = "plom_"
-        flay.addWidget(
-            QLabel(
-                "Plom creates temporary files in {},\n"
-                'in subfolders of the form "{}*"'.format(tmpdir, tempdir_prefix)
-            )
-        )
+        q = QLabel('{}, in subfolders "{}*"'.format(tmpdir, tempdir_prefix))
+        q.setWordWrap(True)
+        q.setAlignment(Qt.AlignTop)
+        flay.addRow("Temporary files:", q)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 

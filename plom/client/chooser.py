@@ -29,6 +29,7 @@ from plom import Plom_API_Version
 from plom import Default_Port
 from plom.plom_exceptions import *
 from plom.messenger import Messenger
+from plom.client.comment_list import comment_file
 
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
@@ -164,8 +165,9 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        cfg = cfgdir / cfgfilename
-        d = ClientSettingsDialog(lastTime, logdir, cfg, tempfile.gettempdir())
+        d = ClientSettingsDialog(
+            lastTime, logdir, cfgdir / cfgfilename, tempfile.gettempdir(), comment_file
+        )
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
