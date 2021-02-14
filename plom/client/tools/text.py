@@ -58,9 +58,11 @@ class CommandText(QUndoCommand):
         )
         self.setText("Text")
         if len(text) > 0:
-            # Works without timer but maybe feels more responsive with b/c
-            # during the api call, source text will be displayed.
-            QTimer.singleShot(5, self.blurb.textToPng)
+            # This is an API call, adds a visible pause before placing object
+            self.blurb.textToPng()
+            # Below feels much more responsive: source text displayed during API call
+            # TODO: Issue #1391: unfortunately causes a race, at least in randomarker
+            # QTimer.singleShot(5, self.blurb.textToPng)
 
     @classmethod
     def from_pickle(cls, X, *, scene):
