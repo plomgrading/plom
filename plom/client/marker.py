@@ -162,7 +162,9 @@ class BackgroundDownloader(QThread):
         full_pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
 
         # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        src_img_data = [
+            {"id": x[0], "md5": x[1], "orientation": 0} for x in page_metadata
+        ]
         # Image names = "<task>.<imagenumber>.<extension>"
         for i, row in enumerate(page_metadata):
             # TODO: add a "aggressive download" option to get all now
@@ -1298,7 +1300,7 @@ class MarkerClient(QWidget):
         log.debug("create paperDir {} for already-graded download".format(paperDir))
 
         # TODO: keep more image_id, md5, server_path_filename
-        src_img_data = [{"md5": x[1]} for x in page_metadata]
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
 
         # Image names = "<task>.<imagenumber>.<extension>"
         for i, row in enumerate(page_metadata):
@@ -1450,7 +1452,9 @@ class MarkerClient(QWidget):
         print("=" * 80)
 
         # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        src_img_data = [
+            {"id": x[0], "md5": x[1], "orientation": 0} for x in page_metadata
+        ]
         # Image names = "<task>.<imagenumber>.<extension>"
         for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
@@ -1980,8 +1984,7 @@ class MarkerClient(QWidget):
         return data
 
     def PermuteAndGetSamePaper(self, task, imageList):
-        """
-        Allows user to reorganize pages of an exam.
+        """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
@@ -1990,12 +1993,11 @@ class MarkerClient(QWidget):
 
         Returns:
             initialData (as described by getDataForAnnotator)
-
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
-        img_src_data = []
+        src_img_data = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
         # TODO: something with tempfile instead
         # TODO: but why not keep using old name once they are static
@@ -2005,18 +2007,18 @@ class MarkerClient(QWidget):
                 self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
             )
             shutil.copyfile(imageList[i][1], tmp)
-            img_src_data.append(
+            src_img_data.append(
                 {
+                    "id": imageList[i][3],
                     "md5": imageList[i][0],
                     "filename": tmp,
                     "orientation": imageList[i][2],
                 }
             )
         task = "q" + task
-        self.examModel.setOriginalFilesAndData(task, img_src_data)
+        self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
-        # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):

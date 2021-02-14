@@ -1689,6 +1689,7 @@ class Annotator(QWidget):
         plomData = {
             "fileNames": [os.path.basename(x["filename"]) for x in self.src_img_data],
             "orientations": [x["orientation"] for x in self.src_img_data],
+            "database_ids": [x["id"] for x in self.src_img_data],
             "saveName": os.path.basename(self.saveName),
             "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
