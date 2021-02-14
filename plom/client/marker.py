@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """
@@ -56,6 +56,7 @@ from plom.plom_exceptions import (
     PlomLatexException,
     PlomNoMoreException,
 )
+from plom.messenger import Messenger
 from .annotator import Annotator
 from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
 from .examviewwindow import ExamViewWindow
@@ -95,22 +96,26 @@ class BackgroundDownloader(QThread):
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
-    def __init__(self, question, version):
+    def __init__(self, question, version, msgr_clone):
         """
         Initializes a new downloader.
 
         Args:
             question (str): question number
             version (str): version number.
+            msgr_clone (Messenger): use this for the actual downloads.
+                Note Messenger is not multithreaded and blocks using
+                mutexes, so you may want to pass a clone of your
+                Messenger, rather than the one you are using youself!
 
         Notes:
             question/version may be able to be type int as well.
-
         """
-        QThread.__init__(self)
+        super().__init__()
         self.question = question
         self.version = version
         self.workingDirectory = directoryPath
+        self._msgr = msgr_clone
 
     def run(self):
         """
@@ -132,7 +137,8 @@ class BackgroundDownloader(QThread):
                 return
             # ask server for task-code of next task
             try:
-                task = messenger.MaskNextTask(self.question, self.version)
+                log.debug("bgdownloader: about to download")
+                task = self._msgr.MaskNextTask(self.question, self.version)
                 if not task:  # no more tests left
                     self.downloadNoneAvailable.emit()
                     self.quit()
@@ -143,7 +149,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                page_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
+                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -157,7 +163,7 @@ class BackgroundDownloader(QThread):
         # Image names = "<task>.<imagenumber>.<extension>"
         for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
-            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self._msgr.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
@@ -172,6 +178,19 @@ class BackgroundUploader(QThread):
     uploadSuccess = pyqtSignal(str, int, int)
     uploadKnownFail = pyqtSignal(str, str)
     uploadUnknownFail = pyqtSignal(str, str)
+
+    def __init__(self, msgr):
+        """Initialize a new uploader
+
+        args:
+            msgr (Messenger):
+                Note Messenger is not multithreaded and blocks using
+                mutexes.  Here we make our own private clone so caller
+                can keep using their's.
+                TODO: have caller do clone, for symmetry with downloader?
+        """
+        super().__init__()
+        self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
         """
@@ -229,6 +248,7 @@ class BackgroundUploader(QThread):
             code = data[0]  # TODO: remove so that queue needs no knowledge of args
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             upload(
+                self._msgr,
                 *data,
                 knownFailCallback=self.uploadKnownFail.emit,
                 unknownFailCallback=self.uploadUnknownFail.emit,
@@ -246,6 +266,7 @@ class BackgroundUploader(QThread):
 
 
 def upload(
+    _msgr,
     task,
     grade,
     filenames,
@@ -303,7 +324,7 @@ def upload(
             )
         )
     try:
-        msg = messenger.MreturnMarkedTask(
+        msg = _msgr.MreturnMarkedTask(
             task,
             question,
             ver,
@@ -970,17 +991,17 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
-
-        global messenger
-        messenger = markerMessenger  # initializes global messenger
+        self.msgr = markerMessenger
+        # BackgroundDownloaders come and go but share a single cloned Messenger
+        # Note: BackgroundUploader is persistent and makes its own clone.
+        self._bgdownloader_msgr = Messenger.clone(self.msgr)
         self.question = question
         self.version = version
 
         # Get the number of Tests, Pages, Questions and Versions
         try:
-            self.exam_spec = messenger.get_spec()
+            self.exam_spec = self.msgr.get_spec()
         except PlomSeriousException as err:
             self.throwSeriousError(err, rethrow=False)
             return
@@ -1015,7 +1036,7 @@ class MarkerClient(QWidget):
         log.debug("Marker main thread: " + str(threading.get_ident()))
 
         if self.allowBackgroundOps:
-            self.backgroundUploader = BackgroundUploader()
+            self.backgroundUploader = BackgroundUploader(self.msgr)
             self.backgroundUploader.uploadSuccess.connect(self.backgroundUploadFinished)
             self.backgroundUploader.uploadKnownFail.connect(
                 self.backgroundUploadFailedServerChanged
@@ -1071,7 +1092,7 @@ class MarkerClient(QWidget):
         self.ui.setupUi(self)
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
-        self.ui.userLabel.setText(messenger.whoami())
+        self.ui.userLabel.setText(self.msgr.whoami())
         self.ui.infoBox.setTitle(
             "Marking Q{} (ver. {}) of “{}”".format(
                 self.question, self.version, self.exam_spec["name"]
@@ -1124,7 +1145,7 @@ class MarkerClient(QWidget):
             True if max score retrieved successfully, False otherwise
         """
         try:
-            self.maxMark = messenger.MgetMaxMark(self.question, self.version)
+            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
         except PlomRangeException as err:
             log.error(err)
             ErrorMessage(str(err)).exec_()
@@ -1215,7 +1236,7 @@ class MarkerClient(QWidget):
 
         """
         # Ask server for list of previously marked papers
-        markedList = messenger.MrequestDoneTasks(self.question, self.version)
+        markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
             self.examModel.addPaper(
@@ -1249,7 +1270,7 @@ class MarkerClient(QWidget):
 
         # TODO: plom file is lovely json: why we pack it around as binary bytes?
         try:
-            [page_metadata, anImage, plomfile_data] = messenger.MrequestImages(
+            [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
@@ -1279,7 +1300,7 @@ class MarkerClient(QWidget):
         for i, row in enumerate(page_metadata):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             src_img_data[i]["filename"] = tmp
-            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
         # Parse PlomFile early for orientation data: but PageScene is going
@@ -1348,7 +1369,7 @@ class MarkerClient(QWidget):
         if not val and not maxm:
             # ask server for progress update
             try:
-                val, maxm = messenger.MprogressCount(self.question, self.version)
+                val, maxm = self.msgr.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
                 log.exception("Serious error detected while updating progress")
                 msg = 'A serious error happened while updating progress:\n"{}"'.format(
@@ -1393,14 +1414,14 @@ class MarkerClient(QWidget):
                 return
             # ask server for task of next task
             try:
-                task = messenger.MaskNextTask(self.question, self.version)
+                task = self.msgr.MaskNextTask(self.question, self.version)
                 if not task:
                     return False
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
 
             try:
-                page_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
+                page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1411,7 +1432,7 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         for i, row in enumerate(page_metadata):
             # try-except? how does this fail?
-            im_bytes = messenger.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
@@ -1450,7 +1471,10 @@ class MarkerClient(QWidget):
             )
             # if prev downloader still going than wait.  might block the gui
             self.backgroundDownloader.wait()
-        self.backgroundDownloader = BackgroundDownloader(self.question, self.version)
+        # New downloader but reuse the existing Messenger clone
+        self.backgroundDownloader = BackgroundDownloader(
+            self.question, self.version, self._bgdownloader_msgr
+        )
         self.backgroundDownloader.downloadSuccess.connect(
             self._requestNextInBackgroundFinished
         )
@@ -1855,6 +1879,7 @@ class MarkerClient(QWidget):
             self.backgroundUploader.enqueueNewUpload(*_data)
         else:
             upload(
+                self.msgr,
                 *_data,
                 knownFailCallback=self.backgroundUploadFailedServerChanged,
                 unknownFailCallback=self.backgroundUploadFailed,
@@ -2069,7 +2094,7 @@ class MarkerClient(QWidget):
         # Then send a 'user closing' message - server will revoke
         # authentication token.
         try:
-            messenger.closeUser()
+            self.msgr.closeUser()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
@@ -2098,7 +2123,7 @@ class MarkerClient(QWidget):
                 # Tell server the task fo any paper that is not marked.
                 # server will put that back on the todo-pile.
                 try:
-                    messenger.MdidNotFinishTask(
+                    self.msgr.MdidNotFinishTask(
                         self.examModel.data(self.examModel.index(r, 0))
                     )
                 except PlomSeriousException as err:
@@ -2116,7 +2141,7 @@ class MarkerClient(QWidget):
 
         """
         try:
-            pageData, imagesAsBytes = messenger.MrequestWholePaper(
+            pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
                 testNumber, self.question
             )
         except PlomTakenException as err:
@@ -2144,12 +2169,12 @@ class MarkerClient(QWidget):
         Returns:
             (tuple) containing pageData and viewFiles
         """
-        pageData = messenger.MrequestWholePaperMetadata(testNumber, self.question)
+        pageData = self.msgr.MrequestWholePaperMetadata(testNumber, self.question)
         return pageData
 
     def downloadOneImage(self, task, image_id, md5):
         """Download one image from server by its database id."""
-        return messenger.MrequestOneImage(task, image_id, md5)
+        return self.msgr.MrequestOneImage(task, image_id, md5)
 
     def doneWithWholePaperFiles(self, viewFiles):
         """ Unlinks files in viewFiles to os. """
@@ -2210,7 +2235,7 @@ class MarkerClient(QWidget):
             return self.commentCache[txt]
         log.debug('requesting latex for "{}"'.format(txt))
         try:
-            fragment = messenger.MlatexFragment(txt)
+            fragment = self.msgr.MlatexFragment(txt)
         except PlomLatexException:
             return None
         # a name for the fragment file
@@ -2247,7 +2272,7 @@ class MarkerClient(QWidget):
 
             # send updated tag back to server.
             try:
-                messenger.MsetTag(task, txt)
+                self.msgr.MsetTag(task, txt)
             except PlomTakenException as err:
                 log.exception("exception when trying to set tag")
                 ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
@@ -2282,7 +2307,7 @@ class MarkerClient(QWidget):
                 return
         task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
         try:
-            imageList = messenger.MrequestOriginalImages(task)
+            imageList = self.msgr.MrequestOriginalImages(task)
         except PlomNoMoreException:
             msg = ErrorMessage("No image corresponding to task {}".format(task))
             msg.exec_()
