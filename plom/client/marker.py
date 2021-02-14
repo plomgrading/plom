@@ -1316,6 +1316,11 @@ class MarkerClient(QWidget):
         # Parse PlomFile early for orientation data: but PageScene is going
         # to parse it later.  TODO: seems like duplication of effort.
         plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
+        db_ids = plomdata.get("database_ids")
+        if db_ids:
+            # if present, must match expected: TODO may delete later.
+            db_id2 = [x[0] for x in page_metadata]
+            assert db_ids == db_id2, f".plom file IDs={db_ids} does not match {db_id2}"
         ori = plomdata.get("orientations")
         if not ori:
             log.warning("plom file has no orientation data: substituting zeros")
