@@ -57,12 +57,6 @@ class CommandText(QUndoCommand):
             pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
         )
         self.setText("Text")
-        if len(text) > 0:
-            # This is an API call, adds a visible pause before placing object
-            self.blurb.textToPng()
-            # Below feels much more responsive: source text displayed during API call
-            # TODO: Issue #1391: unfortunately causes a race, at least in randomarker
-            # QTimer.singleShot(5, self.blurb.textToPng)
 
     @classmethod
     def from_pickle(cls, X, *, scene):
@@ -124,6 +118,11 @@ class TextItem(QGraphicsTextItem):
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
+        if text.casefold().startswith("tex:"):
+            # self.textToPng()
+            # instead, hide latency of API call: meanwhile source text displayed
+            # Issue #1391: unfortunately causes a race, at least in randomarker
+            QTimer.singleShot(5, self.textToPng)
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
