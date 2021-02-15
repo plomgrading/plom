@@ -80,7 +80,9 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.di.saveable = False
         self.blurb.saveable = False
 
-        # check if needs tex->latex
+        # TODO: the blurb will do this anyway, but may defer this to "later",
+        # meanwhile we have tqhe wrong size for tweakPositions (Issue #1391).
+        # TODO: can be removed once the border adjusts automatically to resize.
         self.blurb.textToPng()
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
