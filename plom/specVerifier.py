@@ -348,7 +348,9 @@ class SpecVerifier:
                     '\t\t"{}" = {} is positive integer - check'.format(x, self.spec[x])
                 )
             else:
-                print('Specification error - "{}" must be a positive integer.')
+                print(
+                    'Specification error - "{}" must be a positive integer.'.format(x)
+                )
                 exit(1)
         # Should be non-neg ints
         for x in ["numberToName"]:
@@ -357,7 +359,11 @@ class SpecVerifier:
                     '\t\t"{}" = {} is positive integer - check'.format(x, self.spec[x])
                 )
             else:
-                print('Specification error - "{}" must be a non-negative integer.')
+                print(
+                    'Specification error - "{}" must be a non-negative integer.'.format(
+                        x
+                    )
+                )
                 exit(1)
 
         # have to produce more papers than named papers - preferably with some margin of spares
