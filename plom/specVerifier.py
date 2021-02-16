@@ -340,7 +340,6 @@ class SpecVerifier:
         for x in [
             "numberOfVersions",
             "numberOfPages",
-            "numberToProduce",
             "numberOfQuestions",
         ]:
             if self.isPositiveInt(self.spec[x]):
@@ -352,32 +351,31 @@ class SpecVerifier:
                     'Specification error - "{}" must be a positive integer.'.format(x)
                 )
                 exit(1)
-        # Should be non-neg ints
-        for x in ["numberToName"]:
-            if self.isNonNegInt(self.spec[x]):
-                print(
-                    '\t\t"{}" = {} is positive integer - check'.format(x, self.spec[x])
+        for x in ("numberToName", "numberToProduce"):
+            try:
+                self.spec[x] = int(self.spec[x])
+                print('\t\t"{}" = {} is integer - check'.format(x, self.spec[x]))
+            except ValueError:
+                raise ValueError(
+                    'Specification error - "{}" must be an integer.'.format(x)
+                )
+            if self.spec[x] < 0:
+                print('\t\t"{}" is negative: will determine from classlist!'.format(x))
+
+        if self.spec["numberToProduce"] == 0:
+            raise ValueError('Specification error - "numberToProduce" cannot be zero.')
+
+        if self.spec["numberToProduce"] > 0:
+            if self.spec["numberToProduce"] < self.spec["numberToName"]:
+                raise ValueError(
+                    "Specification error - insufficient papers: producing fewer papers {} than you wish to name {}. Produce more papers.".format(
+                        self.spec["numberToProduce"], self.spec["numberToName"]
+                    )
                 )
             else:
                 print(
-                    'Specification error - "{}" must be a non-negative integer.'.format(
-                        x
-                    )
+                    "\t\tSufficiently many papers: papers to prduce larger than number of named papers - check"
                 )
-                exit(1)
-
-        # have to produce more papers than named papers - preferably with some margin of spares
-        if self.spec["numberToProduce"] < self.spec["numberToName"]:
-            print(
-                "Specification error - You are producing fewer papers {} than you wish to name {}. Produce more papers.".format(
-                    self.spec["numberToProduce"], self.spec["numberToName"]
-                )
-            )
-            exit(1)
-        else:
-            print(
-                "\t\tTotal number of papers is larger than number of named papers - check"
-            )
             if self.spec["numberToProduce"] < 1.05 * self.spec["numberToName"]:
                 print(
                     "WARNING = you are not producing less than 5% un-named papers. We recommend that you produce more un-named papers"
