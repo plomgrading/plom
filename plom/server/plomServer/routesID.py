@@ -6,9 +6,8 @@
 import csv
 import os
 from pathlib import Path
-from math import ceil
 
-from aiohttp import web, MultipartWriter, MultipartReader
+from aiohttp import web, MultipartWriter
 
 from plom import specdir
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
@@ -94,9 +93,6 @@ class IDHandler:
         if spec.number_to_name < 0 or spec.number_to_produce < 0:
             if spec.number_to_name < 0:
                 spec.set_number_to_name(len(classlist))
-                log.info(
-                    'deferred numberToName now set to "{}"'.format(spec.number_to_name)
-                )
                 if (
                     spec.number_to_produce > 0
                     and spec.number_to_produce < spec.number_to_name
@@ -107,9 +103,7 @@ class IDHandler:
                     log.error(s)
                     raise web.HTTPNotAcceptable(reason=s)
             if spec.number_to_produce < 0:
-                extra = ceil(0.1 * len(classlist))
-                extra = min(max(extra, 5), 100)  # threshold to [5, 100]
-                spec.set_number_to_produce(len(classlist) + extra)
+                spec.set_number_to_produce(len(classlist))
             spec.saveVerifiedSpec()
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)

@@ -2,6 +2,8 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
+import logging
+from math import ceil
 import random
 from pathlib import Path
 import pkg_resources
@@ -9,6 +11,7 @@ import pkg_resources
 import toml
 
 specdir = "specAndDatabase"
+log = logging.getLogger("spec")
 
 
 class SpecVerifier:
@@ -139,6 +142,10 @@ class SpecVerifier:
         # TODO: maybe we should do some testing here?
         return cls(toml.load(fname))
 
+    # this allows spec["numberToProduce"] for all
+    def __getitem__(self, what):
+        return self.spec[what]
+
     # this allows spec.number_to_produce
     @property
     def number_to_produce(self):
@@ -149,14 +156,30 @@ class SpecVerifier:
         return self.spec["numberToName"]
 
     def set_number_to_name(self, n):
+        """Set previously-deferred number of named papers.
+
+        exceptions:
+            ValueError: number of named papers already set.
+        """
+        if self.spec["numberToName"] >= 0:
+            raise ValueError("Number of named papers already set: read-only")
         self.spec["numberToName"] = n
+        log.info('deferred number of named papers now set to "{}"'.format(n))
 
-    def set_number_to_produce(self, n):
-        self.spec["numberToProduce"] = n
+    def set_number_to_produce(self, n, spare_percent=10, min_extra=5, max_extra=100):
+        """Set previously-deferred number of named papers.
 
-    # this allows spec["numberToProduce"] for all
-    def __getitem__(self, what):
-        return self.spec[what]
+        exceptions:
+            ValueError: number of named papers already set.
+        """
+        extra = ceil(spare_percent * n / 100)
+        extra = min(max(extra, min_extra), max_extra)  # threshold
+        self.spec["numberToProduce"] = n + extra
+        log.info(
+            'deferred number of papers to produce now set to "{}"'.format(
+                self.spec["numberToProduce"]
+            )
+        )
 
     def __str__(self):
         s = "Plom exam specification:\n  "
