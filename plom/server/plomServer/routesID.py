@@ -93,17 +93,12 @@ class IDHandler:
         if spec.number_to_name < 0 or spec.number_to_produce < 0:
             if spec.number_to_name < 0:
                 spec.set_number_to_name(len(classlist))
-                if (
-                    spec.number_to_produce > 0
-                    and spec.number_to_produce < spec.number_to_name
-                ):
-                    s = "insufficient papers ({}) to cover classlist ({})".format(
-                        spec.number_to_produce, spec.number_to_name
-                    )
-                    log.error(s)
-                    raise web.HTTPNotAcceptable(reason=s)
             if spec.number_to_produce < 0:
                 spec.set_number_to_produce(len(classlist))
+            try:
+                spec.verifySpec(verbose="log")
+            except ValueError as e:
+                raise web.HTTPNotAcceptable(reason=str(e))
             spec.saveVerifiedSpec()
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
