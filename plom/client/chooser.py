@@ -20,6 +20,7 @@ import toml
 import appdirs
 import re
 
+import urllib3
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
 
@@ -418,16 +419,13 @@ class Chooser(QDialog):
         number and put it into the entry box.
         """
         address = address.strip()
-        containsColon = address.find(":")
-        if containsColon != -1:
-            if containsColon != address.rfind(":"):
-                return address
-            try:
-                self.ui.mportSB.setValue(int(address.partition(":")[2]))
-            except ValueError:
-                return address
-            return address.partition(":")[0]
-        return address
+        try:
+            parsedurl = urllib3.util.parse_url(address)
+            if parsedurl.port:
+                self.ui.mportSB.setValue(int(parsedurl.port))
+            return parsedurl.host
+        except urllib3.exceptions.LocationParseError:
+            return address
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):
