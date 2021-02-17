@@ -144,6 +144,16 @@ class SpecVerifier:
     def number_to_produce(self):
         return self.spec["numberToProduce"]
 
+    @property
+    def number_to_name(self):
+        return self.spec["numberToName"]
+
+    def set_number_to_name(self, n):
+        self.spec["numberToName"] = n
+
+    def set_number_to_produce(self, n):
+        self.spec["numberToProduce"] = n
+
     # this allows spec["numberToProduce"] for all
     def __getitem__(self, what):
         return self.spec[what]
