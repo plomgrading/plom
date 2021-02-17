@@ -8,6 +8,7 @@ import os
 import csv
 import tempfile
 
+import urllib3
 from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
 from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
@@ -393,20 +394,31 @@ class Manager(QWidget):
 
     def login(self):
         # Check username is a reasonable string
-        user = self.ui.userLE.text()
+        user = self.ui.userLE.text().strip()
+        self.ui.userLE.setText(user)
+
         if (not user.isalnum()) or (not user):
             return
         # check password at least 4 char long
         pwd = self.ui.passwordLE.text()
+        self.ui.passwordLE.setText(pwd)
+
+
         if len(pwd) < 4:
             return
-        server = self.ui.serverLE.text()
+
+        server = self.partial_parse_address(self.ui.serverLE.text())
+        self.ui.serverLE.setText(server)
         mport = self.ui.mportSB.value()
 
-        # Have Messenger login into to server
-        global managerMessenger
-        managerMessenger = ManagerMessenger(server, mport)
-        managerMessenger.start()
+        try:
+            # Have Messenger login into to server
+            global managerMessenger
+            managerMessenger = ManagerMessenger(server, mport)
+            managerMessenger.start()
+        except PlomBenignException as e:
+            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            return
 
         try:
             managerMessenger.requestAndSaveToken(user, pwd)
@@ -456,6 +468,25 @@ class Manager(QWidget):
         self.initProgressTab()
         self.initUserTab()
         self.initReviewTab()
+
+    def partial_parse_address(self, address):
+        """If address has a port number in it, extract and move to the port box.
+
+        args:
+            address (str): the address
+
+        If there's a colon in the address (maybe user did not see port
+        entry box or is pasting in a string), then try to extract a port
+        number and put it into the entry box.
+        """
+        address = address.strip()
+        try:
+            parsedurl = urllib3.util.parse_url(address)
+            if parsedurl.port:
+                self.ui.mportSB.setValue(int(parsedurl.port))
+            return parsedurl.host
+        except urllib3.exceptions.LocationParseError:
+            return address
 
     # -------------------
     def getTPQV(self):
