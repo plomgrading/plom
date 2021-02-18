@@ -92,9 +92,9 @@ class IDHandler:
         spec = self.server.testSpec
         if spec.number_to_name < 0 or spec.number_to_produce < 0:
             if spec.number_to_name < 0:
-                spec.set_number_to_name(len(classlist))
+                spec.set_number_papers_to_name(len(classlist))
             if spec.number_to_produce < 0:
-                spec.set_number_to_produce(len(classlist))
+                spec.set_number_papers_add_spares(len(classlist))
             try:
                 spec.verifySpec(verbose="log")
             except ValueError as e:

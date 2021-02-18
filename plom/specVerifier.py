@@ -165,7 +165,7 @@ class SpecVerifier:
     def number_to_name(self):
         return self.spec["numberToName"]
 
-    def set_number_to_name(self, n):
+    def set_number_papers_to_name(self, n):
         """Set previously-deferred number of named papers.
 
         exceptions:
@@ -176,14 +176,30 @@ class SpecVerifier:
         self.spec["numberToName"] = n
         log.info('deferred number of named papers now set to "{}"'.format(n))
 
-    def set_number_to_produce(self, n, spare_percent=10, min_extra=5, max_extra=100):
-        """Set previously-deferred number of named papers.
+    def set_number_papers_add_spares(
+        self, n, spare_percent=10, min_extra=5, max_extra=100
+    ):
+        """Set previously-deferred number of papers to produce and add spares.
+
+        By default this will add 10% extra "spare" papers.
+
+        args:
+            n (int): how many requested.
+
+        kwargs:
+            spare_percent (int/float): how many extra papers as a
+                percentage of `n` (default: 10).
+            min_extra (int): minimum number of extra papers (default: 5)
+            max_extra (int): maximum extra papers (default: 100)
 
         exceptions:
-            ValueError: number of named papers already set.
+            ValueError: number of papers already set.
         """
         extra = ceil(spare_percent * n / 100)
         extra = min(max(extra, min_extra), max_extra)  # threshold
+        if self.spec["numberToProduce"] >= 0:
+            # TODO: consider relaxing this?
+            raise ValueError("Number of papers already set: read-only")
         self.spec["numberToProduce"] = n + extra
         log.info(
             'deferred number of papers to produce now set to "{}"'.format(
@@ -238,6 +254,12 @@ class SpecVerifier:
         args:
             verbose: `None`/`False` for don't print; `True` is print to
                 standard output; `"log"` means use logging mechanism.
+
+        return:
+            None
+
+        exceptions:
+            ValueError: with a message indicating the problem.
         """
         if verbose == "log":
             prnt = log.info
