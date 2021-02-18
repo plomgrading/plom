@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import sys
 from getpass import getpass
@@ -61,6 +61,7 @@ def upload_classlist(classlist, msgr):
             "  {}\n"
             "Perhaps classlist is too large for specTest.numberToProduce?".format(e)
         )
+        # TODO: I think the called should be doing all this exit() stuff
         sys.exit(4)
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")
