@@ -176,6 +176,9 @@ class ManagerMessenger(BaseMessenger):
 
         Exceptions:
             PlomConflict: server already has one.
+            PlomRangeException: this classlist causes an invalid server
+                spec.  Most likely numberToProduce is too small but
+                check error message to be sure.
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         """
@@ -194,6 +197,8 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 409:
                 raise PlomConflict(e) from None
+            elif response.status_code == 406:
+                raise PlomRangeException(e) from None
             elif response.status_code == 401:
                 raise PlomAuthenticationException() from None
             else:

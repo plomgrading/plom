@@ -88,6 +88,7 @@ class IDHandler:
         if os.path.isfile(Path(specdir) / "classlist.csv"):
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
+        # TODO should we make copy until sure it passes verification?
         spec = self.server.testSpec
         if spec.numberToName < 0 or spec.numberToProduce < 0:
             if spec.number_to_name < 0:
