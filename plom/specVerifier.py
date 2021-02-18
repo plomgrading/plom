@@ -12,6 +12,7 @@ import toml
 
 specdir = "specAndDatabase"
 log = logging.getLogger("spec")
+
 # support for colour checkmarks
 ansi_green = "\033[92m"
 ansi_yellow = "\033[93m"
@@ -68,7 +69,7 @@ class SpecVerifier:
 
     We can verify that this input is valid:
     >>> spec.verifySpec()     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Check specification keys
+    Checking specification keys
         contains "name" [check]
         contains "longName" [check]
         ...
