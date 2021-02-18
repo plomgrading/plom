@@ -37,6 +37,8 @@ from PyQt5.QtWidgets import (
 
 log = logging.getLogger("annotr")
 comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
+comment_filename = "plomComments.toml"
+comment_file = comment_dir / comment_filename
 
 
 def comments_new_default_list():
@@ -130,8 +132,8 @@ def comments_load_from_file(f):
 
 def commentLoadAll():
     """Grab comments from the toml file or return defaults."""
-    local_comfile = Path("plomComments.toml")
-    comfile = comment_dir / "plomComments.toml"
+    local_comfile = Path(comment_filename)
+    comfile = comment_dir / comment_filename
     try:
         clist = comments_load_from_file(local_comfile)
         # Note: on save, central file overwritten, Issue #1355
@@ -150,7 +152,7 @@ def commentLoadAll():
     return clist
 
 
-def comments_save_list(clist, comment_dir=comment_dir, filename="plomComments.toml"):
+def comments_save_list(clist, comment_dir=comment_dir, filename=comment_filename):
     """Export comment list to toml file."""
     # TODO: don't save empty tags/testnames/etc to file?
     comfile = comment_dir / filename

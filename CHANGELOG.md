@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Client shows path information in the Options dialog.
 
 ### Changed
 * Client background/uploader can operate in parallel.

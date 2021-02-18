@@ -51,7 +51,7 @@ from plom.rules import censorStudentName as censorName
 log = logging.getLogger("identr")
 
 # set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory()
+tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
 directoryPath = tempDirectory.name
 
 
