@@ -152,11 +152,10 @@ class SpecVerifier:
         # TODO: maybe we should do some testing here?
         return cls(toml.load(fname))
 
-    # this allows spec["numberToProduce"] for all
+    # this allows spec["key"] instead of spec.spec["key"] for all
     def __getitem__(self, what):
         return self.spec[what]
 
-    # this allows spec.number_to_produce
     @property
     def number_to_produce(self):
         return self.spec["numberToProduce"]
@@ -165,13 +164,17 @@ class SpecVerifier:
     def number_to_name(self):
         return self.spec["numberToName"]
 
+    # aliases to match the toml file
+    numberToProduce = number_to_produce
+    numberToName = number_to_name
+
     def set_number_papers_to_name(self, n):
         """Set previously-deferred number of named papers.
 
         exceptions:
             ValueError: number of named papers already set.
         """
-        if self.spec["numberToName"] >= 0:
+        if self.numberToName >= 0:
             raise ValueError("Number of named papers already set: read-only")
         self.spec["numberToName"] = n
         log.info('deferred number of named papers now set to "{}"'.format(n))
@@ -197,14 +200,12 @@ class SpecVerifier:
         """
         extra = ceil(spare_percent * n / 100)
         extra = min(max(extra, min_extra), max_extra)  # threshold
-        if self.spec["numberToProduce"] >= 0:
+        if self.numberToProduce >= 0:
             # TODO: consider relaxing this?
             raise ValueError("Number of papers already set: read-only")
         self.spec["numberToProduce"] = n + extra
         log.info(
-            'deferred number of papers to produce now set to "{}"'.format(
-                self.spec["numberToProduce"]
-            )
+            "deferred number of papers is now set to {}".format(self.numberToProduce)
         )
 
     def __str__(self):
@@ -216,9 +217,9 @@ class SpecVerifier:
                 "Number of source versions = {}".format(self.spec["numberOfVersions"]),
                 # "Public code (to prevent project collisions) = {}".format(self.spec["publicCode"]),
                 # "Private random seed (for randomisation) = {}".format(self.spec["privateSeed"]),
-                "Number of tests to produce = {}".format(self.spec["numberToProduce"]),
+                "Number of tests to produce = {}".format(self.numberToProduce),
                 "Number of those to be printed with names = {}".format(
-                    self.spec["numberToName"]
+                    self.numberToName
                 ),
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpages = {}".format(self.spec["idPages"]["pages"]),
@@ -421,18 +422,18 @@ class SpecVerifier:
                     )
                 )
 
-        if self.spec["numberToProduce"] == 0:
+        if self.numberToProduce == 0:
             raise ValueError('Specification error - "numberToProduce" cannot be zero.')
 
-        if self.spec["numberToProduce"] > 0:
-            if self.spec["numberToProduce"] < self.spec["numberToName"]:
+        if self.numberToProduce > 0:
+            if self.numberToProduce < self.numberToName:
                 raise ValueError(
                     "Specification error - insufficient papers: producing fewer papers {} than you wish to name {}. Produce more papers.".format(
-                        self.number_to_produce, self.number_to_name
+                        self.numberToProduce, self.numberToName
                     )
                 )
             print("    Producing enough papers to cover named papers" + chk)
-            if self.spec["numberToProduce"] < 1.05 * self.spec["numberToName"]:
+            if self.numberToProduce < 1.05 * self.numberToName:
                 print(
                     "WARNING: you are producing less than 5% un-named papers; you may want more spares"
                     + warn_mark

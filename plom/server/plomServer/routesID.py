@@ -69,11 +69,10 @@ class IDHandler:
         pairs where each pair is (student ID, student name).
 
         Side effects on the server test spec file:
-          * If number_to_name and/or number_to_produce are -1, values
-            are set based on this classlist and the spec is permanently
-            altered.
-          * If number_to_name < 0 but number_to_produce is too small for
-            the result, respond with HTTPNotAcceptable .
+          * If numberToName and/or numberToProduce are -1, values are
+            set based on this classlist (spec is permanently altered)/
+          * If numberToName < 0 but numberToProduce is too small for the
+            result, respond with HTTPNotAcceptable.
 
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
@@ -90,7 +89,7 @@ class IDHandler:
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
         spec = self.server.testSpec
-        if spec.number_to_name < 0 or spec.number_to_produce < 0:
+        if spec.numberToName < 0 or spec.numberToProduce < 0:
             if spec.number_to_name < 0:
                 spec.set_number_papers_to_name(len(classlist))
             if spec.number_to_produce < 0:

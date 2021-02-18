@@ -36,8 +36,8 @@ def test_spec_setting_adds_spares():
     s.spec["numberToProduce"] = -1
     s.set_number_papers_to_name(16)
     s.set_number_papers_add_spares(16)
-    assert s.number_to_name == 16
-    assert s.number_to_produce > 16
+    assert s.numberToName == 16
+    assert s.numberToProduce > 16
     s.verifySpec(verbose=False)
 
 
