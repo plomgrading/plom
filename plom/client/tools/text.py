@@ -57,10 +57,6 @@ class CommandText(QUndoCommand):
             pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
         )
         self.setText("Text")
-        if len(text) > 0:
-            # Works without timer but maybe feels more responsive with b/c
-            # during the api call, source text will be displayed.
-            QTimer.singleShot(5, self.blurb.textToPng)
 
     @classmethod
     def from_pickle(cls, X, *, scene):
@@ -122,6 +118,11 @@ class TextItem(QGraphicsTextItem):
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
+        if text.casefold().startswith("tex:"):
+            # self.textToPng()
+            # instead, hide latency of API call: meanwhile source text displayed
+            # Issue #1391: unfortunately causes a race, at least in randomarker
+            QTimer.singleShot(5, self.textToPng)
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""

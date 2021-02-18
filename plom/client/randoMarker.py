@@ -21,6 +21,7 @@ import os
 import random
 import sys
 import tempfile
+import time
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainterPath, QPen
@@ -197,6 +198,10 @@ def annotatePaper(maxMark, task, imageList, aname, tags):
         annot = SceneParent()
         annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
         annot.doRandomAnnotations()
+        # Issue #1391: settle annotation events, avoid races with QTimers
+        Qapp.processEvents()
+        time.sleep(0.25)
+        Qapp.processEvents()
         return annot.doneAnnotating()
 
 
@@ -254,6 +259,7 @@ if __name__ == "__main__":
         help="Which server to contact.",
     )
     global messenger
+    global Qapp
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
@@ -293,7 +299,7 @@ if __name__ == "__main__":
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
     L.extend(["-platform", "offscreen"])
-    app = QApplication(L)
+    Qapp = QApplication(L)
 
     for q in range(1, spec["numberOfQuestions"] + 1):
         for v in range(1, spec["numberOfVersions"] + 1):
