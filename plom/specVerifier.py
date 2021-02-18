@@ -12,15 +12,15 @@ import toml
 
 specdir = "specAndDatabase"
 log = logging.getLogger("spec")
-# indicating check marks
-check_mark = " [check]"
-warn_mark = " [warning]"
+# support for colour checkmarks
 ansi_green = "\033[92m"
 ansi_yellow = "\033[93m"
 ansi_red = "\033[91m"
 ansi_off = "\033[0m"
-check_mark = " " + ansi_green + "[\N{Check Mark}]" + ansi_off
-warn_mark = " " + ansi_red + "[warning]" + ansi_off
+# warn_mark = " " + ansi_red + "[warning]" + ansi_off
+# check_mark = " " + ansi_green + "[\N{Check Mark}]" + ansi_off
+warn_mark = " [warning]"
+check_mark = " [check]"
 chk = check_mark
 
 
