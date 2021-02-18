@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Client shows path information in the Options dialog.
+* Server: one can defer choosing number of papers until the classlist is uploaded by using "-1" for numberToName and/or numberToPrint.
 
 ### Changed
 * Client background/uploader can operate in parallel.

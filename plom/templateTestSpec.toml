@@ -14,8 +14,10 @@ numberOfVersions = 2
 # how many pages
 numberOfPages = 6
 # total number of papers to produce
+# (set to "-1" to use length of classlist + 10%)
 numberToProduce = 20
 # how many of those should be preprinted with names from a classlist
+# (again set to "-1" to use the length of the classlist)
 numberToName = 10
 # how many questions to mark
 numberOfQuestions = 3

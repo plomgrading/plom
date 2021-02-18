@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import sys
 from getpass import getpass
 
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomConflict
+from plom.plom_exceptions import (
+    PlomExistingLoginException,
+    PlomConflict,
+    PlomRangeException,
+)
 
 
 def get_messenger(server=None, password=None):
@@ -51,6 +55,14 @@ def upload_classlist(classlist, msgr):
 
     try:
         msgr.upload_classlist(classlist)
+    except PlomRangeException as e:
+        print(
+            "Error: classlist lead to the following specification error:\n"
+            "  {}\n"
+            "Perhaps classlist is too large for specTest.numberToProduce?".format(e)
+        )
+        # TODO: I think the called should be doing all this exit() stuff
+        sys.exit(4)
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")
         sys.exit(3)
