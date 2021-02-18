@@ -4,6 +4,8 @@
 from pytest import raises
 from plom import SpecVerifier
 
+raw = SpecVerifier.demo().spec
+
 
 def test_spec_demo():
     s = SpecVerifier.demo()
@@ -17,38 +19,41 @@ def test_spec_verify():
 
 
 def test_spec_too_many_named():
-    s = SpecVerifier.demo()
-    s.spec["numberToProduce"] = 50
-    s.spec["numberToName"] = 60
+    r = raw.copy()
+    r["numberToProduce"] = 50
+    r["numberToName"] = 60
+    s = SpecVerifier(r)
     raises(ValueError, lambda: s.verifySpec(verbose=False))
 
 
 def test_spec_negatives_still_pass():
-    s = SpecVerifier.demo()
-    s.spec["numberToName"] = -1
-    s.spec["numberToProduce"] = -1
-    s.verifySpec(verbose=False)
+    r = raw.copy()
+    r["numberToName"] = -1
+    r["numberToProduce"] = -1
+    SpecVerifier(r).verifySpec(verbose=False)
 
 
 def test_spec_setting_adds_spares():
-    s = SpecVerifier.demo()
-    s.spec["numberToName"] = -1
-    s.spec["numberToProduce"] = -1
+    r = raw.copy()
+    r["numberToName"] = -1
+    r["numberToProduce"] = -1
+    s = SpecVerifier(r)
     s.set_number_papers_to_name(16)
     s.set_number_papers_add_spares(16)
     assert s.numberToName == 16
+    # creates some spares
     assert s.numberToProduce > 16
     s.verifySpec(verbose=False)
 
 
 def test_spec_invalid_shortname():
-    s = SpecVerifier.demo()
-    s.spec["name"] = "no spaces"
-    raises(ValueError, lambda: s.verifySpec(verbose=False))
+    r = raw.copy()
+    r["name"] = "no spaces"
+    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
 
 
 def test_spec_too_many_named():
-    s = SpecVerifier.demo()
-    s.spec["numberToProduce"] = 50
-    s.spec["numberToName"] = 60
-    raises(ValueError, lambda: s.verifySpec(verbose=False))
+    r = raw.copy()
+    r["numberToProduce"] = 50
+    r["numberToName"] = 60
+    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
