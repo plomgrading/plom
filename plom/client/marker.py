@@ -8,7 +8,7 @@
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPL-3.0-or-later"
 
@@ -1768,7 +1768,7 @@ class MarkerClient(QWidget):
             list: A list of the current comments in the server.
         """
 
-        get_current_comments_response = messenger.MgetCurrentComments()
+        get_current_comments_response = self.msgr.MgetCurrentComments()
         get_comments_status = get_current_comments_response[0]
         if get_comments_status is False:
             log.warning("Refreshing comment list failed. ")
@@ -1788,7 +1788,7 @@ class MarkerClient(QWidget):
                 the comments list update was unsuccessfull.
         """
 
-        refresh_response = messenger.MrefreshComments(current_comments_list)
+        refresh_response = self.msgr.MrefreshComments(current_comments_list)
         refresh_response_status = refresh_response[0]
         if refresh_response_status is False:
             log.warning("Refreshing comment list failed. ")
@@ -2241,7 +2241,7 @@ class MarkerClient(QWidget):
         exam_name = self.exam_spec["name"]
 
         # Here we will get the username
-        username = messenger.whoami()
+        username = self.msgr.whoami()
 
         for X in clist:
             if commentIsVisible(X, n, username) and X["text"][:4].upper() == "TEX:":

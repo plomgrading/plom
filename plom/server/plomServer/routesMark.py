@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+
+import json
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
-
-import json
 
 
 class MarkHandler:

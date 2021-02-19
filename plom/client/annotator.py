@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
@@ -1390,18 +1390,14 @@ class Annotator(QWidget):
         self.ui.refreshCommentsButton.clicked.connect(self.refreshComments)
 
     def handleComment(self, dlt_txt):
-        """
-        Handles comments by passing the comment's delta value and text to self.scene.
+        """Pass comment ID, delta, and text the scene.
 
         Args:
-            dlt_txt (tuple [double, string] ): consists of a number corresponding to the delta for
-                               the comment, followed by a string with it's corresponding text.
-                               Ex:  for a +1 comment with text "forgot the chain rule"
-                                    [1, "forgot the chain rule"]
+            dlt_txt (tuple): the comment ID number, delta, and string of
+                text, e.g., `[12345, -2, "missing chain rule"]`
 
         Returns:
             None: Modifies self.scene and self.toolMode
-
         """
         # Set the model to text and change cursor.
         self.setToolMode("comment", QCursor(Qt.IBeamCursor))

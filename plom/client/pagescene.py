@@ -2081,6 +2081,8 @@ class PageScene(QGraphicsScene):
         Args:
             delta (str): a string containing the delta integer.
             text (str): the text in the comment.
+            commentID (int): the id of the comment: TODO surely rest can
+                be retrieved from this?
             annotatorUpdate (bool): true if annotator should be updated,
                 false otherwise.
 
