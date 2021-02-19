@@ -1,6 +1,6 @@
-html = """
+htmlsrc = """
 <!DOCTYPE html>
-<!-- Copyright (C) 2018-2020 Colin B. Macdonald <cbm@m.fsf.org>-->
+<!-- Copyright (C) 2018-2021 Colin B. Macdonald <cbm@m.fsf.org>-->
 <!-- SPDX-License-Identifier: FSFAP -->
 <!--
      Copying and distribution of this file, with or without modification,

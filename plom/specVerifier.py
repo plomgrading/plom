@@ -389,17 +389,11 @@ class SpecVerifier:
         print('    name "{}" has non-zero length{}'.format(self.spec["name"], chk))
         print('    name "{}" is alphanumeric{}'.format(self.spec["name"], chk))
 
-        # TODO: too restrictive?  e.g., https://gitlab.com/plom/plom/-/issues/1364
-        if not (
-            all(x.isalnum() or x.isspace() for x in self.spec["longName"])
-            and len(self.spec["longName"]) > 0
-        ):
+        if len(self["longName"]) <= 0 or self["longName"].isspace():
             raise ValueError(
-                "Specification error - Test longName must be an alphanumeric string of non-zero length."
+                "Specification error - Test should have nonempty longName."
             )
-
-        print('    Name "{}" has non-zero length{}'.format(self.spec["longName"], chk))
-        print('    Name "{}" is alphanumeric{}'.format(self.spec["longName"], chk))
+        print('    has long name "{}"{}'.format(self["longName"], chk))
 
         print("  Checking production numbers")
         for x in ("numberOfVersions", "numberOfPages", "numberOfQuestions"):
