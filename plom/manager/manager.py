@@ -403,7 +403,6 @@ class Manager(QWidget):
         pwd = self.ui.passwordLE.text()
         self.ui.passwordLE.setText(pwd)
 
-
         if len(pwd) < 4:
             return
 
