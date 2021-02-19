@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from datetime import datetime
@@ -9,13 +9,9 @@ import hashlib
 import imghdr
 import json
 import os
-import subprocess
-import tempfile
-import uuid
 import logging
 import random
 import copy
-import sys
 
 from plom.textools import texFragmentToPNG
 

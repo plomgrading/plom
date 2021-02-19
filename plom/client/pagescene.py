@@ -544,7 +544,6 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             if type(X) is TextItem:
                 count += 1
-
         return count
 
     def areThereAnnotations(self):
@@ -971,7 +970,6 @@ class PageScene(QGraphicsScene):
             None
 
         """
-
         # Find the object under the click.
         under = self.itemAt(event.scenePos(), QTransform())
         # If something is there... (fixes bug reported by MattC)
@@ -1732,7 +1730,6 @@ class PageScene(QGraphicsScene):
             None
 
         """
-
         if item in [
             self.underImage,
             self.scoreBox,
@@ -1885,7 +1882,6 @@ class PageScene(QGraphicsScene):
         Returns:
             True if all objects are within the page's bounds, false otherwise.
         """
-
         for X in self.items():
             # check all items that are not the image or scorebox
             if (X is self.underImage) or (X is self.scoreBox):
@@ -1998,7 +1994,6 @@ class PageScene(QGraphicsScene):
             None
 
         """
-
         # if is an undo then we need a minus-sign here
         # because we are undoing the delta.
         # note that this command is passed a string
@@ -2081,6 +2076,8 @@ class PageScene(QGraphicsScene):
         Args:
             delta (str): a string containing the delta integer.
             text (str): the text in the comment.
+            commentID (int): the id of the comment: TODO surely rest can
+                be retrieved from this?
             annotatorUpdate (bool): true if annotator should be updated,
                 false otherwise.
 
