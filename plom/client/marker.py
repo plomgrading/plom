@@ -58,7 +58,7 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
+from .comment_list import AddTagBox, commentLoadAllToml, commentIsVisible
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import GroupView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
@@ -1761,6 +1761,42 @@ class MarkerClient(QWidget):
             src_img_data,
         )
 
+    def getCurrentComments(self):
+        """Ask from the server for the current comments.
+
+        Returns:
+            list: A list of the current comments in the server.
+        """
+
+        get_current_comments_response = messenger.MgetCurrentComments()
+        get_comments_status = get_current_comments_response[0]
+        if get_comments_status is False:
+            log.warning("Refreshing comment list failed. ")
+            return []
+        else:
+            current_comments_list = get_current_comments_response[1]
+            return current_comments_list
+
+    def getCommentsFromServer(self, current_comments_list):
+        """Push comment list to the server and pull the latest comments list.
+
+        Args:
+            current_comments_list (list): A list of the comments as dictionaries.
+
+        Returns:
+            list: A list of the updated dictionary objects. This list is empty if
+                the comments list update was unsuccessfull.
+        """
+
+        refresh_response = messenger.MrefreshComments(current_comments_list)
+        refresh_response_status = refresh_response[0]
+        if refresh_response_status is False:
+            log.warning("Refreshing comment list failed. ")
+            return []
+        else:
+            refreshed_comments_list = refresh_response[1]
+            return refreshed_comments_list
+
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
@@ -2184,7 +2220,11 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
-        clist = commentLoadAll()
+        # TODO: deprecated, remove?  what do we want to do for comment pre-latexing?
+        if True:
+            return
+
+        clist = commentLoadAllToml()
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C["text"]))
 
@@ -2196,10 +2236,15 @@ class MarkerClient(QWidget):
         c = 0
         pd.setValue(c)
         n = int(self.question)
+
+        # TODO: I don't think we need this anymore
         exam_name = self.exam_spec["name"]
 
+        # Here we will get the username
+        username = messenger.whoami()
+
         for X in clist:
-            if commentIsVisible(X, n, exam_name) and X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, username) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version

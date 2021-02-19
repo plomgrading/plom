@@ -1387,6 +1387,7 @@ class Annotator(QWidget):
         self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
+        self.ui.refreshCommentsButton.clicked.connect(self.refreshComments)
 
     def handleComment(self, dlt_txt):
         """
@@ -1405,7 +1406,9 @@ class Annotator(QWidget):
         # Set the model to text and change cursor.
         self.setToolMode("comment", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheComment(dlt_txt[0], dlt_txt[1], annotatorUpdate=True)
+            self.scene.changeTheComment(
+                dlt_txt[0], dlt_txt[1], dlt_txt[2], annotatorUpdate=True
+            )
 
     def totalMarkSet(self, tm):
         """
@@ -1579,6 +1582,9 @@ class Annotator(QWidget):
             False if user cancels, True if annotator is closed successfully.
 
         """
+        # First lets refresh the comments
+        self.refreshComments()
+
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if there is no answer.")
@@ -1971,6 +1977,7 @@ class Annotator(QWidget):
                 ).exec()
                 return
             else:
+                # TODO: Linter cases this as an error.
                 self.scene.noAnswer(-self.maxMark)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:
@@ -1983,3 +1990,71 @@ class Annotator(QWidget):
             self.ui.finishedButton.animateClick()
         else:
             pass
+
+    def checkCommentSimilarity(self, new_comment):
+        """Check if this new comment is similar to an existing one.
+
+        Args:
+            new_comment (dict): The dictionary representing the new added comment.
+
+        Returns:
+            boolean: True/False based on wether this comment should be added or not
+        """
+
+        # First lets refresh the comments
+        self.refreshComments()
+
+        current_comments_list = self.comment_widget.CL.clist
+
+        for existing_comment in current_comments_list:
+            if (
+                existing_comment["text"] == new_comment["text"]
+                and existing_comment["delta"] == new_comment["delta"]
+            ):
+                new_comment_str = (
+                    str(new_comment["delta"]) + " : " + new_comment["text"]
+                )
+                existing_comment_str = (
+                    str(existing_comment["delta"]) + " : " + existing_comment["text"]
+                )
+
+                similar_comment_message = "<p>You asked for a new comment to be built but it is too similar to other comments:<\p>"
+                similar_comment_message += str(
+                    "<p>Your comment is " + new_comment_str + "<\p>"
+                )
+                similar_comment_message += str(
+                    "<p>The similar comment is " + existing_comment_str + "<\p>"
+                )
+                similar_comment_message += str(
+                    "<p>Are you sure you want to add this new comment ? If you press no, we will add the old comment.<\p>"
+                )
+
+                msg = SimpleMessage(similar_comment_message)
+                if msg.exec_() == QMessageBox.No:
+                    add_new_comment = False
+                else:
+                    add_new_comment = True
+                break
+            else:
+                add_new_comment = True
+
+        return add_new_comment
+
+    def refreshComments(self):
+        """Request for a refreshed comments list and update the current comments box."""
+
+        current_comments_list = self.comment_widget.CL.clist
+
+        refreshed_comments_list = self.parentMarkerUI.getCommentsFromServer(
+            current_comments_list
+        )
+
+        if len(refreshed_comments_list) == 0:
+            ErrorMessage(
+                "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
+            ).exec()
+            return
+        else:
+            self.comment_widget.CL.clist = refreshed_comments_list
+            self.comment_widget.CL.populateTable()
+            return

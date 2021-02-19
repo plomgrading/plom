@@ -197,7 +197,11 @@ class Server(object):
         MreviewQuestion,
         MrevertTask,
     )
-
+    from .plomServer.serverComments import (
+        MgetCurrentComments,
+        MrefreshComments,
+        MupdateCommentsCount,
+    )
     from .plomServer.serverReport import (
         RgetUnusedTests,
         RgetScannedTests,

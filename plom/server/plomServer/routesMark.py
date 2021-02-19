@@ -9,6 +9,8 @@ from .routeutils import authenticate_by_token, authenticate_by_token_required_fi
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
 
+import json
+
 
 class MarkHandler:
     def __init__(self, plomServer):
@@ -281,6 +283,22 @@ class MarkHandler:
             task_metadata["image_md5s"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
+
+        # Get a list of the scene items which includes the comments.
+        plomdat_str = plomdat.decode("UTF-8")
+        plomdat_dict = json.loads(plomdat_str)
+        comment_items_list = plomdat_dict["sceneItems"]
+
+        # Updates the comment counts in the database
+        update_comments_count_response = self.server.MupdateCommentsCount(
+            comment_items_list
+        )
+
+        if update_comments_count_response is False:
+            # TODO: I COuld probably fail here, but I honestly would prefer it
+            # If (at least at the moment) we don't kill the process because
+            # changing comment count didn't work)
+            log.warning("Updating comments counts did not work")
 
         if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
@@ -562,6 +580,60 @@ class MarkHandler:
         else:  # cannot find that task
             return web.Response(status=404)
 
+    # @routes.patch("/MK/comment")
+    @authenticate_by_token_required_fields(["user"])
+    def MgetCurrentComments(self, data, request):
+        """Respond with the current comments list from the database.
+
+        Args:
+            data (dict): A dictionary including user/token.
+            request (aiohttp.web_request.Request): A request of type GET /MK/comment.
+
+        Returns:
+            aiohttp.web_response.Response: Includes the updated list of current comments
+                dictionaries.
+        """
+
+        username = data["user"]
+
+        current_comments = self.server.MgetCurrentComments(username)
+
+        # TODO: Here we would have to get the database cases that check if the task belongs
+        # to this user.
+        if True:
+            return web.json_response(current_comments, status=200)
+        else:  # not your task
+            return web.Response(status=401)
+
+    # @routes.patch("/MK/comment")
+    @authenticate_by_token_required_fields(["user", "current_comments_list"])
+    def MrefreshComments(self, data, request):
+        """Respond with updated comment list and add received comments to the database.
+
+        Args:
+            data (dict): A dictionary including user/token in addition to the list of
+                comments  already available on the client side.
+            request (aiohttp.web_request.Request): A request of type GET /MK/comment.
+
+        Returns:
+            aiohttp.web_response.Response: Includes the updated list of
+                comment dictionaries.
+        """
+
+        username = data["user"]
+        current_comments_list = data["current_comments_list"]
+
+        refreshed_comments = self.server.MrefreshComments(
+            username, current_comments_list
+        )
+
+        # TODO: Here we would have to get the database cases that check if the task belongs
+        # to this user.
+        if True:
+            return web.json_response(refreshed_comments, status=200)
+        else:  # not your task
+            return web.Response(status=401)
+
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -580,6 +652,8 @@ class MarkHandler:
         router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
+        router.add_get("/MK/currentcomment", self.MgetCurrentComments)
+        router.add_get("/MK/comment", self.MrefreshComments)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)

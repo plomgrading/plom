@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 
 from datetime import datetime
+import time
 import hashlib
 import imghdr
 import json
@@ -12,6 +13,9 @@ import subprocess
 import tempfile
 import uuid
 import logging
+import random
+import copy
+import sys
 
 from plom.textools import texFragmentToPNG
 
@@ -332,7 +336,7 @@ def MgetOriginalImages(self, task):
 
 
 def MsetTag(self, username, task_code, tag):
-    """Assign a tag string to a paper
+    """Assign a tag string to a paper.
 
     Args:
         username (str): User who assigned tag to the paper.

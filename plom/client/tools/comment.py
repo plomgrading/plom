@@ -21,11 +21,17 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, delta, text):
+    def __init__(self, scene, pt, delta, text, cid):
         super().__init__()
         self.scene = scene
         self.gdt = GroupDeltaTextItem(
-            pt, delta, text, scene, style=scene.style, fontsize=scene.fontSize
+            pt,
+            delta,
+            text,
+            cid=cid,
+            scene=scene,
+            style=scene.style,
+            fontsize=scene.fontSize,
         )
         self.setText("GroupDeltaText")
 
@@ -37,10 +43,10 @@ class CommandGroupDeltaText(QUndoCommand):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 4:
+        if len(X) != 5:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3])
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4])
 
     def redo(self):
         # Mark increased by delta
@@ -64,7 +70,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, scene, style, fontsize):
+    def __init__(self, pt, delta, text, cid, scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
@@ -123,6 +129,8 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             "GroupDeltaText",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
+            # self.commentID,  # TODO: well, it *should* be there
+            self.blurb.commentID,
             self.di.delta,
             self.blurb.getContents(),
         ]
@@ -148,7 +156,8 @@ class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):
         super().__init__()
         self.di = GhostDelta(dlt, fontsize)
-        self.blurb = GhostText(txt, fontsize)
+        self.commentID = "987654"
+        self.blurb = GhostText(txt, self.commentID, fontsize)
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
@@ -175,7 +184,7 @@ class GhostComment(QGraphicsItemGroup):
         self.removeFromGroup(self.blurb)
         # change things
         self.di.changeDelta(dlt)
-        self.blurb.changeText(txt)
+        self.blurb.changeText(txt, self.commentID)
         # move to correct positions
         self.tweakPositions()
         self.addToGroup(self.blurb)

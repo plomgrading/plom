@@ -356,6 +356,7 @@ class PageScene(QGraphicsScene):
         self.markDelta = "0"
         self.commentText = ""
         self.commentDelta = "0"
+        self.commentID = None
 
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
@@ -522,12 +523,13 @@ class PageScene(QGraphicsScene):
         Get the current text items and comments associated with this paper.
 
         Returns:
-            (list): a list containing all comments.
-
+            list: pairs of IDs and strings from each bit of text.
         """
         comments = []
+        # TODO: Issue #1092.
         for X in self.items():
             if isinstance(X, TextItem):
+                # TODO: maybe we need IDs here, but only for comments not text
                 comments.append(X.getContents())
         return comments
 
@@ -542,6 +544,7 @@ class PageScene(QGraphicsScene):
         for X in self.items():
             if type(X) is TextItem:
                 count += 1
+
         return count
 
     def areThereAnnotations(self):
@@ -828,15 +831,16 @@ class PageScene(QGraphicsScene):
 
         # If the mark-delta of comment is non-zero then create a
         # delta-object with a different offset, else just place the comment.
+        # TODO: comments have IDs, Text does not: refactor to use comment with "."
         if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
             # Update position of text - the ghostitem has it right
             # TODO: move this calc into the item
             pt += QPointF(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, pt, self.commentText)
+            command = CommandText(self, pt, self.commentText)  # self.commentID)
             self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.commentDelta, self.commentText
+                self, pt, self.commentDelta, self.commentText, self.commentID
             )
             log.debug(
                 "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
@@ -967,6 +971,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
+
         # Find the object under the click.
         under = self.itemAt(event.scenePos(), QTransform())
         # If something is there... (fixes bug reported by MattC)
@@ -987,7 +992,7 @@ class PageScene(QGraphicsScene):
 
         # Construct empty text object, give focus to start editor
         pt = event.scenePos()
-        command = CommandText(self, pt, "")
+        command = CommandText(self, pt, "", None)  # TODO: None for commentID?!
         # move so centred under cursor   TODO: move into class!
         pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
         command.blurb.setPos(pt)
@@ -1727,6 +1732,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
+
         if item in [
             self.underImage,
             self.scoreBox,
@@ -1879,6 +1885,7 @@ class PageScene(QGraphicsScene):
         Returns:
             True if all objects are within the page's bounds, false otherwise.
         """
+
         for X in self.items():
             # check all items that are not the image or scorebox
             if (X is self.underImage) or (X is self.scoreBox):
@@ -1991,6 +1998,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
+
         # if is an undo then we need a minus-sign here
         # because we are undoing the delta.
         # note that this command is passed a string
@@ -2004,7 +2012,7 @@ class PageScene(QGraphicsScene):
         # if we are in comment mode then the comment might need updating
         if self.mode == "comment":
             self.changeTheComment(
-                self.markDelta, self.commentText, annotatorUpdate=False
+                self.markDelta, self.commentText, self.commentID, annotatorUpdate=False
             )
 
     def changeTheDelta(self, newDelta, annotatorUpdate=False):
@@ -2066,7 +2074,7 @@ class PageScene(QGraphicsScene):
             return False
         return True
 
-    def changeTheComment(self, delta, text, annotatorUpdate=True):
+    def changeTheComment(self, delta, text, commentID, annotatorUpdate=True):
         """
         Changes the new comment for the paper based on the delta and text.
 
@@ -2107,6 +2115,7 @@ class PageScene(QGraphicsScene):
                 delta = "."
         self.commentDelta = delta
         self.commentText = text
+        self.commentID = commentID
         self.updateGhost(delta, text)
 
     def noAnswer(self, delta):
@@ -2134,10 +2143,15 @@ class PageScene(QGraphicsScene):
         self.undoStack.push(command)
 
         # build a delta-comment
+        print("Colin debugging: no answer: TODO Test this")
+        print("=" * 80)
+        print(self.commentID)
+        print("=" * 80)
         command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
             delta,
             "NO ANSWER GIVEN",
+            self.commentID,  # TODO: can it be?
         )
         self.undoStack.push(command)
