@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QItemDelegate,
     QPushButton,
+    QToolButton,
     QSpinBox,
     QTableView,
     QTextEdit,
@@ -272,19 +273,24 @@ class CommentWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
-        grid.addWidget(self.CL, 1, 1, 2, 3)
+        grid.addWidget(self.CL, 1, 1, 2, 4)
         self.addB = QPushButton("Add")
         self.hideB = QPushButton("Hide")
         self.filtB = QPushButton("Filter")
+        # self.otherB = QPushButton("Refresh")
+        # TODO: needs icon or something, or a ... menu, etc
+        self.otherB = QToolButton()
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
+        grid.addWidget(self.otherB, 3, 4)
         grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.addFromTextList)
         self.hideB.clicked.connect(self.hideItem)
         self.filtB.clicked.connect(self.changeFilter)
+        self.otherB.clicked.connect(self.parent.refreshComments)
 
     def setTestname(self, s):
         """Set testname and refresh view."""

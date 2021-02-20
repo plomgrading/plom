@@ -230,6 +230,8 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
+        m.addAction("Refresh comments", self.refreshComments)
+        m.addSeparator()
         m.addAction("Help", self.menuDummy).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", self.menuDummy).setEnabled(False)
@@ -1387,7 +1389,6 @@ class Annotator(QWidget):
         self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
-        self.ui.refreshCommentsButton.clicked.connect(self.refreshComments)
 
     def handleComment(self, dlt_txt):
         """Pass comment ID, delta, and text the scene.
