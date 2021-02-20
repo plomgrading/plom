@@ -1632,15 +1632,16 @@ class Annotator(QWidget):
 
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
-        try:
-            self.comment_widget.saveComments()
-        except (PermissionError, FileNotFoundError) as e:
-            msg = ErrorMessage(
-                "Error when saving local comment list:\n\n{}\n\n"
-                "You may continue, but comments will not be saved "
-                "between Plom instances".format(e)
-            )
-            msg.exec_()
+        # Deprecated?  Add menu option to export comments?
+        # try:
+        #     self.comment_widget.saveComments()
+        # except (PermissionError, FileNotFoundError) as e:
+        #     msg = ErrorMessage(
+        #         "Error when saving local comment list:\n\n{}\n\n"
+        #         "You may continue, but comments will not be saved "
+        #         "between Plom instances".format(e)
+        #     )
+        #     msg.exec_()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
