@@ -21,7 +21,7 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, delta, text, cid):
+    def __init__(self, scene, pt, cid, delta, text):
         super().__init__()
         self.scene = scene
         self.gdt = GroupDeltaTextItem(
@@ -74,6 +74,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         super().__init__()
         self.pt = pt
         self.style = style
+        self.commentID = cid
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
@@ -129,8 +130,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             "GroupDeltaText",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
-            # self.commentID,  # TODO: well, it *should* be there
-            self.blurb.commentID,
+            self.commentID,
             self.di.delta,
             self.blurb.getContents(),
         ]
@@ -157,7 +157,7 @@ class GhostComment(QGraphicsItemGroup):
         super().__init__()
         self.di = GhostDelta(dlt, fontsize)
         self.commentID = "987654"
-        self.blurb = GhostText(txt, self.commentID, fontsize)
+        self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
@@ -184,7 +184,7 @@ class GhostComment(QGraphicsItemGroup):
         self.removeFromGroup(self.blurb)
         # change things
         self.di.changeDelta(dlt)
-        self.blurb.changeText(txt, self.commentID)
+        self.blurb.changeText(txt)
         # move to correct positions
         self.tweakPositions()
         self.addToGroup(self.blurb)

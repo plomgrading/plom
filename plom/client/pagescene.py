@@ -839,7 +839,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.commentDelta, self.commentText, self.commentID
+                self, pt, self.commentID, self.commentDelta, self.commentText
             )
             log.debug(
                 "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
@@ -990,7 +990,7 @@ class PageScene(QGraphicsScene):
 
         # Construct empty text object, give focus to start editor
         pt = event.scenePos()
-        command = CommandText(self, pt, "", None)  # TODO: None for commentID?!
+        command = CommandText(self, pt, "")
         # move so centred under cursor   TODO: move into class!
         pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
         command.blurb.setPos(pt)
@@ -2147,8 +2147,8 @@ class PageScene(QGraphicsScene):
         command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
+            self.commentID,  # TODO: can it be, should be some dummy value?
             delta,
             "NO ANSWER GIVEN",
-            self.commentID,  # TODO: can it be?
         )
         self.undoStack.push(command)
