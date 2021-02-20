@@ -5,11 +5,9 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-import re
 import time
 import logging
 from pathlib import Path
-import random
 
 import toml
 import appdirs
@@ -39,6 +37,8 @@ from PyQt5.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
+
+from plom.comment_utils import generate_new_comment_ID
 
 
 log = logging.getLogger("annotr")
@@ -278,21 +278,6 @@ def commentIsVisible(comment, question_number, username, filters=None):
     filter_response = all(filter_responses)
 
     return filter_response
-
-
-def generate_new_comment_ID(num_of_digits=12):
-    """Generate a #num_of_digits random number string as a new comment ID.
-
-    Args:
-        num_of_digits (int, optional): Number of digits for comment ID. Defaults to 12.
-
-    Returns:
-        str: A 12 digit number as a string representing the new comment ID.
-    """
-    # TODO: Why string you ask ? Well because of this:
-    # comIDi = QStandardItem(com["id"])
-    # OverflowError: argument 1 overflowed: value must be in the range -2147483648 to 2147483647
-    return str(random.randint(10 ** num_of_digits, 10 ** (num_of_digits + 1) - 1))
 
 
 class CommentWidget(QWidget):
