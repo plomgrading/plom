@@ -38,7 +38,7 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
 )
 
-from plom.comment_utils import generate_new_comment_ID
+from plom.comment_utils import generate_new_comment_ID, comments_apply_default_fields
 
 
 log = logging.getLogger("annotr")
@@ -95,31 +95,6 @@ tags = "Q2 foo bar"
     return comments_apply_default_fields(clist)
 
 
-def comments_apply_default_fields(comlist):
-    """Add missing fields with defaults to list of comments.
-
-    Args:
-        comlist (list): list of dicts.  Copies will not be made so
-            keep a deep copy if you need the original.
-
-    Returns:
-        list: updated list of dicts.
-    """
-    comment_defaults = {
-        "tags": "",
-        "testname": "",
-        "meta": "",
-        "count": 0,
-        "created": time.gmtime(0),
-        "modified": time.gmtime(0),
-        "username": "Administrator",
-    }
-    for d in comlist:
-        for k, v in comment_defaults.items():
-            d.setdefault(k, comment_defaults[k])
-    return comlist
-
-
 def comments_load_from_file(f):
     """Grab comments from a toml file.
 
@@ -174,7 +149,7 @@ def comments_save_list(clist, comment_dir=comment_dir, filename=comment_filename
 # Eventually there may be more "state" to the filters and something like a dict
 # might make more sense here, but for now its list of booleans:
 #    hide-comments-not-for-this-question
-#    hide-comments-not-for-this-test
+#    hide-comments-not-by-this-user
 #    hide-comments-created-by-administrator
 default_comments_filter = [False, False, False]
 

@@ -287,18 +287,12 @@ class MarkHandler:
         # Get a list of the scene items which includes the comments.
         plomdat_str = plomdat.decode("UTF-8")
         plomdat_dict = json.loads(plomdat_str)
-        comment_items_list = plomdat_dict["sceneItems"]
-
-        # Updates the comment counts in the database
-        update_comments_count_response = self.server.MupdateCommentsCount(
-            comment_items_list
-        )
-
-        if update_comments_count_response is False:
+        annotations_list = plomdat_dict["sceneItems"]
+        if not self.server.MupdateCommentsCount(annotations_list):
             # TODO: I COuld probably fail here, but I honestly would prefer it
             # If (at least at the moment) we don't kill the process because
             # changing comment count didn't work)
-            log.warning("Updating comments counts did not work")
+            log.error("Updating comments counts did not work: TODO debug?")
 
         if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
@@ -593,17 +587,9 @@ class MarkHandler:
             aiohttp.web_response.Response: Includes the updated list of current comments
                 dictionaries.
         """
-
         username = data["user"]
-
         current_comments = self.server.MgetCurrentComments(username)
-
-        # TODO: Here we would have to get the database cases that check if the task belongs
-        # to this user.
-        if True:
-            return web.json_response(current_comments, status=200)
-        else:  # not your task
-            return web.Response(status=401)
+        return web.json_response(current_comments, status=200)
 
     # @routes.patch("/MK/comment")
     @authenticate_by_token_required_fields(["user", "current_comments_list"])
@@ -619,20 +605,13 @@ class MarkHandler:
             aiohttp.web_response.Response: Includes the updated list of
                 comment dictionaries.
         """
-
         username = data["user"]
         current_comments_list = data["current_comments_list"]
 
         refreshed_comments = self.server.MrefreshComments(
             username, current_comments_list
         )
-
-        # TODO: Here we would have to get the database cases that check if the task belongs
-        # to this user.
-        if True:
-            return web.json_response(refreshed_comments, status=200)
-        else:  # not your task
-            return web.Response(status=401)
+        return web.json_response(refreshed_comments, status=200)
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
