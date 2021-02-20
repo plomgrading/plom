@@ -132,6 +132,7 @@ class SceneParent(QWidget):
                     CommandGroupDeltaText(
                         self.scene,
                         self.rpt(),
+                        0,
                         dlt,
                         random.choice(self.posComments),
                     )
@@ -151,6 +152,7 @@ class SceneParent(QWidget):
                     CommandGroupDeltaText(
                         self.scene,
                         self.rpt(),
+                        0,
                         dlt,
                         random.choice(self.negComments),
                     )

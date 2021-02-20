@@ -840,7 +840,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.commentDelta, self.commentText, self.commentID
+                self, pt, self.commentID, self.commentDelta, self.commentText
             )
             log.debug(
                 "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
@@ -2152,8 +2152,8 @@ class PageScene(QGraphicsScene):
         command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
+            self.commentID,  # TODO: can it be, should be some dummy value?
             delta,
             "NO ANSWER GIVEN",
-            self.commentID,  # TODO: can it be?
         )
         self.undoStack.push(command)
