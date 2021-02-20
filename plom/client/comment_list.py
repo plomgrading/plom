@@ -151,7 +151,7 @@ def comments_save_list(clist, comment_dir=comment_dir, filename=comment_filename
 #    hide-comments-not-for-this-question
 #    hide-comments-not-by-this-user
 #    hide-comments-created-by-administrator
-default_comments_filter = [False, False, False]
+default_comments_filter = [True, False, False]
 
 
 def comment_relates_to_question_number(comment, question_number):
