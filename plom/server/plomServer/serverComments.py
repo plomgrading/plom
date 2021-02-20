@@ -6,25 +6,15 @@ import time
 import json
 import os
 import logging
-import random
 import copy
+from pathlib import Path
+
+from plom import specdir
+from plom.comment_utils import generate_new_comment_ID
+
 
 log = logging.getLogger("server")
-
-
-def generate_new_comment_ID(num_of_digits=12):
-    """Generate a #num_of_digits random number string as a new comment ID.
-
-    Args:
-        num_of_digits (int, optional): Number of digits for comment ID. Defaults to 12.
-
-    Returns:
-        str: A 12 digit number as a string representing the new comment ID.
-    """
-    # TODO: Why string you ask ? Well because of this:
-    # comIDi = QStandardItem(com["id"])
-    # OverflowError: argument 1 overflowed: value must be in the range -2147483648 to 2147483647
-    return str(random.randint(10 ** num_of_digits, 10 ** (num_of_digits + 1) - 1))
+path = Path(specdir) / "comments.json"
 
 
 def _get_default_comments(number_of_questions):
@@ -84,9 +74,6 @@ def MgetCurrentComments(self, username):
     Returns:
         list: A list of the updated comments as dictionaries.
     """
-
-    path = "markedQuestions/commentFiles/commentsDataBase.json"
-
     if os.path.isfile(path):
         with open(path, "r") as comments_file:
             existing_comments_list = json.load(comments_file)
@@ -117,9 +104,6 @@ def MupdateCommentsCount(self, annotations):
     Returns:
         list: A list of the updated comments as dictionaries.
     """
-
-    path = "markedQuestions/commentFiles/commentsDataBase.json"
-
     annotated_comments = []
     for annotation in annotations:
         if len(annotation) > 2 and (annotation[0] == "GroupDeltaText"):
@@ -196,9 +180,6 @@ def MrefreshComments(self, username, current_marker_comments_list):
     Returns:
         list: A list of the existing comments.
     """
-
-    path = "markedQuestions/commentFiles/commentsDataBase.json"
-
     # Add the new incoming comments to the database.
     # Over-write a comment with the same ID as any of the comments existing in the database.
     # Meaming we prioritize the existing comments over the incoming comments
