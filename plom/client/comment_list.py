@@ -1020,22 +1020,12 @@ class ChangeFiltersDialog(QDialog):
     def __init__(self, parent, curFilters):
         super(QDialog, self).__init__()
         self.parent = parent
-        self.cb1 = QCheckBox("Hide comments from other questions")
-        self.cb2 = QCheckBox("Hide comments from other users")
+        self.cb1 = QCheckBox("Show comments from other questions")
+        self.cb2 = QCheckBox("Show comments from other users (EXPERIMENTAL)")
         self.cb3 = QCheckBox("Hide preset comments from administrator")
-
-        self.cb1.setCheckState(Qt.Checked if curFilters[0] else Qt.Unchecked)
-
-        if curFilters[1]:
-            self.cb2.setCheckState(Qt.Checked)
-        else:
-            self.cb2.setCheckState(Qt.Unchecked)
-
-        if curFilters[2]:
-            self.cb3.setCheckState(Qt.Checked)
-        else:
-            self.cb3.setCheckState(Qt.Unchecked)
-
+        self.cb1.setCheckState(Qt.Unchecked if curFilters[0] else Qt.Checked)
+        self.cb2.setCheckState(Qt.Unchecked if curFilters[1] else Qt.Checked)
+        self.cb3.setCheckState(Qt.Checked if curFilters[2] else Qt.Unchecked)
         flay = QVBoxLayout()
         flay.addWidget(self.cb1)
         flay.addWidget(self.cb2)
@@ -1120,7 +1110,7 @@ class ChangeFiltersDialog(QDialog):
 
     def getFilters(self):
         return [
-            self.cb1.checkState() == Qt.Checked,
-            self.cb2.checkState() == Qt.Checked,
+            self.cb1.checkState() == Qt.Unchecked,
+            self.cb2.checkState() == Qt.Unchecked,
             self.cb3.checkState() == Qt.Checked,
         ]
