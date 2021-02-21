@@ -84,15 +84,18 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-def simple_password():
-    """Creates a new simple password of the form word, word, word, word, word.
+def simple_password(n=3):
+    """Creates a new simple password that contains a random range from n to n+2 words.
+
+    args:
+        n -- number of words for the password. Default n = 3.
 
     Returns:
         str -- Password.
     """
 
-    password = secrets.choice(words)
-    for i in randint(3, 5):
+    password = ""
+    for i in range(n):
         password += secrets.choice(words)
     return password
 

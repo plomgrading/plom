@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Peter Lee
 
 from collections import defaultdict
 import os
@@ -406,7 +407,8 @@ class Manager(QWidget):
         if len(pwd) < 4:
             return
 
-        server = self.partial_parse_address(self.ui.serverLE.text())
+        self.partial_parse_address()
+        server = self.ui.serverLE.text()
         self.ui.serverLE.setText(server)
         mport = self.ui.mportSB.value()
 
@@ -468,24 +470,21 @@ class Manager(QWidget):
         self.initUserTab()
         self.initReviewTab()
 
-    def partial_parse_address(self, address):
+    def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.
-
-        args:
-            address (str): the address
 
         If there's a colon in the address (maybe user did not see port
         entry box or is pasting in a string), then try to extract a port
         number and put it into the entry box.
         """
-        address = address.strip()
+        address = self.ui.serverLE.text()
         try:
             parsedurl = urllib3.util.parse_url(address)
             if parsedurl.port:
                 self.ui.mportSB.setValue(int(parsedurl.port))
-            return parsedurl.host
+            self.ui.serverLE.setText(parsedurl.host)
         except urllib3.exceptions.LocationParseError:
-            return address
+            return
 
     # -------------------
     def getTPQV(self):
