@@ -1047,30 +1047,19 @@ class ChangeFiltersDialog(QDialog):
         self.hidden_comments_list_widget.setDragEnabled(True)
 
         for comment in parent.clist:
+            # careful used later where id is extracted
+            w = QListWidgetItem(
+                "{} Q{} [{}] {}".format(
+                    comment["id"],
+                    comment["question_number"],
+                    comment["delta"],
+                    comment["text"],
+                )
+            )
             if comment["id"] not in parent.hidden_comment_IDs:
-                self.visible_comments_list_widget.addItem(
-                    QListWidgetItem(
-                        str(
-                            str(comment["id"])
-                            + " => "
-                            + str(comment["delta"])
-                            + ": "
-                            + str(comment["text"])
-                        )
-                    )
-                )
+                self.visible_comments_list_widget.addItem(w)
             else:
-                self.hidden_comments_list_widget.addItem(
-                    QListWidgetItem(
-                        str(
-                            str(comment["id"])
-                            + " => "
-                            + str(comment["delta"])
-                            + ": "
-                            + str(comment["text"])
-                        )
-                    )
-                )
+                self.hidden_comments_list_widget.addItem(w)
 
         self.dragdrop_layout = QFormLayout()
         self.dragdrop_layout.addRow(QLabel("Visible"), QLabel("Hidden"))
@@ -1102,7 +1091,7 @@ class ChangeFiltersDialog(QDialog):
         self.parent.hidden_comment_IDs = [
             str(
                 str(self.hidden_comments_list_widget.item(index).text())
-                .split("=")[0]
+                .split()[0]
                 .strip()
             )
             for index in range(self.hidden_comments_list_widget.count())
