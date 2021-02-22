@@ -104,7 +104,7 @@ class Annotator(QWidget):
             parentMarkerUI (MarkerClient): the parent of annotator UI.
             initialData (dict): as documented by the arguments to "loadNewTGV"
         """
-        super(Annotator, self).__init__()
+        super().__init__()
 
         self.username = username
         self.parentMarkerUI = parentMarkerUI
@@ -1005,7 +1005,7 @@ class Annotator(QWidget):
         # the press into a function call (if exists)
         if QGuiApplication.mouseButtons() == Qt.NoButton:
             self.key_codes.get(event.key(), lambda *args: None)()
-        super(Annotator, self).keyPressEvent(event)
+        super().keyPressEvent(event)
 
     def setToolMode(self, newMode, newCursor, imagePath=None):
         """

@@ -924,7 +924,7 @@ class MarkerClient(QWidget):
             Qapp(QApplication): Main client application
 
         """
-        super(MarkerClient, self).__init__()
+        super().__init__()
         self.Qapp = Qapp
 
         # instance vars we can initialize now
@@ -1198,7 +1198,7 @@ class MarkerClient(QWidget):
             self.testImg.resetB.animateClick()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
-        super(MarkerClient, self).resizeEvent(event)
+        super().resizeEvent(event)
 
     def throwSeriousError(self, error, rethrow=True):
         """

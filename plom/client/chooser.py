@@ -102,7 +102,7 @@ def writeLastTime():
 class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
-        super(Chooser, self).__init__()
+        super().__init__()
         self.parent = Qapp
 
         readLastTime()

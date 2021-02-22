@@ -181,7 +181,7 @@ class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
     def __init__(self):
-        super(IDClient, self).__init__()
+        super().__init__()
 
     def getToWork(self, mess):
         global messenger
