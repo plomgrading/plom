@@ -277,9 +277,8 @@ class CommentWidget(QWidget):
         self.addB = QPushButton("Add")
         self.hideB = QPushButton("Hide")
         self.filtB = QPushButton("Filter")
-        # self.otherB = QPushButton("Refresh")
-        # TODO: needs icon or something, or a ... menu, etc
         self.otherB = QToolButton()
+        self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
