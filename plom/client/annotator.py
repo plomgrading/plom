@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 __copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and others"
@@ -200,7 +200,7 @@ class Annotator(QWidget):
         m = QMenu()
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
-        m.addAction("Defer and go to next", self.menuDummy).setEnabled(False)
+        m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
@@ -230,28 +230,14 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
-        m.addAction("Help", self.menuDummy).setEnabled(False)
+        m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        m.addAction("About Plom", self.menuDummy).setEnabled(False)
+        m.addAction("About Plom", lambda: None).setEnabled(False)
         m.addSeparator()
         m.addAction("Close without saving\tctrl-c", self.close)
         self.ui.hamMenuButton.setMenu(m)
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
-
-    # TODO: ask andrew what this does....
-    def menuDummy(self):
-        """
-        Prints "TODO: menu placeholder 1"
-
-        Notes:
-            This method is "Leftover junk from when I hacked the hamburger menu in place." -Colin
-
-        Returns:
-            None
-
-        """
-        log.info("TODO: menu placeholder 1")
 
     def closeCurrentTGV(self):
         """
