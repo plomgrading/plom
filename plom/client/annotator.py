@@ -335,7 +335,7 @@ class Annotator(QWidget):
         self.src_img_data = src_img_data
 
         if getattr(self, "maxMark", None) != maxMark:
-            log.warn("Is changing maxMark supported?  we just did it...")
+            log.warning("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
         del maxMark
 
@@ -358,7 +358,7 @@ class Annotator(QWidget):
         elif self.markStyle == 3:  # markDown
             self.score = self.maxMark
         else:  # must be mark-total
-            log.warn("Using mark-total. This should not happen.")
+            log.warning("Using mark-total. This should not happen.")
             self.score = 0
 
         # Set up the graphicsview and graphicsscene of the group-image

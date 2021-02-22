@@ -1308,7 +1308,7 @@ class MarkerClient(QWidget):
         plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
         ori = plomdata.get("orientations")
         if not ori:
-            log.warn("plom file has no orientation data: substituting zeros")
+            log.warning("plom file has no orientation data: substituting zeros")
             # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
             for d in src_img_data:
                 d["orientation"] = 0
