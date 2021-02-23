@@ -374,7 +374,7 @@ class CommentWidget(QWidget):
         alist = [X for X in lst if X not in clist]
 
         acb = AddCommentBox(
-            self, self.maxMark, alist, self.questnum, self.tgv, self.testname
+            self.username, self.maxMark, alist, self.questnum, self.testname
         )
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
@@ -385,41 +385,50 @@ class CommentWidget(QWidget):
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
             testnames = acb.TEtestname.text().strip()
+            username = acb.TEuser.text().strip()
+            try:
+                question_number = int(acb.TEquestnum.text().strip())
+            except ValueError:
+                return
 
             commentID = generate_new_comment_ID()
-            username = self.username
 
-            question_number = int(acb.questnum)
-            tgv = acb.tgv
+            # txt has no content
+            if len(txt) <= 0:
+                return
+            # TODO: centralized function for this?
+            com = {
+                "delta": dlt,
+                "text": txt,
+                "tags": tag,
+                "testname": testnames,
+                "meta": meta,
+                "count": 0,
+                "created": time.gmtime(),
+                "modified": time.gmtime(),
+                "id": str(commentID),
+                "username": str(username),
+                "question_number": question_number,
+            }
 
-            # check if txt has any content
-            if len(txt) > 0:
-                com = {
-                    "delta": dlt,
-                    "text": txt,
-                    "tags": tag,
-                    "testname": testnames,
-                    "meta": meta,
-                    "count": 0,
-                    "created": time.gmtime(),
-                    "modified": time.gmtime(),
-                    "id": str(commentID),
-                    "username": str(username),
-                    "question_number": question_number,
-                }
+            # Check if the comments are similar
+            add_new_comment = self.parent.checkCommentSimilarity(com)
+            if add_new_comment:
+                self.CL.insertItem(com)
+                self.currentItem()
+                # send a click to the comment button to force updates
+                self.parent.ui.commentButton.animateClick()
 
-                # Check if the comments are similar
-                add_new_comment = self.parent.checkCommentSimilarity(com)
-                if add_new_comment:
-                    self.CL.insertItem(com)
-                    self.currentItem()
-                    # send a click to the comment button to force updates
-                    self.parent.ui.commentButton.animateClick()
-
-                    # We refresh the comments list to add the new comment to the server.
-                    self.parent.refreshComments()
+                # We refresh the comments list to add the new comment to the server.
+                self.parent.refreshComments()
 
     def editCurrent(self, com):
+        """Open a dialog to edit a comment.
+
+        Returns:
+            dict/None: the newly updated comment or None if something
+                has gone wrong or is invalid.
+        """
         # text items in scene.
         lst = self.parent.getComments()
         # text items already in comment list
@@ -428,13 +437,11 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        questnum = self.questnum
-        testname = self.testname
-        tgv = self.tgv
 
-        acb = AddCommentBox(self, self.maxMark, alist, questnum, tgv, testname, com)
+        acb = AddCommentBox(
+            self.username, self.maxMark, alist, self.questnum, self.testname, com
+        )
 
-        # input("Now we are in editCurrent and we created acb")
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -444,6 +451,12 @@ class CommentWidget(QWidget):
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
             testnames = acb.TEtestname.text().strip()
+            username = acb.TEuser.text().strip()
+            try:
+                question_number = int(acb.TEquestnum.text().strip())
+            except ValueError:
+                return None
+
             # update the comment with new values
             com["delta"] = dlt
             com["text"] = txt
@@ -455,10 +468,9 @@ class CommentWidget(QWidget):
 
             # TO BE CHECKED, We just basically create a new ID
             commentID = acb.TEcommentID.text().strip()
-            question_number = acb.questnum
 
             com["id"] = commentID
-            com["username"] = self.username
+            com["username"] = username
             com["question_number"] = question_number
 
             # Check if the comments are similar
@@ -860,22 +872,20 @@ class SimpleCommentTable(QTableView):
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, questnum, tgv, curtestname, com=None):
+    def __init__(self, username, maxMark, lst, questnum, curtestname, com=None):
         """Initialize a new dialog to edit/create a comment.
 
         Args:
-            TODO...
+            username (str)
+            maxMark (int)
             lst (list): these are used to "harvest" plain 'ol text
                 annotations and morph them into comments.
+            questnum (int)
+            curtestname (str): deprecated?
             com (dict/None): if None, we're creating a new comment.
                 Otherwise, this has the current comment data.
         """
-        super(QDialog, self).__init__()
-        self.parent = parent
-
-        self.username = parent.username
-        self.questnum = questnum
-        self.tgv = tgv
+        super().__init__()
 
         self.setWindowTitle("Edit comment")
         self.CB = QComboBox()
@@ -892,7 +902,9 @@ class AddCommentBox(QDialog):
         # TODO: not sure what this is for but maybe it should be a combobox
         self.TEquestnum = QLineEdit()
 
-        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        sizePolicy = QSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+        )
         sizePolicy.setVerticalStretch(3)
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -921,7 +933,7 @@ class AddCommentBox(QDialog):
         flay.addRow("Meta", self.TEmeta)
         flay.addRow("Comment ID", self.TEcommentID)
         flay.addRow("User who created", self.TEuser)
-        flay.addRow("Question number ???", self.TEquestnum)
+        flay.addRow("Question number", self.TEquestnum)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -981,8 +993,8 @@ class AddCommentBox(QDialog):
             )
             # TODO: is this assigned later?
             self.TEcommentID.setPlaceholderText("will be auto-assigned (???)")
-            self.TEuser.setText(self.parent.username)
-            self.TEquestnum.setText(str(self.questnum))
+            self.TEuser.setText(username)
+            self.TEquestnum.setText(str(questnum))
 
     def changedCB(self):
         self.TE.clear()
