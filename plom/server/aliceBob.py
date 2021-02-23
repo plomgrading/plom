@@ -85,10 +85,10 @@ names = names.split()
 
 
 def simple_password(n=3):
-    """Creates a new simple password that contains a random range from n to n+2 words.
+    """Creates a new simple password containing a number of words.
 
     args:
-        n -- number of words for the password. Default n = 3.
+        n {int} -- number of words for the password. Default n = 3.
 
     Returns:
         str -- Password.
