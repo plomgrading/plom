@@ -35,6 +35,8 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QHBoxLayout,
     QListWidgetItem,
+    QSizePolicy,
+    QSpacerItem,
     QTableWidget,
     QTableWidgetItem,
 )
@@ -879,7 +881,7 @@ class AddCommentBox(QDialog):
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = QSpinBox()
-        self.DE = QCheckBox("Delta-mark enabled")
+        self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
@@ -890,15 +892,28 @@ class AddCommentBox(QDialog):
         # TODO: not sure what this is for but maybe it should be a combobox
         self.TEquestnum = QLineEdit()
 
-        # TODO: how to make it smaller vertically than the TE?
-        # self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
-        # self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
+        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        sizePolicy.setVerticalStretch(3)
+        self.TE.setSizePolicy(sizePolicy)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy.setVerticalStretch(2)
+        self.TEtag.setSizePolicy(sizePolicy)
+        self.TEmeta.setSizePolicy(sizePolicy)
+        # TODO: TE is still a little too tall
+        # TODO: make everything wider!
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
-        flay.addRow("Choose text", self.CB)
-        flay.addRow("Set delta", self.SB)
-        flay.addRow("", self.DE)
+        lay = QFormLayout()
+        lay.addRow("or choose text", self.CB)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.CB.setSizePolicy(sizePolicy)
+        flay.addRow("", lay)
+        lay = QHBoxLayout()
+        lay.addWidget(self.DE)
+        lay.addItem(QSpacerItem(48, 10, QSizePolicy.Preferred, QSizePolicy.Minimum))
+        lay.addWidget(self.SB)
+        flay.addRow("Delta mark", lay)
         flay.addRow("Tags", self.TEtag)
         # TODO: support multiple tests, change label to "test(s)" here
         flay.addRow("Specific to test", self.TEtestname)
@@ -958,7 +973,7 @@ class AddCommentBox(QDialog):
             self.TE.setPlaceholderText(
                 'Prepend with "tex:" to use math.\n\n'
                 'You can "Choose text" to harvest comments from an existing annotation.\n\n'
-                'Change "delta" below to set a point-change associated with this comment.'
+                'Change "delta" below to associate a point-change.'
             )
             self.TEmeta.setPlaceholderText(
                 "notes to self, hints on when to use this comment, etc.\n\n"
