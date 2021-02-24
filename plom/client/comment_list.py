@@ -601,6 +601,7 @@ class SimpleCommentTable(QTableView):
         # get rubrics from server
         serverRubrics = self.parent.parent.parentMarkerUI.getRubricsFromServer()[1]
         # remove HAL generated rubrics
+        # TODO: let's do this as a filter "later", similar to how we hide other user's by default
         for X in serverRubrics:
             if X["username"] == "HAL":
                 continue
