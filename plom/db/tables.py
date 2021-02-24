@@ -189,11 +189,11 @@ class OAPage(BaseModel):
 
 
 class Rubric(BaseModel):
+    key = pw.IntegerField(null=False)  # unique key - user-generated from 1000 onwards
     delta = pw.CharField(null=False)
     text = pw.CharField(null=False)
     question = pw.IntegerField(null=False)
     user = pw.ForeignKeyField(User, backref="rubrics", null=False)
-    key = pw.IntegerField(null=False)  # unique key
     revision = pw.IntegerField(null=False, default=0)
     count = pw.IntegerField(null=False, default=0)
     creationTime = pw.DateTimeField(null=False)

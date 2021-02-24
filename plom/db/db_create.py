@@ -343,3 +343,61 @@ def id_paper(self, paper_num, user_name, sid, sname):
             )
         )
     return True, None, None
+
+
+### Create some default rubrics
+def createNoAnswerRubric(self, questionNumber, maxMark):
+    """Create rubrics for when no answer given for question
+
+    Each question needs 2 such rubrics - for mark-up and mark-down styles
+
+    Args:
+        questionNumber (int)
+        maxMark: the max mark for that question
+
+    Returns:
+        Bool: True if successful, False if rubric already exists.
+    """
+    rID = 2 * questionNumber  # +0 for mark-up and +1 for mark-down
+    uref = User.get(name="HAL")
+
+    if Rubric.get_or_none(rID) is None:
+        Rubric.create(
+            key=rID,
+            delta="0",
+            text="No answer given",
+            question=questionNumber,
+            user=uref,
+            creationTime=datetime.now(),
+        )
+        log.info("Created no-answer-rubric (up) for question {}".format(questionNumber))
+    else:
+        log.info(
+            "No-answer-rubric (up) for question {} already exists".format(
+                questionNumber
+            )
+        )
+        return False
+
+    rID += 1
+    if Rubric.get_or_none(rID) is None:
+        Rubric.create(
+            key=rID,
+            delta="-{}".format(maxMark),
+            text="No answer given",
+            question=questionNumber,
+            user=uref,
+            creationTime=datetime.now(),
+            modificationTime=datetime.now(),
+        )
+        log.info(
+            "Created no-answer-rubric (down) for question {}".format(questionNumber)
+        )
+    else:
+        log.info(
+            "No-answer-rubric (down) for question {} already exists".format(
+                questionNumber
+            )
+        )
+        return False
+    return True

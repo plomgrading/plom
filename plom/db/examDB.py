@@ -102,6 +102,7 @@ class PlomDB:
         getPageVersions,
         produceTest,
         id_paper,
+        createNoAnswerRubric,
     )
 
     from plom.db.db_upload import (

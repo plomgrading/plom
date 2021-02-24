@@ -45,6 +45,11 @@ def buildExamDatabaseFromSpec(spec, db):
 
     log = logging.getLogger("DB")
 
+    # create no-answer-given rubrics
+    for q in range(1, 1 + spec["numberOfQuestions"]):
+        if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
+            raise ValueError("No answer rubric for q.{} already exists".format(q))
+
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")
 
