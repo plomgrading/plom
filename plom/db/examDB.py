@@ -53,6 +53,9 @@ class PlomDB:
                     OAPage,
                     IDPage,
                     DNMPage,
+                    ##
+                    Rubric,
+                    ARLink,
                 ]
             )
         log.info("Database initialised.")
