@@ -634,6 +634,23 @@ class MarkHandler:
         else:  # failed - rubric sent is incomplete
             return web.Response(status=406)
 
+    # @routes.get("/MK/rubric")
+    @authenticate_by_token_required_fields(["user"])
+    def MgetRubrics(self, data, request):
+        """Respond with updated comment list and add received comments to the database.
+
+        Args:
+            data (dict): A dictionary including user/token
+            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
+
+        Returns:
+            aiohttp.web_response.Response: List of all comments in DB
+        """
+        username = data["user"]
+
+        rubrics = self.server.MgetRubrics()
+        return web.json_response(rubrics, status=200)
+
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -660,3 +677,4 @@ class MarkHandler:
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
         router.add_put("/MK/rubric", self.McreateRubric)
+        router.add_get("/MK/rubric", self.MgetRubrics)

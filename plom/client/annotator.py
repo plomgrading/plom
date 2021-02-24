@@ -1579,7 +1579,7 @@ class Annotator(QWidget):
             False if user cancels, True if annotator is closed successfully.
 
         """
-        # First lets refresh the comments
+        # First lets refresh the comments --- WHY??
         self.refreshComments()
 
         # do some checks before accepting things
@@ -2041,11 +2041,13 @@ class Annotator(QWidget):
     def refreshComments(self):
         """Request for a refreshed comments list and update the current comments box."""
 
+        print("HERE")
         current_comments_list = self.comment_widget.CL.clist
 
         refreshed_comments_list = self.parentMarkerUI.getCommentsFromServer(
             current_comments_list
         )
+        print(self.parentMarkerUI.getRubricsFromServer())
 
         if len(refreshed_comments_list) == 0:
             ErrorMessage(

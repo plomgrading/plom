@@ -1797,6 +1797,21 @@ class MarkerClient(QWidget):
             refreshed_comments_list = refresh_response[1]
             return refreshed_comments_list
 
+    def getRubricsFromServer(self):
+        """Get list of rubrics from server.
+
+        Args:
+            none
+
+        Returns:
+            list: A list of the dictionary objects.
+        """
+
+        response = self.msgr.MgetRubrics()
+        if response[0] is False:
+            log.warning("Getting rubrics failed. ")
+        return response
+
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)
 

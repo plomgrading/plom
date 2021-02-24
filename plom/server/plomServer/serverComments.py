@@ -166,3 +166,8 @@ def McreateRubric(self, username, new_rubric):
         return [False]
     # else let DB create the new element and return the new key
     return self.DB.McreateRubric(username, new_rubric)
+
+
+def MgetRubrics(self):
+    """Get all rubrics in the DB and return as list of dict"""
+    return self.DB.MgetRubrics()

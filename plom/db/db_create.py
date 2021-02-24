@@ -369,6 +369,7 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
             question=questionNumber,
             user=uref,
             creationTime=datetime.now(),
+            modificationTime=datetime.now(),
         )
         log.info("Created no-answer-rubric (up) for question {}".format(questionNumber))
     else:

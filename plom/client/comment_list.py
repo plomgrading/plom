@@ -388,7 +388,10 @@ class CommentWidget(QWidget):
             except ValueError:
                 return
 
-            print("Contacting server")
+            # txt has no content
+            if len(txt) <= 0:
+                return
+
             rv = self.parent.createNewRubric(
                 {
                     "delta": dlt,
@@ -398,14 +401,11 @@ class CommentWidget(QWidget):
                     "question": question_number,
                 }
             )
-            print("Server contacted = {}".format(rv))
-            return
-
-            commentID = generate_new_comment_ID()
-
-            # txt has no content
-            if len(txt) <= 0:
+            if rv[0]:  # rubric created successfully
+                commentID = rv[1]
+            else:  # some sort of creation problem
                 return
+
             # TODO: centralized function for this?
             com = {
                 "delta": dlt,
@@ -420,16 +420,21 @@ class CommentWidget(QWidget):
                 "question_number": question_number,
             }
 
-            # Check if the comments are similar
-            add_new_comment = self.parent.checkCommentSimilarity(com)
-            if add_new_comment:
-                self.CL.insertItem(com)
-                self.currentItem()
-                # send a click to the comment button to force updates
-                self.parent.ui.commentButton.animateClick()
+            self.CL.insertItem(com)
+            self.currentItem()
+            # send a click to the comment button to force updates
+            self.parent.ui.commentButton.animateClick()
 
-                # We refresh the comments list to add the new comment to the server.
-                self.parent.refreshComments()
+            # Check if the comments are similar
+            # add_new_comment = self.parent.checkCommentSimilarity(com)
+            # if add_new_comment:
+            #     self.CL.insertItem(com)
+            #     self.currentItem()
+            #     # send a click to the comment button to force updates
+            #     self.parent.ui.commentButton.animateClick()
+            #
+            #     # We refresh the comments list to add the new comment to the server.
+            #     self.parent.refreshComments()
 
     def editCurrent(self, com):
         """Open a dialog to edit a comment.
@@ -617,20 +622,19 @@ class SimpleCommentTable(QTableView):
         self.delegate = commentDelegate()
         self.setItemDelegate(self.delegate)
 
+        # clear the list
+        self.clist = []
+        # get rubrics from server
+        serverRubrics = self.parent.parent.parentMarkerUI.getRubricsFromServer()[1]
+        # remove HAL generated rubrics
+        for X in serverRubrics:
+            if X["username"] == "HAL":
+                continue
+            self.clist.append(X)
+
         # TODO: deprecated, remove?
         # load_comments_toml = commentLoadAllToml()
         # toml_exists = load_comments_toml[0]
-        toml_exists = False
-        if toml_exists:
-            default_clist = load_comments_toml[1]
-            self.clist = default_clist
-        else:
-            current_clist = self.parent.parent.parentMarkerUI.getCurrentComments()
-
-            if len(current_clist) != 0:
-                self.clist = current_clist
-            else:
-                self.clist = []
 
         # Creating the hidden comments list.
         self.hidden_comment_IDs = []
@@ -711,7 +715,7 @@ class SimpleCommentTable(QTableView):
 
         self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
-
+            print("Comment ", com)
             # If only user comments are toggled, then only add current and
             # user's own comments.
             if onlyUserComments and (

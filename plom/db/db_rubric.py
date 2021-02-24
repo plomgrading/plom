@@ -43,3 +43,24 @@ def McreateRubric(self, user_name, rubric):
             tags=rubric["tags"],
         )
     return [True, key]
+
+
+def MgetRubrics(self):
+    rubric_list = []
+    query = Rubric.select()
+    for r in query:
+        rubric_list.append(
+            {
+                "id": r.key,
+                "delta": r.delta,
+                "text": r.text,
+                "tags": r.tags,
+                "meta": r.meta,
+                "count": r.count,
+                "created": r.creationTime.strftime("%y:%m:%d-%H:%M:%S"),
+                "modified": r.modificationTime.strftime("%y:%m:%d-%H:%M:%S"),
+                "username": r.user.name,
+                "question_number": r.question,
+            }
+        )
+    return rubric_list
