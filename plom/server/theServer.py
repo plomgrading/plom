@@ -36,6 +36,7 @@ from .plomServer.routesUserInit import UserInitHandler
 from .plomServer.routesUpload import UploadHandler
 from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
+from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
 
 
@@ -201,6 +202,8 @@ class Server(object):
         MgetCurrentComments,
         MrefreshComments,
         MupdateCommentsCount,
+    )
+    from .plomServer.serverRubric import (
         McreateRubric,
         MgetRubrics,
     )
@@ -265,6 +268,7 @@ def launch(masterToken=None):
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)
     marker = MarkHandler(peon)
+    rubricker = RubricHandler(peon)
     reporter = ReportHandler(peon)
 
     # construct the web server
@@ -274,6 +278,7 @@ def launch(masterToken=None):
     uploader.setUpRoutes(app.router)
     ider.setUpRoutes(app.router)
     marker.setUpRoutes(app.router)
+    rubricker.setUpRoutes(app.router)
     reporter.setUpRoutes(app.router)
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
