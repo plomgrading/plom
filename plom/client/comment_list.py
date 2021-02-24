@@ -35,6 +35,8 @@ from PyQt5.QtWidgets import (
     QListWidget,
     QHBoxLayout,
     QListWidgetItem,
+    QSizePolicy,
+    QSpacerItem,
     QTableWidget,
     QTableWidgetItem,
 )
@@ -277,9 +279,8 @@ class CommentWidget(QWidget):
         self.addB = QPushButton("Add")
         self.hideB = QPushButton("Hide")
         self.filtB = QPushButton("Filter")
-        # self.otherB = QPushButton("Refresh")
-        # TODO: needs icon or something, or a ... menu, etc
         self.otherB = QToolButton()
+        self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
@@ -372,9 +373,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        acb = AddCommentBox(
-            self, self.maxMark, alist, self.questnum, self.tgv, self.testname
-        )
+        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -383,42 +382,49 @@ class CommentWidget(QWidget):
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
-            testnames = acb.TEtestname.text().strip()
+            username = acb.TEuser.text().strip()
+            try:
+                question_number = int(acb.TEquestnum.text().strip())
+            except ValueError:
+                return
 
             commentID = generate_new_comment_ID()
-            username = self.username
 
-            question_number = int(acb.questnum)
-            tgv = acb.tgv
+            # txt has no content
+            if len(txt) <= 0:
+                return
+            # TODO: centralized function for this?
+            com = {
+                "delta": dlt,
+                "text": txt,
+                "tags": tag,
+                "meta": meta,
+                "count": 0,
+                "created": time.gmtime(),
+                "modified": time.gmtime(),
+                "id": str(commentID),
+                "username": str(username),
+                "question_number": question_number,
+            }
 
-            # check if txt has any content
-            if len(txt) > 0:
-                com = {
-                    "delta": dlt,
-                    "text": txt,
-                    "tags": tag,
-                    "testname": testnames,
-                    "meta": meta,
-                    "count": 0,
-                    "created": time.gmtime(),
-                    "modified": time.gmtime(),
-                    "id": str(commentID),
-                    "username": str(username),
-                    "question_number": question_number,
-                }
+            # Check if the comments are similar
+            add_new_comment = self.parent.checkCommentSimilarity(com)
+            if add_new_comment:
+                self.CL.insertItem(com)
+                self.currentItem()
+                # send a click to the comment button to force updates
+                self.parent.ui.commentButton.animateClick()
 
-                # Check if the comments are similar
-                add_new_comment = self.parent.checkCommentSimilarity(com)
-                if add_new_comment:
-                    self.CL.insertItem(com)
-                    self.currentItem()
-                    # send a click to the comment button to force updates
-                    self.parent.ui.commentButton.animateClick()
-
-                    # We refresh the comments list to add the new comment to the server.
-                    self.parent.refreshComments()
+                # We refresh the comments list to add the new comment to the server.
+                self.parent.refreshComments()
 
     def editCurrent(self, com):
+        """Open a dialog to edit a comment.
+
+        Returns:
+            dict/None: the newly updated comment or None if something
+                has gone wrong or is invalid.
+        """
         # text items in scene.
         lst = self.parent.getComments()
         # text items already in comment list
@@ -427,13 +433,8 @@ class CommentWidget(QWidget):
             clist.append(self.CL.cmodel.index(r, 1).data())
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
-        questnum = self.questnum
-        testname = self.testname
-        tgv = self.tgv
 
-        acb = AddCommentBox(self, self.maxMark, alist, questnum, tgv, testname, com)
-
-        # input("Now we are in editCurrent and we created acb")
+        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -442,22 +443,25 @@ class CommentWidget(QWidget):
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
-            testnames = acb.TEtestname.text().strip()
+            username = acb.TEuser.text().strip()
+            try:
+                question_number = int(acb.TEquestnum.text().strip())
+            except ValueError:
+                return None
+
             # update the comment with new values
             com["delta"] = dlt
             com["text"] = txt
             com["tags"] = tag
-            com["testname"] = testnames
             com["meta"] = meta
             com["count"] = 0
             com["modified"] = time.gmtime()
 
             # TO BE CHECKED, We just basically create a new ID
             commentID = acb.TEcommentID.text().strip()
-            question_number = acb.questnum
 
             com["id"] = commentID
-            com["username"] = self.username
+            com["username"] = username
             com["question_number"] = question_number
 
             # Check if the comments are similar
@@ -707,7 +711,6 @@ class SimpleCommentTable(QTableView):
 
             tgv = self.tgv
 
-            testname = self.parent.testname
             if (
                 not commentIsVisible(com, questnum, self.username, filters=self.filters)
                 or com["id"] in self.hidden_comment_IDs
@@ -859,55 +862,64 @@ class SimpleCommentTable(QTableView):
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, parent, maxMark, lst, questnum, tgv, curtestname, com=None):
+    def __init__(self, username, maxMark, lst, questnum, com=None):
         """Initialize a new dialog to edit/create a comment.
 
         Args:
-            TODO...
+            username (str)
+            maxMark (int)
             lst (list): these are used to "harvest" plain 'ol text
                 annotations and morph them into comments.
+            questnum (int)
             com (dict/None): if None, we're creating a new comment.
                 Otherwise, this has the current comment data.
         """
-        super(QDialog, self).__init__()
-        self.parent = parent
-
-        self.username = parent.username
-        self.questnum = questnum
-        self.tgv = tgv
+        super().__init__()
 
         self.setWindowTitle("Edit comment")
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = QSpinBox()
-        self.DE = QCheckBox("Delta-mark enabled")
+        self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
         self.TEmeta = QTextEdit()
-        self.TEtestname = QLineEdit()
         self.TEcommentID = QLineEdit()
         self.TEuser = QLineEdit()
         # TODO: not sure what this is for but maybe it should be a combobox
         self.TEquestnum = QLineEdit()
 
-        # TODO: how to make it smaller vertically than the TE?
-        # self.TEtag.setMinimumHeight(self.TE.minimumHeight() // 2)
-        # self.TEtag.setMaximumHeight(self.TE.maximumHeight() // 2)
+        sizePolicy = QSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+        )
+        sizePolicy.setVerticalStretch(3)
+        self.TE.setSizePolicy(sizePolicy)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy.setVerticalStretch(2)
+        self.TEtag.setSizePolicy(sizePolicy)
+        self.TEmeta.setSizePolicy(sizePolicy)
+        # TODO: TE is still a little too tall
+        # TODO: make everything wider!
 
         flay = QFormLayout()
         flay.addRow("Enter text", self.TE)
-        flay.addRow("Choose text", self.CB)
-        flay.addRow("Set delta", self.SB)
-        flay.addRow("", self.DE)
+        lay = QFormLayout()
+        lay.addRow("or choose text", self.CB)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.CB.setSizePolicy(sizePolicy)
+        flay.addRow("", lay)
+        lay = QHBoxLayout()
+        lay.addWidget(self.DE)
+        lay.addItem(QSpacerItem(48, 10, QSizePolicy.Preferred, QSizePolicy.Minimum))
+        lay.addWidget(self.SB)
+        flay.addRow("Delta mark", lay)
         flay.addRow("Tags", self.TEtag)
-        # TODO: support multiple tests, change label to "test(s)" here
-        flay.addRow("Specific to test", self.TEtestname)
-        flay.addRow("", QLabel("(leave blank to share between tests)"))
+
         flay.addRow("Meta", self.TEmeta)
         flay.addRow("Comment ID", self.TEcommentID)
         flay.addRow("User who created", self.TEuser)
-        flay.addRow("Question number ???", self.TEquestnum)
+        flay.addRow("Question number", self.TEquestnum)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -942,24 +954,17 @@ class AddCommentBox(QDialog):
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
-            if com["testname"]:
-                self.TEtestname.setText(str(com["testname"]))
             if com["id"]:
                 self.TEcommentID.setText(str(com["id"]))
             if com["username"]:
                 self.TEuser.setText(com["username"])
             if com["question_number"]:
                 self.TEquestnum.setText(str(com["question_number"]))
-            # TODO: why? do you anticipate a long list of Task ID's that use this comment?
-            # TODO: if so, should it be `tasks_using` and be a list?
-            # com["task_ID"] = str(self.tgv)
-            # self.TEtestname.setText(com["task_ID"])
         else:
-            self.TEtestname.setText(curtestname)
             self.TE.setPlaceholderText(
                 'Prepend with "tex:" to use math.\n\n'
                 'You can "Choose text" to harvest comments from an existing annotation.\n\n'
-                'Change "delta" below to set a point-change associated with this comment.'
+                'Change "delta" below to associate a point-change.'
             )
             self.TEmeta.setPlaceholderText(
                 "notes to self, hints on when to use this comment, etc.\n\n"
@@ -967,8 +972,8 @@ class AddCommentBox(QDialog):
             )
             # TODO: is this assigned later?
             self.TEcommentID.setPlaceholderText("will be auto-assigned (???)")
-            self.TEuser.setText(self.parent.username)
-            self.TEquestnum.setText(str(self.questnum))
+            self.TEuser.setText(username)
+            self.TEquestnum.setText(str(questnum))
 
     def changedCB(self):
         self.TE.clear()
@@ -1020,22 +1025,12 @@ class ChangeFiltersDialog(QDialog):
     def __init__(self, parent, curFilters):
         super(QDialog, self).__init__()
         self.parent = parent
-        self.cb1 = QCheckBox("Hide comments from other questions")
-        self.cb2 = QCheckBox("Hide comments from other users")
+        self.cb1 = QCheckBox("Show comments from other questions")
+        self.cb2 = QCheckBox("Show comments from other users (EXPERIMENTAL)")
         self.cb3 = QCheckBox("Hide preset comments from administrator")
-
-        self.cb1.setCheckState(Qt.Checked if curFilters[0] else Qt.Unchecked)
-
-        if curFilters[1]:
-            self.cb2.setCheckState(Qt.Checked)
-        else:
-            self.cb2.setCheckState(Qt.Unchecked)
-
-        if curFilters[2]:
-            self.cb3.setCheckState(Qt.Checked)
-        else:
-            self.cb3.setCheckState(Qt.Unchecked)
-
+        self.cb1.setCheckState(Qt.Unchecked if curFilters[0] else Qt.Checked)
+        self.cb2.setCheckState(Qt.Unchecked if curFilters[1] else Qt.Checked)
+        self.cb3.setCheckState(Qt.Checked if curFilters[2] else Qt.Unchecked)
         flay = QVBoxLayout()
         flay.addWidget(self.cb1)
         flay.addWidget(self.cb2)
@@ -1057,30 +1052,19 @@ class ChangeFiltersDialog(QDialog):
         self.hidden_comments_list_widget.setDragEnabled(True)
 
         for comment in parent.clist:
+            # careful used later where id is extracted
+            w = QListWidgetItem(
+                "{} Q{} [{}] {}".format(
+                    comment["id"],
+                    comment["question_number"],
+                    comment["delta"],
+                    comment["text"],
+                )
+            )
             if comment["id"] not in parent.hidden_comment_IDs:
-                self.visible_comments_list_widget.addItem(
-                    QListWidgetItem(
-                        str(
-                            str(comment["id"])
-                            + " => "
-                            + str(comment["delta"])
-                            + ": "
-                            + str(comment["text"])
-                        )
-                    )
-                )
+                self.visible_comments_list_widget.addItem(w)
             else:
-                self.hidden_comments_list_widget.addItem(
-                    QListWidgetItem(
-                        str(
-                            str(comment["id"])
-                            + " => "
-                            + str(comment["delta"])
-                            + ": "
-                            + str(comment["text"])
-                        )
-                    )
-                )
+                self.hidden_comments_list_widget.addItem(w)
 
         self.dragdrop_layout = QFormLayout()
         self.dragdrop_layout.addRow(QLabel("Visible"), QLabel("Hidden"))
@@ -1112,7 +1096,7 @@ class ChangeFiltersDialog(QDialog):
         self.parent.hidden_comment_IDs = [
             str(
                 str(self.hidden_comments_list_widget.item(index).text())
-                .split("=")[0]
+                .split()[0]
                 .strip()
             )
             for index in range(self.hidden_comments_list_widget.count())
@@ -1120,7 +1104,7 @@ class ChangeFiltersDialog(QDialog):
 
     def getFilters(self):
         return [
-            self.cb1.checkState() == Qt.Checked,
-            self.cb2.checkState() == Qt.Checked,
+            self.cb1.checkState() == Qt.Unchecked,
+            self.cb2.checkState() == Qt.Unchecked,
             self.cb3.checkState() == Qt.Checked,
         ]
