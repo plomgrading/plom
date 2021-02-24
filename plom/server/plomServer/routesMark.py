@@ -659,4 +659,4 @@ class MarkHandler:
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)
-        router.add_put("/MK/rubric/", self.McreateRubric)
+        router.add_put("/MK/rubric", self.McreateRubric)

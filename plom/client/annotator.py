@@ -2056,3 +2056,7 @@ class Annotator(QWidget):
             self.comment_widget.CL.clist = refreshed_comments_list
             self.comment_widget.CL.populateTable()
             return
+
+    def createNewRubric(self, new_rubric):
+        """Ask server to create a new rubric with data supplied"""
+        return self.parentMarkerUI.sendNewRubricToServer(new_rubric)

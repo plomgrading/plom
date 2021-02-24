@@ -388,6 +388,19 @@ class CommentWidget(QWidget):
             except ValueError:
                 return
 
+            print("Contacting server")
+            rv = self.parent.createNewRubric(
+                {
+                    "delta": dlt,
+                    "text": txt,
+                    "tags": tag,
+                    "meta": meta,
+                    "question": question_number,
+                }
+            )
+            print("Server contacted = {}".format(rv))
+            return
+
             commentID = generate_new_comment_ID()
 
             # txt has no content
