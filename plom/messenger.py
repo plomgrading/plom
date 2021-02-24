@@ -904,3 +904,49 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         return messenger_response
+
+    def McreateRubric(self, new_rubric):
+        """Ask server to make a new rubric and get key back.
+
+        Args:
+            new_rubric (dict): the new rubric info as dict.
+
+        Raises:
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            list: A list of:
+                [False] If operation was unsuccessful.
+                [True, updated_commments_list] including the new comments.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/MK/rubric".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "rubric": new_rubric,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+
+            new_key = response.json()
+            messenger_response = [True, new_key]
+
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 406:
+                raise PlomSeriousException("Rubric sent was incomplete.") from None
+            else:
+                raise PlomSeriousException(
+                    "Error of type {} when creating new rubric".format(e)
+                ) from None
+            messenger_response = [False]
+
+        finally:
+            self.SRmutex.release()
+        return messenger_response

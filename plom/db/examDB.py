@@ -210,3 +210,5 @@ class PlomDB:
         MreviewQuestion,
         MrevertTask,
     )
+
+    from plom.db.db_rubric import McreateRubric

@@ -201,6 +201,7 @@ class Server(object):
         MgetCurrentComments,
         MrefreshComments,
         MupdateCommentsCount,
+        McreateRubric,
     )
     from .plomServer.serverReport import (
         RgetUnusedTests,

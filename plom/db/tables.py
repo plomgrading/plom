@@ -189,7 +189,9 @@ class OAPage(BaseModel):
 
 
 class Rubric(BaseModel):
-    key = pw.IntegerField(null=False)  # unique key - user-generated from 1000 onwards
+    key = pw.IntegerField(
+        unique=True, null=False
+    )  # unique key - user-generated have 12 digits, HAL uses 1XXX.
     delta = pw.CharField(null=False)
     text = pw.CharField(null=False)
     question = pw.IntegerField(null=False)

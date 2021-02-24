@@ -358,7 +358,7 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
     Returns:
         Bool: True if successful, False if rubric already exists.
     """
-    rID = 2 * questionNumber  # +0 for mark-up and +1 for mark-down
+    rID = 1000 + 2 * questionNumber  # +0 for mark-up and +1 for mark-down
     uref = User.get(name="HAL")
 
     if Rubric.get_or_none(rID) is None:
