@@ -591,66 +591,6 @@ class MarkHandler:
         current_comments = self.server.MgetCurrentComments(username)
         return web.json_response(current_comments, status=200)
 
-    # @routes.patch("/MK/comment")
-    @authenticate_by_token_required_fields(["user", "current_comments_list"])
-    def MrefreshComments(self, data, request):
-        """Respond with updated comment list and add received comments to the database.
-
-        Args:
-            data (dict): A dictionary including user/token in addition to the list of
-                comments  already available on the client side.
-            request (aiohttp.web_request.Request): A request of type GET /MK/comment.
-
-        Returns:
-            aiohttp.web_response.Response: Includes the updated list of
-                comment dictionaries.
-        """
-        username = data["user"]
-        current_comments_list = data["current_comments_list"]
-
-        refreshed_comments = self.server.MrefreshComments(
-            username, current_comments_list
-        )
-        return web.json_response(refreshed_comments, status=200)
-
-    # @routes.put("/MK/rubric")
-    @authenticate_by_token_required_fields(["user", "rubric"])
-    def McreateRubric(self, data, request):
-        """Respond with updated comment list and add received comments to the database.
-
-        Args:
-            data (dict): A dictionary including user/token and the new rubric to be created
-            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
-
-        Returns:
-            aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
-        """
-        username = data["user"]
-        new_rubric = data["rubric"]
-
-        rval = self.server.McreateRubric(username, new_rubric)
-        if rval[0]:  # worked - so return key
-            return web.json_response(rval[1], status=200)
-        else:  # failed - rubric sent is incomplete
-            return web.Response(status=406)
-
-    # @routes.get("/MK/rubric")
-    @authenticate_by_token_required_fields(["user"])
-    def MgetRubrics(self, data, request):
-        """Respond with updated comment list and add received comments to the database.
-
-        Args:
-            data (dict): A dictionary including user/token
-            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
-
-        Returns:
-            aiohttp.web_response.Response: List of all comments in DB
-        """
-        username = data["user"]
-
-        rubrics = self.server.MgetRubrics()
-        return web.json_response(rubrics, status=200)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -670,7 +610,6 @@ class MarkHandler:
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_get("/MK/currentcomment", self.MgetCurrentComments)
-        router.add_get("/MK/comment", self.MrefreshComments)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
