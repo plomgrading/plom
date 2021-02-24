@@ -2040,14 +2040,12 @@ class Annotator(QWidget):
 
     def refreshComments(self):
         """Request for a refreshed comments list and update the current comments box."""
-
-        print("HERE")
         current_comments_list = self.comment_widget.CL.clist
+        print("discarding current list {}".format(current_comments_list))
 
-        refreshed_comments_list = self.parentMarkerUI.getCommentsFromServer(
-            current_comments_list
-        )
-        print(self.parentMarkerUI.getRubricsFromServer())
+        wtf, refreshed_comments_list = self.parentMarkerUI.getRubricsFromServer()
+        assert wtf
+        print("new comment list {}".format(refreshed_comments_list))
 
         if len(refreshed_comments_list) == 0:
             ErrorMessage(

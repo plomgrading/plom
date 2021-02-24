@@ -1761,42 +1761,6 @@ class MarkerClient(QWidget):
             src_img_data,
         )
 
-    def getCurrentComments(self):
-        """Ask from the server for the current comments.
-
-        Returns:
-            list: A list of the current comments in the server.
-        """
-
-        get_current_comments_response = self.msgr.MgetCurrentComments()
-        get_comments_status = get_current_comments_response[0]
-        if get_comments_status is False:
-            log.warning("Refreshing comment list failed. ")
-            return []
-        else:
-            current_comments_list = get_current_comments_response[1]
-            return current_comments_list
-
-    def getCommentsFromServer(self, current_comments_list):
-        """Push comment list to the server and pull the latest comments list.
-
-        Args:
-            current_comments_list (list): A list of the comments as dictionaries.
-
-        Returns:
-            list: A list of the updated dictionary objects. This list is empty if
-                the comments list update was unsuccessfull.
-        """
-
-        refresh_response = self.msgr.MrefreshComments(current_comments_list)
-        refresh_response_status = refresh_response[0]
-        if refresh_response_status is False:
-            log.warning("Refreshing comment list failed. ")
-            return []
-        else:
-            refreshed_comments_list = refresh_response[1]
-            return refreshed_comments_list
-
     def getRubricsFromServer(self):
         """Get list of rubrics from server.
 

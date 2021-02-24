@@ -406,35 +406,9 @@ class CommentWidget(QWidget):
             else:  # some sort of creation problem
                 return
 
-            # TODO: centralized function for this?
-            com = {
-                "delta": dlt,
-                "text": txt,
-                "tags": tag,
-                "meta": meta,
-                "count": 0,
-                "created": time.gmtime(),
-                "modified": time.gmtime(),
-                "id": str(commentID),
-                "username": str(username),
-                "question_number": question_number,
-            }
-
-            self.CL.insertItem(com)
-            self.currentItem()
-            # send a click to the comment button to force updates
-            self.parent.ui.commentButton.animateClick()
-
-            # Check if the comments are similar
-            # add_new_comment = self.parent.checkCommentSimilarity(com)
-            # if add_new_comment:
-            #     self.CL.insertItem(com)
-            #     self.currentItem()
-            #     # send a click to the comment button to force updates
-            #     self.parent.ui.commentButton.animateClick()
-            #
-            #     # We refresh the comments list to add the new comment to the server.
-            #     self.parent.refreshComments()
+            # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
+            # TODO: but we should use `commentID` from above to highlight the new row at least
+            self.parent.refreshComments()
 
     def editCurrent(self, com):
         """Open a dialog to edit a comment.
