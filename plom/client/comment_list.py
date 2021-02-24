@@ -373,9 +373,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        acb = AddCommentBox(
-            self.username, self.maxMark, alist, self.questnum, self.testname
-        )
+        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -384,7 +382,6 @@ class CommentWidget(QWidget):
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
-            testnames = acb.TEtestname.text().strip()
             username = acb.TEuser.text().strip()
             try:
                 question_number = int(acb.TEquestnum.text().strip())
@@ -401,7 +398,6 @@ class CommentWidget(QWidget):
                 "delta": dlt,
                 "text": txt,
                 "tags": tag,
-                "testname": testnames,
                 "meta": meta,
                 "count": 0,
                 "created": time.gmtime(),
@@ -438,10 +434,7 @@ class CommentWidget(QWidget):
         # text items in scene not in comment list
         alist = [X for X in lst if X not in clist]
 
-        acb = AddCommentBox(
-            self.username, self.maxMark, alist, self.questnum, self.testname, com
-        )
-
+        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
         if acb.exec_() == QDialog.Accepted:
             if acb.DE.checkState() == Qt.Checked:
                 dlt = acb.SB.value()
@@ -450,7 +443,6 @@ class CommentWidget(QWidget):
             txt = acb.TE.toPlainText().strip()
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
-            testnames = acb.TEtestname.text().strip()
             username = acb.TEuser.text().strip()
             try:
                 question_number = int(acb.TEquestnum.text().strip())
@@ -461,7 +453,6 @@ class CommentWidget(QWidget):
             com["delta"] = dlt
             com["text"] = txt
             com["tags"] = tag
-            com["testname"] = testnames
             com["meta"] = meta
             com["count"] = 0
             com["modified"] = time.gmtime()
@@ -720,7 +711,6 @@ class SimpleCommentTable(QTableView):
 
             tgv = self.tgv
 
-            testname = self.parent.testname
             if (
                 not commentIsVisible(com, questnum, self.username, filters=self.filters)
                 or com["id"] in self.hidden_comment_IDs
@@ -872,7 +862,7 @@ class SimpleCommentTable(QTableView):
 
 
 class AddCommentBox(QDialog):
-    def __init__(self, username, maxMark, lst, questnum, curtestname, com=None):
+    def __init__(self, username, maxMark, lst, questnum, com=None):
         """Initialize a new dialog to edit/create a comment.
 
         Args:
@@ -881,7 +871,6 @@ class AddCommentBox(QDialog):
             lst (list): these are used to "harvest" plain 'ol text
                 annotations and morph them into comments.
             questnum (int)
-            curtestname (str): deprecated?
             com (dict/None): if None, we're creating a new comment.
                 Otherwise, this has the current comment data.
         """
@@ -896,7 +885,6 @@ class AddCommentBox(QDialog):
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
         self.TEmeta = QTextEdit()
-        self.TEtestname = QLineEdit()
         self.TEcommentID = QLineEdit()
         self.TEuser = QLineEdit()
         # TODO: not sure what this is for but maybe it should be a combobox
@@ -927,9 +915,7 @@ class AddCommentBox(QDialog):
         lay.addWidget(self.SB)
         flay.addRow("Delta mark", lay)
         flay.addRow("Tags", self.TEtag)
-        # TODO: support multiple tests, change label to "test(s)" here
-        flay.addRow("Specific to test", self.TEtestname)
-        flay.addRow("", QLabel("(leave blank to share between tests)"))
+
         flay.addRow("Meta", self.TEmeta)
         flay.addRow("Comment ID", self.TEcommentID)
         flay.addRow("User who created", self.TEuser)
@@ -968,20 +954,13 @@ class AddCommentBox(QDialog):
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
-            if com["testname"]:
-                self.TEtestname.setText(str(com["testname"]))
             if com["id"]:
                 self.TEcommentID.setText(str(com["id"]))
             if com["username"]:
                 self.TEuser.setText(com["username"])
             if com["question_number"]:
                 self.TEquestnum.setText(str(com["question_number"]))
-            # TODO: why? do you anticipate a long list of Task ID's that use this comment?
-            # TODO: if so, should it be `tasks_using` and be a list?
-            # com["task_ID"] = str(self.tgv)
-            # self.TEtestname.setText(com["task_ID"])
         else:
-            self.TEtestname.setText(curtestname)
             self.TE.setPlaceholderText(
                 'Prepend with "tex:" to use math.\n\n'
                 'You can "Choose text" to harvest comments from an existing annotation.\n\n'
