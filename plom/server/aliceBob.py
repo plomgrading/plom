@@ -8,7 +8,7 @@ Utilities for canned users and auto-generated (poor) passwords
 """
 
 import secrets
-from random import sample
+from random import sample, randint
 
 words = """
 about above across act active activity add afraid after again age ago agree
@@ -84,13 +84,20 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-def simple_password():
-    """Creates a new simple password of the form word, number, word.
+def simple_password(n=3):
+    """Creates a new simple password containing a number of words.
+
+    args:
+        n {int} -- number of words for the password. Default n = 3.
 
     Returns:
         str -- Password.
     """
-    return secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
+
+    password = ""
+    for i in range(n):
+        password += secrets.choice(words)
+    return password
 
 
 def make_random_user_list(number=None):
