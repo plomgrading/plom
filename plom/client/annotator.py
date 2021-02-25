@@ -1579,9 +1579,6 @@ class Annotator(QWidget):
             False if user cancels, True if annotator is closed successfully.
 
         """
-        # First lets refresh the comments --- WHY??
-        self.refreshComments()
-
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if there is no answer.")
@@ -2042,6 +2039,7 @@ class Annotator(QWidget):
 
     def refreshComments(self):
         """Request for a refreshed comments list and update the current comments box."""
+        # TODO: this digs too deep into comment_widget
         current_comments_list = self.comment_widget.CL.clist
 
         wtf, refreshed_comments_list = self.parentMarkerUI.getRubricsFromServer()
@@ -2052,10 +2050,8 @@ class Annotator(QWidget):
                 "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
             ).exec()
             return
-        else:
-            self.comment_widget.CL.clist = refreshed_comments_list
-            self.comment_widget.CL.populateTable()
-            return
+        self.comment_widget.CL.clist = refreshed_comments_list
+        self.comment_widget.CL.populateTable()
 
     def createNewRubric(self, new_rubric):
         """Ask server to create a new rubric with data supplied"""
