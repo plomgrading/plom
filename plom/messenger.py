@@ -637,7 +637,6 @@ class Messenger(BaseMessenger):
                 "integrity_check": integrity_check,
                 "image_md5s": image_md5_list,
             }
-            print("RUBRICS = ", rubrics)
 
             dat = MultipartEncoder(
                 fields={
