@@ -57,3 +57,9 @@ def test_spec_too_many_named():
     r["numberToProduce"] = 50
     r["numberToName"] = 60
     raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+
+
+def test_spec_longname_slash_issue1364():
+    r = raw.copy()
+    r["longName"] = 'Math123 / Bio321 Midterm ∫∇·Fdv — "have fun!"😀'
+    SpecVerifier(r).verifySpec(verbose=False)

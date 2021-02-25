@@ -19,15 +19,21 @@ import tempfile
 
 import toml
 import appdirs
-import re
 
+import urllib3
 from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomAPIException,
+    PlomAuthenticationException,
+    PlomExistingLoginException,
+)
 from plom.messenger import Messenger
 from plom.client.comment_list import comment_file
 
@@ -97,7 +103,7 @@ def writeLastTime():
 class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
-        super(Chooser, self).__init__()
+        super().__init__()
         self.parent = Qapp
 
         readLastTime()
@@ -193,7 +199,8 @@ class Chooser(QDialog):
             log.warning("Password too short")
             return
 
-        server = self.partial_parse_address(self.ui.serverLE.text())
+        self.partial_parse_address()
+        server = self.ui.serverLE.text()
         self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
@@ -350,8 +357,8 @@ class Chooser(QDialog):
         messenger = None
 
     def getInfo(self):
-
-        server = self.partial_parse_address(self.ui.serverLE.text())
+        self.partial_parse_address()
+        server = self.ui.serverLE.text()
         self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
@@ -378,7 +385,7 @@ class Chooser(QDialog):
         except PlomSeriousException:
             try:
                 spec = messenger.getInfoGeneral()
-            except:
+            except PlomSeriousException:
                 ErrorMessage("Could not connect to server.").exec_()
                 return
 
@@ -412,27 +419,21 @@ class Chooser(QDialog):
         else:
             self.ui.userLE.setFocus(True)
 
-    def partial_parse_address(self, address):
+    def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.
-
-        args:
-            address (str): the address
 
         If there's a colon in the address (maybe user did not see port
         entry box or is pasting in a string), then try to extract a port
         number and put it into the entry box.
         """
-        address = address.strip()
-        containsColon = address.find(":")
-        if containsColon != -1:
-            if containsColon != address.rfind(":"):
-                return address
-            try:
-                self.ui.mportSB.setValue(int(address.partition(":")[2]))
-            except ValueError:
-                return address
-            return address.partition(":")[0]
-        return address
+        address = self.ui.serverLE.text()
+        try:
+            parsedurl = urllib3.util.parse_url(address)
+            if parsedurl.port:
+                self.ui.mportSB.setValue(int(parsedurl.port))
+            self.ui.serverLE.setText(parsedurl.host)
+        except urllib3.exceptions.LocationParseError:
+            return
 
     @pyqtSlot(int)
     def on_other_window_close(self, value):

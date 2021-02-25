@@ -104,7 +104,7 @@ class Annotator(QWidget):
             parentMarkerUI (MarkerClient): the parent of annotator UI.
             initialData (dict): as documented by the arguments to "loadNewTGV"
         """
-        super(Annotator, self).__init__()
+        super().__init__()
 
         self.username = username
         self.parentMarkerUI = parentMarkerUI
@@ -200,7 +200,7 @@ class Annotator(QWidget):
         m = QMenu()
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
-        m.addAction("Defer and go to next", self.menuDummy).setEnabled(False)
+        m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
@@ -232,28 +232,14 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Refresh comments", self.refreshComments)
         m.addSeparator()
-        m.addAction("Help", self.menuDummy).setEnabled(False)
+        m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        m.addAction("About Plom", self.menuDummy).setEnabled(False)
+        m.addAction("About Plom", lambda: None).setEnabled(False)
         m.addSeparator()
         m.addAction("Close without saving\tctrl-c", self.close)
         self.ui.hamMenuButton.setMenu(m)
         self.ui.hamMenuButton.setToolTip("Menu (F10)")
         self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
-
-    # TODO: ask andrew what this does....
-    def menuDummy(self):
-        """
-        Prints "TODO: menu placeholder 1"
-
-        Notes:
-            This method is "Leftover junk from when I hacked the hamburger menu in place." -Colin
-
-        Returns:
-            None
-
-        """
-        log.info("TODO: menu placeholder 1")
 
     def closeCurrentTGV(self):
         """
@@ -351,7 +337,7 @@ class Annotator(QWidget):
         self.src_img_data = src_img_data
 
         if getattr(self, "maxMark", None) != maxMark:
-            log.warn("Is changing maxMark supported?  we just did it...")
+            log.warning("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
         del maxMark
 
@@ -374,7 +360,7 @@ class Annotator(QWidget):
         elif self.markStyle == 3:  # markDown
             self.score = self.maxMark
         else:  # must be mark-total
-            log.warn("Using mark-total. This should not happen.")
+            log.warning("Using mark-total. This should not happen.")
             self.score = 0
 
         # Set up the graphicsview and graphicsscene of the group-image
@@ -1021,7 +1007,7 @@ class Annotator(QWidget):
         # the press into a function call (if exists)
         if QGuiApplication.mouseButtons() == Qt.NoButton:
             self.key_codes.get(event.key(), lambda *args: None)()
-        super(Annotator, self).keyPressEvent(event)
+        super().keyPressEvent(event)
 
     def setToolMode(self, newMode, newCursor, imagePath=None):
         """

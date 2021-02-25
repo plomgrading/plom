@@ -924,7 +924,7 @@ class MarkerClient(QWidget):
             Qapp(QApplication): Main client application
 
         """
-        super(MarkerClient, self).__init__()
+        super().__init__()
         self.Qapp = Qapp
 
         # instance vars we can initialize now
@@ -1198,7 +1198,7 @@ class MarkerClient(QWidget):
             self.testImg.resetB.animateClick()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
-        super(MarkerClient, self).resizeEvent(event)
+        super().resizeEvent(event)
 
     def throwSeriousError(self, error, rethrow=True):
         """
@@ -1308,7 +1308,7 @@ class MarkerClient(QWidget):
         plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
         ori = plomdata.get("orientations")
         if not ori:
-            log.warn("plom file has no orientation data: substituting zeros")
+            log.warning("plom file has no orientation data: substituting zeros")
             # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
             for d in src_img_data:
                 d["orientation"] = 0

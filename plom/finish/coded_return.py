@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -7,10 +7,11 @@
 Gather reassembled papers with html page for digital return.
 """
 
-__copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald and others"
+__copyright__ = "Copyright (C) 2018-2021 Colin B. Macdonald and others"
 __credits__ = ["The Plom Project Developers"]
 __license__ = "AGPL-3.0-or-later"
 
+import html
 import os
 import sys
 import shutil
@@ -58,7 +59,7 @@ def main(use_hex, digits, salt=None):
     """
     spec = SpecVerifier.load_verified()
     shortname = spec["name"]
-    longname = spec["longName"]
+    longname = html.escape(spec["longName"])
     codedReturnDir = Path("codedReturn")
 
     reassembles = ["reassembled", "reassembled_ID_but_not_marked"]
@@ -104,15 +105,15 @@ def main(use_hex, digits, salt=None):
         sys.exit(5)
 
     print("Adding index.html file")
-    from .html_view_test_template import html
+    from .html_view_test_template import htmlsrc
 
-    html = html.replace("__COURSENAME__", longname)
-    html = html.replace("__TESTNAME__", shortname)
-    html = html.replace("__CODE_LENGTH__", str(digits))
-    html = html.replace("__SID_LENGTH__", str(StudentIDLength))
+    htmlsrc = htmlsrc.replace("__COURSENAME__", longname)
+    htmlsrc = htmlsrc.replace("__TESTNAME__", shortname)
+    htmlsrc = htmlsrc.replace("__CODE_LENGTH__", str(digits))
+    htmlsrc = htmlsrc.replace("__SID_LENGTH__", str(StudentIDLength))
 
     with open(codedReturnDir / "index.html", "w") as htmlfile:
-        htmlfile.write(html)
+        htmlfile.write(htmlsrc)
 
     print("All done!  Next tasks:")
     print('  * Copy "{}" to your webserver'.format(codedReturnDir))
