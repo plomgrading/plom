@@ -458,7 +458,7 @@ class CommentWidget(QWidget):
         meta = acb.TEmeta.toPlainText().strip()
         username = acb.TEuser.text().strip()
         # only meaningful if we're modifying
-        commentID = acb.TEcommentID.text().strip()
+        commentID = acb.label_rubric_id.text().strip()
         try:
             question_number = int(acb.TEquestnum.text().strip())
         except ValueError:
@@ -902,7 +902,7 @@ class AddCommentBox(QDialog):
         self.TEtag = QTextEdit()
         self.TEmeta = QTextEdit()
         # cannot edit these
-        self.TEcommentID = QLabel()
+        self.label_rubric_id = QLabel("Will be auto-assigned")
         self.TEuser = QLabel()
         self.TEquestnum = QLabel()
 
@@ -933,7 +933,7 @@ class AddCommentBox(QDialog):
         flay.addRow("Tags", self.TEtag)
 
         flay.addRow("Meta", self.TEmeta)
-        flay.addRow("Comment ID", self.TEcommentID)
+        flay.addRow("Rubric ID", self.label_rubric_id)
         flay.addRow("User who created", self.TEuser)
         flay.addRow("Question number", self.TEquestnum)
 
@@ -971,9 +971,7 @@ class AddCommentBox(QDialog):
                 else:
                     self.SB.setValue(int(com["delta"]))
             if com["id"]:
-                self.TEcommentID.setText(str(com["id"]))
-            else:
-                self.TEcommentID.setText("Will be auto-assigned")
+                self.label_rubric_id.setText(str(com["id"]))
             if com["username"]:
                 self.TEuser.setText(com["username"])
             if com["question_number"]:
@@ -988,7 +986,6 @@ class AddCommentBox(QDialog):
                 "notes to self, hints on when to use this comment, etc.\n\n"
                 "Not shown to student!"
             )
-            self.TEcommentID.setText("Will be auto-assigned")
             self.TEuser.setText(username)
             self.TEquestnum.setText(str(questnum))
 
