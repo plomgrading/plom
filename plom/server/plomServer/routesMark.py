@@ -296,6 +296,9 @@ class MarkHandler:
             elif marked_task_status[1] == "integrity_fail":
                 log.warning("Returning with error 406 = {}".format(marked_task_status))
                 return web.Response(status=406)
+            elif marked_task_status[1] == "invalid_rubric":
+                log.warning("Returning with error 406 = {}".format(marked_task_status))
+                return web.Response(status=406)
             else:
                 log.warning("Returning with error 400 = {}".format(marked_task_status))
                 return web.Response(status=400)

@@ -298,6 +298,11 @@ def MtakeTaskFromClient(
         for img_md5 in image_md5_list:
             if img_md5 not in test_image_md5s:
                 return [False, "image_not_in_test"]
+        # check rubrics keys are valid
+        # TODO - should these check question of rubric agrees with question of task?
+        for rid in rubrics:
+            if Rubric.get_or_none(key=rid) is None:
+                return [False, "invalid_rubric"]
 
         aref = Annotation.create(
             qgroup=qref,
