@@ -981,14 +981,13 @@ class AddCommentBox(QDialog):
         else:
             self.TE.setPlaceholderText(
                 'Prepend with "tex:" to use math.\n\n'
-                'You can "Choose text" to harvest comments from an existing annotation.\n\n'
+                'You can "choose text" to harvest existing text from the page.\n\n'
                 'Change "delta" below to associate a point-change.'
             )
             self.TEmeta.setPlaceholderText(
                 "notes to self, hints on when to use this comment, etc.\n\n"
                 "Not shown to student!"
             )
-            # TODO: is this assigned later?
             self.TEcommentID.setText("Will be auto-assigned")
             self.TEuser.setText(username)
             self.TEquestnum.setText(str(questnum))
