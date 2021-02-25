@@ -567,23 +567,6 @@ class MarkHandler:
         else:  # cannot find that task
             return web.Response(status=404)
 
-    # @routes.patch("/MK/comment")
-    @authenticate_by_token_required_fields(["user"])
-    def MgetCurrentComments(self, data, request):
-        """Respond with the current comments list from the database.
-
-        Args:
-            data (dict): A dictionary including user/token.
-            request (aiohttp.web_request.Request): A request of type GET /MK/comment.
-
-        Returns:
-            aiohttp.web_response.Response: Includes the updated list of current comments
-                dictionaries.
-        """
-        username = data["user"]
-        current_comments = self.server.MgetCurrentComments(username)
-        return web.json_response(current_comments, status=200)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -602,7 +585,6 @@ class MarkHandler:
         router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
-        router.add_get("/MK/currentcomment", self.MgetCurrentComments)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)

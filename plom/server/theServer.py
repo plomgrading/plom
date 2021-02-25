@@ -198,9 +198,6 @@ class Server(object):
         MreviewQuestion,
         MrevertTask,
     )
-    from .plomServer.serverComments import (
-        MgetCurrentComments,
-    )
     from .plomServer.serverRubric import (
         McreateRubric,
         MgetRubrics,
