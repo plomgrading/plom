@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-import time
 import logging
 from pathlib import Path
 
@@ -413,12 +412,11 @@ class CommentWidget(QWidget):
         # send a click to the comment button to force updates
         self.parent.ui.commentButton.animateClick()
 
-    def editCurrent(self, com):
+    def editComment(self, com):
         """Open a dialog to edit a comment.
 
         Returns:
-            dict/None: the newly updated comment or None if something
-                has gone wrong or is invalid.
+            None: does its work through side effects on the comment list.
         """
         # check if com belongs to user - else we need to fork the comment.
         if com["username"] != self.username:
@@ -429,9 +427,8 @@ class CommentWidget(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            else:
-                self.forkCurrent(com)
-                return
+            self.forkComment(com)
+            return
 
         # text items in scene.
         lst = self.parent.getComments()
@@ -459,7 +456,7 @@ class CommentWidget(QWidget):
         try:
             question_number = int(acb.TEquestnum.text().strip())
         except ValueError:
-            return None
+            return
 
         rv = self.parent.modifyRubric(
             commentID,
@@ -483,7 +480,7 @@ class CommentWidget(QWidget):
         # send a click to the comment button to force updates
         self.parent.ui.commentButton.animateClick()
 
-    def forkCurrent(self, com):
+    def forkComment(self, com):
         # text items in scene.
         lst = self.parent.getComments()
         # text items already in comment list
@@ -905,12 +902,7 @@ class SimpleCommentTable(QTableView):
         r = tableIndex.row()
         idx = int(self.cmodel.index(r, 2).data())
         com = self.clist[idx]
-        newcom = self.parent.editCurrent(com)
-        if newcom is not None:
-            self.clist.insert(idx + 1, newcom)
-            # # We refresh the comments list to add the new comment to the server.
-            self.parent.parent.refreshComments()
-            self.populateTable()
+        self.parent.editComment(com)
 
     def focusInEvent(self, event):
         super(SimpleCommentTable, self).focusInEvent(event)
