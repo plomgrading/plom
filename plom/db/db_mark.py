@@ -233,6 +233,7 @@ def MtakeTaskFromClient(
     annot_fname,
     plom_fname,
     comment_fname,
+    rubrics,
     marking_time,
     tags,
     md5,
@@ -332,6 +333,19 @@ def MtakeTaskFromClient(
                 task, mark, user_name, annot_fname, md5
             )
         )
+        # for each rubric used - make a link to the assoc rubric
+        log.info("Recording rubrics, {}, used marking task {}".format(rubrics, task))
+        for rid in rubrics:
+            rref = Rubric.get_or_none(key=rid)
+            rref.count += 1
+            rref.save()
+            if rref is None:  # this should not happen
+                continue
+            # check to see if it is already in
+            arlref = ARLink.get_or_none(annotation=aref, rubric=rref)
+            if arlref is None:
+                ARLink.create(annotation=aref, rubric=rref)
+
         # check if there are any unmarked questions left in the test
         if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:
             log.info("Still unmarked questions in test {}".format(tref.test_number))

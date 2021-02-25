@@ -235,6 +235,7 @@ class MarkHandler:
                 "pg",
                 "ver",
                 "score",
+                "rubrics",
                 "mtime",
                 "tags",
                 "md5sum",
@@ -248,6 +249,7 @@ class MarkHandler:
             return web.Response(status=401)
 
         comments = task_metadata["comments"]  # List of comments.
+        rubrics = task_metadata["rubrics"]  # list of rubric IDs
         task_code = request.match_info["task"]  # Task code.
 
         # Note: if user isn't validated, we don't parse their binary junk
@@ -276,6 +278,7 @@ class MarkHandler:
             task_image,
             plomdat,
             comments,
+            rubrics,
             int(task_metadata["mtime"]),
             task_metadata["tags"],
             task_metadata["md5sum"],

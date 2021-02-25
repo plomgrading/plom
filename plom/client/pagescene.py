@@ -533,6 +533,19 @@ class PageScene(QGraphicsScene):
                 comments.append(X.getContents())
         return comments
 
+    def getRubrics(self):
+        """
+        Get the rubrics(comments) associated with this paper.
+
+        Returns:
+            list: pairs of IDs and strings from each bit of text.
+        """
+        rubrics = []
+        for X in self.items():
+            if isinstance(X, GroupDeltaTextItem):
+                rubrics.append(X.commentID)
+        return rubrics
+
     def countComments(self):
         """
         Counts current text items and comments associated with the paper.
@@ -543,6 +556,19 @@ class PageScene(QGraphicsScene):
         count = 0
         for X in self.items():
             if type(X) is TextItem:
+                count += 1
+        return count
+
+    def countRubrics(self):
+        """
+        Counts current rubrics (comments) associated with the paper.
+
+        Returns:
+            (int): total number of rubrics associated with this paper.
+        """
+        count = 0
+        for X in self.items():
+            if type(X) is GroupDeltaTextItem:
                 count += 1
         return count
 

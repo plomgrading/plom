@@ -603,6 +603,7 @@ class Messenger(BaseMessenger):
         aname,
         pname,
         cname,
+        rubrics,
         integrity_check,
         image_md5_list,
     ):
@@ -631,10 +632,12 @@ class Messenger(BaseMessenger):
                 "mtime": str(mtime),
                 "tags": tags,
                 "comments": open(cname, "r").read(),
+                "rubrics": rubrics,
                 "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
                 "integrity_check": integrity_check,
                 "image_md5s": image_md5_list,
             }
+            print("RUBRICS = ", rubrics)
 
             dat = MultipartEncoder(
                 fields={

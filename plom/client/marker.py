@@ -273,6 +273,7 @@ def upload(
     mtime,
     question,
     ver,
+    rubrics,
     tags,
     integrity_check,
     image_md5_list,
@@ -334,6 +335,7 @@ def upload(
             aname,
             pname,
             cname,
+            rubrics,
             integrity_check,
             image_md5_list,
         )
@@ -1840,6 +1842,7 @@ class MarkerClient(QWidget):
                 aname(str): annotated file name
                 plomFileName(str): the name of thee .plom file
                 commentFileName(str): the name of the comment file.
+                rubric(list[str]): the keys of the rubrics used
                 integrity_check(str): the integrity_check string of the task.
                 src_img_data (list[dict]): image data, md5sums, etc
 
@@ -1854,6 +1857,7 @@ class MarkerClient(QWidget):
             aname,
             plomFileName,
             commentFileName,
+            rubrics,
             integrity_check,
             src_img_data,
         ) = stuff
@@ -1891,6 +1895,7 @@ class MarkerClient(QWidget):
             totmtime,  # total marking time (seconds)
             self.question,
             self.version,
+            rubrics,
             tags,
             integrity_check,
             [x["md5"] for x in src_img_data],

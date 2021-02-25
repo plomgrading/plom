@@ -1626,6 +1626,7 @@ class Annotator(QWidget):
 
         self.scene.save()
         self.saveMarkerComments()
+        rubrics = self.scene.getRubrics()
         self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
@@ -1657,6 +1658,7 @@ class Annotator(QWidget):
             self.saveName,
             plomFile,
             commentFile,
+            rubrics,
             self.integrity_check,
             self.src_img_data,
         ]

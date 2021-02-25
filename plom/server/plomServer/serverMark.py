@@ -177,6 +177,7 @@ def MreturnMarkedTask(
     image,
     plomdat,
     comments,
+    rubrics,
     time_spent_marking,
     tags,
     md5_code,
@@ -195,6 +196,7 @@ def MreturnMarkedTask(
         plomdat (bytearray): Plom data file used for saving marking information in
             editable format.
         comments (str): Return the String of the comments list.
+        rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
         md5_code (str): MD5 hash key for this task.
@@ -248,6 +250,7 @@ def MreturnMarkedTask(
         annotated_filename,
         plom_filename,
         comments_filename,
+        rubrics,
         time_spent_marking,
         tags,
         md5n,
