@@ -54,6 +54,56 @@ class RubricHandler:
         rubrics = self.server.MgetRubrics()
         return web.json_response(rubrics, status=200)
 
+    # @routes.put("/MK/rubric")
+    @authenticate_by_token_required_fields(["user", "rubric"])
+    def McreateRubric(self, data, request):
+        """Add new rubric to DB and respond with its key
+
+        Args:
+            data (dict): A dictionary including user/token and the new rubric to be created
+            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
+
+        Returns:
+            aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
+        """
+        username = data["user"]
+        new_rubric = data["rubric"]
+
+        rval = self.server.McreateRubric(username, new_rubric)
+        if rval[0]:  # worked - so return key
+            return web.json_response(rval[1], status=200)
+        else:  # failed - rubric sent is incomplete
+            return web.Response(status=406)
+
+    # @routes.patch("/MK/rubric/{key}")
+    @authenticate_by_token_required_fields(["user", "rubric"])
+    def MmodifyRubric(self, data, request):
+        """Add modify rubric to DB and respond with its key
+
+        Args:
+            data (dict): A dictionary including user/token and the new rubric to be created
+            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
+
+        Returns:
+            aiohttp.web_response.Response: either 200,newkey or
+            406 if sent rubric was incomplete or inconsistent
+        """
+        username = data["user"]
+        updated_rubric = data["rubric"]
+        key = request.match_info["key"]
+
+        if key != updated_rubric["id"]:  # key mismatch
+            return web.Response(status=400)
+
+        rval = self.server.McreateRubric(username, new_rubric)
+        if rval[0]:  # worked - so return key
+            return web.json_response(rval[1], status=200)
+        else:  # failed - rubric sent is incomplete
+            if rval[1] == "incomplete":
+                return web.Response(status=406)
+            else:
+                return web.Response(status=409)
+
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -62,3 +112,4 @@ class RubricHandler:
         """
         router.add_put("/MK/rubric", self.McreateRubric)
         router.add_get("/MK/rubric", self.MgetRubrics)
+        router.add_patch("/MK/rubric/{key}", self.MmodifyRubric)

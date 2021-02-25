@@ -64,3 +64,35 @@ def MgetRubrics(self):
             }
         )
     return rubric_list
+
+
+def MmodifyRubric(self, user_name, key, rubric):
+    """Create a new rubric entry in the DB
+
+    Args:
+        user_name (str): name of user creating the rubric element
+        key(str): key for the rubric
+        rubric (dict): dict containing the rubric details.
+            For example
+            {delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah", "key:blahblayh"}
+
+    Returns:
+        list: [True, key] - the new key generated, [False, "noSuchRubric"]
+
+    """
+
+    uref = User.get(name=user_name)  # authenticated, so not-None
+    # check if the rubric exists made by this user - cannot modify other user's rubric
+    rref = Rubric.get_or_none(key=key, user=uref)
+    if rref is None:
+        return [False, "noSuchRubric"]
+
+    with plomdb.atomic():
+        rref.delta = rubric["delta"]
+        rref.text = rubric["text"]
+        rref.modificationTime = datetime.now()
+        rref.revision += 1
+        rref.meta = rubric["meta"]
+        rref.tags = rubric["tags"]
+        rref.save()
+    return [True, key]

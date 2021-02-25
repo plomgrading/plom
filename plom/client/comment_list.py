@@ -153,7 +153,7 @@ def comments_save_list(clist, comment_dir=comment_dir, filename=comment_filename
 # might make more sense here, but for now its list of booleans:
 #    hide-comments-not-for-this-question
 #    hide-comments-not-by-this-user
-#    hide-comments-created-by-administrator
+#    hide-comments-created-by-manager
 default_comments_filter = [True, False, False]
 
 
@@ -192,7 +192,7 @@ def comment_relates_to_username(comment, username):
     """
     if username is None:
         return False
-    if username == comment["username"] or comment["username"] == "Administrator":
+    if username == comment["username"] or comment["username"] == "manager":
         return True
     return False
 
@@ -208,7 +208,7 @@ def comment_is_default(comment):
     Returns:
         boolean: True/False.
     """
-    if comment["username"] == "Administrator":
+    if comment["username"] == "manager":
         return True
     else:
         return False
@@ -690,11 +690,10 @@ class SimpleCommentTable(QTableView):
 
         self.cmodel.setRowCount(0)
         for i, com in enumerate(self.clist):
-            print("Comment ", com)
             # If only user comments are toggled, then only add current and
             # user's own comments.
             if onlyUserComments and (
-                com["username"] != self.username and com["username"] != "Administrator"
+                com["username"] != self.username and com["username"] != "manager"
             ):
                 continue
 
@@ -1019,7 +1018,7 @@ class ChangeFiltersDialog(QDialog):
         self.parent = parent
         self.cb1 = QCheckBox("Show comments from other questions")
         self.cb2 = QCheckBox("Show comments from other users (EXPERIMENTAL)")
-        self.cb3 = QCheckBox("Hide preset comments from administrator")
+        self.cb3 = QCheckBox("Hide preset comments from manager")
         self.cb1.setCheckState(Qt.Unchecked if curFilters[0] else Qt.Checked)
         self.cb2.setCheckState(Qt.Unchecked if curFilters[1] else Qt.Checked)
         self.cb3.setCheckState(Qt.Checked if curFilters[2] else Qt.Unchecked)

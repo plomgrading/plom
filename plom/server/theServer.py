@@ -206,6 +206,7 @@ class Server(object):
     from .plomServer.serverRubric import (
         McreateRubric,
         MgetRubrics,
+        MmodifyRubric,
     )
     from .plomServer.serverReport import (
         RgetUnusedTests,

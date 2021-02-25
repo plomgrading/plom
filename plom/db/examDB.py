@@ -211,4 +211,4 @@ class PlomDB:
         MrevertTask,
     )
 
-    from plom.db.db_rubric import McreateRubric, MgetRubrics
+    from plom.db.db_rubric import McreateRubric, MgetRubrics, MmodifyRubric
