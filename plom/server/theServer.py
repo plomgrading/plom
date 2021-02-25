@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
@@ -65,7 +65,6 @@ def build_directories():
         "pages/originalPages",
         "markedQuestions",
         "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
     ):
         Path(d).mkdir(exist_ok=True)
         log.debug("Building directory {}".format(d))

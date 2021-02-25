@@ -103,7 +103,6 @@ def buildRequiredDirectories():
         "pages/originalPages",
         "markedQuestions",
         "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
         "serverConfiguration",
     ]
     for dir in lst:
@@ -312,7 +311,6 @@ def checkDirectories():
         "pages/originalPages",
         "markedQuestions",
         "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
         "serverConfiguration",
     ]
     for d in lst:

@@ -1,17 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from datetime import datetime
-import time
 import hashlib
 import imghdr
-import json
 import os
 import logging
-import random
-import copy
 
 from plom.textools import texFragmentToPNG
 
@@ -164,9 +160,6 @@ def MdidNotFinish(self, username, task_code):
     return
 
 
-# TODO: As input to MreturnMarkedTask, the comments string is in a
-# list ie `["comment 1", "comment 2", "comment 3"]`
-# Maybe this should be changed.
 def MreturnMarkedTask(
     self,
     username,
@@ -176,7 +169,6 @@ def MreturnMarkedTask(
     mark,
     image,
     plomdat,
-    comments,
     rubrics,
     time_spent_marking,
     tags,
@@ -195,7 +187,6 @@ def MreturnMarkedTask(
         image (bytearray): Marked image of question.
         plomdat (bytearray): Plom data file used for saving marking information in
             editable format.
-        comments (str): Return the String of the comments list.
         rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
@@ -214,7 +205,6 @@ def MreturnMarkedTask(
     # image, plomdat are bytearrays, comments = list
     annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
     plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
-    comments_filename = "markedQuestions/commentFiles/G{}.json".format(task_code[1:])
 
     # do sanity checks on incoming annotation image file
     # Check the annotated_filename is valid png - just check header presently
@@ -249,7 +239,6 @@ def MreturnMarkedTask(
         mark,
         annotated_filename,
         plom_filename,
-        comments_filename,
         rubrics,
         time_spent_marking,
         tags,
@@ -263,7 +252,7 @@ def MreturnMarkedTask(
 
     # db successfully updated
     #  check if those files exist already - back up if so
-    for filename in [annotated_filename, plom_filename, comments_filename]:
+    for filename in (annotated_filename, plom_filename):
         if os.path.isfile(filename):
             os.rename(
                 filename,
@@ -275,8 +264,6 @@ def MreturnMarkedTask(
         file_header.write(image)
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
-    with open(comments_filename, "w") as file_header:
-        json.dump(comments, file_header)
 
     self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
     # return ack with current counts.

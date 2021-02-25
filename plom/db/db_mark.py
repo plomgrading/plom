@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+
 from plom.db.tables import *
 from datetime import datetime
 
@@ -232,7 +236,6 @@ def MtakeTaskFromClient(
     mark,
     annot_fname,
     plom_fname,
-    comment_fname,
     rubrics,
     marking_time,
     tags,
@@ -319,7 +322,6 @@ def MtakeTaskFromClient(
         aref.aimage = AImage.create(file_name=annot_fname, md5sum=md5)
         aref.mark = mark
         aref.plom_file = plom_fname
-        aref.comment_file = comment_fname
         aref.marking_time = marking_time
         qref.save()
         aref.save()
@@ -602,7 +604,6 @@ def MrevertTask(self, task):
                 aimage=aref.aimage,
                 edition=ed,
                 plom_file=aref.plom_file,
-                comment_file=aref.comment_file,
                 mark=aref.mark,
                 marking_time=aref.marking_time,
                 time=aref.time,

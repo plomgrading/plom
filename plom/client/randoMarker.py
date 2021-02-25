@@ -63,15 +63,6 @@ class SceneParent(QWidget):
         )
         self.view.connectScene(self.scene)
 
-    def getComments(self):
-        return self.scene.getComments()
-
-    def saveMarkerComments(self):
-        commentList = self.getComments()
-        # savefile is <blah>.png, save comments as <blah>.json
-        with open(self.saveName[:-3] + "json", "w") as commentFile:
-            json.dump(commentList, commentFile)
-
     def pickleIt(self):
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
@@ -175,10 +166,7 @@ class SceneParent(QWidget):
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
-        commentFile = self.saveName[:-3] + "json"
         self.scene.save()
-        # Save the marker's comments
-        self.saveMarkerComments()
         # Pickle the scene as a plom-file
         self.pickleIt()
         return self.scene.score, self.scene.getRubrics()
@@ -228,7 +216,6 @@ def startMarking(question, version):
         with tempfile.TemporaryDirectory() as td:
             aFile = os.path.join(td, "argh.png")
             plomFile = aFile[:-3] + "plom"
-            commentFile = aFile[:-3] + "json"
             score, rubrics = annotatePaper(maxMark, task, imageList, aFile, tags)
             print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
@@ -240,7 +227,6 @@ def startMarking(question, version):
                 "",
                 aFile,
                 plomFile,
-                commentFile,
                 rubrics,
                 integrity_check,
                 image_md5s,
