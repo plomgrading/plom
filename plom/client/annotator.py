@@ -2013,7 +2013,7 @@ class Annotator(QWidget):
                     "<p>The similar comment is " + existing_comment_str + "<\p>"
                 )
                 similar_comment_message += str(
-                    "<p>Are you sure you want to add this new comment ? If you press no, we will add the old comment.<\p>"
+                    "<p>Are you sure you want to add this new comment?<\p>"
                 )
 
                 msg = SimpleMessage(similar_comment_message)
