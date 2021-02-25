@@ -418,6 +418,7 @@ class CommentWidget(QWidget):
         Returns:
             None: does its work through side effects on the comment list.
         """
+        modify = True
         # check if com belongs to user - else we need to fork the comment.
         if com["username"] != self.username:
             msg = SimpleMessage(
@@ -427,8 +428,12 @@ class CommentWidget(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            self.forkComment(com)
-            return
+            com = com.copy()
+            # reset the key
+            com["id"] = None
+            # set username to THIS user
+            com["username"] = self.username
+            modify = False
 
         # text items in scene.
         lst = self.parent.getComments()
@@ -452,76 +457,35 @@ class CommentWidget(QWidget):
         tag = acb.TEtag.toPlainText().strip()
         meta = acb.TEmeta.toPlainText().strip()
         username = acb.TEuser.text().strip()
+        # only meaningful if we're modifying
         commentID = acb.TEcommentID.text().strip()
         try:
             question_number = int(acb.TEquestnum.text().strip())
         except ValueError:
             return
 
-        rv = self.parent.modifyRubric(
-            commentID,
-            {
-                "id": commentID,
-                "delta": dlt,
-                "text": txt,
-                "tags": tag,
-                "meta": meta,
-                "question": question_number,
-            },
-        )
-        if rv[0]:  # rubric created successfully
-            commentID = rv[1]
-        else:  # some sort of creation problem
-            return
-
-        # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
-        # TODO: but we should use `commentID` from above to highlight the new row at least
-        self.parent.refreshComments()
-        # send a click to the comment button to force updates
-        self.parent.ui.commentButton.animateClick()
-
-    def forkComment(self, com):
-        # text items in scene.
-        lst = self.parent.getComments()
-        # text items already in comment list
-        clist = []
-        for r in range(self.CL.cmodel.rowCount()):
-            clist.append(self.CL.cmodel.index(r, 1).data())
-        # text items in scene not in comment list
-        alist = [X for X in lst if X not in clist]
-
-        # reset the key
-        com["id"] = None
-        # set username to THIS user
-        com["username"] = self.username
-
-        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
-        if acb.exec_() != QDialog.Accepted:
-            return
-        if acb.DE.checkState() == Qt.Checked:
-            dlt = acb.SB.value()
+        if modify:
+            rv = self.parent.modifyRubric(
+                commentID,
+                {
+                    "id": commentID,
+                    "delta": dlt,
+                    "text": txt,
+                    "tags": tag,
+                    "meta": meta,
+                    "question": question_number,
+                },
+            )
         else:
-            dlt = "."
-        txt = acb.TE.toPlainText().strip()
-        if len(txt) <= 0:
-            return
-        tag = acb.TEtag.toPlainText().strip()
-        meta = acb.TEmeta.toPlainText().strip()
-        username = acb.TEuser.text().strip()
-        try:
-            question_number = int(acb.TEquestnum.text().strip())
-        except ValueError:
-            return
-
-        rv = self.parent.createNewRubric(
-            {
-                "delta": dlt,
-                "text": txt,
-                "tags": tag,
-                "meta": meta,
-                "question": question_number,
-            }
-        )
+            rv = self.parent.createNewRubric(
+                {
+                    "delta": dlt,
+                    "text": txt,
+                    "tags": tag,
+                    "meta": meta,
+                    "question": question_number,
+                },
+            )
         if rv[0]:  # rubric created successfully
             commentID = rv[1]
         else:  # some sort of creation problem
