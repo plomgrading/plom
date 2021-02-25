@@ -273,6 +273,7 @@ def upload(
     mtime,
     question,
     ver,
+    rubrics,
     tags,
     integrity_check,
     image_md5_list,
@@ -310,17 +311,16 @@ def upload(
 
     """
     # do name sanity checks here
-    aname, pname, cname = filenames
+    aname, pname = filenames
 
     if not (
         task.startswith("q")
         and os.path.basename(aname) == "G{}.png".format(task[1:])
         and os.path.basename(pname) == "G{}.plom".format(task[1:])
-        and os.path.basename(cname) == "G{}.json".format(task[1:])
     ):
         raise PlomSeriousException(
-            "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                aname, pname, cname
+            "Upload file names mismatch [{}, {}] - this should not happen".format(
+                aname, pname
             )
         )
     try:
@@ -333,7 +333,7 @@ def upload(
             tags,
             aname,
             pname,
-            cname,
+            rubrics,
             integrity_check,
             image_md5_list,
         )
@@ -1683,7 +1683,6 @@ class MarkerClient(QWidget):
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, Gtask + ".png")
-        cname = os.path.join(paperdir, Gtask + ".json")
         pname = os.path.join(paperdir, Gtask + ".plom")
 
         remarkFlag = False
@@ -1761,41 +1760,26 @@ class MarkerClient(QWidget):
             src_img_data,
         )
 
-    def getCurrentComments(self):
-        """Ask from the server for the current comments.
-
-        Returns:
-            list: A list of the current comments in the server.
-        """
-
-        get_current_comments_response = self.msgr.MgetCurrentComments()
-        get_comments_status = get_current_comments_response[0]
-        if get_comments_status is False:
-            log.warning("Refreshing comment list failed. ")
-            return []
-        else:
-            current_comments_list = get_current_comments_response[1]
-            return current_comments_list
-
-    def getCommentsFromServer(self, current_comments_list):
-        """Push comment list to the server and pull the latest comments list.
+    def getRubricsFromServer(self):
+        """Get list of rubrics from server.
 
         Args:
-            current_comments_list (list): A list of the comments as dictionaries.
+            none
 
         Returns:
-            list: A list of the updated dictionary objects. This list is empty if
-                the comments list update was unsuccessfull.
+            list: A list of the dictionary objects.
         """
 
-        refresh_response = self.msgr.MrefreshComments(current_comments_list)
-        refresh_response_status = refresh_response[0]
-        if refresh_response_status is False:
-            log.warning("Refreshing comment list failed. ")
-            return []
-        else:
-            refreshed_comments_list = refresh_response[1]
-            return refreshed_comments_list
+        response = self.msgr.MgetRubrics()
+        if response[0] is False:
+            log.warning("Getting rubrics failed. ")
+        return response
+
+    def sendNewRubricToServer(self, new_rubric):
+        return self.msgr.McreateRubric(new_rubric)
+
+    def modifyRubricOnServer(self, key, updated_rubric):
+        return self.msgr.MmodifyRubric(key, updated_rubric)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1853,8 +1837,8 @@ class MarkerClient(QWidget):
                 markingTime(int): total time spent marking.
                 paperDir(dir): Working directory for the current task
                 aname(str): annotated file name
-                plomFileName(str): the name of thee .plom file
-                commentFileName(str): the name of the comment file.
+                plomFileName(str): the name of the .plom file
+                rubric(list[str]): the keys of the rubrics used
                 integrity_check(str): the integrity_check string of the task.
                 src_img_data (list[dict]): image data, md5sums, etc
 
@@ -1868,7 +1852,7 @@ class MarkerClient(QWidget):
             paperDir,
             aname,
             plomFileName,
-            commentFileName,
+            rubrics,
             integrity_check,
             src_img_data,
         ) = stuff
@@ -1901,11 +1885,11 @@ class MarkerClient(QWidget):
             (
                 aname,
                 plomFileName,
-                commentFileName,
-            ),  # annotated, plom, and comment filenames
+            ),
             totmtime,  # total marking time (seconds)
             self.question,
             self.version,
+            rubrics,
             tags,
             integrity_check,
             [x["md5"] for x in src_img_data],

@@ -186,3 +186,23 @@ class OAPage(BaseModel):
     old_annotation = pw.ForeignKeyField(OldAnnotation, backref="oapages")
     image = pw.ForeignKeyField(Image, backref="oapages")
     order = pw.IntegerField(null=False)
+
+
+class Rubric(BaseModel):
+    # unique key - user-generated have 12 digits, HAL uses 1XXX.
+    key = pw.CharField(unique=True, null=False)
+    delta = pw.CharField(null=False)
+    text = pw.CharField(null=False)
+    question = pw.IntegerField(null=False)
+    user = pw.ForeignKeyField(User, backref="rubrics", null=False)
+    revision = pw.IntegerField(null=False, default=0)
+    count = pw.IntegerField(null=False, default=0)
+    creationTime = pw.DateTimeField(null=False)
+    modificationTime = pw.DateTimeField(null=False)
+    tags = pw.CharField(default="")
+    meta = pw.CharField(default="")
+
+
+class ARLink(BaseModel):
+    annotation = pw.ForeignKeyField(Annotation, backref="arlinks")
+    rubric = pw.ForeignKeyField(Rubric, backref="arlinks")

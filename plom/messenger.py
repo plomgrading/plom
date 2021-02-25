@@ -602,7 +602,7 @@ class Messenger(BaseMessenger):
         tags,
         aname,
         pname,
-        cname,
+        rubrics,
         integrity_check,
         image_md5_list,
     ):
@@ -630,7 +630,7 @@ class Messenger(BaseMessenger):
                 "score": str(score),
                 "mtime": str(mtime),
                 "tags": tags,
-                "comments": open(cname, "r").read(),
+                "rubrics": rubrics,
                 "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
                 "integrity_check": integrity_check,
                 "image_md5s": image_md5_list,
@@ -815,54 +815,11 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return image
 
-    def MgetCurrentComments(self):
-        """Request the server for the current comments.
+    def McreateRubric(self, new_rubric):
+        """Ask server to make a new rubric and get key back.
 
         Args:
-            None
-
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
-
-        Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, current_comments_list] including the current comments.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/MK/currentcomment".format(self.server),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-
-            current_comments_list = response.json()
-
-            messenger_response = [True, current_comments_list]
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} for refreshing comments list".format(e)
-                ) from None
-
-            messenger_response = [False]
-
-        finally:
-            self.SRmutex.release()
-
-        return messenger_response
-
-    def MrefreshComments(self, current_comments_list):
-        """Retrieve updated list of comments from the server for this question.
-
-        Args:
-            current_comments_list (list): A list of the comments as dictionaries.
+            new_rubric (dict): the new rubric info as dict.
 
         Raises:
             PlomAuthenticationException: Authentication error.
@@ -875,32 +832,121 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/comment".format(self.server),
+            response = self.session.put(
+                "https://{}/MK/rubric".format(self.server),
                 json={
                     "user": self.user,
                     "token": self.token,
-                    "current_comments_list": current_comments_list,
+                    "rubric": new_rubric,
                 },
                 verify=False,
             )
             response.raise_for_status()
 
-            refreshed_comments_list = response.json()
+            new_key = response.json()
+            messenger_response = [True, new_key]
 
-            messenger_response = [True, refreshed_comments_list]
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 406:
+                raise PlomSeriousException("Rubric sent was incomplete.") from None
+            else:
+                raise PlomSeriousException(
+                    "Error of type {} when creating new rubric".format(e)
+                ) from None
+            messenger_response = [False]
 
+        finally:
+            self.SRmutex.release()
+        return messenger_response
+
+    def MgetRubrics(self):
+        """Retrieve list of rubrics from server.
+
+        Args:
+            current_comments_list (list): A list of the comments as dictionaries.
+
+        Raises:
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            list: A list of:
+                [False] If operation was unsuccessful.
+                [True, list of rubrics]
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/MK/rubric".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+            rubric_list = response.json()
+            messenger_response = [True, rubric_list]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             else:
                 raise PlomSeriousException(
-                    "Error of type {} for refreshing comments list".format(e)
+                    "Error of type {} getting rubric list".format(e)
                 ) from None
+            messenger_response = [False]
+        finally:
+            self.SRmutex.release()
+        return messenger_response
 
+    def MmodifyRubric(self, key, new_rubric):
+        """Ask server to modify a rubric and get key back.
+
+        Args:
+            rubric (dict): the modified rubric info as dict.
+
+        Raises:
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            list: A list of:
+                [False] If operation was unsuccessful.
+                [True, updated_commments_list] including the new comments.
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.patch(
+                "https://{}/MK/rubric/{}".format(self.server, key),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "rubric": new_rubric,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+
+            new_key = response.json()
+            messenger_response = [True, new_key]
+
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 400:
+                raise PlomSeriousException("Key mismatch in request.") from None
+            elif response.status_code == 406:
+                raise PlomSeriousException("Rubric sent was incomplete.") from None
+            elif response.status_code == 409:
+                raise PlomSeriousException("No rubric with that key found.") from None
+            else:
+                raise PlomSeriousException(
+                    "Error of type {} when creating new rubric".format(e)
+                ) from None
             messenger_response = [False]
 
         finally:
             self.SRmutex.release()
-
         return messenger_response

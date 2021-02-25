@@ -4,6 +4,7 @@
 
 import random
 import time
+import copy
 
 
 def generate_new_comment_ID(num_of_digits=12):
@@ -46,3 +47,35 @@ def comments_apply_default_fields(comlist):
         for k, v in comment_defaults.items():
             d.setdefault(k, comment_defaults[k])
     return comlist
+
+
+# TODO: useful in whatever code initializes the rubric DB?
+def _get_default_comments(number_of_questions):
+    """Return the list of default comment dictionary.
+
+    Args:
+        number_of_questions (int): Number of questions in the exam.
+
+    Returns:
+        list: List of default comments dictionary objects.
+    """
+
+    comlist0 = [
+        {"delta": -1, "text": "algebra"},
+        {"delta": -1, "text": "arithmetic"},
+        {"delta": ".", "text": "meh"},
+        {"delta": 0, "text": r"tex: you can write \LaTeX, $e^{i\pi} + 1 = 0$"},
+        {"delta": 1, "text": "good", "meta": "give constructive feedback"},
+    ]
+    comlist0 = comments_apply_default_fields(comlist0)
+
+    comments_list = []
+    # We need to create a version of the default comments for each question.
+    for q_number in range(1, number_of_questions + 1):
+        for comment in comlist0:
+            new_comment = copy.deepcopy(comment)
+            new_comment["question_number"] = int(q_number)
+            new_comment["id"] = generate_new_comment_ID()
+            comments_list.append(new_comment)
+
+    return comments_list

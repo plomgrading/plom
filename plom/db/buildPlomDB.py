@@ -7,6 +7,18 @@ import random
 from plom.db import PlomDB
 
 
+managerRubrics = [
+    {"delta": -1, "text": "arithmetic", "meta": "standardComment"},
+    {"delta": ".", "text": "be careful", "meta": "standardComment"},
+    {
+        "delta": 0,
+        "text": r"tex: you can write \LaTeX, $e^{i\pi} + 1 = 0$",
+        "meta": "LaTeX works",
+    },
+    {"delta": 1, "text": "good", "meta": "give constructive feedback"},
+]
+
+
 def buildExamDatabaseFromSpec(spec, db):
     """Build metadata for exams from spec and insert into the database.
 
@@ -44,6 +56,18 @@ def buildExamDatabaseFromSpec(spec, db):
     import logging
 
     log = logging.getLogger("DB")
+
+    # create no-answer-given rubrics
+    for q in range(1, 1 + spec["numberOfQuestions"]):
+        if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
+            raise ValueError("No answer rubric for q.{} already exists".format(q))
+    # create standard manager rubrics
+    for rubric in managerRubrics:
+        rubric["tags"] = ""
+        for q in range(1, 1 + spec["numberOfQuestions"]):
+            rubric["question"] = "{}".format(q)
+            if not db.McreateRubric("manager", rubric):
+                raise ValueError("Manager rubric for q.{} already exists".format(q))
 
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")

@@ -533,6 +533,19 @@ class PageScene(QGraphicsScene):
                 comments.append(X.getContents())
         return comments
 
+    def getRubrics(self):
+        """
+        Get the rubrics(comments) associated with this paper.
+
+        Returns:
+            list: pairs of IDs and strings from each bit of text.
+        """
+        rubrics = []
+        for X in self.items():
+            if isinstance(X, GroupDeltaTextItem):
+                rubrics.append(X.commentID)
+        return rubrics
+
     def countComments(self):
         """
         Counts current text items and comments associated with the paper.
@@ -543,6 +556,19 @@ class PageScene(QGraphicsScene):
         count = 0
         for X in self.items():
             if type(X) is TextItem:
+                count += 1
+        return count
+
+    def countRubrics(self):
+        """
+        Counts current rubrics (comments) associated with the paper.
+
+        Returns:
+            (int): total number of rubrics associated with this paper.
+        """
+        count = 0
+        for X in self.items():
+            if type(X) is GroupDeltaTextItem:
                 count += 1
         return count
 
@@ -2115,12 +2141,13 @@ class PageScene(QGraphicsScene):
         self.commentID = commentID
         self.updateGhost(delta, text)
 
-    def noAnswer(self, delta):
+    def noAnswer(self, delta, noAnswerCID):
         """
         Handles annotating the page if there is little or no answer written.
 
         Args:
             delta (int): the mark to be assigned to the page.
+            noAnswerCID (int): the key for the noAnswerRubric used
 
         Returns:
             None
@@ -2139,15 +2166,15 @@ class PageScene(QGraphicsScene):
         )
         self.undoStack.push(command)
 
+        # ID for no-answer rubric is defined in the db_create module
+        # in the createNoAnswerRubric function.
+        # Using that ID lets us track the rubric in the DB
+
         # build a delta-comment
-        print("Colin debugging: no answer: TODO Test this")
-        print("=" * 80)
-        print(self.commentID)
-        print("=" * 80)
         command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
-            self.commentID,  # TODO: can it be, should be some dummy value?
+            noAnswerCID,
             delta,
             "NO ANSWER GIVEN",
         )

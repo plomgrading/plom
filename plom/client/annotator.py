@@ -1579,9 +1579,6 @@ class Annotator(QWidget):
             False if user cancels, True if annotator is closed successfully.
 
         """
-        # First lets refresh the comments
-        self.refreshComments()
-
         # do some checks before accepting things
         if not self.scene.areThereAnnotations():
             msg = ErrorMessage("Please make an annotation, even if there is no answer.")
@@ -1625,7 +1622,7 @@ class Annotator(QWidget):
                 return False
 
         self.scene.save()
-        self.saveMarkerComments()
+        rubrics = self.scene.getRubrics()
         self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
@@ -1649,14 +1646,13 @@ class Annotator(QWidget):
 
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.saveName[:-3] + "plom"
-        commentFile = self.saveName[:-3] + "json"
         stuff = [
             self.score,
             tim,
             self.paperDir,
             self.saveName,
             plomFile,
-            commentFile,
+            rubrics,
             self.integrity_check,
             self.src_img_data,
         ]
@@ -1790,13 +1786,6 @@ class Annotator(QWidget):
     def getComments(self):
         """ Retrieves comments from self.scene. """
         return self.scene.getComments()
-
-    def saveMarkerComments(self):
-        """ Saves the markers current comments as a commentFile. """
-        commentList = self.getComments()
-        # savefile is <blah>.png, save comments as <blah>.json
-        with open(self.saveName[:-3] + "json", "w") as commentFile:
-            json.dump(commentList, commentFile)
 
     def latexAFragment(self, txt):
         """
@@ -1960,6 +1949,14 @@ class Annotator(QWidget):
             None
 
         """
+        # ID for no-answer rubric is defined in the db_create module
+        # in the createNoAnswerRubric function.
+        # rID = 1000 + 2 * questionNumber  # +0 for mark-up and +1 for mark-down
+        # build a delta-comment
+        noAnswerCID = 1000 + 2 * self.question_num
+        # what we do depends on whether we are marking up or down.
+        # mark-up leaves a "0", while mark-down leaves "-N"
+        # Of course, have to check that no other delta-marks made.
         if self.markStyle == 2:
             if self.score > 0:  # is mark-up
                 ErrorMessage(
@@ -1967,7 +1964,7 @@ class Annotator(QWidget):
                 ).exec_()
                 return
             else:
-                self.scene.noAnswer(0)
+                self.scene.noAnswer(0, noAnswerCID)
         elif self.markStyle == 3:
             if self.score < self.maxMark:  # is mark-down
                 ErrorMessage(
@@ -1976,7 +1973,7 @@ class Annotator(QWidget):
                 return
             else:
                 # TODO: Linter cases this as an error.
-                self.scene.noAnswer(-self.maxMark)
+                self.scene.noAnswer(-self.maxMark, noAnswerCID + 1)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)
@@ -2040,19 +2037,24 @@ class Annotator(QWidget):
 
     def refreshComments(self):
         """Request for a refreshed comments list and update the current comments box."""
-
+        # TODO: this digs too deep into comment_widget
         current_comments_list = self.comment_widget.CL.clist
 
-        refreshed_comments_list = self.parentMarkerUI.getCommentsFromServer(
-            current_comments_list
-        )
+        wtf, refreshed_comments_list = self.parentMarkerUI.getRubricsFromServer()
+        assert wtf
 
         if len(refreshed_comments_list) == 0:
             ErrorMessage(
                 "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
             ).exec()
             return
-        else:
-            self.comment_widget.CL.clist = refreshed_comments_list
-            self.comment_widget.CL.populateTable()
-            return
+        self.comment_widget.CL.clist = refreshed_comments_list
+        self.comment_widget.CL.populateTable()
+
+    def createNewRubric(self, new_rubric):
+        """Ask server to create a new rubric with data supplied"""
+        return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
+
+    def modifyRubric(self, key, updated_rubric):
+        """Ask server to create a new rubric with data supplied"""
+        return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)

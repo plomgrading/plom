@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
-
-import json
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
@@ -231,10 +229,10 @@ class MarkHandler:
             [
                 "user",
                 "token",
-                "comments",
                 "pg",
                 "ver",
                 "score",
+                "rubrics",
                 "mtime",
                 "tags",
                 "md5sum",
@@ -247,8 +245,8 @@ class MarkHandler:
         if not self.server.validate(task_metadata["user"], task_metadata["token"]):
             return web.Response(status=401)
 
-        comments = task_metadata["comments"]  # List of comments.
-        task_code = request.match_info["task"]  # Task code.
+        rubrics = task_metadata["rubrics"]  # list of rubric IDs
+        task_code = request.match_info["task"]
 
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
@@ -275,7 +273,7 @@ class MarkHandler:
             int(task_metadata["score"]),
             task_image,
             plomdat,
-            comments,
+            rubrics,
             int(task_metadata["mtime"]),
             task_metadata["tags"],
             task_metadata["md5sum"],
@@ -283,16 +281,6 @@ class MarkHandler:
             task_metadata["image_md5s"],
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
-
-        # Get a list of the scene items which includes the comments.
-        plomdat_str = plomdat.decode("UTF-8")
-        plomdat_dict = json.loads(plomdat_str)
-        annotations_list = plomdat_dict["sceneItems"]
-        if not self.server.MupdateCommentsCount(annotations_list):
-            # TODO: I COuld probably fail here, but I honestly would prefer it
-            # If (at least at the moment) we don't kill the process because
-            # changing comment count didn't work)
-            log.error("Updating comments counts did not work: TODO debug?")
 
         if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
@@ -306,6 +294,9 @@ class MarkHandler:
                 log.warning("Returning with error 409 = {}".format(marked_task_status))
                 return web.Response(status=409)
             elif marked_task_status[1] == "integrity_fail":
+                log.warning("Returning with error 406 = {}".format(marked_task_status))
+                return web.Response(status=406)
+            elif marked_task_status[1] == "invalid_rubric":
                 log.warning("Returning with error 406 = {}".format(marked_task_status))
                 return web.Response(status=406)
             else:
@@ -574,45 +565,6 @@ class MarkHandler:
         else:  # cannot find that task
             return web.Response(status=404)
 
-    # @routes.patch("/MK/comment")
-    @authenticate_by_token_required_fields(["user"])
-    def MgetCurrentComments(self, data, request):
-        """Respond with the current comments list from the database.
-
-        Args:
-            data (dict): A dictionary including user/token.
-            request (aiohttp.web_request.Request): A request of type GET /MK/comment.
-
-        Returns:
-            aiohttp.web_response.Response: Includes the updated list of current comments
-                dictionaries.
-        """
-        username = data["user"]
-        current_comments = self.server.MgetCurrentComments(username)
-        return web.json_response(current_comments, status=200)
-
-    # @routes.patch("/MK/comment")
-    @authenticate_by_token_required_fields(["user", "current_comments_list"])
-    def MrefreshComments(self, data, request):
-        """Respond with updated comment list and add received comments to the database.
-
-        Args:
-            data (dict): A dictionary including user/token in addition to the list of
-                comments  already available on the client side.
-            request (aiohttp.web_request.Request): A request of type GET /MK/comment.
-
-        Returns:
-            aiohttp.web_response.Response: Includes the updated list of
-                comment dictionaries.
-        """
-        username = data["user"]
-        current_comments_list = data["current_comments_list"]
-
-        refreshed_comments = self.server.MrefreshComments(
-            username, current_comments_list
-        )
-        return web.json_response(refreshed_comments, status=200)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -631,8 +583,6 @@ class MarkHandler:
         router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
-        router.add_get("/MK/currentcomment", self.MgetCurrentComments)
-        router.add_get("/MK/comment", self.MrefreshComments)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
