@@ -149,25 +149,3 @@ def MrefreshComments(self, username, current_marker_comments_list):
     with open(comfile, "w") as f:
         json.dump(comments_list, f)
     return comments_list
-
-
-def McreateRubric(self, username, new_rubric):
-    """Get DB to create the new rubric element
-
-    Args:
-        username (str): the username making the new rubric
-        rubric (dict): a dict containing the rubric info
-
-    Returns:
-        list: [True, new-key] or [False]
-    """
-    # check rubric sent has required fields
-    if any(X not in new_rubric for X in ["delta", "text", "question", "tags", "meta"]):
-        return [False]
-    # else let DB create the new element and return the new key
-    return self.DB.McreateRubric(username, new_rubric)
-
-
-def MgetRubrics(self):
-    """Get all rubrics in the DB and return as list of dict"""
-    return self.DB.MgetRubrics()

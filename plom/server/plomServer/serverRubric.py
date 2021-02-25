@@ -4,16 +4,10 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 
 """
-Comment-related server methods.
-
-  * TODO: not threadsafe, keeps read/writing the same file.
-    But I think aiohttp will call this from different threads.
-  * TODO: replace with database?
+Rubric-related server methods.
 """
 
-import json
 import logging
-import copy
 from pathlib import Path
 
 from plom import specdir
