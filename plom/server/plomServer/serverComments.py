@@ -86,37 +86,3 @@ def MgetCurrentComments(self, username=None):
         list: the current comments as a list of dicts.
     """
     return _get_current_comment_list(self.testSpec["numberOfQuestions"])
-
-
-def MupdateCommentsCount(self, annotations):
-    """Update the counts of any comments that appear in a list of annotations.
-
-    Any comment ID that does not exist in the current DB is not counted.
-
-    Args:
-        annotations (list): A list of the annotations in the paper.
-
-    Returns:
-        bool: for now, always True.
-    """
-    comments_dict = _get_current_comment_dict(self.testSpec["numberOfQuestions"])
-
-    # filter out non-comments
-    annotated_comments = []
-    for annotation in annotations:
-        if len(annotation) > 2 and (annotation[0] == "GroupDeltaText"):
-            annotated_comments.append(annotation)
-
-    for comment_in_paper in annotated_comments:
-        cid = comment_in_paper[3]
-        if cid in comments_dict.keys():
-            comments_dict[cid]["count"] += 1
-        else:
-            log.error(
-                "Comment ID {} not in database, cannot increase count".format(cid)
-            )
-
-    comments_list = list(comments_dict.values())
-    with open(comfile, "w") as f:
-        json.dump(comments_list, f)
-    return True

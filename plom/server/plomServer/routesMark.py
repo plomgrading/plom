@@ -287,16 +287,6 @@ class MarkHandler:
         )
         # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
 
-        # Get a list of the scene items which includes the comments.
-        plomdat_str = plomdat.decode("UTF-8")
-        plomdat_dict = json.loads(plomdat_str)
-        annotations_list = plomdat_dict["sceneItems"]
-        if not self.server.MupdateCommentsCount(annotations_list):
-            # TODO: I COuld probably fail here, but I honestly would prefer it
-            # If (at least at the moment) we don't kill the process because
-            # changing comment count didn't work)
-            log.error("Updating comments counts did not work: TODO debug?")
-
         if marked_task_status[0]:
             num_done_tasks = marked_task_status[1]
             total_num_tasks = marked_task_status[2]

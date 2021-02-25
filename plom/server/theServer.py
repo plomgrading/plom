@@ -200,7 +200,6 @@ class Server(object):
     )
     from .plomServer.serverComments import (
         MgetCurrentComments,
-        MupdateCommentsCount,
     )
     from .plomServer.serverRubric import (
         McreateRubric,
