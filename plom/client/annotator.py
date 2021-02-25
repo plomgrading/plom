@@ -1622,7 +1622,6 @@ class Annotator(QWidget):
                 return False
 
         self.scene.save()
-        self.saveMarkerComments()
         rubrics = self.scene.getRubrics()
         self.pickleIt()  # Pickle the scene as a plom-file
 
@@ -1647,14 +1646,12 @@ class Annotator(QWidget):
 
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.saveName[:-3] + "plom"
-        commentFile = self.saveName[:-3] + "json"
         stuff = [
             self.score,
             tim,
             self.paperDir,
             self.saveName,
             plomFile,
-            commentFile,
             rubrics,
             self.integrity_check,
             self.src_img_data,
@@ -1789,13 +1786,6 @@ class Annotator(QWidget):
     def getComments(self):
         """ Retrieves comments from self.scene. """
         return self.scene.getComments()
-
-    def saveMarkerComments(self):
-        """ Saves the markers current comments as a commentFile. """
-        commentList = self.getComments()
-        # savefile is <blah>.png, save comments as <blah>.json
-        with open(self.saveName[:-3] + "json", "w") as commentFile:
-            json.dump(commentList, commentFile)
 
     def latexAFragment(self, txt):
         """

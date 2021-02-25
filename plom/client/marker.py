@@ -311,17 +311,16 @@ def upload(
 
     """
     # do name sanity checks here
-    aname, pname, cname = filenames
+    aname, pname = filenames
 
     if not (
         task.startswith("q")
         and os.path.basename(aname) == "G{}.png".format(task[1:])
         and os.path.basename(pname) == "G{}.plom".format(task[1:])
-        and os.path.basename(cname) == "G{}.json".format(task[1:])
     ):
         raise PlomSeriousException(
-            "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                aname, pname, cname
+            "Upload file names mismatch [{}, {}] - this should not happen".format(
+                aname, pname
             )
         )
     try:
@@ -334,7 +333,6 @@ def upload(
             tags,
             aname,
             pname,
-            cname,
             rubrics,
             integrity_check,
             image_md5_list,
@@ -1685,7 +1683,6 @@ class MarkerClient(QWidget):
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, Gtask + ".png")
-        cname = os.path.join(paperdir, Gtask + ".json")
         pname = os.path.join(paperdir, Gtask + ".plom")
 
         remarkFlag = False
@@ -1840,8 +1837,7 @@ class MarkerClient(QWidget):
                 markingTime(int): total time spent marking.
                 paperDir(dir): Working directory for the current task
                 aname(str): annotated file name
-                plomFileName(str): the name of thee .plom file
-                commentFileName(str): the name of the comment file.
+                plomFileName(str): the name of the .plom file
                 rubric(list[str]): the keys of the rubrics used
                 integrity_check(str): the integrity_check string of the task.
                 src_img_data (list[dict]): image data, md5sums, etc
@@ -1856,7 +1852,6 @@ class MarkerClient(QWidget):
             paperDir,
             aname,
             plomFileName,
-            commentFileName,
             rubrics,
             integrity_check,
             src_img_data,
@@ -1890,8 +1885,7 @@ class MarkerClient(QWidget):
             (
                 aname,
                 plomFileName,
-                commentFileName,
-            ),  # annotated, plom, and comment filenames
+            ),
             totmtime,  # total marking time (seconds)
             self.question,
             self.version,
