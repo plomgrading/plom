@@ -376,43 +376,42 @@ class CommentWidget(QWidget):
         alist = [X for X in lst if X not in clist]
 
         acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum)
-        if acb.exec_() == QDialog.Accepted:
-            if acb.DE.checkState() == Qt.Checked:
-                dlt = acb.SB.value()
-            else:
-                dlt = "."
-            txt = acb.TE.toPlainText().strip()
-            tag = acb.TEtag.toPlainText().strip()
-            meta = acb.TEmeta.toPlainText().strip()
-            username = acb.TEuser.text().strip()
-            try:
-                question_number = int(acb.TEquestnum.text().strip())
-            except ValueError:
-                return
+        if acb.exec_() != QDialog.Accepted:
+            return
+        if acb.DE.checkState() == Qt.Checked:
+            dlt = acb.SB.value()
+        else:
+            dlt = "."
+        txt = acb.TE.toPlainText().strip()
+        if len(txt) <= 0:
+            return
+        tag = acb.TEtag.toPlainText().strip()
+        meta = acb.TEmeta.toPlainText().strip()
+        username = acb.TEuser.text().strip()
+        try:
+            question_number = int(acb.TEquestnum.text().strip())
+        except ValueError:
+            return
 
-            # txt has no content
-            if len(txt) <= 0:
-                return
+        rv = self.parent.createNewRubric(
+            {
+                "delta": dlt,
+                "text": txt,
+                "tags": tag,
+                "meta": meta,
+                "question": question_number,
+            }
+        )
+        if rv[0]:  # rubric created successfully
+            commentID = rv[1]
+        else:  # some sort of creation problem
+            return
 
-            rv = self.parent.createNewRubric(
-                {
-                    "delta": dlt,
-                    "text": txt,
-                    "tags": tag,
-                    "meta": meta,
-                    "question": question_number,
-                }
-            )
-            if rv[0]:  # rubric created successfully
-                commentID = rv[1]
-            else:  # some sort of creation problem
-                return
-
-            # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
-            # TODO: but we should use `commentID` from above to highlight the new row at least
-            self.parent.refreshComments()
-            # send a click to the comment button to force updates
-            self.parent.ui.commentButton.animateClick()
+        # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
+        # TODO: but we should use `commentID` from above to highlight the new row at least
+        self.parent.refreshComments()
+        # send a click to the comment button to force updates
+        self.parent.ui.commentButton.animateClick()
 
     def editCurrent(self, com):
         """Open a dialog to edit a comment.
@@ -444,42 +443,45 @@ class CommentWidget(QWidget):
         alist = [X for X in lst if X not in clist]
 
         acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
-        if acb.exec_() == QDialog.Accepted:
-            if acb.DE.checkState() == Qt.Checked:
-                dlt = acb.SB.value()
-            else:
-                dlt = "."
-            txt = acb.TE.toPlainText().strip()
-            tag = acb.TEtag.toPlainText().strip()
-            meta = acb.TEmeta.toPlainText().strip()
-            username = acb.TEuser.text().strip()
-            commentID = acb.TEcommentID.text().strip()
-            try:
-                question_number = int(acb.TEquestnum.text().strip())
-            except ValueError:
-                return None
+        if acb.exec_() != QDialog.Accepted:
+            return
+        if acb.DE.checkState() == Qt.Checked:
+            dlt = acb.SB.value()
+        else:
+            dlt = "."
+        txt = acb.TE.toPlainText().strip()
+        if len(txt) <= 0:
+            return
+        tag = acb.TEtag.toPlainText().strip()
+        meta = acb.TEmeta.toPlainText().strip()
+        username = acb.TEuser.text().strip()
+        commentID = acb.TEcommentID.text().strip()
+        try:
+            question_number = int(acb.TEquestnum.text().strip())
+        except ValueError:
+            return None
 
-            rv = self.parent.modifyRubric(
-                commentID,
-                {
-                    "id": commentID,
-                    "delta": dlt,
-                    "text": txt,
-                    "tags": tag,
-                    "meta": meta,
-                    "question": question_number,
-                },
-            )
-            if rv[0]:  # rubric created successfully
-                commentID = rv[1]
-            else:  # some sort of creation problem
-                return
+        rv = self.parent.modifyRubric(
+            commentID,
+            {
+                "id": commentID,
+                "delta": dlt,
+                "text": txt,
+                "tags": tag,
+                "meta": meta,
+                "question": question_number,
+            },
+        )
+        if rv[0]:  # rubric created successfully
+            commentID = rv[1]
+        else:  # some sort of creation problem
+            return
 
-            # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
-            # TODO: but we should use `commentID` from above to highlight the new row at least
-            self.parent.refreshComments()
-            # send a click to the comment button to force updates
-            self.parent.ui.commentButton.animateClick()
+        # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
+        # TODO: but we should use `commentID` from above to highlight the new row at least
+        self.parent.refreshComments()
+        # send a click to the comment button to force updates
+        self.parent.ui.commentButton.animateClick()
 
     def forkCurrent(self, com):
         # text items in scene.
@@ -497,43 +499,42 @@ class CommentWidget(QWidget):
         com["username"] = self.username
 
         acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
-        if acb.exec_() == QDialog.Accepted:
-            if acb.DE.checkState() == Qt.Checked:
-                dlt = acb.SB.value()
-            else:
-                dlt = "."
-            txt = acb.TE.toPlainText().strip()
-            tag = acb.TEtag.toPlainText().strip()
-            meta = acb.TEmeta.toPlainText().strip()
-            username = acb.TEuser.text().strip()
-            try:
-                question_number = int(acb.TEquestnum.text().strip())
-            except ValueError:
-                return
+        if acb.exec_() != QDialog.Accepted:
+            return
+        if acb.DE.checkState() == Qt.Checked:
+            dlt = acb.SB.value()
+        else:
+            dlt = "."
+        txt = acb.TE.toPlainText().strip()
+        if len(txt) <= 0:
+            return
+        tag = acb.TEtag.toPlainText().strip()
+        meta = acb.TEmeta.toPlainText().strip()
+        username = acb.TEuser.text().strip()
+        try:
+            question_number = int(acb.TEquestnum.text().strip())
+        except ValueError:
+            return
 
-            # txt has no content
-            if len(txt) <= 0:
-                return
+        rv = self.parent.createNewRubric(
+            {
+                "delta": dlt,
+                "text": txt,
+                "tags": tag,
+                "meta": meta,
+                "question": question_number,
+            }
+        )
+        if rv[0]:  # rubric created successfully
+            commentID = rv[1]
+        else:  # some sort of creation problem
+            return
 
-            rv = self.parent.createNewRubric(
-                {
-                    "delta": dlt,
-                    "text": txt,
-                    "tags": tag,
-                    "meta": meta,
-                    "question": question_number,
-                }
-            )
-            if rv[0]:  # rubric created successfully
-                commentID = rv[1]
-            else:  # some sort of creation problem
-                return
-
-            # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
-            # TODO: but we should use `commentID` from above to highlight the new row at least
-            self.parent.refreshComments()
-            # send a click to the comment button to force updates
-            self.parent.ui.commentButton.animateClick()
+        # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
+        # TODO: but we should use `commentID` from above to highlight the new row at least
+        self.parent.refreshComments()
+        # send a click to the comment button to force updates
+        self.parent.ui.commentButton.animateClick()
 
 
 class commentDelegate(QItemDelegate):
