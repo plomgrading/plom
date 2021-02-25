@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QGridLayout,
     QItemDelegate,
+    QMessageBox,
     QPushButton,
     QToolButton,
     QSpinBox,
@@ -42,7 +43,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.comment_utils import generate_new_comment_ID, comments_apply_default_fields
-from .useful_classes import ErrorMessage
+from .useful_classes import ErrorMessage, SimpleMessage
 
 log = logging.getLogger("annotr")
 comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
@@ -422,8 +423,16 @@ class CommentWidget(QWidget):
         """
         # check if com belongs to user - else we need to fork the comment.
         if com["username"] != self.username:
-            ErrorMessage("Cannot edit other users comments (for now)").exec_()
-            return
+            msg = SimpleMessage(
+                "<p>You did not create this message.</p>"
+                "<p>To edit it, the system will make a copy that you can edit.</p>"
+                "<p>Do you want to continue?</p>"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            else:
+                self.forkCurrent(com)
+                return
 
         # text items in scene.
         lst = self.parent.getComments()
@@ -472,33 +481,59 @@ class CommentWidget(QWidget):
             # send a click to the comment button to force updates
             self.parent.ui.commentButton.animateClick()
 
-        #     # update the comment with new values
-        #     com["delta"] = dlt
-        #     com["text"] = txt
-        #     com["tags"] = tag
-        #     com["meta"] = meta
-        #     com["count"] = 0
-        #     com["modified"] = time.gmtime()
-        #
-        #     # TO BE CHECKED, We just basically create a new ID
-        #
-        #     com["id"] = commentID
-        #     com["username"] = username
-        #     com["question_number"] = question_number
-        #
-        #     # Check if the comments are similar
-        #     add_new_comment = self.parent.checkCommentSimilarity(com)
-        #     # input("Were they similar: "+ str(add_new_comment))
-        #     if add_new_comment:
-        #         com["id"] = generate_new_comment_ID()
-        #         self.currentItem()
-        #         # send a click to the comment button to force updates
-        #         self.parent.ui.commentButton.animateClick()
-        #         return com
-        #     else:
-        #         return None
-        # else:
-        #     return None
+    def forkCurrent(self, com):
+        # text items in scene.
+        lst = self.parent.getComments()
+        # text items already in comment list
+        clist = []
+        for r in range(self.CL.cmodel.rowCount()):
+            clist.append(self.CL.cmodel.index(r, 1).data())
+        # text items in scene not in comment list
+        alist = [X for X in lst if X not in clist]
+
+        # reset the key
+        com["id"] = None
+        # set username to THIS user
+        com["username"] = self.username
+
+        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
+        if acb.exec_() == QDialog.Accepted:
+            if acb.DE.checkState() == Qt.Checked:
+                dlt = acb.SB.value()
+            else:
+                dlt = "."
+            txt = acb.TE.toPlainText().strip()
+            tag = acb.TEtag.toPlainText().strip()
+            meta = acb.TEmeta.toPlainText().strip()
+            username = acb.TEuser.text().strip()
+            try:
+                question_number = int(acb.TEquestnum.text().strip())
+            except ValueError:
+                return
+
+            # txt has no content
+            if len(txt) <= 0:
+                return
+
+            rv = self.parent.createNewRubric(
+                {
+                    "delta": dlt,
+                    "text": txt,
+                    "tags": tag,
+                    "meta": meta,
+                    "question": question_number,
+                }
+            )
+            if rv[0]:  # rubric created successfully
+                commentID = rv[1]
+            else:  # some sort of creation problem
+                return
+
+            # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
+            # TODO: but we should use `commentID` from above to highlight the new row at least
+            self.parent.refreshComments()
+            # send a click to the comment button to force updates
+            self.parent.ui.commentButton.animateClick()
 
 
 class commentDelegate(QItemDelegate):
@@ -977,6 +1012,8 @@ class AddCommentBox(QDialog):
                     self.SB.setValue(int(com["delta"]))
             if com["id"]:
                 self.TEcommentID.setText(str(com["id"]))
+            else:
+                self.TEcommentID.setText("Will be auto-assigned")
             if com["username"]:
                 self.TEuser.setText(com["username"])
             if com["question_number"]:
