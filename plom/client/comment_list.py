@@ -151,14 +151,15 @@ def comments_save_list(clist, comment_dir=comment_dir, filename=comment_filename
 
 # Eventually there may be more "state" to the filters and something like a dict
 # might make more sense here, but for now its list of booleans:
-#    hide-comments-not-for-this-question
+#    hide-comments-not-for-this-question (recommended)
 #    hide-comments-not-by-this-user
 #    hide-comments-created-by-manager
-default_comments_filter = [True, False, False]
+#    hide-comments-created-by-system (recommended)
+default_comments_filter = [True, False, False, True]
 
 
-def comment_relates_to_question_number(comment, question_number):
-    """Return True if comment would be visible in Question #question_number.
+def comment_is_question_number(comment, question_number):
+    """Return True if comment created for question_number.
 
     TODO: eventually should have a comment class: `com.isVisibileInQ(question_number)`.
 
@@ -173,14 +174,11 @@ def comment_relates_to_question_number(comment, question_number):
 
     if question_number is None:
         return False
-    if int(question_number) == int(comment["question_number"]):
-        return True
-    else:
-        return False
+    return int(question_number) == int(comment["question_number"])
 
 
-def comment_relates_to_username(comment, username):
-    """Return True if comment would be visible because the current user created it.
+def comment_is_username_or_manager(comment, username):
+    """Return True if comment created by user=username or manager
 
     TODO: eventually should have a comment class: `com.isVisibileInU(username)`.
 
@@ -192,13 +190,11 @@ def comment_relates_to_username(comment, username):
     """
     if username is None:
         return False
-    if username == comment["username"] or comment["username"] == "manager":
-        return True
-    return False
+    return comment["username"] in [username, "manager"]
 
 
-def comment_is_default(comment):
-    """Return True if comment would be visible because the it is a default comment.
+def comment_is_manager(comment):
+    """Return True if comment manager-generated
 
     TODO: eventually should have a comment class: `com.isVisibileInDefault()`.
 
@@ -208,10 +204,21 @@ def comment_is_default(comment):
     Returns:
         boolean: True/False.
     """
-    if comment["username"] == "manager":
-        return True
-    else:
-        return False
+    return comment["username"] == "manager"
+
+
+def comment_is_system(comment):
+    """Return True if comment is system-generated
+
+    TODO: eventually should have a comment class: `com.isVisibileInDefault()`.
+
+    Args:
+        comment (dict): A dictionary which represents the comment.
+
+    Returns:
+        boolean: True/False.
+    """
+    return comment["username"] == "HAL"
 
 
 def commentIsVisible(comment, question_number, username, filters=None):
@@ -231,31 +238,25 @@ def commentIsVisible(comment, question_number, username, filters=None):
     if not filters:
         filters = default_comments_filter
 
-    filter_responses = []
+    # 0=  hide-comments-not-for-this-question
+    # 1=  hide-comments-not-by-this-user(or manager)
+    # 2=  hide-comments-created-by-manager
+    # 3=  hide-comments-created-by-system
 
     # Filter for question number.
-    if filters[0] is True and not comment_relates_to_question_number(
-        comment, question_number
-    ):
-        filter_responses.append(False)
-    else:
-        filter_responses.append(True)
-
+    if filters[0] is True and not comment_is_question_number(comment, question_number):
+        return False
     # Filter for username.
-    if filters[1] is True and not comment_relates_to_username(comment, username):
-        filter_responses.append(False)
-    else:
-        filter_responses.append(True)
-
-    # Filter for default comments.
-    if filters[2] is True and comment_is_default(comment):
-        filter_responses.append(False)
-    else:
-        filter_responses.append(True)
-
-    filter_response = all(filter_responses)
-
-    return filter_response
+    if filters[1] is True and not comment_is_username_or_manager(comment, username):
+        return False
+    # Filter for Manager comments.
+    if filters[2] is True and comment_is_manager(comment):
+        return False
+    # Filter for System comments.
+    if filters[3] is True and comment_is_system(comment):
+        return False
+    # passed all filters
+    return True
 
 
 class CommentWidget(QWidget):
@@ -1016,13 +1017,16 @@ class ChangeFiltersDialog(QDialog):
     def __init__(self, parent, curFilters):
         super(QDialog, self).__init__()
         self.parent = parent
-        self.cb1 = QCheckBox("Show comments from other questions")
-        self.cb2 = QCheckBox("Show comments from other users (EXPERIMENTAL)")
-        self.cb3 = QCheckBox("Hide preset comments from manager")
-        self.cb1.setCheckState(Qt.Unchecked if curFilters[0] else Qt.Checked)
-        self.cb2.setCheckState(Qt.Unchecked if curFilters[1] else Qt.Checked)
-        self.cb3.setCheckState(Qt.Checked if curFilters[2] else Qt.Unchecked)
+        self.cb0 = QCheckBox("Hide comments from other questions **recommended**")
+        self.cb1 = QCheckBox("Hide comments from other users (except manager)")
+        self.cb2 = QCheckBox("Hide comments from manager")
+        self.cb3 = QCheckBox("Hide system-comments **recommended**")
+        self.cb0.setCheckState(Qt.Checked if curFilters[0] else Qt.Unchecked)
+        self.cb1.setCheckState(Qt.Checked if curFilters[1] else Qt.Unchecked)
+        self.cb2.setCheckState(Qt.Checked if curFilters[2] else Qt.Unchecked)
+        self.cb3.setCheckState(Qt.Checked if curFilters[3] else Qt.Unchecked)
         flay = QVBoxLayout()
+        flay.addWidget(self.cb0)
         flay.addWidget(self.cb1)
         flay.addWidget(self.cb2)
         flay.addWidget(self.cb3)
@@ -1095,7 +1099,8 @@ class ChangeFiltersDialog(QDialog):
 
     def getFilters(self):
         return [
-            self.cb1.checkState() == Qt.Unchecked,
-            self.cb2.checkState() == Qt.Unchecked,
+            self.cb0.checkState() == Qt.Checked,
+            self.cb1.checkState() == Qt.Checked,
+            self.cb2.checkState() == Qt.Checked,
             self.cb3.checkState() == Qt.Checked,
         ]
