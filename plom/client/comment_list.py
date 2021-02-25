@@ -42,7 +42,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.comment_utils import generate_new_comment_ID, comments_apply_default_fields
-
+from .useful_classes import ErrorMessage
 
 log = logging.getLogger("annotr")
 comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
@@ -420,6 +420,11 @@ class CommentWidget(QWidget):
             dict/None: the newly updated comment or None if something
                 has gone wrong or is invalid.
         """
+        # check if com belongs to user - else we need to fork the comment.
+        if com["username"] != self.username:
+            ErrorMessage("Cannot edit other users comments (for now)").exec_()
+            return
+
         # text items in scene.
         lst = self.parent.getComments()
         # text items already in comment list
