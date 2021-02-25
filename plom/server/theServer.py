@@ -200,7 +200,6 @@ class Server(object):
     )
     from .plomServer.serverComments import (
         MgetCurrentComments,
-        MrefreshComments,
         MupdateCommentsCount,
     )
     from .plomServer.serverRubric import (

@@ -120,32 +120,3 @@ def MupdateCommentsCount(self, annotations):
     with open(comfile, "w") as f:
         json.dump(comments_list, f)
     return True
-
-
-def MrefreshComments(self, username, current_marker_comments_list):
-    """Add incoming comments to database and return the updated comments list.
-
-    New comments with existing IDs silently overwrite the old comment in
-    the database.  TODO: is this what we want?
-
-    Args:
-        username (str): A string including the username who made the
-            comment.  TODO: currently unused.
-        current_marker_comments_list (list): A list of the comments as dictionaries.
-            TODO: is this the list on the page or is it the clients
-            local list?  routesMark.py makes it sound like latter.
-
-    Returns:
-        list: newly updated comments as list of dicts.
-    """
-    comments_dict = _get_current_comment_dict(self.testSpec["numberOfQuestions"])
-
-    for user_comment in current_marker_comments_list:
-        if user_comment["id"] not in comments_dict.keys():
-            # TODO: note overwrites old comment with new one
-            comments_dict[user_comment["id"]] = user_comment
-
-    comments_list = list(comments_dict.values())
-    with open(comfile, "w") as f:
-        json.dump(comments_list, f)
-    return comments_list
