@@ -901,7 +901,7 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return messenger_response
 
-    def MmodifyRubric(self, new_rubric):
+    def MmodifyRubric(self, key, new_rubric):
         """Ask server to modify a rubric and get key back.
 
         Args:
@@ -918,8 +918,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/MK/rubric".format(self.server),
+            response = self.session.patch(
+                "https://{}/MK/rubric/{}".format(self.server, key),
                 json={
                     "user": self.user,
                     "token": self.token,

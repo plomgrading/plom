@@ -95,7 +95,7 @@ class RubricHandler:
         if key != updated_rubric["id"]:  # key mismatch
             return web.Response(status=400)
 
-        rval = self.server.McreateRubric(username, new_rubric)
+        rval = self.server.MmodifyRubric(username, key, updated_rubric)
         if rval[0]:  # worked - so return key
             return web.json_response(rval[1], status=200)
         else:  # failed - rubric sent is incomplete

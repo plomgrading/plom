@@ -410,6 +410,8 @@ class CommentWidget(QWidget):
             # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
             # TODO: but we should use `commentID` from above to highlight the new row at least
             self.parent.refreshComments()
+            # send a click to the comment button to force updates
+            self.parent.ui.commentButton.animateClick()
 
     def editCurrent(self, com):
         """Open a dialog to edit a comment.
@@ -437,39 +439,61 @@ class CommentWidget(QWidget):
             tag = acb.TEtag.toPlainText().strip()
             meta = acb.TEmeta.toPlainText().strip()
             username = acb.TEuser.text().strip()
+            commentID = acb.TEcommentID.text().strip()
             try:
                 question_number = int(acb.TEquestnum.text().strip())
             except ValueError:
                 return None
 
-            # update the comment with new values
-            com["delta"] = dlt
-            com["text"] = txt
-            com["tags"] = tag
-            com["meta"] = meta
-            com["count"] = 0
-            com["modified"] = time.gmtime()
+            rv = self.parent.modifyRubric(
+                commentID,
+                {
+                    "id": commentID,
+                    "delta": dlt,
+                    "text": txt,
+                    "tags": tag,
+                    "meta": meta,
+                    "question": question_number,
+                },
+            )
+            if rv[0]:  # rubric created successfully
+                commentID = rv[1]
+            else:  # some sort of creation problem
+                return
 
-            # TO BE CHECKED, We just basically create a new ID
-            commentID = acb.TEcommentID.text().strip()
+            # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
+            # TODO: but we should use `commentID` from above to highlight the new row at least
+            self.parent.refreshComments()
+            # send a click to the comment button to force updates
+            self.parent.ui.commentButton.animateClick()
 
-            com["id"] = commentID
-            com["username"] = username
-            com["question_number"] = question_number
-
-            # Check if the comments are similar
-            add_new_comment = self.parent.checkCommentSimilarity(com)
-            # input("Were they similar: "+ str(add_new_comment))
-            if add_new_comment:
-                com["id"] = generate_new_comment_ID()
-                self.currentItem()
-                # send a click to the comment button to force updates
-                self.parent.ui.commentButton.animateClick()
-                return com
-            else:
-                return None
-        else:
-            return None
+        #     # update the comment with new values
+        #     com["delta"] = dlt
+        #     com["text"] = txt
+        #     com["tags"] = tag
+        #     com["meta"] = meta
+        #     com["count"] = 0
+        #     com["modified"] = time.gmtime()
+        #
+        #     # TO BE CHECKED, We just basically create a new ID
+        #
+        #     com["id"] = commentID
+        #     com["username"] = username
+        #     com["question_number"] = question_number
+        #
+        #     # Check if the comments are similar
+        #     add_new_comment = self.parent.checkCommentSimilarity(com)
+        #     # input("Were they similar: "+ str(add_new_comment))
+        #     if add_new_comment:
+        #         com["id"] = generate_new_comment_ID()
+        #         self.currentItem()
+        #         # send a click to the comment button to force updates
+        #         self.parent.ui.commentButton.animateClick()
+        #         return com
+        #     else:
+        #         return None
+        # else:
+        #     return None
 
 
 class commentDelegate(QItemDelegate):
@@ -877,10 +901,10 @@ class AddCommentBox(QDialog):
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
         self.TEmeta = QTextEdit()
-        self.TEcommentID = QLineEdit()
-        self.TEuser = QLineEdit()
-        # TODO: not sure what this is for but maybe it should be a combobox
-        self.TEquestnum = QLineEdit()
+        # cannot edit these
+        self.TEcommentID = QLabel()
+        self.TEuser = QLabel()
+        self.TEquestnum = QLabel()
 
         sizePolicy = QSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
@@ -963,7 +987,7 @@ class AddCommentBox(QDialog):
                 "Not shown to student!"
             )
             # TODO: is this assigned later?
-            self.TEcommentID.setPlaceholderText("will be auto-assigned (???)")
+            self.TEcommentID.setText("Will be auto-assigned")
             self.TEuser.setText(username)
             self.TEquestnum.setText(str(questnum))
 

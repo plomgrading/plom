@@ -2041,11 +2041,9 @@ class Annotator(QWidget):
     def refreshComments(self):
         """Request for a refreshed comments list and update the current comments box."""
         current_comments_list = self.comment_widget.CL.clist
-        print("discarding current list {}".format(current_comments_list))
 
         wtf, refreshed_comments_list = self.parentMarkerUI.getRubricsFromServer()
         assert wtf
-        print("new comment list {}".format(refreshed_comments_list))
 
         if len(refreshed_comments_list) == 0:
             ErrorMessage(
@@ -2060,3 +2058,7 @@ class Annotator(QWidget):
     def createNewRubric(self, new_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.sendNewRubricToServer(new_rubric)
+
+    def modifyRubric(self, key, updated_rubric):
+        """Ask server to create a new rubric with data supplied"""
+        return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)

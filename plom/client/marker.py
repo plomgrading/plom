@@ -1779,6 +1779,9 @@ class MarkerClient(QWidget):
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)
 
+    def modifyRubricOnServer(self, key, updated_rubric):
+        return self.msgr.MmodifyRubric(key, updated_rubric)
+
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
