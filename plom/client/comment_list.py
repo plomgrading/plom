@@ -42,7 +42,7 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
 )
 
-from plom.comment_utils import generate_new_comment_ID, comments_apply_default_fields
+from plom.comment_utils import comments_apply_default_fields
 from .useful_classes import ErrorMessage, SimpleMessage
 
 log = logging.getLogger("annotr")

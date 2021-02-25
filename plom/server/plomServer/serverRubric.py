@@ -8,14 +8,9 @@ Rubric-related server methods.
 """
 
 import logging
-from pathlib import Path
-
-from plom import specdir
-from plom.comment_utils import generate_new_comment_ID, comments_apply_default_fields
 
 
 log = logging.getLogger("server")
-comfile = Path(specdir) / "comments.json"
 
 
 def McreateRubric(self, username, new_rubric):

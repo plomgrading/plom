@@ -3,9 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-import json
-
-from aiohttp import web, MultipartWriter, MultipartReader
+from aiohttp import web
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
