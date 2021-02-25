@@ -289,7 +289,7 @@ class CommentWidget(QWidget):
         grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
-        self.addB.clicked.connect(self.addFromTextList)
+        self.addB.clicked.connect(self.add_new_comment)
         self.hideB.clicked.connect(self.hideItem)
         self.filtB.clicked.connect(self.changeFilter)
         self.otherB.clicked.connect(self.parent.refreshComments)
@@ -364,17 +364,22 @@ class CommentWidget(QWidget):
         """Reset the comment row on a new task to last highlighted comment."""
         return self.CL.setCurrentItemRow(r)
 
-    def addFromTextList(self):
-        # text items in scene.
-        lst = self.parent.getComments()
+    def get_nonrubric_text_from_page(self):
+        """Find any text that isn't already part of a formal rubric.
+
+        Returns:
+            list: TODO: type of these?
+        """
+        text_items = self.parent.getComments()
         # text items already in comment list
         clist = []
         for r in range(self.CL.cmodel.rowCount()):
             clist.append(self.CL.cmodel.index(r, 1).data())
-        # text items in scene not in comment list
-        alist = [X for X in lst if X not in clist]
+        return [x for x in text_items if x not in clist]
 
-        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum)
+    def add_new_comment(self):
+        reapable = self.get_nonrubric_text_from_page()
+        acb = AddCommentBox(self.username, self.maxMark, reapable, self.questnum)
         if acb.exec_() != QDialog.Accepted:
             return
         if acb.DE.checkState() == Qt.Checked:
@@ -435,16 +440,8 @@ class CommentWidget(QWidget):
             com["username"] = self.username
             modify = False
 
-        # text items in scene.
-        lst = self.parent.getComments()
-        # text items already in comment list
-        clist = []
-        for r in range(self.CL.cmodel.rowCount()):
-            clist.append(self.CL.cmodel.index(r, 1).data())
-        # text items in scene not in comment list
-        alist = [X for X in lst if X not in clist]
-
-        acb = AddCommentBox(self.username, self.maxMark, alist, self.questnum, com)
+        reapable = self.get_nonrubric_text_from_page()
+        acb = AddCommentBox(self.username, self.maxMark, reapable, self.questnum, com)
         if acb.exec_() != QDialog.Accepted:
             return
         if acb.DE.checkState() == Qt.Checked:
