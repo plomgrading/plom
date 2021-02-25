@@ -181,7 +181,7 @@ class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
     def __init__(self):
-        super(IDClient, self).__init__()
+        super().__init__()
 
     def getToWork(self, mess):
         global messenger
@@ -301,10 +301,8 @@ class IDClient(QWidget):
             self.student_id_to_snid[sid] = snid
 
             if sname in name_list:
-                log.warn(
-                    'Just FYI: multiple students with name "{}"'.format(
-                        censorName(sname)
-                    )
+                log.warning(
+                    'Just FYI: multiple students with name "%s"', censorName(sname)
                 )
 
     def getPredictions(self):
