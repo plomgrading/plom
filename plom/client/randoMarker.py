@@ -181,7 +181,7 @@ class SceneParent(QWidget):
         self.saveMarkerComments()
         # Pickle the scene as a plom-file
         self.pickleIt()
-        return self.scene.score
+        return self.scene.score, self.scene.getRubrics()
 
     def changeMark(self, delta):
         self.score += delta
@@ -229,7 +229,7 @@ def startMarking(question, version):
             aFile = os.path.join(td, "argh.png")
             plomFile = aFile[:-3] + "plom"
             commentFile = aFile[:-3] + "json"
-            score = annotatePaper(maxMark, task, imageList, aFile, tags)
+            score, rubrics = annotatePaper(maxMark, task, imageList, aFile, tags)
             print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
                 task,
@@ -241,6 +241,7 @@ def startMarking(question, version):
                 aFile,
                 plomFile,
                 commentFile,
+                rubrics,
                 integrity_check,
                 image_md5s,
             )
