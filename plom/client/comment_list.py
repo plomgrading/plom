@@ -889,7 +889,10 @@ class AddCommentBox(QDialog):
         """
         super().__init__()
 
-        self.setWindowTitle("Edit comment")
+        if com:
+            self.setWindowTitle("Modify comment")
+        else:
+            self.setWindowTitle("Add new comment")
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = QSpinBox()
