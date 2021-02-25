@@ -1949,6 +1949,14 @@ class Annotator(QWidget):
             None
 
         """
+        # ID for no-answer rubric is defined in the db_create module
+        # in the createNoAnswerRubric function.
+        # rID = 1000 + 2 * questionNumber  # +0 for mark-up and +1 for mark-down
+        # build a delta-comment
+        noAnswerCID = 1000 + 2 * self.question_num
+        # what we do depends on whether we are marking up or down.
+        # mark-up leaves a "0", while mark-down leaves "-N"
+        # Of course, have to check that no other delta-marks made.
         if self.markStyle == 2:
             if self.score > 0:  # is mark-up
                 ErrorMessage(
@@ -1956,7 +1964,7 @@ class Annotator(QWidget):
                 ).exec_()
                 return
             else:
-                self.scene.noAnswer(0)
+                self.scene.noAnswer(0, noAnswerCID)
         elif self.markStyle == 3:
             if self.score < self.maxMark:  # is mark-down
                 ErrorMessage(
@@ -1965,7 +1973,7 @@ class Annotator(QWidget):
                 return
             else:
                 # TODO: Linter cases this as an error.
-                self.scene.noAnswer(-self.maxMark)
+                self.scene.noAnswer(-self.maxMark, noAnswerCID + 1)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)
