@@ -378,68 +378,39 @@ class CommentWidget(QWidget):
         return [x for x in text_items if x not in clist]
 
     def add_new_comment(self):
-        reapable = self.get_nonrubric_text_from_page()
-        acb = AddCommentBox(self.username, self.maxMark, reapable, self.questnum)
-        if acb.exec_() != QDialog.Accepted:
-            return
-        if acb.DE.checkState() == Qt.Checked:
-            dlt = acb.SB.value()
-        else:
-            dlt = "."
-        txt = acb.TE.toPlainText().strip()
-        if len(txt) <= 0:
-            return
-        tag = acb.TEtag.toPlainText().strip()
-        meta = acb.TEmeta.toPlainText().strip()
-        username = acb.TEuser.text().strip()
-        try:
-            question_number = int(acb.TEquestnum.text().strip())
-        except ValueError:
-            return
+        """Open a dialog to create a new comment."""
+        self._new_or_edit_comment(None)
 
-        rv = self.parent.createNewRubric(
-            {
-                "delta": dlt,
-                "text": txt,
-                "tags": tag,
-                "meta": meta,
-                "question": question_number,
-            }
+    def edit_comment(self, com):
+        """Open a dialog to edit a comment."""
+        if com["username"] == self.username:
+            self._new_or_edit_comment(com, edit=True)
+            return
+        msg = SimpleMessage(
+            "<p>You did not create this message.</p>"
+            "<p>To edit it, the system will make a copy that you can edit.</p>"
+            "<p>Do you want to continue?</p>"
         )
-        if rv[0]:  # rubric created successfully
-            commentID = rv[1]
-        else:  # some sort of creation problem
+        if msg.exec_() == QMessageBox.No:
             return
+        com = com.copy()  # don't muck-up the original
+        com["id"] = None
+        com["username"] = self.username
+        self._new_or_edit_comment(com, edit=False)
 
-        # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
-        # TODO: but we should use `commentID` from above to highlight the new row at least
-        self.parent.refreshComments()
-        # send a click to the comment button to force updates
-        self.parent.ui.commentButton.animateClick()
+    def _new_or_edit_comment(self, com, edit=False):
+        """Open a dialog to edit a comment or make a new one.
 
-    def editComment(self, com):
-        """Open a dialog to edit a comment.
+        args:
+            com (dict/None): a comment to modify or use as a template
+                depending on next arg.  If set to None, which always
+                means create new.
+            edit (bool): are we modifying the comment?  if False, use
+                `com` as a template for a new duplicated comment.
 
         Returns:
             None: does its work through side effects on the comment list.
         """
-        modify = True
-        # check if com belongs to user - else we need to fork the comment.
-        if com["username"] != self.username:
-            msg = SimpleMessage(
-                "<p>You did not create this message.</p>"
-                "<p>To edit it, the system will make a copy that you can edit.</p>"
-                "<p>Do you want to continue?</p>"
-            )
-            if msg.exec_() == QMessageBox.No:
-                return
-            com = com.copy()
-            # reset the key
-            com["id"] = None
-            # set username to THIS user
-            com["username"] = self.username
-            modify = False
-
         reapable = self.get_nonrubric_text_from_page()
         acb = AddCommentBox(self.username, self.maxMark, reapable, self.questnum, com)
         if acb.exec_() != QDialog.Accepted:
@@ -461,7 +432,7 @@ class CommentWidget(QWidget):
         except ValueError:
             return
 
-        if modify:
+        if edit:
             rv = self.parent.modifyRubric(
                 commentID,
                 {
@@ -863,7 +834,7 @@ class SimpleCommentTable(QTableView):
         r = tableIndex.row()
         idx = int(self.cmodel.index(r, 2).data())
         com = self.clist[idx]
-        self.parent.editComment(com)
+        self.parent.edit_comment(com)
 
     def focusInEvent(self, event):
         super(SimpleCommentTable, self).focusInEvent(event)
