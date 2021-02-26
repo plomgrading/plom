@@ -12,14 +12,17 @@ from plom.finish import CSVFilename
 
 
 def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
-    """Private function that writes all of the current marks to a csv.
+    """Writes all of the current marks to a local csv file.
 
     Arguments:
-        numberOfQuestions {int} -- Number of questions in this test
-        spreadSheetDict {dict} -- Dictionary containing the tests to be written to a spreadsheet
+        numberOfQuestions (int): Number of questions in this test.
+        spreadSheetDict (dict): Dictionary containing the tests to be
+            written to a spreadsheet.
 
     Returns:
-        bool, bool -- The first returned boolean is False if each test in spreadSheetDict is marked, True otherwise. The second boolean is False if there is a test with no ID, True otherwise
+        tuple: Two booleans, the first is False if each test in
+            spreadSheetDict is marked, True otherwise . The second
+            is False if there is a test with no ID, True otherwise.
     """
     head = ["StudentID", "StudentName", "TestNumber"]
     for q in range(1, numberOfQuestions + 1):
@@ -27,7 +30,6 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
     head.append("Total")
     for q in range(1, numberOfQuestions + 1):
         head.append("Question {} Version".format(q))
-    # add a warning column
     head.append("Warnings")
 
     with open(CSVFilename, "w") as csvfile:
@@ -86,16 +88,10 @@ def main(server=None, password=None):
     msgr.start()
 
     if not password:
-        try:
-            pwd = getpass.getpass("Please enter the 'manager' password:")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
+        password = getpass.getpass("Please enter the 'manager' password:")
 
     try:
-        msgr.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -104,14 +100,15 @@ def main(server=None, password=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(0)
+        exit(10)
 
-    spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
-    spreadSheetDict = msgr.RgetSpreadsheet()
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+        numberOfQuestions = spec["numberOfQuestions"]
+        spreadSheetDict = msgr.RgetSpreadsheet()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     # Write the appropriate warning depending on if everything has been marked or there are warnings present
     existsUnmarked, existsMissingID = writeSpreadsheet(
