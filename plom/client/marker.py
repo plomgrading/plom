@@ -1127,7 +1127,7 @@ class MarkerClient(QWidget):
         Returns:
             None - Modifies self.ui
         """
-        self.ui.closeButton.clicked.connect(self.shutDown)
+        self.ui.closeButton.clicked.connect(self.close)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
@@ -2051,6 +2051,11 @@ class MarkerClient(QWidget):
         if len(idx) > 0:
             self._updateImage(idx[0].row())
 
+    def closeEvent(self, event):
+        log.debug("Something has triggered a shutdown even")
+        self.do_shutdown_tasks()
+        event.accept()
+
     def shutDownError(self):
         """Shuts down self due to error."""
         if (
@@ -2061,7 +2066,7 @@ class MarkerClient(QWidget):
         self.my_shutdown_signal.emit(2, [])
         self.close()
 
-    def shutDown(self):
+    def do_shutdown_tasks(self):
         """Shuts down self."""
         log.debug("Marker shutdown from thread " + str(threading.get_ident()))
         if self.backgroundUploader:
@@ -2102,7 +2107,6 @@ class MarkerClient(QWidget):
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         self.my_shutdown_signal.emit(2, [markStyle, mouseHand, sidebarRight])
-        self.close()
 
     def DNF(self):
         """
