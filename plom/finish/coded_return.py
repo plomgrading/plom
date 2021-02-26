@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Colin B. Macdonald
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
 """
@@ -57,6 +57,7 @@ def main(use_hex, digits, salt=None):
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
     """
+    # TODO: another case of filesystem access of spec
     spec = SpecVerifier.load_verified()
     shortname = spec["name"]
     longname = html.escape(spec["longName"])

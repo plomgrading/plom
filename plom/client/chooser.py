@@ -54,7 +54,7 @@ lastTime = {}
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
 cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
-cfgfilename = "plomConfig.toml"
+cfgfile = cfgdir / "plomConfig.toml"
 
 
 def readLastTime():
@@ -73,30 +73,26 @@ def readLastTime():
     lastTime["mouse"] = "right"
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
-    # If config file exists, use it to update the defaults
-    # prefer a local file, else try standard config location
-    for cfg in (Path(cfgfilename), cfgdir / cfgfilename):
-        if cfg.exists():
-            # too early to log: log.info("Loading config file %s", cfg)
-            with open(cfg) as data_file:
-                lastTime.update(toml.load(data_file))
-            return
+    # update default from config file
+    if cfgfile.exists():
+        # too early to log: log.info("Loading config file %s", cfgfile)
+        with open(cfgfile) as f:
+            lastTime.update(toml.load(f))
 
 
 def writeLastTime():
     """Write the options to the config file."""
-    cfg = cfgdir / cfgfilename
-    log.info("Saving config file %s", cfg)
+    log.info("Saving config file %s", cfgfile)
     try:
-        cfg.parent.mkdir(exist_ok=True)
-        with open(cfg, "w") as fh:
+        cfgfile.parent.mkdir(exist_ok=True)
+        with open(cfgfile, "w") as fh:
             fh.write(toml.dumps(lastTime))
     except PermissionError as e:
         ErrorMessage(
             "Cannot write config file:\n"
             "    {}\n\n"
             "Any settings will not be saved for future sessions.\n\n"
-            "Error msg: {}.".format(cfg, e)
+            "Error msg: {}.".format(cfgfile, e)
         ).exec_()
 
 
@@ -172,7 +168,7 @@ class Chooser(QDialog):
 
     def options(self):
         d = ClientSettingsDialog(
-            lastTime, logdir, cfgdir / cfgfilename, tempfile.gettempdir(), comment_file
+            lastTime, logdir, cfgfile, tempfile.gettempdir(), comment_file
         )
         d.exec_()
         # TODO: do something more proper like QSettings
