@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import getpass
@@ -68,16 +68,10 @@ def main(server=None, password=None):
     msgr.start()
 
     if not password:
-        try:
-            pwd = getpass.getpass("Please enter the 'manager' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+        password = getpass.getpass("Please enter the 'manager' password:")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"

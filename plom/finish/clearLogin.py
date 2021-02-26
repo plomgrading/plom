@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 from getpass import getpass
 
@@ -22,11 +22,7 @@ def clear_manager_login(server=None, password=None):
     msgr.start()
 
     if not password:
-        try:
-            password = getpass('Please enter the "manager" password: ')
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
+        password = getpass('Please enter the "manager" password: ')
 
     msgr.clearAuthorisation("manager", password)
     print("Manager login cleared.")
