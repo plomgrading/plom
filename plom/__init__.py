@@ -20,7 +20,7 @@ if sys.version_info[0] == 2:
 from .specVerifier import SpecVerifier, specdir
 from .version import __version__
 
-Plom_API_Version = "30"
+Plom_API_Version = "32"
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase
