@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Client background/uploader can operate in parallel.
+* Client no longer looks for config file in the current folder.  The Options dialog shows config and log locations.
 
 ### Fixed
 
