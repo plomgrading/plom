@@ -508,20 +508,19 @@ class Annotator(QWidget):
             return {
                 # Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
                 Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
-                # TODO: maybe shift-G?
+                # TODO: maybe shift-G redo: need proper QAction?
                 # Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
                 # Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-                # Qt.Key_F: lambda: self.commentMode(),
                 # Qt.Key_G: lambda: self.ui.textButton.animateClick(),
                 # Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
                 # Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
                 Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
                 Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
                 Qt.Key_D: lambda: self.ui.commentDownButton.animateClick(),
-                Qt.Key_F: lambda: self.next_pane(),
-                Qt.Key_S: lambda: self.prev_pane(),
-                Qt.Key_T: lambda: self.next_minor_tool(),
-                Qt.Key_R: lambda: self.prev_minor_tool(),
+                Qt.Key_F: self.next_pane,
+                Qt.Key_S: self.prev_pane,
+                Qt.Key_R: lambda: self.next_minor_tool(),
+                Qt.Key_W: lambda: self.prev_minor_tool(),
                 # Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
                 # Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
                 # Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
@@ -687,9 +686,17 @@ class Annotator(QWidget):
             tools = [
                 [
                     self.ui.deleteButton,
-                    self.ui.panButton,
                     self.ui.undoButton,
                     self.ui.redoButton,
+                    self.ui.moveButton,
+                    self.ui.panButton,
+                    self.ui.zoomButton,
+                    self.ui.commentButton,
+                    self.ui.commentDownButton,
+                    self.ui.commentUpButton,
+                    self.ui.deltaButton,
+                ],
+                [
                 ],
                 [
                     # TODO: match the order in "next_minor_tool"
@@ -700,16 +707,11 @@ class Annotator(QWidget):
                     self.ui.lineButton,
                     self.ui.penButton,
                 ],
-                [
-                    self.ui.zoomButton,
-                    self.ui.moveButton,
-                    self.ui.commentButton,
-                    self.ui.commentDownButton,
-                    self.ui.commentUpButton,
-                    self.ui.deltaButton,
-                ],
             ]
-
+            self.ui.commentButton.setVisible(False)
+            self.ui.commentDownButton.setVisible(False)
+            self.ui.commentUpButton.setVisible(False)
+            # self.ui.redoButton.setVisible(False)
             row_index = 0
             for row in tools:
                 column_index = 0
@@ -774,7 +776,6 @@ class Annotator(QWidget):
             self.ui.penButton,
         ]
         if any([f.isChecked() for f in L]):
-            print("a minor tool is already pushed: advancing")
             # TODO: find it, set to in case the shudder *mouse* was used
             # self._which_tool = L.index(...)
             self._which_tool += dir
