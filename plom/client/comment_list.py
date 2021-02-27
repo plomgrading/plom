@@ -274,6 +274,8 @@ class CommentWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
+        self._fake_tabz = QLabel("zip | <b>zap</b> | zop")
+        grid.addWidget(self._fake_tabz, 0, 0, 1, 4, Qt.AlignHCenter | Qt.AlignTop)
         # the table has 2 cols, delta&comment.
         self.CL = SimpleCommentTable(self)
         grid.addWidget(self.CL, 1, 1, 2, 4)

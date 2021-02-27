@@ -506,24 +506,26 @@ class Annotator(QWidget):
         """
         if self.mouseHand == 0:
             return {
-                # home-row
-                Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
-                Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
-                Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-                Qt.Key_F: lambda: self.commentMode(),
-                Qt.Key_G: lambda: self.ui.textButton.animateClick(),
-                # lower-row
-                Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
-                Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-                Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
-                Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
-                # upper-row
-                Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
-                Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-                Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_T: lambda: self.ui.penButton.animateClick(),
+                # Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
+                Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
+                # TODO: maybe shift-G?
+                # Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
+                # Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
+                # Qt.Key_F: lambda: self.commentMode(),
+                # Qt.Key_G: lambda: self.ui.textButton.animateClick(),
+                # Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
+                # Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
+                Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_D: lambda: self.ui.commentDownButton.animateClick(),
+                Qt.Key_F: lambda: self.next_pane(),
+                Qt.Key_S: lambda: self.prev_pane(),
+                Qt.Key_T: lambda: self.next_minor_tool(),
+                Qt.Key_R: lambda: self.prev_minor_tool(),
+                # Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
+                # Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
+                # Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
+                # Qt.Key_T: lambda: self.ui.penButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -742,6 +744,47 @@ class Annotator(QWidget):
         self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
         self.ui.buttonsLayout.addWidget(self.ui.markLabel)
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
+
+    def next_pane(self, dir=1):
+        """Switch to the next rubric pane."""
+        L = ("<b>zip</b> | zap | zop",
+             "zip | <b>zap</b> | zop",
+             "zip | zap | <b>zop</b>")
+        if not hasattr(self, "_whot_pane"):
+            self._whot_pane = 0
+        self._whot_pane += dir
+        self._whot_pane %= len(L)
+        self.comment_widget._fake_tabz.setText(L[self._whot_pane])
+
+    def prev_pane(self):
+        """Switch to the prev rubric pane."""
+        self.next_pane(dir=-1)
+
+    def next_minor_tool(self, dir=1):
+        """Switch to current minor tool or advance to next minor tool."""
+        if not hasattr(self, "_which_tool"):
+            self._which_tool = 0
+        L = [
+            self.ui.boxButton,
+            self.ui.tickButton,
+            self.ui.crossButton,
+            self.ui.textButton,
+            self.ui.lineButton,
+            self.ui.penButton,
+        ]
+        if any([f.isChecked() for f in L]):
+            print("a minor tool is already pushed: advancing")
+            # TODO: find it, set to in case the shudder *mouse* was used
+            # self._which_tool = L.index(...)
+            self._which_tool += dir
+            self._which_tool %= len(L)
+        # no tool was selected so click the previously-used tool
+        f = L[self._which_tool]
+        f.animateClick()
+
+    def prev_minor_tool(self):
+        """Switch to current minor tool or go back to prev minor tool."""
+        self.next_minor_tool(dir=-1)
 
     def viewWholePaper(self):
         """
