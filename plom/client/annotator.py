@@ -686,25 +686,26 @@ class Annotator(QWidget):
             """
             tools = [
                 [
+                    self.ui.deleteButton,
                     self.ui.panButton,
+                    self.ui.undoButton,
                     self.ui.redoButton,
+                ],
+                [
+                    # TODO: match the order in "next_minor_tool"
+                    self.ui.boxButton,
+                    self.ui.tickButton,
                     self.ui.crossButton,
-                    self.ui.commentUpButton,
+                    self.ui.textButton,
+                    self.ui.lineButton,
                     self.ui.penButton,
                 ],
                 [
                     self.ui.zoomButton,
-                    self.ui.undoButton,
-                    self.ui.tickButton,
-                    self.ui.commentButton,
-                    self.ui.textButton,
-                ],
-                [
                     self.ui.moveButton,
-                    self.ui.deleteButton,
-                    self.ui.boxButton,
+                    self.ui.commentButton,
                     self.ui.commentDownButton,
-                    self.ui.lineButton,
+                    self.ui.commentUpButton,
                     self.ui.deltaButton,
                 ],
             ]
