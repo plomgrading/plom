@@ -1246,6 +1246,10 @@ class Annotator(QWidget):
         self.undoShortCut.activated.connect(self.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
         self.redoShortCut.activated.connect(self.redo)
+        # TODO: this is one of our left/right keybindings
+        # TODO: can we do all our shortcuts like this instead of the keyPressEvent?
+        self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
+        self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
 
         self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
         self.twisterShortCut.activated.connect(self.rearrangePages)
