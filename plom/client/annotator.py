@@ -15,6 +15,7 @@ import re
 import sys
 import tempfile
 from textwrap import dedent
+import random
 
 from PyQt5.QtCore import (
     Qt,
@@ -750,14 +751,25 @@ class Annotator(QWidget):
 
     def next_pane(self, dir=1):
         """Switch to the next rubric pane."""
-        L = ("<b>zip</b> | zap | zop",
-             "zip | <b>zap</b> | zop",
-             "zip | zap | <b>zop</b>")
+        panelist = ["Favs", "Part (b)", "All Rubrics", "Shared"]
         if not hasattr(self, "_whot_pane"):
-            self._whot_pane = 0
+            self.refreshComments()  # not all updates go through here
+            self._whot_pane = 2
         self._whot_pane += dir
-        self._whot_pane %= len(L)
-        self.comment_widget._fake_tabz.setText(L[self._whot_pane])
+        self._whot_pane %= len(panelist)
+        i = self._whot_pane
+        # bold the selected one
+        panelist[i] = "<b>{}</b>".format(panelist[i])
+        self.comment_widget._fake_tabz.setText("  |  ".join(panelist))
+        if i == 2:  # hardcoded "All" pane
+            self.comment_widget.CL.clist = self._keep_clist
+        elif i == 0:
+            self.comment_widget.CL.clist = []
+        else:
+            self.comment_widget.CL.clist = random.choices(self._keep_clist, k=2)
+        self.comment_widget.CL.populateTable()
+
+
 
     def prev_pane(self):
         """Switch to the prev rubric pane."""
@@ -2079,6 +2091,7 @@ class Annotator(QWidget):
                 "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
             ).exec()
             return
+        self._keep_clist = refreshed_comments_list
         self.comment_widget.CL.clist = refreshed_comments_list
         self.comment_widget.CL.populateTable()
 
