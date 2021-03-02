@@ -54,6 +54,19 @@ df["test_room"] = "quiz1"
 # except a few:
 # TODO: load SID for CFA students and evening students from text files
 # TODO: for next BMEG class
+cfa = pd.read_csv("cfa.csv", dtype="object")
+evening = pd.read_csv("evening.csv", dtype="object")
+for mod in (cfa, evening):
+    # dict of ID -> test_room
+    mymap = mod.set_index("ID")["test_room"].to_dict()
+    def f(row):
+        r = mymap.get(row["ID"], None)
+        if r:
+            return r
+        else:
+            return row["test_room"]
+    df["test_room"] = df.apply(f, axis=1)
+
 
 # to be filled-in later
 df["test_room_human"] = nan
