@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Jenny Li
 
 """
 We may have students writing in different rooms at different times, create columns for room.
@@ -52,8 +53,6 @@ input("Press enter to continue or ctrl-C to stop ")
 # E.g., everyone in same room
 df["test_room"] = "quiz1"
 # except a few:
-# TODO: load SID for CFA students and evening students from text files
-# TODO: for next BMEG class
 cfa = pd.read_csv("cfa.csv", dtype="object")
 evening = pd.read_csv("evening.csv", dtype="object")
 for mod in (cfa, evening):
@@ -66,6 +65,9 @@ for mod in (cfa, evening):
         else:
             return row["test_room"]
     df["test_room"] = df.apply(f, axis=1)
+# double check right number of unique rooms
+expect_distinct_rooms = 4
+assert len(df["test_room"].unique()) == expect_distinct_rooms
 
 
 # to be filled-in later
