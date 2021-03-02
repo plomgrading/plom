@@ -454,11 +454,15 @@ class MarkerExamModel(QStandardItemModel):
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
+        try:
+            markstr = str(paper.mark) if int(paper.mark) >= 0 else ""
+        except ValueError:
+            markstr = ""
         self.appendRow(
             [
                 QStandardItem(paper.prefix),
                 QStandardItem(paper.status),
-                QStandardItem(str(paper.mark)),
+                QStandardItem(markstr),
                 QStandardItem(str(paper.markingTime)),
                 QStandardItem(paper.tags),
                 QStandardItem("placeholder"),
