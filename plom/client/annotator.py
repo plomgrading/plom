@@ -1317,7 +1317,7 @@ class Annotator(QWidget):
 
         Args:
             mode (str): String corresponding to the toolMode to be loaded
-            aux (int) : the row of the current comment if applicable.
+            aux (int) : the row of the current rubric if applicable.
 
         Returns:
 
@@ -1336,6 +1336,7 @@ class Annotator(QWidget):
             self.markHandler.loadDeltaValue(aux)
         elif mode == "rubric" and aux is not None:
             self.rubric_widget.setCurrentItemRow(aux)
+            print("TODO - this will be a bit problematic")
             self.ui.commentButton.animateClick()
         else:
             self.loadModes.get(mode, lambda *args: None)()
@@ -1397,13 +1398,14 @@ class Annotator(QWidget):
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)
 
-        # Connect the comment buttons to the comment list
+        # Connect the rubric buttons to the rubric list
         # They select the item and trigger its handleClick which fires
         # off a commentSignal which will be picked up by the annotator
         # First up connect the comment list's signal to the annotator's
         # handle comment function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
         # Now connect up the buttons
+        print("TODO - rename commentbutton to rubricbutton in uifiles.")
         self.ui.commentButton.clicked.connect(self.rubric_widget.reselectCurrentRubric)
         self.ui.commentButton.clicked.connect(self.rubric_widget.handleClick)
         # the previous comment button
@@ -1428,8 +1430,6 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self.scene and self.toolMode
         """
-        print("Got from signal {}".format(dlt_txt))
-
         # Set the model to text and change cursor.
         self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
@@ -1437,31 +1437,31 @@ class Annotator(QWidget):
                 dlt_txt[0], dlt_txt[1], dlt_txt[2], annotatorUpdate=True
             )
 
-    def totalMarkSet(self, tm):
+    def totalMarkSet(self, totmark):
         """
-        Sets the total mark and passes that info to the comment list.
+        Sets the total mark and passes that info to the rubric widget.
 
         Args:
-            tm (double) : the total mark of the paper.
+            totmark (int) : the total mark of the paper.
 
         Returns:
             None: modifies self.scoree and self.scene.
 
         """
-        self.score = tm
+        self.score = totmark
         self.rubric_widget.changeMark(self.score)
         # also tell the scene what the new mark is
         if self.scene:  # TODO: bit of a hack
             self.scene.setTheMark(self.score)
 
-    def deltaMarkSet(self, dm):
+    def deltaMarkSet(self, deltmark):
         """
         Handles when the delta button, or a comment is clicked.
         Proceeds to set set the scene and view based on the current
         delta.
 
         Args:
-            dm (double): the positive or negative value corresponding
+            deltmark (int): the positive or negative value corresponding
                            to the delta change in mark.
 
         Notes:
@@ -1476,7 +1476,7 @@ class Annotator(QWidget):
         if not self.scene:
             return
         self.setToolMode("delta", QCursor(Qt.IBeamCursor))
-        if not self.scene.changeTheDelta(dm, annotatorUpdate=True):
+        if not self.scene.changeTheDelta(deltmark, annotatorUpdate=True):
             # If it is out of range then change mode to "move" so that
             # the user cannot paste in that delta.
             self.ui.moveButton.animateClick()
@@ -2065,7 +2065,7 @@ class Annotator(QWidget):
 
         return add_new_comment
 
-    def refreshRubrics(self):
+    def getRubrics(self):
         """Request for a refreshed comments list and update the current comments box."""
         wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer()
         assert wtf
@@ -2075,7 +2075,11 @@ class Annotator(QWidget):
                 "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
             ).exec()
             return
-        self.rubric_widget.setRubrics(refreshed_rubrics_list)
+        return refreshed_rubrics_list
+
+    def refreshRubrics(self):
+        """ask the rubric widget to refresh rubrics"""
+        self.rubric_widget.refreshRubrics()
 
     def createNewRubric(self, new_rubric):
         """Ask server to create a new rubric with data supplied"""

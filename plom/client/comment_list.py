@@ -45,6 +45,7 @@ from PyQt5.QtWidgets import (
 
 from plom.comment_utils import comments_apply_default_fields
 from .useful_classes import ErrorMessage, SimpleMessage
+from .rubric_wrangler import RubricWrangler
 
 log = logging.getLogger("annotr")
 comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
@@ -296,6 +297,8 @@ class CommentWidget(QWidget):
         self.hideB.clicked.connect(self.hideItem)
         self.filtB.clicked.connect(self.changeFilter)
         self.otherB.clicked.connect(self.parent.refreshRubrics)
+        # get rubrics
+        self.parent.refreshRubrics()
 
     def setTestname(self, s):
         """Set testname and refresh view."""
@@ -1260,20 +1263,18 @@ class RubricWidget(QWidget):
         grid.addWidget(self.RTW, 1, 1, 2, 4)
         self.addB = QPushButton("Add")
         self.hideB = QPushButton("Hide")
-        self.filtB = QPushButton("Filter")
+        self.filtB = QPushButton("Arrange/Filter")
         self.otherB = QToolButton()
         self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
-        grid.addWidget(self.hideB, 3, 3)
-        grid.addWidget(self.otherB, 3, 4)
+        grid.addWidget(self.otherB, 3, 3)
         grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
         # self.addB.clicked.connect(self.add_new_comment)
-        # self.hideB.clicked.connect(self.hideItem)
-        # self.filtB.clicked.connect(self.changeFilter)
-        self.otherB.clicked.connect(self.parent.refreshRubrics)
+        self.filtB.clicked.connect(self.wrangleRubrics)
+        self.otherB.clicked.connect(self.refreshRubrics)
 
     def setUpTabs(self):
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
@@ -1284,14 +1285,26 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.CL, "Legacy")
         self.RTW.setCurrentIndex(2)
 
-    def setRubrics(self, rubric_list):
-        self.rubrics = rubric_list
-        # for time being just populate all lists
-        key_list = [X["id"] for X in rubric_list]
-        self.tabA.setRubricsByKey(self.rubrics, key_list)
-        self.tabB.setRubricsByKey(self.rubrics, key_list)
-        self.tabC.setRubricsByKey(self.rubrics, key_list)
-        self.tabS.setRubricsByKey(self.rubrics, key_list)
+    def refreshRubrics(self):
+        """Get rubrics from server and if non-trivial then repopulate"""
+        new_rubrics = self.parent.getRubrics()
+        print("Got new rubrics ", new_rubrics)
+        if new_rubrics is not None:
+            self.rubrics = new_rubrics
+            self.wrangleRubrics()
+
+    def wrangleRubrics(self):
+        wr = RubricWrangler(self.rubrics)
+        wr.exec_()
+
+    # def setRubrics(self):
+    #     self.rubrics = rubric_list
+    #     # for time being just populate all lists
+    #     key_list = [X["id"] for X in rubric_list]
+    #     self.tabA.setRubricsByKey(self.rubrics, key_list)
+    #     self.tabB.setRubricsByKey(self.rubrics, key_list)
+    #     self.tabC.setRubricsByKey(self.rubrics, key_list)
+    #     self.tabS.setRubricsByKey(self.rubrics, key_list)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
