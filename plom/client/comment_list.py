@@ -1124,7 +1124,7 @@ class RubricTable(QTableWidget):
         self.pressed.connect(self.handleClick)
         self.itemChanged.connect(self.handleClick)
 
-    def setRubricsByKey(self, rubric_list, key_list):
+    def setRubricsByKeys(self, rubric_list, key_list):
         """Clear table and repopulate rubrics in the key_list"""
         # remove everything
         for r in range(self.rowCount()):
@@ -1248,6 +1248,8 @@ class RubricWidget(QWidget):
         self.maxMark = maxMark
         self.currentMark = 0
         self.rubrics = rubrics
+        # rubricwrangler can construct a sensible initial state
+        self.wranglerState = None
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
@@ -1288,23 +1290,25 @@ class RubricWidget(QWidget):
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
         new_rubrics = self.parent.getRubrics()
-        print("Got new rubrics ", new_rubrics)
         if new_rubrics is not None:
             self.rubrics = new_rubrics
             self.wrangleRubrics()
 
     def wrangleRubrics(self):
-        wr = RubricWrangler(self.rubrics)
-        wr.exec_()
+        wr = RubricWrangler(
+            self.rubrics, self.wranglerState, self.username, self.question_number
+        )
+        if wr.exec_() != QDialog.Accepted:
+            return
+        else:
+            self.wranglerState = wr.wranglerState
+            self.setRubricsFromStore()
 
-    # def setRubrics(self):
-    #     self.rubrics = rubric_list
-    #     # for time being just populate all lists
-    #     key_list = [X["id"] for X in rubric_list]
-    #     self.tabA.setRubricsByKey(self.rubrics, key_list)
-    #     self.tabB.setRubricsByKey(self.rubrics, key_list)
-    #     self.tabC.setRubricsByKey(self.rubrics, key_list)
-    #     self.tabS.setRubricsByKey(self.rubrics, key_list)
+    def setRubricsFromStore(self):
+        self.tabA.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][0])
+        self.tabB.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][1])
+        self.tabC.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][2])
+        self.tabS.setRubricsByKeys(self.rubrics, self.wranglerState["shown"])
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
