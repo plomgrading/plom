@@ -43,7 +43,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
 )
 
-from .comment_list import CommentWidget
+from .comment_list import CommentWidget, RubricWidget
 
 # import the key-help popup window class
 from .key_help import KeyHelp
@@ -159,8 +159,8 @@ class Annotator(QWidget):
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
         # Create the comment list widget and put into gui.
-        self.comment_widget = CommentWidget(self, None)
-        self.ui.container_commentwidget.addWidget(self.comment_widget)
+        self.rubric_widget = RubricWidget(self, None)
+        self.ui.container_commentwidget.addWidget(self.rubric_widget)
 
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
@@ -230,7 +230,7 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
-        m.addAction("Refresh comments", self.refreshComments)
+        m.addAction("Refresh rubrics", self.refreshRubrics)
         m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
@@ -264,10 +264,10 @@ class Annotator(QWidget):
         if self.scene.mode == "delta":
             self.modeInformation.append(self.scene.markDelta)
         elif self.scene.mode == "comment":
-            self.modeInformation.append(self.comment_widget.getCurrentItemRow())
+            self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
 
-        # after grabbed mode information, reset comment_widget
-        self.comment_widget.reset()
+        # after grabbed mode information, reset rubric_widget
+        self.rubric_widget.reset()
 
         del self.scene
         self.scene = None
@@ -371,13 +371,10 @@ class Annotator(QWidget):
         # TODO: see above, don't click a different button: want to keep same tool
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
-        self.comment_widget.setStyle(self.markStyle)
-        self.comment_widget.maxMark = (
-            self.maxMark  # TODO: add helper?  combine with changeMark?
-        )
-        self.comment_widget.changeMark(self.score)
-        self.comment_widget.setQuestionNumber(self.question_num)
-        self.comment_widget.setTestname(testName)
+        self.rubric_widget.setStyle(self.markStyle)
+        self.rubric_widget.changeMark(self.score, self.maxMark)
+        self.rubric_widget.setQuestionNumber(self.question_num)
+        self.rubric_widget.setTestname(testName)
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
@@ -399,8 +396,10 @@ class Annotator(QWidget):
         if self.modeInformation[0] == "delta":
             self.markHandler.clickDelta(self.modeInformation[1])
         if self.modeInformation[0] == "comment":
-            self.comment_widget.setCurrentItemRow(self.modeInformation[1])
-            self.comment_widget.CL.handleClick()
+            self.rubric_widget.setCurrentRubricKeyAndTab(
+                self.modeInformation[1], self.modeInformation[2]
+            )
+            self.rubric_widget.handleClick()
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -1360,16 +1359,16 @@ class Annotator(QWidget):
         # off a commentSignal which will be picked up by the annotator
         # First up connect the comment list's signal to the annotator's
         # handle comment function.
-        self.comment_widget.CL.commentSignal.connect(self.handleComment)
+        self.rubric_widget.rubricSignal.connect(self.handleComment)
         # Now connect up the buttons
-        self.ui.commentButton.clicked.connect(self.comment_widget.currentItem)
-        self.ui.commentButton.clicked.connect(self.comment_widget.CL.handleClick)
+        self.ui.commentButton.clicked.connect(self.rubric_widget.reselectCurrentRubric)
+        self.ui.commentButton.clicked.connect(self.rubric_widget.handleClick)
         # the previous comment button
-        self.ui.commentUpButton.clicked.connect(self.comment_widget.previousItem)
-        self.ui.commentUpButton.clicked.connect(self.comment_widget.CL.handleClick)
+        self.ui.commentUpButton.clicked.connect(self.rubric_widget.previousItem)
+        self.ui.commentUpButton.clicked.connect(self.rubric_widget.handleClick)
         # the next comment button
-        self.ui.commentDownButton.clicked.connect(self.comment_widget.nextItem)
-        self.ui.commentDownButton.clicked.connect(self.comment_widget.CL.handleClick)
+        self.ui.commentDownButton.clicked.connect(self.rubric_widget.nextItem)
+        self.ui.commentDownButton.clicked.connect(self.rubric_widget.handleClick)
         # Connect up the finishing buttons
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
         self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
@@ -1405,7 +1404,7 @@ class Annotator(QWidget):
 
         """
         self.score = tm
-        self.comment_widget.changeMark(self.score)
+        self.rubric_widget.changeMark(self.score)
         # also tell the scene what the new mark is
         if self.scene:  # TODO: bit of a hack
             self.scene.setTheMark(self.score)
@@ -1540,7 +1539,7 @@ class Annotator(QWidget):
         if self.scene.mode == "comment":
             self.parentMarkerUI.annotatorSettings[
                 "comment"
-            ] = self.comment_widget.getCurrentItemRow()
+            ] = self.comment_widget.getCurrentRubricKeyAndTab()
 
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False
@@ -1983,7 +1982,7 @@ class Annotator(QWidget):
         """
 
         # First lets refresh the comments
-        self.refreshComments()
+        self.refreshRubrics()
 
         current_comments_list = self.comment_widget.CL.clist
 
@@ -2021,21 +2020,17 @@ class Annotator(QWidget):
 
         return add_new_comment
 
-    def refreshComments(self):
+    def refreshRubrics(self):
         """Request for a refreshed comments list and update the current comments box."""
-        # TODO: this digs too deep into comment_widget
-        current_comments_list = self.comment_widget.CL.clist
-
-        wtf, refreshed_comments_list = self.parentMarkerUI.getRubricsFromServer()
+        wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer()
         assert wtf
 
-        if len(refreshed_comments_list) == 0:
+        if len(refreshed_rubrics_list) == 0:
             ErrorMessage(
                 "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
             ).exec()
             return
-        self.comment_widget.CL.clist = refreshed_comments_list
-        self.comment_widget.CL.populateTable()
+        self.rubric_widget.setRubrics(refreshed_rubrics_list)
 
     def createNewRubric(self, new_rubric):
         """Ask server to create a new rubric with data supplied"""

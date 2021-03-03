@@ -27,6 +27,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QToolButton,
     QSpinBox,
+    QTabBar,
+    QTabWidget,
     QTableView,
     QTextEdit,
     QLineEdit,
@@ -292,7 +294,7 @@ class CommentWidget(QWidget):
         self.addB.clicked.connect(self.add_new_comment)
         self.hideB.clicked.connect(self.hideItem)
         self.filtB.clicked.connect(self.changeFilter)
-        self.otherB.clicked.connect(self.parent.refreshComments)
+        self.otherB.clicked.connect(self.parent.refreshRubrics)
 
     def setTestname(self, s):
         """Set testname and refresh view."""
@@ -461,7 +463,7 @@ class CommentWidget(QWidget):
 
         # TODO: we could try to carefully add this one to the table or just pull all from server: latter sounds easier for now, but more latency
         # TODO: but we should use `commentID` from above to highlight the new row at least
-        self.parent.refreshComments()
+        self.parent.refreshRubrics()
         # send a click to the comment button to force updates
         self.parent.ui.commentButton.animateClick()
 
@@ -681,6 +683,7 @@ class SimpleCommentTable(QTableView):
         )
 
     def populateTable(self, onlyUserComments=False):
+        return
         # first erase rows but don't use .clear()
 
         self.cmodel.setRowCount(0)
@@ -1094,3 +1097,214 @@ class ChangeFiltersDialog(QDialog):
             self.cb2.checkState() == Qt.Checked,
             self.cb3.checkState() == Qt.Checked,
         ]
+
+
+class RubricTableItem(QTableWidgetItem):
+    def __init__(self):
+        super(RubricTableItem, self).__init__()
+
+
+class RubricTable(QTableWidget):
+    def __init__(self, sort=False):
+        super(RubricTable, self).__init__()
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setColumnCount(5)
+        self.setHorizontalHeaderLabels(["Shown", "Key", "Username", "Delta", "Text"])
+        self.hideColumn(0)
+        self.hideColumn(1)
+        self.hideColumn(2)
+        if sort:
+            self.setSortingEnabled(True)
+        ##
+        self.pressed.connect(self.handleClick)
+        self.itemChanged.connect(self.handleClick)
+
+    def getKeyFromRow(self, row):
+        return self.item(r, 1).text()
+
+    def getRowFromKey(self, row):
+        for r in range(self.rowCount()):
+            if int(self.item(r, 1).text()) == int(key):
+                return r
+        else:
+            return None
+
+    def getCurrentRubricRow(self):
+        if not self.selectedIndexes():
+            return None
+        return self.selectedIndexes()[0].row()
+
+    def getCurrentRubricKey(self):
+        if not self.selectedIndexes():
+            return None
+        return self.item(self.selectedIndexes()[0].row(), 1).text()
+
+    def reselectCurrentRubric(self):
+        # If no selected row, then select row 0.
+        # else select current row - triggers a signal.
+        r = self.getCurrentRubricRow()
+        if r is None:
+            if self.rowCount() == 0:
+                return
+            else:
+                r = 0
+        self.selectRubricByRow(r)
+
+    def selectRubricByRow(self, r):
+        """Reset the comment row on a new task to last highlighted comment.
+
+        Args:
+            r (int): The row-number in the rubric-table.
+            If r is None, do nothing.
+        """
+        if r is not None:
+            self.selectRow(r)
+
+    def selectRubricByKey(self, key):
+        """Select row with given key. Return true if works, else false"""
+        for r in range(self.rowCount()):
+            if int(self.item(r, 1).text()) == int(key):
+                self.selectRow(r)
+                return True
+        return False
+
+    def nextItem(self):
+        """Move selection to the next row, wrapping around if needed."""
+        r = self.getCurrentRubricRow()
+        if r is None:
+            if self.rowCount() >= 1:
+                r = 0
+            else:
+                return
+        r = (r + 1) % self.rowCount()
+        self.selectRubricByRow(r)
+
+    def previousItem(self):
+        """Move selection to the prevoous row, wrapping around if needed."""
+        r = self.getCurrentRubricRow()
+        if r is None:
+            if self.rowCount() >= 1:
+                r = 0
+            else:
+                return
+        r = (r - 1) % self.rowCount()
+        self.selectRubricByRow(r)
+
+    def handleClick(self):
+        # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
+        r = self.getCurrentRubricRow()
+        # recall columns are ["Shown", "Key", "Username", "Delta", "Text"])
+        if r is not None:
+            self.parent().rubricSignal.emit(
+                [
+                    self.item(r, 1).text(),
+                    self.item(r, 3).text(),
+                    self.item(r, 4).text(),
+                ]
+            )
+
+    def setLegality(self, a, b):
+        """set the legal range of a<=delta<=b"""
+        pass
+
+
+class RubricWidget(QWidget):
+    # This is picked up by the annotator and tells is what is
+    # the current comment and delta
+    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text]
+
+    def __init__(self, parent, maxMark, rubrics={}):
+        # layout the widget - a table and add/delete buttons.
+        super(RubricWidget, self).__init__()
+        self.test_name = None
+        self.question_number = None
+        self.tgv = None
+        self.parent = parent
+        self.username = parent.username
+        self.markStyle = 2  # default to mark-up
+        self.maxMark = maxMark
+        self.currentMark = 0
+        self.rubrics = rubrics
+        grid = QGridLayout()
+        # assume our container will deal with margins
+        grid.setContentsMargins(0, 0, 0, 0)
+        # the table has 2 cols, delta&comment.
+        self.CL = SimpleCommentTable(self)
+        self.tabA = RubricTable()  # group A
+        self.tabB = RubricTable()  # group B
+        self.tabC = RubricTable()  # group C
+        self.tabS = RubricTable(sort=True)  # Shared
+        self.RTW = QTabWidget()
+        self.setUpTabs()
+        grid.addWidget(self.RTW, 1, 1, 2, 4)
+        self.addB = QPushButton("Add")
+        self.hideB = QPushButton("Hide")
+        self.filtB = QPushButton("Filter")
+        self.otherB = QToolButton()
+        self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
+        grid.addWidget(self.addB, 3, 1)
+        grid.addWidget(self.filtB, 3, 2)
+        grid.addWidget(self.hideB, 3, 3)
+        grid.addWidget(self.otherB, 3, 4)
+        grid.setSpacing(0)
+        self.setLayout(grid)
+        # connect the buttons to functions.
+        # self.addB.clicked.connect(self.add_new_comment)
+        # self.hideB.clicked.connect(self.hideItem)
+        # self.filtB.clicked.connect(self.changeFilter)
+        self.otherB.clicked.connect(self.parent.refreshRubrics)
+
+    def setUpTabs(self):
+        self.RTW.tabBar().setChangeCurrentOnDrag(True)
+        self.RTW.addTab(self.tabA, "List A")
+        self.RTW.addTab(self.tabB, "List B")
+        self.RTW.addTab(self.tabC, "List C")
+        self.RTW.addTab(self.tabC, "Shared")
+        self.RTW.addTab(self.CL, "old")
+        self.RTW.setCurrentIndex(3)
+
+    def setRubrics(self, rubric_list):
+        pass
+
+    def getCurrentRubricKeyAndTab(self):
+        """return the current rubric key and the current tab"""
+        return [self.currentWidget().getCurrentRubricKey(), self.currentIndex()]
+
+    def setCurrentRubricKeyAndTab(self, key, tab):
+        """set the current rubric key and the current tab"""
+        self.setCurrentIndex(tab)
+        self.currentWidget().selectRubricByKey(key)
+
+    def setStyle(self, markStyle):
+        self.markStyle = markStyle
+
+    def setQuestionNumber(self, qn):
+        self.question_number = qn
+
+    def setTestName(self, tn):
+        self.test_name = tn
+
+    def reset(self):
+        """Return the widget to a no-TGV-specified state."""
+        self.setQuestionNumber(None)
+        self.setTestname(None)
+        print("TODO - what else needs doing on reset")
+        # TODO: do we need to do something about maxMark, currentMax, markStyle?
+        # self.CL.populateTable()
+
+    def changeMark(self, currentMark, maxMark=None):
+        # Update the current and max mark and so recompute which deltas are displayed
+        if maxMark:
+            self.maxMark = maxMark
+        if self.currentMark != currentMark:
+            print("TODO - update displayed deltas")
+        else:
+            self.currentMark = currentMark
+
+    def handleClick(self):
+        self.currentWidget().handleClick()
