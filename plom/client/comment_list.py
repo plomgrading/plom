@@ -1254,7 +1254,6 @@ class RubricWidget(QWidget):
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
         # the table has 2 cols, delta&comment.
-        self.CL = SimpleCommentTable(self)  # legacy
         self.tabA = RubricTable(self)  # group A
         self.tabB = RubricTable(self)  # group B
         self.tabC = RubricTable(self)  # group C
@@ -1284,8 +1283,7 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabB, "List B")
         self.RTW.addTab(self.tabC, "List C")
         self.RTW.addTab(self.tabS, "Shared")
-        self.RTW.addTab(self.CL, "Legacy")
-        self.RTW.setCurrentIndex(2)
+        self.RTW.setCurrentIndex(3)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -1312,7 +1310,10 @@ class RubricWidget(QWidget):
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
-        return [self.RTW.currentWidget().getCurrentRubricKey(), self.currentIndex()]
+        return [
+            self.RTW.currentWidget().getCurrentRubricKey(),
+            self.RTW.currentIndex(),
+        ]
 
     def setCurrentRubricKeyAndTab(self, key, tab):
         """set the current rubric key and the current tab"""
@@ -1331,7 +1332,7 @@ class RubricWidget(QWidget):
     def reset(self):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
-        self.setTestname(None)
+        self.setTestName(None)
         print("TODO - what else needs doing on reset")
         # TODO: do we need to do something about maxMark, currentMax, markStyle?
         # self.CL.populateTable()

@@ -265,7 +265,7 @@ class Annotator(QWidget):
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "delta":
             self.modeInformation.append(self.scene.markDelta)
-        elif self.scene.mode == "rubric":
+        elif self.scene.mode == "rubric":  # stores as [a,b]
             self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
 
         # after grabbed mode information, reset rubric_widget
@@ -398,8 +398,8 @@ class Annotator(QWidget):
         if self.modeInformation[0] == "delta":
             self.markHandler.clickDelta(self.modeInformation[1])
         if self.modeInformation[0] == "rubric":
-            self.rubric_widget.setCurrentRubricKeyAndTab(
-                self.modeInformation[1], self.modeInformation[2]
+            self.rubric_widget.setCurrentRubricKeyAndTab(  # stored as [a,b]
+                self.modeInformation[1][0], self.modeInformation[1][1]
             )
             self.rubric_widget.handleClick()
 
@@ -1660,16 +1660,6 @@ class Annotator(QWidget):
 
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
-        # Deprecated?  Add menu option to export comments?
-        # try:
-        #     self.comment_widget.saveComments()
-        # except (PermissionError, FileNotFoundError) as e:
-        #     msg = ErrorMessage(
-        #         "Error when saving local comment list:\n\n{}\n\n"
-        #         "You may continue, but comments will not be saved "
-        #         "between Plom instances".format(e)
-        #     )
-        #     msg.exec_()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
@@ -2015,55 +2005,6 @@ class Annotator(QWidget):
             self.ui.finishedButton.animateClick()
         else:
             pass
-
-    def checkCommentSimilarity(self, new_comment):
-        """Check if this new comment is similar to an existing one.
-
-        Args:
-            new_comment (dict): The dictionary representing the new added comment.
-
-        Returns:
-            boolean: True/False based on wether this comment should be added or not
-        """
-
-        # First lets refresh the comments
-        self.refreshRubrics()
-
-        current_comments_list = self.comment_widget.CL.clist
-
-        for existing_comment in current_comments_list:
-            if (
-                existing_comment["text"] == new_comment["text"]
-                and existing_comment["delta"] == new_comment["delta"]
-            ):
-                new_comment_str = (
-                    str(new_comment["delta"]) + " : " + new_comment["text"]
-                )
-                existing_comment_str = (
-                    str(existing_comment["delta"]) + " : " + existing_comment["text"]
-                )
-
-                similar_comment_message = "<p>You asked for a new comment to be built but it is too similar to other comments:<\p>"
-                similar_comment_message += str(
-                    "<p>Your comment is " + new_comment_str + "<\p>"
-                )
-                similar_comment_message += str(
-                    "<p>The similar comment is " + existing_comment_str + "<\p>"
-                )
-                similar_comment_message += str(
-                    "<p>Are you sure you want to add this new comment?<\p>"
-                )
-
-                msg = SimpleMessage(similar_comment_message)
-                if msg.exec_() == QMessageBox.No:
-                    add_new_comment = False
-                else:
-                    add_new_comment = True
-                break
-            else:
-                add_new_comment = True
-
-        return add_new_comment
 
     def getRubrics(self):
         """Request for a refreshed comments list and update the current comments box."""

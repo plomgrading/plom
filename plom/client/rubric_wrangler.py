@@ -174,17 +174,15 @@ class ShowTable(QTableWidget):
 
     def populate(self, rubrics, keys):
         # insert in key order
-        print("Rubrics = ", rubrics)
-        print("Keys = ", keys)
         for k in keys:
             # find the rubric with that key
             rindices = [i for i, v in enumerate(rubrics) if int(v["id"]) == int(k)]
             if len(rindices) != 1:
-                print("We have a problem")
+                print(
+                    "We have a (minor) problem - trying to populate list with key not in our rubric list."
+                )
             else:
                 rind = rindices[0]
-                print("Inserting rubric index ", rind)
-                print("That is rubric ", rubrics[rind])
                 # now insert into the table
                 rc = self.rowCount()
                 self.insertRow(rc)
@@ -409,9 +407,9 @@ class RubricWrangler(QDialog):
                 "shown": [],
                 "hidden": [],
                 "tabs": [[], [], []],
-                "hideManager": self.cbM.checkState(),
-                "hideUsers": self.cbU.checkState(),
-                "hideQuestions": self.cbQ.checkState(),
+                "hideManager": Qt.Unchecked,
+                "hideUsers": Qt.Unchecked,
+                "hideQuestions": Qt.Checked,
             }
         else:
             self.wranglerState = wranglerState
