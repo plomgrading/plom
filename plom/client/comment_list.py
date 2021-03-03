@@ -1173,7 +1173,7 @@ class RubricTable(QTableWidget):
                 return True
         return False
 
-    def nextItem(self):
+    def nextRubric(self):
         """Move selection to the next row, wrapping around if needed."""
         r = self.getCurrentRubricRow()
         if r is None:
@@ -1184,7 +1184,7 @@ class RubricTable(QTableWidget):
         r = (r + 1) % self.rowCount()
         self.selectRubricByRow(r)
 
-    def previousItem(self):
+    def previousRubric(self):
         """Move selection to the prevoous row, wrapping around if needed."""
         r = self.getCurrentRubricRow()
         if r is None:
@@ -1264,9 +1264,9 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabA, "List A")
         self.RTW.addTab(self.tabB, "List B")
         self.RTW.addTab(self.tabC, "List C")
-        self.RTW.addTab(self.tabC, "Shared")
-        self.RTW.addTab(self.CL, "old")
-        self.RTW.setCurrentIndex(3)
+        self.RTW.addTab(self.tabS, "Shared")
+        self.RTW.addTab(self.CL, "Legacy")
+        self.RTW.setCurrentIndex(4)
 
     def setRubrics(self, rubric_list):
         pass
@@ -1308,3 +1308,12 @@ class RubricWidget(QWidget):
 
     def handleClick(self):
         self.currentWidget().handleClick()
+
+    def reselectCurrentRubric(self):
+        self.currentWidget().reselectCurrentRubric()
+
+    def nextRubric(self):
+        self.currentWidget().nextRubric()
+
+    def previousRubric(self):
+        self.currentWidget().previousRubric()

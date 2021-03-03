@@ -374,7 +374,7 @@ class Annotator(QWidget):
         self.rubric_widget.setStyle(self.markStyle)
         self.rubric_widget.changeMark(self.score, self.maxMark)
         self.rubric_widget.setQuestionNumber(self.question_num)
-        self.rubric_widget.setTestname(testName)
+        self.rubric_widget.setTestName(testName)
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
@@ -1364,10 +1364,10 @@ class Annotator(QWidget):
         self.ui.commentButton.clicked.connect(self.rubric_widget.reselectCurrentRubric)
         self.ui.commentButton.clicked.connect(self.rubric_widget.handleClick)
         # the previous comment button
-        self.ui.commentUpButton.clicked.connect(self.rubric_widget.previousItem)
+        self.ui.commentUpButton.clicked.connect(self.rubric_widget.previousRubric)
         self.ui.commentUpButton.clicked.connect(self.rubric_widget.handleClick)
         # the next comment button
-        self.ui.commentDownButton.clicked.connect(self.rubric_widget.nextItem)
+        self.ui.commentDownButton.clicked.connect(self.rubric_widget.nextRubric)
         self.ui.commentDownButton.clicked.connect(self.rubric_widget.handleClick)
         # Connect up the finishing buttons
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
