@@ -276,18 +276,19 @@ class CommentWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        # the table has 2 cols, delta&comment.
+        self._fake_tabz = QLabel("Tabs | <b>Rubric Panes</b> | Go | Here | TODO")
+        grid.addWidget(self._fake_tabz, 0, 0, 1, 4, Qt.AlignHCenter | Qt.AlignTop)
         self.CL = SimpleCommentTable(self)
-        grid.addWidget(self.CL, 1, 1, 2, 4)
+        grid.addWidget(self.CL, 1, 0, 1, 4)
         self.addB = QPushButton("Add")
         self.hideB = QPushButton("Hide")
         self.filtB = QPushButton("Filter")
         self.otherB = QToolButton()
         self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
-        grid.addWidget(self.addB, 3, 1)
-        grid.addWidget(self.filtB, 3, 2)
-        grid.addWidget(self.hideB, 3, 3)
-        grid.addWidget(self.otherB, 3, 4)
+        grid.addWidget(self.addB, 2, 0)
+        grid.addWidget(self.filtB, 2, 1)
+        grid.addWidget(self.hideB, 2, 2)
+        grid.addWidget(self.otherB, 2, 3)
         grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
@@ -1099,14 +1100,10 @@ class ChangeFiltersDialog(QDialog):
         ]
 
 
-class RubricTableItem(QTableWidgetItem):
-    def __init__(self):
-        super(RubricTableItem, self).__init__()
-
-
 class RubricTable(QTableWidget):
-    def __init__(self, sort=False):
+    def __init__(self, parent, sort=False):
         super(RubricTable, self).__init__()
+        self.parent = parent
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -1123,6 +1120,24 @@ class RubricTable(QTableWidget):
         ##
         self.pressed.connect(self.handleClick)
         self.itemChanged.connect(self.handleClick)
+
+    def setRubricsByKey(self, rubric_list, key_list):
+        """Clear table and repopulate rubrics in the key_list"""
+        # remove everything
+        for r in range(self.rowCount()):
+            self.removeRow(0)
+        # since populating in order of key_list, build all keys from rubric_list
+        rkl = [X["id"] for X in rubric_list]
+        for id in key_list:
+            rb = rubric_list[rkl.index(id)]
+            rc = self.rowCount()
+            self.insertRow(rc)
+            self.setItem(rc, 0, QTableWidgetItem(""))
+            self.setItem(rc, 1, QTableWidgetItem(rb["id"]))
+            self.setItem(rc, 2, QTableWidgetItem(rb["username"]))
+            self.setItem(rc, 3, QTableWidgetItem(rb["delta"]))
+            self.setItem(rc, 4, QTableWidgetItem(rb["text"]))
+        self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row):
         return self.item(r, 1).text()
@@ -1200,11 +1215,11 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         # recall columns are ["Shown", "Key", "Username", "Delta", "Text"])
         if r is not None:
-            self.parent().rubricSignal.emit(
+            self.parent.rubricSignal.emit(  # send delta, text, rubricID
                 [
-                    self.item(r, 1).text(),
                     self.item(r, 3).text(),
                     self.item(r, 4).text(),
+                    self.item(r, 1).text(),
                 ]
             )
 
@@ -1218,7 +1233,7 @@ class RubricWidget(QWidget):
     # the current comment and delta
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text]
 
-    def __init__(self, parent, maxMark, rubrics={}):
+    def __init__(self, parent, maxMark, rubrics=[]):
         # layout the widget - a table and add/delete buttons.
         super(RubricWidget, self).__init__()
         self.test_name = None
@@ -1234,11 +1249,12 @@ class RubricWidget(QWidget):
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
         # the table has 2 cols, delta&comment.
-        self.CL = SimpleCommentTable(self)
-        self.tabA = RubricTable()  # group A
-        self.tabB = RubricTable()  # group B
-        self.tabC = RubricTable()  # group C
-        self.tabS = RubricTable(sort=True)  # Shared
+        self.CL = SimpleCommentTable(self)  # legacy
+        self.tabA = RubricTable(self)  # group A
+        self.tabB = RubricTable(self)  # group B
+        self.tabC = RubricTable(self)  # group C
+        self.tabS = RubricTable(self, sort=True)  # Shared
+        self.numberOfTabs = 4
         self.RTW = QTabWidget()
         self.setUpTabs()
         grid.addWidget(self.RTW, 1, 1, 2, 4)
@@ -1266,19 +1282,25 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabC, "List C")
         self.RTW.addTab(self.tabS, "Shared")
         self.RTW.addTab(self.CL, "Legacy")
-        self.RTW.setCurrentIndex(4)
+        self.RTW.setCurrentIndex(2)
 
     def setRubrics(self, rubric_list):
-        pass
+        self.rubrics = rubric_list
+        # for time being just populate all lists
+        key_list = [X["id"] for X in rubric_list]
+        self.tabA.setRubricsByKey(self.rubrics, key_list)
+        self.tabB.setRubricsByKey(self.rubrics, key_list)
+        self.tabC.setRubricsByKey(self.rubrics, key_list)
+        self.tabS.setRubricsByKey(self.rubrics, key_list)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
-        return [self.currentWidget().getCurrentRubricKey(), self.currentIndex()]
+        return [self.RTW.currentWidget().getCurrentRubricKey(), self.currentIndex()]
 
     def setCurrentRubricKeyAndTab(self, key, tab):
         """set the current rubric key and the current tab"""
-        self.setCurrentIndex(tab)
-        self.currentWidget().selectRubricByKey(key)
+        self.RTW.setCurrentIndex(tab)
+        self.RTW.currentWidget().selectRubricByKey(key)
 
     def setStyle(self, markStyle):
         self.markStyle = markStyle
@@ -1307,13 +1329,19 @@ class RubricWidget(QWidget):
             self.currentMark = currentMark
 
     def handleClick(self):
-        self.currentWidget().handleClick()
+        self.RTW.currentWidget().handleClick()
 
     def reselectCurrentRubric(self):
-        self.currentWidget().reselectCurrentRubric()
+        self.RTW.currentWidget().reselectCurrentRubric()
 
     def nextRubric(self):
-        self.currentWidget().nextRubric()
+        self.RTW.currentWidget().nextRubric()
 
     def previousRubric(self):
-        self.currentWidget().previousRubric()
+        self.RTW.currentWidget().previousRubric()
+
+    def next_pane(self):
+        self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
+
+    def prev_pane(self):
+        self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)

@@ -15,6 +15,7 @@ import re
 import sys
 import tempfile
 from textwrap import dedent
+import random
 
 from PyQt5.QtCore import (
     Qt,
@@ -505,24 +506,25 @@ class Annotator(QWidget):
         """
         if self.mouseHand == 0:
             return {
-                # home-row
-                Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
-                Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
-                Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-                Qt.Key_F: lambda: self.commentMode(),
-                Qt.Key_G: lambda: self.ui.textButton.animateClick(),
-                # lower-row
-                Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
-                Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-                Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
-                Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
-                # upper-row
-                Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
-                Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-                Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_T: lambda: self.ui.penButton.animateClick(),
+                # Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
+                Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
+                # TODO: maybe shift-G redo: need proper QAction?
+                # Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
+                # Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
+                # Qt.Key_G: lambda: self.ui.textButton.animateClick(),
+                # Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
+                # Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
+                Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_D: lambda: self.ui.commentDownButton.animateClick(),
+                Qt.Key_F: self.next_pane,
+                Qt.Key_S: self.prev_pane,
+                Qt.Key_R: lambda: self.next_minor_tool(),
+                Qt.Key_W: lambda: self.prev_minor_tool(),
+                # Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
+                # Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
+                # Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
+                # Qt.Key_T: lambda: self.ui.penButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -683,29 +685,32 @@ class Annotator(QWidget):
             """
             tools = [
                 [
-                    self.ui.panButton,
-                    self.ui.redoButton,
-                    self.ui.crossButton,
-                    self.ui.commentUpButton,
-                    self.ui.penButton,
-                ],
-                [
-                    self.ui.zoomButton,
-                    self.ui.undoButton,
-                    self.ui.tickButton,
-                    self.ui.commentButton,
-                    self.ui.textButton,
-                ],
-                [
-                    self.ui.moveButton,
                     self.ui.deleteButton,
-                    self.ui.boxButton,
+                    self.ui.undoButton,
+                    self.ui.redoButton,
+                    self.ui.moveButton,
+                    self.ui.panButton,
+                    self.ui.zoomButton,
+                    self.ui.commentButton,
                     self.ui.commentDownButton,
-                    self.ui.lineButton,
+                    self.ui.commentUpButton,
                     self.ui.deltaButton,
                 ],
+                [],
+                [
+                    # TODO: match the order in "next_minor_tool"
+                    self.ui.boxButton,
+                    self.ui.tickButton,
+                    self.ui.crossButton,
+                    self.ui.textButton,
+                    self.ui.lineButton,
+                    self.ui.penButton,
+                ],
             ]
-
+            self.ui.commentButton.setVisible(False)
+            self.ui.commentDownButton.setVisible(False)
+            self.ui.commentUpButton.setVisible(False)
+            # self.ui.redoButton.setVisible(False)
             row_index = 0
             for row in tools:
                 column_index = 0
@@ -741,6 +746,37 @@ class Annotator(QWidget):
         self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
         self.ui.buttonsLayout.addWidget(self.ui.markLabel)
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
+
+    def next_pane(self):
+        self.rubric_widget.next_pane()
+
+    def prev_pane(self):
+        self.rubric_widget.prev_pane()
+
+    def next_minor_tool(self, dir=1):
+        """Switch to current minor tool or advance to next minor tool."""
+        if not hasattr(self, "_which_tool"):
+            self._which_tool = 0
+        L = [
+            self.ui.boxButton,
+            self.ui.tickButton,
+            self.ui.crossButton,
+            self.ui.textButton,
+            self.ui.lineButton,
+            self.ui.penButton,
+        ]
+        if any([f.isChecked() for f in L]):
+            # TODO: find it, set to in case the shudder *mouse* was used
+            # self._which_tool = L.index(...)
+            self._which_tool += dir
+            self._which_tool %= len(L)
+        # no tool was selected so click the previously-used tool
+        f = L[self._which_tool]
+        f.animateClick()
+
+    def prev_minor_tool(self):
+        """Switch to current minor tool or go back to prev minor tool."""
+        self.next_minor_tool(dir=-1)
 
     def viewWholePaper(self):
         """
@@ -1021,7 +1057,8 @@ class Annotator(QWidget):
         """
         # A bit of a hack to take care of comment-mode and delta-mode
         if self.scene and self.scene.mode == "comment" and newMode != "comment":
-            self.comment_widget.CL.setStyleSheet("")
+            # self.comment_widget.CL.setStyleSheet("")
+            print("TODO - fix up style setting in rubric widget")
         # We have to be a little careful since not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
 
@@ -1032,9 +1069,10 @@ class Annotator(QWidget):
             # tool buttons change the mode
             self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
-        elif self.sender() is self.comment_widget.CL:
+        elif self.sender() is self.rubric_widget:
             self.markHandler.clearButtonStyle()
-            self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
+            print("TODO - fix this style setting")
+            # self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
             self.ui.commentButton.setChecked(True)
         elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
@@ -1188,6 +1226,10 @@ class Annotator(QWidget):
         self.undoShortCut.activated.connect(self.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
         self.redoShortCut.activated.connect(self.redo)
+        # TODO: this is one of our left/right keybindings
+        # TODO: can we do all our shortcuts like this instead of the keyPressEvent?
+        self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
+        self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
 
         self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
         self.twisterShortCut.activated.connect(self.rearrangePages)
@@ -1359,7 +1401,7 @@ class Annotator(QWidget):
         # off a commentSignal which will be picked up by the annotator
         # First up connect the comment list's signal to the annotator's
         # handle comment function.
-        self.rubric_widget.rubricSignal.connect(self.handleComment)
+        self.rubric_widget.rubricSignal.connect(self.handleRubric)
         # Now connect up the buttons
         self.ui.commentButton.clicked.connect(self.rubric_widget.reselectCurrentRubric)
         self.ui.commentButton.clicked.connect(self.rubric_widget.handleClick)
@@ -1375,7 +1417,7 @@ class Annotator(QWidget):
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
 
-    def handleComment(self, dlt_txt):
+    def handleRubric(self, dlt_txt):
         """Pass comment ID, delta, and text the scene.
 
         Args:
@@ -1385,10 +1427,12 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self.scene and self.toolMode
         """
+        print("Got from signal {}".format(dlt_txt))
+
         # Set the model to text and change cursor.
         self.setToolMode("comment", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheComment(
+            self.scene.changeTheRubric(
                 dlt_txt[0], dlt_txt[1], dlt_txt[2], annotatorUpdate=True
             )
 

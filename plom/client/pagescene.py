@@ -2032,7 +2032,7 @@ class PageScene(QGraphicsScene):
         self.parent.changeMark(self.score)
         # if we are in comment mode then the comment might need updating
         if self.mode == "comment":
-            self.changeTheComment(
+            self.changeTheRubric(
                 self.markDelta, self.commentText, self.commentID, annotatorUpdate=False
             )
 
@@ -2095,7 +2095,7 @@ class PageScene(QGraphicsScene):
             return False
         return True
 
-    def changeTheComment(self, delta, text, commentID, annotatorUpdate=True):
+    def changeTheRubric(self, delta, text, commentID, annotatorUpdate=True):
         """
         Changes the new comment for the paper based on the delta and text.
 
