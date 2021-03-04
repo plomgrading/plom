@@ -319,9 +319,15 @@ class GhostText(QGraphicsTextItem):
         self._tex_src_cache = None
         self.setPlainText(txt)
         if self.scene() and txt.casefold().startswith("tex:"):
-            texIt = (
-                "\\color{blue}\n" + txt[4:].strip()
-            )  # make color blue for ghost rendering
+            if legal:
+                texIt = (
+                    "\\color{blue}\n" + txt[4:].strip()
+                )  # make color blue for ghost rendering
+            else:
+                texIt = (
+                    "\\color{gray}\n" + txt[4:].strip()
+                )  # make color gray for ghost rendering (when delta not legal)
+
             fragfilename = self.scene().latexAFragment(texIt)
             if fragfilename:
                 self._tex_src_cache = txt

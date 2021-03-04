@@ -1824,9 +1824,9 @@ class Annotator(QWidget):
         self.doneViewingPaper()
         event.accept()
 
-    def getComments(self):
-        """ Retrieves comments from self.scene. """
-        return self.scene.getComments()
+    def get_nonrubric_text_from_page(self):
+        """ Retrieves text (not in rubrics) from self.scene. """
+        return self.scene.get_nonrubric_text_from_page()
 
     def latexAFragment(self, txt):
         """

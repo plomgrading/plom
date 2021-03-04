@@ -518,20 +518,21 @@ class PageScene(QGraphicsScene):
         else:
             self.views()[0].setDragMode(0)
 
-    def getComments(self):
+    def get_nonrubric_text_from_page(self):
         """
         Get the current text items and rubrics associated with this paper.
 
         Returns:
-            list: pairs of IDs and strings from each bit of text.
+            list: strings from each bit of text.
         """
-        comments = []
-        # TODO: Issue #1092.
+        texts = []
         for X in self.items():
             if isinstance(X, TextItem):
-                # TODO: maybe we need IDs here, but only for comments not text
-                comments.append(X.getContents())
-        return comments
+                # if item is in a rubric then its 'group' will be non-null
+                # only keep those with group=None to keep non-rubric text
+                if X.group() is None:
+                    texts.append(X.getContents())
+        return texts
 
     def getRubrics(self):
         """

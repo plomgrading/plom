@@ -2219,7 +2219,7 @@ class MarkerClient(QWidget):
         clist.sort(key=lambda C: -len(C["text"]))
 
         # Build a progress dialog to warn user
-        pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
+        pd = QProgressDialog("Caching latex comments", None, 0, 3 * len(clist), self)
         pd.setWindowModality(Qt.WindowModal)
         pd.setMinimumDuration(0)
         # Start caching.
@@ -2241,13 +2241,21 @@ class MarkerClient(QWidget):
                 self.latexAFragment(txt)
                 c += 1
                 pd.setValue(c)
-                # and latex the preview
-                txtp = "\\color{blue}" + txt  # make color blue for ghost rendering
+                # and latex the previews (legal and illegal versions)
+                txtp = (
+                    "\\color{blue}" + txt
+                )  # make color blue for ghost rendering (legal)
+                self.latexAFragment(txtp)
+                c += 1
+                pd.setValue(c)
+                txtp = (
+                    "\\color{gray}" + txt
+                )  # make color gray for ghost rendering (illegal)
                 self.latexAFragment(txtp)
                 c += 1
                 pd.setValue(c)
             else:
-                c += 2
+                c += 3
                 pd.setLabelText("Caching:\nno tex")
                 pd.setValue(c)
         pd.close()

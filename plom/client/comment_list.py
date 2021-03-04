@@ -1285,7 +1285,6 @@ class RubricWidget(QWidget):
         self.setUpTabs()
         grid.addWidget(self.RTW, 1, 1, 2, 4)
         self.addB = QPushButton("Add")
-        self.hideB = QPushButton("Hide")
         self.filtB = QPushButton("Arrange/Filter")
         self.otherB = QToolButton()
         self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
@@ -1295,7 +1294,7 @@ class RubricWidget(QWidget):
         grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
-        # self.addB.clicked.connect(self.add_new_comment)
+        self.addB.clicked.connect(self.add_new_rubric)
         self.filtB.clicked.connect(self.wrangleRubrics)
         self.otherB.clicked.connect(self.refreshRubrics)
 
@@ -1422,3 +1421,216 @@ class RubricWidget(QWidget):
 
     def prev_pane(self):
         self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
+
+    def get_nonrubric_text_from_page(self):
+        """Find any text that isn't already part of a formal rubric.
+
+        Returns:
+            list: strings for each text on page that is not inside a rubric
+        """
+        return self.parent.get_nonrubric_text_from_page()
+
+    def add_new_rubric(self):
+        """Open a dialog to create a new comment."""
+        self._new_or_edit_rubric(None)
+
+    def edit_rubric(self, com):
+        """Open a dialog to edit a comment."""
+        if com["username"] == self.username:
+            self._new_or_rubric_comment(com, edit=True)
+            return
+        msg = SimpleMessage(
+            "<p>You did not create this message.</p>"
+            "<p>To edit it, the system will make a copy that you can edit.</p>"
+            "<p>Do you want to continue?</p>"
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        com = com.copy()  # don't muck-up the original
+        com["id"] = None
+        com["username"] = self.username
+        self._new_or_edit_rubric(com, edit=False)
+
+    def _new_or_edit_rubric(self, com, edit=False):
+        """Open a dialog to edit a comment or make a new one.
+
+        args:
+            com (dict/None): a comment to modify or use as a template
+                depending on next arg.  If set to None, which always
+                means create new.
+            edit (bool): are we modifying the comment?  if False, use
+                `com` as a template for a new duplicated comment.
+
+        Returns:
+            None: does its work through side effects on the comment list.
+        """
+        reapable = self.get_nonrubric_text_from_page()
+        arb = AddRubricBox(self.username, self.maxMark, reapable, com)
+        if arb.exec_() != QDialog.Accepted:
+            return
+        if arb.DE.checkState() == Qt.Checked:
+            dlt = str(arb.SB.value())
+        else:
+            dlt = "."
+        txt = arb.TE.toPlainText().strip()
+        if len(txt) <= 0:
+            return
+        tag = arb.TEtag.toPlainText().strip()
+        meta = arb.TEmeta.toPlainText().strip()
+        username = arb.TEuser.text().strip()
+        # only meaningful if we're modifying
+        rubricID = arb.label_rubric_id.text().strip()
+
+        new_rubric = {
+            "delta": dlt,
+            "text": txt,
+            "tags": tag,
+            "meta": meta,
+            "username": self.username,
+            "question": self.question_number,
+        }
+
+        if edit:
+            new_rubric["id"] = rubricID
+            rv = self.parent.modifyRubric(rubricID, new_rubric)
+            return
+
+        rv = self.parent.createNewRubric(new_rubric)
+        # check was updated/created successfully
+        if rv[0]:  # rubric created successfully
+            rubricID = rv[1]
+        else:  # some sort of creation problem
+            return
+        new_rubric["id"] = rubricID
+        # at this point we have an accepted new rubric
+        # add it to the internal list of rubrics
+        self.rubrics.append(new_rubric)
+        # also add it to the list in the current rubriclist and the shownlist
+        # update wranglerState (as if we have run that)
+        # then update the displayed rubrics
+        self.wranglerState["shown"].append(rubricID)
+        if self.RTW.currentIndex() in [0, 1, 2]:
+            self.wranglerState["tabs"][self.RTW.currentIndex()].append(rubricID)
+        self.setRubricsFromStore()
+        # finally - select that rubric
+        self.RTW.currentWidget().selectRubricByKey(rubricID)
+
+
+class AddRubricBox(QDialog):
+    def __init__(self, username, maxMark, lst, com=None):
+        """Initialize a new dialog to edit/create a comment.
+
+        Args:
+            username (str)
+            maxMark (int)
+            lst (list): these are used to "harvest" plain 'ol text
+                annotations and morph them into comments.
+            com (dict/None): if None, we're creating a new rubric.
+                Otherwise, this has the current comment data.
+        """
+        super().__init__()
+
+        if com:
+            self.setWindowTitle("Modify rubric")
+        else:
+            self.setWindowTitle("Add new rubric")
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+        self.SB = QSpinBox()
+        self.DE = QCheckBox("enabled")
+        self.DE.setCheckState(Qt.Checked)
+        self.DE.stateChanged.connect(self.toggleSB)
+        self.TEtag = QTextEdit()
+        self.TEmeta = QTextEdit()
+        # cannot edit these
+        self.label_rubric_id = QLabel("Will be auto-assigned")
+        self.TEuser = QLabel()
+
+        sizePolicy = QSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+        )
+        sizePolicy.setVerticalStretch(3)
+        self.TE.setSizePolicy(sizePolicy)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy.setVerticalStretch(2)
+        self.TEtag.setSizePolicy(sizePolicy)
+        self.TEmeta.setSizePolicy(sizePolicy)
+        # TODO: TE is still a little too tall
+        # TODO: make everything wider!
+
+        flay = QFormLayout()
+        flay.addRow("Enter text", self.TE)
+        lay = QFormLayout()
+        lay.addRow("or choose text", self.CB)
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.CB.setSizePolicy(sizePolicy)
+        flay.addRow("", lay)
+        lay = QHBoxLayout()
+        lay.addWidget(self.DE)
+        lay.addItem(QSpacerItem(48, 10, QSizePolicy.Preferred, QSizePolicy.Minimum))
+        lay.addWidget(self.SB)
+        flay.addRow("Delta mark", lay)
+        flay.addRow("Tags", self.TEtag)
+
+        flay.addRow("Meta", self.TEmeta)
+        flay.addRow("Rubric ID", self.label_rubric_id)
+        flay.addRow("User who created", self.TEuser)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.SB.setRange(-maxMark, maxMark)
+        self.CB.addItem("")
+        self.CB.addItems(lst)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+
+        if com:
+            if com["text"]:
+                self.TE.clear()
+                self.TE.insertPlainText(com["text"])
+            if com["tags"]:
+                self.TEtag.clear()
+                self.TEtag.insertPlainText(com["tags"])
+            if com["meta"]:
+                self.TEmeta.clear()
+                self.TEmeta.insertPlainText(com["meta"])
+            if com["delta"]:
+                if com["delta"] == ".":
+                    self.SB.setValue(0)
+                    self.DE.setCheckState(Qt.Unchecked)
+                else:
+                    self.SB.setValue(int(com["delta"]))
+            if com["id"]:
+                self.label_rubric_id.setText(str(com["id"]))
+            if com["username"]:
+                self.TEuser.setText(com["username"])
+        else:
+            self.TE.setPlaceholderText(
+                'Prepend with "tex:" to use math.\n\n'
+                'You can "choose text" to harvest existing text from the page.\n\n'
+                'Change "delta" below to associate a point-change.'
+            )
+            self.TEmeta.setPlaceholderText(
+                "notes to self, hints on when to use this comment, etc.\n\n"
+                "Not shown to student!"
+            )
+            self.TEuser.setText(username)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())
+
+    def toggleSB(self):
+        if self.DE.checkState() == Qt.Checked:
+            self.SB.setEnabled(True)
+        else:
+            self.SB.setEnabled(False)
