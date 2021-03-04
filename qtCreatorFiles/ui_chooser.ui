@@ -253,19 +253,6 @@
       <item row="0" column="2" colspan="2">
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QPushButton" name="fontButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Set font</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -346,7 +333,6 @@
   <tabstop>userLE</tabstop>
   <tabstop>passwordLE</tabstop>
   <tabstop>fontSB</tabstop>
-  <tabstop>fontButton</tabstop>
   <tabstop>optionsButton</tabstop>
   <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
