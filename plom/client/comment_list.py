@@ -1126,16 +1126,16 @@ class RubricTable(QTableWidget):
         self.horizontalHeader().setStretchLastSection(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        self.setColumnCount(5)
-        self.setHorizontalHeaderLabels(["Shown", "Key", "Username", "Delta", "Text"])
+        self.setColumnCount(4)
+        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.hideColumn(0)
         self.hideColumn(1)
-        self.hideColumn(2)
         if sort:
             self.setSortingEnabled(True)
         ##
         self.pressed.connect(self.handleClick)
         self.itemChanged.connect(self.handleClick)
+        self.doubleClicked.connect(self.editRow)
 
     def setRubricsByKeys(self, rubric_list, key_list):
         """Clear table and repopulate rubrics in the key_list"""
@@ -1148,19 +1148,18 @@ class RubricTable(QTableWidget):
             rb = rubric_list[rkl.index(id)]
             rc = self.rowCount()
             self.insertRow(rc)
-            self.setItem(rc, 0, QTableWidgetItem(""))
-            self.setItem(rc, 1, QTableWidgetItem(rb["id"]))
-            self.setItem(rc, 2, QTableWidgetItem(rb["username"]))
-            self.setItem(rc, 3, QTableWidgetItem(rb["delta"]))
-            self.setItem(rc, 4, QTableWidgetItem(rb["text"]))
+            self.setItem(rc, 0, QTableWidgetItem(rb["id"]))
+            self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
+            self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
+            self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
         self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row):
-        return self.item(r, 1).text()
+        return self.item(r, 0).text()
 
     def getRowFromKey(self, row):
         for r in range(self.rowCount()):
-            if int(self.item(r, 1).text()) == int(key):
+            if int(self.item(r, 0).text()) == int(key):
                 return r
         else:
             return None
@@ -1173,7 +1172,7 @@ class RubricTable(QTableWidget):
     def getCurrentRubricKey(self):
         if not self.selectedIndexes():
             return None
-        return self.item(self.selectedIndexes()[0].row(), 1).text()
+        return self.item(self.selectedIndexes()[0].row(), 0).text()
 
     def reselectCurrentRubric(self):
         # If no selected row, then select row 0.
@@ -1199,7 +1198,7 @@ class RubricTable(QTableWidget):
     def selectRubricByKey(self, key):
         """Select row with given key. Return true if works, else false"""
         for r in range(self.rowCount()):
-            if int(self.item(r, 1).text()) == int(key):
+            if int(self.item(r, 0).text()) == int(key):
                 self.selectRow(r)
                 return True
         return False
@@ -1229,27 +1228,32 @@ class RubricTable(QTableWidget):
     def handleClick(self):
         # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
         r = self.getCurrentRubricRow()
-        # recall columns are ["Shown", "Key", "Username", "Delta", "Text"])
+        # recall columns are ["Key", "Username", "Delta", "Text"])
         if r is not None:
             self.parent.rubricSignal.emit(  # send delta, text, rubricID
                 [
+                    self.item(r, 2).text(),
                     self.item(r, 3).text(),
-                    self.item(r, 4).text(),
-                    self.item(r, 1).text(),
+                    self.item(r, 0).text(),
                 ]
             )
 
     def updateLegalityOfDeltas(self, legalDown, legalUp):
         """Style items according to legal range of a<=delta<=b"""
         for r in range(self.rowCount()):
-            v = deltaToInt(self.item(r, 3).text())
+            v = deltaToInt(self.item(r, 2).text())
             if v > legalUp or v < legalDown:
+                self.item(r, 2).setForeground(colour_illegal)
                 self.item(r, 3).setForeground(colour_illegal)
-                self.item(r, 4).setForeground(colour_illegal)
             else:
+                self.item(r, 2).setForeground(colour_legal)
                 self.item(r, 3).setForeground(colour_legal)
-                self.item(r, 4).setForeground(colour_legal)
         self.repaint()
+
+    def editRow(self, tableIndex):
+        r = tableIndex.row()
+        rubricKey = self.item(r, 0).text()
+        self.parent.edit_rubric(rubricKey)
 
 
 class RubricWidget(QWidget):
@@ -1434,10 +1438,18 @@ class RubricWidget(QWidget):
         """Open a dialog to create a new comment."""
         self._new_or_edit_rubric(None)
 
-    def edit_rubric(self, com):
-        """Open a dialog to edit a comment."""
+    def edit_rubric(self, key):
+        """Open a dialog to edit a rubric - from the id-key of that rubric."""
+        # first grab the rubric from that key
+        try:
+            index = [x["id"] for x in self.rubrics].index(key)
+        except ValueError:
+            # no such rubric - this should not happen
+            return
+        com = self.rubrics[index]
+
         if com["username"] == self.username:
-            self._new_or_rubric_comment(com, edit=True)
+            self._new_or_edit_rubric(com, edit=True)
             return
         msg = SimpleMessage(
             "<p>You did not create this message.</p>"
