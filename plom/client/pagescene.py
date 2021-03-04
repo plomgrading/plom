@@ -2091,15 +2091,16 @@ class PageScene(QGraphicsScene):
         Returns:
             bool: True if the delta is legal, False otherwise.
         """
-        MARKSTYLE NEEDED!
-
-
         if n == ".":
             return True
         n = int(n)
-        lookingAhead = self.score + n
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            return False
+        # check against markstyle (assuming only up or down)
+        if self.markStyle == 2:  # is mark-up
+            if n < 0 or self.score + n > self.maxMark:
+                return False
+        else:  # is mark-down
+            if n > 0 or self.score + n < 0:
+                return False
         return True
 
     def changeTheRubric(self, delta, text, rubricID, annotatorUpdate=True):
