@@ -19,7 +19,7 @@ These are as best we can recall.  Currently UBC Maths-centric.
 | 318    | Midterm, Exam   | 100    | Omer                             |
 | 264    | Quizzes  | 200           | Seckin                           |
 
-Approx 5000 papers.
+Approx 5000 papers over 9 courses.
 
 
 ## 2019-Summer
@@ -30,7 +30,7 @@ Approx 5000 papers.
 | 253    | Test x4, Exam | 160           | Colin   |
 | 300    | Quizzes       | 50            | Seckin  |
 
-Approx 1000 papers.
+Approx 1000 papers over 3 courses.
 
 
 ## 2019-2020
@@ -45,7 +45,7 @@ Approx 1000 papers.
 | 152    | 3 Tests        | 900           | Kalle+Maricela |
 | 302    | Midterm        | 175           | Yinon          |
 
-Approx 7500 papers
+Approx 7500 papers over 7 courses.
 
 
 ## 2020-2021
@@ -59,7 +59,7 @@ Approx 7500 papers
 | BMEG220 | quiz x2, midterm, exam  | 120        | 1st non-math        |
 | 340     | 11 homework sets        | 127        | Forest, 1st hw      |
 
-Approx 7000 papers (+ more to come?)
+Approx 7000 papers over 6 courses (+ more to come?)
 
 
 ## Totals
