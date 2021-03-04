@@ -1508,6 +1508,9 @@ class RubricWidget(QWidget):
             new_rubric["id"] = rubricID
             rv = self.parent.modifyRubric(rubricID, new_rubric)
             # update the rubric in the current internal rubric list
+            # make sure that keys match.
+            assert self.rubrics[index]["id"] == new_rubric["id"]
+            # then replace
             self.rubrics[index] = new_rubric
         else:
             rv = self.parent.createNewRubric(new_rubric)
