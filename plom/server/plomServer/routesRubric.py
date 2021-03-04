@@ -52,6 +52,24 @@ class RubricHandler:
         rubrics = self.server.MgetRubrics()
         return web.json_response(rubrics, status=200)
 
+    # @routes.get("/MK/rubric/{question}")
+    @authenticate_by_token_required_fields(["user"])
+    def MgetRubricsByQuestion(self, data, request):
+        """Respond with updated comment list and add received comments to the database.
+
+        Args:
+            data (dict): A dictionary including user/token
+            request (aiohttp.web_request.Request): A request of type GET /MK/rubric/{question}.
+
+        Returns:
+            aiohttp.web_response.Response: List of all comments in DB
+        """
+        username = data["user"]
+        question_number = request.match_info["question"]
+
+        rubrics = self.server.MgetRubrics(question_number)
+        return web.json_response(rubrics, status=200)
+
     # @routes.put("/MK/rubric")
     @authenticate_by_token_required_fields(["user", "rubric"])
     def McreateRubric(self, data, request):
@@ -110,4 +128,5 @@ class RubricHandler:
         """
         router.add_put("/MK/rubric", self.McreateRubric)
         router.add_get("/MK/rubric", self.MgetRubrics)
+        router.add_get("/MK/rubric/{question}", self.MgetRubricsByQuestion)
         router.add_patch("/MK/rubric/{key}", self.MmodifyRubric)

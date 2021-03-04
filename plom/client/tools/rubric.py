@@ -21,14 +21,14 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, cid, delta, text):
+    def __init__(self, scene, pt, rid, delta, text):
         super().__init__()
         self.scene = scene
         self.gdt = GroupDeltaTextItem(
             pt,
             delta,
             text,
-            cid=cid,
+            rid,
             scene=scene,
             style=scene.style,
             fontsize=scene.fontSize,
@@ -70,11 +70,11 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, cid, scene, style, fontsize):
+    def __init__(self, pt, delta, text, rid, scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
-        self.commentID = cid
+        self.rubricID = rid
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
@@ -115,9 +115,9 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         pt = self.di.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if dlt != ".":
-            cr = self.di.boundingRect()
-            self.blurb.moveBy(cr.width() + 5, 0)
+        # TODO: may want some special treatment in "." case
+        cr = self.di.boundingRect()
+        self.blurb.moveBy(cr.width() + 5, 0)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -130,7 +130,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             "GroupDeltaText",
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
-            self.commentID,
+            self.rubricID,
             self.di.delta,
             self.blurb.getContents(),
         ]
@@ -156,7 +156,7 @@ class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):
         super().__init__()
         self.di = GhostDelta(dlt, fontsize)
-        self.commentID = "987654"
+        self.rubricID = "987654"  # a dummy value
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -178,13 +178,13 @@ class GhostComment(QGraphicsItemGroup):
             else:
                 self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def changeComment(self, dlt, txt):
+    def changeComment(self, dlt, txt, legal=True):
         # need to force a bounding-rect update by removing an item and adding it back
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
         # change things
-        self.di.changeDelta(dlt)
-        self.blurb.changeText(txt)
+        self.di.changeDelta(dlt, legal)
+        self.blurb.changeText(txt, legal)
         # move to correct positions
         self.tweakPositions()
         self.addToGroup(self.blurb)

@@ -15,6 +15,7 @@ import re
 import sys
 import tempfile
 from textwrap import dedent
+import random
 
 from PyQt5.QtCore import (
     Qt,
@@ -43,7 +44,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
 )
 
-from .comment_list import CommentWidget
+from .comment_list import CommentWidget, RubricWidget
 
 # import the key-help popup window class
 from .key_help import KeyHelp
@@ -65,9 +66,9 @@ log = logging.getLogger("annotr")
 # Short descriptions of each tool to display to user.
 tipText = {
     "box": "Box: L = highlighted box, R/Shift = highlighted ellipse.",
-    "com": "Comment: L = paste comment and associated mark, R/Shift = labelled box",
-    "com up": "Comment up: Select previous comment in list",
-    "com down": "Comment down: Select next comment in list",
+    "rubric": "Rubric: L = paste rubric, R/Shift = labelled box",
+    "rubric up": "Rubric up: Select previous rubric in list",
+    "rubric down": "Rubric down: Select next rubric in list",
     "cross": "Cross: L = cross, M/Ctrl = ?-mark, R/Shift = checkmark.",
     "delta": "Delta: L = paste mark, M/Ctrl = ?-mark, R/Shift = checkmark/cross.",
     "delete": "Delete: L = Delete object, L-drag = delete area.",
@@ -112,7 +113,7 @@ class Annotator(QWidget):
 
         # Show warnings or not
         self.markWarn = True
-        self.commentWarn = True
+        self.rubricWarn = True
 
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
@@ -137,7 +138,7 @@ class Annotator(QWidget):
         self.score = None
         self.maxMark = None
 
-        # when comments are used, we just outline the comment list - not
+        # when rubrics are used, we just outline the rubric widget - not
         # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
 
@@ -159,8 +160,9 @@ class Annotator(QWidget):
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
         # Create the comment list widget and put into gui.
-        self.comment_widget = CommentWidget(self, None)
-        self.ui.container_commentwidget.addWidget(self.comment_widget)
+        self.rubric_widget = RubricWidget(self)
+        self.ui.container_commentwidget.addWidget(self.rubric_widget)
+        print("TODO rename comment stuff in qt-creator files to rubric stuff")
 
         # pass the marking style to the mark entry widget.
         # also when we set this up we have to connect various
@@ -192,6 +194,9 @@ class Annotator(QWidget):
 
         if initialData:
             self.loadNewTGV(*initialData)
+
+        # since we now know question etc, we can now fire up initial rubrics
+        self.rubric_widget.setInitialRubrics()
 
         # Grab window settings from parent
         self.loadWindowSettings()
@@ -230,7 +235,7 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
-        m.addAction("Refresh comments", self.refreshComments)
+        m.addAction("Refresh rubrics", self.refreshRubrics)
         m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
@@ -263,11 +268,11 @@ class Annotator(QWidget):
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "delta":
             self.modeInformation.append(self.scene.markDelta)
-        elif self.scene.mode == "comment":
-            self.modeInformation.append(self.comment_widget.getCurrentItemRow())
+        elif self.scene.mode == "rubric":  # stores as [a,b]
+            self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
 
-        # after grabbed mode information, reset comment_widget
-        self.comment_widget.reset()
+        # after grabbed mode information, reset rubric_widget
+        self.rubric_widget.reset()
 
         del self.scene
         self.scene = None
@@ -371,13 +376,10 @@ class Annotator(QWidget):
         # TODO: see above, don't click a different button: want to keep same tool
 
         # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
-        self.comment_widget.setStyle(self.markStyle)
-        self.comment_widget.maxMark = (
-            self.maxMark  # TODO: add helper?  combine with changeMark?
-        )
-        self.comment_widget.changeMark(self.score)
-        self.comment_widget.setQuestionNumber(self.question_num)
-        self.comment_widget.setTestname(testName)
+        self.rubric_widget.setStyle(self.markStyle)
+        self.rubric_widget.changeMark(self.score, self.maxMark)
+        self.rubric_widget.setQuestionNumber(self.question_num)
+        self.rubric_widget.setTestName(testName)
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
@@ -386,21 +388,23 @@ class Annotator(QWidget):
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
+        # TODO: Make handling of rubric less hack.
+        log.debug("Restore mode info = {}".format(self.modeInformation))
+        self.scene.setToolMode(self.modeInformation[0])
+        if self.modeInformation[0] == "delta":
+            self.markHandler.clickDelta(self.modeInformation[1])
+        if self.modeInformation[0] == "rubric":
+            self.rubric_widget.setCurrentRubricKeyAndTab(  # stored as [a,b]
+                self.modeInformation[1][0], self.modeInformation[1][1]
+            )
+            self.rubric_widget.handleClick()
+
         # update the displayed score - fixes #843
         self.changeMark(self.score)
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
             self.unpickleIt(plomDict)
-
-        # TODO: Make handling of comment less hack.
-        log.debug("Restore mode info = {}".format(self.modeInformation))
-        self.scene.setToolMode(self.modeInformation[0])
-        if self.modeInformation[0] == "delta":
-            self.markHandler.clickDelta(self.modeInformation[1])
-        if self.modeInformation[0] == "comment":
-            self.comment_widget.setCurrentItemRow(self.modeInformation[1])
-            self.comment_widget.CL.handleClick()
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()
@@ -506,24 +510,41 @@ class Annotator(QWidget):
         """
         if self.mouseHand == 0:
             return {
-                # home-row
-                Qt.Key_A: lambda: self.ui.zoomButton.animateClick(),
-                Qt.Key_S: lambda: self.ui.undoButton.animateClick(),
-                Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-                Qt.Key_F: lambda: self.commentMode(),
-                Qt.Key_G: lambda: self.ui.textButton.animateClick(),
-                # lower-row
-                Qt.Key_Z: lambda: self.ui.moveButton.animateClick(),
-                Qt.Key_X: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-                Qt.Key_V: lambda: self.ui.commentDownButton.animateClick(),
-                Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
-                # upper-row
-                Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
-                Qt.Key_W: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-                Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_T: lambda: self.ui.penButton.animateClick(),
+                # undo redo = g/t
+                Qt.Key_T: lambda: self.ui.redoButton.animateClick(),
+                Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
+                # try rubric under d
+                Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_D: self.rubricMode,  # note: F selects mode, then next rubric
+                # prev/next pane = s,d
+                Qt.Key_F: self.next_pane,
+                Qt.Key_S: self.prev_pane,
+                # prev/next minor-tools = w,e
+                Qt.Key_R: lambda: self.next_minor_tool(),
+                Qt.Key_W: lambda: self.prev_minor_tool(),
+                # try keeping rubric under f
+                # rubric (mode-down)/up = f,r
+                # Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
+                # Qt.Key_F: self.rubricMode,  # note: F selects mode, then next rubric
+                # # prev/next pane = s,d
+                # Qt.Key_D: self.next_pane,
+                # Qt.Key_S: self.prev_pane,
+                # # prev/next minor-tools = w,e
+                # Qt.Key_E: lambda: self.next_minor_tool(),
+                # Qt.Key_W: lambda: self.prev_minor_tool(),
+                ####
+                # others - delete,move,zoom = Q,A,Z
+                Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_A: lambda: self.ui.moveButton.animateClick(),
+                Qt.Key_Z: lambda: self.ui.zoomButton.animateClick(),
+                # TODO: maybe shift-G redo: need proper QAction?
+                # Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
+                # Qt.Key_G: lambda: self.ui.textButton.animateClick(),
+                # Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
+                # Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
+                # Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
+                # Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
+                # Qt.Key_T: lambda: self.ui.penButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -554,7 +575,7 @@ class Annotator(QWidget):
             return {
                 # home-row
                 Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-                Qt.Key_J: lambda: self.commentMode(),
+                Qt.Key_J: lambda: self.rubricMode(),
                 Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
                 Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
                 Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
@@ -684,29 +705,32 @@ class Annotator(QWidget):
             """
             tools = [
                 [
-                    self.ui.panButton,
-                    self.ui.redoButton,
-                    self.ui.crossButton,
-                    self.ui.commentUpButton,
-                    self.ui.penButton,
-                ],
-                [
-                    self.ui.zoomButton,
-                    self.ui.undoButton,
-                    self.ui.tickButton,
-                    self.ui.commentButton,
-                    self.ui.textButton,
-                ],
-                [
-                    self.ui.moveButton,
                     self.ui.deleteButton,
-                    self.ui.boxButton,
+                    self.ui.undoButton,
+                    self.ui.redoButton,
+                    self.ui.moveButton,
+                    self.ui.panButton,
+                    self.ui.zoomButton,
+                    self.ui.commentButton,
                     self.ui.commentDownButton,
-                    self.ui.lineButton,
+                    self.ui.commentUpButton,
                     self.ui.deltaButton,
                 ],
+                [],
+                [
+                    # TODO: match the order in "next_minor_tool"
+                    self.ui.boxButton,
+                    self.ui.tickButton,
+                    self.ui.crossButton,
+                    self.ui.textButton,
+                    self.ui.lineButton,
+                    self.ui.penButton,
+                ],
             ]
-
+            self.ui.commentButton.setVisible(False)
+            self.ui.commentDownButton.setVisible(False)
+            self.ui.commentUpButton.setVisible(False)
+            # self.ui.redoButton.setVisible(False)
             row_index = 0
             for row in tools:
                 column_index = 0
@@ -742,6 +766,37 @@ class Annotator(QWidget):
         self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
         self.ui.buttonsLayout.addWidget(self.ui.markLabel)
         self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
+
+    def next_pane(self):
+        self.rubric_widget.next_pane()
+
+    def prev_pane(self):
+        self.rubric_widget.prev_pane()
+
+    def next_minor_tool(self, dir=1):
+        """Switch to current minor tool or advance to next minor tool."""
+        if not hasattr(self, "_which_tool"):
+            self._which_tool = 0
+        L = [
+            self.ui.boxButton,
+            self.ui.tickButton,
+            self.ui.crossButton,
+            self.ui.textButton,
+            self.ui.lineButton,
+            self.ui.penButton,
+        ]
+        if any([f.isChecked() for f in L]):
+            # TODO: find it, set to in case the shudder *mouse* was used
+            # self._which_tool = L.index(...)
+            self._which_tool += dir
+            self._which_tool %= len(L)
+        # no tool was selected so click the previously-used tool
+        f = L[self._which_tool]
+        f.animateClick()
+
+    def prev_minor_tool(self):
+        """Switch to current minor tool or go back to prev minor tool."""
+        self.next_minor_tool(dir=-1)
 
     def viewWholePaper(self):
         """
@@ -1021,8 +1076,9 @@ class Annotator(QWidget):
             None: Modifies self
         """
         # A bit of a hack to take care of comment-mode and delta-mode
-        if self.scene and self.scene.mode == "comment" and newMode != "comment":
-            self.comment_widget.CL.setStyleSheet("")
+        if self.scene and self.scene.mode == "rubric" and newMode != "rubric":
+            # self.comment_widget.CL.setStyleSheet("")
+            print("TODO - fix up style setting in rubric widget")
         # We have to be a little careful since not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
 
@@ -1033,9 +1089,10 @@ class Annotator(QWidget):
             # tool buttons change the mode
             self.sender().setChecked(True)
             self.markHandler.clearButtonStyle()
-        elif self.sender() is self.comment_widget.CL:
+        elif self.sender() is self.rubric_widget:
             self.markHandler.clearButtonStyle()
-            self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
+            print("TODO - fix this style setting")
+            # self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
             self.ui.commentButton.setChecked(True)
         elif self.sender() is self.markHandler:
             # Clear the style of the mark-handler (this will mostly not do
@@ -1189,6 +1246,10 @@ class Annotator(QWidget):
         self.undoShortCut.activated.connect(self.undo)
         self.redoShortCut = QShortcut(QKeySequence("Ctrl+y"), self)
         self.redoShortCut.activated.connect(self.redo)
+        # TODO: this is one of our left/right keybindings
+        # TODO: can we do all our shortcuts like this instead of the keyPressEvent?
+        self.redoShortCut2 = QShortcut(QKeySequence("Shift+g"), self)
+        self.redoShortCut2.activated.connect(self.ui.redoButton.animateClick)
 
         self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
         self.twisterShortCut.activated.connect(self.rearrangePages)
@@ -1216,13 +1277,13 @@ class Annotator(QWidget):
         """ Changes the tool to box. """
         self.setToolMode("box", self.cursorBox)
 
-    def commentMode(self):
-        """ Changes the tool to comment."""
-        if self.scene.mode == "comment":
-            self.comment_widget.nextItem()
+    def rubricMode(self):
+        """ Changes the tool to rubric."""
+        if self.scene.mode == "rubric":
+            self.rubric_widget.nextRubric()
         else:
-            self.comment_widget.currentItem()
-        self.comment_widget.CL.handleClick()
+            self.rubric_widget.reselectCurrentRubric()
+        self.rubric_widget.handleClick()
 
     def crossMode(self):
         """ Changes the tool to crossMode. """
@@ -1275,14 +1336,14 @@ class Annotator(QWidget):
 
         Args:
             mode (str): String corresponding to the toolMode to be loaded
-            aux (int) : the row of the current comment if applicable.
+            aux (int) : the row of the current rubric if applicable.
 
         Returns:
 
         """
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
-            "comment": lambda: self.commentMode(),
+            "rubric": lambda: self.rubricMode(),
             "cross": lambda: self.ui.crossButton.animateClick(),
             "line": lambda: self.ui.lineButton.animateClick(),
             "pen": lambda: self.ui.penButton.animateClick(),
@@ -1292,8 +1353,9 @@ class Annotator(QWidget):
         if mode == "delta" and aux is not None:
             # make sure that the mark handler has been set.
             self.markHandler.loadDeltaValue(aux)
-        elif mode == "comment" and aux is not None:
-            self.comment_widget.setCurrentItemRow(aux)
+        elif mode == "rubric" and aux is not None:  # key and tab set as [a,b]
+            self.rubric_widget.setCurrentRubricKeyAndTab(aux[0], aux[1])
+            print("TODO - this will be a bit problematic")
             self.ui.commentButton.animateClick()
         else:
             self.loadModes.get(mode, lambda *args: None)()
@@ -1355,28 +1417,29 @@ class Annotator(QWidget):
         # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
         self.ui.cancelButton.clicked.connect(self.close)
 
-        # Connect the comment buttons to the comment list
+        # Connect the rubric buttons to the rubric list
         # They select the item and trigger its handleClick which fires
         # off a commentSignal which will be picked up by the annotator
         # First up connect the comment list's signal to the annotator's
         # handle comment function.
-        self.comment_widget.CL.commentSignal.connect(self.handleComment)
+        self.rubric_widget.rubricSignal.connect(self.handleRubric)
         # Now connect up the buttons
-        self.ui.commentButton.clicked.connect(self.comment_widget.currentItem)
-        self.ui.commentButton.clicked.connect(self.comment_widget.CL.handleClick)
+        print("TODO - rename commentbutton to rubricbutton in uifiles.")
+        self.ui.commentButton.clicked.connect(self.rubric_widget.reselectCurrentRubric)
+        self.ui.commentButton.clicked.connect(self.rubric_widget.handleClick)
         # the previous comment button
-        self.ui.commentUpButton.clicked.connect(self.comment_widget.previousItem)
-        self.ui.commentUpButton.clicked.connect(self.comment_widget.CL.handleClick)
+        self.ui.commentUpButton.clicked.connect(self.rubric_widget.previousRubric)
+        self.ui.commentUpButton.clicked.connect(self.rubric_widget.handleClick)
         # the next comment button
-        self.ui.commentDownButton.clicked.connect(self.comment_widget.nextItem)
-        self.ui.commentDownButton.clicked.connect(self.comment_widget.CL.handleClick)
+        self.ui.commentDownButton.clicked.connect(self.rubric_widget.nextRubric)
+        self.ui.commentDownButton.clicked.connect(self.rubric_widget.handleClick)
         # Connect up the finishing buttons
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
         self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
 
-    def handleComment(self, dlt_txt):
+    def handleRubric(self, dlt_txt):
         """Pass comment ID, delta, and text the scene.
 
         Args:
@@ -1387,37 +1450,37 @@ class Annotator(QWidget):
             None: Modifies self.scene and self.toolMode
         """
         # Set the model to text and change cursor.
-        self.setToolMode("comment", QCursor(Qt.IBeamCursor))
+        self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
-            self.scene.changeTheComment(
+            self.scene.changeTheRubric(
                 dlt_txt[0], dlt_txt[1], dlt_txt[2], annotatorUpdate=True
             )
 
-    def totalMarkSet(self, tm):
+    def totalMarkSet(self, totmark):
         """
-        Sets the total mark and passes that info to the comment list.
+        Sets the total mark and passes that info to the rubric widget.
 
         Args:
-            tm (double) : the total mark of the paper.
+            totmark (int) : the total mark of the paper.
 
         Returns:
             None: modifies self.scoree and self.scene.
 
         """
-        self.score = tm
-        self.comment_widget.changeMark(self.score)
+        self.score = totmark
+        self.rubric_widget.changeMark(self.score)
         # also tell the scene what the new mark is
         if self.scene:  # TODO: bit of a hack
             self.scene.setTheMark(self.score)
 
-    def deltaMarkSet(self, dm):
+    def deltaMarkSet(self, deltmark):
         """
         Handles when the delta button, or a comment is clicked.
         Proceeds to set set the scene and view based on the current
         delta.
 
         Args:
-            dm (double): the positive or negative value corresponding
+            deltmark (int): the positive or negative value corresponding
                            to the delta change in mark.
 
         Notes:
@@ -1432,7 +1495,7 @@ class Annotator(QWidget):
         if not self.scene:
             return
         self.setToolMode("delta", QCursor(Qt.IBeamCursor))
-        if not self.scene.changeTheDelta(dm, annotatorUpdate=True):
+        if not self.scene.changeTheDelta(deltmark, annotatorUpdate=True):
             # If it is out of range then change mode to "move" so that
             # the user cannot paste in that delta.
             self.ui.moveButton.animateClick()
@@ -1472,20 +1535,27 @@ class Annotator(QWidget):
         else:
             self.showMaximized()
 
+        # load the state of the rubric list widget
+        if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
+            self.rubric_widget.wranglerState = self.parentMarkerUI.annotatorSettings[
+                "rubricWranglerState"
+            ]
+            self.rubric_widget.setRubricsFromStore()
+
         # remember the "do not show again" checks
         if self.parentMarkerUI.annotatorSettings["markWarnings"] is not None:
             self.markWarn = self.parentMarkerUI.annotatorSettings["markWarnings"]
-        if self.parentMarkerUI.annotatorSettings["commentWarnings"] is not None:
-            self.commentWarn = self.parentMarkerUI.annotatorSettings["commentWarnings"]
+        if self.parentMarkerUI.annotatorSettings["rubricWarnings"] is not None:
+            self.rubricWarn = self.parentMarkerUI.annotatorSettings["rubricWarnings"]
 
         # remember the last tool used
         if self.parentMarkerUI.annotatorSettings["tool"] is not None:
             if self.parentMarkerUI.annotatorSettings["tool"] == "delta":
                 dlt = self.parentMarkerUI.annotatorSettings["delta"]
                 self.loadModeFromBefore("delta", dlt)
-            elif self.parentMarkerUI.annotatorSettings["tool"] == "comment":
-                cmt = self.parentMarkerUI.annotatorSettings["comment"]
-                self.loadModeFromBefore("comment", cmt)
+            elif self.parentMarkerUI.annotatorSettings["tool"] == "rubric":
+                rbrc = self.parentMarkerUI.annotatorSettings["rubric"]
+                self.loadModeFromBefore("rubric", rbrc)
             else:
                 self.loadModeFromBefore(self.parentMarkerUI.annotatorSettings["tool"])
 
@@ -1530,22 +1600,27 @@ class Annotator(QWidget):
             "viewRectangle"
         ] = self.view.getCurrentViewRect()
         self.parentMarkerUI.annotatorSettings["markWarnings"] = self.markWarn
-        self.parentMarkerUI.annotatorSettings["commentWarnings"] = self.commentWarn
+        self.parentMarkerUI.annotatorSettings["rubricWarnings"] = self.rubricWarn
         self.parentMarkerUI.annotatorSettings[
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
         self.parentMarkerUI.annotatorSettings["tool"] = self.scene.mode
         if self.scene.mode == "delta":
             self.parentMarkerUI.annotatorSettings["delta"] = self.scene.markDelta
-        if self.scene.mode == "comment":
+        if self.scene.mode == "rubric":
             self.parentMarkerUI.annotatorSettings[
-                "comment"
-            ] = self.comment_widget.getCurrentItemRow()
+                "rubric"
+            ] = self.rubric_widget.getCurrentRubricKeyAndTab()
 
         if self.ui.hideableBox.isVisible():
             self.parentMarkerUI.annotatorSettings["compact"] = False
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
+
+        # save the rubricWidgetLists
+        self.parentMarkerUI.annotatorSettings[
+            "rubricWranglerState"
+        ] = self.rubric_widget.wranglerState
 
     def saveAnnotations(self):
         """
@@ -1581,7 +1656,7 @@ class Annotator(QWidget):
 
         # warn if points where lost but insufficient annotations
         if (
-            self.commentWarn
+            self.rubricWarn
             and 0 < self.score < self.maxMark
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
@@ -1597,7 +1672,7 @@ class Annotator(QWidget):
                 return False
             if msg.cb.checkState() == Qt.Checked:
                 # Note: these are only saved if we ultimately accept
-                self.commentWarn = False
+                self.rubricWarn = False
 
         if self.score == 0 and self.markHandler.style != "Down":
             if not self._zeroMarksWarn():
@@ -1616,16 +1691,6 @@ class Annotator(QWidget):
 
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()
-        # Deprecated?  Add menu option to export comments?
-        # try:
-        #     self.comment_widget.saveComments()
-        # except (PermissionError, FileNotFoundError) as e:
-        #     msg = ErrorMessage(
-        #         "Error when saving local comment list:\n\n{}\n\n"
-        #         "You may continue, but comments will not be saved "
-        #         "between Plom instances".format(e)
-        #     )
-        #     msg.exec_()
 
         log.debug("emitting accept signal")
         tim = self.timer.elapsed() // 1000
@@ -1769,9 +1834,9 @@ class Annotator(QWidget):
         self.doneViewingPaper()
         event.accept()
 
-    def getComments(self):
-        """ Retrieves comments from self.scene. """
-        return self.scene.getComments()
+    def get_nonrubric_text_from_page(self):
+        """ Retrieves text (not in rubrics) from self.scene. """
+        return self.scene.get_nonrubric_text_from_page()
 
     def latexAFragment(self, txt):
         """
@@ -1972,70 +2037,23 @@ class Annotator(QWidget):
         else:
             pass
 
-    def checkCommentSimilarity(self, new_comment):
-        """Check if this new comment is similar to an existing one.
-
-        Args:
-            new_comment (dict): The dictionary representing the new added comment.
-
-        Returns:
-            boolean: True/False based on wether this comment should be added or not
-        """
-
-        # First lets refresh the comments
-        self.refreshComments()
-
-        current_comments_list = self.comment_widget.CL.clist
-
-        for existing_comment in current_comments_list:
-            if (
-                existing_comment["text"] == new_comment["text"]
-                and existing_comment["delta"] == new_comment["delta"]
-            ):
-                new_comment_str = (
-                    str(new_comment["delta"]) + " : " + new_comment["text"]
-                )
-                existing_comment_str = (
-                    str(existing_comment["delta"]) + " : " + existing_comment["text"]
-                )
-
-                similar_comment_message = "<p>You asked for a new comment to be built but it is too similar to other comments:<\p>"
-                similar_comment_message += str(
-                    "<p>Your comment is " + new_comment_str + "<\p>"
-                )
-                similar_comment_message += str(
-                    "<p>The similar comment is " + existing_comment_str + "<\p>"
-                )
-                similar_comment_message += str(
-                    "<p>Are you sure you want to add this new comment?<\p>"
-                )
-
-                msg = SimpleMessage(similar_comment_message)
-                if msg.exec_() == QMessageBox.No:
-                    add_new_comment = False
-                else:
-                    add_new_comment = True
-                break
-            else:
-                add_new_comment = True
-
-        return add_new_comment
-
-    def refreshComments(self):
-        """Request for a refreshed comments list and update the current comments box."""
-        # TODO: this digs too deep into comment_widget
-        current_comments_list = self.comment_widget.CL.clist
-
-        wtf, refreshed_comments_list = self.parentMarkerUI.getRubricsFromServer()
+    def getRubrics(self):
+        """Request for a refreshed comments list and update the current comments box. Only get rubrics for current question."""
+        wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer(
+            self.question_num
+        )
         assert wtf
 
-        if len(refreshed_comments_list) == 0:
+        if len(refreshed_rubrics_list) == 0:
             ErrorMessage(
                 "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
             ).exec()
             return
-        self.comment_widget.CL.clist = refreshed_comments_list
-        self.comment_widget.CL.populateTable()
+        return refreshed_rubrics_list
+
+    def refreshRubrics(self):
+        """ask the rubric widget to refresh rubrics"""
+        self.rubric_widget.refreshRubrics()
 
     def createNewRubric(self, new_rubric):
         """Ask server to create a new rubric with data supplied"""

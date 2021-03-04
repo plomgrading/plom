@@ -30,9 +30,9 @@ def McreateRubric(self, username, new_rubric):
     return self.DB.McreateRubric(username, new_rubric)
 
 
-def MgetRubrics(self):
-    """Get all rubrics in the DB and return as list of dict"""
-    return self.DB.MgetRubrics()
+def MgetRubrics(self, question_number=None):
+    """Get all rubrics in the DB and return as list of dict. If question is specified then get only rubrics for that question."""
+    return self.DB.MgetRubrics(question_number)
 
 
 def MmodifyRubric(self, username, key, updated_rubric):
