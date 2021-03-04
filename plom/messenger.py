@@ -1071,7 +1071,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
 
             paneConfig = response.json()
-            messenger_response = [True]
+            messenger_response = True
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -1088,7 +1088,7 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(
                     "Error of type {} when creating new rubric".format(e)
                 ) from None
-            messenger_response = [False]
+            messenger_response = False
 
         finally:
             self.SRmutex.release()

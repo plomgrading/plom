@@ -1061,6 +1061,12 @@ class MarkerClient(QWidget):
         self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
         self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
 
+        # load in the rubric pane settings
+        log.info("Loading user's rubric pane configuration")
+        rval = self.msgr.MgetUserRubricPanes(self.question)
+        if rval[0]:
+            self.annotatorSettings["rubricWranglerState"] = rval[1]
+
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
             self.canViewAll = True
@@ -2118,6 +2124,15 @@ class MarkerClient(QWidget):
         # not marked - using 'DNF' (did not finish). Sever will put
         # those files back on the todo pile.
         self.DNF()
+        # now save the annotator rubric pane state to server
+
+        if self.msgr.MsaveUserRubricPanes(
+            self.question, self.annotatorSettings["rubricWranglerState"]
+        ):
+            log.info("Saved user's rubric pane configuration to server")
+        else:
+            log.info("Problem saving user's rubric pane configuration to server")
+
         # Then send a 'user closing' message - server will revoke
         # authentication token.
         try:
