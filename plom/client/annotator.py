@@ -388,13 +388,6 @@ class Annotator(QWidget):
         else:
             self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
 
-        # update the displayed score - fixes #843
-        self.changeMark(self.score)
-
-        # Very last thing = unpickle scene from plomDict
-        if plomDict is not None:
-            self.unpickleIt(plomDict)
-
         # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setToolMode(self.modeInformation[0])
@@ -405,6 +398,13 @@ class Annotator(QWidget):
                 self.modeInformation[1][0], self.modeInformation[1][1]
             )
             self.rubric_widget.handleClick()
+
+        # update the displayed score - fixes #843
+        self.changeMark(self.score)
+
+        # Very last thing = unpickle scene from plomDict
+        if plomDict is not None:
+            self.unpickleIt(plomDict)
 
         # reset the timer (its not needed to make a new one)
         self.timer.start()

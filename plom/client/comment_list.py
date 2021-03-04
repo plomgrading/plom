@@ -12,7 +12,7 @@ import toml
 import appdirs
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QDropEvent, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import QBrush, QColor, QDropEvent, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -51,6 +51,19 @@ log = logging.getLogger("annotr")
 comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
 comment_filename = "plomComments.toml"
 comment_file = comment_dir / comment_filename
+
+
+def deltaToInt(x):
+    """Since delta can just be a . """
+    if x == ".":
+        return 0
+    else:
+        return int(x)
+
+
+# colours to indicate whether rubric is legal to paste or not.
+colour_legal = QBrush(QColor(0, 0, 0))
+colour_illegal = QBrush(QColor(128, 128, 128, 128))
 
 
 def comments_new_default_list():
@@ -1226,9 +1239,17 @@ class RubricTable(QTableWidget):
                 ]
             )
 
-    def setLegality(self, a, b):
-        """set the legal range of a<=delta<=b"""
-        pass
+    def updateLegalityOfDeltas(self, legalDown, legalUp):
+        """Style items according to legal range of a<=delta<=b"""
+        for r in range(self.rowCount()):
+            v = deltaToInt(self.item(r, 3).text())
+            if v > legalUp or v < legalDown:
+                self.item(r, 3).setForeground(colour_illegal)
+                self.item(r, 4).setForeground(colour_illegal)
+            else:
+                self.item(r, 3).setForeground(colour_legal)
+                self.item(r, 4).setForeground(colour_legal)
+        self.repaint()
 
 
 class RubricWidget(QWidget):
@@ -1246,7 +1267,7 @@ class RubricWidget(QWidget):
         self.username = parent.username
         self.markStyle = 2  # default to mark-up
         self.maxMark = None
-        self.currentMark = 0
+        self.currentMark = None
         self.rubrics = None
         # set sensible initial state
         self.wranglerState = None
@@ -1318,10 +1339,10 @@ class RubricWidget(QWidget):
             if X["username"] not in [self.username, "manager"]:
                 continue
             self.wranglerState["shown"].append(X["id"])
-        print("Rubrics = ", self.rubrics)
-        print("WranglerState = ", self.wranglerState)
         # then set state from this
         self.setRubricsFromStore()
+        # do legality of deltas check
+        self.updateLegalityOfDeltas()
 
     def setRubricsFromStore(self):
         self.tabA.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][0])
@@ -1362,10 +1383,27 @@ class RubricWidget(QWidget):
         # Update the current and max mark and so recompute which deltas are displayed
         if maxMark:
             self.maxMark = maxMark
-        if self.currentMark != currentMark:
-            print("TODO - update displayed deltas")
-        else:
+
+        # update the local mark
+        if currentMark != self.currentMark:
             self.currentMark = currentMark
+            self.updateLegalityOfDeltas()
+
+    def updateLegalityOfDeltas(self):
+        # if score is x/N then largest legal delta = +(N-x)
+        legalUp = self.maxMark - self.currentMark
+        # if score is x/N then smallest legal delta = -x
+        legalDown = -self.currentMark
+        # now change upper/lower bounds depending on marking style
+        if self.markStyle == 2:  # mark up
+            legalDown = 0
+        elif self.markStyle == 3:  # mark down
+            legalUp = 0
+        # now redo each tab
+        self.tabA.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabB.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabC.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
