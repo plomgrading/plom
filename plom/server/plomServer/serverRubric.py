@@ -8,7 +8,7 @@ Rubric-related server methods.
 """
 
 import logging
-
+import os
 
 log = logging.getLogger("server")
 
@@ -53,3 +53,31 @@ def MmodifyRubric(self, username, key, updated_rubric):
         return [False, "incomplete"]
     # else let DB modify the rubric and return the key.
     return self.DB.MmodifyRubric(username, key, updated_rubric)
+
+
+def MgetUserRubricPanes(self, username, question):
+    try:
+        paneConfigFilename = os.path.join(
+            "userData", "pane.{}.{}.json".format(username, question)
+        )
+        if os.path.isfile(paneConfigFilename):
+            pass
+        else:
+            return [False]
+        with open(paneConfigFilename) as fh:
+            rubricPanes = fh.readlines()
+        return [True, rubricPanes]
+    except:
+        return [False]
+
+
+def MsaveUserRubricPanes(self, username, question, rubricPanes):
+    try:
+        paneConfigFilename = os.path.join(
+            "userData", "pane.{}.{}.json".format(username, question)
+        )
+        with open(paneConfigFilename, "wb") as fh:
+            fh.write(rubricPanes)
+        return True
+    except:
+        return False
