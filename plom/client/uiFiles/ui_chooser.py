@@ -139,7 +139,7 @@ class Ui_Chooser(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.fontSB.sizePolicy().hasHeightForWidth())
         self.fontSB.setSizePolicy(sizePolicy)
-        self.fontSB.setMinimum(2)
+        self.fontSB.setMinimum(4)
         self.fontSB.setMaximum(24)
         self.fontSB.setProperty("value", 10)
         self.fontSB.setObjectName("fontSB")
