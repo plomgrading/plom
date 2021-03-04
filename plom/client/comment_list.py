@@ -480,8 +480,8 @@ class SimpleCommentTable(QTableView):
         # Drag and drop rows to reorder and also paste into pageview
         self.setDragDropMode(QAbstractItemView.DragDrop)
         self.setDragEnabled(True)
-        self.setAcceptDrops(True)
-        self.viewport().setAcceptDrops(True)
+        self.setAcceptDrops(False)
+        self.viewport().setAcceptDrops(False)
         self.setDragDropOverwriteMode(False)
         self.setDropIndicatorShown(True)
         self.filters = comDefaultFilters
