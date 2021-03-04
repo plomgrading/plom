@@ -1017,8 +1017,8 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
 
-            paneConfig = response.json()
             if response.status_code == 200:
+                paneConfig = response.json()
                 messenger_response = [True, paneConfig]
             elif response.status_code == 204:
                 messenger_response = [False]  # no content
@@ -1064,7 +1064,7 @@ class Messenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                     "question": question,
-                    "rubric_panes": paneConfig,
+                    "rubric_config": paneConfig,
                 },
                 verify=False,
             )

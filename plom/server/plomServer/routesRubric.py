@@ -134,7 +134,6 @@ class RubricHandler:
         """
         username = data["user"]
         question = data["question"]
-        rubricPanes = data["rubric_panes"]
         # TODO - remove duplication or check it.
         usernameCheck = request.match_info["user"]
         questionCheck = request.match_info["question"]
@@ -142,7 +141,7 @@ class RubricHandler:
         if username != usernameCheck or int(question) != int(questionCheck):
             return web.Response(status=403)  # data inconsistent
 
-        rval = self.server.MgetUserRubricPanes(username, question, rubricPanes)
+        rval = self.server.MgetUserRubricPanes(username, question)
         if rval[0]:  # worked
             return web.json_response(rval[1], status=200)
         else:  # nothing there.
@@ -162,7 +161,7 @@ class RubricHandler:
         """
         username = data["user"]
         question = data["question"]
-        rubricPanes = data["rubric_panes"]
+        rubricPanes = data["rubric_config"]
         # TODO - remove duplication or check it.
         usernameCheck = request.match_info["user"]
         questionCheck = request.match_info["question"]
