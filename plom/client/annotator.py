@@ -513,16 +513,26 @@ class Annotator(QWidget):
                 # undo redo = g/t
                 Qt.Key_T: lambda: self.ui.redoButton.animateClick(),
                 Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
-                # rubric (mode-down)/up = f,r
-                Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
-                # note: first F selects mode, subsequent moves to next rubric
-                Qt.Key_F: self.rubricMode,
+                # try rubric under d
+                Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_D: self.rubricMode,  # note: F selects mode, then next rubric
                 # prev/next pane = s,d
-                Qt.Key_D: self.next_pane,
+                Qt.Key_F: self.next_pane,
                 Qt.Key_S: self.prev_pane,
                 # prev/next minor-tools = w,e
-                Qt.Key_E: lambda: self.next_minor_tool(),
+                Qt.Key_R: lambda: self.next_minor_tool(),
                 Qt.Key_W: lambda: self.prev_minor_tool(),
+                # try keeping rubric under f
+                # rubric (mode-down)/up = f,r
+                # Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
+                # Qt.Key_F: self.rubricMode,  # note: F selects mode, then next rubric
+                # # prev/next pane = s,d
+                # Qt.Key_D: self.next_pane,
+                # Qt.Key_S: self.prev_pane,
+                # # prev/next minor-tools = w,e
+                # Qt.Key_E: lambda: self.next_minor_tool(),
+                # Qt.Key_W: lambda: self.prev_minor_tool(),
+                ####
                 # others - delete,move,zoom = Q,A,Z
                 Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
                 Qt.Key_A: lambda: self.ui.moveButton.animateClick(),
