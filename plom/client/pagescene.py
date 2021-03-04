@@ -810,6 +810,10 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
+        # if delta not legal, then don't start
+        if not self.isLegalDelta(self.rubricDelta):
+            return
+
         # in rubric mode the ghost is activated, so look for objects that intersect the ghost.
         # if they are delta, text or GDT then do nothing.
 
@@ -855,11 +859,13 @@ class PageScene(QGraphicsScene):
         pt = event.scenePos()  # grab the location of the mouse-click
 
         if not self.isLegalDelta(self.rubricDelta):
+            # cannot paste illegal delta
+            pass
             # TODO: maybe invalid rubrics should not be placeable?
             # Update position of text - the ghostitem has it right
-            pt += QPointF(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, pt, self.rubricText)  # self.rubricID)
-            self.undoStack.push(command)
+            # pt += QPointF(0, self.ghostItem.blurb.pos().y())
+            # command = CommandText(self, pt, self.rubricText)  # self.rubricID)
+            # self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
                 self, pt, self.rubricID, self.rubricDelta, self.rubricText
@@ -1924,7 +1930,7 @@ class PageScene(QGraphicsScene):
                 return False
         return True
 
-    def updateGhost(self, dlt, txt):
+    def updateGhost(self, dlt, txt, legal=True):
         """
         Updates the ghost object based on the delta and text.
 
@@ -1936,7 +1942,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        self.ghostItem.changeComment(dlt, txt)
+        self.ghostItem.changeComment(dlt, txt, legal)
 
     def exposeGhost(self):
         """ Exposes the ghost object."""
@@ -2060,7 +2066,7 @@ class PageScene(QGraphicsScene):
 
         self.rubricDelta = self.markDelta
         self.rubricText = ""
-        self.updateGhost(self.rubricDelta, self.rubricText)
+        self.updateGhost(self.rubricDelta, self.rubricText, legalDelta)
         self.exposeGhost()
 
         return legalDelta
@@ -2120,23 +2126,24 @@ class PageScene(QGraphicsScene):
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
-        if delta != ".":
-            id = int(delta)
-
-            # we pass the actual rubric-delta to this (though it might be
-            # suppressed in the rubriclist).. so we have to check the
-            # the delta is legal for the marking style. if delta<0 when mark
-            # up OR delta>0 when mark down OR mark-total then pass delta="."
-            if (
-                (id < 0 and self.markStyle == 2)
-                or (id > 0 and self.markStyle == 3)
-                or self.markStyle == 1
-            ):
-                delta = "."
+        legality = self.isLegalDelta(delta)
+        # if delta != ".":
+        #     id = int(delta)
+        #
+        #     # we pass the actual rubric-delta to this (though it might be
+        #     # suppressed in the rubriclist).. so we have to check the
+        #     # the delta is legal for the marking style. if delta<0 when mark
+        #     # up OR delta>0 when mark down OR mark-total then pass delta="."
+        #     if (
+        #         (id < 0 and self.markStyle == 2)
+        #         or (id > 0 and self.markStyle == 3)
+        #         or self.markStyle == 1
+        #     ):
+        #         delta = "."
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID
-        self.updateGhost(delta, text)
+        self.updateGhost(delta, text, legality)
 
     def noAnswer(self, delta, noAnswerCID):
         """

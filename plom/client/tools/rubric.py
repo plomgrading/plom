@@ -178,13 +178,13 @@ class GhostComment(QGraphicsItemGroup):
             else:
                 self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
-    def changeComment(self, dlt, txt):
+    def changeComment(self, dlt, txt, legal=True):
         # need to force a bounding-rect update by removing an item and adding it back
         self.removeFromGroup(self.di)
         self.removeFromGroup(self.blurb)
         # change things
-        self.di.changeDelta(dlt)
-        self.blurb.changeText(txt)
+        self.di.changeDelta(dlt, legal)
+        self.blurb.changeText(txt, legal)
         # move to correct positions
         self.tweakPositions()
         self.addToGroup(self.blurb)

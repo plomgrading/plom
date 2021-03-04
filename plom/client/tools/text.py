@@ -296,9 +296,12 @@ class TextItem(QGraphicsTextItem):
 class GhostText(QGraphicsTextItem):
     """Blue "ghost" of text indicating what text will be placed in scene."""
 
-    def __init__(self, txt, fontsize=10):
+    def __init__(self, txt, fontsize=10, legal=True):
         super().__init__()
-        self.setDefaultTextColor(Qt.blue)
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
         self.setPlainText(txt)
         font = QFont("Helvetica")
         font.setPointSizeF(fontsize)
@@ -312,7 +315,7 @@ class GhostText(QGraphicsTextItem):
         """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
         return self._tex_src_cache is not None
 
-    def changeText(self, txt):
+    def changeText(self, txt, legal=True):
         self._tex_src_cache = None
         self.setPlainText(txt)
         if self.scene() and txt.casefold().startswith("tex:"):
@@ -326,3 +329,7 @@ class GhostText(QGraphicsTextItem):
                 tc = self.textCursor()
                 qi = QImage(fragfilename)
                 tc.insertImage(qi)
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
