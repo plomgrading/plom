@@ -2091,6 +2091,9 @@ class PageScene(QGraphicsScene):
         Returns:
             bool: True if the delta is legal, False otherwise.
         """
+        MARKSTYLE NEEDED!
+
+
         if n == ".":
             return True
         n = int(n)

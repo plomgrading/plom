@@ -1304,9 +1304,9 @@ class RubricWidget(QWidget):
 
     def setUpTabs(self):
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabA, "List A")
-        self.RTW.addTab(self.tabB, "List B")
-        self.RTW.addTab(self.tabC, "List C")
+        self.RTW.addTab(self.tabA, "A")
+        self.RTW.addTab(self.tabB, "B")
+        self.RTW.addTab(self.tabC, "C")
         self.RTW.addTab(self.tabS, "Shared")
         self.RTW.setCurrentIndex(3)
 
@@ -1316,6 +1316,8 @@ class RubricWidget(QWidget):
         if new_rubrics is not None:
             self.rubrics = new_rubrics
             self.wrangleRubrics()
+        # do legality of deltas check
+        self.updateLegalityOfDeltas()
 
     def wrangleRubrics(self):
         wr = RubricWrangler(self.rubrics, self.wranglerState, self.username)
