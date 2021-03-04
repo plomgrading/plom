@@ -211,7 +211,7 @@ class Ui_Chooser(object):
         self.label_2.setText(_translate("Chooser", "Password:"))
         self.settingsBox.setTitle(_translate("Chooser", "Settings"))
         self.fontLabel.setText(_translate("Chooser", "Font size:"))
-        self.optionsButton.setText(_translate("Chooser", "More &options..."))
+        self.optionsButton.setText(_translate("Chooser", "&Options..."))
         self.taskGBox.setTitle(_translate("Chooser", "Choose task"))
         self.markButton.setText(_translate("Chooser", "&Mark"))
         self.identifyButton.setText(_translate("Chooser", "&Identify"))
