@@ -854,12 +854,9 @@ class PageScene(QGraphicsScene):
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
-        # If the mark-delta of rubric is non-zero then create a
-        # delta-object with a different offset, else just place the rubric.
-        # TODO: rubric have IDs, Text does not: refactor to use rubric with "."
-        if self.rubricDelta == "." or not self.isLegalDelta(self.rubricDelta):
+        if not self.isLegalDelta(self.rubricDelta):
+            # TODO: maybe invalid rubrics should not be placeable?
             # Update position of text - the ghostitem has it right
-            # TODO: move this calc into the item
             pt += QPointF(0, self.ghostItem.blurb.pos().y())
             command = CommandText(self, pt, self.rubricText)  # self.rubricID)
             self.undoStack.push(command)
@@ -2020,6 +2017,8 @@ class PageScene(QGraphicsScene):
             None
 
         """
+        if deltaMarkString == ".":
+            return
         # if is an undo then we need a minus-sign here
         # because we are undoing the delta.
         # note that this command is passed a string
@@ -2031,6 +2030,7 @@ class PageScene(QGraphicsScene):
         self.scoreBox.changeScore(self.score)
         self.parent.changeMark(self.score)
         # if we are in rubric mode then the rubric might need updating
+        # TODO: any action on dot needed here?
         if self.mode == "rubric":
             self.changeTheRubric(
                 self.markDelta, self.rubricText, self.rubricID, annotatorUpdate=False
@@ -2075,20 +2075,17 @@ class PageScene(QGraphicsScene):
 
     def isLegalDelta(self, n):
         """
-        Verifies if a delta is legal.
-
-        Notes:
-            A legal delta is one that would not push the paper's score below 0
-                or above maxMark.
+        Would this delta value push the paper score below 0 or above maxMark?
 
         Args:
-            n (str): a string containing the delta integer.
+            n (int/str): the delta integer, either convertable to `int`
+                or the literal string ".".
 
         Returns:
-            True if the delta is legal, false otherwise.
-
+            bool: True if the delta is legal, False otherwise.
         """
-        # TODO: try, return True if not int?
+        if n == ".":
+            return True
         n = int(n)
         lookingAhead = self.score + n
         if lookingAhead < 0 or lookingAhead > self.maxMark:

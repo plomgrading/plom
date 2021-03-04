@@ -115,9 +115,9 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         pt = self.di.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if dlt != ".":
-            cr = self.di.boundingRect()
-            self.blurb.moveBy(cr.width() + 5, 0)
+        # TODO: may want some special treatment in "." case
+        cr = self.di.boundingRect()
+        self.blurb.moveBy(cr.width() + 5, 0)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
