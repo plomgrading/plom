@@ -271,9 +271,6 @@ class Chooser(QDialog):
             idwin.show()
             idwin.getToWork(messenger)
             self.parent.identifier = idwin
-        else:
-            # reserved for future use
-            pass
 
     def runMarker(self):
         self.runIt = "Marker"

@@ -175,13 +175,15 @@ class Ui_Chooser(object):
         self.identifyButton = QtWidgets.QPushButton(self.taskGBox)
         self.identifyButton.setObjectName("identifyButton")
         self.horizontalLayout.addWidget(self.identifyButton)
-        self.totalButton = QtWidgets.QPushButton(self.taskGBox)
-        self.totalButton.setEnabled(False)
-        self.totalButton.setObjectName("totalButton")
-        self.horizontalLayout.addWidget(self.totalButton)
+        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem2)
         self.closeButton = QtWidgets.QPushButton(self.taskGBox)
         self.closeButton.setObjectName("closeButton")
         self.horizontalLayout.addWidget(self.closeButton)
+        self.horizontalLayout.setStretch(0, 1)
+        self.horizontalLayout.setStretch(1, 1)
+        self.horizontalLayout.setStretch(2, 1)
+        self.horizontalLayout.setStretch(3, 1)
         self.verticalLayout.addWidget(self.taskGBox)
 
         self.retranslateUi(Chooser)
@@ -199,8 +201,7 @@ class Ui_Chooser(object):
         Chooser.setTabOrder(self.fontButton, self.optionsButton)
         Chooser.setTabOrder(self.optionsButton, self.markButton)
         Chooser.setTabOrder(self.markButton, self.identifyButton)
-        Chooser.setTabOrder(self.identifyButton, self.totalButton)
-        Chooser.setTabOrder(self.totalButton, self.closeButton)
+        Chooser.setTabOrder(self.identifyButton, self.closeButton)
 
     def retranslateUi(self, Chooser):
         _translate = QtCore.QCoreApplication.translate
@@ -224,5 +225,4 @@ class Ui_Chooser(object):
         self.taskGBox.setTitle(_translate("Chooser", "Choose task"))
         self.markButton.setText(_translate("Chooser", "&Mark"))
         self.identifyButton.setText(_translate("Chooser", "&Identify"))
-        self.totalButton.setText(_translate("Chooser", "Future use"))
         self.closeButton.setText(_translate("Chooser", "&Close"))

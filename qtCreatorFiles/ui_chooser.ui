@@ -295,7 +295,7 @@
      <property name="title">
       <string>Choose task</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1">
       <item>
        <widget class="QPushButton" name="markButton">
         <property name="text">
@@ -311,14 +311,17 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="totalButton">
-        <property name="enabled">
-         <bool>false</bool>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="text">
-         <string>Future use</string>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
         </property>
-       </widget>
+       </spacer>
       </item>
       <item>
        <widget class="QPushButton" name="closeButton">
@@ -347,7 +350,6 @@
   <tabstop>optionsButton</tabstop>
   <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
-  <tabstop>totalButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>
