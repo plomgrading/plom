@@ -45,9 +45,12 @@ def McreateRubric(self, user_name, rubric):
     return [True, key]
 
 
-def MgetRubrics(self):
+def MgetRubrics(self, question_number=None):
     rubric_list = []
-    query = Rubric.select()
+    if question_number is None:
+        query = Rubric.select()
+    else:
+        query = Rubric.select().where(Rubric.question == question_number)
     for r in query:
         rubric_list.append(
             {

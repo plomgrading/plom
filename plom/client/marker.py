@@ -1760,7 +1760,7 @@ class MarkerClient(QWidget):
             src_img_data,
         )
 
-    def getRubricsFromServer(self):
+    def getRubricsFromServer(self, question=None):
         """Get list of rubrics from server.
 
         Args:
@@ -1769,8 +1769,10 @@ class MarkerClient(QWidget):
         Returns:
             list: A list of the dictionary objects.
         """
-
-        response = self.msgr.MgetRubrics()
+        if question is None:
+            response = self.msgr.MgetRubrics()
+        else:
+            response = self.msgr.MgetRubricsByQuestion(question)
         if response[0] is False:
             log.warning("Getting rubrics failed. ")
         return response

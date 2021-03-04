@@ -1236,7 +1236,7 @@ class RubricWidget(QWidget):
     # the current comment and delta
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text]
 
-    def __init__(self, parent, maxMark, rubrics=[]):
+    def __init__(self, parent):
         # layout the widget - a table and add/delete buttons.
         super(RubricWidget, self).__init__()
         self.test_name = None
@@ -1245,11 +1245,12 @@ class RubricWidget(QWidget):
         self.parent = parent
         self.username = parent.username
         self.markStyle = 2  # default to mark-up
-        self.maxMark = maxMark
+        self.maxMark = None
         self.currentMark = 0
-        self.rubrics = rubrics
-        # rubricwrangler can construct a sensible initial state
+        self.rubrics = None
+        # set sensible initial state
         self.wranglerState = None
+
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
@@ -1293,14 +1294,34 @@ class RubricWidget(QWidget):
             self.wrangleRubrics()
 
     def wrangleRubrics(self):
-        wr = RubricWrangler(
-            self.rubrics, self.wranglerState, self.username, self.question_number
-        )
+        wr = RubricWrangler(self.rubrics, self.wranglerState, self.username)
         if wr.exec_() != QDialog.Accepted:
             return
         else:
             self.wranglerState = wr.wranglerState
             self.setRubricsFromStore()
+
+    def setInitialRubrics(self):
+        """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
+
+        self.rubrics = self.parent.getRubrics()
+        self.wranglerState = {
+            "shown": [],
+            "hidden": [],
+            "tabs": [[], [], []],
+            "hideManager": Qt.Unchecked,
+            "hideUsers": Qt.Unchecked,
+        }
+        # only rubrics for this question
+        # exclude other users except manager
+        for X in self.rubrics:
+            if X["username"] not in [self.username, "manager"]:
+                continue
+            self.wranglerState["shown"].append(X["id"])
+        print("Rubrics = ", self.rubrics)
+        print("WranglerState = ", self.wranglerState)
+        # then set state from this
+        self.setRubricsFromStore()
 
     def setRubricsFromStore(self):
         self.tabA.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][0])

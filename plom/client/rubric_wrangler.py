@@ -58,8 +58,8 @@ class RubricModel(QStandardItemModel):
     def __init__(self, data):
         super(RubricModel, self).__init__()
         self._data = data
-        self.setColumnCount(5)
-        self.setHorizontalHeaderLabels(["Key", "Question", "Username", "Delta", "Text"])
+        self.setColumnCount(4)
+        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.populate(data)
 
     def populate(self, data, hideHAL=True):
@@ -73,7 +73,6 @@ class RubricModel(QStandardItemModel):
             self.appendRow(
                 [
                     QStandardItem(str(X["id"])),
-                    QStandardItem(str(X["question_number"])),
                     QStandardItem(X["username"]),
                     QStandardItem(str(X["delta"])),
                     QStandardItem(X["text"]),
@@ -82,23 +81,20 @@ class RubricModel(QStandardItemModel):
 
 
 class RubricProxyModel(QSortFilterProxyModel):
-    def __init__(self, username, question_number):
+    def __init__(self, username):
         QSortFilterProxyModel.__init__(self)
         self.username = username
-        self.question_number = str(question_number)
         self.tFilt = ""
         self.uFilt = ""
-        self.hideQ = Qt.Checked
         self.hideU = Qt.Unchecked
         self.hideM = Qt.Unchecked
         self.setDynamicSortFilter(True)
-        # Cols = [0"Key", 1"Question", 2"Username", 3"Delta", 4"Text"]
+        # Cols = [0"Key", 1"Username", 2"Delta", 3"Text"]
 
-    def setBinaryFilters(self, hideQ, hideU, hideM):
-        self.hideQ = hideQ
+    def setBinaryFilters(self, hideU, hideM):
         self.hideU = hideU
         self.hideM = hideM
-        self.setFilterKeyColumn(2)  # to trigger a refresh
+        self.setFilterKeyColumn(1)  # to trigger a refresh
 
     def setTextFilter(self, txt):
         self.uFilt = ""
@@ -111,42 +107,36 @@ class RubricProxyModel(QSortFilterProxyModel):
         self.setFilterKeyColumn(2)
 
     def filterAcceptsRow(self, pos, index):
-        # Cols = [0"Key", 1"Question", 2"Username", 3"Delta", 4"Text"]
-        # check question number hiding
-        if self.hideQ == Qt.Checked and (
-            self.sourceModel().data(self.sourceModel().index(pos, 1))
-            != self.question_number
-        ):
-            return False
+        # Cols = [0"Key", 1"Username", 2"Delta", 3"Text"]
         # check username number hiding (except manager)
         if self.hideU == Qt.Checked and (
-            self.sourceModel().data(self.sourceModel().index(pos, 2))
+            self.sourceModel().data(self.sourceModel().index(pos, 1))
             not in [self.username, "manager"]
         ):
             return False
         # check manager hiding
         if self.hideM == Qt.Checked and (
-            self.sourceModel().data(self.sourceModel().index(pos, 2)) == "manager"
+            self.sourceModel().data(self.sourceModel().index(pos, 1)) == "manager"
         ):
             return False
 
         if len(self.tFilt) > 0:  # filter on text
             return (
                 self.tFilt.casefold()
-                in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+                in self.sourceModel().data(self.sourceModel().index(pos, 3)).casefold()
             )
         elif len(self.uFilt) > 0:  # filter on user
             return (
                 self.uFilt.casefold()
-                in self.sourceModel().data(self.sourceModel().index(pos, 2)).casefold()
+                in self.sourceModel().data(self.sourceModel().index(pos, 1)).casefold()
             )
         else:
             return True
 
     def lessThan(self, left, right):
-        # Cols = [0"Key", 1"Question", 2"Username", 3"Delta", 4"Text"]
+        # Cols = [0"Key", 1"Username", 2"Delta", 3"Text"]
         # if sorting on key or delta then turn things into ints
-        if left.column() == 3:  # sort on delta - treat '.' as 0
+        if left.column() == 2:  # sort on delta - treat '.' as 0
             ld = deltaToInt(self.sourceModel().data(left))
             rd = deltaToInt(self.sourceModel().data(right))
         else:
@@ -164,8 +154,8 @@ class ShowTable(QTableWidget):
         self.horizontalHeader().setStretchLastSection(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        self.setColumnCount(5)
-        self.setHorizontalHeaderLabels(["Key", "Question", "Username", "Delta", "Text"])
+        self.setColumnCount(4)
+        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
 
     def cleanUp(self):
         # remove all rows
@@ -187,10 +177,9 @@ class ShowTable(QTableWidget):
                 rc = self.rowCount()
                 self.insertRow(rc)
                 self.setItem(rc, 0, QTableWidgetItem(rubrics[rind]["id"]))
-                self.setItem(rc, 1, QTableWidgetItem(rubrics[rind]["question_number"]))
-                self.setItem(rc, 2, QTableWidgetItem(rubrics[rind]["username"]))
-                self.setItem(rc, 3, QTableWidgetItem(rubrics[rind]["delta"]))
-                self.setItem(rc, 4, QTableWidgetItem(rubrics[rind]["text"]))
+                self.setItem(rc, 1, QTableWidgetItem(rubrics[rind]["username"]))
+                self.setItem(rc, 2, QTableWidgetItem(rubrics[rind]["delta"]))
+                self.setItem(rc, 3, QTableWidgetItem(rubrics[rind]["text"]))
 
     def getCurrentKeys(self):
         current_keys = []
@@ -240,43 +229,43 @@ class ShowTable(QTableWidget):
         elif isinstance(event.source(), ShowTable):  # move between lists
             targetRow = self.indexAt(event.pos()).row()
             sourceInd = event.source().selectedIndexes()
-            sourceRowCount = len(sourceInd) // 5
+            sourceRowCount = len(sourceInd) // 4
             # just before you drop - make a list of keys already in table
             existingKeys = [self.item(k, 0).text() for k in range(self.rowCount())]
             if targetRow == -1:  # at end
                 targetRow = self.rowCount()
             # check each row to drop
             for k in range(sourceRowCount):
-                rdat = [sourceInd[5 * k + j].data() for j in range(5)]
-                if rdat[1] in existingKeys:
+                rdat = [sourceInd[4 * k + j].data() for j in range(4)]
+                if rdat[0] in existingKeys:
                     pass
                 else:
                     self.insertRow(targetRow)
-                    for col in range(5):
+                    for col in range(4):
                         self.setItem(targetRow, col, QTableWidgetItem(rdat[col]))
                     targetRow += 1
             # # if shift-key pressed - then delete source
             if QApplication.keyboardModifiers() == Qt.ShiftModifier:
                 sourceRows = sorted([X.row() for X in sourceInd], reverse=True)
-                # is multiple of 5
-                for r in sourceRows[0::5]:  # every th
+                # is multiple of 4
+                for r in sourceRows[0::4]:  # every 4th
                     event.source().removeRow(r)
         else:
             targetRow = self.indexAt(event.pos()).row()
             sourceInd = event.source().selectedIndexes()
-            sourceRowCount = len(sourceInd) // 5
+            sourceRowCount = len(sourceInd) // 4
             # before you drop - make a list of keys already in table
             existingKeys = [self.item(k, 0).text() for k in range(self.rowCount())]
             if targetRow == -1:  # at end
                 targetRow = self.rowCount()
             # check each row to drop
             for k in range(sourceRowCount):
-                rdat = [sourceInd[5 * k + j].data() for j in range(5)]
-                if rdat[1] in existingKeys:
+                rdat = [sourceInd[4 * k + j].data() for j in range(4)]
+                if rdat[0] in existingKeys:
                     pass
                 else:
                     self.insertRow(targetRow)
-                    for col in range(5):
+                    for col in range(4):
                         self.setItem(targetRow, col, QTableWidgetItem(rdat[col]))
                     targetRow += 1
 
@@ -346,14 +335,13 @@ class ShowListFrame(QFrame):
 
 
 class RubricWrangler(QDialog):
-    def __init__(self, rubrics, wranglerState, username, question_number):
+    def __init__(self, rubrics, wranglerState, username):
         super(RubricWrangler, self).__init__()
         self.resize(1200, 768)
         self.username = username
-        self.question_number = question_number
         self.rubrics = rubrics
         self.model = RubricModel(rubrics)
-        self.proxy = RubricProxyModel(username, question_number)
+        self.proxy = RubricProxyModel(username)
         self.rubricTable = QTableView()
         self.proxy.setSourceModel(self.model)
         self.rubricTable.setModel(self.proxy)
@@ -375,11 +363,9 @@ class RubricWrangler(QDialog):
         self.uFiltLE = QLineEdit()
         self.uFiltLE.returnPressed.connect(self.setUserFilter)
         ##
-        self.cbQ = QCheckBox("Hide comments from other questions **recommended**")
         self.cbU = QCheckBox("Hide comments from other users (except manager)")
         self.cbM = QCheckBox("Hide comments from manager")
         # connect checkboxes to filters
-        self.cbQ.stateChanged.connect(self.setCheckBoxFilters)
         self.cbU.stateChanged.connect(self.setCheckBoxFilters)
         self.cbM.stateChanged.connect(self.setCheckBoxFilters)
         ##
@@ -388,15 +374,14 @@ class RubricWrangler(QDialog):
         self.cB = QPushButton("&Cancel")
         self.cB.clicked.connect(self.reject)
         grid = QGridLayout()
-        grid.addWidget(self.rubricTable, 4, 1, 8, 8)
-        grid.addWidget(self.cbQ, 1, 1, 1, 2)
-        grid.addWidget(self.cbU, 2, 1, 1, 2)
-        grid.addWidget(self.cbM, 3, 1, 1, 2)
+        grid.addWidget(self.rubricTable, 3, 1, 8, 8)
+        grid.addWidget(self.cbU, 1, 1, 1, 2)
+        grid.addWidget(self.cbM, 2, 1, 1, 2)
         grid.addWidget(QLabel("Filter on rubric text"), 10, 9, 1, 1)
         grid.addWidget(self.tFiltLE, 10, 10, 1, 2)
         grid.addWidget(QLabel("Filter on rubric username"), 11, 9, 1, 1)
         grid.addWidget(self.uFiltLE, 11, 10, 1, 2)
-        grid.addWidget(self.ST, 1, 9, 8, 8)
+        grid.addWidget(self.ST, 1, 9, 10, 10)
         grid.addWidget(self.aB, 20, 20)
         grid.addWidget(self.cB, 20, 19)
         self.setLayout(grid)
@@ -409,22 +394,14 @@ class RubricWrangler(QDialog):
                 "tabs": [[], [], []],
                 "hideManager": Qt.Unchecked,
                 "hideUsers": Qt.Unchecked,
-                "hideQuestions": Qt.Checked,
             }
         else:
             self.wranglerState = wranglerState
         # use this to set state
         self.setFromWranglerState()
 
-    def setCheckBoxes(self):
-        self.cbQ.setCheckState(Qt.Checked if self.curFilters[0] else Qt.Unchecked)
-        self.cbU.setCheckState(Qt.Checked if self.curFilters[1] else Qt.Unchecked)
-        self.cbM.setCheckState(Qt.Checked if self.curFilters[2] else Qt.Unchecked)
-        ##
-
     def setCheckBoxFilters(self):
         self.proxy.setBinaryFilters(
-            self.cbQ.checkState(),
             self.cbU.checkState(),
             self.cbM.checkState(),
         )
@@ -444,7 +421,6 @@ class RubricWrangler(QDialog):
             "tabs": [],
             "hideManager": self.cbM.checkState(),
             "hideUsers": self.cbU.checkState(),
-            "hideQuestions": self.cbQ.checkState(),
         }
         # get listsA,B,C from first 3 tabs
         for p in range(3):
@@ -457,15 +433,11 @@ class RubricWrangler(QDialog):
             # check against various filters
             if key in store["hidden"]:
                 continue
-            # columns are ["Key", "Question", "Username", "Delta", "Text"])
+            # columns are ["Key", "Username", "Delta", "Text"])
             # check question number filtering - col1
-            if self.cbQ.checkState() == Qt.Checked and self.model.index(
-                r, 1
-            ).data() != str(self.question_number):
-                continue
-            # check username filtering - col2
+            # check username filtering - col1
             if self.cbU.checkState() == Qt.Checked and self.model.index(
-                r, 2
+                r, 1
             ).data() not in [
                 self.username,
                 "manager",
@@ -474,7 +446,7 @@ class RubricWrangler(QDialog):
             # check manager filtering
             if (
                 self.cbM.checkState() == Qt.Checked
-                and self.model.index(r, 2).data() == "manager"
+                and self.model.index(r, 1).data() == "manager"
             ):
                 continue
             # passes all
@@ -484,7 +456,6 @@ class RubricWrangler(QDialog):
     def setFromWranglerState(self):
         # does not do any sanity checks
         # set the checkboxes
-        self.cbQ.setCheckState(self.wranglerState["hideQuestions"])
         self.cbU.setCheckState(self.wranglerState["hideUsers"])
         self.cbM.setCheckState(self.wranglerState["hideManager"])
         # main list already populated from rubrics on init

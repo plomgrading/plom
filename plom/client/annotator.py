@@ -160,7 +160,7 @@ class Annotator(QWidget):
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
         # Create the comment list widget and put into gui.
-        self.rubric_widget = RubricWidget(self, None)
+        self.rubric_widget = RubricWidget(self)
         self.ui.container_commentwidget.addWidget(self.rubric_widget)
         print("TODO rename comment stuff in qt-creator files to rubric stuff")
 
@@ -195,7 +195,9 @@ class Annotator(QWidget):
         if initialData:
             self.loadNewTGV(*initialData)
 
-        # ARGH - GET RUBRIC LIST HERE
+        # since we now know question etc, we can now fire up initial rubrics
+        self.rubric_widget.setInitialRubrics()
+
         # Grab window settings from parent
         self.loadWindowSettings()
 
@@ -2026,8 +2028,10 @@ class Annotator(QWidget):
             pass
 
     def getRubrics(self):
-        """Request for a refreshed comments list and update the current comments box."""
-        wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer()
+        """Request for a refreshed comments list and update the current comments box. Only get rubrics for current question."""
+        wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer(
+            self.question_num
+        )
         assert wtf
 
         if len(refreshed_rubrics_list) == 0:
