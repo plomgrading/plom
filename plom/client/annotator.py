@@ -195,6 +195,7 @@ class Annotator(QWidget):
         if initialData:
             self.loadNewTGV(*initialData)
 
+        # ARGH - GET RUBRIC LIST HERE
         # Grab window settings from parent
         self.loadWindowSettings()
 
@@ -1340,8 +1341,8 @@ class Annotator(QWidget):
         if mode == "delta" and aux is not None:
             # make sure that the mark handler has been set.
             self.markHandler.loadDeltaValue(aux)
-        elif mode == "rubric" and aux is not None:
-            self.rubric_widget.setCurrentItemRow(aux)
+        elif mode == "rubric" and aux is not None:  # key and tab set as [a,b]
+            self.rubric_widget.setCurrentRubricKeyAndTab(aux[0], aux[1])
             print("TODO - this will be a bit problematic")
             self.ui.commentButton.animateClick()
         else:
@@ -1522,6 +1523,13 @@ class Annotator(QWidget):
         else:
             self.showMaximized()
 
+        # load the state of the rubric list widget
+        if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
+            self.rubric_widget.wranglerState = self.parentMarkerUI.annotatorSettings[
+                "rubricWranglerState"
+            ]
+            self.rubric_widget.setRubricsFromStore()
+
         # remember the "do not show again" checks
         if self.parentMarkerUI.annotatorSettings["markWarnings"] is not None:
             self.markWarn = self.parentMarkerUI.annotatorSettings["markWarnings"]
@@ -1596,6 +1604,11 @@ class Annotator(QWidget):
             self.parentMarkerUI.annotatorSettings["compact"] = False
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
+
+        # save the rubricWidgetLists
+        self.parentMarkerUI.annotatorSettings[
+            "rubricWranglerState"
+        ] = self.rubric_widget.wranglerState
 
     def saveAnnotations(self):
         """
