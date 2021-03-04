@@ -1125,7 +1125,7 @@ class RubricTable(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
         self.setDragEnabled(True)
-        self.setAcceptDrops(True)
+        self.setAcceptDrops(False)
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.hideColumn(0)
