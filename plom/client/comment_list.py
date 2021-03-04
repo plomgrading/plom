@@ -1449,7 +1449,7 @@ class RubricWidget(QWidget):
         com = self.rubrics[index]
 
         if com["username"] == self.username:
-            self._new_or_edit_rubric(com, edit=True)
+            self._new_or_edit_rubric(com, edit=True, index=index)
             return
         msg = SimpleMessage(
             "<p>You did not create this message.</p>"
@@ -1463,7 +1463,7 @@ class RubricWidget(QWidget):
         com["username"] = self.username
         self._new_or_edit_rubric(com, edit=False)
 
-    def _new_or_edit_rubric(self, com, edit=False):
+    def _new_or_edit_rubric(self, com, edit=False, index=None):
         """Open a dialog to edit a comment or make a new one.
 
         args:
@@ -1472,6 +1472,8 @@ class RubricWidget(QWidget):
                 means create new.
             edit (bool): are we modifying the comment?  if False, use
                 `com` as a template for a new duplicated comment.
+            index (int): the index of the comment inside the current rubric list
+                used for updating the data in the rubric list after edit (only)
 
         Returns:
             None: does its work through side effects on the comment list.
@@ -1505,27 +1507,30 @@ class RubricWidget(QWidget):
         if edit:
             new_rubric["id"] = rubricID
             rv = self.parent.modifyRubric(rubricID, new_rubric)
-            return
-
-        rv = self.parent.createNewRubric(new_rubric)
-        # check was updated/created successfully
-        if rv[0]:  # rubric created successfully
+            # update the rubric in the current internal rubric list
+            self.rubrics[index] = new_rubric
+        else:
+            rv = self.parent.createNewRubric(new_rubric)
+            # check was updated/created successfully
+            if not rv[0]:  # some sort of creation problem
+                return
+            # created ok
             rubricID = rv[1]
-        else:  # some sort of creation problem
-            return
-        new_rubric["id"] = rubricID
-        # at this point we have an accepted new rubric
-        # add it to the internal list of rubrics
-        self.rubrics.append(new_rubric)
-        # also add it to the list in the current rubriclist and the shownlist
-        # update wranglerState (as if we have run that)
-        # then update the displayed rubrics
-        self.wranglerState["shown"].append(rubricID)
-        if self.RTW.currentIndex() in [0, 1, 2]:
-            self.wranglerState["tabs"][self.RTW.currentIndex()].append(rubricID)
+            new_rubric["id"] = rubricID
+            # at this point we have an accepted new rubric
+            # add it to the internal list of rubrics
+            self.rubrics.append(new_rubric)
+            # also add it to the list in the current rubriclist and the shownlist
+            # update wranglerState (as if we have run that)
+            # then update the displayed rubrics
+            self.wranglerState["shown"].append(rubricID)
+            if self.RTW.currentIndex() in [0, 1, 2]:
+                self.wranglerState["tabs"][self.RTW.currentIndex()].append(rubricID)
+        # refresh the rubrics from our internal list
         self.setRubricsFromStore()
-        # finally - select that rubric
+        # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(rubricID)
+        self.handleClick()
 
 
 class AddRubricBox(QDialog):
