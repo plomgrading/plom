@@ -190,7 +190,6 @@ mousePress = {
     "rubric": "mousePressRubric",
     "cross": "mousePressCross",
     "delete": "mousePressDelete",
-    "delta": "mousePressDelta",
     "line": "mousePressLine",
     "move": "mousePressMove",
     "pan": "mousePressPan",
@@ -861,12 +860,8 @@ class PageScene(QGraphicsScene):
 
         if not self.isLegalDelta(self.rubricDelta):
             # cannot paste illegal delta
+            # still need to reset rubricFlag below.
             pass
-            # TODO: maybe invalid rubrics should not be placeable?
-            # Update position of text - the ghostitem has it right
-            # pt += QPointF(0, self.ghostItem.blurb.pos().y())
-            # command = CommandText(self, pt, self.rubricText)  # self.rubricID)
-            # self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
                 self, pt, self.rubricID, self.rubricDelta, self.rubricText
@@ -911,45 +906,6 @@ class PageScene(QGraphicsScene):
         else:
             command = CommandCross(self, pt)
         self.undoStack.push(command)  # push onto the stack.
-
-    def mousePressDelta(self, event):
-        """
-        Creates the mark-delta, ?-mark/tick/cross based on which mouse
-        button or mouse/key combination was pressed.
-
-        Notes:
-            cross = right-click or shift+click if current mark-delta > 0.
-            tick = right-click or shift+click if current mark-delta <= 0.
-            question mark = middle-click or control+click.
-            mark-delta = left-click or any other combination, assigns with
-                the selected mark-delta value.
-
-
-        Args:
-            event (QMouseEvent): Mouse press.
-
-        Returns:
-            None
-
-        """
-        pt = event.scenePos()  # Grab click's location and create command.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            if int(self.markDelta) > 0:
-                command = CommandCross(self, pt)
-            else:
-                command = CommandTick(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            command = CommandQMark(self, pt)
-        else:
-            if self.isLegalDelta(self.markDelta):
-                command = CommandDelta(self, pt, self.markDelta)
-            else:
-                return
-        self.undoStack.push(command)  # push command onto undoStack.
 
     def mousePressMove(self, event):
         """
@@ -2043,34 +1999,34 @@ class PageScene(QGraphicsScene):
                 self.markDelta, self.rubricText, self.rubricID, annotatorUpdate=False
             )
 
-    def changeTheDelta(self, newDelta, annotatorUpdate=False):
-        """
-        Changes the new mark/score for the paper based on the delta.
-
-        Args:
-            newDelta (str): a string containing the delta integer.
-            annotatorUpdate (bool): true if annotator should be updated,
-                false otherwise.
-
-        Returns:
-            True if the delta is legal, false otherwise.
-
-        """
-        legalDelta = self.isLegalDelta(newDelta)
-        self.markDelta = newDelta
-
-        if annotatorUpdate:
-            gpt = QCursor.pos()  # global mouse pos
-            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-            self.ghostItem.setPos(spt)
-
-        self.rubricDelta = self.markDelta
-        self.rubricText = ""
-        self.updateGhost(self.rubricDelta, self.rubricText, legalDelta)
-        self.exposeGhost()
-
-        return legalDelta
+    # def changeTheDelta(self, newDelta, annotatorUpdate=False):
+    #     """
+    #     Changes the new mark/score for the paper based on the delta.
+    #
+    #     Args:
+    #         newDelta (str): a string containing the delta integer.
+    #         annotatorUpdate (bool): true if annotator should be updated,
+    #             false otherwise.
+    #
+    #     Returns:
+    #         True if the delta is legal, false otherwise.
+    #
+    #     """
+    #     legalDelta = self.isLegalDelta(newDelta)
+    #     self.markDelta = newDelta
+    #
+    #     if annotatorUpdate:
+    #         gpt = QCursor.pos()  # global mouse pos
+    #         vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
+    #         spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
+    #         self.ghostItem.setPos(spt)
+    #
+    #     self.rubricDelta = self.markDelta
+    #     self.rubricText = ""
+    #     self.updateGhost(self.rubricDelta, self.rubricText, legalDelta)
+    #     self.exposeGhost()
+    #
+    #     return legalDelta
 
     def undo(self):
         """ Undoes a given action."""
