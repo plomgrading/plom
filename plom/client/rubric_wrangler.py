@@ -33,7 +33,6 @@ def showRubricToUser(rubric):
     if rubric["username"] == "HAL":
         return False
     # hide manager-delta rubrics
-    print("U{}M{}".format(rubric["username"], rubric["meta"]))
     if rubric["username"] == "manager" and rubric["meta"] == "delta":
         return False
     # passes filters

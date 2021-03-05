@@ -1491,12 +1491,16 @@ class RubricWidget(QWidget):
         self.tabB.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabC.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabDelta.updateLegalityOfDeltas(legalDown, legalUp)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
 
     def reselectCurrentRubric(self):
         self.RTW.currentWidget().reselectCurrentRubric()
+
+    def selectRubricByRow(self, rowNumber):
+        self.RTW.currentWidget().selectRubricByRow(rowNumber)
 
     def nextRubric(self):
         self.RTW.currentWidget().nextRubric()
