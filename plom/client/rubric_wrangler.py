@@ -27,6 +27,19 @@ from PyQt5.QtWidgets import (
 )
 
 
+def showRubricToUser(rubric):
+    """Filter the rubrics shown to the user in the wrangler"""
+    # hide system rubrics
+    if rubric["username"] == "HAL":
+        return False
+    # hide manager-delta rubrics
+    print("U{}M{}".format(rubric["username"], rubric["meta"]))
+    if rubric["username"] == "manager" and rubric["meta"] == "delta":
+        return False
+    # passes filters
+    return True
+
+
 def deltaToInt(x):
     """Since delta can just be a . """
     if x == ".":
@@ -62,22 +75,21 @@ class RubricModel(QStandardItemModel):
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.populate(data)
 
-    def populate(self, data, hideHAL=True):
+    def populate(self, data):
         # clear all rows
         self.removeRows(0, self.rowCount())
         # then repopulate
         for X in data:
-            # hide HAL generated rubrics
-            if hideHAL and X["username"] == "HAL":
-                continue
-            self.appendRow(
-                [
-                    QStandardItem(str(X["id"])),
-                    QStandardItem(X["username"]),
-                    QStandardItem(str(X["delta"])),
-                    QStandardItem(X["text"]),
-                ]
-            )
+            # check if given rubric should appear
+            if showRubricToUser(X):
+                self.appendRow(
+                    [
+                        QStandardItem(str(X["id"])),
+                        QStandardItem(X["username"]),
+                        QStandardItem(str(X["delta"])),
+                        QStandardItem(X["text"]),
+                    ]
+                )
 
 
 class RubricProxyModel(QSortFilterProxyModel):

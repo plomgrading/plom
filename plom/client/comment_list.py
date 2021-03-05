@@ -1124,6 +1124,7 @@ class RubricTable(QTableWidget):
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
+        self.verticalHeader().setVisible(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(False)
         self.setColumnCount(4)
@@ -1152,6 +1153,8 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
             self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
             self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
+            # set row header
+            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc)))
             # set 'illegal' colour if out of range
             if legalDown is not None and legalUp is not None:
                 v = deltaToInt(rb["delta"])
@@ -1160,6 +1163,43 @@ class RubricTable(QTableWidget):
                     self.item(rc, 3).setForeground(colour_illegal)
 
         self.resizeColumnsToContents()
+
+    def setDeltaRubrics(self, markStyle, maxMark, rubrics):
+        """Clear table and repopulate with delta-rubrics"""
+        # remove everything
+        for r in range(self.rowCount()):
+            self.removeRow(0)
+        # grab the delta-rubrics from the rubricslist
+        delta_rubrics = []
+        for rb in rubrics:
+            # make sure you get the ones relevant to the marking style
+            if rb["username"] == "manager" and rb["meta"] == "delta":
+                if markStyle == 2 and int(rb["delta"]) >= 0:
+                    delta_rubrics.append(rb)
+                if markStyle == 3 and int(rb["delta"]) <= 0:
+                    delta_rubrics.append(rb)
+        # to make sure the delta is legal, set legalUp,down
+        if markStyle == 2:
+            legalUp = maxMark
+            legalDown = 0
+        else:
+            legalUp = 0
+            legalDown = -maxMark
+        # now sort in numerical order away from 0 and add
+        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
+            rc = self.rowCount()
+            self.insertRow(rc)
+            self.setItem(rc, 0, QTableWidgetItem(rb["id"]))
+            self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
+            self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
+            self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
+            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc)))
+            # set 'illegal' colour if out of range
+            if legalDown is not None and legalUp is not None:
+                v = int(rb["delta"])
+                if v > legalUp or v < legalDown:
+                    self.item(rc, 2).setForeground(colour_illegal)
+                    self.item(rc, 3).setForeground(colour_illegal)
 
     def getKeyFromRow(self, row):
         return self.item(r, 0).text()
@@ -1290,7 +1330,8 @@ class RubricWidget(QWidget):
         self.tabB = RubricTable(self)  # group B
         self.tabC = RubricTable(self)  # group C
         self.tabS = RubricTable(self, sort=True)  # Shared
-        self.numberOfTabs = 4
+        self.tabDelta = RubricTable(self)  # group C
+        self.numberOfTabs = 5
         self.RTW = QTabWidget()
         self.setUpTabs()
         grid.addWidget(self.RTW, 1, 1, 2, 4)
@@ -1310,11 +1351,12 @@ class RubricWidget(QWidget):
 
     def setUpTabs(self):
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
+        self.RTW.addTab(self.tabS, "Shared")
         self.RTW.addTab(self.tabA, "A")
         self.RTW.addTab(self.tabB, "B")
         self.RTW.addTab(self.tabC, "C")
-        self.RTW.addTab(self.tabS, "Shared")
-        self.RTW.setCurrentIndex(3)
+        self.RTW.addTab(self.tabDelta, "Delta")
+        self.RTW.setCurrentIndex(1)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -1346,8 +1388,11 @@ class RubricWidget(QWidget):
         }
         # only rubrics for this question
         # exclude other users except manager
+        # exclude manager-delta rubrics
         for X in self.rubrics:
             if X["username"] not in [self.username, "manager"]:
+                continue
+            if X["username"] == "manager" and X["meta"] == "delta":
                 continue
             self.wranglerState["shown"].append(X["id"])
         # then set state from this
@@ -1387,6 +1432,11 @@ class RubricWidget(QWidget):
             self.wranglerState["shown"],
             legalDown=legalDown,
             legalUp=legalUp,
+        )
+        self.tabDelta.setDeltaRubrics(
+            self.markStyle,
+            self.maxMark,
+            self.rubrics,
         )
 
     def getCurrentRubricKeyAndTab(self):
