@@ -201,6 +201,8 @@ class Server(object):
         McreateRubric,
         MgetRubrics,
         MmodifyRubric,
+        MgetUserRubricPanes,
+        MsaveUserRubricPanes,
     )
     from .plomServer.serverReport import (
         RgetUnusedTests,

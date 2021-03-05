@@ -990,3 +990,107 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
         return messenger_response
+
+    def MgetUserRubricPanes(self, question):
+        """Ask server for the user's rubric-pane config file for this question
+
+        Args:
+            question (int): the current question number
+
+        Raises:
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            paneConfig: [True, A json of the dict required to set up panes] or [False]
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/MK/user/{}/{}".format(self.server, self.user, question),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+
+            if response.status_code == 200:
+                paneConfig = response.json()
+                messenger_response = [True, paneConfig]
+            elif response.status_code == 204:
+                messenger_response = [False]  # no content
+            else:
+                raise PlomSeriousException(
+                    "No other 20x error should come from server."
+                ) from None
+
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 403:
+                raise PlomSeriousException(
+                    "Username or question mismatch in request."
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Error of type {} when creating new rubric".format(e)
+                ) from None
+            messenger_response = [False]
+
+        finally:
+            self.SRmutex.release()
+        return messenger_response
+
+    def MsaveUserRubricPanes(self, question, paneConfig):
+        """Ask server for the user's rubric-pane config file for this question
+
+        Args:
+            question (int): the current question number
+            paneConfig (dict): the user's rubric pane configuration for this question
+
+        Raises:
+            PlomAuthenticationException: Authentication error.
+            PlomSeriousException: Other error types, possible needs fix or debugging.
+
+        Returns:
+            paneConfig: [True] or [False]
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/MK/user/{}/{}".format(self.server, self.user, question),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "rubric_config": paneConfig,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+
+            messenger_response = True
+
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 409:
+                raise PlomSeriousException(
+                    "Username or question mismatch in request."
+                ) from None
+            elif response.status_code == 406:
+                raise PlomSeriousException(
+                    "Problem writing pane configuration on server."
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Error of type {} when creating new rubric".format(e)
+                ) from None
+            messenger_response = False
+
+        finally:
+            self.SRmutex.release()
+        return messenger_response
