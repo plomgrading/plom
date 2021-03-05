@@ -7,6 +7,7 @@
 Rubric-related server methods.
 """
 
+import json
 import logging
 import os
 
@@ -58,14 +59,14 @@ def MmodifyRubric(self, username, key, updated_rubric):
 def MgetUserRubricPanes(self, username, question):
     try:
         paneConfigFilename = os.path.join(
-            "userData", "pane.{}.{}.json".format(username, question)
+            "userRubricPaneData", "rubricPanes.{}.{}.json".format(username, question)
         )
         if os.path.isfile(paneConfigFilename):
             pass
         else:
             return [False]
-        with open(paneConfigFilename) as fh:
-            rubricPanes = fh.readlines()
+        with open(paneConfigFilename) as infile:
+            rubricPanes = json.load(infile)
         return [True, rubricPanes]
     except:
         return [False]
@@ -74,10 +75,10 @@ def MgetUserRubricPanes(self, username, question):
 def MsaveUserRubricPanes(self, username, question, rubricPanes):
     try:
         paneConfigFilename = os.path.join(
-            "userData", "pane.{}.{}.json".format(username, question)
+            "userRubricPaneData", "rubricPanes.{}.{}.json".format(username, question)
         )
-        with open(paneConfigFilename, "wb") as fh:
-            fh.write(rubricPanes)
+        with open(paneConfigFilename, "w") as outfile:
+            json.dump(rubricPanes, outfile)
         return True
     except:
         return False

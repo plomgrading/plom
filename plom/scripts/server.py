@@ -104,7 +104,7 @@ def buildRequiredDirectories():
         "markedQuestions",
         "markedQuestions/plomFiles",
         "serverConfiguration",
-        "userData",
+        "userRubricPaneData",
     ]
     for dir in lst:
         os.makedirs(dir, exist_ok=True)

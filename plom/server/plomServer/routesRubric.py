@@ -148,7 +148,7 @@ class RubricHandler:
             return web.Response(status=204)
 
     # @routes.put("/MK/user/{user}/{question}")
-    @authenticate_by_token_required_fields(["user", "rubric_panes", "question"])
+    @authenticate_by_token_required_fields(["user", "rubric_config", "question"])
     def MsaveUserRubricPanes(self, data, request):
         """Add new rubric to DB and respond with its key
 
@@ -161,7 +161,7 @@ class RubricHandler:
         """
         username = data["user"]
         question = data["question"]
-        rubricPanes = data["rubric_config"]
+        rubricConfig = data["rubric_config"]
         # TODO - remove duplication or check it.
         usernameCheck = request.match_info["user"]
         questionCheck = request.match_info["question"]
@@ -169,8 +169,7 @@ class RubricHandler:
         if username != usernameCheck or int(question) != int(questionCheck):
             return web.Response(status=409)  # data inconsistent
 
-        rval = self.server.MsaveUserRubricPanes(username, question, rubricPanes)
-        if rval[0]:  # worked
+        if self.server.MsaveUserRubricPanes(username, question, rubricConfig):  # worked
             return web.Response(status=200)
         else:  # some sort of error
             return web.Response(status=406)

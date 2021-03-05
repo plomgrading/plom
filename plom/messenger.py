@@ -1070,7 +1070,6 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
 
-            paneConfig = response.json()
             messenger_response = True
 
         except requests.HTTPError as e:
