@@ -1023,7 +1023,9 @@ class Messenger(BaseMessenger):
             elif response.status_code == 204:
                 messenger_response = [False]  # no content
             else:
-                print("WE SHOULD NOT BE HERE")
+                raise PlomSeriousException(
+                    "No other 20x error should come from server."
+                ) from None
 
         except requests.HTTPError as e:
             if response.status_code == 401:
