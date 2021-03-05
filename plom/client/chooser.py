@@ -35,7 +35,6 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
 )
 from plom.messenger import Messenger
-from plom.client.comment_list import comment_file
 
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
@@ -168,7 +167,7 @@ class Chooser(QDialog):
 
     def options(self):
         d = ClientSettingsDialog(
-            lastTime, logdir, cfgfile, tempfile.gettempdir(), comment_file
+            lastTime, logdir, cfgfile, tempfile.gettempdir()
         )
         d.exec_()
         # TODO: do something more proper like QSettings
