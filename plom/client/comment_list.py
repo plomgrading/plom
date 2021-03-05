@@ -1137,7 +1137,7 @@ class RubricTable(QTableWidget):
         self.itemChanged.connect(self.handleClick)
         self.doubleClicked.connect(self.editRow)
 
-    def setRubricsByKeys(self, rubric_list, key_list):
+    def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
         """Clear table and repopulate rubrics in the key_list"""
         # remove everything
         for r in range(self.rowCount()):
@@ -1152,6 +1152,13 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
             self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
             self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
+            # set 'illegal' colour if out of range
+            if legalDown is not None and legalUp is not None:
+                v = deltaToInt(rb["delta"])
+                if v > legalUp or v < legalDown:
+                    self.item(rc, 2).setForeground(colour_illegal)
+                    self.item(rc, 3).setForeground(colour_illegal)
+
         self.resizeColumnsToContents()
 
     def getKeyFromRow(self, row):
@@ -1248,7 +1255,6 @@ class RubricTable(QTableWidget):
             else:
                 self.item(r, 2).setForeground(colour_legal)
                 self.item(r, 3).setForeground(colour_legal)
-        self.repaint()
 
     def editRow(self, tableIndex):
         r = tableIndex.row()
@@ -1346,14 +1352,42 @@ class RubricWidget(QWidget):
             self.wranglerState["shown"].append(X["id"])
         # then set state from this
         self.setRubricsFromStore()
-        # do legality of deltas check
-        self.updateLegalityOfDeltas()
 
     def setRubricsFromStore(self):
-        self.tabA.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][0])
-        self.tabB.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][1])
-        self.tabC.setRubricsByKeys(self.rubrics, self.wranglerState["tabs"][2])
-        self.tabS.setRubricsByKeys(self.rubrics, self.wranglerState["shown"])
+        # if score is x/N then largest legal delta = +(N-x)
+        legalUp = self.maxMark - self.currentMark
+        # if score is x/N then smallest legal delta = -x
+        legalDown = -self.currentMark
+        # now change upper/lower bounds depending on marking style
+        if self.markStyle == 2:  # mark up
+            legalDown = 0
+        elif self.markStyle == 3:  # mark down
+            legalUp = 0
+
+        self.tabA.setRubricsByKeys(
+            self.rubrics,
+            self.wranglerState["tabs"][0],
+            legalDown=legalDown,
+            legalUp=legalUp,
+        )
+        self.tabB.setRubricsByKeys(
+            self.rubrics,
+            self.wranglerState["tabs"][1],
+            legalDown=legalDown,
+            legalUp=legalUp,
+        )
+        self.tabC.setRubricsByKeys(
+            self.rubrics,
+            self.wranglerState["tabs"][2],
+            legalDown=legalDown,
+            legalUp=legalUp,
+        )
+        self.tabS.setRubricsByKeys(
+            self.rubrics,
+            self.wranglerState["shown"],
+            legalDown=legalDown,
+            legalUp=legalUp,
+        )
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
@@ -1389,10 +1423,8 @@ class RubricWidget(QWidget):
         if maxMark:
             self.maxMark = maxMark
 
-        # update the local mark
-        if currentMark != self.currentMark:
-            self.currentMark = currentMark
-            self.updateLegalityOfDeltas()
+        self.currentMark = currentMark
+        self.updateLegalityOfDeltas()
 
     def updateLegalityOfDeltas(self):
         # if score is x/N then largest legal delta = +(N-x)

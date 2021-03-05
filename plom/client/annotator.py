@@ -398,7 +398,8 @@ class Annotator(QWidget):
                 self.modeInformation[1][0], self.modeInformation[1][1]
             )
             self.rubric_widget.handleClick()
-
+        # redo this after all the other rubric stuff initialised
+        self.rubric_widget.changeMark(self.score, self.maxMark)
         # update the displayed score - fixes #843
         self.changeMark(self.score)
 
@@ -1523,6 +1524,8 @@ class Annotator(QWidget):
         self.ui.markLabel.setText(
             "{} out of {}".format(self.scene.score, self.scene.maxMark)
         )
+        #
+        # TODO - decide if we can get rid of this markhandler stuff.
         self.markHandler.setMark(self.score)
         self.markHandler.repaint()
         self.markHandler.updateRelevantDeltaActions()
