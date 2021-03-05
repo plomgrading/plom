@@ -166,17 +166,14 @@ class GhostComment(QGraphicsItemGroup):
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if self.di.delta == ".":
-            cr = self.blurb.boundingRect()
+
+        cr = self.di.boundingRect()
+        self.di.moveBy(0, -cr.height() / 2)
+        # check if blurb is empty, move accordingly to hide it
+        if not self.blurb.is_rendered() and self.blurb.toPlainText() == "":
             self.blurb.moveBy(0, -cr.height() / 2)
         else:
-            cr = self.di.boundingRect()
-            self.di.moveBy(0, -cr.height() / 2)
-            # check if blurb is empty, move accordingly to hide it
-            if not self.blurb.is_rendered() and self.blurb.toPlainText() == "":
-                self.blurb.moveBy(0, -cr.height() / 2)
-            else:
-                self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
+            self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
     def changeComment(self, dlt, txt, legal=True):
         # need to force a bounding-rect update by removing an item and adding it back
@@ -188,11 +185,7 @@ class GhostComment(QGraphicsItemGroup):
         # move to correct positions
         self.tweakPositions()
         self.addToGroup(self.blurb)
-        if dlt == ".":
-            self.di.setVisible(False)
-        else:
-            self.di.setVisible(True)
-            self.addToGroup(self.di)
+        self.addToGroup(self.di)
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting

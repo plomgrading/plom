@@ -205,7 +205,6 @@ mouseMove = {
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
     "rubric": "mouseMoveRubric",
-    "delta": "mouseMoveDelta",
     "zoom": "mouseMoveZoom",
 }
 mouseRelease = {
@@ -352,7 +351,6 @@ class PageScene(QGraphicsScene):
         self.addItem(self.ghostItem)
 
         # Set a mark-delta, rubric-text and rubric-delta.
-        self.markDelta = "0"
         self.rubricText = ""
         self.rubricDelta = "0"
         self.rubricID = None
@@ -485,7 +483,7 @@ class PageScene(QGraphicsScene):
         Sets the current toolMode.
 
         Args:
-            mode (str): One of "rubric", "delta", "pan", "move" etc..
+            mode (str): One of "rubric", "pan", "move" etc..
 
         Returns:
             None
@@ -494,14 +492,8 @@ class PageScene(QGraphicsScene):
         self.views()[0].setFocus(Qt.TabFocusReason)
 
         self.mode = mode
-        # if current mode is not rubric or delta, make sure the
-        # ghostcomment is hidden
-        if self.mode == "delta":
-            # make sure the ghost is updated - fixes #307
-            self.updateGhost(self.markDelta, "")
-        elif self.mode == "rubric":
-            pass
-        else:
+        # if current mode is not rubric, make sure the ghostcomment is hidden
+        if self.mode != "rubric":
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
             if self.rubricFlag > 0:
@@ -676,15 +668,9 @@ class PageScene(QGraphicsScene):
 
         """
 
-        deltaShift = self.parent.cursorCross
-        if self.mode == "delta":
-            if not int(self.markDelta) > 0:
-                deltaShift = self.parent.cursorTick
-
         variableCursors = {
             "cross": [self.parent.cursorTick, self.parent.cursorQMark],
             "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
-            "delta": [deltaShift, self.parent.cursorQMark],
             "tick": [self.parent.cursorCross, self.parent.cursorQMark],
             "box": [self.parent.cursorEllipse, self.parent.cursorBox],
             "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
@@ -717,7 +703,6 @@ class PageScene(QGraphicsScene):
         variableCursorRelease = {
             "cross": self.parent.cursorCross,
             "line": self.parent.cursorLine,
-            "delta": Qt.ArrowCursor,
             "tick": self.parent.cursorTick,
             "box": self.parent.cursorBox,
             "pen": self.parent.cursorPen,
@@ -1940,20 +1925,6 @@ class PageScene(QGraphicsScene):
                 )
             )
 
-    def mouseMoveDelta(self, event):
-        """
-        Handles mouse moving with a delta.
-
-        Args:
-            event (QMouseEvent): the event of the mouse moving.
-
-        Returns:
-            None
-        """
-        if not self.ghostItem.isVisible():
-            self.ghostItem.setVisible(True)
-        self.ghostItem.setPos(event.scenePos())
-
     def setTheMark(self, newMark):
         """
         Sets the new mark/score for the paper.
@@ -1996,37 +1967,8 @@ class PageScene(QGraphicsScene):
         # TODO: any action on dot needed here?
         if self.mode == "rubric":
             self.changeTheRubric(
-                self.markDelta, self.rubricText, self.rubricID, annotatorUpdate=False
+                self.rubricDelta, self.rubricText, self.rubricID, annotatorUpdate=False
             )
-
-    # def changeTheDelta(self, newDelta, annotatorUpdate=False):
-    #     """
-    #     Changes the new mark/score for the paper based on the delta.
-    #
-    #     Args:
-    #         newDelta (str): a string containing the delta integer.
-    #         annotatorUpdate (bool): true if annotator should be updated,
-    #             false otherwise.
-    #
-    #     Returns:
-    #         True if the delta is legal, false otherwise.
-    #
-    #     """
-    #     legalDelta = self.isLegalDelta(newDelta)
-    #     self.markDelta = newDelta
-    #
-    #     if annotatorUpdate:
-    #         gpt = QCursor.pos()  # global mouse pos
-    #         vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-    #         spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-    #         self.ghostItem.setPos(spt)
-    #
-    #     self.rubricDelta = self.markDelta
-    #     self.rubricText = ""
-    #     self.updateGhost(self.rubricDelta, self.rubricText, legalDelta)
-    #     self.exposeGhost()
-    #
-    #     return legalDelta
 
     def undo(self):
         """ Undoes a given action."""
@@ -2082,25 +2024,13 @@ class PageScene(QGraphicsScene):
             vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
-            self.markDelta = delta
+            self.rubricDelta = delta
             self.setToolMode("rubric")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
         legality = self.isLegalDelta(delta)
-        # if delta != ".":
-        #     id = int(delta)
-        #
-        #     # we pass the actual rubric-delta to this (though it might be
-        #     # suppressed in the rubriclist).. so we have to check the
-        #     # the delta is legal for the marking style. if delta<0 when mark
-        #     # up OR delta>0 when mark down OR mark-total then pass delta="."
-        #     if (
-        #         (id < 0 and self.markStyle == 2)
-        #         or (id > 0 and self.markStyle == 3)
-        #         or self.markStyle == 1
-        #     ):
-        #         delta = "."
+
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID
