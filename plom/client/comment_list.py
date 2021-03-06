@@ -1135,7 +1135,7 @@ class RubricTable(QTableWidget):
             self.setSortingEnabled(True)
         ##
         self.pressed.connect(self.handleClick)
-        self.itemChanged.connect(self.handleClick)
+        # self.itemChanged.connect(self.handleClick)
         self.doubleClicked.connect(self.editRow)
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
