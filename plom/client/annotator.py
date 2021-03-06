@@ -624,13 +624,12 @@ class Annotator(QWidget):
         self.ui.finishedButton.setMaximumWidth(44)
 
         to_reveal = [
-            [self.ui.penButton, 4, 1],
-            [self.ui.lineButton, 4, 2],
-            [self.ui.tickButton, 5, 1],
-            [self.ui.crossButton, 5, 2],
-            [self.ui.textButton, 6, 1],
-            [self.ui.commentButton, 6, 2],
-            [self.ui.boxButton, 7, 1],
+            [self.ui.boxButton, 4, 1],
+            [self.ui.tickButton, 4, 2],
+            [self.ui.crossButton, 5, 1],
+            [self.ui.textButton, 5, 2],
+            [self.ui.lineButton, 6, 1],
+            [self.ui.penButton, 6, 2],
             [self.ui.deleteButton, 8, 1],
             [self.ui.panButton, 8, 2],
             [self.ui.undoButton, 8, 1],
