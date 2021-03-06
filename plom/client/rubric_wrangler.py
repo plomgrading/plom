@@ -369,7 +369,8 @@ class RubricWrangler(QDialog):
         self.rubricTable.setDragEnabled(True)
         self.rubricTable.setAcceptDrops(False)
         ##
-        kopy = list(tab_names)
+        # TODO: only want the A,B,C
+        kopy = list(tab_names[1:4])
         kopy.append("HIDE")
         self.ST = ShowListFrame(kopy)
         ##

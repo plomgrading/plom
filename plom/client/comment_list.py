@@ -1166,7 +1166,24 @@ class RubricTable(QTableWidget):
             menu.addAction(QAction("Edit a copy...", self))
         else:
             menu.addAction(QAction("Edit...", self))
+        menu.addSeparator()
+        renameTabAction = QAction("Rename this pane...", self)
+        renameTabAction.triggered.connect(self.rename_current_tab)
+        menu.addAction(renameTabAction)
+        if False:  # e.g., share pane, delta pane renamable?
+            renameTabAction.setEnabled(False)
         menu.popup(QCursor.pos())
+
+    def rename_current_tab(self):
+        # we want the current tab, not current row
+        # TODO: this convoluted access probably indicates this is the wrong place for this function
+        n = self.parent.RTW.currentIndex()
+        log.debug("current tab is %d", n)
+        if n < 0:
+            return  # "-1 if there is no current widget"
+        self.parent.tab_names[n]["shortname"] = "foo"
+        self.parent.tab_names[n]["longname"] = "foozy"
+        self.parent.refreshTabHeaderNames()
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
         """Clear table and repopulate rubrics in the key_list"""
@@ -1358,12 +1375,16 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        # the table has 2 cols, delta&comment.
-        # TODO: hardcoded to length 3 for now
+        # TODO: markstyle set after rubric widget added
+        # if self.parent.markStyle == 2: ...
+        delta_label = "\N{Plus-minus Sign}n"
+        # TODO: hardcoded length for now
         self.tab_names = [
+            {"shortname": "Shared", "longname": "Shared"},
             {"shortname": "\N{Black Star}", "longname": "Favourites"},
             {"shortname": "A", "longname": None},
             {"shortname": "B", "longname": None},
+            {"shortname": delta_label, "longname": "Delta"},
         ]
         self.tabA = RubricTable(self)  # group A
         self.tabB = RubricTable(self)  # group B
@@ -1373,11 +1394,11 @@ class RubricWidget(QWidget):
         self.numberOfTabs = 5
         self.RTW = QTabWidget()
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabS, "Shared")
-        self.RTW.addTab(self.tabA, self.tab_names[0]["shortname"])
-        self.RTW.addTab(self.tabB, self.tab_names[1]["shortname"])
-        self.RTW.addTab(self.tabC, self.tab_names[2]["shortname"])
-        self.RTW.addTab(self.tabDelta, "Delta")
+        self.RTW.addTab(self.tabS, self.tab_names[0]["shortname"])
+        self.RTW.addTab(self.tabA, self.tab_names[1]["shortname"])
+        self.RTW.addTab(self.tabB, self.tab_names[2]["shortname"])
+        self.RTW.addTab(self.tabC, self.tab_names[3]["shortname"])
+        self.RTW.addTab(self.tabDelta, self.tab_names[4]["shortname"])
         self.RTW.setCurrentIndex(0)  # start on shared tab
         grid.addWidget(self.RTW, 1, 1, 2, 4)
         self.addB = QPushButton("Add")
@@ -1393,6 +1414,19 @@ class RubricWidget(QWidget):
         self.addB.clicked.connect(self.add_new_rubric)
         self.filtB.clicked.connect(self.wrangleRubrics)
         self.otherB.clicked.connect(self.refreshRubrics)
+
+    def refreshTabHeaderNames(self):
+        # TODO: this will fail with movable tabs: probably we need to store this
+        # `tab_names` info inside the RubricTables instead of `self.tab_names`.
+        print("Note: {} tabs".format(self.RTW.count()))
+        for n in range(self.RTW.count()):
+            log.debug(
+                'refresh tab %d text from "%s" to "%s"',
+                n,
+                self.RTW.tabText(n),
+                self.tab_names[n]["shortname"],
+            )
+            self.RTW.setTabText(n, self.tab_names[n]["shortname"])
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
