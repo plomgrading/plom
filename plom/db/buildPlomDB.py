@@ -8,14 +8,14 @@ from plom.db import PlomDB
 
 
 managerRubrics = [
-    {"delta": -1, "text": "arithmetic", "meta": "standardComment"},
+    {"delta": "-1", "text": "arithmetic", "meta": "standardComment"},
     {"delta": ".", "text": "be careful", "meta": "standardComment"},
     {
-        "delta": 0,
+        "delta": "0",
         "text": r"tex: you can write \LaTeX, $e^{i\pi} + 1 = 0$",
         "meta": "LaTeX works",
     },
-    {"delta": 1, "text": "good", "meta": "give constructive feedback"},
+    {"delta": "+1", "text": "good", "meta": "give constructive feedback"},
 ]
 
 
