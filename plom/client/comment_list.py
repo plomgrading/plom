@@ -1575,7 +1575,7 @@ class RubricWidget(QWidget):
         if arb.exec_() != QDialog.Accepted:
             return
         if arb.DE.checkState() == Qt.Checked:
-            dlt = str(arb.SB.value())
+            dlt = str(arb.SB.textFromValue())
         else:
             dlt = "."
         txt = arb.TE.toPlainText().strip()
@@ -1628,6 +1628,15 @@ class RubricWidget(QWidget):
         self.handleClick()
 
 
+class SignedSB(QSpinBox):  # add an explicit sign to spinbox
+    def textFromValue(self, n):
+        t = QSpinBox().textFromValue(n)
+        if n > 0:
+            return "+" + t
+        else:
+            return t
+
+
 class AddRubricBox(QDialog):
     def __init__(self, username, maxMark, lst, com=None):
         """Initialize a new dialog to edit/create a comment.
@@ -1648,7 +1657,8 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Add new rubric")
         self.CB = QComboBox()
         self.TE = QTextEdit()
-        self.SB = QSpinBox()
+        self.SB = SignedSB()
+        # self.SB = QSpinBox()
         self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
