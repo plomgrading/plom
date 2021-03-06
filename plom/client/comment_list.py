@@ -1579,7 +1579,7 @@ class RubricWidget(QWidget):
         if arb.exec_() != QDialog.Accepted:
             return
         if arb.DE.checkState() == Qt.Checked:
-            dlt = str(arb.SB.textFromValue())
+            dlt = str(arb.SB.textFromValue(arb.SB.value()))
         else:
             dlt = "."
         txt = arb.TE.toPlainText().strip()
