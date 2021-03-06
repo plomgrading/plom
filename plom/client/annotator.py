@@ -502,10 +502,10 @@ class Annotator(QWidget):
                 # try rubric under d
                 Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
                 Qt.Key_D: self.rubricMode,  # note: F selects mode, then next rubric
-                # prev/next pane = s,d
+                # prev/next pane = s,f
                 Qt.Key_F: self.next_pane,
                 Qt.Key_S: self.prev_pane,
-                # prev/next minor-tools = w,e
+                # prev/next minor-tools = w,r
                 Qt.Key_R: lambda: self.next_minor_tool(),
                 Qt.Key_W: lambda: self.prev_minor_tool(),
                 # try keeping rubric under f
@@ -523,14 +523,6 @@ class Annotator(QWidget):
                 Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
                 Qt.Key_A: lambda: self.ui.moveButton.animateClick(),
                 Qt.Key_Z: lambda: self.ui.zoomButton.animateClick(),
-                # TODO: maybe shift-G redo: need proper QAction?
-                # Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-                # Qt.Key_G: lambda: self.ui.textButton.animateClick(),
-                # Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-                # Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
-                # Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
-                # Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-                # Qt.Key_T: lambda: self.ui.penButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -558,24 +550,23 @@ class Annotator(QWidget):
             }
         else:
             return {
-                # home-row
-                Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-                Qt.Key_J: lambda: self.rubricMode(),
-                Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
-                Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
-                Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
-                # lower-row
-                Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
-                Qt.Key_M: lambda: self.ui.commentDownButton.animateClick(),
-                Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
-                Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
-                # top-row
-                Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
-                Qt.Key_U: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
-                Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_P: lambda: self.ui.panButton.animateClick(),
+                # lefthanded
+                # undo redo = g/t => h/y
+                Qt.Key_Y: lambda: self.ui.redoButton.animateClick(),
+                Qt.Key_H: lambda: self.ui.undoButton.animateClick(),
+                # try rubric under d: e/d => i/k
+                Qt.Key_I: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_K: self.rubricMode,  # note: F selects mode, then next rubric
+                # prev/next pane = s,f => j/l
+                Qt.Key_L: self.next_pane,
+                Qt.Key_J: self.prev_pane,
+                # prev/next minor-tools = u,o =>
+                Qt.Key_O: lambda: self.next_minor_tool(),
+                Qt.Key_U: lambda: self.prev_minor_tool(),
+                # others - delete,move,zoom = Q,A,Z => p,;,/
+                Qt.Key_P: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_Semicolo: lambda: self.ui.moveButton.animateClick(),
+                Qt.Key_Slash: lambda: self.ui.zoomButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -583,17 +574,16 @@ class Annotator(QWidget):
                 Qt.Key_Minus: lambda: self.view.zoomOut(),
                 Qt.Key_Underscore: lambda: self.view.zoomOut(),
                 # Change-mark shortcuts
-                # Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-                # Qt.Key_1: lambda: self.keyToChangeMark(1),
-                # Qt.Key_2: lambda: self.keyToChangeMark(2),
-                # Qt.Key_3: lambda: self.keyToChangeMark(3),
-                # Qt.Key_4: lambda: self.keyToChangeMark(4),
-                # Qt.Key_5: lambda: self.keyToChangeMark(5),
-                # Qt.Key_6: lambda: self.keyToChangeMark(6),
-                # Qt.Key_7: lambda: self.keyToChangeMark(7),
-                # Qt.Key_8: lambda: self.keyToChangeMark(8),
-                # Qt.Key_9: lambda: self.keyToChangeMark(9),
-                # Qt.Key_0: lambda: self.keyToChangeMark(10),
+                Qt.Key_1: lambda: self.keyToChangeRubric(1),
+                Qt.Key_2: lambda: self.keyToChangeRubric(2),
+                Qt.Key_3: lambda: self.keyToChangeRubric(3),
+                Qt.Key_4: lambda: self.keyToChangeRubric(4),
+                Qt.Key_5: lambda: self.keyToChangeRubric(5),
+                Qt.Key_6: lambda: self.keyToChangeRubric(6),
+                Qt.Key_7: lambda: self.keyToChangeRubric(7),
+                Qt.Key_8: lambda: self.keyToChangeRubric(8),
+                Qt.Key_9: lambda: self.keyToChangeRubric(9),
+                Qt.Key_0: lambda: self.keyToChangeRubric(10),
                 # ?-mark pop up a key-list
                 Qt.Key_Question: lambda: self.keyPopUp(),
                 # Toggle hide/unhide tools so as to maximise space for annotation

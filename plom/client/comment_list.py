@@ -1360,7 +1360,7 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabB, "B")
         self.RTW.addTab(self.tabC, "C")
         self.RTW.addTab(self.tabDelta, "Delta")
-        self.RTW.setCurrentIndex(0)  # start on shared
+        self.RTW.setCurrentIndex(0)  # start on shared tab
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
