@@ -1505,6 +1505,10 @@ class Annotator(QWidget):
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
         # save the rubricWidgetLists
+        self.saveWranglerState()
+
+    def saveWranglerState(self):
+        # save the rubricWidgetLists
         self.parentMarkerUI.annotatorSettings[
             "rubricWranglerState"
         ] = self.rubric_widget.wranglerState
