@@ -1259,9 +1259,8 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                r = 0
-            else:
-                return
+                self.selectRubricByRow(0)
+            return
         r = (r + 1) % self.rowCount()
         self.selectRubricByRow(r)
 
@@ -1270,24 +1269,24 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                r = 0
-            else:
-                return
+                self.selectRubricByRow(self.rowCount() - 1)
+            return
         r = (r - 1) % self.rowCount()
         self.selectRubricByRow(r)
 
     def handleClick(self):
         # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
         r = self.getCurrentRubricRow()
+        if r is None:
+            return
         # recall columns are ["Key", "Username", "Delta", "Text"])
-        if r is not None:
-            self.parent.rubricSignal.emit(  # send delta, text, rubricID
-                [
-                    self.item(r, 2).text(),
-                    self.item(r, 3).text(),
-                    self.item(r, 0).text(),
-                ]
-            )
+        self.parent.rubricSignal.emit(  # send delta, text, rubricID
+            [
+                self.item(r, 2).text(),
+                self.item(r, 3).text(),
+                self.item(r, 0).text(),
+            ]
+        )
 
     def updateLegalityOfDeltas(self, legalDown, legalUp):
         """Style items according to legal range of a<=delta<=b"""
@@ -1505,6 +1504,7 @@ class RubricWidget(QWidget):
 
     def selectRubricByRow(self, rowNumber):
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
+        self.handleClick()
 
     def nextRubric(self):
         self.RTW.currentWidget().nextRubric()
@@ -1514,9 +1514,11 @@ class RubricWidget(QWidget):
 
     def next_pane(self):
         self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
+        self.handleClick()
 
     def prev_pane(self):
         self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
+        self.handleClick()
 
     def get_nonrubric_text_from_page(self):
         """Find any text that isn't already part of a formal rubric.
