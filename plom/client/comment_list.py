@@ -1495,6 +1495,8 @@ class RubricWidget(QWidget):
         self.tabDelta = RubricTable(self, tabType="delta")  # group D
         self.numberOfTabs = 5
         self.RTW = QTabWidget()
+        # Change here to enable movable tabs: may require fixing indexing elsewhere
+        self.RTW.setMovable(False)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tab_names[0]["shortname"])
         self.RTW.addTab(self.tabA, self.tab_names[1]["shortname"])
