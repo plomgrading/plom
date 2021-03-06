@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -283,14 +284,13 @@ class ShowTable(QTableWidget):
 
 class ShowTabW(QTabWidget):
     def __init__(self, nameList):
-        super(ShowTabW, self).__init__()
+        super().__init__()
         self.tabBar().setAcceptDrops(True)
         self.tabBar().setChangeCurrentOnDrag(True)
         for X in nameList:
+            if isinstance(X, dict):
+                X = X["longname"] if X["longname"] else "List {}".format(X["shortname"])
             self.addTab(ShowTable(), X)
-
-    def addTab(self, widget, text):
-        p = super().addTab(widget, text)
 
     def dropEvent(self, event):
         self.currentWidget().dropEvent(event)
@@ -298,7 +298,7 @@ class ShowTabW(QTabWidget):
 
 class DropButton(QPushButton):
     def __init__(self, p, txt):
-        super(DropButton, self).__init__(txt)
+        super().__init__(txt)
         self.setAcceptDrops(True)
         self.index = p
         self.clicked.connect(self.payAttentionToMe)
@@ -323,12 +323,14 @@ class DropButton(QPushButton):
 
 class ShowListFrame(QFrame):
     def __init__(self, nameList):
-        super(ShowListFrame, self).__init__()
+        super().__init__()
         self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         self.STW = ShowTabW(nameList)
         self.DI = DeleteIcon()
         vl = QVBoxLayout()
         for n, X in enumerate(nameList):
+            if isinstance(X, dict):
+                X = X["longname"] if X["longname"] else "List {}".format(X["shortname"])
             vl.addWidget(DropButton(n, X))
         hl = QHBoxLayout()
         hl.addLayout(vl)
@@ -346,8 +348,8 @@ class ShowListFrame(QFrame):
 
 
 class RubricWrangler(QDialog):
-    def __init__(self, rubrics, wranglerState, username):
-        super(RubricWrangler, self).__init__()
+    def __init__(self, rubrics, wranglerState, username, tab_names):
+        super().__init__()
         self.resize(1200, 768)
         self.username = username
         self.rubrics = rubrics
@@ -367,7 +369,9 @@ class RubricWrangler(QDialog):
         self.rubricTable.setDragEnabled(True)
         self.rubricTable.setAcceptDrops(False)
         ##
-        self.ST = ShowListFrame(["List A", "List B", "List C", "HIDE"])
+        kopy = list(tab_names)
+        kopy.append("HIDE")
+        self.ST = ShowListFrame(kopy)
         ##
         self.tFiltLE = QLineEdit()
         self.tFiltLE.returnPressed.connect(self.setTextFilter)

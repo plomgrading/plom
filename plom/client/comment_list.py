@@ -1118,7 +1118,7 @@ class ChangeFiltersDialog(QDialog):
 
 class RubricTable(QTableWidget):
     def __init__(self, parent, sort=False):
-        super(RubricTable, self).__init__()
+        super().__init__()
         self.parent = parent
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1329,6 +1329,12 @@ class RubricWidget(QWidget):
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
         # the table has 2 cols, delta&comment.
+        # TODO: hardcoded to length 3 for now
+        self.tab_names = [
+            {"shortname": "\N{Black Star}", "longname": "Favourites"},
+            {"shortname": "A", "longname": None},
+            {"shortname": "B", "longname": None},
+        ]
         self.tabA = RubricTable(self)  # group A
         self.tabB = RubricTable(self)  # group B
         self.tabC = RubricTable(self)  # group C
@@ -1336,7 +1342,13 @@ class RubricWidget(QWidget):
         self.tabDelta = RubricTable(self)  # group C
         self.numberOfTabs = 5
         self.RTW = QTabWidget()
-        self.setUpTabs()
+        self.RTW.tabBar().setChangeCurrentOnDrag(True)
+        self.RTW.addTab(self.tabS, "Shared")
+        self.RTW.addTab(self.tabA, self.tab_names[0]["shortname"])
+        self.RTW.addTab(self.tabB, self.tab_names[1]["shortname"])
+        self.RTW.addTab(self.tabC, self.tab_names[2]["shortname"])
+        self.RTW.addTab(self.tabDelta, "Delta")
+        self.RTW.setCurrentIndex(0)  # start on shared tab
         grid.addWidget(self.RTW, 1, 1, 2, 4)
         self.addB = QPushButton("Add")
         self.filtB = QPushButton("Arrange/Filter")
@@ -1352,15 +1364,6 @@ class RubricWidget(QWidget):
         self.filtB.clicked.connect(self.wrangleRubrics)
         self.otherB.clicked.connect(self.refreshRubrics)
 
-    def setUpTabs(self):
-        self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabS, "Shared")
-        self.RTW.addTab(self.tabA, "A")
-        self.RTW.addTab(self.tabB, "B")
-        self.RTW.addTab(self.tabC, "C")
-        self.RTW.addTab(self.tabDelta, "Delta")
-        self.RTW.setCurrentIndex(0)  # start on shared tab
-
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
         new_rubrics = self.parent.getRubrics()
@@ -1371,7 +1374,9 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def wrangleRubrics(self):
-        wr = RubricWrangler(self.rubrics, self.wranglerState, self.username)
+        wr = RubricWrangler(
+            self.rubrics, self.wranglerState, self.username, self.tab_names
+        )
         if wr.exec_() != QDialog.Accepted:
             return
         else:
