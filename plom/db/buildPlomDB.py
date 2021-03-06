@@ -31,10 +31,12 @@ def buildSpecialRubrics(spec, db):
             rubric["question"] = "{}".format(q)
             if not db.McreateRubric("manager", rubric):
                 raise ValueError("Manager rubric for q.{} already exists".format(q))
-    # create standard manager delta-rubrics
+    # create standard manager delta-rubrics - but no 0
     for q in range(1, 1 + spec["numberOfQuestions"]):
         mx = spec["question"]["{}".format(q)]["mark"]
         for m in range(-mx, mx + 1):
+            if m == 0:
+                continue
             rubric = {
                 # make '+' explicit for positive delta
                 "delta": "{}".format(m) if m <= 0 else "+{}".format(m),

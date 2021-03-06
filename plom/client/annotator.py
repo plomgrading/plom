@@ -538,7 +538,6 @@ class Annotator(QWidget):
                 Qt.Key_Minus: lambda: self.view.zoomOut(),
                 Qt.Key_Underscore: lambda: self.view.zoomOut(),
                 # Change-mark shortcuts
-                Qt.Key_QuoteLeft: lambda: self.keyToChangeRubric(0),
                 Qt.Key_1: lambda: self.keyToChangeRubric(1),
                 Qt.Key_2: lambda: self.keyToChangeRubric(2),
                 Qt.Key_3: lambda: self.keyToChangeRubric(3),
@@ -584,17 +583,17 @@ class Annotator(QWidget):
                 Qt.Key_Minus: lambda: self.view.zoomOut(),
                 Qt.Key_Underscore: lambda: self.view.zoomOut(),
                 # Change-mark shortcuts
-                Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-                Qt.Key_1: lambda: self.keyToChangeMark(1),
-                Qt.Key_2: lambda: self.keyToChangeMark(2),
-                Qt.Key_3: lambda: self.keyToChangeMark(3),
-                Qt.Key_4: lambda: self.keyToChangeMark(4),
-                Qt.Key_5: lambda: self.keyToChangeMark(5),
-                Qt.Key_6: lambda: self.keyToChangeMark(6),
-                Qt.Key_7: lambda: self.keyToChangeMark(7),
-                Qt.Key_8: lambda: self.keyToChangeMark(8),
-                Qt.Key_9: lambda: self.keyToChangeMark(9),
-                Qt.Key_0: lambda: self.keyToChangeMark(10),
+                # Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
+                # Qt.Key_1: lambda: self.keyToChangeMark(1),
+                # Qt.Key_2: lambda: self.keyToChangeMark(2),
+                # Qt.Key_3: lambda: self.keyToChangeMark(3),
+                # Qt.Key_4: lambda: self.keyToChangeMark(4),
+                # Qt.Key_5: lambda: self.keyToChangeMark(5),
+                # Qt.Key_6: lambda: self.keyToChangeMark(6),
+                # Qt.Key_7: lambda: self.keyToChangeMark(7),
+                # Qt.Key_8: lambda: self.keyToChangeMark(8),
+                # Qt.Key_9: lambda: self.keyToChangeMark(9),
+                # Qt.Key_0: lambda: self.keyToChangeMark(10),
                 # ?-mark pop up a key-list
                 Qt.Key_Question: lambda: self.keyPopUp(),
                 # Toggle hide/unhide tools so as to maximise space for annotation
@@ -1004,7 +1003,7 @@ class Annotator(QWidget):
         else:
             self.setWindowState(Qt.WindowNoState)
 
-    def keyToChangeRubric(self, rowNumber):
+    def keyToChangeRubric(self, keyNumber):
         """
         Translates a the numerical key into a selection of that row of the current rubric pane.
 
@@ -1013,8 +1012,8 @@ class Annotator(QWidget):
             None: modifies self.rubric_widget
 
         """
-        # Otherwise click the appropriate button.
-        self.rubric_widget.selectRubricByRow(rowNumber)
+        # row is one less than key
+        self.rubric_widget.selectRubricByRow(keyNumber - 1)
 
     def keyPressEvent(self, event):
         """

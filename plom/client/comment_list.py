@@ -1146,7 +1146,11 @@ class RubricTable(QTableWidget):
         # since populating in order of key_list, build all keys from rubric_list
         rkl = [X["id"] for X in rubric_list]
         for id in key_list:
-            rb = rubric_list[rkl.index(id)]
+            try:  # guard against mysterious keys - should not happen unless people doing silliness
+                rb = rubric_list[rkl.index(id)]
+            except (ValueError, KeyError, IndexError):
+                continue
+
             rc = self.rowCount()
             self.insertRow(rc)
             self.setItem(rc, 0, QTableWidgetItem(rb["id"]))
@@ -1154,7 +1158,7 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
             self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
             # set row header
-            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc)))
+            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc + 1)))
             # set 'illegal' colour if out of range
             if legalDown is not None and legalUp is not None:
                 v = deltaToInt(rb["delta"])
@@ -1193,7 +1197,7 @@ class RubricTable(QTableWidget):
             self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
             self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
             self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
-            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc)))
+            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc + 1)))
             # set 'illegal' colour if out of range
             if legalDown is not None and legalUp is not None:
                 v = int(rb["delta"])
@@ -1356,7 +1360,7 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabB, "B")
         self.RTW.addTab(self.tabC, "C")
         self.RTW.addTab(self.tabDelta, "Delta")
-        self.RTW.setCurrentIndex(1)
+        self.RTW.setCurrentIndex(0)  # start on shared
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
