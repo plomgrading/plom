@@ -12,9 +12,17 @@ import toml
 import appdirs
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QBrush, QColor, QDropEvent, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QDropEvent,
+    QStandardItem,
+    QStandardItemModel,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QAction,
     QCheckBox,
     QLabel,
     QComboBox,
@@ -24,6 +32,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QItemDelegate,
     QMessageBox,
+    QMenu,
     QPushButton,
     QToolButton,
     QSpinBox,
@@ -1137,6 +1146,27 @@ class RubricTable(QTableWidget):
         self.pressed.connect(self.handleClick)
         # self.itemChanged.connect(self.handleClick)
         self.doubleClicked.connect(self.editRow)
+
+    def contextMenuEvent(self, event):
+        log.debug("Popping up a popup menu")
+        menu = QMenu(self)
+        if True:  # if this_is_share_pane
+            hideAction = QAction("Hide", self)
+            # hideAction.triggered.connect(lambda: self.hide_the_thingy(event))
+        else:
+            hideAction = QAction("Remove from pane", self)
+        menu.addAction(hideAction)
+        menu.addSeparator()
+        menu.addAction(QAction("Add to Pane A", self))
+        menu.addAction(QAction("Add to Pane B", self))
+        menu.addAction(QAction("Add to Pane C", self))
+        menu.addAction(QAction("Add to new pane...", self))
+        menu.addSeparator()
+        if True:  # if this_isnt_mine
+            menu.addAction(QAction("Edit a copy...", self))
+        else:
+            menu.addAction(QAction("Edit...", self))
+        menu.popup(QCursor.pos())
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
         """Clear table and repopulate rubrics in the key_list"""
