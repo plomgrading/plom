@@ -48,7 +48,7 @@ from .comment_list import CommentWidget, RubricWidget
 
 # import the key-help popup window class
 from .key_help import KeyHelp
-from .mark_handler import MarkHandler
+
 from .origscanviewer import OriginalScansViewer, RearrangementViewer
 from .pagescene import PageScene
 from .pageview import PageView
@@ -70,7 +70,6 @@ tipText = {
     "rubric up": "Rubric up: Select previous rubric in list",
     "rubric down": "Rubric down: Select next rubric in list",
     "cross": "Cross: L = cross, M/Ctrl = ?-mark, R/Shift = checkmark.",
-    "delta": "Delta: L = paste mark, M/Ctrl = ?-mark, R/Shift = checkmark/cross.",
     "delete": "Delete: L = Delete object, L-drag = delete area.",
     "line": "Line: L = straight line, M/Ctrl = double-arrow, R/Shift = arrow.",
     "move": "Move object.",
@@ -164,11 +163,10 @@ class Annotator(QWidget):
         self.ui.container_commentwidget.addWidget(self.rubric_widget)
         print("TODO rename comment stuff in qt-creator files to rubric stuff")
 
-        # pass the marking style to the mark entry widget.
+        # pass the marking style to the rubric-widget
         # also when we set this up we have to connect various
-        # mark set, delta-set, mark change functions
+        # mark set, mark change functions
         self.scene = None  # TODO?
-        self.markHandler = None
 
         self.setMiscShortCuts()
         # set the zoom combobox
@@ -266,9 +264,7 @@ class Annotator(QWidget):
 
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
-        if self.scene.mode == "delta":
-            self.modeInformation.append(self.scene.markDelta)
-        elif self.scene.mode == "rubric":  # stores as [a,b]
+        if self.scene.mode == "rubric":  # stores as [a,b]
             self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
 
         # after grabbed mode information, reset rubric_widget
@@ -287,7 +283,6 @@ class Annotator(QWidget):
         self.paperDir = None
         self.src_img_data = None
         self.saveName = None
-        # self.destroyMarkHandler()
 
     def loadNewTGV(
         self,
@@ -314,7 +309,7 @@ class Annotator(QWidget):
             saveName (str): name the tgv is saved as
             maxMark (int): maximum possible score for that test question
             markStyle (int): marking style
-                             1 = mark total = user clicks the total-mark
+                             1 = mark total = user clicks the total-mark (DEPRECATED)
                              2 = mark-up = mark starts at 0 and user increments it
                              3 = mark-down = mark starts at max and user decrements it
                              Note: can be overridden by the plomDict.
@@ -375,24 +370,14 @@ class Annotator(QWidget):
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
-        # TODO: perhaps not right depending on when `self.setMarkHandler(self.markStyle)` is called
         self.rubric_widget.setStyle(self.markStyle)
         self.rubric_widget.changeMark(self.score, self.maxMark)
         self.rubric_widget.setQuestionNumber(self.question_num)
         self.rubric_widget.setTestName(testName)
 
-        if not self.markHandler:
-            # Build the mark handler and put into the gui.
-            self.markHandler = MarkHandler(self, self.maxMark, self.markStyle)
-            self.ui.container_markgrid.addWidget(self.markHandler)
-        else:
-            self.markHandler.resetAndMaybeChange(self.maxMark, self.markStyle)
-
         # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setToolMode(self.modeInformation[0])
-        if self.modeInformation[0] == "delta":
-            self.markHandler.clickDelta(self.modeInformation[1])
         if self.modeInformation[0] == "rubric":
             self.rubric_widget.setCurrentRubricKeyAndTab(  # stored as [a,b]
                 self.modeInformation[1][0], self.modeInformation[1][1]
@@ -517,10 +502,10 @@ class Annotator(QWidget):
                 # try rubric under d
                 Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
                 Qt.Key_D: self.rubricMode,  # note: F selects mode, then next rubric
-                # prev/next pane = s,d
+                # prev/next pane = s,f
                 Qt.Key_F: self.next_pane,
                 Qt.Key_S: self.prev_pane,
-                # prev/next minor-tools = w,e
+                # prev/next minor-tools = w,r
                 Qt.Key_R: lambda: self.next_minor_tool(),
                 Qt.Key_W: lambda: self.prev_minor_tool(),
                 # try keeping rubric under f
@@ -538,14 +523,6 @@ class Annotator(QWidget):
                 Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
                 Qt.Key_A: lambda: self.ui.moveButton.animateClick(),
                 Qt.Key_Z: lambda: self.ui.zoomButton.animateClick(),
-                # TODO: maybe shift-G redo: need proper QAction?
-                # Qt.Key_D: lambda: self.ui.tickButton.animateClick(),
-                # Qt.Key_G: lambda: self.ui.textButton.animateClick(),
-                # Qt.Key_C: lambda: self.ui.boxButton.animateClick(),
-                # Qt.Key_B: lambda: self.ui.lineButton.animateClick(),
-                # Qt.Key_Q: lambda: self.ui.panButton.animateClick(),
-                # Qt.Key_E: lambda: self.ui.crossButton.animateClick(),
-                # Qt.Key_T: lambda: self.ui.penButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -553,17 +530,16 @@ class Annotator(QWidget):
                 Qt.Key_Minus: lambda: self.view.zoomOut(),
                 Qt.Key_Underscore: lambda: self.view.zoomOut(),
                 # Change-mark shortcuts
-                Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-                Qt.Key_1: lambda: self.keyToChangeMark(1),
-                Qt.Key_2: lambda: self.keyToChangeMark(2),
-                Qt.Key_3: lambda: self.keyToChangeMark(3),
-                Qt.Key_4: lambda: self.keyToChangeMark(4),
-                Qt.Key_5: lambda: self.keyToChangeMark(5),
-                Qt.Key_6: lambda: self.keyToChangeMark(6),
-                Qt.Key_7: lambda: self.keyToChangeMark(7),
-                Qt.Key_8: lambda: self.keyToChangeMark(8),
-                Qt.Key_9: lambda: self.keyToChangeMark(9),
-                Qt.Key_0: lambda: self.keyToChangeMark(10),
+                Qt.Key_1: lambda: self.keyToChangeRubric(1),
+                Qt.Key_2: lambda: self.keyToChangeRubric(2),
+                Qt.Key_3: lambda: self.keyToChangeRubric(3),
+                Qt.Key_4: lambda: self.keyToChangeRubric(4),
+                Qt.Key_5: lambda: self.keyToChangeRubric(5),
+                Qt.Key_6: lambda: self.keyToChangeRubric(6),
+                Qt.Key_7: lambda: self.keyToChangeRubric(7),
+                Qt.Key_8: lambda: self.keyToChangeRubric(8),
+                Qt.Key_9: lambda: self.keyToChangeRubric(9),
+                Qt.Key_0: lambda: self.keyToChangeRubric(10),
                 # ?-mark pop up a key-list
                 Qt.Key_Question: lambda: self.keyPopUp(),
                 # Toggle hide/unhide tools so as to maximise space for annotation
@@ -574,24 +550,23 @@ class Annotator(QWidget):
             }
         else:
             return {
-                # home-row
-                Qt.Key_H: lambda: self.ui.textButton.animateClick(),
-                Qt.Key_J: lambda: self.rubricMode(),
-                Qt.Key_K: lambda: self.ui.tickButton.animateClick(),
-                Qt.Key_L: lambda: self.ui.undoButton.animateClick(),
-                Qt.Key_Semicolon: lambda: self.ui.zoomButton.animateClick(),
-                # lower-row
-                Qt.Key_N: lambda: self.ui.lineButton.animateClick(),
-                Qt.Key_M: lambda: self.ui.commentDownButton.animateClick(),
-                Qt.Key_Comma: lambda: self.ui.boxButton.animateClick(),
-                Qt.Key_Period: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_Slash: lambda: self.ui.moveButton.animateClick(),
-                # top-row
-                Qt.Key_Y: lambda: self.ui.penButton.animateClick(),
-                Qt.Key_U: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_I: lambda: self.ui.crossButton.animateClick(),
-                Qt.Key_O: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_P: lambda: self.ui.panButton.animateClick(),
+                # lefthanded
+                # undo redo = g/t => h/y
+                Qt.Key_Y: lambda: self.ui.redoButton.animateClick(),
+                Qt.Key_H: lambda: self.ui.undoButton.animateClick(),
+                # try rubric under d: e/d => i/k
+                Qt.Key_I: lambda: self.ui.commentUpButton.animateClick(),
+                Qt.Key_K: self.rubricMode,  # note: F selects mode, then next rubric
+                # prev/next pane = s,f => j/l
+                Qt.Key_L: self.next_pane,
+                Qt.Key_J: self.prev_pane,
+                # prev/next minor-tools = u,o =>
+                Qt.Key_O: lambda: self.next_minor_tool(),
+                Qt.Key_U: lambda: self.prev_minor_tool(),
+                # others - delete,move,zoom = Q,A,Z => p,;,/
+                Qt.Key_P: lambda: self.ui.deleteButton.animateClick(),
+                Qt.Key_Semicolo: lambda: self.ui.moveButton.animateClick(),
+                Qt.Key_Slash: lambda: self.ui.zoomButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -599,17 +574,16 @@ class Annotator(QWidget):
                 Qt.Key_Minus: lambda: self.view.zoomOut(),
                 Qt.Key_Underscore: lambda: self.view.zoomOut(),
                 # Change-mark shortcuts
-                Qt.Key_QuoteLeft: lambda: self.keyToChangeMark(0),
-                Qt.Key_1: lambda: self.keyToChangeMark(1),
-                Qt.Key_2: lambda: self.keyToChangeMark(2),
-                Qt.Key_3: lambda: self.keyToChangeMark(3),
-                Qt.Key_4: lambda: self.keyToChangeMark(4),
-                Qt.Key_5: lambda: self.keyToChangeMark(5),
-                Qt.Key_6: lambda: self.keyToChangeMark(6),
-                Qt.Key_7: lambda: self.keyToChangeMark(7),
-                Qt.Key_8: lambda: self.keyToChangeMark(8),
-                Qt.Key_9: lambda: self.keyToChangeMark(9),
-                Qt.Key_0: lambda: self.keyToChangeMark(10),
+                Qt.Key_1: lambda: self.keyToChangeRubric(1),
+                Qt.Key_2: lambda: self.keyToChangeRubric(2),
+                Qt.Key_3: lambda: self.keyToChangeRubric(3),
+                Qt.Key_4: lambda: self.keyToChangeRubric(4),
+                Qt.Key_5: lambda: self.keyToChangeRubric(5),
+                Qt.Key_6: lambda: self.keyToChangeRubric(6),
+                Qt.Key_7: lambda: self.keyToChangeRubric(7),
+                Qt.Key_8: lambda: self.keyToChangeRubric(8),
+                Qt.Key_9: lambda: self.keyToChangeRubric(9),
+                Qt.Key_0: lambda: self.keyToChangeRubric(10),
                 # ?-mark pop up a key-list
                 Qt.Key_Question: lambda: self.keyPopUp(),
                 # Toggle hide/unhide tools so as to maximise space for annotation
@@ -650,14 +624,12 @@ class Annotator(QWidget):
         self.ui.finishedButton.setMaximumWidth(44)
 
         to_reveal = [
-            [self.ui.penButton, 4, 1],
-            [self.ui.lineButton, 4, 2],
-            [self.ui.tickButton, 5, 1],
-            [self.ui.crossButton, 5, 2],
-            [self.ui.textButton, 6, 1],
-            [self.ui.commentButton, 6, 2],
-            [self.ui.boxButton, 7, 1],
-            [self.ui.deltaButton, 7, 2],
+            [self.ui.boxButton, 4, 1],
+            [self.ui.tickButton, 4, 2],
+            [self.ui.crossButton, 5, 1],
+            [self.ui.textButton, 5, 2],
+            [self.ui.lineButton, 6, 1],
+            [self.ui.penButton, 6, 2],
             [self.ui.deleteButton, 8, 1],
             [self.ui.panButton, 8, 2],
             [self.ui.undoButton, 8, 1],
@@ -677,8 +649,6 @@ class Annotator(QWidget):
             self.ui.revealLayout.addWidget(
                 button[0], button[1], button[2], Qt.AlignHCenter | Qt.AlignTop
             )
-
-        self.ui.deltaButton.setVisible(True)
 
         self.ui.revealLayout.addWidget(
             self.ui.modeLabel, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
@@ -715,7 +685,6 @@ class Annotator(QWidget):
                     self.ui.commentButton,
                     self.ui.commentDownButton,
                     self.ui.commentUpButton,
-                    self.ui.deltaButton,
                 ],
                 [],
                 [
@@ -759,7 +728,6 @@ class Annotator(QWidget):
 
         load_tools(self.mouseHand)
 
-        self.ui.deltaButton.setVisible(False)
         self.ui.ebLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
         self.ui.modeLayout.addWidget(self.ui.finishedButton)
@@ -1024,25 +992,17 @@ class Annotator(QWidget):
         else:
             self.setWindowState(Qt.WindowNoState)
 
-    def keyToChangeMark(self, buttonNumber):
+    def keyToChangeRubric(self, keyNumber):
         """
-        Translates a key-press into a button-press.
+        Translates a the numerical key into a selection of that row of the current rubric pane.
 
-        Notes:
-            Each key clicks one of the delta-mark buttons in the mark-entry widget.
-            If mark-up style then they trigger the positive mark buttons,
-            hence p0,p1 etc... if mark down then triggers the negative mark
-            buttons - n1,n2, etc.
 
         Returns:
-            None: modifies self.markHandler.
+            None: modifies self.rubric_widget
 
         """
-        # if key is higher than maxMark then no such button.
-        if buttonNumber > self.maxMark:
-            return
-        # Otherwise click the appropriate button.
-        self.markHandler.markButtons[buttonNumber].animateClick()
+        # row is one less than key
+        self.rubric_widget.selectRubricByRow(keyNumber - 1)
 
     def keyPressEvent(self, event):
         """
@@ -1076,30 +1036,20 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self
         """
-        # A bit of a hack to take care of comment-mode and delta-mode
+        # A bit of a hack to take care of rubric-mode
         if self.scene and self.scene.mode == "rubric" and newMode != "rubric":
             # self.comment_widget.CL.setStyleSheet("")
             print("TODO - fix up style setting in rubric widget")
         # We have to be a little careful since not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
 
-        if self.sender() in self.markHandler.getButtonList():
-            # has come from mark-change button, markHandler does its own styling
-            pass
-        elif self.sender() in self.ui.frameTools.children():
+        if self.sender() in self.ui.frameTools.children():
             # tool buttons change the mode
             self.sender().setChecked(True)
-            self.markHandler.clearButtonStyle()
         elif self.sender() is self.rubric_widget:
-            self.markHandler.clearButtonStyle()
             print("TODO - fix this style setting")
             # self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
             self.ui.commentButton.setChecked(True)
-        elif self.sender() is self.markHandler:
-            # Clear the style of the mark-handler (this will mostly not do
-            # anything, but saves us testing if we had styled it)
-            self.markHandler.clearButtonStyle()
-            # this should not happen
         else:
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
@@ -1166,7 +1116,6 @@ class Annotator(QWidget):
         )
         self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
         self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
-        self.setIcon(self.ui.deltaButton, "delta", "{}/delta.svg".format(base_path))
         self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
         self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
         self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
@@ -1294,13 +1243,6 @@ class Annotator(QWidget):
         """ Changes the tool to delete. """
         self.setToolMode("delete", self.cursorDelete)
 
-    def deltaButtonMode(self):
-        """ Changes the tool to the delta button. """
-        if QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier:
-            self.ui.deltaButton.showMenu()
-        else:
-            self.setToolMode("delta", Qt.ArrowCursor)
-
     def lineMode(self):
         """ Changes the tool to the line button.  """
         self.setToolMode("line", self.cursorLine)
@@ -1351,10 +1293,7 @@ class Annotator(QWidget):
             "text": lambda: self.ui.textButton.animateClick(),
             "tick": lambda: self.ui.tickButton.animateClick(),
         }
-        if mode == "delta" and aux is not None:
-            # make sure that the mark handler has been set.
-            self.markHandler.loadDeltaValue(aux)
-        elif mode == "rubric" and aux is not None:  # key and tab set as [a,b]
+        if mode == "rubric" and aux is not None:  # key and tab set as [a,b]
             self.rubric_widget.setCurrentRubricKeyAndTab(aux[0], aux[1])
             print("TODO - this will be a bit problematic")
             self.ui.commentButton.animateClick()
@@ -1406,8 +1345,6 @@ class Annotator(QWidget):
         self.ui.textButton.clicked.connect(self.textMode)
         self.ui.tickButton.clicked.connect(self.tickMode)
         self.ui.zoomButton.clicked.connect(self.zoomMode)
-        # Also the "hidden" delta-button
-        self.ui.deltaButton.clicked.connect(self.deltaButtonMode)
 
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
@@ -1457,54 +1394,6 @@ class Annotator(QWidget):
                 dlt_txt[0], dlt_txt[1], dlt_txt[2], annotatorUpdate=True
             )
 
-    def totalMarkSet(self, totmark):
-        """
-        Sets the total mark and passes that info to the rubric widget.
-
-        Args:
-            totmark (int) : the total mark of the paper.
-
-        Returns:
-            None: modifies self.scoree and self.scene.
-
-        """
-        self.score = totmark
-        self.rubric_widget.changeMark(self.score)
-        # also tell the scene what the new mark is
-        if self.scene:  # TODO: bit of a hack
-            self.scene.setTheMark(self.score)
-
-    def deltaMarkSet(self, deltmark):
-        """
-        Handles when the delta button, or a comment is clicked.
-        Proceeds to set set the scene and view based on the current
-        delta.
-
-        Args:
-            deltmark (int): the positive or negative value corresponding
-                           to the delta change in mark.
-
-        Notes:
-            The delta will be checked for "legality" (i.e. will the delta
-             cause the grade to go below zero or above the max) at a later
-             date. This will not cause the method to break.
-
-        Returns:
-            None: Modifies self.scene
-
-        """
-        if not self.scene:
-            return
-        self.setToolMode("delta", QCursor(Qt.IBeamCursor))
-        if not self.scene.changeTheDelta(deltmark, annotatorUpdate=True):
-            # If it is out of range then change mode to "move" so that
-            # the user cannot paste in that delta.
-            self.ui.moveButton.animateClick()
-            return
-        # Else, the delta is now set, so now change the mode here.
-        self.setToolMode("delta", QCursor(Qt.IBeamCursor))
-        self.ui.deltaButton.setChecked(True)
-
     def changeMark(self, mark):
         """
         Updates the mark-handler.
@@ -1513,7 +1402,7 @@ class Annotator(QWidget):
             mark: the new mark for the given tgv.
 
         Returns:
-            None: modifies self.score, self.ui and self.markHandler
+            None: modifies self.score, self.ui and self.rubric_widget
 
         """
         # Tell the mark-handler what the new mark is and force a repaint.
@@ -1525,10 +1414,10 @@ class Annotator(QWidget):
             "{} out of {}".format(self.scene.score, self.scene.maxMark)
         )
         #
-        # TODO - decide if we can get rid of this markhandler stuff.
-        self.markHandler.setMark(self.score)
-        self.markHandler.repaint()
-        self.markHandler.updateRelevantDeltaActions()
+        self.rubric_widget.changeMark(self.score)
+        # also tell the scene what the new mark is
+        if self.scene:  # TODO: bit of a hack
+            self.scene.setTheMark(self.score)
 
     def loadWindowSettings(self):
         """ Loads the window settings. """
@@ -1553,10 +1442,7 @@ class Annotator(QWidget):
 
         # remember the last tool used
         if self.parentMarkerUI.annotatorSettings["tool"] is not None:
-            if self.parentMarkerUI.annotatorSettings["tool"] == "delta":
-                dlt = self.parentMarkerUI.annotatorSettings["delta"]
-                self.loadModeFromBefore("delta", dlt)
-            elif self.parentMarkerUI.annotatorSettings["tool"] == "rubric":
+            if self.parentMarkerUI.annotatorSettings["tool"] == "rubric":
                 rbrc = self.parentMarkerUI.annotatorSettings["rubric"]
                 self.loadModeFromBefore("rubric", rbrc)
             else:
@@ -1608,8 +1494,6 @@ class Annotator(QWidget):
             "zoomState"
         ] = self.ui.zoomCB.currentIndex()
         self.parentMarkerUI.annotatorSettings["tool"] = self.scene.mode
-        if self.scene.mode == "delta":
-            self.parentMarkerUI.annotatorSettings["delta"] = self.scene.markDelta
         if self.scene.mode == "rubric":
             self.parentMarkerUI.annotatorSettings[
                 "rubric"
@@ -1620,6 +1504,10 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
+        # save the rubricWidgetLists
+        self.saveWranglerState()
+
+    def saveWranglerState(self):
         # save the rubricWidgetLists
         self.parentMarkerUI.annotatorSettings[
             "rubricWranglerState"
@@ -1677,11 +1565,11 @@ class Annotator(QWidget):
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
-        if self.score == 0 and self.markHandler.style != "Down":
+        if self.score == 0 and self.markStyle != "Down":
             if not self._zeroMarksWarn():
                 return False
 
-        if self.score == self.maxMark and self.markHandler.style == "Down":
+        if self.score == self.maxMark and self.markStyle == "Down":
             if not self._fullMarkWarn():
                 return False
 
@@ -1907,9 +1795,6 @@ class Annotator(QWidget):
         if plomData.get("annotationColor", None):
             self.scene.set_annotation_color(plomData["annotationColor"])
         self.scene.unpickleSceneItems(plomData["sceneItems"])
-        # if markstyle is "Total", then click appropriate button
-        if self.markStyle == 1:
-            self.markHandler.unpickleTotal(plomData["currentMark"])
         self.view.setHidden(False)
 
     def setZoomComboBox(self):

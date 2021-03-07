@@ -12,18 +12,28 @@ import toml
 import appdirs
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QBrush, QColor, QDropEvent, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QCursor,
+    QDropEvent,
+    QStandardItem,
+    QStandardItemModel,
+)
 from PyQt5.QtWidgets import (
     QAbstractItemView,
+    QAction,
     QCheckBox,
     QLabel,
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QInputDialog,
     QFormLayout,
     QGridLayout,
     QItemDelegate,
     QMessageBox,
+    QMenu,
     QPushButton,
     QToolButton,
     QSpinBox,
@@ -1118,12 +1128,13 @@ class ChangeFiltersDialog(QDialog):
 
 class RubricTable(QTableWidget):
     def __init__(self, parent, sort=False):
-        super(RubricTable, self).__init__()
+        super().__init__()
         self.parent = parent
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
+        self.verticalHeader().setVisible(True)
         self.setDragEnabled(True)
         self.setAcceptDrops(False)
         self.setColumnCount(4)
@@ -1134,8 +1145,55 @@ class RubricTable(QTableWidget):
             self.setSortingEnabled(True)
         ##
         self.pressed.connect(self.handleClick)
-        self.itemChanged.connect(self.handleClick)
+        # self.itemChanged.connect(self.handleClick)
         self.doubleClicked.connect(self.editRow)
+
+    def contextMenuEvent(self, event):
+        log.debug("Popping up a popup menu")
+        menu = QMenu(self)
+        if True:  # if this_is_share_pane
+            hideAction = QAction("Hide", self)
+            # hideAction.triggered.connect(lambda: self.hide_the_thingy(event))
+        else:
+            hideAction = QAction("Remove from pane", self)
+        menu.addAction(hideAction)
+        menu.addSeparator()
+        menu.addAction(QAction("Add to Pane A", self))
+        menu.addAction(QAction("Add to Pane B", self))
+        menu.addAction(QAction("Add to Pane C", self))
+        menu.addAction(QAction("Add to new pane...", self))
+        menu.addSeparator()
+        if True:  # if this_isnt_mine
+            menu.addAction(QAction("Edit a copy...", self))
+        else:
+            menu.addAction(QAction("Edit...", self))
+        menu.addSeparator()
+        renameTabAction = QAction("Rename this pane...", self)
+        renameTabAction.triggered.connect(self.rename_current_tab)
+        menu.addAction(renameTabAction)
+        if False:  # e.g., share pane, delta pane renamable?
+            renameTabAction.setEnabled(False)
+        menu.popup(QCursor.pos())
+
+    def rename_current_tab(self):
+        # we want the current tab, not current row
+        # TODO: this convoluted access probably indicates this is the wrong place for this function
+        n = self.parent.RTW.currentIndex()
+        log.debug("current tab is %d", n)
+        if n < 0:
+            return  # "-1 if there is no current widget"
+        # TODO: use a custom dialog
+        curname = self.parent.tab_names[n]
+        s1, ok1 = QInputDialog.getText(
+            self, 'Rename pane "{}"'.format(curname["shortname"]), "Enter short name"
+        )
+        s2, ok2 = QInputDialog.getText(
+            self, 'Rename pane "{}"'.format(curname["shortname"]), "Enter long name"
+        )
+        if ok1 and ok2:
+            self.parent.tab_names[n]["shortname"] = s1
+            self.parent.tab_names[n]["longname"] = s2
+        self.parent.refreshTabHeaderNames()
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
         """Clear table and repopulate rubrics in the key_list"""
@@ -1145,13 +1203,19 @@ class RubricTable(QTableWidget):
         # since populating in order of key_list, build all keys from rubric_list
         rkl = [X["id"] for X in rubric_list]
         for id in key_list:
-            rb = rubric_list[rkl.index(id)]
+            try:  # guard against mysterious keys - should not happen unless people doing silliness
+                rb = rubric_list[rkl.index(id)]
+            except (ValueError, KeyError, IndexError):
+                continue
+
             rc = self.rowCount()
             self.insertRow(rc)
             self.setItem(rc, 0, QTableWidgetItem(rb["id"]))
             self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
             self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
             self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
+            # set row header
+            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc + 1)))
             # set 'illegal' colour if out of range
             if legalDown is not None and legalUp is not None:
                 v = deltaToInt(rb["delta"])
@@ -1160,6 +1224,43 @@ class RubricTable(QTableWidget):
                     self.item(rc, 3).setForeground(colour_illegal)
 
         self.resizeColumnsToContents()
+
+    def setDeltaRubrics(self, markStyle, maxMark, rubrics):
+        """Clear table and repopulate with delta-rubrics"""
+        # remove everything
+        for r in range(self.rowCount()):
+            self.removeRow(0)
+        # grab the delta-rubrics from the rubricslist
+        delta_rubrics = []
+        for rb in rubrics:
+            # make sure you get the ones relevant to the marking style
+            if rb["username"] == "manager" and rb["meta"] == "delta":
+                if markStyle == 2 and int(rb["delta"]) >= 0:
+                    delta_rubrics.append(rb)
+                if markStyle == 3 and int(rb["delta"]) <= 0:
+                    delta_rubrics.append(rb)
+        # to make sure the delta is legal, set legalUp,down
+        if markStyle == 2:
+            legalUp = maxMark
+            legalDown = 0
+        else:
+            legalUp = 0
+            legalDown = -maxMark
+        # now sort in numerical order away from 0 and add
+        for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
+            rc = self.rowCount()
+            self.insertRow(rc)
+            self.setItem(rc, 0, QTableWidgetItem(rb["id"]))
+            self.setItem(rc, 1, QTableWidgetItem(rb["username"]))
+            self.setItem(rc, 2, QTableWidgetItem(rb["delta"]))
+            self.setItem(rc, 3, QTableWidgetItem(rb["text"]))
+            self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc + 1)))
+            # set 'illegal' colour if out of range
+            if legalDown is not None and legalUp is not None:
+                v = int(rb["delta"])
+                if v > legalUp or v < legalDown:
+                    self.item(rc, 2).setForeground(colour_illegal)
+                    self.item(rc, 3).setForeground(colour_illegal)
 
     def getKeyFromRow(self, row):
         return self.item(r, 0).text()
@@ -1215,9 +1316,8 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                r = 0
-            else:
-                return
+                self.selectRubricByRow(0)
+            return
         r = (r + 1) % self.rowCount()
         self.selectRubricByRow(r)
 
@@ -1226,24 +1326,24 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                r = 0
-            else:
-                return
+                self.selectRubricByRow(self.rowCount() - 1)
+            return
         r = (r - 1) % self.rowCount()
         self.selectRubricByRow(r)
 
     def handleClick(self):
         # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
         r = self.getCurrentRubricRow()
+        if r is None:
+            return
         # recall columns are ["Key", "Username", "Delta", "Text"])
-        if r is not None:
-            self.parent.rubricSignal.emit(  # send delta, text, rubricID
-                [
-                    self.item(r, 2).text(),
-                    self.item(r, 3).text(),
-                    self.item(r, 0).text(),
-                ]
-            )
+        self.parent.rubricSignal.emit(  # send delta, text, rubricID
+            [
+                self.item(r, 2).text(),
+                self.item(r, 3).text(),
+                self.item(r, 0).text(),
+            ]
+        )
 
     def updateLegalityOfDeltas(self, legalDown, legalUp):
         """Style items according to legal range of a<=delta<=b"""
@@ -1285,14 +1385,31 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        # the table has 2 cols, delta&comment.
+        # TODO: markstyle set after rubric widget added
+        # if self.parent.markStyle == 2: ...
+        delta_label = "\N{Plus-minus Sign}n"
+        # TODO: hardcoded length for now
+        self.tab_names = [
+            {"shortname": "Shared", "longname": "Shared"},
+            {"shortname": "\N{Black Star}", "longname": "Favourites"},
+            {"shortname": "A", "longname": None},
+            {"shortname": "B", "longname": None},
+            {"shortname": delta_label, "longname": "Delta"},
+        ]
         self.tabA = RubricTable(self)  # group A
         self.tabB = RubricTable(self)  # group B
         self.tabC = RubricTable(self)  # group C
         self.tabS = RubricTable(self, sort=True)  # Shared
-        self.numberOfTabs = 4
+        self.tabDelta = RubricTable(self)  # group C
+        self.numberOfTabs = 5
         self.RTW = QTabWidget()
-        self.setUpTabs()
+        self.RTW.tabBar().setChangeCurrentOnDrag(True)
+        self.RTW.addTab(self.tabS, self.tab_names[0]["shortname"])
+        self.RTW.addTab(self.tabA, self.tab_names[1]["shortname"])
+        self.RTW.addTab(self.tabB, self.tab_names[2]["shortname"])
+        self.RTW.addTab(self.tabC, self.tab_names[3]["shortname"])
+        self.RTW.addTab(self.tabDelta, self.tab_names[4]["shortname"])
+        self.RTW.setCurrentIndex(0)  # start on shared tab
         grid.addWidget(self.RTW, 1, 1, 2, 4)
         self.addB = QPushButton("Add")
         self.filtB = QPushButton("Arrange/Filter")
@@ -1308,13 +1425,18 @@ class RubricWidget(QWidget):
         self.filtB.clicked.connect(self.wrangleRubrics)
         self.otherB.clicked.connect(self.refreshRubrics)
 
-    def setUpTabs(self):
-        self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabA, "A")
-        self.RTW.addTab(self.tabB, "B")
-        self.RTW.addTab(self.tabC, "C")
-        self.RTW.addTab(self.tabS, "Shared")
-        self.RTW.setCurrentIndex(3)
+    def refreshTabHeaderNames(self):
+        # TODO: this will fail with movable tabs: probably we need to store this
+        # `tab_names` info inside the RubricTables instead of `self.tab_names`.
+        print("Note: {} tabs".format(self.RTW.count()))
+        for n in range(self.RTW.count()):
+            log.debug(
+                'refresh tab %d text from "%s" to "%s"',
+                n,
+                self.RTW.tabText(n),
+                self.tab_names[n]["shortname"],
+            )
+            self.RTW.setTabText(n, self.tab_names[n]["shortname"])
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -1326,12 +1448,16 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def wrangleRubrics(self):
-        wr = RubricWrangler(self.rubrics, self.wranglerState, self.username)
+        wr = RubricWrangler(
+            self.rubrics, self.wranglerState, self.username, self.tab_names
+        )
         if wr.exec_() != QDialog.Accepted:
             return
         else:
             self.wranglerState = wr.wranglerState
             self.setRubricsFromStore()
+            # ask annotator to save this stuff back to marker
+            self.parent.saveWranglerState()
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
@@ -1346,8 +1472,11 @@ class RubricWidget(QWidget):
         }
         # only rubrics for this question
         # exclude other users except manager
+        # exclude manager-delta rubrics
         for X in self.rubrics:
             if X["username"] not in [self.username, "manager"]:
+                continue
+            if X["username"] == "manager" and X["meta"] == "delta":
                 continue
             self.wranglerState["shown"].append(X["id"])
         # then set state from this
@@ -1387,6 +1516,11 @@ class RubricWidget(QWidget):
             self.wranglerState["shown"],
             legalDown=legalDown,
             legalUp=legalUp,
+        )
+        self.tabDelta.setDeltaRubrics(
+            self.markStyle,
+            self.maxMark,
+            self.rubrics,
         )
 
     def getCurrentRubricKeyAndTab(self):
@@ -1441,12 +1575,17 @@ class RubricWidget(QWidget):
         self.tabB.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabC.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabDelta.updateLegalityOfDeltas(legalDown, legalUp)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
 
     def reselectCurrentRubric(self):
         self.RTW.currentWidget().reselectCurrentRubric()
+
+    def selectRubricByRow(self, rowNumber):
+        self.RTW.currentWidget().selectRubricByRow(rowNumber)
+        self.handleClick()
 
     def nextRubric(self):
         self.RTW.currentWidget().nextRubric()
@@ -1456,9 +1595,11 @@ class RubricWidget(QWidget):
 
     def next_pane(self):
         self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
+        self.handleClick()
 
     def prev_pane(self):
         self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
+        self.handleClick()
 
     def get_nonrubric_text_from_page(self):
         """Find any text that isn't already part of a formal rubric.
@@ -1517,7 +1658,7 @@ class RubricWidget(QWidget):
         if arb.exec_() != QDialog.Accepted:
             return
         if arb.DE.checkState() == Qt.Checked:
-            dlt = str(arb.SB.value())
+            dlt = str(arb.SB.textFromValue(arb.SB.value()))
         else:
             dlt = "."
         txt = arb.TE.toPlainText().strip()
@@ -1570,6 +1711,15 @@ class RubricWidget(QWidget):
         self.handleClick()
 
 
+class SignedSB(QSpinBox):  # add an explicit sign to spinbox
+    def textFromValue(self, n):
+        t = QSpinBox().textFromValue(n)
+        if n > 0:
+            return "+" + t
+        else:
+            return t
+
+
 class AddRubricBox(QDialog):
     def __init__(self, username, maxMark, lst, com=None):
         """Initialize a new dialog to edit/create a comment.
@@ -1590,7 +1740,8 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Add new rubric")
         self.CB = QComboBox()
         self.TE = QTextEdit()
-        self.SB = QSpinBox()
+        self.SB = SignedSB()
+        # self.SB = QSpinBox()
         self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
