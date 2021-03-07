@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QInputDialog,
     QFormLayout,
     QGridLayout,
     QItemDelegate,
@@ -1181,8 +1182,17 @@ class RubricTable(QTableWidget):
         log.debug("current tab is %d", n)
         if n < 0:
             return  # "-1 if there is no current widget"
-        self.parent.tab_names[n]["shortname"] = "foo"
-        self.parent.tab_names[n]["longname"] = "foozy"
+        # TODO: use a custom dialog
+        curname = self.parent.tab_names[n]
+        s1, ok1 = QInputDialog.getText(
+            self, 'Rename pane "{}"'.format(curname["shortname"]), "Enter short name"
+        )
+        s2, ok2 = QInputDialog.getText(
+            self, 'Rename pane "{}"'.format(curname["shortname"]), "Enter long name"
+        )
+        if ok1 and ok2:
+            self.parent.tab_names[n]["shortname"] = s1
+            self.parent.tab_names[n]["longname"] = s2
         self.parent.refreshTabHeaderNames()
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
