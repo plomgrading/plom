@@ -552,6 +552,7 @@ linuxbin_ubuntu1804:
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu1804.bin
     - mv dist/PlomClient*.bin $NAME
+    - chmod 755 PlomClient*.bin
     - md5sum PlomClient*.bin > md5sum
     - ls $NAME
     - cat md5sum
@@ -647,6 +648,7 @@ linuxbin_ubuntu2004:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
     - mv dist/PlomClient*.bin .
+    - chmod 755 PlomClient*.bin
     - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu2004.bin}"; done;
     - md5sum PlomClient*.bin > md5sum
     - ls PlomClient*.bin
@@ -677,6 +679,7 @@ linuxbin_centos:
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-centos7.bin
     - mv dist/PlomClient*.bin $NAME
+    - chmod 755 PlomClient*.bin
     - md5sum PlomClient*.bin > md5sum
     - ls $NAME
     - cat md5sum
