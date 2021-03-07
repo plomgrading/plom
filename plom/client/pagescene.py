@@ -799,38 +799,31 @@ class PageScene(QGraphicsScene):
         if not self.isLegalDelta(self.rubricDelta):
             return
 
+        # rubric flag explained
+        # 0 = initial state - before rubric click-drag-release-click started
+        # 1 = started drawing box
+        # 2 = started drawing line
+
         # in rubric mode the ghost is activated, so look for objects that intersect the ghost.
         # if they are delta, text or GDT then do nothing.
 
-        if self.textUnderneathGhost():  # something underneath
-            if self.rubricFlag == 0:  # starting a rubric
-                if (event.button() == Qt.RightButton) or (
-                    QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-                ):  # starting a drag - so ignore the intersection
-                    pass
-                else:
-                    return  # intersection - don't stamp anything, just return
-            elif self.rubricFlag == 2:  # finishing the rubric stamp
-                return  # intersection - so don't stamp anything.
+        # check if anything underneath when trying to start / finish
+        if self.textUnderneathGhost() and self.rubricFlag in [0, 2]:
+            return  # intersection - so don't stamp anything.
 
-        # check the rubricFlag and if shift-key is pressed
+        # check the rubricFlag
         if isinstance(event, QGraphicsSceneDragDropEvent):  # is a rubric drag event.
             pass  # no rectangle-drag-rubric, only rubric-stamp
         elif self.rubricFlag == 0:
             # check if drag event
-            if (event.button() == Qt.RightButton) or (
-                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-            ):
-                self.rubricFlag = 1
-                self.originPos = event.scenePos()
-                self.currentPos = self.originPos
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-                self.boxItem.setPen(self.ink)
-                self.boxItem.setBrush(self.lightBrush)
-                self.addItem(self.boxItem)
-                return
+            self.rubricFlag = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+            return
         elif self.rubricFlag == 2:
             connectingLine = whichLineToDraw(
                 self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
@@ -1719,15 +1712,32 @@ class PageScene(QGraphicsScene):
             return
         elif self.rubricFlag == 1:
             self.removeItem(self.boxItem)
-            self.undoStack.beginMacro("Click-Drag composite object")
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
-            # TODO: making a small object draws a line to nowhere... was this intended?
             if (
                 abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
                 > 24
             ):
+                self.undoStack.beginMacro("Click-Drag composite object")
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
+            else:
+                # small box, so just stamp the rubric
+                if self.textUnderneathGhost():
+                    self.rubricFlag = 0  # reset the rubric flag
+                    return  # can't paste it here.
+                command = CommandGroupDeltaText(
+                    self,
+                    event.scenePos(),
+                    self.rubricID,
+                    self.rubricDelta,
+                    self.rubricText,
+                )
+                log.debug(
+                    "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
+                )
+                self.undoStack.push(command)  # push the delta onto the undo stack.
+                self.rubricFlag = 0  # reset the rubric flag
+                return
 
             self.rubricFlag = 2
             self.originPos = event.scenePos()
