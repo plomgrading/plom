@@ -1136,7 +1136,7 @@ class RubricTable(QTableWidget):
         self.horizontalHeader().setStretchLastSection(True)
         self.verticalHeader().setVisible(True)
         self.setDragEnabled(True)
-        self.setAcceptDrops(False)
+        self.setAcceptDrops(True)
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.hideColumn(0)
@@ -1174,6 +1174,37 @@ class RubricTable(QTableWidget):
         if False:  # e.g., share pane, delta pane renamable?
             renameTabAction.setEnabled(False)
         menu.popup(QCursor.pos())
+
+    def dropEvent(self, event):
+        # TODO - simplify - only a single row is selected
+        # fixed drop event using
+        # https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget
+        if event.source() == self:
+            event.setDropAction(Qt.CopyAction)
+            rows = set([mi.row() for mi in self.selectedIndexes()])
+            targetRow = self.indexAt(event.pos()).row()
+            rows.discard(targetRow)
+            rows = sorted(rows)
+            if not rows:
+                return
+            if targetRow == -1:
+                targetRow = self.rowCount()
+            for _ in range(len(rows)):
+                self.insertRow(targetRow)
+            rowMapping = dict()  # Src row to target row.
+            for idx, row in enumerate(rows):
+                if row < targetRow:
+                    rowMapping[row] = targetRow + idx
+                else:
+                    rowMapping[row + len(rows)] = targetRow + idx
+            colCount = self.columnCount()
+            for srcRow, tgtRow in sorted(rowMapping.items()):
+                for col in range(0, colCount):
+                    self.setItem(tgtRow, col, self.takeItem(srcRow, col))
+            for row in reversed(sorted(list(rowMapping.keys()))):
+                self.removeRow(row)
+            event.accept()
+            self.parent.update_after_reordering()
 
     def rename_current_tab(self):
         # we want the current tab, not current row
@@ -1264,6 +1295,9 @@ class RubricTable(QTableWidget):
 
     def getKeyFromRow(self, row):
         return self.item(r, 0).text()
+
+    def getKeyList(self):
+        return [self.item(r, 0).text() for r in range(self.rowCount())]
 
     def getRowFromKey(self, row):
         for r in range(self.rowCount()):
@@ -1709,6 +1743,17 @@ class RubricWidget(QWidget):
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(rubricID)
         self.handleClick()
+
+    def update_after_reordering(self):
+        # ToDo - de-cludge this
+        if self.RTW.currentIndex() == 0:
+            self.wranglerState["shown"] = self.tabS.getKeyList()
+        if self.RTW.currentIndex() == 1:
+            self.wranglerState["tabs"][0] = self.tabA.getKeyList()
+        if self.RTW.currentIndex() == 2:
+            self.wranglerState["tabs"][1] = self.tabB.getKeyList()
+        if self.RTW.currentIndex() == 3:
+            self.wranglerState["tabs"][2] = self.tabC.getKeyList()
 
 
 class SignedSB(QSpinBox):  # add an explicit sign to spinbox
