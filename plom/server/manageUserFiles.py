@@ -106,9 +106,9 @@ def check_username_password_format(username_password_dict):
         boolean: also prints to screen as a side effect.
     """
     for username, password in username_password_dict.items():
-        if not (len(username) >= 4 and username.isalnum()):
+        if not (username.isalnum() and username[0].isalpha()):
             print(
-                "Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(
+                "Username '{}' is problematic: should be alphanumeric and starting with a letter.".format(
                     username
                 )
             )
