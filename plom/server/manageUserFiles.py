@@ -106,8 +106,6 @@ def check_username_password_format(username_password_dict):
         boolean: also prints to screen as a side effect.
     """
     for username, password in username_password_dict.items():
-
-        # basic sanity check of username
         if not (len(username) >= 4 and username.isalnum()):
             print(
                 "Usernames must be at least 4 alphanumeric characters. Username '{}' is problematic.".format(
@@ -115,16 +113,16 @@ def check_username_password_format(username_password_dict):
                 )
             )
             return False
-
-        # basic password checks
-        if len(password) < 4 or username in password:
+        if len(password) < 4:
             print(
-                "Passwords must be at least 4 characters and cannot contain the username. Password of '{}' is problematic.".format(
+                "Password of '{}' is too short, should be at least 4 chars.".format(
                     username
                 )
             )
             return False
-
+        if password == username:
+            print("Password of '{}' is too close to their username.".format(username))
+            return False
     return True
 
 
