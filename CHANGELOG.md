@@ -7,12 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
 ### Changed
+* Client rubrics list can no longer use drag-n-drop to reorder: this feature will return in 0.6.0, but for now its too buggy.
 
 ### Fixed
-
+* Misc bug fixes and UI tweaks.
+* LaTeX appears smoother on non-white backgrounds.
+* Important dependency bumps including a aiohttp security fix.
 
 
 ## [0.5.18] - 2021-03-02
@@ -24,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Client background/uploader can operate in parallel.
 * Client no longer looks for config file in the current folder.  The Options dialog shows config and log locations.
-* Client rubrics list can no longer use drag-n-drop to reorder: this feature will return in 0.6.0, but for now its too buggy.
 
 
 ## [0.5.17] - 2021-02-10
