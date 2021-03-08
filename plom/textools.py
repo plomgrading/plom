@@ -13,7 +13,7 @@ from pathlib import Path
 import pkg_resources
 
 
-def texFragmentToPNG(fragment, outName):
+def texFragmentToPNG(fragment, outName, dpi=225):
     """Process a fragment of latex and produce a png image."""
 
     head = r"""
@@ -59,7 +59,7 @@ def texFragmentToPNG(fragment, outName):
                 "dvipng",
                 "-q",
                 "-D",
-                "225",
+                str(dpi),
                 "-bg",
                 "Transparent",
                 "frag.dvi",
