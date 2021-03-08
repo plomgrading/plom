@@ -202,23 +202,23 @@ def parse_user_list(user_file_path):
 
     Returns:
         None: has side effect of saving user hash dictionary.
+
+    Raises:
+        ValueError
     """
     csv_headers, username_password_dict = return_csv_info(user_file_path)
 
     if not check_user_file_header(csv_headers):
-        print(
-            'Malformed header in user_file_path - should have 2 columns with headers "user" and "password". Aborting.'
+        raise ValueError(
+            'Malformed header - should have 2 columns with headers "user" and "password".'
         )
-        exit(1)
-    elif not check_usernames_requirements(username_password_dict):
-        print(
+    if not check_usernames_requirements(username_password_dict):
+        raise ValueError(
             "Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user."
         )
-        exit(1)
-    elif not check_username_password_format(username_password_dict):
-        print("Username and passwords are not in the required format.")
-        exit(1)
-    else:
-        username_hash_dict = return_user_hash(username_password_dict)
+    if not check_username_password_format(username_password_dict):
+        raise ValueError("Username and passwords are not in the required format.")
+
+    username_hash_dict = return_user_hash(username_password_dict)
 
     save_users(username_hash_dict, user_hash_login_json_path)
