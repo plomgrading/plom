@@ -133,13 +133,16 @@ class KeyWrangler(QDialog):
         self.vB.clicked.connect(self.validate)
         self.aB = QPushButton("Accept layout")
         self.aB.clicked.connect(self.acceptLayout)
+        self.cB = QPushButton("Reject layout")
+        self.cB.clicked.connect(self.reject)
 
         grid = QGridLayout()
         grid.addWidget(self.sdfB, 0, 1)
         grid.addWidget(self.asdB, 0, 2)
         grid.addWidget(self.frB, 0, 3)
-        grid.addWidget(self.vB, 5, 1)
-        grid.addWidget(self.aB, 5, 3)
+        grid.addWidget(self.vB, 5, 3)
+        grid.addWidget(self.cB, 6, 1)
+        grid.addWidget(self.aB, 6, 3)
         ##
         grid.addWidget(self.deleteLabel, 1, 1)
         grid.addWidget(self.moveLabel, 2, 1)
@@ -203,7 +206,7 @@ class KeyWrangler(QDialog):
             return
         newKeyDict = {}
         for act in self.actions:
-            newKeyDict[act] = getattr(self, act + "Key").theCode
+            newKeyDict[act] = getattr(self, act + "Key")
         print(newKeyDict)
         self.accept()
 

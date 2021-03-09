@@ -497,32 +497,22 @@ class Annotator(QWidget):
         if self.mouseHand == 0:
             return {
                 # undo redo = g/t
-                Qt.Key_T: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
-                # try rubric under d
-                Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_D: self.rubricMode,  # note: F selects mode, then next rubric
-                # prev/next pane = s,f
-                Qt.Key_F: self.next_pane,
-                Qt.Key_S: self.prev_pane,
-                # prev/next minor-tools = w,r
-                Qt.Key_R: lambda: self.next_minor_tool(),
-                Qt.Key_W: lambda: self.prev_minor_tool(),
-                # try keeping rubric under f
-                # rubric (mode-down)/up = f,r
-                # Qt.Key_R: lambda: self.ui.commentUpButton.animateClick(),
-                # Qt.Key_F: self.rubricMode,  # note: F selects mode, then next rubric
-                # # prev/next pane = s,d
-                # Qt.Key_D: self.next_pane,
+                # Qt.Key_T: lambda: self.ui.redoButton.animateClick(),
+                # Qt.Key_G: lambda: self.ui.undoButton.animateClick(),
+                # # try rubric under d
+                # Qt.Key_E: lambda: self.ui.commentUpButton.animateClick(),
+                # Qt.Key_D: self.rubricMode,  # note: F selects mode, then next rubric
+                # # prev/next pane = s,f
+                # Qt.Key_F: self.next_pane,
                 # Qt.Key_S: self.prev_pane,
-                # # prev/next minor-tools = w,e
-                # Qt.Key_E: lambda: self.next_minor_tool(),
+                # # prev/next minor-tools = w,r
+                # Qt.Key_R: lambda: self.next_minor_tool(),
                 # Qt.Key_W: lambda: self.prev_minor_tool(),
                 ####
                 # others - delete,move,zoom = Q,A,Z
-                Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_A: lambda: self.ui.moveButton.animateClick(),
-                Qt.Key_Z: lambda: self.ui.zoomButton.animateClick(),
+                # Qt.Key_Q: lambda: self.ui.deleteButton.animateClick(),
+                # Qt.Key_A: lambda: self.ui.moveButton.animateClick(),
+                # Qt.Key_Z: lambda: self.ui.zoomButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -552,21 +542,21 @@ class Annotator(QWidget):
             return {
                 # lefthanded
                 # undo redo = g/t => h/y
-                Qt.Key_Y: lambda: self.ui.redoButton.animateClick(),
-                Qt.Key_H: lambda: self.ui.undoButton.animateClick(),
-                # try rubric under d: e/d => i/k
-                Qt.Key_I: lambda: self.ui.commentUpButton.animateClick(),
-                Qt.Key_K: self.rubricMode,  # note: F selects mode, then next rubric
-                # prev/next pane = s,f => j/l
-                Qt.Key_L: self.next_pane,
-                Qt.Key_J: self.prev_pane,
-                # prev/next minor-tools = u,o =>
-                Qt.Key_O: lambda: self.next_minor_tool(),
-                Qt.Key_U: lambda: self.prev_minor_tool(),
-                # others - delete,move,zoom = Q,A,Z => p,;,/
-                Qt.Key_P: lambda: self.ui.deleteButton.animateClick(),
-                Qt.Key_Semicolo: lambda: self.ui.moveButton.animateClick(),
-                Qt.Key_Slash: lambda: self.ui.zoomButton.animateClick(),
+                # Qt.Key_Y: lambda: self.ui.redoButton.animateClick(),
+                # Qt.Key_H: lambda: self.ui.undoButton.animateClick(),
+                # # try rubric under d: e/d => i/k
+                # Qt.Key_I: lambda: self.ui.commentUpButton.animateClick(),
+                # Qt.Key_K: self.rubricMode,  # note: F selects mode, then next rubric
+                # # prev/next pane = s,f => j/l
+                # Qt.Key_L: self.next_pane,
+                # Qt.Key_J: self.prev_pane,
+                # # prev/next minor-tools = u,o =>
+                # Qt.Key_O: lambda: self.next_minor_tool(),
+                # Qt.Key_U: lambda: self.prev_minor_tool(),
+                # # others - delete,move,zoom = Q,A,Z => p,;,/
+                # Qt.Key_P: lambda: self.ui.deleteButton.animateClick(),
+                # Qt.Key_Semicolo: lambda: self.ui.moveButton.animateClick(),
+                # Qt.Key_Slash: lambda: self.ui.zoomButton.animateClick(),
                 # Then maximize and mark buttons
                 Qt.Key_Backslash: lambda: self.swapMaxNorm(),
                 Qt.Key_Plus: lambda: self.view.zoomIn(),
@@ -1166,6 +1156,37 @@ class Annotator(QWidget):
             None: adds shortcuts.
 
         """
+        # basic tool keys
+        # undo/redo = G,T
+        self.undoSC = QShortcut(QKeySequence("G"), self)
+        self.redoSC = QShortcut(QKeySequence("T"), self)
+        self.undoSC.activated.connect(self.undo)
+        self.redoSC.activated.connect(self.redo)
+        # next/prev rubric = D,E
+        self.nextRubricSC = QShortcut(QKeySequence("D"), self)
+        self.prevRubricSC = QShortcut(QKeySequence("E"), self)
+        self.nextRubricSC.activated.connect(self.rubricMode)
+        self.prevRubricSC.activated.connect(self.rubric_widget.previousRubric)
+        # next/prev pane = F,S
+        self.nextPaneSC = QShortcut(QKeySequence("F"), self)
+        self.prevPaneSC = QShortcut(QKeySequence("S"), self)
+        self.nextPaneSC.activated.connect(self.next_pane)
+        self.prevPaneSC.activated.connect(self.prev_pane)
+        # next/prev tool = R,W
+        self.nextToolSC = QShortcut(QKeySequence("R"), self)
+        self.prevToolSC = QShortcut(QKeySequence("W"), self)
+        self.nextToolSC.activated.connect(self.next_minor_tool)
+        self.prevToolSC.activated.connect(self.prev_minor_tool)
+        # others - delete,move,zoom = Q,A,Z
+        self.deleteSC = QShortcut(QKeySequence("Q"), self)
+        self.moveSC = QShortcut(QKeySequence("A"), self)
+        self.zoomSC = QShortcut(QKeySequence("Z"), self)
+        self.deleteSC.activated.connect(self.deleteMode)
+        self.moveSC.activated.connect(self.moveMode)
+        self.zoomSC.activated.connect(self.zoomMode)
+
+        # Now other misc shortcuts
+
         # shortcuts for next paper
         self.endShortCut = QShortcut(QKeySequence("Alt+Enter"), self)
         self.endShortCut.activated.connect(self.saveAndGetNext)
