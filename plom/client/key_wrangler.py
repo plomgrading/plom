@@ -16,14 +16,17 @@ from PyQt5.QtWidgets import (
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 
 the_actions = [
-    "nextRubric",
     "previousRubric",
-    "nextPane",
+    "nextRubric",
     "previousPane",
-    "nextTool",
+    "nextPane",
     "previousTool",
-    "undo",
+    "nextTool",
     "redo",
+    "undo",
+    "delete",
+    "move",
+    "zoom",
 ]
 
 keys_sdf = {
@@ -35,6 +38,9 @@ keys_sdf = {
     "previousPane": "S",
     "nextTool": "R",
     "previousTool": "W",
+    "delete": "Q",
+    "move": "A",
+    "zoom": "Z",
 }
 
 keys_fr = {
@@ -46,6 +52,23 @@ keys_fr = {
     "previousPane": "S",
     "nextTool": "E",
     "previousTool": "W",
+    "delete": "Q",
+    "move": "A",
+    "zoom": "Z",
+}
+
+keys_asd = {
+    "redo": "R",
+    "undo": "F",
+    "nextRubric": "S",
+    "previousRubric": "W",
+    "nextPane": "D",
+    "previousPane": "A",
+    "nextTool": "E",
+    "previousTool": "Q",
+    "delete": "C",
+    "move": "X",
+    "zoom": "Z",
 }
 
 
@@ -92,40 +115,73 @@ class KeyWrangler(QWidget):
 
         for act in self.actions:
             setattr(self, act + "Label", QLabel(act))
+            getattr(self, act + "Label").setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             setattr(
                 self,
-                act + "KeyInput",
+                act + "Key",
                 SingleKeyEdit(self, self.currentKeys[act], legal=self.legalKeyCodes),
             )
 
         self.sdfB = QPushButton("Set SDF")
         self.sdfB.clicked.connect(self.setSDF)
+        self.asdB = QPushButton("Set ASD")
+        self.asdB.clicked.connect(self.setASD)
         self.frB = QPushButton("Set FR")
         self.frB.clicked.connect(self.setFR)
         self.vB = QPushButton("Validate")
         self.vB.clicked.connect(self.validate)
 
         grid = QGridLayout()
+        grid.addWidget(self.sdfB, 0, 1)
+        grid.addWidget(self.asdB, 0, 2)
+        grid.addWidget(self.frB, 0, 3)
+        grid.addWidget(self.vB, 5, 1)
+        ##
+        grid.addWidget(self.deleteLabel, 1, 1)
+        grid.addWidget(self.moveLabel, 2, 1)
+        grid.addWidget(self.zoomLabel, 3, 1)
+        grid.addWidget(self.deleteKey, 1, 2)
+        grid.addWidget(self.moveKey, 2, 2)
+        grid.addWidget(self.zoomKey, 3, 2)
+        ##
+        grid.addWidget(self.previousToolLabel, 1, 3)
+        grid.addWidget(self.previousToolKey, 1, 4)
+        grid.addWidget(self.nextToolLabel, 1, 7)
+        grid.addWidget(self.nextToolKey, 1, 8)
+        ##
+        grid.addWidget(self.previousPaneLabel, 4, 3)
+        grid.addWidget(self.previousPaneKey, 4, 4)
+        grid.addWidget(self.nextPaneLabel, 4, 7)
+        grid.addWidget(self.nextPaneKey, 4, 8)
+        ##
+        grid.addWidget(self.previousRubricLabel, 2, 5)
+        grid.addWidget(self.previousRubricKey, 2, 6)
+        grid.addWidget(self.nextRubricLabel, 3, 5)
+        grid.addWidget(self.nextRubricKey, 3, 6)
+
         for r, act in enumerate(self.actions):
-            grid.addWidget(getattr(self, act + "Label"), r, 1)
-            grid.addWidget(getattr(self, act + "KeyInput"), r, 2)
-        grid.addWidget(self.sdfB, 0, 3)
-        grid.addWidget(self.frB, 0, 4)
-        grid.addWidget(self.vB, 4, 3)
+            rw = r // 2
+            c = (r - rw * 2) * 2
+            # grid.addWidget(getattr(self, act + "Label"), rw + 1, c)
+            # grid.addWidget(getattr(self, act + "KeyInput"), rw + 1, c + 1)
         self.setLayout(grid)
 
     def setSDF(self):
         for act in self.actions:
-            getattr(self, act + "KeyInput").setText(keys_sdf[act])
+            getattr(self, act + "Key").setText(keys_sdf[act])
 
     def setFR(self):
         for act in self.actions:
-            getattr(self, act + "KeyInput").setText(keys_fr[act])
+            getattr(self, act + "Key").setText(keys_fr[act])
+
+    def setASD(self):
+        for act in self.actions:
+            getattr(self, act + "Key").setText(keys_asd[act])
 
     def validate(self):
         actToCode = {}
         for act in self.actions:
-            actToCode[act] = getattr(self, act + "KeyInput").theCode
+            actToCode[act] = getattr(self, act + "Key").theCode
             if actToCode[act] is None:
                 print("Is invalid - '{}' is missing a key".format(act))
                 return False
@@ -135,7 +191,9 @@ class KeyWrangler(QWidget):
                 if actToCode[act] == actToCode[self.actions[k]]:
                     print(
                         "Is invalid '{}' and '{}' have same key '{}'".format(
-                            act, self.actions[k], QKeySequence(actToCode[act])[0]
+                            act,
+                            self.actions[k],
+                            QKeySequence(actToCode[act]).toString(),
                         )
                     )
                     return False
