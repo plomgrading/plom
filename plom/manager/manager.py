@@ -348,7 +348,7 @@ class Manager(QWidget):
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.closeWindow)
-        self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
@@ -387,10 +387,9 @@ class Manager(QWidget):
         self.ui.serverLE.setText(s)
         self.ui.mportSB.setValue(int(p))
 
-    def setFont(self):
-        v = self.ui.fontSB.value()
+    def setFont(self, n):
         fnt = self.parent.font()
-        fnt.setPointSize(v)
+        fnt.setPointSize(n)
         self.parent.setFont(fnt)
 
     def login(self):

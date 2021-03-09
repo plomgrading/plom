@@ -5,8 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
+
+
+
+## [0.5.19] - 2021-03-09
+
+### Changed
+* Client rubrics list can no longer use drag-n-drop to reorder: this feature will return in 0.6.0, but for now its too buggy.
+
+### Fixed
+* Misc bug fixes and UI tweaks.
+* LaTeX appears smoother on non-white backgrounds.
+* Important dependency bumps including a aiohttp security fix.
+
+
+## [0.5.18] - 2021-03-02
 
 ### Added
 * Client shows path information in the Options dialog.
@@ -15,9 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Client background/uploader can operate in parallel.
 * Client no longer looks for config file in the current folder.  The Options dialog shows config and log locations.
-
-### Fixed
-
 
 
 ## [0.5.17] - 2021-02-10
@@ -391,7 +408,9 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.17...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.19...master
+[0.5.19]: https://gitlab.com/plom/plom/compare/v0.5.18...v0.5.19
+[0.5.18]: https://gitlab.com/plom/plom/compare/v0.5.17...v0.5.18
 [0.5.17]: https://gitlab.com/plom/plom/compare/v0.5.16...v0.5.17
 [0.5.16]: https://gitlab.com/plom/plom/compare/v0.5.15...v0.5.16
 [0.5.15]: https://gitlab.com/plom/plom/compare/v0.5.13...v0.5.15

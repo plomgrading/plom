@@ -131,19 +131,17 @@ class Chooser(QDialog):
         self.ui.setupUi(self)
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
-        self.setLastTime()
-        # connect buttons to functions.
         self.ui.markButton.clicked.connect(self.runMarker)
         self.ui.identifyButton.clicked.connect(self.runIDer)
-
         self.ui.closeButton.clicked.connect(self.closeWindow)
-        self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.getInfo)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
+        self.setLastTime()
 
     def setLastTime(self):
         # set login etc from last time client ran.
@@ -152,7 +150,6 @@ class Chooser(QDialog):
         self.ui.pgSB.setValue(int(lastTime["question"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
-        self.setFont()
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
@@ -268,9 +265,6 @@ class Chooser(QDialog):
             idwin.show()
             idwin.getToWork(messenger)
             self.parent.identifier = idwin
-        else:
-            # reserved for future use
-            pass
 
     def runMarker(self):
         self.runIt = "Marker"
@@ -300,10 +294,14 @@ class Chooser(QDialog):
             messenger.stop()
         self.close()
 
-    def setFont(self):
-        v = self.ui.fontSB.value()
+    def setFont(self, n):
+        """Adjust font size of user interface.
+
+        args:
+            n (int): the desired font size in points.
+        """
         fnt = self.parent.font()
-        fnt.setPointSize(v)
+        fnt.setPointSize(n)
         self.parent.setFont(fnt)
 
     def getQuestion(self):

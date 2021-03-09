@@ -190,7 +190,6 @@ mousePress = {
     "rubric": "mousePressRubric",
     "cross": "mousePressCross",
     "delete": "mousePressDelete",
-    "delta": "mousePressDelta",
     "line": "mousePressLine",
     "move": "mousePressMove",
     "pan": "mousePressPan",
@@ -206,7 +205,6 @@ mouseMove = {
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
     "rubric": "mouseMoveRubric",
-    "delta": "mouseMoveDelta",
     "zoom": "mouseMoveZoom",
 }
 mouseRelease = {
@@ -353,7 +351,6 @@ class PageScene(QGraphicsScene):
         self.addItem(self.ghostItem)
 
         # Set a mark-delta, rubric-text and rubric-delta.
-        self.markDelta = "0"
         self.rubricText = ""
         self.rubricDelta = "0"
         self.rubricID = None
@@ -486,7 +483,7 @@ class PageScene(QGraphicsScene):
         Sets the current toolMode.
 
         Args:
-            mode (str): One of "rubric", "delta", "pan", "move" etc..
+            mode (str): One of "rubric", "pan", "move" etc..
 
         Returns:
             None
@@ -495,14 +492,8 @@ class PageScene(QGraphicsScene):
         self.views()[0].setFocus(Qt.TabFocusReason)
 
         self.mode = mode
-        # if current mode is not rubric or delta, make sure the
-        # ghostcomment is hidden
-        if self.mode == "delta":
-            # make sure the ghost is updated - fixes #307
-            self.updateGhost(self.markDelta, "")
-        elif self.mode == "rubric":
-            pass
-        else:
+        # if current mode is not rubric, make sure the ghostcomment is hidden
+        if self.mode != "rubric":
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
             if self.rubricFlag > 0:
@@ -677,15 +668,9 @@ class PageScene(QGraphicsScene):
 
         """
 
-        deltaShift = self.parent.cursorCross
-        if self.mode == "delta":
-            if not int(self.markDelta) > 0:
-                deltaShift = self.parent.cursorTick
-
         variableCursors = {
             "cross": [self.parent.cursorTick, self.parent.cursorQMark],
             "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
-            "delta": [deltaShift, self.parent.cursorQMark],
             "tick": [self.parent.cursorCross, self.parent.cursorQMark],
             "box": [self.parent.cursorEllipse, self.parent.cursorBox],
             "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
@@ -718,7 +703,6 @@ class PageScene(QGraphicsScene):
         variableCursorRelease = {
             "cross": self.parent.cursorCross,
             "line": self.parent.cursorLine,
-            "delta": Qt.ArrowCursor,
             "tick": self.parent.cursorTick,
             "box": self.parent.cursorBox,
             "pen": self.parent.cursorPen,
@@ -815,38 +799,31 @@ class PageScene(QGraphicsScene):
         if not self.isLegalDelta(self.rubricDelta):
             return
 
+        # rubric flag explained
+        # 0 = initial state - before rubric click-drag-release-click started
+        # 1 = started drawing box
+        # 2 = started drawing line
+
         # in rubric mode the ghost is activated, so look for objects that intersect the ghost.
         # if they are delta, text or GDT then do nothing.
 
-        if self.textUnderneathGhost():  # something underneath
-            if self.rubricFlag == 0:  # starting a rubric
-                if (event.button() == Qt.RightButton) or (
-                    QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-                ):  # starting a drag - so ignore the intersection
-                    pass
-                else:
-                    return  # intersection - don't stamp anything, just return
-            elif self.rubricFlag == 2:  # finishing the rubric stamp
-                return  # intersection - so don't stamp anything.
+        # check if anything underneath when trying to start / finish
+        if self.textUnderneathGhost() and self.rubricFlag in [0, 2]:
+            return  # intersection - so don't stamp anything.
 
-        # check the rubricFlag and if shift-key is pressed
+        # check the rubricFlag
         if isinstance(event, QGraphicsSceneDragDropEvent):  # is a rubric drag event.
             pass  # no rectangle-drag-rubric, only rubric-stamp
         elif self.rubricFlag == 0:
             # check if drag event
-            if (event.button() == Qt.RightButton) or (
-                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-            ):
-                self.rubricFlag = 1
-                self.originPos = event.scenePos()
-                self.currentPos = self.originPos
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-                self.boxItem.setPen(self.ink)
-                self.boxItem.setBrush(self.lightBrush)
-                self.addItem(self.boxItem)
-                return
+            self.rubricFlag = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+            return
         elif self.rubricFlag == 2:
             connectingLine = whichLineToDraw(
                 self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
@@ -861,12 +838,8 @@ class PageScene(QGraphicsScene):
 
         if not self.isLegalDelta(self.rubricDelta):
             # cannot paste illegal delta
+            # still need to reset rubricFlag below.
             pass
-            # TODO: maybe invalid rubrics should not be placeable?
-            # Update position of text - the ghostitem has it right
-            # pt += QPointF(0, self.ghostItem.blurb.pos().y())
-            # command = CommandText(self, pt, self.rubricText)  # self.rubricID)
-            # self.undoStack.push(command)
         else:
             command = CommandGroupDeltaText(
                 self, pt, self.rubricID, self.rubricDelta, self.rubricText
@@ -911,45 +884,6 @@ class PageScene(QGraphicsScene):
         else:
             command = CommandCross(self, pt)
         self.undoStack.push(command)  # push onto the stack.
-
-    def mousePressDelta(self, event):
-        """
-        Creates the mark-delta, ?-mark/tick/cross based on which mouse
-        button or mouse/key combination was pressed.
-
-        Notes:
-            cross = right-click or shift+click if current mark-delta > 0.
-            tick = right-click or shift+click if current mark-delta <= 0.
-            question mark = middle-click or control+click.
-            mark-delta = left-click or any other combination, assigns with
-                the selected mark-delta value.
-
-
-        Args:
-            event (QMouseEvent): Mouse press.
-
-        Returns:
-            None
-
-        """
-        pt = event.scenePos()  # Grab click's location and create command.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            if int(self.markDelta) > 0:
-                command = CommandCross(self, pt)
-            else:
-                command = CommandTick(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            command = CommandQMark(self, pt)
-        else:
-            if self.isLegalDelta(self.markDelta):
-                command = CommandDelta(self, pt, self.markDelta)
-            else:
-                return
-        self.undoStack.push(command)  # push command onto undoStack.
 
     def mousePressMove(self, event):
         """
@@ -1778,15 +1712,32 @@ class PageScene(QGraphicsScene):
             return
         elif self.rubricFlag == 1:
             self.removeItem(self.boxItem)
-            self.undoStack.beginMacro("Click-Drag composite object")
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
-            # TODO: making a small object draws a line to nowhere... was this intended?
             if (
                 abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
                 > 24
             ):
+                self.undoStack.beginMacro("Click-Drag composite object")
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
+            else:
+                # small box, so just stamp the rubric
+                if self.textUnderneathGhost():
+                    self.rubricFlag = 0  # reset the rubric flag
+                    return  # can't paste it here.
+                command = CommandGroupDeltaText(
+                    self,
+                    event.scenePos(),
+                    self.rubricID,
+                    self.rubricDelta,
+                    self.rubricText,
+                )
+                log.debug(
+                    "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
+                )
+                self.undoStack.push(command)  # push the delta onto the undo stack.
+                self.rubricFlag = 0  # reset the rubric flag
+                return
 
             self.rubricFlag = 2
             self.originPos = event.scenePos()
@@ -1984,20 +1935,6 @@ class PageScene(QGraphicsScene):
                 )
             )
 
-    def mouseMoveDelta(self, event):
-        """
-        Handles mouse moving with a delta.
-
-        Args:
-            event (QMouseEvent): the event of the mouse moving.
-
-        Returns:
-            None
-        """
-        if not self.ghostItem.isVisible():
-            self.ghostItem.setVisible(True)
-        self.ghostItem.setPos(event.scenePos())
-
     def setTheMark(self, newMark):
         """
         Sets the new mark/score for the paper.
@@ -2040,37 +1977,8 @@ class PageScene(QGraphicsScene):
         # TODO: any action on dot needed here?
         if self.mode == "rubric":
             self.changeTheRubric(
-                self.markDelta, self.rubricText, self.rubricID, annotatorUpdate=False
+                self.rubricDelta, self.rubricText, self.rubricID, annotatorUpdate=False
             )
-
-    def changeTheDelta(self, newDelta, annotatorUpdate=False):
-        """
-        Changes the new mark/score for the paper based on the delta.
-
-        Args:
-            newDelta (str): a string containing the delta integer.
-            annotatorUpdate (bool): true if annotator should be updated,
-                false otherwise.
-
-        Returns:
-            True if the delta is legal, false otherwise.
-
-        """
-        legalDelta = self.isLegalDelta(newDelta)
-        self.markDelta = newDelta
-
-        if annotatorUpdate:
-            gpt = QCursor.pos()  # global mouse pos
-            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-            self.ghostItem.setPos(spt)
-
-        self.rubricDelta = self.markDelta
-        self.rubricText = ""
-        self.updateGhost(self.rubricDelta, self.rubricText, legalDelta)
-        self.exposeGhost()
-
-        return legalDelta
 
     def undo(self):
         """ Undoes a given action."""
@@ -2126,25 +2034,13 @@ class PageScene(QGraphicsScene):
             vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
-            self.markDelta = delta
+            self.rubricDelta = delta
             self.setToolMode("rubric")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
         legality = self.isLegalDelta(delta)
-        # if delta != ".":
-        #     id = int(delta)
-        #
-        #     # we pass the actual rubric-delta to this (though it might be
-        #     # suppressed in the rubriclist).. so we have to check the
-        #     # the delta is legal for the marking style. if delta<0 when mark
-        #     # up OR delta>0 when mark down OR mark-total then pass delta="."
-        #     if (
-        #         (id < 0 and self.markStyle == 2)
-        #         or (id > 0 and self.markStyle == 3)
-        #         or self.markStyle == 1
-        #     ):
-        #         delta = "."
+
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID

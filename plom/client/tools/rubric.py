@@ -93,14 +93,24 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.blurb.textToPng()
 
         # move blurb so that its top-left corner is next to top-right corner of delta.
-        self.tweakPositions(delta)
+        self.tweakPositions(delta, text)
+        # hide delta if trivial
+        if delta == ".":  # hide the delta
+            self.di.setVisible(False)
+        else:
+            self.di.setVisible(True)
+            self.addToGroup(self.di)
+        # hide blurb if text is trivial
+        if text == ".":  # hide the text
+            self.blurb.setVisible(False)
+        else:
+            self.blurb.setVisible(True)
+            self.addToGroup(self.blurb)
 
         # set up animators for delete
         self.animator = [self.di, self.blurb]
         self.animateFlag = False
 
-        self.addToGroup(self.di)
-        self.addToGroup(self.blurb)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
@@ -111,13 +121,25 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         self.blurb.restyle(style)
         self.di.restyle(style)
 
-    def tweakPositions(self, dlt):
-        pt = self.di.pos()
+    def tweakPositions(self, delta, text):
+        pt = self.pt
         self.blurb.setPos(pt)
         self.di.setPos(pt)
         # TODO: may want some special treatment in "." case
-        cr = self.di.boundingRect()
-        self.blurb.moveBy(cr.width() + 5, 0)
+        # cr = self.di.boundingRect()
+        # self.blurb.moveBy(cr.width() + 5, 0)
+
+        # if no delta, then move things accordingly
+        if delta == ".":
+            cr = self.blurb.boundingRect()
+            self.blurb.moveBy(0, -cr.height() / 2)
+        elif text == ".":
+            cr = self.di.boundingRect()
+            self.di.moveBy(0, -cr.height() / 2)
+        else:  # render both
+            cr = self.di.boundingRect()
+            self.di.moveBy(0, -cr.height() / 2)
+            self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
@@ -161,22 +183,23 @@ class GhostComment(QGraphicsItemGroup):
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def tweakPositions(self):
+    def tweakPositions(self, dlt, txt):
         """Adjust the positions of the delta and text depending on their size and ontent."""
         pt = self.pos()
         self.blurb.setPos(pt)
         self.di.setPos(pt)
-        if self.di.delta == ".":
+
+        # if no delta, then move things accordingly
+        if dlt == ".":
             cr = self.blurb.boundingRect()
             self.blurb.moveBy(0, -cr.height() / 2)
-        else:
+        elif txt == ".":
             cr = self.di.boundingRect()
             self.di.moveBy(0, -cr.height() / 2)
-            # check if blurb is empty, move accordingly to hide it
-            if not self.blurb.is_rendered() and self.blurb.toPlainText() == "":
-                self.blurb.moveBy(0, -cr.height() / 2)
-            else:
-                self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
+        else:  # render both
+            cr = self.di.boundingRect()
+            self.di.moveBy(0, -cr.height() / 2)
+            self.blurb.moveBy(cr.width() + 5, -cr.height() / 2)
 
     def changeComment(self, dlt, txt, legal=True):
         # need to force a bounding-rect update by removing an item and adding it back
@@ -186,13 +209,18 @@ class GhostComment(QGraphicsItemGroup):
         self.di.changeDelta(dlt, legal)
         self.blurb.changeText(txt, legal)
         # move to correct positions
-        self.tweakPositions()
-        self.addToGroup(self.blurb)
-        if dlt == ".":
+        self.tweakPositions(dlt, txt)
+        if dlt == ".":  # hide the delta
             self.di.setVisible(False)
         else:
             self.di.setVisible(True)
             self.addToGroup(self.di)
+        # hide blurb if text trivial
+        if txt == ".":  # hide the text
+            self.blurb.setVisible(False)
+        else:
+            self.blurb.setVisible(True)
+            self.addToGroup(self.blurb)
 
     def paint(self, painter, option, widget):
         # paint a bounding rectangle for undo/redo highlighting
