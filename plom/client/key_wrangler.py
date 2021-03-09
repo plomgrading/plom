@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QWidget,
 )
+from .useful_classes import ErrorMessage
 
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 
@@ -104,7 +105,7 @@ class SingleKeyEdit(QLineEdit):
         self.setText(self.theKey)
 
 
-class KeyWrangler(QWidget):
+class KeyWrangler(QDialog):
     def __init__(self, currentKeys=None):
         super(KeyWrangler, self).__init__()
         if currentKeys is None:
@@ -130,12 +131,15 @@ class KeyWrangler(QWidget):
         self.frB.clicked.connect(self.setFR)
         self.vB = QPushButton("Validate")
         self.vB.clicked.connect(self.validate)
+        self.aB = QPushButton("Accept layout")
+        self.aB.clicked.connect(self.acceptLayout)
 
         grid = QGridLayout()
         grid.addWidget(self.sdfB, 0, 1)
         grid.addWidget(self.asdB, 0, 2)
         grid.addWidget(self.frB, 0, 3)
         grid.addWidget(self.vB, 5, 1)
+        grid.addWidget(self.aB, 5, 3)
         ##
         grid.addWidget(self.deleteLabel, 1, 1)
         grid.addWidget(self.moveLabel, 2, 1)
@@ -158,12 +162,7 @@ class KeyWrangler(QWidget):
         grid.addWidget(self.previousRubricKey, 2, 6)
         grid.addWidget(self.nextRubricLabel, 3, 5)
         grid.addWidget(self.nextRubricKey, 3, 6)
-
-        for r, act in enumerate(self.actions):
-            rw = r // 2
-            c = (r - rw * 2) * 2
-            # grid.addWidget(getattr(self, act + "Label"), rw + 1, c)
-            # grid.addWidget(getattr(self, act + "KeyInput"), rw + 1, c + 1)
+        ##
         self.setLayout(grid)
 
     def setSDF(self):
@@ -183,21 +182,30 @@ class KeyWrangler(QWidget):
         for act in self.actions:
             actToCode[act] = getattr(self, act + "Key").theCode
             if actToCode[act] is None:
-                print("Is invalid - '{}' is missing a key".format(act))
+                ErrorMessage("Is invalid - '{}' is missing a key".format(act)).exec_()
                 return False
         # check for duplications
         for n, act in enumerate(self.actions):
             for k in range(0, n):
                 if actToCode[act] == actToCode[self.actions[k]]:
-                    print(
+                    ErrorMessage(
                         "Is invalid '{}' and '{}' have same key '{}'".format(
                             act,
                             self.actions[k],
                             QKeySequence(actToCode[act]).toString(),
                         )
-                    )
+                    ).exec_()
                     return False
         return True
+
+    def acceptLayout(self):
+        if self.validate() is False:
+            return
+        newKeyDict = {}
+        for act in self.actions:
+            newKeyDict[act] = getattr(self, act + "Key").theCode
+        print(newKeyDict)
+        self.accept()
 
 
 def main(args):
