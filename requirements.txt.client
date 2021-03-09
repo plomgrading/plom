@@ -7,9 +7,9 @@
 # without any warranty.
 
 # These should be kept lock-step with `requirements.txt`
-appdirs==1.4.4
-PyQt5==5.15.2
+PyQt5==5.15.3
 PyQt5-sip==12.8.1
+appdirs==1.4.4
 requests==2.25.1
 requests-toolbelt==0.9.1
 toml==0.10.2
