@@ -68,16 +68,21 @@ class DeleteIcon(QPushButton):
 
 
 class RubricModel(QStandardItemModel):
-    def __init__(self, data):
+    def __init__(self, data=None):
         super(RubricModel, self).__init__()
-        self._data = data
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
+        if data is not None:
+            self._data = data
+            self.populate(data)
+
+    def repopulate(self, data):
+        self._data = data
+        # clear all rows
+        self.removeRows(0, self.rowCount())
         self.populate(data)
 
     def populate(self, data):
-        # clear all rows
-        self.removeRows(0, self.rowCount())
         # then repopulate
         for X in data:
             # check if given rubric should appear
@@ -353,7 +358,7 @@ class RubricWrangler(QDialog):
         self.resize(1200, 768)
         self.username = username
         self.rubrics = rubrics
-        self.model = RubricModel(rubrics)
+        self.model = RubricModel()
         self.proxy = RubricProxyModel(username)
         self.rubricTable = QTableView()
         self.proxy.setSourceModel(self.model)
@@ -405,7 +410,7 @@ class RubricWrangler(QDialog):
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
             self.wranglerState = {
-                "shown": [],
+                "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
                 "tabs": [[], [], []],
                 "hideManager": Qt.Unchecked,
@@ -474,8 +479,18 @@ class RubricWrangler(QDialog):
         # set the checkboxes
         self.cbU.setCheckState(self.wranglerState["hideUsers"])
         self.cbM.setCheckState(self.wranglerState["hideManager"])
-        # main list already populated from rubrics on init
-        # self.model.populate(self.rubrics)
+        # set the main list to obey the order in wrangerState, but then append any new rubrics
+        rkeys = [X["id"] for X in self.rubrics]  # keys in order
+        mainList = []
+        # add rubrics in the order from wranglerstate - which is list of keys
+        for key in self.wranglerState["shown"]:
+            ind = rkeys.index(key)
+            mainList.append(self.rubrics[ind])
+        # add any remaining rubrics
+        for ind, key in enumerate(rkeys):
+            if key not in self.wranglerState["shown"]:
+                mainList.append(self.rubrics[ind])
+        self.model.repopulate(mainList)
         # populate the ABC lists
         for p in range(3):
             self.ST.populate(p, self.rubrics, self.wranglerState["tabs"][p])

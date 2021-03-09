@@ -1181,28 +1181,19 @@ class RubricTable(QTableWidget):
         # https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget
         if event.source() == self:
             event.setDropAction(Qt.CopyAction)
-            rows = set([mi.row() for mi in self.selectedIndexes()])
+            sourceRow = self.selectedIndexes()[0].row()
             targetRow = self.indexAt(event.pos()).row()
-            rows.discard(targetRow)
-            rows = sorted(rows)
-            if not rows:
-                return
-            if targetRow == -1:
+            if targetRow == -1:  # no row, so drop at end
                 targetRow = self.rowCount()
-            for _ in range(len(rows)):
-                self.insertRow(targetRow)
-            rowMapping = dict()  # Src row to target row.
-            for idx, row in enumerate(rows):
-                if row < targetRow:
-                    rowMapping[row] = targetRow + idx
-                else:
-                    rowMapping[row + len(rows)] = targetRow + idx
-            colCount = self.columnCount()
-            for srcRow, tgtRow in sorted(rowMapping.items()):
-                for col in range(0, colCount):
-                    self.setItem(tgtRow, col, self.takeItem(srcRow, col))
-            for row in reversed(sorted(list(rowMapping.keys()))):
-                self.removeRow(row)
+            # insert a new row at position targetRow
+            self.insertRow(targetRow)
+            # but now - if sourceRow after target row, sourceRow has moved by 1.
+            if targetRow < sourceRow:
+                sourceRow += 1
+            # move items from the sourceRow to the new targetRow
+            for col in range(0, self.columnCount()):
+                self.setItem(targetRow, col, self.takeItem(sourceRow, col))
+            self.removeRow(sourceRow)
             event.accept()
             self.parent.update_after_reordering()
 
