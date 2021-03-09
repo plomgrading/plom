@@ -33,8 +33,8 @@ the_actions = [
 keys_sdf = {
     "redo": "T",
     "undo": "G",
-    "nextRubric": "E",
-    "previousRubric": "D",
+    "nextRubric": "D",
+    "previousRubric": "E",
     "nextPane": "F",
     "previousPane": "S",
     "nextTool": "R",

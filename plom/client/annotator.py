@@ -45,6 +45,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .comment_list import CommentWidget, RubricWidget
+from .key_wrangler import KeyWrangler, keys_sdf
 
 # import the key-help popup window class
 from .key_help import KeyHelp
@@ -1148,6 +1149,49 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
+    def setMainShortCuts(self):
+        # basic tool keys
+        # use sdf defaults unless saved
+        if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
+            keys = keys_sdf
+        else:
+            # check all required present
+            if all(
+                act in self.parentMarkerUI.annotatorSettings["tool_keys"]
+                for act in keys_sdf
+            ):
+                keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
+            else:  # not all there so use sdf-defaults
+                keys = keys_sdf
+
+        # undo/redo = G,T
+        self.undoSC = QShortcut(QKeySequence(keys["undo"]), self)
+        self.redoSC = QShortcut(QKeySequence(keys["redo"]), self)
+        self.undoSC.activated.connect(self.undo)
+        self.redoSC.activated.connect(self.redo)
+        # next/prev rubric = D,E
+        self.nextRubricSC = QShortcut(QKeySequence(keys["nextRubric"]), self)
+        self.prevRubricSC = QShortcut(QKeySequence(keys["previousRubric"]), self)
+        self.nextRubricSC.activated.connect(self.rubricMode)
+        self.prevRubricSC.activated.connect(self.rubric_widget.previousRubric)
+        # next/prev pane = F,S
+        self.nextPaneSC = QShortcut(QKeySequence(keys["nextPane"]), self)
+        self.prevPaneSC = QShortcut(QKeySequence(keys["previousPane"]), self)
+        self.nextPaneSC.activated.connect(self.next_pane)
+        self.prevPaneSC.activated.connect(self.prev_pane)
+        # next/prev tool = R,W
+        self.nextToolSC = QShortcut(QKeySequence(keys["nextTool"]), self)
+        self.prevToolSC = QShortcut(QKeySequence(keys["previousTool"]), self)
+        self.nextToolSC.activated.connect(self.next_minor_tool)
+        self.prevToolSC.activated.connect(self.prev_minor_tool)
+        # others - delete,move,zoom = Q,A,Z
+        self.deleteSC = QShortcut(QKeySequence(keys["delete"]), self)
+        self.moveSC = QShortcut(QKeySequence(keys["move"]), self)
+        self.zoomSC = QShortcut(QKeySequence(keys["zoom"]), self)
+        self.deleteSC.activated.connect(self.deleteMode)
+        self.moveSC.activated.connect(self.moveMode)
+        self.zoomSC.activated.connect(self.zoomMode)
+
     def setMiscShortCuts(self):
         """
         Sets miscellaneous shortcuts.
@@ -1156,34 +1200,7 @@ class Annotator(QWidget):
             None: adds shortcuts.
 
         """
-        # basic tool keys
-        # undo/redo = G,T
-        self.undoSC = QShortcut(QKeySequence("G"), self)
-        self.redoSC = QShortcut(QKeySequence("T"), self)
-        self.undoSC.activated.connect(self.undo)
-        self.redoSC.activated.connect(self.redo)
-        # next/prev rubric = D,E
-        self.nextRubricSC = QShortcut(QKeySequence("D"), self)
-        self.prevRubricSC = QShortcut(QKeySequence("E"), self)
-        self.nextRubricSC.activated.connect(self.rubricMode)
-        self.prevRubricSC.activated.connect(self.rubric_widget.previousRubric)
-        # next/prev pane = F,S
-        self.nextPaneSC = QShortcut(QKeySequence("F"), self)
-        self.prevPaneSC = QShortcut(QKeySequence("S"), self)
-        self.nextPaneSC.activated.connect(self.next_pane)
-        self.prevPaneSC.activated.connect(self.prev_pane)
-        # next/prev tool = R,W
-        self.nextToolSC = QShortcut(QKeySequence("R"), self)
-        self.prevToolSC = QShortcut(QKeySequence("W"), self)
-        self.nextToolSC.activated.connect(self.next_minor_tool)
-        self.prevToolSC.activated.connect(self.prev_minor_tool)
-        # others - delete,move,zoom = Q,A,Z
-        self.deleteSC = QShortcut(QKeySequence("Q"), self)
-        self.moveSC = QShortcut(QKeySequence("A"), self)
-        self.zoomSC = QShortcut(QKeySequence("Z"), self)
-        self.deleteSC.activated.connect(self.deleteMode)
-        self.moveSC.activated.connect(self.moveMode)
-        self.zoomSC.activated.connect(self.zoomMode)
+        self.setMainShortCuts()
 
         # Now other misc shortcuts
 
