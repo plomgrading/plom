@@ -403,8 +403,8 @@ class RubricWrangler(QDialog):
         grid.addWidget(QLabel("Filter on rubric username"), 13, 1, 1, 1)
         grid.addWidget(self.uFiltLE, 13, 2, 1, 2)
         grid.addWidget(self.ST, 1, 9, 10, 10)
-        grid.addWidget(self.aB, 20, 20)
-        grid.addWidget(self.cB, 20, 19)
+        grid.addWidget(self.aB, 20, 18)
+        grid.addWidget(self.cB, 20, 17)
         self.setLayout(grid)
 
         # set sensible default state if rubricWidget sends state=none
