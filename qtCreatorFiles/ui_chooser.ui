@@ -143,7 +143,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="pgLabel">
         <property name="text">
-         <string>Question</string>
+         <string>Question:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -214,8 +214,8 @@
      <property name="title">
       <string>Settings</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_4" columnstretch="1,1,1,1">
-      <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1,1,1">
+      <item>
        <widget class="QLabel" name="fontLabel">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -231,7 +231,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
+      <item>
        <widget class="QSpinBox" name="fontSB">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -240,7 +240,7 @@
          </sizepolicy>
         </property>
         <property name="minimum">
-         <number>2</number>
+         <number>4</number>
         </property>
         <property name="maximum">
          <number>24</number>
@@ -250,42 +250,19 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2" colspan="2">
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QPushButton" name="fontButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Set font</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QPushButton" name="optionsButton">
-          <property name="text">
-           <string>More &amp;options...</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="optionsButton">
+        <property name="text">
+         <string>&amp;Options...</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -295,7 +272,7 @@
      <property name="title">
       <string>Choose task</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1">
       <item>
        <widget class="QPushButton" name="markButton">
         <property name="text">
@@ -311,14 +288,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="totalButton">
-        <property name="enabled">
-         <bool>false</bool>
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="text">
-         <string>Future use</string>
-        </property>
-       </widget>
+       </spacer>
       </item>
       <item>
        <widget class="QPushButton" name="closeButton">
@@ -343,11 +317,8 @@
   <tabstop>userLE</tabstop>
   <tabstop>passwordLE</tabstop>
   <tabstop>fontSB</tabstop>
-  <tabstop>fontButton</tabstop>
-  <tabstop>optionsButton</tabstop>
   <tabstop>markButton</tabstop>
   <tabstop>identifyButton</tabstop>
-  <tabstop>totalButton</tabstop>
   <tabstop>closeButton</tabstop>
  </tabstops>
  <resources/>

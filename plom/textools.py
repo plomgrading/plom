@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 """Tools for working with TeX"""
 
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and Colin B. Macdonald"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
-
 import os
-import sys
 import subprocess
 import tempfile
 import shutil
@@ -17,7 +13,7 @@ from pathlib import Path
 import pkg_resources
 
 
-def texFragmentToPNG(fragment, outName):
+def texFragmentToPNG(fragment, outName, dpi=225):
     """Process a fragment of latex and produce a png image."""
 
     head = r"""
@@ -63,9 +59,9 @@ def texFragmentToPNG(fragment, outName):
                 "dvipng",
                 "-q",
                 "-D",
-                "225",
+                str(dpi),
                 "-bg",
-                "transparent",
+                "Transparent",
                 "frag.dvi",
                 "-o",
                 "frag.png",
