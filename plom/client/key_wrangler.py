@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-import sys
+
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
@@ -217,14 +217,3 @@ class KeyWrangler(QDialog):
         if self.validate() is False:
             return
         self.accept()
-
-
-def main(args):
-    app = QApplication(args)
-    kw = KeyWrangler()
-    kw.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    main([""])
