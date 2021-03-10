@@ -104,6 +104,12 @@ class SingleKeyEdit(QLineEdit):
         self.theKey = QKeySequence(self.theCode).toString()
         self.setText(self.theKey)
 
+    def setText(self, omega):
+        self.theKey = omega
+        if len(omega) > 0:
+            self.theCode = QKeySequence(omega)[0]
+        super().setText(omega)
+
 
 class KeyWrangler(QDialog):
     def __init__(self, currentKeys=None):
@@ -201,13 +207,15 @@ class KeyWrangler(QDialog):
                     return False
         return True
 
+    def getKeyBindings(self):
+        newKeyDict = {}
+        for act in self.actions:
+            newKeyDict[act] = getattr(self, act + "Key").theKey
+        return newKeyDict
+
     def acceptLayout(self):
         if self.validate() is False:
             return
-        newKeyDict = {}
-        for act in self.actions:
-            newKeyDict[act] = getattr(self, act + "Key")
-        print(newKeyDict)
         self.accept()
 
 

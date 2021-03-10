@@ -169,6 +169,8 @@ class Annotator(QWidget):
         # mark set, mark change functions
         self.scene = None  # TODO?
 
+        # no initial keybindings - get from the marker if non-default
+        self.keyBindings = None
         self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
@@ -236,6 +238,9 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Refresh rubrics", self.refreshRubrics)
         m.addSeparator()
+        m.addAction("Change keybindings", self.setKeyBindings)
+        m.addSeparator()
+
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
@@ -1149,11 +1154,42 @@ class Annotator(QWidget):
         self._priv_force_close = True
         self.close()
 
+    def changeMainShortCuts(self, keys):
+        # basic tool keys
+        self.keyBindings = keys
+        # save to parent-marker
+        self.parentMarkerUI.annotatorSettings["tool_keys"] = keys
+        # shortcuts already in place - just need to update the keys
+        # undo/redo = G,T
+        self.undoSC.setKey(keys["undo"])
+        self.redoSC.setKey(keys["redo"])
+        # next/prev rubric = D,E
+        self.nextRubricSC.setKey(keys["nextRubric"])
+        self.prevRubricSC.setKey(keys["previousRubric"])
+        # next/prev pane = F,S
+        self.nextPaneSC.setKey(keys["nextPane"])
+        self.prevPaneSC.setKey(keys["previousPane"])
+        # next/prev tool = R,W
+        self.nextToolSC.setKey(keys["nextTool"])
+        self.prevToolSC.setKey(keys["previousTool"])
+        # others - delete,move,zoom = Q,A,Z
+        self.deleteSC.setKey(keys["delete"])
+        self.moveSC.setKey(keys["move"])
+        self.zoomSC.setKey(keys["zoom"])
+
+    def setKeyBindings(self):
+        kw = KeyWrangler(self.keyBindings)
+        if kw.exec_() == QDialog.Accepted:
+            self.changeMainShortCuts(kw.getKeyBindings())
+
     def setMainShortCuts(self):
         # basic tool keys
+        if self.keyBindings is None:
+            self.keyBindings = keys_sdf
+
         # use sdf defaults unless saved
         if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
-            keys = keys_sdf
+            keys = self.keyBindings
         else:
             # check all required present
             if all(
@@ -1162,8 +1198,9 @@ class Annotator(QWidget):
             ):
                 keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
             else:  # not all there so use sdf-defaults
-                keys = keys_sdf
+                keys = self.keyBindings
 
+        print("Using keybinding ", keys)
         # undo/redo = G,T
         self.undoSC = QShortcut(QKeySequence(keys["undo"]), self)
         self.redoSC = QShortcut(QKeySequence(keys["redo"]), self)
