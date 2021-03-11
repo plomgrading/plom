@@ -1129,7 +1129,7 @@ class ChangeFiltersDialog(QDialog):
 
 
 class RubricTable(QTableWidget):
-    def __init__(self, parent, sort=False, tabType=None):
+    def __init__(self, parent, shortname=None, sort=False, tabType=None):
         super().__init__()
         self.parent = parent
         self.tabType = tabType  # to help set menu
@@ -1146,10 +1146,17 @@ class RubricTable(QTableWidget):
         self.hideColumn(1)
         if sort:
             self.setSortingEnabled(True)
-        ##
+        self.shortname = shortname
         self.pressed.connect(self.handleClick)
         # self.itemChanged.connect(self.handleClick)
         self.doubleClicked.connect(self.editRow)
+
+    def set_name(self, newname):
+        log.debug("tab %s changing name to %s", self.shortname, newname)
+        self.shortname = newname
+        # TODO: assumes parent is TabWidget, can we do with signals/slots?
+        # More like "If anybody cares, I just changed my name!"
+        self.parent.update_tab_names()
 
     def contextMenuEvent(self, event):
         if self.tabType == "hide":
@@ -1271,24 +1278,23 @@ class RubricTable(QTableWidget):
             event.accept()
 
     def rename_current_tab(self):
-        # we want the current tab, not current row
-        # TODO: this convoluted access probably indicates this is the wrong place for this function
-        n = self.parent.RTW.currentIndex()
-        log.debug("current tab is %d", n)
-        if n < 0:
-            return  # "-1 if there is no current widget"
+        # this is really a method for the current tab, not current row
+        # TODO: perhaps this method is in the wrong place
+        curtab_widget = self.parent.RTW.currentWidget()
+        if not curtab_widget:
+            return
+        curname = curtab_widget.shortname
         # TODO: use a custom dialog
-        curname = self.parent.tab_names[n]
         s1, ok1 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname["shortname"]), "Enter short name"
+            self, 'Rename pane "{}"'.format(curname), "Enter short name"
         )
         s2, ok2 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname["shortname"]), "Enter long name"
+            self, 'Rename pane "{}"'.format(curname), "Enter long name"
         )
-        if ok1 and ok2:
-            self.parent.tab_names[n]["shortname"] = s1
-            self.parent.tab_names[n]["longname"] = s2
-        self.parent.refreshTabHeaderNames()
+        if not (ok1 and ok2):
+            return
+        log.debug('refresh tab text from "%s" to "%s"', curname, s1)
+        curtab_widget.set_name(s1)
 
     def appendNewRubric(self, rubric, legalDown=None, legalUp=None):
         rc = self.rowCount()
@@ -1481,28 +1487,32 @@ class RubricWidget(QWidget):
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
         # TODO: hardcoded length for now
-        self.tab_names = [
+        tab_names = [
             {"shortname": "Shared", "longname": "Shared"},
             {"shortname": "\N{Black Star}", "longname": "Favourites"},
             {"shortname": "A", "longname": None},
             {"shortname": "B", "longname": None},
             {"shortname": delta_label, "longname": "Delta"},
         ]
-        self.tabA = RubricTable(self)  # group A
-        self.tabB = RubricTable(self)  # group B
-        self.tabC = RubricTable(self)  # group C
-        self.tabS = RubricTable(self, tabType="show")  # Shared
-        self.tabDelta = RubricTable(self, tabType="delta")  # group D
+        self.tabA = RubricTable(self, shortname=tab_names[1]["shortname"])
+        self.tabB = RubricTable(self, shortname=tab_names[2]["shortname"])
+        self.tabC = RubricTable(self, shortname=tab_names[3]["shortname"])
+        self.tabS = RubricTable(
+            self, shortname=tab_names[0]["shortname"], tabType="show"
+        )
+        self.tabDelta = RubricTable(
+            self, shortname=tab_names[4]["shortname"], tabType="delta"
+        )
         self.numberOfTabs = 5
         self.RTW = QTabWidget()
         # Change here to enable movable tabs: may require fixing indexing elsewhere
         self.RTW.setMovable(False)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
-        self.RTW.addTab(self.tabS, self.tab_names[0]["shortname"])
-        self.RTW.addTab(self.tabA, self.tab_names[1]["shortname"])
-        self.RTW.addTab(self.tabB, self.tab_names[2]["shortname"])
-        self.RTW.addTab(self.tabC, self.tab_names[3]["shortname"])
-        self.RTW.addTab(self.tabDelta, self.tab_names[4]["shortname"])
+        self.RTW.addTab(self.tabS, self.tabS.shortname)
+        self.RTW.addTab(self.tabA, self.tabA.shortname)
+        self.RTW.addTab(self.tabB, self.tabB.shortname)
+        self.RTW.addTab(self.tabC, self.tabC.shortname)
+        self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         self.tabHide = RubricTable(self, sort=True, tabType="hide")
         self.groupHide = QTabWidget()
@@ -1544,18 +1554,11 @@ class RubricWidget(QWidget):
             self.filtB.setEnabled(True)
             self.otherB.setEnabled(True)
 
-    def refreshTabHeaderNames(self):
-        # TODO: this will fail with movable tabs: probably we need to store this
-        # `tab_names` info inside the RubricTables instead of `self.tab_names`.
-        print("Note: {} tabs".format(self.RTW.count()))
+    def update_tab_names(self):
+        """Loop over the tabs and update their displayed names"""
         for n in range(self.RTW.count()):
-            log.debug(
-                'refresh tab %d text from "%s" to "%s"',
-                n,
-                self.RTW.tabText(n),
-                self.tab_names[n]["shortname"],
-            )
-            self.RTW.setTabText(n, self.tab_names[n]["shortname"])
+            self.RTW.setTabText(n, self.RTW.widget(n).shortname)
+            # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -1567,8 +1570,10 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def wrangleRubrics(self):
+        # TODO: reconstruct tab_names and WTF is wranglerState here?
+        tab_names = ["TODO" for x in range(5)]
         wr = RubricWrangler(
-            self.rubrics, self.get_tab_rubric_lists(), self.username, self.tab_names
+            self.rubrics, self.get_tab_rubric_lists(), self.username, tab_names
         )
         if wr.exec_() != QDialog.Accepted:
             return
