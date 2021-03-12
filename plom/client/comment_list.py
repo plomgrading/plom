@@ -1570,11 +1570,7 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def wrangleRubrics(self):
-        # TODO: reconstruct tab_names and WTF is wranglerState here?
-        tab_names = ["TODO" for x in range(5)]
-        wr = RubricWrangler(
-            self.rubrics, self.get_tab_rubric_lists(), self.username, tab_names
-        )
+        wr = RubricWrangler(self.rubrics, self.get_tab_rubric_lists(), self.username)
         if wr.exec_() != QDialog.Accepted:
             return
         else:
@@ -1587,6 +1583,7 @@ class RubricWidget(QWidget):
 
         self.rubrics = self.parent.getRubrics()
         wranglerState = {
+            "user_tab_names": [],
             "shown": [],
             "hidden": [],
             "tabs": [[], [], []],
@@ -1604,6 +1601,20 @@ class RubricWidget(QWidget):
         self.setRubricsFromState(wranglerState)
 
     def setRubricsFromState(self, wranglerState):
+        tabnames = wranglerState.get("user_tab_names", None)
+        if tabnames is None:
+            log.warning("wranglerState is lacking user_tab_names")
+        if tabnames:
+            if len(tabnames) != 3:
+                log.error(
+                    "Something is wrong: user_tab_names should be length 3, is %s",
+                    str(tabnames),
+                )
+            else:
+                self.tabA.set_name(tabnames[0])
+                self.tabB.set_name(tabnames[1])
+                self.tabC.set_name(tabnames[2])
+
         legalDown, legalUp = self.getLegalDownUp()
 
         self.tabA.setRubricsByKeys(
@@ -1855,6 +1866,11 @@ class RubricWidget(QWidget):
     def get_tab_rubric_lists(self):
         """returns a dict of lists of the current rubrics"""
         return {
+            "user_tab_names": [
+                self.tabA.shortname,
+                self.tabB.shortname,
+                self.tabC.shortname,
+            ],
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
             "tabs": [

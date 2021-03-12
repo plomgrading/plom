@@ -334,7 +334,7 @@ class ShowListFrame(QFrame):
 
 
 class RubricWrangler(QDialog):
-    def __init__(self, rubrics, wranglerState, username, tab_names):
+    def __init__(self, rubrics, wranglerState, username):
         super().__init__()
         self.resize(1200, 768)
         self.username = username
@@ -355,10 +355,9 @@ class RubricWrangler(QDialog):
         self.rubricTable.setDragEnabled(True)
         self.rubricTable.setAcceptDrops(False)
         ##
-        # TODO: only want the A,B,C
-        kopy = list(tab_names[1:4])
-        kopy.append("HIDE")
-        self.ST = ShowListFrame(kopy)
+        tab_names = wranglerState["user_tab_names"].copy()  # copy needed?
+        tab_names.append("HIDE")
+        self.ST = ShowListFrame(tab_names)
         ##
         self.tFiltLE = QLineEdit()
         self.tFiltLE.returnPressed.connect(self.setTextFilter)
