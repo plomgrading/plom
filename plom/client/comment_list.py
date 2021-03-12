@@ -1167,9 +1167,13 @@ class RubricTable(QTableWidget):
         log.debug("Popping up a popup menu")
         menu = QMenu(self)
         remAction = QAction("Remove from this pane", self)
+        remAction.triggered.connect(self.removeCurrentRubric)
         addA = QAction("Add to Pane A", self)
+        addA.triggered.connect(lambda: self.addCurrentRubricToTab(1))
         addB = QAction("Add to Pane B", self)
+        addB.triggered.connect(lambda: self.addCurrentRubricToTab(2))
         addC = QAction("Add to Pane C", self)
+        addC.triggered.connect(lambda: self.addCurrentRubricToTab(3))
         edit = QAction("Edit rubric", self)
         menu.addAction(remAction)
         menu.addSeparator()
@@ -1188,8 +1192,11 @@ class RubricTable(QTableWidget):
         log.debug("Popping up a popup menu")
         menu = QMenu(self)
         addA = QAction("Add to Pane A", self)
+        addA.triggered.connect(lambda: self.addCurrentRubricToTab(1))
         addB = QAction("Add to Pane B", self)
+        addB.triggered.connect(lambda: self.addCurrentRubricToTab(2))
         addC = QAction("Add to Pane C", self)
+        addC.triggered.connect(lambda: self.addCurrentRubricToTab(3))
         edit = QAction("Edit rubric", self)
         menu.addAction(addA)
         menu.addAction(addB)
@@ -1207,13 +1214,23 @@ class RubricTable(QTableWidget):
         menu.popup(QCursor.pos())
 
     def hideContextMenuEvent(self, event):
-        print("Pop-up hide menu")
         log.debug("Popping up a popup menu")
         menu = QMenu(self)
         unhideAction = QAction("Unhide rubric", self)
         unhideAction.triggered.connect(self.unhideCurrentRubric)
         menu.addAction(unhideAction)
         menu.popup(QCursor.pos())
+
+    def addCurrentRubricToTab(self, tabIndex):
+        row = self.getCurrentRubricRow()
+        key = self.item(row, 0).text()
+        self.parent.addRubricByKeyToTab(key, tabIndex)
+
+    def removeCurrentRubric(self):
+        row = self.getCurrentRubricRow()
+        self.removeRow(row)
+        self.selectRubricByRow(0)
+        self.handleClick()
 
     def hideCurrentRubric(self):
         row = self.getCurrentRubricRow()
@@ -1275,6 +1292,11 @@ class RubricTable(QTableWidget):
 
     def appendNewRubric(self, rubric, legalDown=None, legalUp=None):
         rc = self.rowCount()
+        # do sanity check for duplications
+        for r in range(rc):
+            if rubric["id"] == self.item(r, 0).text():
+                return  # rubric already present
+        # is a new rubric, so append it
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
@@ -1712,6 +1734,16 @@ class RubricWidget(QWidget):
         index = [x["id"] for x in self.rubrics].index(key)
         legalDown, legalUp = self.getLegalDownUp()
         self.tabHide.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+
+    def addRubricByKeyToTab(self, key, tabIndex):
+        index = [x["id"] for x in self.rubrics].index(key)
+        legalDown, legalUp = self.getLegalDownUp()
+        if tabIndex == 1:
+            self.tabA.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        elif tabIndex == 2:
+            self.tabB.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        elif tabIndex == 3:
+            self.tabC.appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
