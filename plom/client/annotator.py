@@ -45,7 +45,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .comment_list import CommentWidget, RubricWidget
-from .key_wrangler import KeyWrangler, keys_sdf
+from .key_wrangler import KeyWrangler, key_layouts
 
 # import the key-help popup window class
 from .key_help import KeyHelp
@@ -1071,7 +1071,7 @@ class Annotator(QWidget):
     def setMainShortCuts(self):
         # basic tool keys
         if self.keyBindings is None:
-            self.keyBindings = keys_sdf
+            self.keyBindings = key_layouts["sdf"]
 
         # use sdf defaults unless saved
         if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
@@ -1080,7 +1080,7 @@ class Annotator(QWidget):
             # check all required present
             if all(
                 act in self.parentMarkerUI.annotatorSettings["tool_keys"]
-                for act in keys_sdf
+                for act in key_layouts["sdf"]
             ):
                 keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
             else:  # not all there so use sdf-defaults

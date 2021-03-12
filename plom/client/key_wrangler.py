@@ -31,60 +31,73 @@ the_actions = [
     "zoom",
 ]
 
-keys_sdf = {
-    "redo": "T",
-    "undo": "G",
-    "nextRubric": "D",
-    "previousRubric": "E",
-    "nextPane": "F",
-    "previousPane": "S",
-    "nextTool": "R",
-    "previousTool": "W",
-    "delete": "Q",
-    "move": "A",
-    "zoom": "Z",
-}
 
-keys_dvorak = {
-    "redo": "Y",
-    "undo": "I",
-    "nextRubric": "E",
-    "previousRubric": ".",
-    "nextPane": "U",
-    "previousPane": "O",
-    "nextTool": "P",
-    "previousTool": ",",
-    "delete": "''",
-    "move": "A",
-    "zoom": ";",
-}
-
-keys_asd = {
-    "redo": "R",
-    "undo": "F",
-    "nextRubric": "S",
-    "previousRubric": "W",
-    "nextPane": "D",
-    "previousPane": "A",
-    "nextTool": "E",
-    "previousTool": "Q",
-    "delete": "C",
-    "move": "X",
-    "zoom": "Z",
-}
-
-keys_jkl = {
-    "redo": "Y",
-    "undo": "H",
-    "nextRubric": "K",
-    "previousRubric": "I",
-    "nextPane": "L",
-    "previousPane": "J",
-    "nextTool": "O",
-    "previousTool": "U",
-    "delete": "P",
-    "move": ";",
-    "zoom": "/",
+key_layouts = {
+    "sdf": {
+        "redo": "T",
+        "undo": "G",
+        "nextRubric": "D",
+        "previousRubric": "E",
+        "nextPane": "F",
+        "previousPane": "S",
+        "nextTool": "R",
+        "previousTool": "W",
+        "delete": "Q",
+        "move": "A",
+        "zoom": "Z",
+    },
+    "sdf_french": {
+        "redo": "T",
+        "undo": "G",
+        "nextRubric": "D",
+        "previousRubric": "E",
+        "nextPane": "F",
+        "previousPane": "S",
+        "nextTool": "R",
+        "previousTool": "Z",
+        "delete": "A",
+        "move": "Q",
+        "zoom": "W",
+    },
+    "dvorak": {
+        "redo": "Y",
+        "undo": "I",
+        "nextRubric": "E",
+        "previousRubric": ".",
+        "nextPane": "U",
+        "previousPane": "O",
+        "nextTool": "P",
+        "previousTool": ",",
+        "delete": "'",
+        "move": "A",
+        "zoom": ";",
+    },
+    "asd": {
+        "redo": "R",
+        "undo": "F",
+        "nextRubric": "S",
+        "previousRubric": "W",
+        "nextPane": "D",
+        "previousPane": "A",
+        "nextTool": "E",
+        "previousTool": "Q",
+        "delete": "C",
+        "move": "X",
+        "zoom": "Z",
+    },
+    "jkl": {
+        "redo": "Y",
+        "undo": "H",
+        "nextRubric": "K",
+        "previousRubric": "I",
+        "nextPane": "L",
+        "previousPane": "J",
+        "nextTool": "O",
+        "previousTool": "U",
+        "delete": "P",
+        "move": ";",
+        "zoom": "/",
+    },
 }
 
 
@@ -145,13 +158,15 @@ class KeyWrangler(QDialog):
             )
 
         self.sdfB = QPushButton("Set SDF")
-        self.sdfB.clicked.connect(self.setSDF)
+        self.sdfB.clicked.connect(lambda: self.setKeyLayout("sdf"))
         self.asdB = QPushButton("Set ASD")
-        self.asdB.clicked.connect(self.setASD)
+        self.asdB.clicked.connect(lambda: self.setKeyLayout("asd"))
         self.jklB = QPushButton("Set JKL")
-        self.jklB.clicked.connect(self.setJKL)
+        self.jklB.clicked.connect(lambda: self.setKeyLayout("jkl"))
+        self.frenchB = QPushButton("Set SDF (French)")
+        self.frenchB.clicked.connect(lambda: self.setKeyLayout("sdf_french"))
         self.dvkB = QPushButton("Set Dvorak")
-        self.dvkB.clicked.connect(self.setDvorak)
+        self.dvkB.clicked.connect(lambda: self.setKeyLayout("dvorak"))
         self.vB = QPushButton("Validate")
         self.vB.clicked.connect(self.validate)
         self.aB = QPushButton("Accept layout")
@@ -162,10 +177,11 @@ class KeyWrangler(QDialog):
 
         grid = QGridLayout()
         mgrid = QGridLayout()
-        mgrid.addWidget(self.sdfB, 5, 7)
-        mgrid.addWidget(self.asdB, 5, 8)
-        mgrid.addWidget(self.jklB, 6, 7)
-        mgrid.addWidget(self.dvkB, 6, 8)
+        mgrid.addWidget(self.sdfB, 5, 6)
+        mgrid.addWidget(self.asdB, 5, 7)
+        mgrid.addWidget(self.jklB, 6, 6)
+        mgrid.addWidget(self.dvkB, 6, 7)
+        mgrid.addWidget(self.frenchB, 5, 8)
         mgrid.addWidget(self.vB, 5, 3)
         mgrid.addWidget(self.cB, 6, 1)
         mgrid.addWidget(self.aB, 6, 3)
@@ -196,21 +212,12 @@ class KeyWrangler(QDialog):
         self.GB.setLayout(grid)
         self.setLayout(mgrid)
 
-    def setSDF(self):
-        for act in self.actions:
-            getattr(self, act + "Key").setText(keys_sdf[act])
-
-    def setJKL(self):
-        for act in self.actions:
-            getattr(self, act + "Key").setText(keys_jkl[act])
-
-    def setASD(self):
-        for act in self.actions:
-            getattr(self, act + "Key").setText(keys_asd[act])
-
-    def setDvorak(self):
-        for act in self.actions:
-            getattr(self, act + "Key").setText(keys_dvorak[act])
+    def setKeyLayout(self, name):
+        if name not in key_layouts:
+            return
+        else:
+            for act in self.actions:
+                getattr(self, act + "Key").setText(key_layouts[name][act])
 
     def validate(self):
         actToCode = {}
