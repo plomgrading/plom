@@ -1596,9 +1596,11 @@ class RubricWidget(QWidget):
             "hidden": [],
             "tabs": [[], [], []],
         }
-        # only rubrics for this question
-        # exclude manager-delta rubrics
         for X in self.rubrics:
+            # exclude HALs system-rubrics
+            if X["username"] == "HAL":
+                continue
+            # exclude manager-delta rubrics
             if X["username"] == "manager" and X["meta"] == "delta":
                 continue
             wranglerState["shown"].append(X["id"])
