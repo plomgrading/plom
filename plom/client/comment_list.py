@@ -1469,6 +1469,21 @@ class RubricTable(QTableWidget):
         rubricKey = self.item(r, 0).text()
         self.parent.edit_rubric(rubricKey)
 
+    def updateRubric(self, new_rubric, legalDown, legalUp):
+        for r in range(self.rowCount()):
+            if self.item(r, 0).text() == new_rubric["id"]:
+                self.item(r, 1).setText(new_rubric["username"])
+                self.item(r, 2).setText(new_rubric["delta"])
+                self.item(r, 3).setText(new_rubric["text"])
+                # update the legality
+                v = deltaToInt(new_rubric["delta"])
+                if v > legalUp or v < legalDown:
+                    self.item(r, 2).setForeground(colour_illegal)
+                    self.item(r, 3).setForeground(colour_illegal)
+                else:
+                    self.item(r, 2).setForeground(colour_legal)
+                    self.item(r, 3).setForeground(colour_legal)
+
 
 class RubricWidget(QWidget):
     # This is picked up by the annotator and tells is what is
@@ -1848,6 +1863,8 @@ class RubricWidget(QWidget):
             assert self.rubrics[index]["id"] == new_rubric["id"]
             # then replace
             self.rubrics[index] = new_rubric
+            # update the rubric in all lists
+            self.updateRubricInLists(new_rubric)
         else:
             rv = self.parent.createNewRubric(new_rubric)
             # check was updated/created successfully
@@ -1869,6 +1886,14 @@ class RubricWidget(QWidget):
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(rubricID)
         self.handleClick()
+
+    def updateRubricInLists(self, new_rubric):
+        legalDown, legalUp = self.getLegalDownUp()
+        self.tabS.updateRubric(new_rubric, legalDown, legalUp)
+        self.tabA.updateRubric(new_rubric, legalDown, legalUp)
+        self.tabB.updateRubric(new_rubric, legalDown, legalUp)
+        self.tabC.updateRubric(new_rubric, legalDown, legalUp)
+        self.tabHide.updateRubric(new_rubric, legalDown, legalUp)
 
     def get_tab_rubric_lists(self):
         """returns a dict of lists of the current rubrics"""
