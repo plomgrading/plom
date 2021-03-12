@@ -1175,21 +1175,19 @@ class RubricTable(QTableWidget):
         tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
 
         menu = QMenu(self)
+        addTo = [QAction("Move to Pane {}".format(x), self) for x in tabnames]
+        # note do not use a loop here: lambda does not behave right
+        addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
+        addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
+        addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
         remAction = QAction("Remove from this pane", self)
         remAction.triggered.connect(self.removeCurrentRubric)
-        addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
-        # note do not use a loop here: lambda does not behave right
-        addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
-        addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
-        addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
         edit = QAction("Edit rubric", self)
         edit.setEnabled(False)  # TODO hook it up
-        menu.addAction(remAction)
-        menu.addSeparator()
         for n, a in enumerate(addTo):
-            menu.addAction(a)
-            if n + 1 == curtab_idx:
-                a.setEnabled(False)
+            if n + 1 != curtab_idx:
+                menu.addAction(a)
+        menu.addAction(remAction)
         menu.addSeparator()
         menu.addAction(edit)
         menu.addSeparator()
@@ -1237,6 +1235,14 @@ class RubricTable(QTableWidget):
 
     def removeCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        self.removeRow(row)
+        self.selectRubricByRow(0)
+        self.handleClick()
+
+    def moveCurrentRubricToTab(self, tabIndex):
+        row = self.getCurrentRubricRow()
+        key = self.item(row, 0).text()
+        self.parent.addRubricByKeyToTab(key, tabIndex)
         self.removeRow(row)
         self.selectRubricByRow(0)
         self.handleClick()
