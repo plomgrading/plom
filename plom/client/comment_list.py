@@ -1171,22 +1171,25 @@ class RubricTable(QTableWidget):
             self.defaultContextMenuEvent(event)
 
     def defaultContextMenuEvent(self, event):
-        log.debug("Popping up a popup menu")
+        curtab_idx = self.parent.RTW.currentIndex()
+        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
+
         menu = QMenu(self)
         remAction = QAction("Remove from this pane", self)
         remAction.triggered.connect(self.removeCurrentRubric)
-        addA = QAction("Add to Pane A", self)
-        addA.triggered.connect(lambda: self.addCurrentRubricToTab(1))
-        addB = QAction("Add to Pane B", self)
-        addB.triggered.connect(lambda: self.addCurrentRubricToTab(2))
-        addC = QAction("Add to Pane C", self)
-        addC.triggered.connect(lambda: self.addCurrentRubricToTab(3))
+        addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
+        # note do not use a loop here: lambda does not behave right
+        addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
+        addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
+        addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
         edit = QAction("Edit rubric", self)
+        edit.setEnabled(False)  # TODO hook it up
         menu.addAction(remAction)
         menu.addSeparator()
-        menu.addAction(addA)
-        menu.addAction(addB)
-        menu.addAction(addC)
+        for n, a in enumerate(addTo):
+            menu.addAction(a)
+            if n + 1 == curtab_idx:
+                a.setEnabled(False)
         menu.addSeparator()
         menu.addAction(edit)
         menu.addSeparator()
@@ -1196,18 +1199,17 @@ class RubricTable(QTableWidget):
         menu.popup(QCursor.pos())
 
     def showContextMenuEvent(self, event):
-        log.debug("Popping up a popup menu")
+        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
         menu = QMenu(self)
-        addA = QAction("Add to Pane A", self)
-        addA.triggered.connect(lambda: self.addCurrentRubricToTab(1))
-        addB = QAction("Add to Pane B", self)
-        addB.triggered.connect(lambda: self.addCurrentRubricToTab(2))
-        addC = QAction("Add to Pane C", self)
-        addC.triggered.connect(lambda: self.addCurrentRubricToTab(3))
+        addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
+        # note do not use a loop here: lambda does not behave right
+        addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
+        addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
+        addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
         edit = QAction("Edit rubric", self)
-        menu.addAction(addA)
-        menu.addAction(addB)
-        menu.addAction(addC)
+        edit.setEnabled(False)  # TODO hook it up
+        for a in addTo:
+            menu.addAction(a)
         menu.addSeparator()
         hideAction = QAction("Hide", self)
         hideAction.triggered.connect(self.hideCurrentRubric)
