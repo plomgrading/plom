@@ -235,7 +235,21 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Refresh rubrics", self.refreshRubrics)
         m.addSeparator()
-        m.addAction("Change keybindings", self.setKeyBindings)
+        # key-binding submenu stuff
+        km = m.addMenu("Set major keys")
+        km.addAction(
+            "Use sdf keys (default)", lambda: self.setKeyBindingsToDefault("sdf")
+        )
+        km.addSeparator()
+        km.addAction("Use jkl keys", lambda: self.setKeyBindingsToDefault("jkl"))
+        km.addAction(
+            "Use sdf-french keys", lambda: self.setKeyBindingsToDefault("sdf_french")
+        )
+        km.addAction("Use asd keys", lambda: self.setKeyBindingsToDefault("asd"))
+        km.addAction("Use dvorak keys", lambda: self.setKeyBindingsToDefault("dvorak"))
+        km.addSeparator()
+        km.addAction("Use custom keys", self.setKeyBindings)
+        km.addSeparator()
         m.addSeparator()
 
         m.addAction("Help", lambda: None).setEnabled(False)
@@ -1067,6 +1081,12 @@ class Annotator(QWidget):
         kw = KeyWrangler(self.keyBindings)
         if kw.exec_() == QDialog.Accepted:
             self.changeMainShortCuts(kw.getKeyBindings())
+
+    def setKeyBindingsToDefault(self, name):
+        if name not in key_layouts:
+            return
+        else:
+            self.changeMainShortCuts(key_layouts[name])
 
     def setMainShortCuts(self):
         # basic tool keys
