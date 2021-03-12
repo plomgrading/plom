@@ -7,7 +7,6 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication,
-    QCheckBox,
     QDialog,
     QFrame,
     QGridLayout,
@@ -68,16 +67,21 @@ class DeleteIcon(QPushButton):
 
 
 class RubricModel(QStandardItemModel):
-    def __init__(self, data):
+    def __init__(self, data=None):
         super(RubricModel, self).__init__()
-        self._data = data
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
+        if data is not None:
+            self._data = data
+            self.populate(data)
+
+    def repopulate(self, data):
+        self._data = data
+        # clear all rows
+        self.removeRows(0, self.rowCount())
         self.populate(data)
 
     def populate(self, data):
-        # clear all rows
-        self.removeRows(0, self.rowCount())
         # then repopulate
         for X in data:
             # check if given rubric should appear
@@ -98,15 +102,8 @@ class RubricProxyModel(QSortFilterProxyModel):
         self.username = username
         self.tFilt = ""
         self.uFilt = ""
-        self.hideU = Qt.Unchecked
-        self.hideM = Qt.Unchecked
         self.setDynamicSortFilter(True)
         # Cols = [0"Key", 1"Username", 2"Delta", 3"Text"]
-
-    def setBinaryFilters(self, hideU, hideM):
-        self.hideU = hideU
-        self.hideM = hideM
-        self.setFilterKeyColumn(1)  # to trigger a refresh
 
     def setTextFilter(self, txt):
         self.uFilt = ""
@@ -120,17 +117,6 @@ class RubricProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, pos, index):
         # Cols = [0"Key", 1"Username", 2"Delta", 3"Text"]
-        # check username number hiding (except manager)
-        if self.hideU == Qt.Checked and (
-            self.sourceModel().data(self.sourceModel().index(pos, 1))
-            not in [self.username, "manager"]
-        ):
-            return False
-        # check manager hiding
-        if self.hideM == Qt.Checked and (
-            self.sourceModel().data(self.sourceModel().index(pos, 1)) == "manager"
-        ):
-            return False
 
         if len(self.tFilt) > 0:  # filter on text
             return (
@@ -353,7 +339,7 @@ class RubricWrangler(QDialog):
         self.resize(1200, 768)
         self.username = username
         self.rubrics = rubrics
-        self.model = RubricModel(rubrics)
+        self.model = RubricModel()
         self.proxy = RubricProxyModel(username)
         self.rubricTable = QTableView()
         self.proxy.setSourceModel(self.model)
@@ -379,48 +365,32 @@ class RubricWrangler(QDialog):
         self.uFiltLE = QLineEdit()
         self.uFiltLE.returnPressed.connect(self.setUserFilter)
         ##
-        self.cbU = QCheckBox("Hide comments from other users (except manager)")
-        self.cbM = QCheckBox("Hide comments from manager")
-        # connect checkboxes to filters
-        self.cbU.stateChanged.connect(self.setCheckBoxFilters)
-        self.cbM.stateChanged.connect(self.setCheckBoxFilters)
-        ##
         self.aB = QPushButton("&Accept")
         self.aB.clicked.connect(self.returnWrangled)
         self.cB = QPushButton("&Cancel")
         self.cB.clicked.connect(self.reject)
         grid = QGridLayout()
-        grid.addWidget(self.rubricTable, 3, 1, 8, 8)
-        grid.addWidget(self.cbU, 1, 1, 1, 2)
-        grid.addWidget(self.cbM, 2, 1, 1, 2)
+        grid.addWidget(self.rubricTable, 1, 1, 8, 8)
         grid.addWidget(QLabel("Filter on rubric text"), 12, 1, 1, 1)
         grid.addWidget(self.tFiltLE, 12, 2, 1, 2)
         grid.addWidget(QLabel("Filter on rubric username"), 13, 1, 1, 1)
         grid.addWidget(self.uFiltLE, 13, 2, 1, 2)
         grid.addWidget(self.ST, 1, 9, 10, 10)
-        grid.addWidget(self.aB, 20, 20)
-        grid.addWidget(self.cB, 20, 19)
+        grid.addWidget(self.aB, 20, 18)
+        grid.addWidget(self.cB, 20, 17)
         self.setLayout(grid)
 
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
             self.wranglerState = {
-                "shown": [],
+                "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
                 "tabs": [[], [], []],
-                "hideManager": Qt.Unchecked,
-                "hideUsers": Qt.Unchecked,
             }
         else:
             self.wranglerState = wranglerState
         # use this to set state
         self.setFromWranglerState()
-
-    def setCheckBoxFilters(self):
-        self.proxy.setBinaryFilters(
-            self.cbU.checkState(),
-            self.cbM.checkState(),
-        )
 
     def setTextFilter(self):
         self.proxy.setTextFilter(self.tFiltLE.text())
@@ -435,8 +405,6 @@ class RubricWrangler(QDialog):
             "shown": [],
             "hidden": [],
             "tabs": [],
-            "hideManager": self.cbM.checkState(),
-            "hideUsers": self.cbU.checkState(),
         }
         # get listsA,B,C from first 3 tabs
         for p in range(3):
@@ -444,26 +412,11 @@ class RubricWrangler(QDialog):
         # get hidden from widget3 = hidelist
         store["hidden"] = self.ST.STW.widget(3).getCurrentKeys()
         # anything not hidden is shown
+        # columns are ["Key", "Username", "Delta", "Text"])
         for r in range(self.model.rowCount()):
             key = self.model.index(r, 0).data()
-            # check against various filters
+            # check if is in "hidden" list
             if key in store["hidden"]:
-                continue
-            # columns are ["Key", "Username", "Delta", "Text"])
-            # check question number filtering - col1
-            # check username filtering - col1
-            if self.cbU.checkState() == Qt.Checked and self.model.index(
-                r, 1
-            ).data() not in [
-                self.username,
-                "manager",
-            ]:
-                continue
-            # check manager filtering
-            if (
-                self.cbM.checkState() == Qt.Checked
-                and self.model.index(r, 1).data() == "manager"
-            ):
                 continue
             # passes all
             store["shown"].append(key)
@@ -471,11 +424,18 @@ class RubricWrangler(QDialog):
 
     def setFromWranglerState(self):
         # does not do any sanity checks
-        # set the checkboxes
-        self.cbU.setCheckState(self.wranglerState["hideUsers"])
-        self.cbM.setCheckState(self.wranglerState["hideManager"])
-        # main list already populated from rubrics on init
-        # self.model.populate(self.rubrics)
+        # set the main list to obey the order in wrangerState, but then append any new rubrics
+        rkeys = [X["id"] for X in self.rubrics]  # keys in order
+        mainList = []
+        # add rubrics in the order from wranglerstate - which is list of keys
+        for key in self.wranglerState["shown"]:
+            ind = rkeys.index(key)
+            mainList.append(self.rubrics[ind])
+        # add any remaining rubrics
+        for ind, key in enumerate(rkeys):
+            if key not in self.wranglerState["shown"]:
+                mainList.append(self.rubrics[ind])
+        self.model.repopulate(mainList)
         # populate the ABC lists
         for p in range(3):
             self.ST.populate(p, self.rubrics, self.wranglerState["tabs"][p])

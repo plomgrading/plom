@@ -1429,10 +1429,9 @@ class Annotator(QWidget):
 
         # load the state of the rubric list widget
         if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
-            self.rubric_widget.wranglerState = self.parentMarkerUI.annotatorSettings[
-                "rubricWranglerState"
-            ]
-            self.rubric_widget.setRubricsFromStore()
+            self.rubric_widget.setRubricsFromState(
+                self.parentMarkerUI.annotatorSettings["rubricWranglerState"]
+            )
 
         # remember the "do not show again" checks
         if self.parentMarkerUI.annotatorSettings["markWarnings"] is not None:
@@ -1505,13 +1504,11 @@ class Annotator(QWidget):
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
         # save the rubricWidgetLists
-        self.saveWranglerState()
+        self.saveWranglerState(self.rubric_widget.get_tab_rubric_lists())
 
-    def saveWranglerState(self):
+    def saveWranglerState(self, wranglerState):
         # save the rubricWidgetLists
-        self.parentMarkerUI.annotatorSettings[
-            "rubricWranglerState"
-        ] = self.rubric_widget.wranglerState
+        self.parentMarkerUI.annotatorSettings["rubricWranglerState"] = wranglerState
 
     def saveAnnotations(self):
         """
