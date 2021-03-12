@@ -1195,6 +1195,7 @@ class RubricTable(QTableWidget):
             # move items from the sourceRow to the new targetRow
             for col in range(0, self.columnCount()):
                 self.setItem(targetRow, col, self.takeItem(sourceRow, col))
+            self.selectRow(targetRow)
             self.removeRow(sourceRow)
             event.accept()
 
@@ -1235,7 +1236,6 @@ class RubricTable(QTableWidget):
                 self.item(rc, 3).setForeground(colour_illegal)
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
-        print(key_list)
         """Clear table and repopulate rubrics in the key_list"""
         # remove everything
         for r in range(self.rowCount()):
