@@ -6,6 +6,7 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
     QApplication,
     QDialog,
+    QGroupBox,
     QGridLayout,
     QLabel,
     QLineEdit,
@@ -44,18 +45,18 @@ keys_sdf = {
     "zoom": "Z",
 }
 
-keys_fr = {
-    "redo": "T",
-    "undo": "G",
-    "nextRubric": "F",
-    "previousRubric": "R",
-    "nextPane": "D",
-    "previousPane": "S",
-    "nextTool": "E",
-    "previousTool": "W",
-    "delete": "Q",
+keys_dvorak = {
+    "redo": "Y",
+    "undo": "I",
+    "nextRubric": "E",
+    "previousRubric": ".",
+    "nextPane": "U",
+    "previousPane": "O",
+    "nextTool": "P",
+    "previousTool": ",",
+    "delete": "''",
     "move": "A",
-    "zoom": "Z",
+    "zoom": ";",
 }
 
 keys_asd = {
@@ -70,6 +71,20 @@ keys_asd = {
     "delete": "C",
     "move": "X",
     "zoom": "Z",
+}
+
+keys_jkl = {
+    "redo": "Y",
+    "undo": "H",
+    "nextRubric": "K",
+    "previousRubric": "I",
+    "nextPane": "L",
+    "previousPane": "J",
+    "nextTool": "O",
+    "previousTool": "U",
+    "delete": "P",
+    "move": ";",
+    "zoom": "/",
 }
 
 
@@ -133,22 +148,28 @@ class KeyWrangler(QDialog):
         self.sdfB.clicked.connect(self.setSDF)
         self.asdB = QPushButton("Set ASD")
         self.asdB.clicked.connect(self.setASD)
-        self.frB = QPushButton("Set FR")
-        self.frB.clicked.connect(self.setFR)
+        self.jklB = QPushButton("Set JKL")
+        self.jklB.clicked.connect(self.setJKL)
+        self.dvkB = QPushButton("Set Dvorak")
+        self.dvkB.clicked.connect(self.setDvorak)
         self.vB = QPushButton("Validate")
         self.vB.clicked.connect(self.validate)
         self.aB = QPushButton("Accept layout")
         self.aB.clicked.connect(self.acceptLayout)
         self.cB = QPushButton("Reject layout")
         self.cB.clicked.connect(self.reject)
+        self.GB = QGroupBox("Actions and Keys")
 
         grid = QGridLayout()
-        grid.addWidget(self.sdfB, 0, 1)
-        grid.addWidget(self.asdB, 0, 2)
-        grid.addWidget(self.frB, 0, 3)
-        grid.addWidget(self.vB, 5, 3)
-        grid.addWidget(self.cB, 6, 1)
-        grid.addWidget(self.aB, 6, 3)
+        mgrid = QGridLayout()
+        mgrid.addWidget(self.sdfB, 5, 7)
+        mgrid.addWidget(self.asdB, 5, 8)
+        mgrid.addWidget(self.jklB, 6, 7)
+        mgrid.addWidget(self.dvkB, 6, 8)
+        mgrid.addWidget(self.vB, 5, 3)
+        mgrid.addWidget(self.cB, 6, 1)
+        mgrid.addWidget(self.aB, 6, 3)
+        mgrid.addWidget(self.GB, 1, 1, 3, 8)
         ##
         grid.addWidget(self.deleteLabel, 1, 1)
         grid.addWidget(self.moveLabel, 2, 1)
@@ -172,19 +193,24 @@ class KeyWrangler(QDialog):
         grid.addWidget(self.nextRubricLabel, 3, 5)
         grid.addWidget(self.nextRubricKey, 3, 6)
         ##
-        self.setLayout(grid)
+        self.GB.setLayout(grid)
+        self.setLayout(mgrid)
 
     def setSDF(self):
         for act in self.actions:
             getattr(self, act + "Key").setText(keys_sdf[act])
 
-    def setFR(self):
+    def setJKL(self):
         for act in self.actions:
-            getattr(self, act + "Key").setText(keys_fr[act])
+            getattr(self, act + "Key").setText(keys_jkl[act])
 
     def setASD(self):
         for act in self.actions:
             getattr(self, act + "Key").setText(keys_asd[act])
+
+    def setDvorak(self):
+        for act in self.actions:
+            getattr(self, act + "Key").setText(keys_dvorak[act])
 
     def validate(self):
         actToCode = {}
