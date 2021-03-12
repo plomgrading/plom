@@ -1129,9 +1129,10 @@ class ChangeFiltersDialog(QDialog):
 
 
 class RubricTable(QTableWidget):
-    def __init__(self, parent, sort=False):
+    def __init__(self, parent, sort=False, tabType=None):
         super().__init__()
         self.parent = parent
+        self.tabType = tabType  # to help set menu
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -1151,31 +1152,84 @@ class RubricTable(QTableWidget):
         self.doubleClicked.connect(self.editRow)
 
     def contextMenuEvent(self, event):
+        if self.tabType == "hide":
+            self.hideContextMenuEvent(event)
+        elif self.tabType == "delta":
+            pass
+        elif self.tabType == "show":
+            self.showContextMenuEvent(event)
+        elif self.tabType == None:
+            self.defaultContextMenuEvent(event)
+        else:
+            self.defaultContextMenuEvent(event)
+
+    def defaultContextMenuEvent(self, event):
         log.debug("Popping up a popup menu")
         menu = QMenu(self)
-        if True:  # if this_is_share_pane
-            hideAction = QAction("Hide", self)
-            # hideAction.triggered.connect(lambda: self.hide_the_thingy(event))
-        else:
-            hideAction = QAction("Remove from pane", self)
-        menu.addAction(hideAction)
+        remAction = QAction("Remove from this pane", self)
+        addA = QAction("Add to Pane A", self)
+        addB = QAction("Add to Pane B", self)
+        addC = QAction("Add to Pane C", self)
+        edit = QAction("Edit rubric", self)
+        menu.addAction(remAction)
         menu.addSeparator()
-        menu.addAction(QAction("Add to Pane A", self))
-        menu.addAction(QAction("Add to Pane B", self))
-        menu.addAction(QAction("Add to Pane C", self))
-        menu.addAction(QAction("Add to new pane...", self))
+        menu.addAction(addA)
+        menu.addAction(addB)
+        menu.addAction(addC)
         menu.addSeparator()
-        if True:  # if this_isnt_mine
-            menu.addAction(QAction("Edit a copy...", self))
-        else:
-            menu.addAction(QAction("Edit...", self))
+        menu.addAction(edit)
         menu.addSeparator()
         renameTabAction = QAction("Rename this pane...", self)
-        renameTabAction.triggered.connect(self.rename_current_tab)
         menu.addAction(renameTabAction)
-        if False:  # e.g., share pane, delta pane renamable?
-            renameTabAction.setEnabled(False)
+        renameTabAction.triggered.connect(self.rename_current_tab)
         menu.popup(QCursor.pos())
+
+    def showContextMenuEvent(self, event):
+        log.debug("Popping up a popup menu")
+        menu = QMenu(self)
+        addA = QAction("Add to Pane A", self)
+        addB = QAction("Add to Pane B", self)
+        addC = QAction("Add to Pane C", self)
+        edit = QAction("Edit rubric", self)
+        menu.addAction(addA)
+        menu.addAction(addB)
+        menu.addAction(addC)
+        menu.addSeparator()
+        hideAction = QAction("Hide", self)
+        hideAction.triggered.connect(self.hideCurrentRubric)
+        menu.addAction(hideAction)
+        menu.addSeparator()
+        menu.addAction(edit)
+        menu.addSeparator()
+        renameTabAction = QAction("Rename this pane...", self)
+        menu.addAction(renameTabAction)
+        renameTabAction.triggered.connect(self.rename_current_tab)
+        menu.popup(QCursor.pos())
+
+    def hideContextMenuEvent(self, event):
+        print("Pop-up hide menu")
+        log.debug("Popping up a popup menu")
+        menu = QMenu(self)
+        unhideAction = QAction("Unhide rubric", self)
+        unhideAction.triggered.connect(self.unhideCurrentRubric)
+        menu.addAction(unhideAction)
+        menu.popup(QCursor.pos())
+
+    def hideCurrentRubric(self):
+        row = self.getCurrentRubricRow()
+        key = self.item(row, 0).text()
+        self.parent.hideRubricByKey(key)
+        self.removeRow(row)
+        self.selectRubricByRow(0)
+        self.handleClick()
+
+    def unhideCurrentRubric(self):
+        row = self.getCurrentRubricRow()
+        key = self.item(row, 0).text()
+        self.parent.unhideRubricByKey(key)
+        self.removeRow(row)
+        self.selectRubricByRow(0)
+        self.handleClick()
 
     def dropEvent(self, event):
         # TODO - simplify - only a single row is selected
@@ -1415,8 +1469,8 @@ class RubricWidget(QWidget):
         self.tabA = RubricTable(self)  # group A
         self.tabB = RubricTable(self)  # group B
         self.tabC = RubricTable(self)  # group C
-        self.tabS = RubricTable(self)  # Shared
-        self.tabDelta = RubricTable(self)  # group D
+        self.tabS = RubricTable(self, tabType="show")  # Shared
+        self.tabDelta = RubricTable(self, tabType="delta")  # group D
         self.numberOfTabs = 5
         self.RTW = QTabWidget()
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
@@ -1426,7 +1480,7 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabC, self.tab_names[3]["shortname"])
         self.RTW.addTab(self.tabDelta, self.tab_names[4]["shortname"])
         self.RTW.setCurrentIndex(0)  # start on shared tab
-        self.tabHide = RubricTable(self, sort=True)
+        self.tabHide = RubricTable(self, sort=True, tabType="hide")
         self.groupHide = QTabWidget()
         self.groupHide.addTab(self.tabHide, "Hidden")
         self.showHideW = QStackedWidget()
@@ -1648,6 +1702,16 @@ class RubricWidget(QWidget):
             list: strings for each text on page that is not inside a rubric
         """
         return self.parent.get_nonrubric_text_from_page()
+
+    def unhideRubricByKey(self, key):
+        index = [x["id"] for x in self.rubrics].index(key)
+        legalDown, legalUp = self.getLegalDownUp()
+        self.tabS.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+
+    def hideRubricByKey(self, key):
+        index = [x["id"] for x in self.rubrics].index(key)
+        legalDown, legalUp = self.getLegalDownUp()
+        self.tabHide.appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
