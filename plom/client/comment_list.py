@@ -1597,11 +1597,8 @@ class RubricWidget(QWidget):
             "tabs": [[], [], []],
         }
         # only rubrics for this question
-        # exclude other users except manager
         # exclude manager-delta rubrics
         for X in self.rubrics:
-            if X["username"] not in [self.username, "manager"]:
-                continue
             if X["username"] == "manager" and X["meta"] == "delta":
                 continue
             wranglerState["shown"].append(X["id"])
