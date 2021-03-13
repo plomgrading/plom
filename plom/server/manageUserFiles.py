@@ -41,7 +41,7 @@ def build_canned_users(number_of_users):
     # build list of required users
     user_list = []
     for required_user in list_of_required_users:
-        user_list.append([required_user, simple_password()])
+        user_list.append([required_user, simple_password(n=4)])
     # now append list of standard users - some sanity checks about numbers
     if number_of_users <= cutoff_for_named_users:
         print("Making list of named users")
