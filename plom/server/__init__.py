@@ -16,5 +16,5 @@ specdir = Path(specdir)
 confdir = Path("serverConfiguration")
 
 from .misc import build_server_directories, check_server_directories
-from .misc import build_self_signed_SSL_keys
+from .cert_utils import build_self_signed_SSL_keys
 from .manageUserFiles import parse_user_list, build_canned_users
