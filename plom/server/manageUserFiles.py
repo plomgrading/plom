@@ -35,9 +35,6 @@ def build_canned_users(number_of_users, numbered=False):
     Returns:
         list: list of users (either named or numbered users).
     """
-    if number_of_users <= 0:
-        raise ValueError("Must produce at least 1 regular user.")
-
     # build list of required users
     user_list = []
     for required_user in list_of_required_users:
