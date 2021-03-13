@@ -45,10 +45,8 @@ def build_canned_users(number_of_users, numbered=False):
 
     # append list of standard users
     if numbered:
-        print("Making list of numbered users")
         user_list.extend(make_numbered_user_list(number_of_users))
     else:
-        print("Making list of named users")
         user_list.extend(make_random_user_list(number_of_users))
 
     return user_list
