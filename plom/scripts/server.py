@@ -278,10 +278,9 @@ def processUsers(userFile, demo, auto, auto_num):
 
     # otherwise we have to make one for the user - check if one already there.
     if (server_conf_dir / "userListRaw.csv").exists():
-        print(
-            "File 'userListRaw.csv' already exists in 'serverConfiguration'. Remove before continuing. Aborting."
+        raise FileExistsError(
+            "File 'userListRaw.csv' already exists in '{}'. Remove before continuing.".format(server_conf_dir)
         )
-        exit(1)
 
     if demo:
         print(
