@@ -1,8 +1,20 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """The Plom Server"""
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
+
+from pathlib import Path
+import logging
+
+from plom import specdir
+
+specdir = Path(specdir)
+confdir = Path("serverConfiguration")
+
+from .misc import build_server_directories, check_server_directories
+from .misc import build_self_signed_SSL_keys
+from .manageUserFiles import parse_user_list, build_canned_users

@@ -12,22 +12,19 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import locale
 import os
-import shlex
 import shutil
-import subprocess
 from pathlib import Path
 from textwrap import fill, dedent
 
 import pkg_resources
 
 from plom import __version__
-from plom import specdir
+from plom.server import specdir, confdir
+from plom.server import build_server_directories, check_server_directories
+from plom.server import parse_user_list, build_canned_users
+from plom.server import build_self_signed_SSL_keys
 
-
-specdir = Path(specdir)
-server_conf_dir = Path("serverConfiguration")
 
 server_instructions = """Overview of running the Plom server:
 
@@ -92,53 +89,8 @@ def checkSpecAndDatabase():
         print("Cannot find the classlist: expect it later...")
 
 
-def buildRequiredDirectories():
-    # TODO unix paths hardcoded
-    lst = [
-        specdir,
-        "pages",
-        "pages/discardedPages",
-        "pages/collidingPages",
-        "pages/unknownPages",
-        "pages/originalPages",
-        "markedQuestions",
-        "markedQuestions/plomFiles",
-        "serverConfiguration",
-        "userRubricPaneData",
-    ]
-    for dir in lst:
-        os.makedirs(dir, exist_ok=True)
-
-
-def buildSSLKeys():
-    """Make new key and cert files if they do not yet exist."""
-    key = server_conf_dir / "plom.key"
-    cert = server_conf_dir / "plom-selfsigned.crt"
-    if key.is_file() and cert.is_file():
-        print("SSL key and certificate already exist - will not change.")
-        return
-
-    # Generate new self-signed key/cert
-    sslcmd = "openssl req -x509 -sha256 -newkey rsa:2048"
-    sslcmd += " -keyout {} -nodes -out {} -days 1000 -subj".format(key, cert)
-
-    # TODO: is this the way to get two digit country code?
-    tmp = locale.getdefaultlocale()[0]
-    if tmp:
-        twodigcc = tmp[-2:]
-    else:
-        twodigcc = "CA"
-    sslcmd += " '/C={}/ST=./L=./CN=localhost'".format(twodigcc)
-    try:
-        subprocess.check_call(shlex.split(sslcmd))
-    except Exception as err:
-        raise PlomServerConfigurationError(
-            "Something went wrong building ssl keys.\n{}\nCannot continue.".format(err)
-        )
-
-
 def createServerConfig():
-    sd = server_conf_dir / "serverDetails.toml"
+    sd = confdir / "serverDetails.toml"
     if sd.exists():
         print("Server config already exists - will not change.")
         return
@@ -147,9 +99,8 @@ def createServerConfig():
     with open(sd, "wb") as fh:
         fh.write(template)
     print(
-        "Please update '{}' with the correct name (or IP) of your server and the port.".format(
-            sd
-        )
+        "You may want to update '{}' with the correct name (or IP) and "
+        "port of your server.".format(sd)
     )
 
 
@@ -229,9 +180,12 @@ def doLatexChecks():
 
 def initialiseServer():
     print("Build required directories")
-    buildRequiredDirectories()
-    print("Building self-signed ssl keys for server")
-    buildSSLKeys()
+    build_server_directories()
+    print("Building self-signed SSL key for server")
+    try:
+        build_self_signed_SSL_keys()
+    except FileExistsError as e:
+        print("Skipped SSL keygen - {}".format(e))
     print("Copy server networking configuration template into place.")
     createServerConfig()
     print("Build blank predictionlist for identifying.")
@@ -260,35 +214,32 @@ def processUsers(userFile, demo, auto, auto_num):
     return:
         None
     """
+    confdir.mkdir(exist_ok=True)
+    userlist = confdir / "userList.json"
     # if we have been passed a userFile then process it and return
     if userFile:
-        print("Processing user file '{}' to 'userList.json'".format(userFile))
-        if (server_conf_dir / "userList.json").exists():
-            print("WARNING - this is overwriting the existing userList.json file.")
-        from plom.server import manageUserFiles
-
-        manageUserFiles.parse_user_list(userFile)
+        print("Processing user file '{}' to {}".format(userFile, userlist))
+        if userlist.exists():
+            print("WARNING - overwriting existing {} file.".format(userlist))
+        parse_user_list(userFile)
         return
 
+    rawfile = confdir / "userListRaw.csv"
     # otherwise we have to make one for the user - check if one already there.
-    if (server_conf_dir / "userListRaw.csv").exists():
+    if rawfile.exists():
         raise FileExistsError(
-            "File '{}' already exists.  Remove and try again.".format(
-                server_conf_dir / "userListRaw.csv"
-            )
+            "File {} already exists.  Remove and try again.".format(rawfile)
         )
 
     if demo:
         print(
-            "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
+            "Creating a demo user list at {}. "
+            "** DO NOT USE ON REAL SERVER **".format(rawfile)
         )
-        from plom.server import manageUserFiles
-
-        rawfile = server_conf_dir / "userListRaw.csv"
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
-        manageUserFiles.parse_user_list(rawfile)
+        parse_user_list(rawfile)
         return
 
     if auto or auto_num:
@@ -304,14 +255,12 @@ def processUsers(userFile, demo, auto, auto_num):
             "Creating an auto-generated {0} user list at '{1}'\n"
             "Please edit as you see fit and then rerun 'plom-server users {1}'".format(
                 "numbered" if numbered else "named",
-                server_conf_dir / "userListRaw.csv",
+                rawfile,
             )
         )
-        from plom.server import manageUserFiles
-
         # grab required users and regular users
-        lst = manageUserFiles.build_canned_users(N, numbered)
-        with open(server_conf_dir / "userListRaw.csv", "w+") as fh:
+        lst = build_canned_users(N, numbered)
+        with open(rawfile, "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
                 fh.write('"{}", "{}"\n'.format(np[0], np[1]))
@@ -320,47 +269,25 @@ def processUsers(userFile, demo, auto, auto_num):
     if not userFile:
         print(
             "Creating '{}' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters.".format(
-                server_conf_dir / "userListRaw.csv"
+                rawfile
             )
         )
         cl = pkg_resources.resource_string("plom", "templateUserList.csv")
-        with open(server_conf_dir / "userListRaw.csv", "wb") as fh:
+        with open(rawfile, "wb") as fh:
             fh.write(cl)
 
 
-#################
-def checkDirectories():
-    # TODO unix paths hardcoded
-    lst = [
-        "pages",
-        "pages/discardedPages",
-        "pages/collidingPages",
-        "pages/unknownPages",
-        "pages/originalPages",
-        "markedQuestions",
-        "markedQuestions/plomFiles",
-        "serverConfiguration",
-    ]
-    for d in lst:
-        if not os.path.isdir(d):
-            print(
-                "Required directories are not present. Have you run 'plom-server init'?"
-            )
-            exit(1)
-
-
 def checkServerConfigured():
-    if not (server_conf_dir / "serverDetails.toml").exists():
+    if not (confdir / "serverDetails.toml").exists():
         print("Server configuration file not present. Have you run 'plom-server init'?")
         exit(1)
 
-    if not (server_conf_dir / "userList.json").exists():
+    if not (confdir / "userList.json").exists():
         print("Processed userlist is not present. Have you run 'plom-server users'?")
         exit(1)
 
     if not (
-        (server_conf_dir / "plom.key").exists()
-        and (server_conf_dir / "plom-selfsigned.crt").exists()
+        (confdir / "plom.key").exists() and (confdir / "plom-selfsigned.crt").exists()
     ):
         print("SSL keys not present. Have you run 'plom-server init'?")
         exit(1)
@@ -374,22 +301,16 @@ def checkServerConfigured():
         exit(1)
 
 
-def prelaunchChecks():
-    # check database, spec and classlist in place
-    checkSpecAndDatabase()
-    # check all directories built
-    checkDirectories()
-    # check serverConf and userlist present (also check predictionlist).
-    checkServerConfigured()
-    # ready to go
-    return True
-
-
 def launchTheServer(masterToken):
     from plom.server import theServer
 
-    if prelaunchChecks():
-        theServer.launch(masterToken)
+    check_server_directories()
+    # check database, spec and classlist in place
+    checkSpecAndDatabase()
+    # check serverConf and userlist present (also check predictionlist).
+    checkServerConfigured()
+
+    theServer.launch(masterToken)
 
 
 #################
@@ -410,7 +331,11 @@ spR = sub.add_parser("launch", help="Launch server.")
 spR.add_argument(
     "masterToken",
     nargs="?",
-    help="The master token is a 32 hex-digit string used to encrypt tokens in database. If you do not supply one then the server will create one. You should record the token somewhere (and reuse it at next server-start) if you want to be able to hot-restart the server (ie - restart the server without requiring users to log-off and log-in again).",
+    help="""The master token is a 32 hex-digit string used to encrypt tokens
+in the database.  If you do not supply one then the server will create one.
+You could record the token somewhere (and reuse it at next server-start)
+if you want to be able to hot-restart the server (i.e., restart the server
+without requiring users to log-off and log-in again).""",
 )
 #
 spU.add_argument(
