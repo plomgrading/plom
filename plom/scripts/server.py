@@ -324,20 +324,20 @@ parser.add_argument("--version", action="version", version="%(prog)s " + __versi
 sub = parser.add_subparsers(
     dest="command", description="Perform various server-related tasks."
 )
-#
+
 spI = sub.add_parser("init", help="Initialise server.")
 spU = sub.add_parser("users", help="Create required users.")
 spR = sub.add_parser("launch", help="Launch server.")
 spR.add_argument(
     "masterToken",
     nargs="?",
-    help="""The master token is a 32 hex-digit string used to encrypt tokens
-in the database.  If you do not supply one then the server will create one.
-You could record the token somewhere (and reuse it at next server-start)
-if you want to be able to hot-restart the server (i.e., restart the server
-without requiring users to log-off and log-in again).""",
+    help="""A 32 hex-digit string used to encrypt tokens in the database.
+        If you do not supply one then the server will create one.
+        If you record the token somewhere you can hot-restart the server
+        (i.e., restart the server without requiring users to log-off and
+        log-in again).""",
 )
-#
+
 spU.add_argument(
     "userlist",
     nargs="?",
