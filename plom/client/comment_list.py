@@ -1483,6 +1483,7 @@ class RubricWidget(QWidget):
             self.wranglerState["shown"].append(X["id"])
         # then set state from this
         self.setRubricsFromStore()
+        # then make sure a rubric selected in each
 
     def setRubricsFromStore(self):
         # if score is x/N then largest legal delta = +(N-x)
@@ -1524,6 +1525,12 @@ class RubricWidget(QWidget):
             self.maxMark,
             self.rubrics,
         )
+        # make sure something selected in each pane
+        self.tabDelta.selectRubricByRow(0)
+        self.tabC.selectRubricByRow(0)
+        self.tabB.selectRubricByRow(0)
+        self.tabA.selectRubricByRow(0)
+        self.tabS.selectRubricByRow(0)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
@@ -1584,6 +1591,7 @@ class RubricWidget(QWidget):
 
     def reselectCurrentRubric(self):
         self.RTW.currentWidget().reselectCurrentRubric()
+        self.handleClick()
 
     def selectRubricByRow(self, rowNumber):
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
