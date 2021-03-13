@@ -16,6 +16,8 @@ from .routeutils import (
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
 
+from plom import SpecVerifier
+
 
 class UserInitHandler:
     def __init__(self, plomServer):
@@ -156,6 +158,34 @@ class UserInitHandler:
             return web.Response(status=404)
         return web.json_response(spec, status=200)
 
+    # @routes.put("/info/spec")
+    @authenticate_by_token_required_fields(["user", "spec"])
+    def put_spec(self, data, request):
+        """Accept an uploaded exam specification.
+
+        Response:
+            403: only manager can upload a spec.
+            400: the provided spec is not valid.  NOT IMPLEMENTED YET.
+            409: Conflict: we already had a spec and it does not match
+                this new one.  TODO: how to handle private key?
+                NOT IMPLEMENTED YET.
+            200: new spec file accepted or spec file matches what we
+                already have.
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
+        # TODO: support a --force?
+        # raise web.HTTPConflict(reason="we already have a spec and it doesn't match the one you gave us")
+        sv = SpecVerifier(data["spec"])
+        sv.verifySpec()
+        sv.checkCodes()
+        # TODO: error handing
+        # raise web.HTTPBadRequest(reason="Invalid spec data")
+        sv.saveVerifiedSpec()
+        self.server.testSpec = SpecVerifier.load_verified()
+        log.info("spec loaded: %s", self.server.info_spec())
+        return web.Response()
+
     # @routes.get("/info/shortName")
     @no_authentication_only_log_request
     async def InfoShortName(self, request):
@@ -172,6 +202,7 @@ class UserInitHandler:
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortName", self.InfoShortName)
         router.add_get("/info/spec", self.info_spec)
+        router.add_put("/info/spec", self.put_spec)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
         router.add_post("/authorisation/{user}", self.createModifyUser)

@@ -187,6 +187,42 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def upload_spec(self, specdata):
+        """Give the server a specification.
+
+        Args:
+            specdata (dict): see :func:`plom.SpecVerifier`.
+
+        Exceptions:
+            PlomConflict: server already has one, and it doesn't match.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        TODO anything else?
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.session.put(
+                "https://{}/info/spec".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "spec": specdata,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 409:
+                raise PlomConflict(e) from None
+            elif response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
     def RgetCompletionStatus(self):
         self.SRmutex.acquire()
         try:

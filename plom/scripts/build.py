@@ -23,7 +23,7 @@ from stdiomask import getpass
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
-from plom.plom_exceptions import PlomExistingDatabase
+from plom.plom_exceptions import PlomConflict, PlomExistingDatabase
 from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.produce import get_messenger
 from plom.produce import build_database, build_papers
@@ -86,9 +86,7 @@ def parseAndVerifySpecification(fname):
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
     sub = parser.add_subparsers(
         dest="command", description="Perform tasks related to building tests."
     )
@@ -119,7 +117,7 @@ def get_parser():
 
     spP = sub.add_parser(
         "parse",
-        help="Parse spec file",
+        help="Parse spec file (DEPRECATED?)",
         description="Parse and verify the test-specification toml file.",
     )
     spP.add_argument(
@@ -129,7 +127,20 @@ def get_parser():
         help="defaults to '%(default)s'.",
     )
 
-    #
+    spS = sub.add_parser(
+        "uploadspec",
+        help="Upload spec to server",
+        description="Upload exam specification to server.",
+    )
+    spS.add_argument(
+        "specFile",
+        nargs="?",
+        default="testSpec.toml",
+        help="defaults to '%(default)s'.",
+    )
+    spS.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    spS.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
     spL = sub.add_parser(
         "class",
         help="Read in a classlist",
@@ -257,7 +268,7 @@ def get_parser():
     group.add_argument(
         "--demo",
         action="store_true",
-        help="Upload an auto-generated rubric list for demos.",
+        help="Use auto-generated rubric list.",
     )
 
     spClear = sub.add_parser(
@@ -321,9 +332,29 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parseAndVerifySpecification(fname)
     elif args.command == "parse":
+        print("DEPRECATED?")
         fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         parseAndVerifySpecification(fname)
+
+    elif args.command == "uploadspec":
+        fname = checkTomlExtension(args.specFile)
+        sv = SpecVerifier.from_toml_file(fname)
+        sv.verifySpec()
+        sv.checkCodes()
+        print("spec seems ok: we will upload it to the server")
+        msgr = get_messenger(args.server, args.password)
+        try:
+            # TODO: sv.spec versus sv.get_public_spec_dict()?
+            # TODO: think about who is supposed to know/generate the privateSeed
+            msgr.upload_spec(sv.spec)
+        except PlomConflict:
+            print("Error: Server already has a spec (TODO: add force?).")
+            sys.exit(3)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
     elif args.command == "class":
         if args.demo:
             classlist = get_demo_classlist()

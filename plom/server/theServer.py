@@ -46,8 +46,7 @@ class Server:
             log.info("existing spec loaded")
         except FileNotFoundError:
             self.testSpec = None
-            log.error("spec file not found -- use 'plom-build' to create one")
-            raise
+            log.info("no spec file: we expect it later...")
         self.authority = Authority(masterToken)
         self.DB = db
         self.API = serverAPI
