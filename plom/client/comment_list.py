@@ -1320,6 +1320,7 @@ class RubricTable(QTableWidget):
             return
         r = (r + 1) % self.rowCount()
         self.selectRubricByRow(r)
+        self.handleClick()
 
     def previousRubric(self):
         """Move selection to the prevoous row, wrapping around if needed."""
@@ -1330,6 +1331,7 @@ class RubricTable(QTableWidget):
             return
         r = (r - 1) % self.rowCount()
         self.selectRubricByRow(r)
+        self.handleClick()
 
     def handleClick(self):
         # When an item is clicked, grab the details and emit rubric signal [key, delta, text]

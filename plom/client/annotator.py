@@ -1264,7 +1264,6 @@ class Annotator(QWidget):
             self.rubric_widget.nextRubric()
         else:
             self.rubric_widget.reselectCurrentRubric()
-        self.rubric_widget.handleClick()
 
     def crossMode(self):
         """ Changes the tool to crossMode. """
