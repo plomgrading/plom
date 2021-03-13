@@ -33,6 +33,8 @@ from PyQt5.QtGui import (
     QPixmap,
 )
 from PyQt5.QtWidgets import (
+    QAction,
+    QActionGroup,
     QDialog,
     QWidget,
     QMenu,
@@ -169,9 +171,6 @@ class Annotator(QWidget):
         # mark set, mark change functions
         self.scene = None  # TODO?
 
-        # no initial keybindings - get from the marker if non-default
-        self.keyBindings = None
-        self.setMiscShortCuts()
         # set the zoom combobox
         self.setZoomComboBox()
         # Set the tool icons
@@ -199,6 +198,14 @@ class Annotator(QWidget):
         # Grab window settings from parent
         self.loadWindowSettings()
 
+        self.ui.hamMenuButton.setMenu(self.buildHamburger())
+        self.ui.hamMenuButton.setToolTip("Menu (F10)")
+        self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
+        # no initial keybindings - get from the marker if non-default
+        self.keyBindings = None
+        self.setMiscShortCuts()
+
+    def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
         m = QMenu()
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
@@ -237,18 +244,31 @@ class Annotator(QWidget):
         m.addSeparator()
         # key-binding submenu stuff
         km = m.addMenu("Set major keys")
-        km.addAction(
-            "Use sdf keys (default)", lambda: self.setKeyBindingsToDefault("sdf")
+        # to make these actions checkable, they need to belong to self.
+        kmg = QActionGroup(m)
+        for name in key_layouts:
+            setattr(self, "kb_{}_act".format(name), QAction("Use {} keys".format(name)))
+            getattr(self, "kb_{}_act".format(name)).setCheckable(True)
+            km.addAction(getattr(self, "kb_{}_act".format(name)))
+            kmg.addAction(getattr(self, "kb_{}_act".format(name)))
+        # TODO - get this inside the loop with correct lambda function scope hackery
+        self.kb_sdf_act.triggered.connect(lambda: self.setKeyBindingsToDefault("sdf"))
+        self.kb_sdf_french_act.triggered.connect(
+            lambda: self.setKeyBindingsToDefault("sdf_french")
         )
-        km.addSeparator()
-        km.addAction("Use jkl keys", lambda: self.setKeyBindingsToDefault("jkl"))
-        km.addAction(
-            "Use sdf-french keys", lambda: self.setKeyBindingsToDefault("sdf_french")
+        self.kb_dvorak_act.triggered.connect(
+            lambda: self.setKeyBindingsToDefault("sdf_dvorak")
         )
-        km.addAction("Use asd keys", lambda: self.setKeyBindingsToDefault("asd"))
-        km.addAction("Use dvorak keys", lambda: self.setKeyBindingsToDefault("dvorak"))
+        self.kb_asd_act.triggered.connect(lambda: self.setKeyBindingsToDefault("asd"))
+        self.kb_jkl_act.triggered.connect(lambda: self.setKeyBindingsToDefault("jkl"))
+
         km.addSeparator()
-        km.addAction("Use custom keys", self.setKeyBindings)
+        self.kb_custom_act = QAction("Use custom keys")
+        self.kb_custom_act.setCheckable(True)
+        self.kb_custom_act.triggered.connect(self.setKeyBindings)
+        kmg.addAction(self.kb_custom_act)
+        km.addAction(self.kb_custom_act)
+
         km.addSeparator()
         m.addSeparator()
 
@@ -257,9 +277,7 @@ class Annotator(QWidget):
         m.addAction("About Plom", lambda: None).setEnabled(False)
         m.addSeparator()
         m.addAction("Close without saving\tctrl-c", self.close)
-        self.ui.hamMenuButton.setMenu(m)
-        self.ui.hamMenuButton.setToolTip("Menu (F10)")
-        self.ui.hamMenuButton.setPopupMode(QToolButton.InstantPopup)
+        return m
 
     def closeCurrentTGV(self):
         """
@@ -1092,6 +1110,8 @@ class Annotator(QWidget):
         # basic tool keys
         if self.keyBindings is None:
             self.keyBindings = key_layouts["sdf"]
+            # set the menu action item
+            self.kb_sdf_act.setChecked(True)
 
         # use sdf defaults unless saved
         if self.parentMarkerUI.annotatorSettings["tool_keys"] is None:
@@ -1103,6 +1123,8 @@ class Annotator(QWidget):
                 for act in key_layouts["sdf"]
             ):
                 keys = self.parentMarkerUI.annotatorSettings["tool_keys"]
+                # TODO - this just clicks "custom" - might be better to detect if known binding.
+                self.kb_custom_act.setChecked(True)
             else:  # not all there so use sdf-defaults
                 keys = self.keyBindings
 
