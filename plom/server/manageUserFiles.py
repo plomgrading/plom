@@ -54,19 +54,6 @@ def build_canned_users(number_of_users, numbered=False):
     return user_list
 
 
-def save_users(username_hash_dict, user_hash_login_json_path):
-    """Saves the user hash login info to the file at user_hash_login_json_path.
-
-    Arguments:
-        username_hash_dict {dict} -- Dictionary of the form {Str:Str} which represents
-                                     {username: hashed_password} objects.
-        user_hash_login_json_path {Str} -- File path for saving the login hash info.
-    """
-
-    with open(user_hash_login_json_path, "w") as fh:
-        fh.write(json.dumps(username_hash_dict, indent=2))
-
-
 def return_user_hash(username_password_dict):
     """Creates a dictionary for username and hash which is derived from the user's password.
 
@@ -215,4 +202,5 @@ def parse_user_list(user_file_path):
 
     username_hash_dict = return_user_hash(username_password_dict)
 
-    save_users(username_hash_dict, user_hash_login_json_path)
+    with open(user_hash_login_json_path, "w") as fh:
+        fh.write(json.dumps(username_hash_dict, indent=2))
