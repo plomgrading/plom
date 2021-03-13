@@ -322,7 +322,7 @@ def processUsers(userFile, demo, auto, auto_num):
 
     if not userFile:
         print(
-            "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
+            "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters."
         )
         cl = pkg_resources.resource_string("plom", "templateUserList.csv")
         with open(server_conf_dir / "userListRaw.csv", "wb") as fh:
