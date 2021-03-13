@@ -61,7 +61,7 @@ def upload_classlist(classlist, msgr):
             "  {}\n"
             "Perhaps classlist is too large for specTest.numberToProduce?".format(e)
         )
-        # TODO: I think the called should be doing all this exit() stuff
+        # TODO: I think the caller should be doing all this exit() stuff
         sys.exit(4)
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")

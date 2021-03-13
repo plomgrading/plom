@@ -33,29 +33,24 @@ server_instructions = """Overview of running the Plom server:
 
   0. Decide on a working directory for the server and cd into it.
 
-  1. Copy the `{specdir}` directory (not just its contents) to your
-     server directory.
+  1. Run '%(prog)s init' - create sub-directories and config files.
 
-  2. Run '%(prog)s init' - this will check that everything is in place
-     and create necessary sub-directories *and* create config files for
-     you to edit.
-
-  3. Run '%(prog)s users' - This will create a template user list
+  2. Run '%(prog)s users' - This will create a template user list
      file for you to edit.  Passwords are displayed in plain text.
      Running with '--demo' option creates a (standard) demo user list,
      while '--auto N' makes an random-generated list of N users.  Edit
      as you see fit.
 
-  4. Run '%(prog)s users <filename>' - This parses the plain-text
+  3. Run '%(prog)s users <filename>' - This parses the plain-text
      user list, performs some simple sanity checks and then hashes the
      passwords to a new file.
 
-       4a. Optionally you can now delete the file containing
+       3a. Optionally you can now delete the file containing
            plain-text passwords.
 
-  5. Now you can start the server with '%(prog)s launch'.
+  4. Add a specfile to '{specdir}': 'plom-build' can do this..
 
-FUTURE - '%(prog)s stop' will stop the server.
+  5. Now you can start the server with '%(prog)s launch'.
 """.format(
     specdir=specdir
 )
@@ -71,7 +66,7 @@ def checkSpecAndDatabase():
         print("Directory '{}' is present.".format(specdir))
     else:
         print(
-            "Cannot find '{}' directory - you must copy this into place before running server. Cannot continue.".format(
+            "Cannot find '{}' directory - have you run 'plom-server init' yet?".format(
                 specdir
             )
         )
@@ -100,6 +95,7 @@ def checkSpecAndDatabase():
 def buildRequiredDirectories():
     # TODO unix paths hardcoded
     lst = [
+        specdir,
         "pages",
         "pages/discardedPages",
         "pages/collidingPages",
@@ -232,8 +228,6 @@ def doLatexChecks():
 
 
 def initialiseServer():
-    print("Do simple existence checks on required files.")
-    checkSpecAndDatabase()
     print("Build required directories")
     buildRequiredDirectories()
     print("Building self-signed ssl keys for server")

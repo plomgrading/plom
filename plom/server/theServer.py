@@ -73,10 +73,16 @@ def build_directories():
 # ----------------------
 
 
-class Server(object):
-    def __init__(self, spec, db, masterToken):
+class Server:
+    def __init__(self, db, masterToken):
         log.debug("Initialising server")
-        self.testSpec = spec
+        try:
+            self.testSpec = SpecVerifier.load_verified()
+            log.info("existing spec loaded")
+        except FileNotFoundError:
+            self.testSpec = None
+            log.error("spec file not found -- use 'plom-build' to create one")
+            raise
         self.authority = Authority(masterToken)
         self.DB = db
         self.API = serverAPI
@@ -253,14 +259,11 @@ def launch(masterToken=None):
     Keyword Arguments:
         masterToken {str} -- Token that is authenticated by the authority, if None, one is created in authenticate.py. default: {None}
     """
-
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
-    # TODO: might be nice to do a sanity spec verification, once we have a quiet one
-    spec = SpecVerifier.from_toml_file(Path(specdir) / "verifiedSpec.toml")
     build_directories()
-    peon = Server(spec, examDB, masterToken)
+    peon = Server(examDB, masterToken)
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)
