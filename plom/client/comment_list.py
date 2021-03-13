@@ -1755,18 +1755,30 @@ class RubricWidget(QWidget):
         self.handleClick()
 
     def nextRubric(self):
-        self.RTW.currentWidget().nextRubric()
+        # change rubrics in the right pane
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.currentWidget().nextRubric()
+        else:
+            self.tabHide.previousRubric()
 
     def previousRubric(self):
-        self.RTW.currentWidget().previousRubric()
+        # change rubrics in the right pane
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.currentWidget().previousRubric()
+        else:
+            self.tabHide.previousRubric()
 
     def next_pane(self):
-        self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
-        self.handleClick()
+        # only change panes if they are shown
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
+            self.handleClick()
 
     def prev_pane(self):
-        self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
-        self.handleClick()
+        # only change panes if they are shown
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
+            self.handleClick()
 
     def get_nonrubric_text_from_page(self):
         """Find any text that isn't already part of a formal rubric.
