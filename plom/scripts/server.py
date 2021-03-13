@@ -251,7 +251,7 @@ def processUsers(userFile, demo, auto):
     if userFile:
         print("Processing user file '{}' to 'userList.json'".format(userFile))
         if os.path.isfile(Path("serverConfiguration") / "userList.json"):
-            print("WARNING - this will overwrite the existing userList.json file.")
+            print("WARNING - this is overwriting the existing userList.json file.")
         from plom.server import manageUserFiles
 
         manageUserFiles.parse_user_list(userFile)
