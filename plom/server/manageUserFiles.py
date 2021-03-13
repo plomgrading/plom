@@ -21,18 +21,19 @@ user_hash_login_json_path = "serverConfiguration/userList.json"
 list_of_required_users = ["manager", "scanner", "reviewer"]
 list_of_expected_header = ["user", "password"]
 minimum_number_of_required_users = 4
-cutoff_for_named_users = 20
-cutoff_for_numbered_users = 50
 
 
-def build_canned_users(number_of_users):
+def build_canned_users(number_of_users, numbered=False):
     """Creates a list of fake users.
 
     Arguments:
-        number_of_users {int} -- Number of fake users to create.
+        number_of_users (int): number of fake users to create.
+        numbered (bool): if True, make numbered users such as "user017"
+            otherwise (default) make real-ish names like "gwen" or
+            "talia07".
 
     Returns:
-        list -- List of users (either named or numbered users).
+        list: list of users (either named or numbered users).
     """
     if number_of_users <= 0:
         raise ValueError("Must produce at least 1 regular user.")
@@ -41,18 +42,14 @@ def build_canned_users(number_of_users):
     user_list = []
     for required_user in list_of_required_users:
         user_list.append([required_user, simple_password(n=4)])
-    # now append list of standard users - some sanity checks about numbers
-    if number_of_users <= cutoff_for_named_users:
-        print("Making list of named users")
-        user_list = user_list + make_random_user_list(number_of_users)
-    elif number_of_users <= cutoff_for_numbered_users:
+
+    # append list of standard users
+    if numbered:
         print("Making list of numbered users")
-        user_list = user_list + make_numbered_user_list(number_of_users)
+        user_list.extend(make_numbered_user_list(number_of_users))
     else:
-        print(
-            "This is too many canned users. You should make your own list of users. Aborting."
-        )
-        exit(1)
+        print("Making list of named users")
+        user_list.extend(make_random_user_list(number_of_users))
 
     return user_list
 
@@ -76,14 +73,12 @@ def return_user_hash(username_password_dict):
     TODO: Would be really nice if the hash function was somehow passed in as a parameter.
 
     Arguments:
-        username_password_dict {dict} -- A dictionary of the form {Str:Str} which represents
-                                        {username: password} objects.
+        username_password_dict (dict):  keys username (str) to value
+            password (str).
 
     Returns:
-        dict -- A dictionary of the form {Str:Str} which represents {username: hashed_password}
-                objects.
+        dict: keys username (str) to value hashed password (str).
     """
-
     username_hash_dict = {}
     for user in username_password_dict:
         username_hash_dict[user] = plomctx.hash(username_password_dict[user])
@@ -98,7 +93,7 @@ def check_username_password_format(username_password_dict):
     May not check all the data: short-circuits out on first false.
 
     Arguments:
-        username_password_dict (dict):  keys username (str) to value
+        username_password_dict (dict): keys username (str) to value
             password (str).
 
     Returns:
