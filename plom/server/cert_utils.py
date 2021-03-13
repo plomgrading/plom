@@ -16,20 +16,21 @@ from plom.server import confdir
 log = logging.getLogger("server")
 
 
-def build_self_signed_SSL_keys(dir=confdir, extra_args=""):
+def build_self_signed_SSL_keys(dur=confdir, extra_args=""):
     """Make new self-signed key and cert files if they do not yet exist.
 
     Calls the `openssl` binary using `subprocess`.
 
     args:
-        dir (pathlib.Path): where to put the key and cert file.
+        dur (pathlib.Path): where to put the key and cert file.
         extra_args (str): any extra command line args for openssl.
 
     raises:
         RuntimeError: on subprocess failure.
+        FileExistsError: keys are already there.
     """
-    key = Path(dir) / "plom.key"
-    cert = Path(dir) / "plom-selfsigned.crt"
+    key = Path(dur) / "plom.key"
+    cert = Path(dur) / "plom-selfsigned.crt"
     if key.is_file() and cert.is_file():
         raise FileExistsError("SSL key and certificate already exist")
 

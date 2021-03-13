@@ -8,6 +8,8 @@
 import logging
 from pathlib import Path
 
+import pkg_resources
+
 from plom.server import specdir, confdir
 
 
@@ -45,3 +47,36 @@ def check_server_directories():
                 "Required directory '{}' are not present. "
                 "Have you run 'plom-server init'?".format(d)
             )
+
+
+def create_server_config(dur=confdir):
+    """Create a default server configuration file.
+
+    args:
+        dur (pathlib.Path): where to put the file.
+
+    raises:
+        FileExistsError: file is already there.
+    """
+    sd = Path(dur) / "serverDetails.toml"
+    if sd.exists():
+        raise FileExistsError("Config already exists in {}".format(sd))
+    template = pkg_resources.resource_string("plom", "serverDetails.toml")
+    with open(sd, "wb") as fh:
+        fh.write(template)
+
+
+def create_blank_predictions(dur=specdir):
+    """Create empty prediction list to store machine-read student IDs.
+
+    args:
+        dur (str/pathlib.Path): where to put the file.
+
+    raises:
+        FileExistsError: file is already there.
+    """
+    pl = Path(dur) / "predictionlist.csv"
+    if pl.exists():
+        raise FileExistsError(f"{pl} already exists.")
+    with open(pl, "w") as fh:
+        fh.write("test, id\n")

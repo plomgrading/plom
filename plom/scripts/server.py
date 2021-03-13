@@ -22,6 +22,7 @@ import pkg_resources
 from plom import __version__
 from plom.server import specdir, confdir
 from plom.server import build_server_directories, check_server_directories
+from plom.server import create_server_config, create_blank_predictions
 from plom.server import parse_user_list, build_canned_users
 from plom.server import build_self_signed_SSL_keys
 
@@ -87,33 +88,6 @@ def checkSpecAndDatabase():
         print("Classlist present.")
     else:
         print("Cannot find the classlist: expect it later...")
-
-
-def createServerConfig():
-    sd = confdir / "serverDetails.toml"
-    if sd.exists():
-        print("Server config already exists - will not change.")
-        return
-
-    template = pkg_resources.resource_string("plom", "serverDetails.toml")
-    with open(sd, "wb") as fh:
-        fh.write(template)
-    print(
-        "You may want to update '{}' with the correct name (or IP) and "
-        "port of your server.".format(sd)
-    )
-
-
-def createBlankPredictions():
-    pl = specdir / "predictionlist.csv"
-    if pl.exists():
-        print("Predictionlist already present.")
-        return
-    print(
-        "Predictionlist will be updated when you run ID-prediction from manager-client."
-    )
-    with open(pl, "w") as fh:
-        fh.write("test, id\n")
 
 
 def doLatexChecks():
@@ -184,12 +158,26 @@ def initialiseServer():
     print("Building self-signed SSL key for server")
     try:
         build_self_signed_SSL_keys()
-    except FileExistsError as e:
-        print("Skipped SSL keygen - {}".format(e))
+    except FileExistsError as err:
+        print(f"Skipped SSL keygen - {err}")
+
     print("Copy server networking configuration template into place.")
-    createServerConfig()
+    try:
+        create_server_config()
+    except FileExistsError as err:
+        print(f"Skipping server config - {err}")
+    else:
+        print(
+            "You may want to update '{}' with the correct name (or IP) and "
+            "port of your server.".format(confdir / "serverDetails.toml")
+        )
+
     print("Build blank predictionlist for identifying.")
-    createBlankPredictions()
+    try:
+        create_blank_predictions()
+    except FileExistsError as err:
+        print(f"Skipping prediction list - {err}")
+
     print(
         "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
     )
