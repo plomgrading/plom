@@ -279,7 +279,9 @@ def processUsers(userFile, demo, auto, auto_num):
     # otherwise we have to make one for the user - check if one already there.
     if (server_conf_dir / "userListRaw.csv").exists():
         raise FileExistsError(
-            "File 'userListRaw.csv' already exists in '{}'. Remove before continuing.".format(server_conf_dir)
+            "File '{}' already exists.  Remove and try again.".format(
+                server_conf_dir / "userListRaw.csv"
+            )
         )
 
     if demo:
@@ -307,7 +309,9 @@ def processUsers(userFile, demo, auto, auto_num):
         del auto
         del auto_num
         print(
-            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
+            "Please edit as you see fit and then rerun 'plom-server users {}'".format(
+                server_conf_dir / "userListRaw.csv"
+            )
         )
         from plom.server import manageUserFiles
 
@@ -321,7 +325,9 @@ def processUsers(userFile, demo, auto, auto_num):
 
     if not userFile:
         print(
-            "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters."
+            "Creating '{}' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters.".format(
+                server_conf_dir / "userListRaw.csv"
+            )
         )
         cl = pkg_resources.resource_string("plom", "templateUserList.csv")
         with open(server_conf_dir / "userListRaw.csv", "wb") as fh:
