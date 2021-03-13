@@ -251,7 +251,21 @@ def initialiseServer():
 #################
 
 
-def processUsers(userFile, demo, auto):
+def processUsers(userFile, demo, auto, auto_num):
+    """Deal with processing and/or creation of username lists.
+
+    Behaviour different depending on the args.
+
+    args:
+        userFile (str/pathlib.Path): a filename of usernames/passwords
+            for the server.
+        demo (bool): make canned demo with known usernames/passwords.
+        auto (bool): autogenerate usernames and passwords.
+        auto_num (bool): autogenerate usernames like "user03" and pwds.
+
+    return:
+        None
+    """
     # if we have been passed a userFile then process it and return
     if userFile:
         print("Processing user file '{}' to 'userList.json'".format(userFile))
@@ -282,15 +296,24 @@ def processUsers(userFile, demo, auto):
         manageUserFiles.parse_user_list(rawfile)
         return
 
-    if auto is not None:
-        print("Creating an auto-generated user list at userListRaw.csv.")
+    if auto or auto_num:
+        if auto:
+            print("Creating an auto-generated named user list at userListRaw.csv.")
+            N = auto
+            numbered = False
+        if auto_num:
+            print("Creating an auto-generated numbered user list at userListRaw.csv.")
+            N = auto_num
+            numbered = True
+        del auto
+        del auto_num
         print(
             "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
         )
         from plom.server import manageUserFiles
 
         # grab required users and regular users
-        lst = manageUserFiles.build_canned_users(auto)
+        lst = manageUserFiles.build_canned_users(N, numbered)
         with open(server_conf_dir / "userListRaw.csv", "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
@@ -407,7 +430,13 @@ grp.add_argument(
     "--auto",
     type=int,
     metavar="N",
-    help="Construct an auto-generated user list of N users.",
+    help="Construct an auto-generated user list of N users with real-ish usernames.",
+)
+grp.add_argument(
+    "--auto-numbered",
+    type=int,
+    metavar="N",
+    help='Construct an auto-generated user list of "user17"-like usernames.',
 )
 
 
@@ -417,8 +446,7 @@ def main():
     if args.command == "init":
         initialiseServer()
     elif args.command == "users":
-        # process the class list and copy into place
-        processUsers(args.userlist, args.demo, args.auto)
+        processUsers(args.userlist, args.demo, args.auto, args.auto_numbered)
     elif args.command == "launch":
         launchTheServer(args.masterToken)
     else:
