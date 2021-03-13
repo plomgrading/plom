@@ -299,18 +299,18 @@ def processUsers(userFile, demo, auto, auto_num):
 
     if auto or auto_num:
         if auto:
-            print("Creating an auto-generated named user list at userListRaw.csv.")
             N = auto
             numbered = False
         if auto_num:
-            print("Creating an auto-generated numbered user list at userListRaw.csv.")
             N = auto_num
             numbered = True
         del auto
         del auto_num
         print(
-            "Please edit as you see fit and then rerun 'plom-server users {}'".format(
-                server_conf_dir / "userListRaw.csv"
+            "Creating an auto-generated {0} user list at '{1}'\n"
+            "Please edit as you see fit and then rerun 'plom-server users {1}'".format(
+                "numbered" if numbered else "named",
+                server_conf_dir / "userListRaw.csv",
             )
         )
         from plom.server import manageUserFiles
