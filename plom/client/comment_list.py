@@ -1428,6 +1428,7 @@ class RubricTable(QTableWidget):
             return
         r = (r + 1) % self.rowCount()
         self.selectRubricByRow(r)
+        self.handleClick()
 
     def previousRubric(self):
         """Move selection to the prevoous row, wrapping around if needed."""
@@ -1438,6 +1439,7 @@ class RubricTable(QTableWidget):
             return
         r = (r - 1) % self.rowCount()
         self.selectRubricByRow(r)
+        self.handleClick()
 
     def handleClick(self):
         # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
@@ -1569,6 +1571,8 @@ class RubricWidget(QWidget):
             self.addB.setEnabled(False)
             self.filtB.setEnabled(False)
             self.otherB.setEnabled(False)
+            # reselect the current rubric
+            self.tabHide.handleClick()
         else:
             # move to main list
             self.showHideW.setCurrentIndex(0)
@@ -1576,6 +1580,8 @@ class RubricWidget(QWidget):
             self.addB.setEnabled(True)
             self.filtB.setEnabled(True)
             self.otherB.setEnabled(True)
+            # reselect the current rubric
+            self.handleClick()
 
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
@@ -1637,8 +1643,8 @@ class RubricWidget(QWidget):
                 self.tabB.set_name(tabnames[1])
                 self.tabC.set_name(tabnames[2])
 
+        # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
-
         self.tabA.setRubricsByKeys(
             self.rubrics,
             wranglerState["tabs"][0],
@@ -1674,6 +1680,14 @@ class RubricWidget(QWidget):
             legalDown=legalDown,
             legalUp=legalUp,
         )
+
+        # make sure something selected in each pane
+        self.tabHide.selectRubricByRow(0)
+        self.tabDelta.selectRubricByRow(0)
+        self.tabC.selectRubricByRow(0)
+        self.tabB.selectRubricByRow(0)
+        self.tabA.selectRubricByRow(0)
+        self.tabS.selectRubricByRow(0)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
@@ -1738,24 +1752,37 @@ class RubricWidget(QWidget):
 
     def reselectCurrentRubric(self):
         self.RTW.currentWidget().reselectCurrentRubric()
+        self.handleClick()
 
     def selectRubricByRow(self, rowNumber):
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
         self.handleClick()
 
     def nextRubric(self):
-        self.RTW.currentWidget().nextRubric()
+        # change rubrics in the right pane
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.currentWidget().nextRubric()
+        else:
+            self.tabHide.previousRubric()
 
     def previousRubric(self):
-        self.RTW.currentWidget().previousRubric()
+        # change rubrics in the right pane
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.currentWidget().previousRubric()
+        else:
+            self.tabHide.previousRubric()
 
     def next_pane(self):
-        self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
-        self.handleClick()
+        # only change panes if they are shown
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
+            self.handleClick()
 
     def prev_pane(self):
-        self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
-        self.handleClick()
+        # only change panes if they are shown
+        if self.showHideW.currentIndex() == 0:
+            self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
+            self.handleClick()
 
     def get_nonrubric_text_from_page(self):
         """Find any text that isn't already part of a formal rubric.
