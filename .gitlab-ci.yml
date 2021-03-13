@@ -181,11 +181,11 @@ demoserver:
   script:
     - mkdir demo
     - pushd demo
+    - plom-server init
+    - plom-server users --demo
     - plom-build new --demo
     # Start server
     - ip addr
-    - plom-server init
-    - plom-server users --demo
     - plom-server launch &
     - sleep 2
     - sleep 2
@@ -224,11 +224,11 @@ hwdemoserver:
   script:
     - mkdir demo
     - pushd demo
+    - plom-server init
+    - plom-server users --demo
     - plom-build new --demo
     # Start server
     - ip addr
-    - plom-server init
-    - plom-server users --demo
     - plom-server launch &
     - sleep 2
     - sleep 2
@@ -264,6 +264,8 @@ fullworkflow:
     # Build tests
     - mkdir play
     - pushd play
+    - plom-server init
+    - plom-server users --demo
     - plom-build new
     - plom-build parse
     - python3 -m plom.produce.demotools
@@ -272,8 +274,6 @@ fullworkflow:
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
     # Start server
     - ip addr
-    - plom-server init
-    - plom-server users --demo
     - plom-server launch &
     - sleep 2
     - sleep 2
@@ -386,12 +386,12 @@ nodock_newdeps:
     # Build tests
     - mkdir play
     - pushd play
+    - plom-server init
+    - plom-server users --demo
     - plom-build new
     - plom-build parse
     - python3 -m plom.produce.demotools
     - ip addr
-    - plom-server init
-    - plom-server users --demo
     - plom-server launch &
     - sleep 2
     - sleep 2
@@ -479,12 +479,12 @@ nodock_mindeps:
     # Build tests
     - mkdir play
     - pushd play
+    - plom-server init
+    - plom-server users --demo
     - plom-build new
     - plom-build parse
     - python3 -m plom.produce.demotools
     - ip addr
-    - plom-server init
-    - plom-server users --demo
     - plom-server launch &
     - sleep 2
     - sleep 2
