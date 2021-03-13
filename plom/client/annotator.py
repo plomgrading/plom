@@ -961,9 +961,9 @@ class Annotator(QWidget):
             # tool buttons change the mode
             self.sender().setChecked(True)
         elif self.sender() is self.rubric_widget:
-            print("TODO - fix this style setting")
             # self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
-            self.ui.commentButton.setChecked(True)
+            # self.ui.commentButton.setChecked(True)
+            pass
         else:
             # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
@@ -1079,17 +1079,17 @@ class Annotator(QWidget):
         self.parentMarkerUI.annotatorSettings["tool_keys"] = keys
         # shortcuts already in place - just need to update the keys
         mainShortCuts = [
-            ("undo", "undo"),
-            ("redo", "redo"),
+            ("undo", "toUndo"),
+            ("redo", "toRedo"),
             ("nextRubric", "rubricMode"),
             ("previousRubric", "prev_rubric"),
             ("nextPane", "next_pane"),
             ("previousPane", "prev_pane"),
             ("nextTool", "next_minor_tool"),
             ("previousTool", "prev_minor_tool"),
-            ("delete", "deleteMode"),
-            ("move", "moveMode"),
-            ("zoom", "zoomMode"),
+            ("delete", "toDeleteMode"),
+            ("move", "toMoveMode"),
+            ("zoom", "toZoomMode"),
         ]
         for (name, command) in mainShortCuts:
             # self.nameSC.setKey(keys[name])
@@ -1129,17 +1129,17 @@ class Annotator(QWidget):
                 keys = self.keyBindings
 
         mainShortCuts = [
-            ("undo", "undo"),
-            ("redo", "redo"),
+            ("undo", "toUndo"),
+            ("redo", "toRedo"),
             ("nextRubric", "rubricMode"),
             ("previousRubric", "prev_rubric"),
             ("nextPane", "next_pane"),
             ("previousPane", "prev_pane"),
             ("nextTool", "next_minor_tool"),
             ("previousTool", "prev_minor_tool"),
-            ("delete", "deleteMode"),
-            ("move", "moveMode"),
-            ("zoom", "zoomMode"),
+            ("delete", "toDeleteMode"),
+            ("move", "toMoveMode"),
+            ("zoom", "toZoomMode"),
         ]
         for (name, command) in mainShortCuts:
             # self.nameSC = QShortCut(QKeySequence(keys[name]), self)
@@ -1245,9 +1245,15 @@ class Annotator(QWidget):
         self.slowDepanShortCut = QShortcut(QKeySequence("Ctrl+Shift+space"), self)
         self.slowDepanShortCut.activated.connect(lambda: self.view.depanThrough(0.02))
 
+    def toUndo(self):
+        self.ui.undoButton.animateClick()
+
     def undo(self):
         """ Undoes the last action in the UI. """
         self.scene.undo()
+
+    def toRedo(self):
+        self.ui.redoButton.animateClick()
 
     def redo(self):
         """ Redoes the last action in the UI. """
@@ -1269,6 +1275,9 @@ class Annotator(QWidget):
         """ Changes the tool to crossMode. """
         self.setToolMode("cross", self.cursorCross)
 
+    def toDeleteMode(self):
+        self.ui.deleteButton.animateClick()
+
     def deleteMode(self):
         """ Changes the tool to delete. """
         self.setToolMode("delete", self.cursorDelete)
@@ -1276,6 +1285,9 @@ class Annotator(QWidget):
     def lineMode(self):
         """ Changes the tool to the line button.  """
         self.setToolMode("line", self.cursorLine)
+
+    def toMoveMode(self):
+        self.ui.moveButton.animateClick()
 
     def moveMode(self):
         """ Changes the tool to the move button. """
@@ -1298,6 +1310,9 @@ class Annotator(QWidget):
     def tickMode(self):
         """ Changes the tool to the tick button. """
         self.setToolMode("tick", self.cursorTick)
+
+    def toZoomMode(self):
+        self.ui.zoomButton.animateClick()
 
     def zoomMode(self):
         """ Changes the tool to the zoom button. """

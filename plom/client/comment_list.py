@@ -1571,6 +1571,8 @@ class RubricWidget(QWidget):
             self.addB.setEnabled(False)
             self.filtB.setEnabled(False)
             self.otherB.setEnabled(False)
+            # reselect the current rubric
+            self.tabHide.handleClick()
         else:
             # move to main list
             self.showHideW.setCurrentIndex(0)
@@ -1578,6 +1580,8 @@ class RubricWidget(QWidget):
             self.addB.setEnabled(True)
             self.filtB.setEnabled(True)
             self.otherB.setEnabled(True)
+            # reselect the current rubric
+            self.handleClick()
 
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
