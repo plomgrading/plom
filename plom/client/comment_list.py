@@ -1514,12 +1514,11 @@ class RubricWidget(QWidget):
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
         # TODO: hardcoded length for now
-        self.num_user_tabs = 4
+        self.num_user_tabs = 5
         self.numberOfTabs = self.num_user_tabs + 2
-        self.tabA = RubricTable(self, shortname="Q1")
-        self.tabB = RubricTable(self, shortname="Q2")
-        self.tabC = RubricTable(self, shortname="Q3")
-        self.tabD = RubricTable(self, shortname="Q4")
+        self.user_tabs = []
+        for n in range(self.num_user_tabs):
+            self.user_tabs.append(RubricTable(self, shortname=f"Q{n}"))
         self.tabS = RubricTable(
             self, shortname="Shared", tabType="show"
         )
@@ -1531,10 +1530,8 @@ class RubricWidget(QWidget):
         self.RTW.setMovable(False)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
-        self.RTW.addTab(self.tabA, self.tabA.shortname)
-        self.RTW.addTab(self.tabB, self.tabB.shortname)
-        self.RTW.addTab(self.tabC, self.tabC.shortname)
-        self.RTW.addTab(self.tabD, self.tabD.shortname)
+        for tab in self.user_tabs:
+            self.RTW.addTab(tab, tab.shortname)
         self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         self.tabHide = RubricTable(self, sort=True, tabType="hide")
@@ -1613,7 +1610,7 @@ class RubricWidget(QWidget):
             "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [[], [], [], []],
+            "tabs": [[]]*self.num_user_tabs,
         }
         for X in self.rubrics:
             # exclude HALs system-rubrics
@@ -1637,37 +1634,20 @@ class RubricWidget(QWidget):
                     str(tabnames),
                 )
             else:
-                self.tabA.set_name(tabnames[0])
-                self.tabB.set_name(tabnames[1])
-                self.tabC.set_name(tabnames[2])
-                self.tabD.set_name(tabnames[3])
+                for (n, tab) in enumerate(self.user_tab):
+                    print((n,tab))
+                    tab.set_name(tabnames[n])
 
         # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
-        self.tabA.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][0],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
-        self.tabB.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][1],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
-        self.tabC.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][2],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
-        self.tabD.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][3],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
+        print(wranglerState)
+        for n, tab in enumerate(self.user_tabs):
+            tab.setRubricsByKeys(
+                self.rubrics,
+                wranglerState["tabs"][n],
+                legalDown=legalDown,
+                legalUp=legalUp,
+            )
         self.tabS.setRubricsByKeys(
             self.rubrics,
             wranglerState["shown"],
@@ -1689,11 +1669,9 @@ class RubricWidget(QWidget):
         # make sure something selected in each pane
         self.tabHide.selectRubricByRow(0)
         self.tabDelta.selectRubricByRow(0)
-        self.tabD.selectRubricByRow(0)
-        self.tabC.selectRubricByRow(0)
-        self.tabB.selectRubricByRow(0)
-        self.tabA.selectRubricByRow(0)
         self.tabS.selectRubricByRow(0)
+        for tab in self.user_tabs:
+            tab.selectRubricByRow(0)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
@@ -1747,12 +1725,10 @@ class RubricWidget(QWidget):
     def updateLegalityOfDeltas(self):
         legalDown, legalUp = self.getLegalDownUp()
         # now redo each tab
-        self.tabA.updateLegalityOfDeltas(legalDown, legalUp)
-        self.tabB.updateLegalityOfDeltas(legalDown, legalUp)
-        self.tabC.updateLegalityOfDeltas(legalDown, legalUp)
-        self.tabD.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabDelta.updateLegalityOfDeltas(legalDown, legalUp)
+        for tab in self.user_tabs:
+            tab.updateLegalityOfDeltas(legalDown, legalUp)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
@@ -1812,14 +1788,10 @@ class RubricWidget(QWidget):
     def addRubricByKeyToTab(self, key, tabIndex):
         index = [x["id"] for x in self.rubrics].index(key)
         legalDown, legalUp = self.getLegalDownUp()
-        if tabIndex == 1:
-            self.tabA.appendNewRubric(self.rubrics[index], legalDown, legalUp)
-        elif tabIndex == 2:
-            self.tabB.appendNewRubric(self.rubrics[index], legalDown, legalUp)
-        elif tabIndex == 3:
-            self.tabC.appendNewRubric(self.rubrics[index], legalDown, legalUp)
-        elif tabIndex == 4:
-            self.tabD.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        # TODO: I don't know what this function does or if I have generalized it correctly
+        if tabIndex in range(1, self.num_user_tabs + 1):
+            i = tabIndex - 1
+            self.user_tab[i].appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
@@ -1926,29 +1898,17 @@ class RubricWidget(QWidget):
     def updateRubricInLists(self, new_rubric):
         legalDown, legalUp = self.getLegalDownUp()
         self.tabS.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabA.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabB.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabC.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabD.updateRubric(new_rubric, legalDown, legalUp)
         self.tabHide.updateRubric(new_rubric, legalDown, legalUp)
+        for tab in self.user_tabs:
+            tab.updateRubric(new_rubric, legalDown, legalUp)
 
     def get_tab_rubric_lists(self):
         """returns a dict of lists of the current rubrics"""
         return {
-            "user_tab_names": [
-                self.tabA.shortname,
-                self.tabB.shortname,
-                self.tabC.shortname,
-                self.tabD.shortname,
-            ],
+            "user_tab_names": [t.shortname for t in self.user_tabs],
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
-            "tabs": [
-                self.tabA.getKeyList(),
-                self.tabB.getKeyList(),
-                self.tabC.getKeyList(),
-                self.tabD.getKeyList(),
-            ],
+            "tabs": [t.getKeyList() for t in self.user_tabs],
         }
 
 
