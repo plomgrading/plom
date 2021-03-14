@@ -406,8 +406,6 @@ class RubricWrangler(QDialog):
             "hidden": [],
             "tabs": [],
         }
-        # get listsA,B,C from first 3 tabs
-        # TODO: fix
         for p in range(self.num_user_tabs):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
         # get hidden from widget3 = hidelist
@@ -438,10 +436,11 @@ class RubricWrangler(QDialog):
                 mainList.append(self.rubrics[ind])
         self.model.repopulate(mainList)
         # populate the ABC lists
-        for p in range(4):
+        for p in range(self.num_user_tabs):
             self.ST.populate(p, self.rubrics, self.wranglerState["tabs"][p])
         # populate the hide-list
-        self.ST.populate(4, self.rubrics, self.wranglerState["hidden"])
+        idx = self.num_user_tabs
+        self.ST.populate(idx, self.rubrics, self.wranglerState["hidden"])
 
     def returnWrangled(self):
         self.wranglerState = self.toWranglerState()
