@@ -1179,7 +1179,7 @@ class RubricTable(QTableWidget):
 
         menu = QMenu(self)
         addTo = [QAction("Move to Pane {}".format(x), self) for x in tabnames]
-        #for n in range(0, len(addTo)):
+        # for n in range(0, len(addTo)):
         #    addTo[n].triggered.connect(lambda x=n: self.moveCurrentRubricToTab(x+1))
         # note do not use a loop here: lambda does not behave right
         N = len(tabnames)
@@ -1564,12 +1564,8 @@ class RubricWidget(QWidget):
         self.user_tabs = []
         for n in range(self.num_user_tabs):
             self.user_tabs.append(RubricTable(self, shortname="Q{}".format(n + 1)))
-        self.tabS = RubricTable(
-            self, shortname="Shared", tabType="show"
-        )
-        self.tabDelta = RubricTable(
-            self, shortname=delta_label, tabType="delta"
-        )
+        self.tabS = RubricTable(self, shortname="Shared", tabType="show")
+        self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
         # Change here to enable movable tabs: may require fixing indexing elsewhere
         self.RTW.setMovable(False)
@@ -1655,7 +1651,7 @@ class RubricWidget(QWidget):
             "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [[]]*self.num_user_tabs,
+            "tabs": [[]] * self.num_user_tabs,
         }
         for X in self.rubrics:
             # exclude HALs system-rubrics
@@ -1680,12 +1676,10 @@ class RubricWidget(QWidget):
                 )
             else:
                 for (n, tab) in enumerate(self.user_tabs):
-                    print((n,tab))
                     tab.set_name(tabnames[n])
 
         # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
-        print(wranglerState)
         for n, tab in enumerate(self.user_tabs):
             tab.setRubricsByKeys(
                 self.rubrics,
