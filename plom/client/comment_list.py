@@ -1180,6 +1180,7 @@ class RubricTable(QTableWidget):
         addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
         addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
         addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
+        addTo[3].triggered.connect(lambda: self.moveCurrentRubricToTab(4))
         remAction = QAction("Remove from this pane", self)
         remAction.triggered.connect(self.removeCurrentRubric)
         edit = QAction("Edit rubric", self)
@@ -1204,6 +1205,7 @@ class RubricTable(QTableWidget):
         addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
         addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
         addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
+        addTo[3].triggered.connect(lambda: self.addCurrentRubricToTab(4))
         edit = QAction("Edit rubric", self)
         edit.setEnabled(False)  # TODO hook it up
         for a in addTo:
