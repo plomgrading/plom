@@ -56,12 +56,15 @@ def buildSpecialRubrics(spec, db):
                 )
 
 
-def buildExamDatabaseFromSpec(spec, db):
+def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
     """Build metadata for exams from spec and insert into the database.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         db (database): the database to populate.
+        preset_ver_map (dict/None): optional predetermined version map
+            keyed by test number and question number.  If None, we will
+            build our own random version mapping.  TODO: add details.
 
     Returns:
         bool: True if succuess.
@@ -128,9 +131,24 @@ def buildExamDatabaseFromSpec(spec, db):
                 # version selected randomly in [1, 2, ..., #versions]
                 v = random.randint(1, spec["numberOfVersions"])
                 vstr = "v{}".format(v)
+            elif spec["question"][gs]["select"] == "param":
+                # If caller does not provide a version, all are version 1.
+                # Caller can provide a version to group their parameters by any
+                # way they wish.  Typically this would be be ease grading, e.g.,
+                #   * map negative parameters to v1 and positive to v2.
+                #   * map tuples (a,b) with common `b` value to same version.
+                # In fact there is no significant difference between `param`
+                # and `shuffle` when user data is provided.  But clients or
+                # other aspects of the software might behave differently.
+                if preset_ver_map:
+                    raise NotImplementedError()
+                else:
+                    v = 1
+                assert v in range(1, spec["numberOfVersions"] + 1)
+                vstr = "v{}".format(v)
             else:
                 raise KeyError(
-                    'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
+                    'problem with spec: expected "fix/shuffle/param" but got "{}".'.format(
                         spec["question"][gs]["select"]
                     )
                 )
