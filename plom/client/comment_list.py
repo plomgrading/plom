@@ -1518,7 +1518,7 @@ class RubricWidget(QWidget):
         self.numberOfTabs = self.num_user_tabs + 2
         self.user_tabs = []
         for n in range(self.num_user_tabs):
-            self.user_tabs.append(RubricTable(self, shortname=f"Q{n}"))
+            self.user_tabs.append(RubricTable(self, shortname="Q{}".format(n + 1)))
         self.tabS = RubricTable(
             self, shortname="Shared", tabType="show"
         )
