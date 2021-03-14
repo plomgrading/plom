@@ -380,11 +380,12 @@ class RubricWrangler(QDialog):
         self.setLayout(grid)
 
         # set sensible default state if rubricWidget sends state=none
+        # TODO: fix, and also this seems duplicated from comment_list.py?
         if wranglerState is None:
             self.wranglerState = {
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [[], [], [], []],
+                "tabs": [[], [], [], []],  # TODO: let's try to use just empty here
             }
         else:
             self.wranglerState = wranglerState
@@ -406,6 +407,7 @@ class RubricWrangler(QDialog):
             "tabs": [],
         }
         # get listsA,B,C from first 3 tabs
+        # TODO: fix
         for p in range(4):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
         # get hidden from widget3 = hidelist
