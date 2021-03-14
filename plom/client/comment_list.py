@@ -1516,7 +1516,6 @@ class RubricWidget(QWidget):
         # TODO: hardcoded length for now
         tab_names = [
             {"shortname": "Shared", "longname": "Shared"},
-            {"shortname": "\N{Black Star}", "longname": "Favourites"},
             {"shortname": "Q1", "longname": None},
             {"shortname": "Q2", "longname": None},
             {"shortname": "Q3", "longname": None},
