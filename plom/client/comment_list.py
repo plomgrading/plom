@@ -1267,17 +1267,23 @@ class RubricTable(QTableWidget):
 
     def addCurrentRubricToTab(self, tabIndex):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.addRubricByKeyToTab(key, tabIndex)
 
     def removeCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         self.removeRow(row)
         self.selectRubricByRow(0)
         self.handleClick()
 
     def moveCurrentRubricToTab(self, tabIndex):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.addRubricByKeyToTab(key, tabIndex)
         self.removeRow(row)
@@ -1286,6 +1292,8 @@ class RubricTable(QTableWidget):
 
     def hideCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.hideRubricByKey(key)
         self.removeRow(row)
@@ -1294,6 +1302,8 @@ class RubricTable(QTableWidget):
 
     def unhideCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.unhideRubricByKey(key)
         self.removeRow(row)
