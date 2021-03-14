@@ -1828,7 +1828,7 @@ class RubricWidget(QWidget):
         index = [x["id"] for x in self.rubrics].index(key)
         legalDown, legalUp = self.getLegalDownUp()
         # TODO: I don't know what this function does or if I have generalized it correctly
-        if tabIndex in range(1, self.num_user_tabs + 1):
+        if tabIndex in range(1, len(self.user_tabs) + 1):
             i = tabIndex - 1
             self.user_tabs[i].appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
