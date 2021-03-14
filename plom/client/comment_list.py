@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Forest Kobayashi
 
 import logging
 from pathlib import Path
