@@ -1634,7 +1634,7 @@ class RubricWidget(QWidget):
                     str(tabnames),
                 )
             else:
-                for (n, tab) in enumerate(self.user_tab):
+                for (n, tab) in enumerate(self.user_tabs):
                     print((n,tab))
                     tab.set_name(tabnames[n])
 
@@ -1791,7 +1791,7 @@ class RubricWidget(QWidget):
         # TODO: I don't know what this function does or if I have generalized it correctly
         if tabIndex in range(1, self.num_user_tabs + 1):
             i = tabIndex - 1
-            self.user_tab[i].appendNewRubric(self.rubrics[index], legalDown, legalUp)
+            self.user_tabs[i].appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
