@@ -1172,7 +1172,7 @@ class RubricTable(QTableWidget):
 
     def defaultContextMenuEvent(self, event):
         curtab_idx = self.parent.RTW.currentIndex()
-        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
+        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
 
         menu = QMenu(self)
         addTo = [QAction("Move to Pane {}".format(x), self) for x in tabnames]
@@ -1197,7 +1197,7 @@ class RubricTable(QTableWidget):
         menu.popup(QCursor.pos())
 
     def showContextMenuEvent(self, event):
-        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
+        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
         menu = QMenu(self)
         addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
         # note do not use a loop here: lambda does not behave right
@@ -1515,20 +1515,23 @@ class RubricWidget(QWidget):
         tab_names = [
             {"shortname": "Shared", "longname": "Shared"},
             {"shortname": "\N{Black Star}", "longname": "Favourites"},
-            {"shortname": "A", "longname": None},
-            {"shortname": "B", "longname": None},
+            {"shortname": "Q1", "longname": None},
+            {"shortname": "Q2", "longname": None},
+            {"shortname": "Q3", "longname": None},
+            {"shortname": "Q4", "longname": None},
             {"shortname": delta_label, "longname": "Delta"},
         ]
         self.tabA = RubricTable(self, shortname=tab_names[1]["shortname"])
         self.tabB = RubricTable(self, shortname=tab_names[2]["shortname"])
         self.tabC = RubricTable(self, shortname=tab_names[3]["shortname"])
+        self.tabD = RubricTable(self, shortname=tab_names[4]["shortname"])
         self.tabS = RubricTable(
             self, shortname=tab_names[0]["shortname"], tabType="show"
         )
         self.tabDelta = RubricTable(
-            self, shortname=tab_names[4]["shortname"], tabType="delta"
+            self, shortname=tab_names[5]["shortname"], tabType="delta"
         )
-        self.numberOfTabs = 5
+        self.numberOfTabs = 6
         self.RTW = QTabWidget()
         # Change here to enable movable tabs: may require fixing indexing elsewhere
         self.RTW.setMovable(False)
@@ -1537,6 +1540,7 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabA, self.tabA.shortname)
         self.RTW.addTab(self.tabB, self.tabB.shortname)
         self.RTW.addTab(self.tabC, self.tabC.shortname)
+        self.RTW.addTab(self.tabD, self.tabD.shortname)
         self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         self.tabHide = RubricTable(self, sort=True, tabType="hide")
@@ -1615,7 +1619,7 @@ class RubricWidget(QWidget):
             "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [[], [], []],
+            "tabs": [[], [], [], []],
         }
         for X in self.rubrics:
             # exclude HALs system-rubrics
@@ -1633,15 +1637,16 @@ class RubricWidget(QWidget):
         if tabnames is None:
             log.warning("wranglerState is lacking user_tab_names")
         if tabnames:
-            if len(tabnames) != 3:
+            if len(tabnames) != 4:
                 log.error(
-                    "Something is wrong: user_tab_names should be length 3, is %s",
+                    "Something is wrong: user_tab_names should be length 4, is %s",
                     str(tabnames),
                 )
             else:
                 self.tabA.set_name(tabnames[0])
                 self.tabB.set_name(tabnames[1])
                 self.tabC.set_name(tabnames[2])
+                self.tabD.set_name(tabnames[3])
 
         # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
@@ -1660,6 +1665,12 @@ class RubricWidget(QWidget):
         self.tabC.setRubricsByKeys(
             self.rubrics,
             wranglerState["tabs"][2],
+            legalDown=legalDown,
+            legalUp=legalUp,
+        )
+        self.tabD.setRubricsByKeys(
+            self.rubrics,
+            wranglerState["tabs"][3],
             legalDown=legalDown,
             legalUp=legalUp,
         )
@@ -1684,6 +1695,7 @@ class RubricWidget(QWidget):
         # make sure something selected in each pane
         self.tabHide.selectRubricByRow(0)
         self.tabDelta.selectRubricByRow(0)
+        self.tabD.selectRubricByRow(0)
         self.tabC.selectRubricByRow(0)
         self.tabB.selectRubricByRow(0)
         self.tabA.selectRubricByRow(0)
@@ -1744,6 +1756,7 @@ class RubricWidget(QWidget):
         self.tabA.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabB.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabC.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabD.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabDelta.updateLegalityOfDeltas(legalDown, legalUp)
 
@@ -1811,6 +1824,8 @@ class RubricWidget(QWidget):
             self.tabB.appendNewRubric(self.rubrics[index], legalDown, legalUp)
         elif tabIndex == 3:
             self.tabC.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        elif tabIndex == 4:
+            self.tabD.appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
@@ -1920,6 +1935,7 @@ class RubricWidget(QWidget):
         self.tabA.updateRubric(new_rubric, legalDown, legalUp)
         self.tabB.updateRubric(new_rubric, legalDown, legalUp)
         self.tabC.updateRubric(new_rubric, legalDown, legalUp)
+        self.tabD.updateRubric(new_rubric, legalDown, legalUp)
         self.tabHide.updateRubric(new_rubric, legalDown, legalUp)
 
     def get_tab_rubric_lists(self):
@@ -1929,6 +1945,7 @@ class RubricWidget(QWidget):
                 self.tabA.shortname,
                 self.tabB.shortname,
                 self.tabC.shortname,
+                self.tabD.shortname,
             ],
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
@@ -1936,6 +1953,7 @@ class RubricWidget(QWidget):
                 self.tabA.getKeyList(),
                 self.tabB.getKeyList(),
                 self.tabC.getKeyList(),
+                self.tabD.getKeyList(),
             ],
         }
 

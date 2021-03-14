@@ -384,7 +384,7 @@ class RubricWrangler(QDialog):
             self.wranglerState = {
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [[], [], []],
+                "tabs": [[], [], [], []],
             }
         else:
             self.wranglerState = wranglerState
@@ -406,7 +406,7 @@ class RubricWrangler(QDialog):
             "tabs": [],
         }
         # get listsA,B,C from first 3 tabs
-        for p in range(3):
+        for p in range(4):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
         # get hidden from widget3 = hidelist
         store["hidden"] = self.ST.STW.widget(3).getCurrentKeys()
@@ -436,10 +436,10 @@ class RubricWrangler(QDialog):
                 mainList.append(self.rubrics[ind])
         self.model.repopulate(mainList)
         # populate the ABC lists
-        for p in range(3):
+        for p in range(4):
             self.ST.populate(p, self.rubrics, self.wranglerState["tabs"][p])
         # populate the hide-list
-        self.ST.populate(3, self.rubrics, self.wranglerState["hidden"])
+        self.ST.populate(4, self.rubrics, self.wranglerState["hidden"])
 
     def returnWrangled(self):
         self.wranglerState = self.toWranglerState()
