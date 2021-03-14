@@ -34,12 +34,14 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def TriggerPopulateDB(self):
+    def TriggerPopulateDB(self, version_map={}):
         """Instruct the server to generate paper data in the database.
 
         Returns:
             str: a big block of largely useless status or summary info
                 from the database commands.
+
+        TODO: would be more symmetric to use PUT:/admin/pageVersionMap
 
         Raises:
             PlomBenignException: already has a populated database.
@@ -51,7 +53,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.put(
                 "https://{}/admin/populateDB".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "version_map": version_map,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:

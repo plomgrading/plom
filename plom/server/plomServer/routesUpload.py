@@ -847,22 +847,30 @@ class UploadHandler:
         update_count = self.server.processTUploads()
         return web.json_response(update_count, status=200)
 
-    @authenticate_by_token_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user", "version_map"])
     def populateExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database.
 
         TODO: maybe the api call should just be for one row of the database.
-
-        TODO: or maybe we can pass the page-to-version mapping to this?
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
 
+        # TODO: talking to DB directly is not design we use elsewhere: call helper?
         from plom.db import buildExamDatabaseFromSpec
 
-        # TODO this is not the design we have elsewhere, should call helper function
+        if len(data["version_map"]) == 0:
+            vmap = None
+        else:
+            # undo JSON casting dict keys to str
+            vmap = {}
+            for t, vv in data["version_map"].items():
+                vmap[int(t)] = {int(k): v for k, v in vv.items()}
+
         try:
-            r, summary = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+            r, summary = buildExamDatabaseFromSpec(
+                self.server.testSpec, self.server.DB, vmap
+            )
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"

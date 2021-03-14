@@ -129,7 +129,10 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
                 vstr = "f{}".format(v)
             elif spec["question"][gs]["select"] == "shuffle":
                 # version selected randomly in [1, 2, ..., #versions]
-                v = random.randint(1, spec["numberOfVersions"])
+                if preset_ver_map:
+                    v = preset_ver_map[t][g + 1]
+                else:
+                    v = random.randint(1, spec["numberOfVersions"])
                 vstr = "v{}".format(v)
             elif spec["question"][gs]["select"] == "param":
                 # If caller does not provide a version, all are version 1.
@@ -141,11 +144,11 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
                 # and `shuffle` when user data is provided.  But clients or
                 # other aspects of the software might behave differently.
                 if preset_ver_map:
-                    raise NotImplementedError()
+                    v = preset_ver_map[t][g + 1]
                 else:
                     v = 1
                 assert v in range(1, spec["numberOfVersions"] + 1)
-                vstr = "v{}".format(v)
+                vstr = "p{}".format(v)
             else:
                 raise KeyError(
                     'problem with spec: expected "fix/shuffle/param" but got "{}".'.format(
