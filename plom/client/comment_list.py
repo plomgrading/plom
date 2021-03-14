@@ -1172,15 +1172,34 @@ class RubricTable(QTableWidget):
 
     def defaultContextMenuEvent(self, event):
         curtab_idx = self.parent.RTW.currentIndex()
-        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
+        # TODO: is this way more future proof for moveable tabs?
+        # N = self.parent.num_user_tabs
+        # tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, N + 1)]
+        tabnames = [t.shortname for t in self.parent.user_tabs]
 
         menu = QMenu(self)
         addTo = [QAction("Move to Pane {}".format(x), self) for x in tabnames]
+        #for n in range(0, len(addTo)):
+        #    addTo[n].triggered.connect(lambda x=n: self.moveCurrentRubricToTab(x+1))
         # note do not use a loop here: lambda does not behave right
-        addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
-        addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
-        addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
-        addTo[3].triggered.connect(lambda: self.moveCurrentRubricToTab(4))
+        N = len(tabnames)
+        # ARGGHHH Issue #1441, it burns it burns!!
+        if N > 0:
+            addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
+        if N > 1:
+            addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
+        if N > 2:
+            addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
+        if N > 3:
+            addTo[3].triggered.connect(lambda: self.moveCurrentRubricToTab(4))
+        if N > 4:
+            addTo[4].triggered.connect(lambda: self.moveCurrentRubricToTab(5))
+        if N > 5:
+            addTo[5].triggered.connect(lambda: self.moveCurrentRubricToTab(6))
+        if N > 6:
+            addTo[6].triggered.connect(lambda: self.moveCurrentRubricToTab(7))
+        if N > 7:
+            addTo[7].triggered.connect(lambda: self.moveCurrentRubricToTab(8))
         remAction = QAction("Remove from this pane", self)
         remAction.triggered.connect(self.removeCurrentRubric)
         edit = QAction("Edit rubric", self)
@@ -1198,14 +1217,30 @@ class RubricTable(QTableWidget):
         menu.popup(QCursor.pos())
 
     def showContextMenuEvent(self, event):
-        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
+        # tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
+        # TODO: is this way more future proof for moveable tabs?
+        tabnames = [t.shortname for t in self.parent.user_tabs]
         menu = QMenu(self)
         addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
         # note do not use a loop here: lambda does not behave right
-        addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
-        addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
-        addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
-        addTo[3].triggered.connect(lambda: self.addCurrentRubricToTab(4))
+        N = len(tabnames)
+        # ARGGHHH Issue #1441, it burns it burns!!
+        if N > 0:
+            addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
+        if N > 1:
+            addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
+        if N > 2:
+            addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
+        if N > 3:
+            addTo[3].triggered.connect(lambda: self.addCurrentRubricToTab(4))
+        if N > 4:
+            addTo[4].triggered.connect(lambda: self.addCurrentRubricToTab(5))
+        if N > 5:
+            addTo[5].triggered.connect(lambda: self.addCurrentRubricToTab(6))
+        if N > 6:
+            addTo[6].triggered.connect(lambda: self.addCurrentRubricToTab(7))
+        if N > 7:
+            addTo[7].triggered.connect(lambda: self.addCurrentRubricToTab(8))
         edit = QAction("Edit rubric", self)
         edit.setEnabled(False)  # TODO hook it up
         for a in addTo:
@@ -1513,7 +1548,7 @@ class RubricWidget(QWidget):
         # TODO: markstyle set after rubric widget added
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
-        # TODO: hardcoded length for now
+        # TODO: hardcoded length for now, b/c of Issue #1441 it can be at most 8
         self.num_user_tabs = 5
         self.numberOfTabs = self.num_user_tabs + 2
         self.user_tabs = []
