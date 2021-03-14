@@ -1514,25 +1514,18 @@ class RubricWidget(QWidget):
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
         # TODO: hardcoded length for now
-        tab_names = [
-            {"shortname": "Shared", "longname": "Shared"},
-            {"shortname": "Q1", "longname": None},
-            {"shortname": "Q2", "longname": None},
-            {"shortname": "Q3", "longname": None},
-            {"shortname": "Q4", "longname": None},
-            {"shortname": delta_label, "longname": "Delta"},
-        ]
-        self.tabA = RubricTable(self, shortname=tab_names[1]["shortname"])
-        self.tabB = RubricTable(self, shortname=tab_names[2]["shortname"])
-        self.tabC = RubricTable(self, shortname=tab_names[3]["shortname"])
-        self.tabD = RubricTable(self, shortname=tab_names[4]["shortname"])
+        self.num_user_tabs = 4
+        self.numberOfTabs = self.num_user_tabs + 2
+        self.tabA = RubricTable(self, shortname="Q1")
+        self.tabB = RubricTable(self, shortname="Q2")
+        self.tabC = RubricTable(self, shortname="Q3")
+        self.tabD = RubricTable(self, shortname="Q4")
         self.tabS = RubricTable(
-            self, shortname=tab_names[0]["shortname"], tabType="show"
+            self, shortname="Shared", tabType="show"
         )
         self.tabDelta = RubricTable(
-            self, shortname=tab_names[5]["shortname"], tabType="delta"
+            self, shortname=delta_label, tabType="delta"
         )
-        self.numberOfTabs = 6
         self.RTW = QTabWidget()
         # Change here to enable movable tabs: may require fixing indexing elsewhere
         self.RTW.setMovable(False)
