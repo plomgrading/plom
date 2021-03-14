@@ -1,10 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
+import logging
 import random
+
 from plom.db import PlomDB
+
+
+log = logging.getLogger("DB")
 
 
 managerRubrics = [
@@ -55,26 +60,7 @@ def buildExamDatabaseFromSpec(spec, db):
     """Build metadata for exams from spec and insert into the database.
 
     Arguments:
-        spec {dict} -- The spec file for the database that is being setup.
-                          Example below:
-                          {
-                            'name': 'plomdemo',
-                            'longName': 'Midterm Demo using Plom',
-                            'numberOfVersions': 2,
-                            'numberOfPages': 6,
-                            'numberToProduce': 20,
-                            'numberToName': 10,
-                            'numberOfQuestions': 3,
-                            'privateSeed': '1001378822317872',
-                            'publicCode': '270385',
-                            'idPages': {'pages': [1]},
-                            'doNotMark': {'pages': [2]},
-                            'question': {
-                                '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
-                                '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
-                                '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
-                            }
-                          }
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         db (database): the database to populate.
 
     Returns:
@@ -83,11 +69,8 @@ def buildExamDatabaseFromSpec(spec, db):
 
     Raises:
         ValueError: if database already populated.
+        KeyError: question selection scheme is invalid.
     """
-    # fire up logging
-    import logging
-
-    log = logging.getLogger("DB")
 
     buildSpecialRubrics(spec, db)
 
@@ -137,19 +120,16 @@ def buildExamDatabaseFromSpec(spec, db):
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now a str and 1,2,3,...
-            if (
-                spec["question"][gs]["select"] == "fix"
-            ):  # there is only one version so all are version 1
+            if spec["question"][gs]["select"] == "fix":
+                # there is only one version so all are version 1
                 v = 1
                 vstr = "f{}".format(v)
-            elif (
-                spec["question"][gs]["select"] == "shuffle"
-            ):  # version selected randomly in [1, 2, ..., #versions]
+            elif spec["question"][gs]["select"] == "shuffle":
+                # version selected randomly in [1, 2, ..., #versions]
                 v = random.randint(1, spec["numberOfVersions"])
                 vstr = "v{}".format(v)
             else:
-                # TODO: or RuntimeError?
-                raise ValueError(
+                raise KeyError(
                     'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
                         spec["question"][gs]["select"]
                     )
