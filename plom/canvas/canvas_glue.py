@@ -10,6 +10,19 @@ import canvasapi as capi
 # Extend the CurrentUser class to add some helpful methods, e.g. one
 # to only fetch course
 class User(capi.current_user.CurrentUser):
+    def __init__(self, capi_user):
+
+        # Ensure that we got the right thing passed in
+        assert isinstance(capi_user, capi.current_user.CurrentUser)
+
+        # capi_user.__init__(self)
+
+        self.canvas = capi_user
+        return
+
+    def get_courses(self):
+        return self.canvas.get_courses()
+
     def get_courses_teaching(self):
         """
         Get a list of courses in which the user has instructor status
@@ -30,7 +43,11 @@ class User(capi.current_user.CurrentUser):
                 # what's going on.
                 #
                 # TODO: INvestigate further?
-                assert course.access_restricted_by_date
+                try:
+                    assert course.access_restricted_by_date
+                except AttributeError:
+                    print(f"Course {course} has no such attribute.")
+                    print(dir(course))
         self.teaching = teaching
         return teaching
 
