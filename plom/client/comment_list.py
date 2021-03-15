@@ -1215,6 +1215,9 @@ class RubricTable(QTableWidget):
         renameTabAction = QAction("Rename this pane...", self)
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
+        a = QAction("Add new pane", self)
+        a.triggered.connect(self.add_new_tab)
+        menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
 
@@ -1255,6 +1258,9 @@ class RubricTable(QTableWidget):
         renameTabAction = QAction("Rename this pane...", self)
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
+        a = QAction("Add new pane", self)
+        a.triggered.connect(self.add_new_tab)
+        menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
 
@@ -1342,6 +1348,12 @@ class RubricTable(QTableWidget):
         # )
         log.debug('refresh tab text from "%s" to "%s"', curname, s1)
         curtab_widget.set_name(s1)
+
+    def add_new_tab(self):
+        # TODO: probably this method is in the wrong place
+        tab = RubricTable(self.parent, shortname="new")
+        self.parent.user_tabs.append(tab)
+        self.parent.RTW.addTab(tab, tab.shortname)
 
     def appendByKey(self, key):
         """Append the rubric associated with a key to the end of the list
