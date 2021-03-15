@@ -1641,8 +1641,15 @@ class RubricWidget(QWidget):
 
     @property
     def user_tabs(self):
-        """Dynamically construct the ordered list of user tabs."""
-        return [self.RTW.widget(n) for n in range(self.RTW.count())]
+        """Dynamically construct the ordered list of user-defined tabs."""
+        # this is all tabs: we want only the user ones
+        # return [self.RTW.widget(n) for n in range(self.RTW.count())]
+        L = []
+        for n in range(self.RTW.count()):
+            tab = self.RTW.widget(n)
+            if tab.tabType == None:
+                L.append(tab)
+        return L
 
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
