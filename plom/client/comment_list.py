@@ -1579,7 +1579,9 @@ class RubricWidget(QWidget):
         # TODO: markstyle set after rubric widget added
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
-        default_user_tabs = ["\N{Black Star}", "A", "B"]
+        # useful others: \N{Rotated Floral Heart Bullet} \N{Double Dagger}
+        # \N{Black Spade Suit} \N{Black Heart Suit} \N{Black Diamond Suit} \N{Black Club Suit}
+        default_user_tabs = ["\N{Black Star}", "\N{Floral Heart}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
