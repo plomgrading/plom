@@ -384,9 +384,10 @@ class RubricWrangler(QDialog):
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
             wranglerState = {
+                "user_tab_names": [],
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [[]] * self.num_user_tabs,
+                "tabs": [],
             }
         self.setFromWranglerState(wranglerState)
 
@@ -400,12 +401,17 @@ class RubricWrangler(QDialog):
 
     def toWranglerState(self):
         store = {
+            "user_tab_names": [],
             "shown": [],
             "hidden": [],
             "tabs": [],
         }
         for p in range(self.num_user_tabs):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
+        # TODO: this doesn't yet set the names: but they can't change in here anyway
+        # for p in range(self.num_user_tabs):
+        #     print(self.ST.STW.widget(p).shortname)
+        #     store["user_tab_names"].append(...)
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Delta", "Text"])
