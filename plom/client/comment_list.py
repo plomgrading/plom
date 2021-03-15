@@ -1340,15 +1340,15 @@ class RubricTable(QTableWidget):
         if not curtab_widget:
             return
         curname = curtab_widget.shortname
-        # TODO: use a custom dialog
         s1, ok1 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname), "Enter short name"
+            self, 'Rename pane "{}"'.format(curname), "Enter new name"
         )
-        s2, ok2 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname), "Enter long name"
-        )
-        if not (ok1 and ok2):
+        if not ok1:
             return
+        # TODO: use a custom dialog
+        # s2, ok2 = QInputDialog.getText(
+        #     self, 'Rename pane "{}"'.format(curname), "Enter long name"
+        # )
         log.debug('refresh tab text from "%s" to "%s"', curname, s1)
         curtab_widget.set_name(s1)
 
