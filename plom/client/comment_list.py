@@ -1578,7 +1578,7 @@ class RubricWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         # TODO: markstyle set after rubric widget added
         # if self.parent.markStyle == 2: ...
-        delta_label = "\N{Plus-minus Sign}n"
+        delta_label = "\N{Plus-minus Sign}\N{Greek Small Letter Delta}"
         # useful others: \N{Rotated Floral Heart Bullet} \N{Double Dagger}
         # \N{Black Spade Suit} \N{Black Heart Suit} \N{Black Diamond Suit} \N{Black Club Suit}
         default_user_tabs = ["\N{Black Star}", "\N{Floral Heart}"]
