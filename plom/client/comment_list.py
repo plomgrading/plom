@@ -1352,7 +1352,7 @@ class RubricTable(QTableWidget):
     def add_new_tab(self):
         # TODO: probably this method is in the wrong place
         tab = RubricTable(self.parent, shortname="new")
-        self.parent.user_tabs.append(tab)
+        # self.parent.user_tabs.append(tab)
         self.parent.RTW.addTab(tab, tab.shortname)
 
     def appendByKey(self, key):
@@ -1582,9 +1582,9 @@ class RubricWidget(QWidget):
         delta_label = "\N{Plus-minus Sign}n"
         # TODO: hardcoded length for now, b/c of Issue #1441 it can be at most 8
         initial_tabs = ["\N{Black Star}", "A", "B"]
-        self.user_tabs = []
+        user_tabs = []
         for n, name in enumerate(initial_tabs):
-            self.user_tabs.append(RubricTable(self, shortname=name))
+            user_tabs.append(RubricTable(self, shortname=name))
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
@@ -1592,7 +1592,7 @@ class RubricWidget(QWidget):
         self.RTW.setMovable(False)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
-        for tab in self.user_tabs:
+        for tab in user_tabs:
             self.RTW.addTab(tab, tab.shortname)
         self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
@@ -1639,6 +1639,11 @@ class RubricWidget(QWidget):
             self.otherB.setEnabled(True)
             # reselect the current rubric
             self.handleClick()
+
+    @property
+    def user_tabs(self):
+        """Dynamically construct the ordered list of user tabs."""
+        return [self.RTW.widget(n) for n in range(self.RTW.count())]
 
     def update_tab_names(self):
         """Loop over the tabs and update their displayed names"""
@@ -1704,6 +1709,7 @@ class RubricWidget(QWidget):
         TODO: can be revisited: perhaps this function should be allowed
         to grow the number of tabs.  Probably it should.
         """
+        # TODO: probably needs more effort to grow tabs here
         # zip truncates shorter list incase of length mismatch
         for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
             tab.set_name(name)
