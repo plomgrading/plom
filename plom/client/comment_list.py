@@ -1707,15 +1707,25 @@ class RubricWidget(QWidget):
                 may vary, etc.
 
         If there is too much data for the number of data, the extra data
-        is discarded.  If there is too few data, pad with empty lists.
+        is discarded.  If there is too few data, pad with empty lists
+        and/or leave the current lists as they are.
 
-        TODO: can be revisited: perhaps this function should be allowed
-        to grow the number of tabs.  Probably it should.
+        TODO: if new Annotator, we may want to clear the tabs before
+        calling this.
         """
-        # TODO: probably needs more effort to grow tabs here
         # zip truncates shorter list incase of length mismatch
-        for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
-            tab.set_name(name)
+        # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
+        #    tab.set_name(name)
+        curtabs = self.user_tabs
+        newnames = wranglerState["user_tab_names"]
+        for n in range(max(len(curtabs), len(newnames))):
+            if n < len(curtabs):
+                if n < len(newnames):
+                    curtabs[n].set_name(newnames[n])
+            else:
+                if n < len(newnames):
+                    self.add_new_tab(newnames[n])
+        del curtabs
 
         # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
