@@ -1137,6 +1137,7 @@ class RubricTable(QTableWidget):
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
         self.verticalHeader().setVisible(True)
         self.setDragEnabled(True)
