@@ -386,7 +386,7 @@ class RubricWrangler(QDialog):
             wranglerState = {
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [[]] * self.num_user_names,
+                "tabs": [[]] * self.num_user_tabs,
             }
         self.setFromWranglerState(wranglerState)
 
