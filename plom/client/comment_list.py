@@ -1216,7 +1216,7 @@ class RubricTable(QTableWidget):
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
         a = QAction("Add new pane", self)
-        a.triggered.connect(self.add_new_tab)
+        a.triggered.connect(self.parent.add_new_tab)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -1259,7 +1259,7 @@ class RubricTable(QTableWidget):
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
         a = QAction("Add new pane", self)
-        a.triggered.connect(self.add_new_tab)
+        a.triggered.connect(self.parent.add_new_tab)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -1348,12 +1348,6 @@ class RubricTable(QTableWidget):
         # )
         log.debug('refresh tab text from "%s" to "%s"', curname, s1)
         curtab_widget.set_name(s1)
-
-    def add_new_tab(self):
-        # TODO: probably this method is in the wrong place
-        tab = RubricTable(self.parent, shortname="new")
-        # self.parent.user_tabs.append(tab)
-        self.parent.RTW.addTab(tab, tab.shortname)
 
     def appendByKey(self, key):
         """Append the rubric associated with a key to the end of the list
@@ -1655,6 +1649,10 @@ class RubricWidget(QWidget):
         for n in range(self.RTW.count()):
             self.RTW.setTabText(n, self.RTW.widget(n).shortname)
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
+
+    def add_new_tab(self, name="new"):
+        tab = RubricTable(self, shortname=name)
+        self.RTW.addTab(tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
