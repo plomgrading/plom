@@ -1146,6 +1146,10 @@ class RubricTable(QTableWidget):
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.hideColumn(0)
         self.hideColumn(1)
+        # could use a subclass
+        if self.tabType == "delta":
+            self.hideColumn(3)
+            self.verticalHeader().setVisible(False)
         if sort:
             self.setSortingEnabled(True)
         self.shortname = shortname
