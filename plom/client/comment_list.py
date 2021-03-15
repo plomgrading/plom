@@ -1560,11 +1560,12 @@ class RubricWidget(QWidget):
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
         # TODO: hardcoded length for now, b/c of Issue #1441 it can be at most 8
-        self.num_user_tabs = 5
-        self.numberOfTabs = self.num_user_tabs + 2
+        initial_tabs = ["\N{Black Star}", "A", "B"]
+        # TODO: get rid of this instance variable?
+        self.numberOfTabs = len(initial_tabs) + 2
         self.user_tabs = []
-        for n in range(self.num_user_tabs):
-            self.user_tabs.append(RubricTable(self, shortname="Q{}".format(n + 1)))
+        for n, name in enumerate(initial_tabs):
+            self.user_tabs.append(RubricTable(self, shortname=name))
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
