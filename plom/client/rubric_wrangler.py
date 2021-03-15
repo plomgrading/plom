@@ -409,8 +409,7 @@ class RubricWrangler(QDialog):
         }
         for p in range(self.num_user_tabs):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
-        # get hidden from widget3 = hidelist
-        store["hidden"] = self.ST.STW.widget(3).getCurrentKeys()
+        store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Delta", "Text"])
         for r in range(self.model.rowCount()):
