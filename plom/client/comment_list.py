@@ -1570,8 +1570,6 @@ class RubricWidget(QWidget):
         delta_label = "\N{Plus-minus Sign}n"
         # TODO: hardcoded length for now, b/c of Issue #1441 it can be at most 8
         initial_tabs = ["\N{Black Star}", "A", "B"]
-        # TODO: get rid of this instance variable?
-        self.numberOfTabs = len(initial_tabs) + 2
         self.user_tabs = []
         for n, name in enumerate(initial_tabs):
             self.user_tabs.append(RubricTable(self, shortname=name))
@@ -1822,13 +1820,15 @@ class RubricWidget(QWidget):
     def next_pane(self):
         # only change panes if they are shown
         if self.showHideW.currentIndex() == 0:
-            self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % self.numberOfTabs)
+            numtabs = self.RTW.count()
+            self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % numtabs)
             self.handleClick()
 
     def prev_pane(self):
         # only change panes if they are shown
         if self.showHideW.currentIndex() == 0:
-            self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % self.numberOfTabs)
+            numtabs = self.RTW.count()
+            self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % numtabs)
             self.handleClick()
 
     def get_nonrubric_text_from_page(self):
