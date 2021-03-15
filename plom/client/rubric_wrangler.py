@@ -383,15 +383,12 @@ class RubricWrangler(QDialog):
 
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
-            self.wranglerState = {
+            wranglerState = {
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
                 "tabs": [[]] * self.num_user_names,
             }
-        else:
-            self.wranglerState = wranglerState
-        # use this to set state
-        self.setFromWranglerState()
+        self.setFromWranglerState(wranglerState)
 
     def setTextFilter(self):
         self.proxy.setTextFilter(self.tFiltLE.text())
@@ -421,26 +418,26 @@ class RubricWrangler(QDialog):
             store["shown"].append(key)
         return store
 
-    def setFromWranglerState(self):
+    def setFromWranglerState(self, state):
         # does not do any sanity checks
         # set the main list to obey the order in wrangerState, but then append any new rubrics
         rkeys = [X["id"] for X in self.rubrics]  # keys in order
         mainList = []
-        # add rubrics in the order from wranglerstate - which is list of keys
-        for key in self.wranglerState["shown"]:
+        # add rubrics in the order from state - which is list of keys
+        for key in state["shown"]:
             ind = rkeys.index(key)
             mainList.append(self.rubrics[ind])
         # add any remaining rubrics
         for ind, key in enumerate(rkeys):
-            if key not in self.wranglerState["shown"]:
+            if key not in state["shown"]:
                 mainList.append(self.rubrics[ind])
         self.model.repopulate(mainList)
         # populate the ABC lists
         for p in range(self.num_user_tabs):
-            self.ST.populate(p, self.rubrics, self.wranglerState["tabs"][p])
+            self.ST.populate(p, self.rubrics, state["tabs"][p])
         # populate the hide-list
         idx = self.num_user_tabs
-        self.ST.populate(idx, self.rubrics, self.wranglerState["hidden"])
+        self.ST.populate(idx, self.rubrics, state["hidden"])
 
     def returnWrangled(self):
         self.wranglerState = self.toWranglerState()
