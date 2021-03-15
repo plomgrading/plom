@@ -1168,110 +1168,103 @@ class RubricTable(QTableWidget):
             self.showContextMenuEvent(event)
         elif self.tabType == None:
             self.defaultContextMenuEvent(event)
-        else:
-            self.defaultContextMenuEvent(event)
+        event.ignore()
 
     def defaultContextMenuEvent(self, event):
-        curtab_idx = self.parent.RTW.currentIndex()
-        # TODO: is this way more future proof for moveable tabs?
-        # N = self.parent.num_user_tabs
-        # tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, N + 1)]
-        tabnames = [t.shortname for t in self.parent.user_tabs]
+        # first try to get the row from the event
+        row = self.rowAt(event.pos().y())
+        if row < 0:
+            # no row under click but maybe one is highlighted
+            row = self.getCurrentRubricRow()
+        key = None if row is None else self.getKeyFromRow(row)
+
+        # These are workaround for Issue #1441, lambdas in a loop
+        def func_factory_add(t, k):
+            def foo():
+                t.appendByKey(k)
+
+            return foo
+
+        def func_factory_del(t, k):
+            def foo():
+                t.removeRubricByKey(k)
+
+            return foo
 
         menu = QMenu(self)
-        addTo = [QAction("Move to Pane {}".format(x), self) for x in tabnames]
-        # for n in range(0, len(addTo)):
-        #    addTo[n].triggered.connect(lambda x=n: self.moveCurrentRubricToTab(x+1))
-        # note do not use a loop here: lambda does not behave right
-        N = len(tabnames)
-        # ARGGHHH Issue #1441, it burns it burns!!
-        if N > 0:
-            addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
-        if N > 1:
-            addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
-        if N > 2:
-            addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
-        if N > 3:
-            addTo[3].triggered.connect(lambda: self.moveCurrentRubricToTab(4))
-        if N > 4:
-            addTo[4].triggered.connect(lambda: self.moveCurrentRubricToTab(5))
-        if N > 5:
-            addTo[5].triggered.connect(lambda: self.moveCurrentRubricToTab(6))
-        if N > 6:
-            addTo[6].triggered.connect(lambda: self.moveCurrentRubricToTab(7))
-        if N > 7:
-            addTo[7].triggered.connect(lambda: self.moveCurrentRubricToTab(8))
-        remAction = QAction("Remove from this pane", self)
-        remAction.triggered.connect(self.removeCurrentRubric)
-        edit = QAction("Edit rubric", self)
-        edit.setEnabled(False)  # TODO hook it up
-        for n, a in enumerate(addTo):
-            if n + 1 != curtab_idx:
+        if key:
+            edit = QAction("Edit rubric", self)
+            edit.setEnabled(False)  # TODO hook it up
+            menu.addAction(edit)
+            menu.addSeparator()
+
+            for tab in self.parent.user_tabs:
+                if tab == self:
+                    continue
+                a = QAction(f"Move to Pane {tab.shortname}", self)
+                a.triggered.connect(func_factory_add(tab, key))
+                a.triggered.connect(func_factory_del(self, key))
                 menu.addAction(a)
-        menu.addAction(remAction)
-        menu.addSeparator()
-        menu.addAction(edit)
-        menu.addSeparator()
+            menu.addSeparator()
+
+            remAction = QAction("Remove from this pane", self)
+            remAction.triggered.connect(func_factory_del(self, key))
+            menu.addAction(remAction)
+            menu.addSeparator()
+
         renameTabAction = QAction("Rename this pane...", self)
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
         menu.popup(QCursor.pos())
+        event.accept()
 
     def showContextMenuEvent(self, event):
-        # tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
-        # TODO: is this way more future proof for moveable tabs?
-        tabnames = [t.shortname for t in self.parent.user_tabs]
+        # first try to get the row from the event
+        row = self.rowAt(event.pos().y())
+        if row < 0:
+            # no row under click but maybe one is highlighted
+            row = self.getCurrentRubricRow()
+        key = None if row is None else self.getKeyFromRow(row)
+
+        # workaround for Issue #1441, lambdas in a loop
+        def function_factory(t, k):
+            def foo():
+                t.appendByKey(k)
+
+            return foo
+
         menu = QMenu(self)
-        addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
-        # note do not use a loop here: lambda does not behave right
-        N = len(tabnames)
-        # ARGGHHH Issue #1441, it burns it burns!!
-        if N > 0:
-            addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
-        if N > 1:
-            addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
-        if N > 2:
-            addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
-        if N > 3:
-            addTo[3].triggered.connect(lambda: self.addCurrentRubricToTab(4))
-        if N > 4:
-            addTo[4].triggered.connect(lambda: self.addCurrentRubricToTab(5))
-        if N > 5:
-            addTo[5].triggered.connect(lambda: self.addCurrentRubricToTab(6))
-        if N > 6:
-            addTo[6].triggered.connect(lambda: self.addCurrentRubricToTab(7))
-        if N > 7:
-            addTo[7].triggered.connect(lambda: self.addCurrentRubricToTab(8))
-        edit = QAction("Edit rubric", self)
-        edit.setEnabled(False)  # TODO hook it up
-        for a in addTo:
-            menu.addAction(a)
-        menu.addSeparator()
-        hideAction = QAction("Hide", self)
-        hideAction.triggered.connect(self.hideCurrentRubric)
-        menu.addAction(hideAction)
-        menu.addSeparator()
-        menu.addAction(edit)
-        menu.addSeparator()
+        if key:
+            edit = QAction("Edit rubric", self)
+            edit.setEnabled(False)  # TODO hook it up
+            menu.addAction(edit)
+            menu.addSeparator()
+
+            # TODO: walk in another order for moveable tabs?
+            # [self.parent.RTW.widget(n) for n in range(1, 5)]
+            for tab in self.parent.user_tabs:
+                a = QAction(f"Add to Pane {tab.shortname}", self)
+                a.triggered.connect(function_factory(tab, key))
+                menu.addAction(a)
+            menu.addSeparator()
+
+            hideAction = QAction("Hide", self)
+            hideAction.triggered.connect(self.hideCurrentRubric)
+            menu.addAction(hideAction)
+            menu.addSeparator()
         renameTabAction = QAction("Rename this pane...", self)
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
         menu.popup(QCursor.pos())
+        event.accept()
 
     def hideContextMenuEvent(self, event):
-        log.debug("Popping up a popup menu")
         menu = QMenu(self)
         unhideAction = QAction("Unhide rubric", self)
         unhideAction.triggered.connect(self.unhideCurrentRubric)
         menu.addAction(unhideAction)
         menu.popup(QCursor.pos())
-
-    def addCurrentRubricToTab(self, tabIndex):
-        row = self.getCurrentRubricRow()
-        if row is None:
-            return
-        key = self.item(row, 0).text()
-        self.parent.addRubricByKeyToTab(key, tabIndex)
+        event.accept()
 
     def removeCurrentRubric(self):
         row = self.getCurrentRubricRow()
@@ -1281,12 +1274,10 @@ class RubricTable(QTableWidget):
         self.selectRubricByRow(0)
         self.handleClick()
 
-    def moveCurrentRubricToTab(self, tabIndex):
-        row = self.getCurrentRubricRow()
+    def removeRubricByKey(self, key):
+        row = self.getRowFromKey(key)
         if row is None:
             return
-        key = self.item(row, 0).text()
-        self.parent.addRubricByKeyToTab(key, tabIndex)
         self.removeRow(row)
         self.selectRubricByRow(0)
         self.handleClick()
@@ -1352,7 +1343,25 @@ class RubricTable(QTableWidget):
         log.debug('refresh tab text from "%s" to "%s"', curname, s1)
         curtab_widget.set_name(s1)
 
+    def appendByKey(self, key):
+        """Append the rubric associated with a key to the end of the list
+
+        If its a dupe, don't add.
+
+        TODO: legalUp/Down stuff?  Not sure I follow.
+
+        args
+            key (str/int?): the key associated with a rubric.
+
+        raises
+            what happens on invalid key?
+        """
+        # TODO: hmmm, should be dict?
+        (rubric,) = [x for x in self.parent.rubrics if x["id"] == key]
+        self.appendNewRubric(rubric)
+
     def appendNewRubric(self, rubric, legalDown=None, legalUp=None):
+        # TODO: why does the caller need to determine this legalUp/Down stuff?
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -1416,12 +1425,12 @@ class RubricTable(QTableWidget):
             self.appendNewRubric(rb, legalDown, legalUp)
 
     def getKeyFromRow(self, row):
-        return self.item(r, 0).text()
+        return self.item(row, 0).text()
 
     def getKeyList(self):
         return [self.item(r, 0).text() for r in range(self.rowCount())]
 
-    def getRowFromKey(self, row):
+    def getRowFromKey(self, key):
         for r in range(self.rowCount()):
             if int(self.item(r, 0).text()) == int(key):
                 return r
@@ -1839,14 +1848,6 @@ class RubricWidget(QWidget):
         index = [x["id"] for x in self.rubrics].index(key)
         legalDown, legalUp = self.getLegalDownUp()
         self.tabHide.appendNewRubric(self.rubrics[index], legalDown, legalUp)
-
-    def addRubricByKeyToTab(self, key, tabIndex):
-        index = [x["id"] for x in self.rubrics].index(key)
-        legalDown, legalUp = self.getLegalDownUp()
-        # TODO: I don't know what this function does or if I have generalized it correctly
-        if tabIndex in range(1, len(self.user_tabs) + 1):
-            i = tabIndex - 1
-            self.user_tabs[i].appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
