@@ -1652,7 +1652,7 @@ class RubricWidget(QWidget):
             "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [[]] * self.num_user_tabs,
+            "tabs": [],
         }
         for X in self.rubrics:
             # exclude HALs system-rubrics
@@ -1666,25 +1666,39 @@ class RubricWidget(QWidget):
         self.setRubricsFromState(wranglerState)
 
     def setRubricsFromState(self, wranglerState):
-        tabnames = wranglerState.get("user_tab_names", None)
-        if tabnames is None:
-            log.warning("wranglerState is lacking user_tab_names")
-        if tabnames:
-            if len(tabnames) != 4:
-                log.error(
-                    "Something is wrong: user_tab_names should be length 4, is %s",
-                    str(tabnames),
-                )
-            else:
-                for (n, tab) in enumerate(self.user_tabs):
-                    tab.set_name(tabnames[n])
+        """Set rubric tabs (but not rubrics themselves from saved data.
+
+        The various rubric tabs are updated based on data passed in.
+        The rubrics themselves are uneffected.
+
+        args:
+            wranglerState (dict): should be documented elsewhere and
+                linked here but must contain at least `shown`, `hidden`,
+                `tabs`, and `user_tab_names`.  The last two may be empty
+                lists.  Subject to change without notice, your milleage
+                may vary, etc.
+
+        If there is too much data for the number of data, the extra data
+        is discarded.  If there is too few data, pad with empty lists.
+
+        TODO: can be revisited: perhaps this function should be allowed
+        to grow the number of tabs.  Probably it should.
+        """
+        # zip truncates shorter list incase of length mismatch
+        for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
+            tab.set_name(name)
 
         # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
         for n, tab in enumerate(self.user_tabs):
+            if n >= len(wranglerState["tabs"]):
+                # not enough data for number of tabs
+                idlist = []
+            else:
+                idlist = wranglerState["tabs"][n]
             tab.setRubricsByKeys(
                 self.rubrics,
-                wranglerState["tabs"][n],
+                idlist,
                 legalDown=legalDown,
                 legalUp=legalUp,
             )
