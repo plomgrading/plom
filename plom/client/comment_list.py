@@ -1580,7 +1580,6 @@ class RubricWidget(QWidget):
         # TODO: markstyle set after rubric widget added
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
-        # TODO: hardcoded length for now, b/c of Issue #1441 it can be at most 8
         initial_tabs = ["\N{Black Star}", "A", "B"]
         user_tabs = []
         for n, name in enumerate(initial_tabs):
