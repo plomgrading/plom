@@ -1140,6 +1140,22 @@ class RubricTable(QTableWidget):
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
         self.verticalHeader().setVisible(True)
+        #  negative padding is probably b/c of fontsize changes
+        self.setStyleSheet("""
+            QHeaderView::section {
+                background-color: palette(window);
+                color: palette(dark);
+                padding-left: 0px;
+                padding-right: -3px;
+                border: 0px solid palette(shadow);
+            }
+            QTableView {
+                border: none;
+            }""")
+        # CSS cannot set relative fontsize
+        f = self.font()
+        f.setPointSize(0.67*f.pointSize())
+        self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setShowGrid(False)
@@ -1150,7 +1166,7 @@ class RubricTable(QTableWidget):
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
-            self.verticalHeader().setVisible(False)
+            # self.verticalHeader().setVisible(False)
         if sort:
             self.setSortingEnabled(True)
         self.shortname = shortname
