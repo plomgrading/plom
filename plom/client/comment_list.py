@@ -1427,6 +1427,9 @@ class RubricTable(QTableWidget):
             if v > legalUp or v < legalDown:
                 self.item(rc, 2).setForeground(colour_illegal)
                 self.item(rc, 3).setForeground(colour_illegal)
+            else:
+                self.item(rc, 2).setForeground(colour_legal)
+                self.item(rc, 3).setForeground(colour_legal)
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
         """Clear table and repopulate rubrics in the key_list"""
