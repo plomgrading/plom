@@ -16,6 +16,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import (
     QBrush,
     QColor,
+    QPalette,
     QCursor,
     QDropEvent,
     QStandardItem,
@@ -75,6 +76,7 @@ def deltaToInt(x):
 
 
 # colours to indicate whether rubric is legal to paste or not.
+# TODO: how do:  QPalette().color(QPalette.Text), QPalette().color(QPalette.Dark)
 colour_legal = QBrush(QColor(0, 0, 0))
 colour_illegal = QBrush(QColor(128, 128, 128, 128))
 
@@ -1399,9 +1401,10 @@ class RubricTable(QTableWidget):
         raises
             what happens on invalid key?
         """
+        legalDown, legalUp = self.parent.getLegalDownUp()
         # TODO: hmmm, should be dict?
         (rubric,) = [x for x in self.parent.rubrics if x["id"] == key]
-        self.appendNewRubric(rubric)
+        self.appendNewRubric(rubric, legalDown, legalUp)
 
     def appendNewRubric(self, rubric, legalDown=None, legalUp=None):
         # TODO: why does the caller need to determine this legalUp/Down stuff?
