@@ -1378,6 +1378,7 @@ class RubricTable(QTableWidget):
         )
         if not ok1:
             return
+        # TODO: hint that "wh&ot" will enable "alt-o" shortcut on most OSes
         # TODO: use a custom dialog
         # s2, ok2 = QInputDialog.getText(
         #     self, 'Rename pane "{}"'.format(curname), "Enter long name"
