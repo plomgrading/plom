@@ -1574,17 +1574,15 @@ class RubricWidget(QWidget):
         # TODO: markstyle set after rubric widget added
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
-        initial_tabs = ["\N{Black Star}", "A", "B"]
-        user_tabs = []
-        for n, name in enumerate(initial_tabs):
-            user_tabs.append(RubricTable(self, shortname=name))
+        default_user_tabs = ["\N{Black Star}", "A", "B"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
-        for tab in user_tabs:
+        for name in default_user_tabs:
+            tab = RubricTable(self, shortname=name)
             self.RTW.addTab(tab, tab.shortname)
         self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
