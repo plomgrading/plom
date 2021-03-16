@@ -1685,8 +1685,20 @@ class RubricWidget(QWidget):
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
 
     def add_new_tab(self, name="new"):
+        """Add new user-defined tab either to end or near end.
+
+        If the delta tab is last, insert before that.  Otherwise append
+        to the end of tab list.
+
+        args:
+            name (str): name of the new tab, default "new"
+        """
         tab = RubricTable(self, shortname=name)
-        self.RTW.addTab(tab, tab.shortname)
+        n = self.RTW.count()
+        if n >= 1 and self.RTW.widget(n - 1).is_delta_tab():
+            self.RTW.insertTab(n - 1, tab, tab.shortname)
+        else:
+            self.RTW.addTab(tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
