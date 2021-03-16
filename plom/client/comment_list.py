@@ -1165,6 +1165,9 @@ class RubricTable(QTableWidget):
         # More like "If anybody cares, I just changed my name!"
         self.parent.update_tab_names()
 
+    def is_delta_tab(self):
+        return self.tabType == "delta"
+
     def contextMenuEvent(self, event):
         if self.tabType == "hide":
             self.hideContextMenuEvent(event)
@@ -1577,8 +1580,6 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        # TODO: markstyle set after rubric widget added
-        # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}\N{Greek Small Letter Delta}"
         # useful others: \N{Rotated Floral Heart Bullet} \N{Double Dagger}
         # \N{Black Spade Suit} \N{Black Heart Suit} \N{Black Diamond Suit} \N{Black Club Suit}
@@ -1785,7 +1786,18 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByKey(key)
 
     def setStyle(self, markStyle):
+        """Adjust to possible changes in marking style between down and up."""
         self.markStyle = markStyle
+        if markStyle == 2:
+            delta_label = "+\N{Greek Small Letter Delta}"
+        elif markStyle == 3:
+            delta_label = "-\N{Greek Small Letter Delta}"
+        else:
+            log.warning("Invalid markstyle specified")
+        for n in range(self.RTW.count()):
+            if self.RTW.widget(n).is_delta_tab():
+                self.RTW.widget(n).shortname = delta_label
+                self.RTW.setTabText(n, self.RTW.widget(n).shortname)
 
     def setQuestionNumber(self, qn):
         self.question_number = qn
