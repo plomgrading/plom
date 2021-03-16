@@ -1165,19 +1165,30 @@ class RubricTable(QTableWidget):
         # More like "If anybody cares, I just changed my name!"
         self.parent.update_tab_names()
 
+    def is_user_tab(self):
+        return self.tabType is None
+
     def is_delta_tab(self):
         return self.tabType == "delta"
 
+    def is_hidden_tab(self):
+        # TODO: naming here is confusing
+        return self.tabType == "hide"
+
+    def is_shared_tab(self):
+        return self.tabType == "show"
+
     def contextMenuEvent(self, event):
-        if self.tabType == "hide":
+        if self.is_hidden_tab():
             self.hideContextMenuEvent(event)
-        elif self.tabType == "delta":
-            pass
-        elif self.tabType == "show":
+        elif self.is_shared_tab():
             self.showContextMenuEvent(event)
-        elif self.tabType == None:
+        elif self.is_user_tab():
             self.defaultContextMenuEvent(event)
-        event.ignore()
+        elif self.is_delta_tab():
+            event.ignore()
+        else:
+            event.ignore()
 
     def defaultContextMenuEvent(self, event):
         # first try to get the row from the event
@@ -1647,7 +1658,7 @@ class RubricWidget(QWidget):
         L = []
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
-            if tab.tabType == None:
+            if tab.is_user_tab():
                 L.append(tab)
         return L
 
