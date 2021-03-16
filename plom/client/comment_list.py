@@ -16,6 +16,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import (
     QBrush,
     QColor,
+    QPalette,
     QCursor,
     QDropEvent,
     QStandardItem,
@@ -75,6 +76,7 @@ def deltaToInt(x):
 
 
 # colours to indicate whether rubric is legal to paste or not.
+# TODO: how do:  QPalette().color(QPalette.Text), QPalette().color(QPalette.Dark)
 colour_legal = QBrush(QColor(0, 0, 0))
 colour_illegal = QBrush(QColor(128, 128, 128, 128))
 
@@ -1137,14 +1139,40 @@ class RubricTable(QTableWidget):
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
         self.verticalHeader().setVisible(True)
+        self.setAlternatingRowColors(True)
+        #  negative padding is probably b/c of fontsize changes
+        self.setStyleSheet(
+            """
+            QHeaderView::section {
+                background-color: palette(window);
+                color: palette(dark);
+                padding-left: 1px;
+                padding-right: -3px;
+                border: none;
+            }
+            QTableView {
+                border: none;
+            }"""
+        )
+        # CSS cannot set relative fontsize
+        f = self.font()
+        f.setPointSizeF(0.67 * f.pointSizeF())
+        self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
+        # TODO: Issue #1447
+        self.setShowGrid(True)
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
         self.hideColumn(0)
         self.hideColumn(1)
+        # could use a subclass
+        if self.tabType == "delta":
+            self.hideColumn(3)
+            # self.verticalHeader().setVisible(False)
         if sort:
             self.setSortingEnabled(True)
         self.shortname = shortname
@@ -1159,16 +1187,30 @@ class RubricTable(QTableWidget):
         # More like "If anybody cares, I just changed my name!"
         self.parent.update_tab_names()
 
+    def is_user_tab(self):
+        return self.tabType is None
+
+    def is_delta_tab(self):
+        return self.tabType == "delta"
+
+    def is_hidden_tab(self):
+        # TODO: naming here is confusing
+        return self.tabType == "hide"
+
+    def is_shared_tab(self):
+        return self.tabType == "show"
+
     def contextMenuEvent(self, event):
-        if self.tabType == "hide":
+        if self.is_hidden_tab():
             self.hideContextMenuEvent(event)
-        elif self.tabType == "delta":
-            pass
-        elif self.tabType == "show":
+        elif self.is_shared_tab():
             self.showContextMenuEvent(event)
-        elif self.tabType == None:
+        elif self.is_user_tab():
             self.defaultContextMenuEvent(event)
-        event.ignore()
+        elif self.is_delta_tab():
+            event.ignore()
+        else:
+            event.ignore()
 
     def defaultContextMenuEvent(self, event):
         # first try to get the row from the event
@@ -1342,6 +1384,7 @@ class RubricTable(QTableWidget):
         )
         if not ok1:
             return
+        # TODO: hint that "wh&ot" will enable "alt-o" shortcut on most OSes
         # TODO: use a custom dialog
         # s2, ok2 = QInputDialog.getText(
         #     self, 'Rename pane "{}"'.format(curname), "Enter long name"
@@ -1362,9 +1405,10 @@ class RubricTable(QTableWidget):
         raises
             what happens on invalid key?
         """
+        legalDown, legalUp = self.parent.getLegalDownUp()
         # TODO: hmmm, should be dict?
         (rubric,) = [x for x in self.parent.rubrics if x["id"] == key]
-        self.appendNewRubric(rubric)
+        self.appendNewRubric(rubric, legalDown, legalUp)
 
     def appendNewRubric(self, rubric, legalDown=None, legalUp=None):
         # TODO: why does the caller need to determine this legalUp/Down stuff?
@@ -1380,13 +1424,16 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
         # set row header
-        self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc + 1)))
+        self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set 'illegal' colour if out of range
         if legalDown is not None and legalUp is not None:
             v = deltaToInt(rubric["delta"])
             if v > legalUp or v < legalDown:
                 self.item(rc, 2).setForeground(colour_illegal)
                 self.item(rc, 3).setForeground(colour_illegal)
+            else:
+                self.item(rc, 2).setForeground(colour_legal)
+                self.item(rc, 3).setForeground(colour_legal)
 
     def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
         """Clear table and repopulate rubrics in the key_list"""
@@ -1571,10 +1618,10 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        # TODO: markstyle set after rubric widget added
-        # if self.parent.markStyle == 2: ...
-        delta_label = "\N{Plus-minus Sign}n"
-        default_user_tabs = ["\N{Black Star}", "A", "B"]
+        delta_label = "\N{Plus-minus Sign}\N{Greek Small Letter Delta}"
+        # useful others: \N{Rotated Floral Heart Bullet} \N{Double Dagger}
+        # \N{Black Spade Suit} \N{Black Heart Suit} \N{Black Diamond Suit} \N{Black Club Suit}
+        default_user_tabs = ["\N{Black Star}", "\N{Floral Heart}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
@@ -1638,7 +1685,7 @@ class RubricWidget(QWidget):
         L = []
         for n in range(self.RTW.count()):
             tab = self.RTW.widget(n)
-            if tab.tabType == None:
+            if tab.is_user_tab():
                 L.append(tab)
         return L
 
@@ -1649,8 +1696,20 @@ class RubricWidget(QWidget):
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
 
     def add_new_tab(self, name="new"):
+        """Add new user-defined tab either to end or near end.
+
+        If the delta tab is last, insert before that.  Otherwise append
+        to the end of tab list.
+
+        args:
+            name (str): name of the new tab, default "new"
+        """
         tab = RubricTable(self, shortname=name)
-        self.RTW.addTab(tab, tab.shortname)
+        n = self.RTW.count()
+        if n >= 1 and self.RTW.widget(n - 1).is_delta_tab():
+            self.RTW.insertTab(n - 1, tab, tab.shortname)
+        else:
+            self.RTW.addTab(tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -1777,7 +1836,18 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByKey(key)
 
     def setStyle(self, markStyle):
+        """Adjust to possible changes in marking style between down and up."""
         self.markStyle = markStyle
+        if markStyle == 2:
+            delta_label = "+\N{Greek Small Letter Delta}"
+        elif markStyle == 3:
+            delta_label = "-\N{Greek Small Letter Delta}"
+        else:
+            log.warning("Invalid markstyle specified")
+        for n in range(self.RTW.count()):
+            if self.RTW.widget(n).is_delta_tab():
+                self.RTW.widget(n).shortname = delta_label
+                self.RTW.setTabText(n, self.RTW.widget(n).shortname)
 
     def setQuestionNumber(self, qn):
         self.question_number = qn
