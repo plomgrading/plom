@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Forest Kobayashi
 
 import logging
 from pathlib import Path
@@ -1172,14 +1173,34 @@ class RubricTable(QTableWidget):
 
     def defaultContextMenuEvent(self, event):
         curtab_idx = self.parent.RTW.currentIndex()
-        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
+        # TODO: is this way more future proof for moveable tabs?
+        # N = self.parent.num_user_tabs
+        # tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, N + 1)]
+        tabnames = [t.shortname for t in self.parent.user_tabs]
 
         menu = QMenu(self)
         addTo = [QAction("Move to Pane {}".format(x), self) for x in tabnames]
+        # for n in range(0, len(addTo)):
+        #    addTo[n].triggered.connect(lambda x=n: self.moveCurrentRubricToTab(x+1))
         # note do not use a loop here: lambda does not behave right
-        addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
-        addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
-        addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
+        N = len(tabnames)
+        # ARGGHHH Issue #1441, it burns it burns!!
+        if N > 0:
+            addTo[0].triggered.connect(lambda: self.moveCurrentRubricToTab(1))
+        if N > 1:
+            addTo[1].triggered.connect(lambda: self.moveCurrentRubricToTab(2))
+        if N > 2:
+            addTo[2].triggered.connect(lambda: self.moveCurrentRubricToTab(3))
+        if N > 3:
+            addTo[3].triggered.connect(lambda: self.moveCurrentRubricToTab(4))
+        if N > 4:
+            addTo[4].triggered.connect(lambda: self.moveCurrentRubricToTab(5))
+        if N > 5:
+            addTo[5].triggered.connect(lambda: self.moveCurrentRubricToTab(6))
+        if N > 6:
+            addTo[6].triggered.connect(lambda: self.moveCurrentRubricToTab(7))
+        if N > 7:
+            addTo[7].triggered.connect(lambda: self.moveCurrentRubricToTab(8))
         remAction = QAction("Remove from this pane", self)
         remAction.triggered.connect(self.removeCurrentRubric)
         edit = QAction("Edit rubric", self)
@@ -1197,13 +1218,30 @@ class RubricTable(QTableWidget):
         menu.popup(QCursor.pos())
 
     def showContextMenuEvent(self, event):
-        tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 4)]
+        # tabnames = [self.parent.RTW.widget(n).shortname for n in range(1, 5)]
+        # TODO: is this way more future proof for moveable tabs?
+        tabnames = [t.shortname for t in self.parent.user_tabs]
         menu = QMenu(self)
         addTo = [QAction("Add to Pane {}".format(x), self) for x in tabnames]
         # note do not use a loop here: lambda does not behave right
-        addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
-        addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
-        addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
+        N = len(tabnames)
+        # ARGGHHH Issue #1441, it burns it burns!!
+        if N > 0:
+            addTo[0].triggered.connect(lambda: self.addCurrentRubricToTab(1))
+        if N > 1:
+            addTo[1].triggered.connect(lambda: self.addCurrentRubricToTab(2))
+        if N > 2:
+            addTo[2].triggered.connect(lambda: self.addCurrentRubricToTab(3))
+        if N > 3:
+            addTo[3].triggered.connect(lambda: self.addCurrentRubricToTab(4))
+        if N > 4:
+            addTo[4].triggered.connect(lambda: self.addCurrentRubricToTab(5))
+        if N > 5:
+            addTo[5].triggered.connect(lambda: self.addCurrentRubricToTab(6))
+        if N > 6:
+            addTo[6].triggered.connect(lambda: self.addCurrentRubricToTab(7))
+        if N > 7:
+            addTo[7].triggered.connect(lambda: self.addCurrentRubricToTab(8))
         edit = QAction("Edit rubric", self)
         edit.setEnabled(False)  # TODO hook it up
         for a in addTo:
@@ -1230,17 +1268,23 @@ class RubricTable(QTableWidget):
 
     def addCurrentRubricToTab(self, tabIndex):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.addRubricByKeyToTab(key, tabIndex)
 
     def removeCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         self.removeRow(row)
         self.selectRubricByRow(0)
         self.handleClick()
 
     def moveCurrentRubricToTab(self, tabIndex):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.addRubricByKeyToTab(key, tabIndex)
         self.removeRow(row)
@@ -1249,6 +1293,8 @@ class RubricTable(QTableWidget):
 
     def hideCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.hideRubricByKey(key)
         self.removeRow(row)
@@ -1257,6 +1303,8 @@ class RubricTable(QTableWidget):
 
     def unhideCurrentRubric(self):
         row = self.getCurrentRubricRow()
+        if row is None:
+            return
         key = self.item(row, 0).text()
         self.parent.unhideRubricByKey(key)
         self.removeRow(row)
@@ -1292,15 +1340,15 @@ class RubricTable(QTableWidget):
         if not curtab_widget:
             return
         curname = curtab_widget.shortname
-        # TODO: use a custom dialog
         s1, ok1 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname), "Enter short name"
+            self, 'Rename pane "{}"'.format(curname), "Enter new name"
         )
-        s2, ok2 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname), "Enter long name"
-        )
-        if not (ok1 and ok2):
+        if not ok1:
             return
+        # TODO: use a custom dialog
+        # s2, ok2 = QInputDialog.getText(
+        #     self, 'Rename pane "{}"'.format(curname), "Enter long name"
+        # )
         log.debug('refresh tab text from "%s" to "%s"', curname, s1)
         curtab_widget.set_name(s1)
 
@@ -1511,32 +1559,22 @@ class RubricWidget(QWidget):
         # TODO: markstyle set after rubric widget added
         # if self.parent.markStyle == 2: ...
         delta_label = "\N{Plus-minus Sign}n"
-        # TODO: hardcoded length for now
-        tab_names = [
-            {"shortname": "Shared", "longname": "Shared"},
-            {"shortname": "\N{Black Star}", "longname": "Favourites"},
-            {"shortname": "A", "longname": None},
-            {"shortname": "B", "longname": None},
-            {"shortname": delta_label, "longname": "Delta"},
-        ]
-        self.tabA = RubricTable(self, shortname=tab_names[1]["shortname"])
-        self.tabB = RubricTable(self, shortname=tab_names[2]["shortname"])
-        self.tabC = RubricTable(self, shortname=tab_names[3]["shortname"])
-        self.tabS = RubricTable(
-            self, shortname=tab_names[0]["shortname"], tabType="show"
-        )
-        self.tabDelta = RubricTable(
-            self, shortname=tab_names[4]["shortname"], tabType="delta"
-        )
-        self.numberOfTabs = 5
+        # TODO: hardcoded length for now, b/c of Issue #1441 it can be at most 8
+        initial_tabs = ["\N{Black Star}", "A", "B"]
+        # TODO: get rid of this instance variable?
+        self.numberOfTabs = len(initial_tabs) + 2
+        self.user_tabs = []
+        for n, name in enumerate(initial_tabs):
+            self.user_tabs.append(RubricTable(self, shortname=name))
+        self.tabS = RubricTable(self, shortname="Shared", tabType="show")
+        self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
         # Change here to enable movable tabs: may require fixing indexing elsewhere
         self.RTW.setMovable(False)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
-        self.RTW.addTab(self.tabA, self.tabA.shortname)
-        self.RTW.addTab(self.tabB, self.tabB.shortname)
-        self.RTW.addTab(self.tabC, self.tabC.shortname)
+        for tab in self.user_tabs:
+            self.RTW.addTab(tab, tab.shortname)
         self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         self.tabHide = RubricTable(self, sort=True, tabType="hide")
@@ -1615,7 +1653,7 @@ class RubricWidget(QWidget):
             "user_tab_names": [],
             "shown": [],
             "hidden": [],
-            "tabs": [[], [], []],
+            "tabs": [],
         }
         for X in self.rubrics:
             # exclude HALs system-rubrics
@@ -1629,40 +1667,42 @@ class RubricWidget(QWidget):
         self.setRubricsFromState(wranglerState)
 
     def setRubricsFromState(self, wranglerState):
-        tabnames = wranglerState.get("user_tab_names", None)
-        if tabnames is None:
-            log.warning("wranglerState is lacking user_tab_names")
-        if tabnames:
-            if len(tabnames) != 3:
-                log.error(
-                    "Something is wrong: user_tab_names should be length 3, is %s",
-                    str(tabnames),
-                )
-            else:
-                self.tabA.set_name(tabnames[0])
-                self.tabB.set_name(tabnames[1])
-                self.tabC.set_name(tabnames[2])
+        """Set rubric tabs (but not rubrics themselves from saved data.
+
+        The various rubric tabs are updated based on data passed in.
+        The rubrics themselves are uneffected.
+
+        args:
+            wranglerState (dict): should be documented elsewhere and
+                linked here but must contain at least `shown`, `hidden`,
+                `tabs`, and `user_tab_names`.  The last two may be empty
+                lists.  Subject to change without notice, your milleage
+                may vary, etc.
+
+        If there is too much data for the number of data, the extra data
+        is discarded.  If there is too few data, pad with empty lists.
+
+        TODO: can be revisited: perhaps this function should be allowed
+        to grow the number of tabs.  Probably it should.
+        """
+        # zip truncates shorter list incase of length mismatch
+        for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
+            tab.set_name(name)
 
         # compute legality for putting things in tables
         legalDown, legalUp = self.getLegalDownUp()
-        self.tabA.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][0],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
-        self.tabB.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][1],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
-        self.tabC.setRubricsByKeys(
-            self.rubrics,
-            wranglerState["tabs"][2],
-            legalDown=legalDown,
-            legalUp=legalUp,
-        )
+        for n, tab in enumerate(self.user_tabs):
+            if n >= len(wranglerState["tabs"]):
+                # not enough data for number of tabs
+                idlist = []
+            else:
+                idlist = wranglerState["tabs"][n]
+            tab.setRubricsByKeys(
+                self.rubrics,
+                idlist,
+                legalDown=legalDown,
+                legalUp=legalUp,
+            )
         self.tabS.setRubricsByKeys(
             self.rubrics,
             wranglerState["shown"],
@@ -1684,10 +1724,9 @@ class RubricWidget(QWidget):
         # make sure something selected in each pane
         self.tabHide.selectRubricByRow(0)
         self.tabDelta.selectRubricByRow(0)
-        self.tabC.selectRubricByRow(0)
-        self.tabB.selectRubricByRow(0)
-        self.tabA.selectRubricByRow(0)
         self.tabS.selectRubricByRow(0)
+        for tab in self.user_tabs:
+            tab.selectRubricByRow(0)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab"""
@@ -1741,11 +1780,10 @@ class RubricWidget(QWidget):
     def updateLegalityOfDeltas(self):
         legalDown, legalUp = self.getLegalDownUp()
         # now redo each tab
-        self.tabA.updateLegalityOfDeltas(legalDown, legalUp)
-        self.tabB.updateLegalityOfDeltas(legalDown, legalUp)
-        self.tabC.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
         self.tabDelta.updateLegalityOfDeltas(legalDown, legalUp)
+        for tab in self.user_tabs:
+            tab.updateLegalityOfDeltas(legalDown, legalUp)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
@@ -1805,12 +1843,10 @@ class RubricWidget(QWidget):
     def addRubricByKeyToTab(self, key, tabIndex):
         index = [x["id"] for x in self.rubrics].index(key)
         legalDown, legalUp = self.getLegalDownUp()
-        if tabIndex == 1:
-            self.tabA.appendNewRubric(self.rubrics[index], legalDown, legalUp)
-        elif tabIndex == 2:
-            self.tabB.appendNewRubric(self.rubrics[index], legalDown, legalUp)
-        elif tabIndex == 3:
-            self.tabC.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        # TODO: I don't know what this function does or if I have generalized it correctly
+        if tabIndex in range(1, len(self.user_tabs) + 1):
+            i = tabIndex - 1
+            self.user_tabs[i].appendNewRubric(self.rubrics[index], legalDown, legalUp)
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
@@ -1917,26 +1953,17 @@ class RubricWidget(QWidget):
     def updateRubricInLists(self, new_rubric):
         legalDown, legalUp = self.getLegalDownUp()
         self.tabS.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabA.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabB.updateRubric(new_rubric, legalDown, legalUp)
-        self.tabC.updateRubric(new_rubric, legalDown, legalUp)
         self.tabHide.updateRubric(new_rubric, legalDown, legalUp)
+        for tab in self.user_tabs:
+            tab.updateRubric(new_rubric, legalDown, legalUp)
 
     def get_tab_rubric_lists(self):
         """returns a dict of lists of the current rubrics"""
         return {
-            "user_tab_names": [
-                self.tabA.shortname,
-                self.tabB.shortname,
-                self.tabC.shortname,
-            ],
+            "user_tab_names": [t.shortname for t in self.user_tabs],
             "shown": self.tabS.getKeyList(),
             "hidden": self.tabHide.getKeyList(),
-            "tabs": [
-                self.tabA.getKeyList(),
-                self.tabB.getKeyList(),
-                self.tabC.getKeyList(),
-            ],
+            "tabs": [t.getKeyList() for t in self.user_tabs],
         }
 
 

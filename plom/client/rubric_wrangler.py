@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Forest Kobayashi
 
 from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
@@ -355,6 +356,7 @@ class RubricWrangler(QDialog):
         self.rubricTable.setDragEnabled(True)
         self.rubricTable.setAcceptDrops(False)
         ##
+        self.num_user_tabs = len(wranglerState["user_tab_names"])
         tab_names = wranglerState["user_tab_names"].copy()  # copy needed?
         tab_names.append("HIDE")
         self.ST = ShowListFrame(tab_names)
@@ -381,15 +383,13 @@ class RubricWrangler(QDialog):
 
         # set sensible default state if rubricWidget sends state=none
         if wranglerState is None:
-            self.wranglerState = {
+            wranglerState = {
+                "user_tab_names": [],
                 "shown": [X["id"] for X in self.rubrics],  # all keys
                 "hidden": [],
-                "tabs": [[], [], []],
+                "tabs": [],
             }
-        else:
-            self.wranglerState = wranglerState
-        # use this to set state
-        self.setFromWranglerState()
+        self.setFromWranglerState(wranglerState)
 
     def setTextFilter(self):
         self.proxy.setTextFilter(self.tFiltLE.text())
@@ -401,15 +401,18 @@ class RubricWrangler(QDialog):
 
     def toWranglerState(self):
         store = {
+            "user_tab_names": [],
             "shown": [],
             "hidden": [],
             "tabs": [],
         }
-        # get listsA,B,C from first 3 tabs
-        for p in range(3):
+        for p in range(self.num_user_tabs):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
-        # get hidden from widget3 = hidelist
-        store["hidden"] = self.ST.STW.widget(3).getCurrentKeys()
+        # TODO: this doesn't yet set the names: but they can't change in here anyway
+        # for p in range(self.num_user_tabs):
+        #     print(self.ST.STW.widget(p).shortname)
+        #     store["user_tab_names"].append(...)
+        store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown
         # columns are ["Key", "Username", "Delta", "Text"])
         for r in range(self.model.rowCount()):
@@ -421,25 +424,26 @@ class RubricWrangler(QDialog):
             store["shown"].append(key)
         return store
 
-    def setFromWranglerState(self):
+    def setFromWranglerState(self, state):
         # does not do any sanity checks
         # set the main list to obey the order in wrangerState, but then append any new rubrics
         rkeys = [X["id"] for X in self.rubrics]  # keys in order
         mainList = []
-        # add rubrics in the order from wranglerstate - which is list of keys
-        for key in self.wranglerState["shown"]:
+        # add rubrics in the order from state - which is list of keys
+        for key in state["shown"]:
             ind = rkeys.index(key)
             mainList.append(self.rubrics[ind])
         # add any remaining rubrics
         for ind, key in enumerate(rkeys):
-            if key not in self.wranglerState["shown"]:
+            if key not in state["shown"]:
                 mainList.append(self.rubrics[ind])
         self.model.repopulate(mainList)
         # populate the ABC lists
-        for p in range(3):
-            self.ST.populate(p, self.rubrics, self.wranglerState["tabs"][p])
+        for p in range(self.num_user_tabs):
+            self.ST.populate(p, self.rubrics, state["tabs"][p])
         # populate the hide-list
-        self.ST.populate(3, self.rubrics, self.wranglerState["hidden"])
+        idx = self.num_user_tabs
+        self.ST.populate(idx, self.rubrics, state["hidden"])
 
     def returnWrangled(self):
         self.wranglerState = self.toWranglerState()
