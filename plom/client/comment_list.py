@@ -1156,7 +1156,7 @@ class RubricTable(QTableWidget):
             }""")
         # CSS cannot set relative fontsize
         f = self.font()
-        f.setPointSize(0.67*f.pointSize())
+        f.setPointSizeF(0.67*f.pointSizeF())
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
