@@ -1142,8 +1142,10 @@ class RubricTable(QTableWidget):
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
         self.verticalHeader().setVisible(True)
+        self.setAlternatingRowColors(True)
         #  negative padding is probably b/c of fontsize changes
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QHeaderView::section {
                 background-color: palette(window);
                 color: palette(dark);
@@ -1153,10 +1155,11 @@ class RubricTable(QTableWidget):
             }
             QTableView {
                 border: none;
-            }""")
+            }"""
+        )
         # CSS cannot set relative fontsize
         f = self.font()
-        f.setPointSizeF(0.67*f.pointSizeF())
+        f.setPointSizeF(0.67 * f.pointSizeF())
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
