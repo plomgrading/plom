@@ -1145,9 +1145,9 @@ class RubricTable(QTableWidget):
             QHeaderView::section {
                 background-color: palette(window);
                 color: palette(dark);
-                padding-left: 0px;
+                padding-left: 1px;
                 padding-right: -3px;
-                border: 0px solid palette(shadow);
+                border: none;
             }
             QTableView {
                 border: none;
@@ -1417,7 +1417,7 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
         # set row header
-        self.setVerticalHeaderItem(rc, QTableWidgetItem(" {} ".format(rc + 1)))
+        self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set 'illegal' colour if out of range
         if legalDown is not None and legalUp is not None:
             v = deltaToInt(rubric["delta"])
