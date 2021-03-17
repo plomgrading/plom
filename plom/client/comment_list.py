@@ -1264,6 +1264,20 @@ class RubricTable(QTableWidget):
         a = QAction("Add new pane", self)
         a.triggered.connect(lambda: self.parent.add_new_tab())
         menu.addAction(a)
+        a = QAction("Remove this pane", self)
+
+        def foo():
+            # TODO: can we put all this in some close event?
+            # TODO: also, I don't like that we're hardcoding the parent structure here
+            for n in range(self.parent.RTW.count()):
+                tab = self.parent.RTW.widget(n)
+                if tab == self:
+                    self.parent.RTW.removeTab(n)
+            self.clear()
+            self.deleteLater()
+
+        a.triggered.connect(foo)
+        menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
 
