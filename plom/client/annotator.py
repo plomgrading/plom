@@ -304,6 +304,7 @@ class Annotator(QWidget):
 
         # after grabbed mode information, reset rubric_widget
         self.rubric_widget.reset()
+        self.rubric_widget.setEnabled(False)
 
         del self.scene
         self.scene = None
@@ -409,6 +410,7 @@ class Annotator(QWidget):
         self.rubric_widget.changeMark(self.score, self.maxMark)
         self.rubric_widget.setQuestionNumber(self.question_num)
         self.rubric_widget.setTestName(testName)
+        self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))

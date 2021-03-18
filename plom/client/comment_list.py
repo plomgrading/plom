@@ -1868,7 +1868,7 @@ class RubricWidget(QWidget):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
         self.setTestName(None)
-        print("TODO - what else needs doing on reset")
+        log.debug("TODO - what else needs doing on reset")
         # TODO: do we need to do something about maxMark, currentMax, markStyle?
         # self.CL.populateTable()
 
