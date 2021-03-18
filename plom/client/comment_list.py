@@ -2001,6 +2001,9 @@ class RubricWidget(QWidget):
         Returns:
             None: does its work through side effects on the comment list.
         """
+        if self.question_number is None:
+            log.error("Not allowed to create rubric while question number undefined.")
+            return
         reapable = self.get_nonrubric_text_from_page()
         arb = AddRubricBox(self.username, self.maxMark, reapable, com)
         if arb.exec_() != QDialog.Accepted:
