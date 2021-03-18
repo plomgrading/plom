@@ -266,6 +266,7 @@ class Annotator(QWidget):
 
         # after grabbed mode information, reset comment_widget
         self.comment_widget.reset()
+        self.comment_widget.setEnabled(False)
 
         del self.scene
         self.scene = None
@@ -376,6 +377,7 @@ class Annotator(QWidget):
         self.comment_widget.changeMark(self.score)
         self.comment_widget.setQuestionNumber(self.question_num)
         self.comment_widget.setTestname(testName)
+        self.comment_widget.setEnabled(True)
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
@@ -750,6 +752,8 @@ class Annotator(QWidget):
         Returns:
             None: modifies self.testView
         """
+        if not self.tgvID:
+            return
         # grab the files if needed.
         testNumber = self.tgvID[:4]
         if self.testViewFiles is None:
@@ -773,6 +777,8 @@ class Annotator(QWidget):
         Returns:
             None
         """
+        if not self.tgvID or not self.scene:
+            return
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
@@ -1203,10 +1209,14 @@ class Annotator(QWidget):
 
     def undo(self):
         """ Undoes the last action in the UI. """
+        if not self.scene:
+            return
         self.scene.undo()
 
     def redo(self):
         """ Redoes the last action in the UI. """
+        if not self.scene:
+            return
         self.scene.redo()
 
     # Simple mode change functions
@@ -1216,6 +1226,9 @@ class Annotator(QWidget):
 
     def commentMode(self):
         """ Changes the tool to comment."""
+        if not self.scene:
+            self.comment_widget.nextItem()
+            return
         if self.scene.mode == "comment":
             self.comment_widget.nextItem()
         else:
@@ -1771,6 +1784,8 @@ class Annotator(QWidget):
 
     def getComments(self):
         """ Retrieves comments from self.scene. """
+        if not self.scene:
+            return []
         return self.scene.getComments()
 
     def saveMarkerComments(self):
