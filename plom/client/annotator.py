@@ -1779,7 +1779,13 @@ class Annotator(QWidget):
         event.accept()
 
     def get_nonrubric_text_from_page(self):
-        """ Retrieves text (not in rubrics) from self.scene. """
+        """Retrieves text (not in rubrics) from the scene.
+
+        Returns:
+            list: strings for text annotations not in a rubric.
+        """
+        if not self.scene:
+            return []
         return self.scene.get_nonrubric_text_from_page()
 
     def latexAFragment(self, txt):
