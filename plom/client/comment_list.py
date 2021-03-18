@@ -1755,7 +1755,7 @@ class RubricWidget(QWidget):
         self.setRubricsFromState(wranglerState)
 
     def setRubricsFromState(self, wranglerState):
-        """Set rubric tabs (but not rubrics themselves from saved data.
+        """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
         The rubrics themselves are uneffected.
@@ -1854,6 +1854,11 @@ class RubricWidget(QWidget):
                 self.RTW.setTabText(n, self.RTW.widget(n).shortname)
 
     def setQuestionNumber(self, qn):
+        """Set question number being graded.
+
+        args:
+            qn (int/None): the question number.
+        """
         self.question_number = qn
 
     def setTestName(self, tn):
@@ -1863,7 +1868,7 @@ class RubricWidget(QWidget):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
         self.setTestName(None)
-        print("TODO - what else needs doing on reset")
+        log.debug("TODO - what else needs doing on reset")
         # TODO: do we need to do something about maxMark, currentMax, markStyle?
         # self.CL.populateTable()
 
@@ -1996,6 +2001,9 @@ class RubricWidget(QWidget):
         Returns:
             None: does its work through side effects on the comment list.
         """
+        if self.question_number is None:
+            log.error("Not allowed to create rubric while question number undefined.")
+            return
         reapable = self.get_nonrubric_text_from_page()
         arb = AddRubricBox(self.username, self.maxMark, reapable, com)
         if arb.exec_() != QDialog.Accepted:

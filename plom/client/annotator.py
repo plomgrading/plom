@@ -304,6 +304,7 @@ class Annotator(QWidget):
 
         # after grabbed mode information, reset rubric_widget
         self.rubric_widget.reset()
+        self.rubric_widget.setEnabled(False)
 
         del self.scene
         self.scene = None
@@ -409,6 +410,7 @@ class Annotator(QWidget):
         self.rubric_widget.changeMark(self.score, self.maxMark)
         self.rubric_widget.setQuestionNumber(self.question_num)
         self.rubric_widget.setTestName(testName)
+        self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
         log.debug("Restore mode info = {}".format(self.modeInformation))
@@ -711,6 +713,8 @@ class Annotator(QWidget):
         Returns:
             None: modifies self.testView
         """
+        if not self.tgvID:
+            return
         # grab the files if needed.
         testNumber = self.tgvID[:4]
         if self.testViewFiles is None:
@@ -734,6 +738,8 @@ class Annotator(QWidget):
         Returns:
             None
         """
+        if not self.tgvID or not self.scene:
+            return
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
@@ -1250,6 +1256,8 @@ class Annotator(QWidget):
 
     def undo(self):
         """ Undoes the last action in the UI. """
+        if not self.scene:
+            return
         self.scene.undo()
 
     def toRedo(self):
@@ -1257,6 +1265,8 @@ class Annotator(QWidget):
 
     def redo(self):
         """ Redoes the last action in the UI. """
+        if not self.scene:
+            return
         self.scene.redo()
 
     # Simple mode change functions
@@ -1266,6 +1276,9 @@ class Annotator(QWidget):
 
     def rubricMode(self):
         """ Changes the tool to rubric."""
+        if not self.scene:
+            self.rubric_widget.nextRubric()
+            return
         if self.scene.mode == "rubric":
             self.rubric_widget.nextRubric()
         else:
@@ -1768,7 +1781,13 @@ class Annotator(QWidget):
         event.accept()
 
     def get_nonrubric_text_from_page(self):
-        """ Retrieves text (not in rubrics) from self.scene. """
+        """Retrieves text (not in rubrics) from the scene.
+
+        Returns:
+            list: strings for text annotations not in a rubric.
+        """
+        if not self.scene:
+            return []
         return self.scene.get_nonrubric_text_from_page()
 
     def latexAFragment(self, txt):
