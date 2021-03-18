@@ -35,5 +35,5 @@ def putSolutionImage(
     else:
         pwd = password
 
-    managerMessenger.putSolutionImage(question, version, image)
+    managerMessenger.putSolutionImage(question, version, imageName)
     managerMessenger.stop()

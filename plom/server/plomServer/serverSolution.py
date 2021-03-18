@@ -25,8 +25,11 @@ def getSolutionStatus(self):
                 "solutionImages", "solution.{}.{}.png".format(q, v)
             )
             if os.path.isfile(solutionFile):
-                status[(q, v)] = hashlib.md5(solutionFile).hexdigest()
-            else:
+                # check the md5sum and return it.
+                with open(solutionFile, "rb") as fh:
+                    img_obj = fh.read()
+                    status[(q, v)] = hashlib.md5(img_obj).hexdigest()
+            else:  # else return empty string
                 status[(q, v)] = ""
     return status
 
@@ -39,6 +42,20 @@ def getSolutionImage(self, question, version):
         return solutionFile
     else:
         return None
+
+
+def uploadSolutionImage(self, question, version, md5sum, image):
+    # check md5sum matches
+    md5n = hashlib.md5(image).hexdigest()
+    if md5n != md5sum:
+        return False
+
+    solutionFile = os.path.join(
+        "solutionImages", "solution.{}.{}.png".format(question, version)
+    )
+    with open(solutionFile, "wb") as fh:
+        fh.write(image)
+    return True
 
 
 #

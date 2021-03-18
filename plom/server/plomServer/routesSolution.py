@@ -28,10 +28,39 @@ class SolutionHandler:
         else:
             return web.response(status=404)
 
-        pass
+    async def uploadSolutionImage(self, data, request):
+        reader = MultipartReader.from_response(request)
+        # Dealing with the metadata.
+        soln_metadata_object = await reader.next()
 
-    def uploadSolutionImage(self, data, request):
-        pass
+        if task_metadata_object is None:  # weird error
+            return web.Response(status=406)  # should have sent 2 parts
+        task_metadata = await task_metadata_object.json()
+        # Validate that the dictionary has these fields.
+        if not validate_required_fields(
+            soln_metadata, ["user", "token", "question", "version", "md5sum"]
+        ):
+            return web.Response(status=400)
+        # make sure user = manager
+        if soln_metadata["user"] != "manager":
+            return web.Response(status=401)
+        # Validate username and token.
+        if not self.server.validate(soln_metadata["user"], soln_metadata["token"]):
+            return web.Response(status=401)
+        # Get the image.
+        soln_image_object = await reader.next()
+        if soln_image_object is None:  # weird error
+            return web.Response(status=406)  # should have sent 2 parts
+        soln_image = await soln_image_object.read()
+        if self.server.uploadSolutionImage(
+            soln_metadata["question"],
+            soln_metadata["version"],
+            soln_metadata["md5sum"],
+            soln_image,
+        ):
+            return web.Response(status=200)  # all okay
+        else:
+            return web.Response(status=406)  # some file problem
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.

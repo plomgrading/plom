@@ -38,6 +38,7 @@ from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
+from .plomServer.routesSolution import SolutionHandler
 
 
 confdir = Path("serverConfiguration")
@@ -227,6 +228,11 @@ class Server(object):
         RgetAnnotatedImage,
         RgetUserList,
         RgetUserDetails,
+    )
+    from .plomServer.serverSolution import (
+        uploadSolutionImage,
+        getSolutionImage,
+        getSolutionStatus,
     )
 
 

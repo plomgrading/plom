@@ -16,11 +16,9 @@ from plom import __version__
 
 
 def uploadSolutionImage(server, password, question, version, imageName):
-    print(
-        "Upload solution image to server for question {} version {}.".format(
-            question, version
-        )
-    )
+    from plom.solution import putSolutionImage
+
+    putSolutionImage(question, version, imageName, server, password)
 
 
 def getSolutionImage(server, password, question, version):

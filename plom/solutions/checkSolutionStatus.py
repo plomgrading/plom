@@ -33,6 +33,7 @@ def checkStatus(server=None, pwd=None):
         exit(10)
 
     spec = msgr.get_spec()
-    hasSolutions = msgr.RgetSolutionStatus()
+
+    hasSolutions = msgr.getSolutionStatus()
     msgr.closeUser()
     msgr.stop()

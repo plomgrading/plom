@@ -1631,7 +1631,7 @@ class ManagerMessenger(BaseMessenger):
 
         return response.json()
 
-    def RgetSolutionStatus(self):
+    def getSolutionStatus(self):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -1685,13 +1685,12 @@ class ManagerMessenger(BaseMessenger):
         return img
 
 
-def putSolutionImageTestPage(self, question, version, filename):
+def uploadSolutionImage(self, question, version, filename):
     self.SRmutex.acquire()
     try:
         param = {
             "user": self.user,
             "token": self.token,
-            "fileName": filename,
             "question": question,
             "version": version,
             "md5sum": md5sum,
@@ -1700,7 +1699,7 @@ def putSolutionImageTestPage(self, question, version, filename):
         dat = MultipartEncoder(
             fields={
                 "param": json.dumps(param),
-                "originalImage": (sname, open(fileName, "rb"), mime_type),  # image
+                "image": (sname, open(fileName, "rb"), mime_type),  # image
             }
         )
         response = self.session.put(
@@ -1720,5 +1719,3 @@ def putSolutionImageTestPage(self, question, version, filename):
             ) from None
     finally:
         self.SRmutex.release()
-
-    return response.json()
