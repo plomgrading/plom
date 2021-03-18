@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-from aiohttp import web
+from aiohttp import web, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
@@ -16,26 +16,28 @@ class SolutionHandler:
 
     @authenticate_by_token_required_fields(["user"])
     def getSolutionStatus(self, data, request):
-        status = self.server.getSolutionStatus()
+        soln_dict = self.server.getSolutionStatus()
+        return web.json_response(soln_dict, status=200)
 
     @authenticate_by_token_required_fields(["user", "question", "version"])
     def getSolutionImage(self, data, request):
         q = data["question"]
         v = data["version"]
-        solutionFile = self.server.getSolutionImage(question, version)
+        solutionFile = self.server.getSolutionImage(q, v)
         if solutionFile is not None:
             return web.FileResponse(solutionFile, status=200)
         else:
-            return web.response(status=404)
+            return web.Response(status=404)
 
-    async def uploadSolutionImage(self, data, request):
+    async def uploadSolutionImage(self, request):
         reader = MultipartReader.from_response(request)
         # Dealing with the metadata.
         soln_metadata_object = await reader.next()
 
-        if task_metadata_object is None:  # weird error
+        if soln_metadata_object is None:  # weird error
             return web.Response(status=406)  # should have sent 2 parts
-        task_metadata = await task_metadata_object.json()
+        soln_metadata = await soln_metadata_object.json()
+        print(soln_metadata)
         # Validate that the dictionary has these fields.
         if not validate_required_fields(
             soln_metadata, ["user", "token", "question", "version", "md5sum"]
@@ -43,6 +45,7 @@ class SolutionHandler:
             return web.Response(status=400)
         # make sure user = manager
         if soln_metadata["user"] != "manager":
+            print("ARGH")
             return web.Response(status=401)
         # Validate username and token.
         if not self.server.validate(soln_metadata["user"], soln_metadata["token"]):

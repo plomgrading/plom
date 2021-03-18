@@ -34,6 +34,7 @@ def checkStatus(server=None, pwd=None):
 
     spec = msgr.get_spec()
 
-    hasSolutions = msgr.getSolutionStatus()
+    solutionList = msgr.getSolutionStatus()
     msgr.closeUser()
     msgr.stop()
+    return solutionList

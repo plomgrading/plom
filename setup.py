@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 from glob import glob
 
 # TODO: "stop importing things from the local path" or use this workaround:
-#sys.path.insert(0, os.dirname(__file__))
+# sys.path.insert(0, os.dirname(__file__))
 
 # This directory
 dir_setup = os.path.dirname(os.path.realpath(__file__))
@@ -97,6 +97,7 @@ setup(
             "plom-build=plom.scripts.build:main",
             "plom-server=plom.scripts.server:main",
             "plom-scan=plom.scripts.scan:main",
+            "plom-solution=plom.scripts.solution:main",
             "plom-manager=plom.scripts.manager:main",
             "plom-finish=plom.scripts.finish:main",
             "plom-fake-scribbles=plom.produce.faketools:main",

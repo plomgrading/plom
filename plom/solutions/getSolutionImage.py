@@ -9,6 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 import getpass
 
 from plom.messenger import ManagerMessenger
+from plom.plom_exceptions import PlomExistingLoginException
 
 
 def getSolutionImage(
@@ -19,10 +20,10 @@ def getSolutionImage(
 ):
     if server and ":" in server:
         s, p = server.split(":")
-        managerMessenger = ManagerMessenger(s, port=p)
+        msgr = ManagerMessenger(s, port=p)
     else:
-        managerMessenger = ManagerMessenger(server)
-    managerMessenger.start()
+        msgr = ManagerMessenger(server)
+    msgr.start()
 
     # get the password if not specified
     if password is None:
@@ -35,9 +36,23 @@ def getSolutionImage(
         pwd = password
 
     try:
-        img = managerMessenger.getSolutionImage(question, version)
+        msgr.requestAndSaveToken("manager", pwd)
+    except PlomExistingLoginException as e:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-solution clear"'
+        )
+        exit(10)
+
+    try:
+        img = msgr.getSolutionImage(question, version)
     except PlomBenignException as err:
         print("No solution for question {} version {}".format(question, version))
         return None
-    managerMessenger.stop()
+
+    msgr.closeUser()
+    msgr.stop()
     return img

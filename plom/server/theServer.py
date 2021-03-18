@@ -273,6 +273,7 @@ def launch(masterToken=None):
     marker = MarkHandler(peon)
     rubricker = RubricHandler(peon)
     reporter = ReportHandler(peon)
+    solutioner = SolutionHandler(peon)
 
     # construct the web server
     app = web.Application()
@@ -283,6 +284,7 @@ def launch(masterToken=None):
     marker.setUpRoutes(app.router)
     rubricker.setUpRoutes(app.router)
     reporter.setUpRoutes(app.router)
+    solutioner.setUpRoutes(app.router)
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     sslContext.check_hostname = False

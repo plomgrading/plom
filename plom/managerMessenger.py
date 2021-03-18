@@ -4,9 +4,11 @@
 
 from io import StringIO, BytesIO
 
+import hashlib
+import json
 import urllib3
 import requests
-from requests_toolbelt import MultipartDecoder
+from requests_toolbelt import MultipartDecoder, MultipartEncoder
 
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
@@ -1684,38 +1686,37 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         return img
 
-
-def uploadSolutionImage(self, question, version, filename):
-    self.SRmutex.acquire()
-    try:
-        param = {
-            "user": self.user,
-            "token": self.token,
-            "question": question,
-            "version": version,
-            "md5sum": md5sum,
-        }
-        mime_type = mimetypes.guess_type(filename)[0]
-        dat = MultipartEncoder(
-            fields={
-                "param": json.dumps(param),
-                "image": (sname, open(fileName, "rb"), mime_type),  # image
+    def putSolutionImage(self, question, version, fileName):
+        self.SRmutex.acquire()
+        try:
+            param = {
+                "user": self.user,
+                "token": self.token,
+                "question": question,
+                "version": version,
+                "md5sum": hashlib.md5(open(fileName, "rb").read()).hexdigest(),
             }
-        )
-        response = self.session.put(
-            "https://{}/admin/solution".format(self.server),
-            json={"user": self.user, "token": self.token},
-            data=dat,
-            headers={"Content-Type": dat.content_type},
-            verify=False,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
-        if response.status_code == 401:
-            raise PlomAuthenticationException() from None
-        else:
-            raise PlomSeriousException(
-                "Some other sort of error {}".format(e)
-            ) from None
-    finally:
-        self.SRmutex.release()
+
+            dat = MultipartEncoder(
+                fields={
+                    "param": json.dumps(param),
+                    "image": open(fileName, "rb"),  # image
+                }
+            )
+            response = self.session.put(
+                "https://{}/admin/solution".format(self.server),
+                json={"user": self.user, "token": self.token},
+                data=dat,
+                headers={"Content-Type": dat.content_type},
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()

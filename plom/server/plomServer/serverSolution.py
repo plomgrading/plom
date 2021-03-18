@@ -14,10 +14,10 @@ log = logging.getLogger("server")
 
 
 def getSolutionStatus(self):
-    status = {}
-    for q in range(1, self.server.testSpec.numberOfQuestions + 1):
-        if self.server.testSpec["question.{}".format(q)]["select"] == "shuffle":
-            vm = self.server.testSpec.numberOfVersions
+    status = []
+    for q in range(1, self.testSpec["numberOfQuestions"] + 1):
+        if self.testSpec["question"][str(q)]["select"] == "shuffle":
+            vm = self.testSpec["numberOfVersions"]
         else:
             vm = 1
         for v in range(1, vm + 1):
@@ -28,9 +28,9 @@ def getSolutionStatus(self):
                 # check the md5sum and return it.
                 with open(solutionFile, "rb") as fh:
                     img_obj = fh.read()
-                    status[(q, v)] = hashlib.md5(img_obj).hexdigest()
+                    status.append([q, v, hashlib.md5(img_obj).hexdigest()])
             else:  # else return empty string
-                status[(q, v)] = ""
+                status.append([q, v, ""])
     return status
 
 

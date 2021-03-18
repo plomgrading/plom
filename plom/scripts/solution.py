@@ -16,24 +16,30 @@ from plom import __version__
 
 
 def uploadSolutionImage(server, password, question, version, imageName):
-    from plom.solution import putSolutionImage
+    from plom.solutions import putSolutionImage
 
-    putSolutionImage(question, version, imageName, server, password)
+    putSolutionImage.putSolutionImage(question, version, imageName, server, password)
 
 
 def getSolutionImage(server, password, question, version):
-    from plom.solution import getSolutionImage
+    from plom.solutions import getSolutionImage
 
-    img = getSolutionImage(question, version, server, password)
+    img = getSolutionImage.getSolutionImage(question, version, server, password)
     if img is not None:
-        with open("solution.{}.{}.png", "wb") as fh:
+        with open("solution.{}.{}.png".format(question, version), "wb") as fh:
             fh.write(img)
 
 
 def solutionStatus(server, password):
-    from plom.solution import checkSolutionStatus
+    from plom.solutions import checkSolutionStatus
 
-    checkSolutionStatus.checkStatus(server, password)
+    solutionList = checkSolutionStatus.checkStatus(server, password)
+    # will be a list of triples [q,v,md5sum] or [q,v,""]
+    for qvm in solutionList:
+        if qvm[2] == "":
+            print("q {} v {} = no solution".format(qvm[0], qvm[1]))
+        else:
+            print("q {} v {} = solution with md5sum {}".format(qvm[0], qvm[1], qvm[2]))
 
 
 def clearLogin(server, password):
@@ -113,7 +119,7 @@ def main():
         except KeyError:
             pass
 
-    if args.command == "put":
+    if args.command == "upload":
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
     if args.command == "get":
         getSolutionImage(args.server, args.password, args.q, args.v)
