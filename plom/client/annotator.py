@@ -1220,6 +1220,9 @@ class Annotator(QWidget):
 
     def commentMode(self):
         """ Changes the tool to comment."""
+        if not self.scene:
+            self.comment_widget.nextItem()
+            return
         if self.scene.mode == "comment":
             self.comment_widget.nextItem()
         else:
