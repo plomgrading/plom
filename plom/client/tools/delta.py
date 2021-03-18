@@ -133,10 +133,14 @@ class DeltaItem(QGraphicsTextItem):
 
 
 class GhostDelta(QGraphicsTextItem):
-    def __init__(self, delta, fontsize=10):
+    def __init__(self, delta, fontsize=10, legal=True):
         super().__init__()
         self.delta = delta
-        self.setDefaultTextColor(Qt.blue)
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
+
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
@@ -146,9 +150,13 @@ class GhostDelta(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def changeDelta(self, dlt):
+    def changeDelta(self, dlt, legal=True):
         self.delta = dlt
         self.setPlainText(" {} ".format(self.delta))
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
 
     def paint(self, painter, option, widget):
         # paint the background

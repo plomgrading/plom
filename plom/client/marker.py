@@ -8,7 +8,7 @@
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPL-3.0-or-later"
 
@@ -58,7 +58,7 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .comment_list import AddTagBox, commentLoadAll, commentIsVisible
+from .comment_list import AddTagBox, commentLoadAllToml, commentIsVisible
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import GroupView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
@@ -273,6 +273,7 @@ def upload(
     mtime,
     question,
     ver,
+    rubrics,
     tags,
     integrity_check,
     image_md5_list,
@@ -310,17 +311,16 @@ def upload(
 
     """
     # do name sanity checks here
-    aname, pname, cname = filenames
+    aname, pname = filenames
 
     if not (
         task.startswith("q")
         and os.path.basename(aname) == "G{}.png".format(task[1:])
         and os.path.basename(pname) == "G{}.plom".format(task[1:])
-        and os.path.basename(cname) == "G{}.json".format(task[1:])
     ):
         raise PlomSeriousException(
-            "Upload file names mismatch [{}, {}, {}] - this should not happen".format(
-                aname, pname, cname
+            "Upload file names mismatch [{}, {}] - this should not happen".format(
+                aname, pname
             )
         )
     try:
@@ -333,7 +333,7 @@ def upload(
             tags,
             aname,
             pname,
-            cname,
+            rubrics,
             integrity_check,
             image_md5_list,
         )
@@ -1065,6 +1065,12 @@ class MarkerClient(QWidget):
         self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
         self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
 
+        # load in the rubric pane settings
+        log.info("Loading user's rubric pane configuration")
+        rval = self.msgr.MgetUserRubricPanes(self.question)
+        if rval[0]:
+            self.annotatorSettings["rubricWranglerState"] = rval[1]
+
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
             self.canViewAll = True
@@ -1687,7 +1693,6 @@ class MarkerClient(QWidget):
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
         log.debug("create paperdir {} for annotating".format(paperdir))
         aname = os.path.join(paperdir, Gtask + ".png")
-        cname = os.path.join(paperdir, Gtask + ".json")
         pname = os.path.join(paperdir, Gtask + ".plom")
 
         remarkFlag = False
@@ -1765,6 +1770,29 @@ class MarkerClient(QWidget):
             src_img_data,
         )
 
+    def getRubricsFromServer(self, question=None):
+        """Get list of rubrics from server.
+
+        Args:
+            none
+
+        Returns:
+            list: A list of the dictionary objects.
+        """
+        if question is None:
+            response = self.msgr.MgetRubrics()
+        else:
+            response = self.msgr.MgetRubricsByQuestion(question)
+        if response[0] is False:
+            log.warning("Getting rubrics failed. ")
+        return response
+
+    def sendNewRubricToServer(self, new_rubric):
+        return self.msgr.McreateRubric(new_rubric)
+
+    def modifyRubricOnServer(self, key, updated_rubric):
+        return self.msgr.MmodifyRubric(key, updated_rubric)
+
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
@@ -1821,8 +1849,8 @@ class MarkerClient(QWidget):
                 markingTime(int): total time spent marking.
                 paperDir(dir): Working directory for the current task
                 aname(str): annotated file name
-                plomFileName(str): the name of thee .plom file
-                commentFileName(str): the name of the comment file.
+                plomFileName(str): the name of the .plom file
+                rubric(list[str]): the keys of the rubrics used
                 integrity_check(str): the integrity_check string of the task.
                 src_img_data (list[dict]): image data, md5sums, etc
 
@@ -1836,7 +1864,7 @@ class MarkerClient(QWidget):
             paperDir,
             aname,
             plomFileName,
-            commentFileName,
+            rubrics,
             integrity_check,
             src_img_data,
         ) = stuff
@@ -1869,11 +1897,11 @@ class MarkerClient(QWidget):
             (
                 aname,
                 plomFileName,
-                commentFileName,
-            ),  # annotated, plom, and comment filenames
+            ),
             totmtime,  # total marking time (seconds)
             self.question,
             self.version,
+            rubrics,
             tags,
             integrity_check,
             [x["md5"] for x in src_img_data],
@@ -2100,6 +2128,15 @@ class MarkerClient(QWidget):
         # not marked - using 'DNF' (did not finish). Sever will put
         # those files back on the todo pile.
         self.DNF()
+        # now save the annotator rubric pane state to server
+
+        if self.msgr.MsaveUserRubricPanes(
+            self.question, self.annotatorSettings["rubricWranglerState"]
+        ):
+            log.info("Saved user's rubric pane configuration to server")
+        else:
+            log.info("Problem saving user's rubric pane configuration to server")
+
         # Then send a 'user closing' message - server will revoke
         # authentication token.
         try:
@@ -2192,35 +2229,52 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
-        clist = commentLoadAll()
+        # TODO: deprecated, remove?  what do we want to do for comment pre-latexing?
+        if True:
+            return
+
+        clist = commentLoadAllToml()
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C["text"]))
 
         # Build a progress dialog to warn user
-        pd = QProgressDialog("Caching latex comments", None, 0, 2 * len(clist), self)
+        pd = QProgressDialog("Caching latex comments", None, 0, 3 * len(clist), self)
         pd.setWindowModality(Qt.WindowModal)
         pd.setMinimumDuration(0)
         # Start caching.
         c = 0
         pd.setValue(c)
         n = int(self.question)
+
+        # TODO: I don't think we need this anymore
         exam_name = self.exam_spec["name"]
 
+        # Here we will get the username
+        username = self.msgr.whoami()
+
         for X in clist:
-            if commentIsVisible(X, n, exam_name) and X["text"][:4].upper() == "TEX:":
+            if commentIsVisible(X, n, username) and X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
                 self.latexAFragment(txt)
                 c += 1
                 pd.setValue(c)
-                # and latex the preview
-                txtp = "\\color{blue}" + txt  # make color blue for ghost rendering
+                # and latex the previews (legal and illegal versions)
+                txtp = (
+                    "\\color{blue}" + txt
+                )  # make color blue for ghost rendering (legal)
+                self.latexAFragment(txtp)
+                c += 1
+                pd.setValue(c)
+                txtp = (
+                    "\\color{gray}" + txt
+                )  # make color gray for ghost rendering (illegal)
                 self.latexAFragment(txtp)
                 c += 1
                 pd.setValue(c)
             else:
-                c += 2
+                c += 3
                 pd.setLabelText("Caching:\nno tex")
                 pd.setValue(c)
         pd.close()

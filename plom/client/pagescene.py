@@ -187,10 +187,9 @@ class UnderlyingImages(QGraphicsItemGroup):
 # for mouse press, move and release
 mousePress = {
     "box": "mousePressBox",
-    "comment": "mousePressComment",
+    "rubric": "mousePressRubric",
     "cross": "mousePressCross",
     "delete": "mousePressDelete",
-    "delta": "mousePressDelta",
     "line": "mousePressLine",
     "move": "mousePressMove",
     "pan": "mousePressPan",
@@ -205,8 +204,7 @@ mouseMove = {
     "delete": "mouseMoveDelete",
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
-    "comment": "mouseMoveComment",
-    "delta": "mouseMoveDelta",
+    "rubric": "mouseMoveRubric",
     "zoom": "mouseMoveZoom",
 }
 mouseRelease = {
@@ -217,7 +215,7 @@ mouseRelease = {
     "pen": "mouseReleasePen",
     "pan": "mouseReleasePan",
     "zoom": "mouseReleaseZoom",
-    "comment": "mouseReleaseComment",
+    "rubric": "mouseReleaseRubric",
 }
 
 
@@ -324,12 +322,12 @@ class PageScene(QGraphicsScene):
         self.boxFlag = 0
         self.deleteFlag = 0
         self.zoomFlag = 0
-        # The box-drag-comment composite object is constructed in stages
-        # 0 = no box-drag-comment is currently in progress (default)
+        # The box-drag-rubric composite object is constructed in stages
+        # 0 = no box-drag-rubric is currently in progress (default)
         # 1 = drawing the box
         # 2 = drawing the line
-        # 3 = drawing the comment - this should only be very briefly mid function.
-        self.commentFlag = 0
+        # 3 = drawing the rubric - this should only be very briefly mid function.
+        self.rubricFlag = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -352,10 +350,10 @@ class PageScene(QGraphicsScene):
         self.ghostItem.setVisible(False)
         self.addItem(self.ghostItem)
 
-        # Set a mark-delta, comment-text and comment-delta.
-        self.markDelta = "0"
-        self.commentText = ""
-        self.commentDelta = "0"
+        # Set a mark-delta, rubric-text and rubric-delta.
+        self.rubricText = ""
+        self.rubricDelta = "0"
+        self.rubricID = None
 
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
@@ -485,7 +483,7 @@ class PageScene(QGraphicsScene):
         Sets the current toolMode.
 
         Args:
-            mode (str): One of "comment", "delta", "pan", "move" etc..
+            mode (str): One of "rubric", "pan", "move" etc..
 
         Returns:
             None
@@ -494,19 +492,13 @@ class PageScene(QGraphicsScene):
         self.views()[0].setFocus(Qt.TabFocusReason)
 
         self.mode = mode
-        # if current mode is not comment or delta, make sure the
-        # ghostcomment is hidden
-        if self.mode == "delta":
-            # make sure the ghost is updated - fixes #307
-            self.updateGhost(self.markDelta, "")
-        elif self.mode == "comment":
-            pass
-        else:
+        # if current mode is not rubric, make sure the ghostcomment is hidden
+        if self.mode != "rubric":
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
-            if self.commentFlag > 0:
+            if self.rubricFlag > 0:
                 self.removeItem(self.lineItem)
-                self.commentFlag = 0
+                self.rubricFlag = 0
                 # also end the macro and then trigger an undo so box removed.
                 self.undoStack.endMacro()
                 self.undo()
@@ -517,19 +509,34 @@ class PageScene(QGraphicsScene):
         else:
             self.views()[0].setDragMode(0)
 
-    def getComments(self):
+    def get_nonrubric_text_from_page(self):
         """
-        Get the current text items and comments associated with this paper.
+        Get the current text items and rubrics associated with this paper.
 
         Returns:
-            (list): a list containing all comments.
-
+            list: strings from each bit of text.
         """
-        comments = []
+        texts = []
         for X in self.items():
             if isinstance(X, TextItem):
-                comments.append(X.getContents())
-        return comments
+                # if item is in a rubric then its 'group' will be non-null
+                # only keep those with group=None to keep non-rubric text
+                if X.group() is None:
+                    texts.append(X.getContents())
+        return texts
+
+    def getRubrics(self):
+        """
+        Get the rubrics(comments) associated with this paper.
+
+        Returns:
+            list: pairs of IDs and strings from each bit of text.
+        """
+        rubrics = []
+        for X in self.items():
+            if isinstance(X, GroupDeltaTextItem):
+                rubrics.append(X.rubricID)
+        return rubrics
 
     def countComments(self):
         """
@@ -541,6 +548,19 @@ class PageScene(QGraphicsScene):
         count = 0
         for X in self.items():
             if type(X) is TextItem:
+                count += 1
+        return count
+
+    def countRubrics(self):
+        """
+        Counts current rubrics (comments) associated with the paper.
+
+        Returns:
+            (int): total number of rubrics associated with this paper.
+        """
+        count = 0
+        for X in self.items():
+            if type(X) is GroupDeltaTextItem:
                 count += 1
         return count
 
@@ -648,15 +668,9 @@ class PageScene(QGraphicsScene):
 
         """
 
-        deltaShift = self.parent.cursorCross
-        if self.mode == "delta":
-            if not int(self.markDelta) > 0:
-                deltaShift = self.parent.cursorTick
-
         variableCursors = {
             "cross": [self.parent.cursorTick, self.parent.cursorQMark],
             "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
-            "delta": [deltaShift, self.parent.cursorQMark],
             "tick": [self.parent.cursorCross, self.parent.cursorQMark],
             "box": [self.parent.cursorEllipse, self.parent.cursorBox],
             "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
@@ -689,7 +703,6 @@ class PageScene(QGraphicsScene):
         variableCursorRelease = {
             "cross": self.parent.cursorCross,
             "line": self.parent.cursorLine,
-            "delta": Qt.ArrowCursor,
             "tick": self.parent.cursorTick,
             "box": self.parent.cursorBox,
             "pen": self.parent.cursorPen,
@@ -767,8 +780,8 @@ class PageScene(QGraphicsScene):
                 return True
         return False
 
-    def mousePressComment(self, event):
-        """Mouse press while holding comment tool.
+    def mousePressRubric(self, event):
+        """Mouse press while holding rubric tool.
 
         Usually this creates a rubric, an object consisting of a delta
         grade and an associated text item.  With shift modifier key, it
@@ -782,39 +795,36 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        # in comment mode the ghost is activated, so look for objects that intersect the ghost.
+        # if delta not legal, then don't start
+        if not self.isLegalDelta(self.rubricDelta):
+            return
+
+        # rubric flag explained
+        # 0 = initial state - before rubric click-drag-release-click started
+        # 1 = started drawing box
+        # 2 = started drawing line
+
+        # in rubric mode the ghost is activated, so look for objects that intersect the ghost.
         # if they are delta, text or GDT then do nothing.
 
-        if self.textUnderneathGhost():  # something underneath
-            if self.commentFlag == 0:  # starting a comment
-                if (event.button() == Qt.RightButton) or (
-                    QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-                ):  # starting a drag - so ignore the intersection
-                    pass
-                else:
-                    return  # intersection - don't stamp anything, just return
-            elif self.commentFlag == 2:  # finishing the comment stamp
-                return  # intersection - so don't stamp anything.
+        # check if anything underneath when trying to start / finish
+        if self.textUnderneathGhost() and self.rubricFlag in [0, 2]:
+            return  # intersection - so don't stamp anything.
 
-        # check the commentFlag and if shift-key is pressed
-        if isinstance(event, QGraphicsSceneDragDropEvent):  # is a comment drag event.
-            pass  # no rectangle-drag-comment, only comment-stamp
-        elif self.commentFlag == 0:
+        # check the rubricFlag
+        if isinstance(event, QGraphicsSceneDragDropEvent):  # is a rubric drag event.
+            pass  # no rectangle-drag-rubric, only rubric-stamp
+        elif self.rubricFlag == 0:
             # check if drag event
-            if (event.button() == Qt.RightButton) or (
-                QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-            ):
-                self.commentFlag = 1
-                self.originPos = event.scenePos()
-                self.currentPos = self.originPos
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-                self.boxItem.setPen(self.ink)
-                self.boxItem.setBrush(self.lightBrush)
-                self.addItem(self.boxItem)
-                return
-        elif self.commentFlag == 2:
+            self.rubricFlag = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+            return
+        elif self.rubricFlag == 2:
             connectingLine = whichLineToDraw(
                 self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
                 self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
@@ -822,31 +832,27 @@ class PageScene(QGraphicsScene):
             command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
             self.undoStack.push(command)
             self.removeItem(self.lineItem)
-            self.commentFlag = 3
+            self.rubricFlag = 3
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
-        # If the mark-delta of comment is non-zero then create a
-        # delta-object with a different offset, else just place the comment.
-        if self.commentDelta == "." or not self.isLegalDelta(self.commentDelta):
-            # Update position of text - the ghostitem has it right
-            # TODO: move this calc into the item
-            pt += QPointF(0, self.ghostItem.blurb.pos().y())
-            command = CommandText(self, pt, self.commentText)
-            self.undoStack.push(command)
+        if not self.isLegalDelta(self.rubricDelta):
+            # cannot paste illegal delta
+            # still need to reset rubricFlag below.
+            pass
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.commentDelta, self.commentText
+                self, pt, self.rubricID, self.rubricDelta, self.rubricText
             )
             log.debug(
-                "Making a GroupDeltaText: commentFlag is {}".format(self.commentFlag)
+                "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
             )
             self.undoStack.push(command)  # push the delta onto the undo stack.
-        if self.commentFlag > 0:
+        if self.rubricFlag > 0:
             log.debug(
-                "commentFlag > 0 so we must be finishing a click-drag comment: finalizing macro"
+                "rubricFlag > 0 so we must be finishing a click-drag rubric: finalizing macro"
             )
-            self.commentFlag = 0
+            self.rubricFlag = 0
             self.undoStack.endMacro()
 
     def mousePressCross(self, event):
@@ -878,45 +884,6 @@ class PageScene(QGraphicsScene):
         else:
             command = CommandCross(self, pt)
         self.undoStack.push(command)  # push onto the stack.
-
-    def mousePressDelta(self, event):
-        """
-        Creates the mark-delta, ?-mark/tick/cross based on which mouse
-        button or mouse/key combination was pressed.
-
-        Notes:
-            cross = right-click or shift+click if current mark-delta > 0.
-            tick = right-click or shift+click if current mark-delta <= 0.
-            question mark = middle-click or control+click.
-            mark-delta = left-click or any other combination, assigns with
-                the selected mark-delta value.
-
-
-        Args:
-            event (QMouseEvent): Mouse press.
-
-        Returns:
-            None
-
-        """
-        pt = event.scenePos()  # Grab click's location and create command.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            if int(self.markDelta) > 0:
-                command = CommandCross(self, pt)
-            else:
-                command = CommandTick(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            command = CommandQMark(self, pt)
-        else:
-            if self.isLegalDelta(self.markDelta):
-                command = CommandDelta(self, pt, self.markDelta)
-            else:
-                return
-        self.undoStack.push(command)  # push command onto undoStack.
 
     def mousePressMove(self, event):
         """
@@ -1091,7 +1058,7 @@ class PageScene(QGraphicsScene):
         elif e.mimeData().hasFormat(
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
-            # User has dragged in a comment from the comment-list.
+            # User has dragged in a rubric from the rubric-list.
             e.setDropAction(Qt.CopyAction)
         else:
             e.ignore()
@@ -1103,21 +1070,21 @@ class PageScene(QGraphicsScene):
     def dropEvent(self, e):
         """ Handles drop events."""
         # all drop events should copy
-        # - even if user is trying to remove comment from comment-list make sure is copy-action.
+        # - even if user is trying to remove rubric from rubric-list make sure is copy-action.
         e.setDropAction(Qt.CopyAction)
 
         if e.mimeData().hasFormat("text/plain"):
-            # Simulate a comment click.
-            self.commentText = e.mimeData().text()
-            self.commentDelta = "0"
-            self.mousePressComment(e)
+            # Simulate a rubric click.
+            self.rubricText = e.mimeData().text()
+            self.rubricDelta = "0"
+            self.mousePressRubric(e)
 
         elif e.mimeData().hasFormat(
             "application/x-qabstractitemmodeldatalist"
         ) or e.mimeData().hasFormat("application/x-qstandarditemmodeldatalist"):
-            # Simulate a comment click.
-            self.mousePressComment(e)
-            # User has dragged in a comment from the comment-list.
+            # Simulate a rubric click.
+            self.mousePressRubric(e)
+            # User has dragged in a rubric from the rubric-list.
             pass
         else:
             pass
@@ -1740,22 +1707,39 @@ class PageScene(QGraphicsScene):
             command = CommandDelete(self, item)
             self.undoStack.push(command)
 
-    def mouseReleaseComment(self, event):
-        if self.commentFlag == 0:
+    def mouseReleaseRubric(self, event):
+        if self.rubricFlag == 0:
             return
-        elif self.commentFlag == 1:
+        elif self.rubricFlag == 1:
             self.removeItem(self.boxItem)
-            self.undoStack.beginMacro("Click-Drag composite object")
             # check if rect has some perimeter (allow long/thin) - need abs - see #977
-            # TODO: making a small object draws a line to nowhere... was this intended?
             if (
                 abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
                 > 24
             ):
+                self.undoStack.beginMacro("Click-Drag composite object")
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
+            else:
+                # small box, so just stamp the rubric
+                if self.textUnderneathGhost():
+                    self.rubricFlag = 0  # reset the rubric flag
+                    return  # can't paste it here.
+                command = CommandGroupDeltaText(
+                    self,
+                    event.scenePos(),
+                    self.rubricID,
+                    self.rubricDelta,
+                    self.rubricText,
+                )
+                log.debug(
+                    "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
+                )
+                self.undoStack.push(command)  # push the delta onto the undo stack.
+                self.rubricFlag = 0  # reset the rubric flag
+                return
 
-            self.commentFlag = 2
+            self.rubricFlag = 2
             self.originPos = event.scenePos()
             self.currentPos = self.originPos
             self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
@@ -1832,7 +1816,7 @@ class PageScene(QGraphicsScene):
 
     def hasAnyComments(self):
         """
-        Returns True if scene has any comments or text items,
+        Returns True if scene has any rubrics or text items,
         False otherwise.
         """
         for X in self.items():
@@ -1898,7 +1882,7 @@ class PageScene(QGraphicsScene):
                 return False
         return True
 
-    def updateGhost(self, dlt, txt):
+    def updateGhost(self, dlt, txt, legal=True):
         """
         Updates the ghost object based on the delta and text.
 
@@ -1910,7 +1894,7 @@ class PageScene(QGraphicsScene):
             None
 
         """
-        self.ghostItem.changeComment(dlt, txt)
+        self.ghostItem.changeComment(dlt, txt, legal)
 
     def exposeGhost(self):
         """ Exposes the ghost object."""
@@ -1920,9 +1904,9 @@ class PageScene(QGraphicsScene):
         """ Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
-    def mouseMoveComment(self, event):
+    def mouseMoveRubric(self, event):
         """
-        Handles mouse moving with a comment.
+        Handles mouse moving with a rubric.
 
         Args:
             event (QMouseEvent): the event of the mouse moving.
@@ -1934,7 +1918,7 @@ class PageScene(QGraphicsScene):
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
 
-        if self.commentFlag == 1:
+        if self.rubricFlag == 1:
             self.currentPos = event.scenePos()
             if self.boxItem is None:
                 self.boxItem = QGraphicsRectItem(
@@ -1942,7 +1926,7 @@ class PageScene(QGraphicsScene):
                 )
             else:
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-        elif self.commentFlag == 2:
+        elif self.rubricFlag == 2:
             self.currentPos = event.scenePos()
             self.lineItem.setLine(
                 whichLineToDraw(
@@ -1950,20 +1934,6 @@ class PageScene(QGraphicsScene):
                     self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
                 )
             )
-
-    def mouseMoveDelta(self, event):
-        """
-        Handles mouse moving with a delta.
-
-        Args:
-            event (QMouseEvent): the event of the mouse moving.
-
-        Returns:
-            None
-        """
-        if not self.ghostItem.isVisible():
-            self.ghostItem.setVisible(True)
-        self.ghostItem.setPos(event.scenePos())
 
     def setTheMark(self, newMark):
         """
@@ -1991,6 +1961,8 @@ class PageScene(QGraphicsScene):
             None
 
         """
+        if deltaMarkString == ".":
+            return
         # if is an undo then we need a minus-sign here
         # because we are undoing the delta.
         # note that this command is passed a string
@@ -2001,40 +1973,12 @@ class PageScene(QGraphicsScene):
             self.score += deltaMark
         self.scoreBox.changeScore(self.score)
         self.parent.changeMark(self.score)
-        # if we are in comment mode then the comment might need updating
-        if self.mode == "comment":
-            self.changeTheComment(
-                self.markDelta, self.commentText, annotatorUpdate=False
+        # if we are in rubric mode then the rubric might need updating
+        # TODO: any action on dot needed here?
+        if self.mode == "rubric":
+            self.changeTheRubric(
+                self.rubricDelta, self.rubricText, self.rubricID, annotatorUpdate=False
             )
-
-    def changeTheDelta(self, newDelta, annotatorUpdate=False):
-        """
-        Changes the new mark/score for the paper based on the delta.
-
-        Args:
-            newDelta (str): a string containing the delta integer.
-            annotatorUpdate (bool): true if annotator should be updated,
-                false otherwise.
-
-        Returns:
-            True if the delta is legal, false otherwise.
-
-        """
-        legalDelta = self.isLegalDelta(newDelta)
-        self.markDelta = newDelta
-
-        if annotatorUpdate:
-            gpt = QCursor.pos()  # global mouse pos
-            vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
-            spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
-            self.ghostItem.setPos(spt)
-
-        self.commentDelta = self.markDelta
-        self.commentText = ""
-        self.updateGhost(self.commentDelta, self.commentText)
-        self.exposeGhost()
-
-        return legalDelta
 
     def undo(self):
         """ Undoes a given action."""
@@ -2046,33 +1990,36 @@ class PageScene(QGraphicsScene):
 
     def isLegalDelta(self, n):
         """
-        Verifies if a delta is legal.
-
-        Notes:
-            A legal delta is one that would not push the paper's score below 0
-                or above maxMark.
+        Would this delta value push the paper score below 0 or above maxMark?
 
         Args:
-            n (str): a string containing the delta integer.
+            n (int/str): the delta integer, either convertable to `int`
+                or the literal string ".".
 
         Returns:
-            True if the delta is legal, false otherwise.
-
+            bool: True if the delta is legal, False otherwise.
         """
-        # TODO: try, return True if not int?
+        if n == ".":
+            return True
         n = int(n)
-        lookingAhead = self.score + n
-        if lookingAhead < 0 or lookingAhead > self.maxMark:
-            return False
+        # check against markstyle (assuming only up or down)
+        if self.markStyle == 2:  # is mark-up
+            if n < 0 or self.score + n > self.maxMark:
+                return False
+        else:  # is mark-down
+            if n > 0 or self.score + n < 0:
+                return False
         return True
 
-    def changeTheComment(self, delta, text, annotatorUpdate=True):
+    def changeTheRubric(self, delta, text, rubricID, annotatorUpdate=True):
         """
-        Changes the new comment for the paper based on the delta and text.
+        Changes the new rubric for the paper based on the delta and text.
 
         Args:
             delta (str): a string containing the delta integer.
-            text (str): the text in the comment.
+            text (str): the text in the rubric.
+            rubricID (int): the id of the rubric: TODO surely rest can
+                be retrieved from this?
             annotatorUpdate (bool): true if annotator should be updated,
                 false otherwise.
 
@@ -2087,34 +2034,25 @@ class PageScene(QGraphicsScene):
             vpt = self.views()[0].mapFromGlobal(gpt)  # mouse pos in view
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
-            self.markDelta = delta
-            self.setToolMode("comment")
+            self.rubricDelta = delta
+            self.setToolMode("rubric")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
-        if delta != ".":
-            id = int(delta)
+        legality = self.isLegalDelta(delta)
 
-            # we pass the actual comment-delta to this (though it might be
-            # suppressed in the commentlistwidget).. so we have to check the
-            # the delta is legal for the marking style. if delta<0 when mark
-            # up OR delta>0 when mark down OR mark-total then pass delta="."
-            if (
-                (id < 0 and self.markStyle == 2)
-                or (id > 0 and self.markStyle == 3)
-                or self.markStyle == 1
-            ):
-                delta = "."
-        self.commentDelta = delta
-        self.commentText = text
-        self.updateGhost(delta, text)
+        self.rubricDelta = delta
+        self.rubricText = text
+        self.rubricID = rubricID
+        self.updateGhost(delta, text, legality)
 
-    def noAnswer(self, delta):
+    def noAnswer(self, delta, noAnswerCID):
         """
         Handles annotating the page if there is little or no answer written.
 
         Args:
             delta (int): the mark to be assigned to the page.
+            noAnswerCID (int): the key for the noAnswerRubric used
 
         Returns:
             None
@@ -2133,10 +2071,15 @@ class PageScene(QGraphicsScene):
         )
         self.undoStack.push(command)
 
-        # build a delta-comment
+        # ID for no-answer rubric is defined in the db_create module
+        # in the createNoAnswerRubric function.
+        # Using that ID lets us track the rubric in the DB
+
+        # build a delta-text-rubric-thingy
         command = CommandGroupDeltaText(
             self,
             br.center() + br.topRight() / 8,
+            noAnswerCID,
             delta,
             "NO ANSWER GIVEN",
         )

@@ -7,6 +7,50 @@ import random
 from plom.db import PlomDB
 
 
+managerRubrics = [
+    {"delta": "-1", "text": "arithmetic", "meta": "standardComment"},
+    {"delta": ".", "text": "be careful", "meta": "standardComment"},
+    {
+        "delta": "0",
+        "text": r"tex: you can write \LaTeX, $e^{i\pi} + 1 = 0$",
+        "meta": "LaTeX works",
+    },
+    {"delta": "+1", "text": "good", "meta": "give constructive feedback"},
+]
+
+
+def buildSpecialRubrics(spec, db):
+    # create no-answer-given rubrics
+    for q in range(1, 1 + spec["numberOfQuestions"]):
+        if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
+            raise ValueError("No answer rubric for q.{} already exists".format(q))
+    # create standard manager rubrics
+    for rubric in managerRubrics:
+        rubric["tags"] = ""
+        for q in range(1, 1 + spec["numberOfQuestions"]):
+            rubric["question"] = "{}".format(q)
+            if not db.McreateRubric("manager", rubric):
+                raise ValueError("Manager rubric for q.{} already exists".format(q))
+    # create standard manager delta-rubrics - but no 0
+    for q in range(1, 1 + spec["numberOfQuestions"]):
+        mx = spec["question"]["{}".format(q)]["mark"]
+        for m in range(-mx, mx + 1):
+            if m == 0:
+                continue
+            rubric = {
+                # make '+' explicit for positive delta
+                "delta": "{}".format(m) if m <= 0 else "+{}".format(m),
+                "text": ".",
+                "tags": "",
+                "meta": "delta",
+                "question": q,
+            }
+            if not db.McreateRubric("manager", rubric):
+                raise ValueError(
+                    "Manager delta-rubric {} for q.{} already exists".format(m, q)
+                )
+
+
 def buildExamDatabaseFromSpec(spec, db):
     """Build metadata for exams from spec and insert into the database.
 
@@ -44,6 +88,8 @@ def buildExamDatabaseFromSpec(spec, db):
     import logging
 
     log = logging.getLogger("DB")
+
+    buildSpecialRubrics(spec, db)
 
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")

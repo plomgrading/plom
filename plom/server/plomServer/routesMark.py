@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -229,10 +229,10 @@ class MarkHandler:
             [
                 "user",
                 "token",
-                "comments",
                 "pg",
                 "ver",
                 "score",
+                "rubrics",
                 "mtime",
                 "tags",
                 "md5sum",
@@ -245,8 +245,8 @@ class MarkHandler:
         if not self.server.validate(task_metadata["user"], task_metadata["token"]):
             return web.Response(status=401)
 
-        comments = task_metadata["comments"]  # List of comments.
-        task_code = request.match_info["task"]  # Task code.
+        rubrics = task_metadata["rubrics"]  # list of rubric IDs
+        task_code = request.match_info["task"]
 
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
@@ -273,7 +273,7 @@ class MarkHandler:
             int(task_metadata["score"]),
             task_image,
             plomdat,
-            comments,
+            rubrics,
             int(task_metadata["mtime"]),
             task_metadata["tags"],
             task_metadata["md5sum"],
@@ -294,6 +294,9 @@ class MarkHandler:
                 log.warning("Returning with error 409 = {}".format(marked_task_status))
                 return web.Response(status=409)
             elif marked_task_status[1] == "integrity_fail":
+                log.warning("Returning with error 406 = {}".format(marked_task_status))
+                return web.Response(status=406)
+            elif marked_task_status[1] == "invalid_rubric":
                 log.warning("Returning with error 406 = {}".format(marked_task_status))
                 return web.Response(status=406)
             else:

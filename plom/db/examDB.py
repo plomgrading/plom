@@ -53,6 +53,9 @@ class PlomDB:
                     OAPage,
                     IDPage,
                     DNMPage,
+                    ##
+                    Rubric,
+                    ARLink,
                 ]
             )
         log.info("Database initialised.")
@@ -99,6 +102,7 @@ class PlomDB:
         getPageVersions,
         produceTest,
         id_paper,
+        createNoAnswerRubric,
     )
 
     from plom.db.db_upload import (
@@ -206,3 +210,5 @@ class PlomDB:
         MreviewQuestion,
         MrevertTask,
     )
+
+    from plom.db.db_rubric import McreateRubric, MgetRubrics, MmodifyRubric

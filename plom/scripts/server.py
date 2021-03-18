@@ -107,8 +107,8 @@ def buildRequiredDirectories():
         "pages/originalPages",
         "markedQuestions",
         "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
         "serverConfiguration",
+        "userRubricPaneData",
     ]
     for dir in lst:
         os.makedirs(dir, exist_ok=True)
@@ -345,7 +345,6 @@ def checkDirectories():
         "pages/originalPages",
         "markedQuestions",
         "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
         "serverConfiguration",
     ]
     for d in lst:

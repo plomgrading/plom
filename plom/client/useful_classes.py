@@ -214,7 +214,7 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
-    def __init__(self, s, logdir, cfgfile, tmpdir, comment_file):
+    def __init__(self, s, logdir, cfgfile, tmpdir):
         super().__init__()
         # self.parent = parent
         self.setWindowTitle("Plom client options")
@@ -299,7 +299,6 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShadow(QFrame.Sunken)
         flay.addRow(line)
         flay.addRow("Config file:", QLabel("{}".format(cfgfile)))
-        flay.addRow("Rubrics:", QLabel("{}".format(comment_file)))
         tempdir_prefix = "plom_"
         q = QLabel('{}, in subfolders "{}*"'.format(tmpdir, tempdir_prefix))
         q.setWordWrap(True)
