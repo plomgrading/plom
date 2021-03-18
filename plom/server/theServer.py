@@ -4,12 +4,6 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 
-__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Dryden Wiebe", "Vala Vakilian"]
-__license__ = "AGPLv3"
-
-# TODO - directory structure!
-
 import json
 import ssl
 import subprocess
@@ -26,10 +20,9 @@ from plom import Default_Port
 from plom import SpecVerifier
 from plom import specdir
 from plom.db import PlomDB
+from plom.server import confdir, check_server_directories
 
 from .authenticate import Authority
-
-serverInfo = {"server": "127.0.0.1", "port": Default_Port}
 
 
 from .plomServer.routesUserInit import UserInitHandler
@@ -39,8 +32,6 @@ from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
 
-
-confdir = Path("serverConfiguration")
 
 # 5 is to keep debug/info lined up
 logging.basicConfig(
@@ -52,31 +43,16 @@ log = logging.getLogger("server")
 logging.getLogger().setLevel("Debug".upper())
 
 
-# ----------------------
-def build_directories():
-    """Build the directories that this script needs"""
-
-    # the list of directories. Might need updating.
-    for d in (
-        "pages",
-        "pages/discardedPages",
-        "pages/collidingPages",
-        "pages/unknownPages",
-        "pages/originalPages",
-        "markedQuestions",
-        "markedQuestions/plomFiles",
-    ):
-        Path(d).mkdir(exist_ok=True)
-        log.debug("Building directory {}".format(d))
-
-
-# ----------------------
-
-
-class Server(object):
-    def __init__(self, spec, db, masterToken):
+class Server:
+    def __init__(self, db, masterToken):
         log.debug("Initialising server")
-        self.testSpec = spec
+        try:
+            self.testSpec = SpecVerifier.load_verified()
+            log.info("existing spec loaded")
+        except FileNotFoundError:
+            self.testSpec = None
+            log.error("spec file not found -- use 'plom-build' to create one")
+            raise
         self.authority = Authority(masterToken)
         self.DB = db
         self.API = serverAPI
@@ -233,7 +209,7 @@ class Server(object):
 def get_server_info():
     """Read the server info from config file."""
 
-    global serverInfo
+    serverInfo = {"server": "127.0.0.1", "port": Default_Port}
     try:
         with open(confdir / "serverDetails.toml") as data_file:
             serverInfo = toml.load(data_file)
@@ -245,22 +221,23 @@ def get_server_info():
     # TODO: nicer way to do this?
     if serverInfo["LogLevel"].upper() == "INFO":
         logging.getLogger("aiohttp.access").setLevel("WARNING")
+    return serverInfo
 
 
 def launch(masterToken=None):
     """Launches the Plom server.
 
-    Keyword Arguments:
-        masterToken {str} -- Token that is authenticated by the authority, if None, one is created in authenticate.py. default: {None}
+    args:
+        masterToken (str): a 32 hex-digit string used to encrypt tokens
+            in the database.  Not needed on server unless you want to
+            hot-restart the server without requiring users to log-off
+            and log-in again.  If None, a new token is created.
     """
-
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
-    get_server_info()
+    check_server_directories()
+    server_info = get_server_info()
     examDB = PlomDB(Path(specdir) / "plom.db")
-    # TODO: might be nice to do a sanity spec verification, once we have a quiet one
-    spec = SpecVerifier.from_toml_file(Path(specdir) / "verifiedSpec.toml")
-    build_directories()
-    peon = Server(spec, examDB, masterToken)
+    peon = Server(examDB, masterToken)
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)
@@ -283,7 +260,7 @@ def launch(masterToken=None):
     sslContext.load_cert_chain(confdir / "plom-selfsigned.crt", confdir / "plom.key")
     log.info("Start the server!")
     try:
-        web.run_app(app, ssl_context=sslContext, port=serverInfo["port"])
+        web.run_app(app, ssl_context=sslContext, port=server_info["port"])
     except KeyboardInterrupt:
         # Above seems to have its own Ctrl-C handler so this never happens?
         log.info("Closing down via keyboard interrupt")

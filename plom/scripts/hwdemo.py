@@ -51,9 +51,10 @@ def main():
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
-    subprocess.check_call(split("plom-build new --demo"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
+
+    subprocess.check_call(split("plom-build new --demo"))
 
     # Start server into background
     print("Running server I hope")

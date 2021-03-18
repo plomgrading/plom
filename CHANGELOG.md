@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
 
 ### Fixed
 
