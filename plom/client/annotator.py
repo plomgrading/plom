@@ -1270,6 +1270,9 @@ class Annotator(QWidget):
 
     def rubricMode(self):
         """ Changes the tool to rubric."""
+        if not self.scene:
+            self.rubric_widget.nextRubric()
+            return
         if self.scene.mode == "rubric":
             self.rubric_widget.nextRubric()
         else:
