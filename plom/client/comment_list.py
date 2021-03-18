@@ -1911,7 +1911,7 @@ class RubricWidget(QWidget):
         if self.showHideW.currentIndex() == 0:
             self.RTW.currentWidget().nextRubric()
         else:
-            self.tabHide.previousRubric()
+            self.tabHide.nextRubric()
 
     def previousRubric(self):
         # change rubrics in the right pane
