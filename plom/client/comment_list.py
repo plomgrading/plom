@@ -1755,7 +1755,7 @@ class RubricWidget(QWidget):
         self.setRubricsFromState(wranglerState)
 
     def setRubricsFromState(self, wranglerState):
-        """Set rubric tabs (but not rubrics themselves from saved data.
+        """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
         The rubrics themselves are uneffected.
