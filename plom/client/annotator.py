@@ -1203,10 +1203,14 @@ class Annotator(QWidget):
 
     def undo(self):
         """ Undoes the last action in the UI. """
+        if not self.scene:
+            return
         self.scene.undo()
 
     def redo(self):
         """ Redoes the last action in the UI. """
+        if not self.scene:
+            return
         self.scene.redo()
 
     # Simple mode change functions
