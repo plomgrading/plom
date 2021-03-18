@@ -34,6 +34,9 @@ stages:
   - release
 
 
+# Attention maintainers: if you start to see errors in the CI runs like:
+#   E: Failed to fetch http://security.ubuntu.com... 404 Not Found [IP: 91...]
+# Run with DOCKER_USE_CACHE set to 0, under Pipeline -> Run pipeline
 docker-image:
   stage: build
   needs: []

@@ -26,6 +26,9 @@ from plom import __version__
 from plom import specdir
 
 
+specdir = Path(specdir)
+server_conf_dir = Path("serverConfiguration")
+
 server_instructions = """Overview of running the Plom server:
 
   0. Decide on a working directory for the server and cd into it.
@@ -64,7 +67,7 @@ class PlomServerConfigurationError(Exception):
 
 
 def checkSpecAndDatabase():
-    if os.path.isdir(specdir):
+    if specdir.exists():
         print("Directory '{}' is present.".format(specdir))
     else:
         print(
@@ -74,7 +77,7 @@ def checkSpecAndDatabase():
         )
         exit(1)
 
-    if os.path.isfile(Path(specdir) / "verifiedSpec.toml"):
+    if (specdir / "verifiedSpec.toml").exists():
         print("Test specification present.")
     else:
         print(
@@ -82,19 +85,20 @@ def checkSpecAndDatabase():
         )
         exit(1)
 
-    if os.path.isfile(Path(specdir) / "plom.db"):
+    if (specdir / "plom.db").exists():
         print("Database present: using existing database.")
     else:
         print("Database not yet present: it will be created on first run.")
         # TODO: or should `plom-server init` create it?")
 
-    if os.path.isfile(Path(specdir) / "classlist.csv"):
+    if (specdir / "classlist.csv").exists():
         print("Classlist present.")
     else:
         print("Cannot find the classlist: expect it later...")
 
 
 def buildRequiredDirectories():
+    # TODO unix paths hardcoded
     lst = [
         "pages",
         "pages/discardedPages",
@@ -112,9 +116,9 @@ def buildRequiredDirectories():
 
 def buildSSLKeys():
     """Make new key and cert files if they do not yet exist."""
-    key = Path("serverConfiguration") / "plom.key"
-    cert = Path("serverConfiguration") / "plom-selfsigned.crt"
-    if os.path.isfile(key) and os.path.isfile(cert):
+    key = server_conf_dir / "plom.key"
+    cert = server_conf_dir / "plom-selfsigned.crt"
+    if key.is_file() and cert.is_file():
         print("SSL key and certificate already exist - will not change.")
         return
 
@@ -138,13 +142,13 @@ def buildSSLKeys():
 
 
 def createServerConfig():
-    sd = os.path.join("serverConfiguration", "serverDetails.toml")
-    if os.path.isfile(sd):
+    sd = server_conf_dir / "serverDetails.toml"
+    if sd.exists():
         print("Server config already exists - will not change.")
         return
 
     template = pkg_resources.resource_string("plom", "serverDetails.toml")
-    with open(os.path.join(sd), "wb") as fh:
+    with open(sd, "wb") as fh:
         fh.write(template)
     print(
         "Please update '{}' with the correct name (or IP) of your server and the port.".format(
@@ -154,8 +158,8 @@ def createServerConfig():
 
 
 def createBlankPredictions():
-    pl = Path(specdir) / "predictionlist.csv"
-    if os.path.isfile(pl):
+    pl = specdir / "predictionlist.csv"
+    if pl.exists():
         print("Predictionlist already present.")
         return
     print(
@@ -171,6 +175,7 @@ def doLatexChecks():
 
     os.makedirs("pleaseCheck", exist_ok=True)
 
+    # TODO: big ol' GETCWD here: we're trying to get rid of those
     # check build of fragment
     cdir = os.getcwd()
     keepfiles = ("checkThing.png", "pns.0.0.0.png")
@@ -246,23 +251,38 @@ def initialiseServer():
 #################
 
 
-def processUsers(userFile, demo, auto):
+def processUsers(userFile, demo, auto, auto_num):
+    """Deal with processing and/or creation of username lists.
+
+    Behaviour different depending on the args.
+
+    args:
+        userFile (str/pathlib.Path): a filename of usernames/passwords
+            for the server.
+        demo (bool): make canned demo with known usernames/passwords.
+        auto (bool): autogenerate usernames and passwords.
+        auto_num (bool): autogenerate usernames like "user03" and pwds.
+
+    return:
+        None
+    """
     # if we have been passed a userFile then process it and return
     if userFile:
         print("Processing user file '{}' to 'userList.json'".format(userFile))
-        if os.path.isfile(Path("serverConfiguration") / "userList.json"):
-            print("WARNING - this will overwrite the existing userList.json file.")
+        if (server_conf_dir / "userList.json").exists():
+            print("WARNING - this is overwriting the existing userList.json file.")
         from plom.server import manageUserFiles
 
         manageUserFiles.parse_user_list(userFile)
         return
 
     # otherwise we have to make one for the user - check if one already there.
-    if os.path.isfile(os.path.join("serverConfiguration", "userListRaw.csv")):
-        print(
-            "File 'userListRaw.csv' already exists in 'serverConfiguration'. Remove before continuing. Aborting."
+    if (server_conf_dir / "userListRaw.csv").exists():
+        raise FileExistsError(
+            "File '{}' already exists.  Remove and try again.".format(
+                server_conf_dir / "userListRaw.csv"
+            )
         )
-        exit(1)
 
     if demo:
         print(
@@ -270,40 +290,53 @@ def processUsers(userFile, demo, auto):
         )
         from plom.server import manageUserFiles
 
-        rawfile = Path("serverConfiguration") / "userListRaw.csv"
+        rawfile = server_conf_dir / "userListRaw.csv"
         cl = pkg_resources.resource_string("plom", "demoUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
         manageUserFiles.parse_user_list(rawfile)
         return
 
-    if auto is not None:
-        print("Creating an auto-generated user list at userListRaw.csv.")
+    if auto or auto_num:
+        if auto:
+            N = auto
+            numbered = False
+        if auto_num:
+            N = auto_num
+            numbered = True
+        del auto
+        del auto_num
         print(
-            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
+            "Creating an auto-generated {0} user list at '{1}'\n"
+            "Please edit as you see fit and then rerun 'plom-server users {1}'".format(
+                "numbered" if numbered else "named",
+                server_conf_dir / "userListRaw.csv",
+            )
         )
         from plom.server import manageUserFiles
 
         # grab required users and regular users
-        lst = manageUserFiles.build_canned_users(auto)
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
+        lst = manageUserFiles.build_canned_users(N, numbered)
+        with open(server_conf_dir / "userListRaw.csv", "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
                 fh.write('"{}", "{}"\n'.format(np[0], np[1]))
-
         return
 
     if not userFile:
         print(
-            "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
+            "Creating '{}' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters.".format(
+                server_conf_dir / "userListRaw.csv"
+            )
         )
         cl = pkg_resources.resource_string("plom", "templateUserList.csv")
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
+        with open(server_conf_dir / "userListRaw.csv", "wb") as fh:
             fh.write(cl)
 
 
 #################
 def checkDirectories():
+    # TODO unix paths hardcoded
     lst = [
         "pages",
         "pages/discardedPages",
@@ -323,22 +356,22 @@ def checkDirectories():
 
 
 def checkServerConfigured():
-    if not os.path.isfile(os.path.join("serverConfiguration", "serverDetails.toml")):
+    if not (server_conf_dir / "serverDetails.toml").exists():
         print("Server configuration file not present. Have you run 'plom-server init'?")
         exit(1)
 
-    if not os.path.isfile(os.path.join("serverConfiguration", "userList.json")):
+    if not (server_conf_dir / "userList.json").exists():
         print("Processed userlist is not present. Have you run 'plom-server users'?")
         exit(1)
 
     if not (
-        os.path.isfile(os.path.join("serverConfiguration", "plom.key"))
-        and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt"))
+        (server_conf_dir / "plom.key").exists()
+        and (server_conf_dir / "plom-selfsigned.crt").exists()
     ):
         print("SSL keys not present. Have you run 'plom-server init'?")
         exit(1)
 
-    if os.path.isfile(Path(specdir) / "predictionlist.csv"):
+    if (specdir / "predictionlist.csv").exists():
         print("Predictionlist present.")
     else:
         print(
@@ -401,7 +434,13 @@ grp.add_argument(
     "--auto",
     type=int,
     metavar="N",
-    help="Construct an auto-generated user list of N users.",
+    help="Construct an auto-generated user list of N users with real-ish usernames.",
+)
+grp.add_argument(
+    "--auto-numbered",
+    type=int,
+    metavar="N",
+    help='Construct an auto-generated user list of "user17"-like usernames.',
 )
 
 
@@ -411,8 +450,7 @@ def main():
     if args.command == "init":
         initialiseServer()
     elif args.command == "users":
-        # process the class list and copy into place
-        processUsers(args.userlist, args.demo, args.auto)
+        processUsers(args.userlist, args.demo, args.auto, args.auto_numbered)
     elif args.command == "launch":
         launchTheServer(args.masterToken)
     else:

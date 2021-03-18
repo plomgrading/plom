@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.5.21] - 2021-03-18
+
+### Changed
+* Server has more flexibility in creating demo/auto users with `--auto` and new `--auto-named`.
+
+### Fixed
+* Misc fixes.
+
+
 ## [0.5.19] - 2021-03-09
 
 ### Changed
@@ -408,7 +417,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.19...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.21...master
+[0.5.21]: https://gitlab.com/plom/plom/compare/v0.5.19...v0.5.21
 [0.5.19]: https://gitlab.com/plom/plom/compare/v0.5.18...v0.5.19
 [0.5.18]: https://gitlab.com/plom/plom/compare/v0.5.17...v0.5.18
 [0.5.17]: https://gitlab.com/plom/plom/compare/v0.5.16...v0.5.17
