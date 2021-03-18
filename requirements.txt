@@ -24,7 +24,7 @@ opencv-python==4.5.1.48
 packaging==20.9
 pandas==1.1.5
 passlib==1.7.4
-peewee==3.14.2
+peewee==3.14.3
 pycparser==2.20
 pymupdf==1.18.9
 # unlisted dep of pyqrcode
@@ -36,5 +36,5 @@ requests-toolbelt==0.9.1
 scikit-learn==0.24.1
 toml==0.10.2
 tqdm==4.59.0
-urllib3==1.26.3
-weasyprint==52.3
+urllib3==1.26.4
+weasyprint==52.4
