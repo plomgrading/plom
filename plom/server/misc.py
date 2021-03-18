@@ -26,7 +26,7 @@ server_dirs = (
     Path("pages") / "originalPages",
     Path("markedQuestions"),
     Path("markedQuestions") / "plomFiles",
-    Path("markedQuestions") / "commentFiles",
+    Path("userRubricPaneData"),
 )
 
 
