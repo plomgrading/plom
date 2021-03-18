@@ -266,6 +266,7 @@ class Annotator(QWidget):
 
         # after grabbed mode information, reset comment_widget
         self.comment_widget.reset()
+        self.comment_widget.setEnabled(False)
 
         del self.scene
         self.scene = None
@@ -376,6 +377,7 @@ class Annotator(QWidget):
         self.comment_widget.changeMark(self.score)
         self.comment_widget.setQuestionNumber(self.question_num)
         self.comment_widget.setTestname(testName)
+        self.comment_widget.setEnabled(True)
 
         if not self.markHandler:
             # Build the mark handler and put into the gui.
