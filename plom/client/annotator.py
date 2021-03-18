@@ -1782,6 +1782,8 @@ class Annotator(QWidget):
 
     def getComments(self):
         """ Retrieves comments from self.scene. """
+        if not self.scene:
+            return []
         return self.scene.getComments()
 
     def saveMarkerComments(self):
