@@ -711,6 +711,8 @@ class Annotator(QWidget):
         Returns:
             None: modifies self.testView
         """
+        if not self.tgvID:
+            return
         # grab the files if needed.
         testNumber = self.tgvID[:4]
         if self.testViewFiles is None:
@@ -734,6 +736,8 @@ class Annotator(QWidget):
         Returns:
             None
         """
+        if not self.tgvID or not self.scene:
+            return
         self.parentMarkerUI.Qapp.setOverrideCursor(Qt.WaitCursor)
         # disable ui before calling process events
         self.setEnabled(False)
