@@ -1854,6 +1854,11 @@ class RubricWidget(QWidget):
                 self.RTW.setTabText(n, self.RTW.widget(n).shortname)
 
     def setQuestionNumber(self, qn):
+        """Set question number being graded.
+
+        args:
+            qn (int/None): the question number.
+        """
         self.question_number = qn
 
     def setTestName(self, tn):
