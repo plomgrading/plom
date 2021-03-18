@@ -31,9 +31,6 @@ from plom.produce.demotools import buildDemoSourceFiles
 from plom.finish import clear_manager_login
 
 
-dbfile = os.path.join(specdir, "plom.db")
-
-
 def checkTomlExtension(fname):
     """Append a .toml extension if not present.
 
@@ -63,7 +60,7 @@ def parseAndVerifySpecification(fname):
     os.makedirs("sourceVersions", exist_ok=True)
     print('Parsing and verifying the specification "{}"'.format(fname))
     if not os.path.isfile(fname):
-        print('Cannot find "{}" - have you run "plom-build create" yet?'.format(fname))
+        print('Cannot find "{}" - try "plom-build new"?'.format(fname))
         exit(1)
 
     sv = SpecVerifier.from_toml_file(fname)
