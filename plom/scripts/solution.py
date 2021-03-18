@@ -24,15 +24,24 @@ def uploadSolutionImage(server, password, question, version, imageName):
 
 
 def getSolutionImage(server, password, question, version):
-    print("Get solution image for question {} version {}".format(question, version))
+    from plom.solution import getSolutionImage
+
+    img = getSolutionImage(question, version, server, password)
+    if img is not None:
+        with open("solution.{}.{}.png", "wb") as fh:
+            fh.write(img)
 
 
 def solutionStatus(server, password):
-    print("Get list of question/version and which have solution images")
+    from plom.solution import checkSolutionStatus
+
+    checkSolutionStatus.checkStatus(server, password)
 
 
-def clearLogin():
-    print("Clear manager login from server")
+def clearLogin(server, password):
+    from plom.solutions import clearManagerLogin
+
+    clearManagerLogin.clearLogin(server, password)
 
 
 parser = argparse.ArgumentParser(

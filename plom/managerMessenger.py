@@ -1609,3 +1609,116 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def RgetMarked(self, q, v):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/marked".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token, "q": q, "v": v},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def RgetSolutionStatus(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/solutions".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getSolutionImage(self, question, version):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/solution".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "version": version,
+                },
+            )
+            response.raise_for_status()
+
+            img = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                # TODO - replace this with a 204 code?
+                raise PlomBenignException(
+                    "No solution for {}.{} uploaded".format(question, version)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+        return img
+
+
+def putSolutionImageTestPage(self, question, version, filename):
+    self.SRmutex.acquire()
+    try:
+        param = {
+            "user": self.user,
+            "token": self.token,
+            "fileName": filename,
+            "question": question,
+            "version": version,
+            "md5sum": md5sum,
+        }
+        mime_type = mimetypes.guess_type(filename)[0]
+        dat = MultipartEncoder(
+            fields={
+                "param": json.dumps(param),
+                "originalImage": (sname, open(fileName, "rb"), mime_type),  # image
+            }
+        )
+        response = self.session.put(
+            "https://{}/admin/solution".format(self.server),
+            json={"user": self.user, "token": self.token},
+            data=dat,
+            headers={"Content-Type": dat.content_type},
+            verify=False,
+        )
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        if response.status_code == 401:
+            raise PlomAuthenticationException() from None
+        else:
+            raise PlomSeriousException(
+                "Some other sort of error {}".format(e)
+            ) from None
+    finally:
+        self.SRmutex.release()
+
+    return response.json()
