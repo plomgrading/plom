@@ -23,37 +23,11 @@ def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=Fals
     if not password:
         password = getpass('Please enter the "manager" password: ')
 
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        # TODO: bit annoying, maybe want manager UI open...
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        exit(10)
+    msgr.requestAndSaveToken("manager", password)
     try:
         spec = msgr.get_spec()
-        print("="*80)
-        print("TEMPORARILY HACKING VERSION MAP CLIENT SIDE")
-        print("="*80)
-        vmap = {}
-        for t in range(1, spec["numberToProduce"] + 1):
-            vmap[t] = {}
-            for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
-                gs = str(g + 1)  # now a str and 1,2,3,...
-                if spec["question"][gs]["select"] == "fix":
-                    vmap[t][g + 1] = 1
-                elif spec["question"][gs]["select"] == "shuffle":
-                    vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
-                elif spec["question"][gs]["select"] == "param":
-                    vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
-
         try:
-            status = msgr.TriggerPopulateDB(vmap)
+            status = msgr.TriggerPopulateDB()
         except PlomBenignException:
             print("Error: Server already has a populated database")
             exit(3)
@@ -90,3 +64,72 @@ def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=Fals
     finally:
         msgr.closeUser()
         msgr.stop()
+
+
+def make_random_ver_map(spec):
+    """Rough client-side version map.
+
+    args:
+        spec (dict): plom spec as documented elsewhere.  TODO: maybe
+            maybe better to pass only the bits we need.
+
+    return:
+        dict: a dict-of-dicts keyed by paper number (int) and then
+            question number (str, b/c WTF knows).  Values are integers.
+    """
+    vmap = {}
+    for t in range(1, Nspec["numberToProduce"] + 1):
+        vmap[t] = {}
+        for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
+            gs = str(g + 1)  # now a str and 1,2,3,...
+            if spec["question"][gs]["select"] == "fix":
+                vmap[t][g + 1] = 1
+            elif spec["question"][gs]["select"] == "shuffle":
+                vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
+            elif spec["question"][gs]["select"] == "param":
+                vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
+    return vmap
+
+
+def build_database_from_versions(server=None, password=None, vermap={}):
+    """Build the database from a pre-set version map.
+
+    args:
+        vermap (dict): TODO XREF ver map tools.  If empty dict, we have
+            server make its own mapping.
+        server (str):
+        password (str):
+    """
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    if not password:
+        password = getpass('Please enter the "manager" password: ')
+
+    msgr.requestAndSaveToken("manager", password)
+    try:
+        status = msgr.TriggerPopulateDB(vermap)
+    except PlomBenignException:
+        # TODO this should be a more specific exception
+        raise RuntimeError("Server already has a populated database") from None
+    print("TODO: what is this info?  TODO: stop this function from printing")
+    print(status)
+
+    # TODO: grab it and sanity check?
+    pvmap = msgr.getGlobalPageVersionMap()
+    # we want qvmap not pvmap
+    #assert pvmap == vermap
+
+    # Not our problem here?
+    # classlist = msgr.IDrequestClasslist()
+    # print("Checking papers produced and updating databases")
+    # confirm_processed(spec, msgr, classlist)
+    # print("Identifying any pre-named papers into the database")
+    # identify_prenamed(spec, msgr, classlist)
+
+    msgr.closeUser()
+    msgr.stop()
