@@ -78,3 +78,7 @@ class PlomTaskChangedError(PlomBenignException):
 
 class PlomTaskDeletedError(PlomBenignException):
     pass
+
+
+class PlomNoSolutionException(PlomBenignException):
+    pass

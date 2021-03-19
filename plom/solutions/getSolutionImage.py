@@ -49,7 +49,7 @@ def getSolutionImage(
 
     try:
         img = msgr.getSolutionImage(question, version)
-    except PlomBenignException as err:
+    except PlomNoSolutionException as err:
         print("No solution for question {} version {}".format(question, version))
         return None
 

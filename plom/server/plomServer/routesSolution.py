@@ -27,7 +27,7 @@ class SolutionHandler:
         if solutionFile is not None:
             return web.FileResponse(solutionFile, status=200)
         else:
-            return web.Response(status=404)
+            return web.Response(status=204)
 
     async def uploadSolutionImage(self, request):
         reader = MultipartReader.from_response(request)
@@ -72,5 +72,5 @@ class SolutionHandler:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
         """
         router.add_put("/admin/solution", self.uploadSolutionImage)
-        router.add_get("/admin/solution", self.getSolutionImage)
+        router.add_get("/MK/solution", self.getSolutionImage)
         router.add_get("/REP/solutions", self.getSolutionStatus)

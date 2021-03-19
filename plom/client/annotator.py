@@ -52,7 +52,7 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import OriginalScansViewer, RearrangementViewer
+from .origscanviewer import OriginalScansViewer, RearrangementViewer, SolutionViewer
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
@@ -120,6 +120,8 @@ class Annotator(QWidget):
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
         self.testViewFiles = None
+        # a solution view pop-up window - initially set to None
+        self.solutionView = None
 
         # declares some instance vars
         self.cursorBox = None
@@ -213,6 +215,8 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
+        m.addSeparator()
+        m.addAction("View solutions", self.viewSolutions)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
@@ -1163,6 +1167,7 @@ class Annotator(QWidget):
             ("keyHelp", "?", self.keyPopUp),
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
+            ("viewSolutions", Qt.Key_F2, self.viewSolutions),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -1778,6 +1783,11 @@ class Annotator(QWidget):
         self.annotator_done_reject.emit(self.tgvID)
         # clean up after a testview
         self.doneViewingPaper()
+        # clean up after a solution-view
+        if self.solutionView:
+            self.solutionView.close()
+            self.solutionView = None
+
         event.accept()
 
     def get_nonrubric_text_from_page(self):
@@ -2011,3 +2021,17 @@ class Annotator(QWidget):
     def modifyRubric(self, key, updated_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+
+    def viewSolutions(self):
+        solutionFile = self.parentMarkerUI.getSolutionImage()
+        if solutionFile is None:
+            ErrorMessage("No solution has been uploaded").exec_()
+            return
+
+        if self.solutionView is None:
+            self.solutionView = SolutionViewer(self, solutionFile)
+        self.solutionView.show()
+
+    def refreshSolutionImage(self):
+        # force a refresh
+        self.parentMarkerUI.refreshSolutionImage()

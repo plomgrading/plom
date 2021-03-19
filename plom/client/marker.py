@@ -55,6 +55,7 @@ from plom.plom_exceptions import (
     PlomException,
     PlomLatexException,
     PlomNoMoreException,
+    PlomNoSolutionException,
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
@@ -1792,6 +1793,31 @@ class MarkerClient(QWidget):
 
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
+
+    def getSolutionImage(self):
+        # get the file from disc if it exists, else grab from server
+        soln = os.path.join(
+            self.workingDirectory,
+            "solution.{}.{}.png".format(self.question, self.version),
+        )
+        if os.path.isfile(soln):
+            return soln
+        else:
+            return self.refreshSolutionImage()
+
+    def refreshSolutionImage(self):
+        # get solution and save it to temp dir
+        try:
+            im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
+            soln = os.path.join(
+                self.workingDirectory,
+                "solution.{}.{}.png".format(self.question, self.version),
+            )
+            with open(soln, "wb+") as fh:
+                fh.write(im_bytes)
+            return soln
+        except PlomNoSolutionException as err:
+            return None
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)

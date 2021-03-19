@@ -1658,7 +1658,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/admin/solution".format(self.server),
+                "https://{}/MK/solution".format(self.server),
                 verify=False,
                 json={
                     "user": self.user,
@@ -1668,16 +1668,15 @@ class ManagerMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
+            if response.status_code == 204:
+                raise PlomNoSolutionException(
+                    "No solution for {}.{} uploaded".format(question, version)
+                ) from None
 
             img = BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                # TODO - replace this with a 204 code?
-                raise PlomBenignException(
-                    "No solution for {}.{} uploaded".format(question, version)
-                ) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
