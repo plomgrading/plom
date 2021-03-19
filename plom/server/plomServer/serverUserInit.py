@@ -111,15 +111,21 @@ def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
     should be reset as todo.
     Then pass them back the authorisation token
     (the password is only checked on first authorisation - since slow)
+
+    returns:
+        tuple: `(True, token)` on success, `(False, code, user_readable)`
+            on failure.  Here `code` can be one of the strings "API",
+            "NotAuth", "Disabled", "HasToken" and `user_readable` is a
+            longer string appropriate for an user-centred error message.
     """
     if clientAPI != self.API:
-        return [
+        return (
             False,
-            "API"
+            "API",
             'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
                 clientAPI, self.API, self.Version
             ),
-        ]
+        )
 
     if not self.checkPassword(user, password):
         log.warning(
@@ -127,19 +133,24 @@ def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
                 user, remote_ip, client_ver
             )
         )
-        return [False, "The name / password pair is not authorised"]
+        return (False, "NotAuth", "The name / password pair is not authorised")
 
     if not self.checkUserEnabled(user):
         log.info('User "{}" logged in but account is disabled by manager'.format(user))
-        return [
+        return (
             False,
-            "The name / password pair has been disabled. Contact your instructor.",
-        ]
+            "Disabled",
+            "User login has been disabled. Contact your administrator?",
+        )
 
     # Now check if user already logged in - ie has token already.
     if self.DB.userHasToken(user):
         log.debug('User "{}" already has token'.format(user))
-        return [False, "UHT", "User already has token."]
+        return (
+            False,
+            "HasToken",
+            "User already has token: perhaps logged in elsewhere or previous session crashed?",
+        )
     # give user a token, and store the xor'd version.
     [clientToken, storageToken] = self.authority.create_token()
     self.DB.setUserToken(user, storageToken)
@@ -151,7 +162,7 @@ def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
             user, remote_ip, client_ver
         )
     )
-    return [True, clientToken]
+    return (True, clientToken)
 
 
 def setUserEnable(self, user, enableFlag):

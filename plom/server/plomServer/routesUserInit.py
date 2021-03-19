@@ -116,13 +116,11 @@ class UserInitHandler:
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)  # all good, return the token
         elif rmsg[1].startswith("API"):
-            return web.json_response(
-                rmsg[1], status=400
-            )  # api error - return the error message
-        elif rmsg[1].startswith("UHT"):
-            return web.json_response(rmsg[1], status=409)  # user has token already.
+            return web.json_response(rmsg[2], status=400)
+        elif rmsg[1].startswith("HasToken"):
+            return web.json_response(rmsg[2], status=409)
         else:
-            return web.json_response(rmsg[1], status=401)  # you are not authorised
+            return web.json_response(rmsg[2], status=401)  # you are not authorised
 
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
