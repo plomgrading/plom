@@ -21,6 +21,23 @@ def uploadSolutionImage(server, password, question, version, imageName):
     putSolutionImage.putSolutionImage(question, version, imageName, server, password)
 
 
+def deleteSolutionImage(server, password, question, version):
+    from plom.solutions import deleteSolutionImage
+
+    if deleteSolutionImage.deleteSolutionImage(question, version, server, password):
+        print(
+            "Successfully removed solution to question {} version {}".format(
+                question, version
+            )
+        )
+    else:
+        print(
+            "There was no solution to question {} version {} to remove".format(
+                question, version
+            )
+        )
+
+
 def getSolutionImage(server, password, question, version):
     from plom.solutions import getSolutionImage
 
@@ -58,13 +75,18 @@ sub = parser.add_subparsers(dest="command")
 
 spU = sub.add_parser(
     "upload",
-    help="Upload solution image to scanner",
-    description="Upload solution image to scanner.",
+    help="Upload solution image to server",
+    description="Upload solution image to server.",
 )
 spG = sub.add_parser(
     "get",
-    help="Get solution image to scanner",
-    description="Upload solution image to scanner.",
+    help="Get solution image to server",
+    description="Get solution image from server.",
+)
+spD = sub.add_parser(
+    "delete",
+    help="Delete solution image to scanner",
+    description="Delete solution image from server.",
 )
 spS = sub.add_parser(
     "status",
@@ -99,8 +121,18 @@ spG.add_argument(
     action="store",
     help="The version to get",
 )
+spD.add_argument(
+    "q",
+    action="store",
+    help="The question to delete",
+)
+spD.add_argument(
+    "v",
+    action="store",
+    help="The version to delete",
+)
 
-for x in (spU, spG, spS, spC):
+for x in (spU, spG, spD, spS, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -123,6 +155,8 @@ def main():
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
     if args.command == "get":
         getSolutionImage(args.server, args.password, args.q, args.v)
+    if args.command == "delete":
+        deleteSolutionImage(args.server, args.password, args.q, args.v)
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "clear":

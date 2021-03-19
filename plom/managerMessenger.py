@@ -1719,3 +1719,31 @@ class ManagerMessenger(BaseMessenger):
                 ) from None
         finally:
             self.SRmutex.release()
+
+    def deleteSolutionImage(self, question, version):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.delete(
+                "https://{}/admin/solution".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "version": version,
+                },
+            )
+            response.raise_for_status()
+            if response.status_code == 200:
+                return True
+            if response.status_code == 204:
+                return False
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()

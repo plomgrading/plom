@@ -208,6 +208,7 @@ class Server:
     from .plomServer.serverSolution import (
         uploadSolutionImage,
         getSolutionImage,
+        deleteSolutionImage,
         getSolutionStatus,
     )
 

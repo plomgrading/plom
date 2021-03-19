@@ -29,6 +29,15 @@ class SolutionHandler:
         else:
             return web.Response(status=204)
 
+    @authenticate_by_token_required_fields(["user", "question", "version"])
+    def deleteSolutionImage(self, data, request):
+        q = data["question"]
+        v = data["version"]
+        if self.server.deleteSolutionImage(q, v):
+            return web.Response(status=200)
+        else:
+            return web.Response(status=204)
+
     async def uploadSolutionImage(self, request):
         reader = MultipartReader.from_response(request)
         # Dealing with the metadata.
@@ -72,5 +81,6 @@ class SolutionHandler:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the response functions to.
         """
         router.add_put("/admin/solution", self.uploadSolutionImage)
+        router.add_delete("/admin/solution", self.deleteSolutionImage)
         router.add_get("/MK/solution", self.getSolutionImage)
         router.add_get("/REP/solutions", self.getSolutionStatus)

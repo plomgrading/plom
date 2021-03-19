@@ -1807,16 +1807,19 @@ class MarkerClient(QWidget):
 
     def refreshSolutionImage(self):
         # get solution and save it to temp dir
+        soln = os.path.join(
+            self.workingDirectory,
+            "solution.{}.{}.png".format(self.question, self.version),
+        )
         try:
             im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
-            soln = os.path.join(
-                self.workingDirectory,
-                "solution.{}.{}.png".format(self.question, self.version),
-            )
             with open(soln, "wb+") as fh:
                 fh.write(im_bytes)
             return soln
         except PlomNoSolutionException as err:
+            # if a residual file is there, delete it
+            if os.path.isfile(soln):
+                os.remove(soln)
             return None
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
