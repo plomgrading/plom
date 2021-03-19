@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -40,6 +40,7 @@ import plom.finish.spreadsheet
 from plom.finish.spreadsheet import CSVFilename
 import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
+import plom.finish.reassemble_solutions
 import plom.finish.coded_return
 
 
@@ -132,12 +133,26 @@ spCodedReturn.add_argument(
         `--salt "Many a slip twixt the cup and the lip"`.
     """,
 )
+spSolution = sub.add_parser(
+    "solutions",
+    help="Create solution-PDFs to return to students",
+    description="""
+        If all solution images present, then this will build individualised
+        solution PDFs for the students (based on the particular q/v of their
+        test.
+    """,
+    epilog="""
+        WARNING: This command must be run on the server, and in the
+        server's directory (where you ran `plom-server launch`).
+        This may change in the future.
+    """,
+)
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
     description='Clear "manager" login after a crash or other expected event.',
 )
-for x in (spCheck, spCSV, spAssemble, spClear):
+for x in (spCheck, spCSV, spAssemble, spSolution, spClear):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
@@ -165,6 +180,8 @@ def main():
             plom.finish.reassemble_ID_only.main(args.server, args.password)
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
+    elif args.command == "solutions":
+        plom.finish.reassemble_solutions.main(args.server, args.password)
     elif args.command == "webpage":
         plom.finish.coded_return.main(args.hex, args.digits, args.salt)
     elif args.command == "clear":
