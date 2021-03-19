@@ -110,6 +110,14 @@ class BaseMessenger:
 
         The token is then used to authenticate future transactions with the server.
 
+        raises:
+            PlomAPIException: a mismatch between server/client versions.
+            PlomExistingLoginException: user already has a token:
+                currently, we do not support getting another one.
+            PlomAuthenticationException: wrong password, account
+                disabled, etc: check contents for details.
+            PlomSeriousException: something else unexpected such as a
+                network failure.
         """
         self.SRmutex.acquire()
         try:
@@ -126,13 +134,12 @@ class BaseMessenger:
             )
             # throw errors when response code != 200.
             response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
             self.token = response.json()
             self.user = user
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException(response.json()) from None
-            elif response.status_code == 400:  # API error
+            elif response.status_code == 400:
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:
                 raise PlomExistingLoginException(response.json()) from None
