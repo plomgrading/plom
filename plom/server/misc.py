@@ -27,6 +27,7 @@ server_dirs = (
     Path("markedQuestions"),
     Path("markedQuestions") / "plomFiles",
     Path("userRubricPaneData"),
+    Path("solutionImages"),
 )
 
 

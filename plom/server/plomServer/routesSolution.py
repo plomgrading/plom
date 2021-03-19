@@ -46,7 +46,6 @@ class SolutionHandler:
         if soln_metadata_object is None:  # weird error
             return web.Response(status=406)  # should have sent 2 parts
         soln_metadata = await soln_metadata_object.json()
-        print(soln_metadata)
         # Validate that the dictionary has these fields.
         if not validate_required_fields(
             soln_metadata, ["user", "token", "question", "version", "md5sum"]
@@ -54,7 +53,6 @@ class SolutionHandler:
             return web.Response(status=400)
         # make sure user = manager
         if soln_metadata["user"] != "manager":
-            print("ARGH")
             return web.Response(status=401)
         # Validate username and token.
         if not self.server.validate(soln_metadata["user"], soln_metadata["token"]):

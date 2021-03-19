@@ -17,6 +17,7 @@ import pkg_resources
 import pandas
 
 from plom.textools import buildLaTeX
+from plom.scan.scansToImages import processFileToBitmaps
 
 
 def getDemoClassList():
@@ -69,8 +70,18 @@ def buildDemoSourceFiles(solutions=False):
         # uncomment the line "% \printanswers..."
         if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions2.pdf"):
             return False
+        extractSolutionPages()
     # all done
     return True
+
+
+def extractSolutionPages():
+    processFileToBitmaps(
+        Path("sourceVersions") / "solutions1.pdf", Path("sourceVersions")
+    )
+    processFileToBitmaps(
+        Path("sourceVersions") / "solutions2.pdf", Path("sourceVersions")
+    )
 
 
 def buildLaTeXExam2(src, filename):

@@ -33,6 +33,17 @@ parser = argparse.ArgumentParser(
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
 
+# a list of solution page images (q,v,file)
+demo_solution_list = [
+    (1, 1, "solutions1-3.png"),
+    (2, 1, "solutions1-4.png"),
+    (3, 1, "solutions1-5.png"),
+    (1, 2, "solutions2-3.png"),
+    (2, 2, "solutions2-4.png"),
+    (3, 2, "solutions2-5.png"),
+]
+
+
 def main():
     args = parser.parse_args()
     print("Plom version {}".format(__version__))
@@ -100,6 +111,14 @@ def main():
     print("Replacing all missing questions.")
     subprocess.check_call(split("plom-hwscan missing -w 4567 -y"))
     # print(">> TODO << process loose pages")
+
+    # now upload solutions
+    print("Upload solutions to server")
+    for (q, v, f) in demo_solution_list:
+        fn = os.path.join("sourceVersions", f)
+        subprocess.check_call(
+            split("plom-solution upload -w 1234 {} {} {}".format(q, v, fn))
+        )
 
     time.sleep(0.5)
     try:

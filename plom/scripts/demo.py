@@ -40,6 +40,16 @@ parser.add_argument(
     help="How many fake exam papers for the demo (defaults to 20 if omitted)",
 )
 
+# a list of solution page images (q,v,file)
+demo_solution_list = [
+    (1, 1, "solutions1-3.png"),
+    (2, 1, "solutions1-4.png"),
+    (3, 1, "solutions1-5.png"),
+    (1, 2, "solutions2-3.png"),
+    (2, 2, "solutions2-4.png"),
+    (3, 2, "solutions2-5.png"),
+]
+
 
 def main():
     args = parser.parse_args()
@@ -111,6 +121,14 @@ def main():
             split("plom-scan process -w 4567 {} {}.pdf".format(opts, f))
         )
         subprocess.check_call(split("plom-scan upload -w 4567 -u {}".format(f)))
+
+    # now upload solutions
+    print("Upload solutions to server")
+    for (q, v, f) in demo_solution_list:
+        fn = os.path.join("sourceVersions", f)
+        subprocess.check_call(
+            split("plom-solution upload -w 1234 {} {} {}".format(q, v, fn))
+        )
 
     time.sleep(0.5)
     try:
