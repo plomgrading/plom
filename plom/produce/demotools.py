@@ -35,13 +35,14 @@ def getDemoClassListLength():
     return getDemoClassList().shape[0]
 
 
-def buildDemoSourceFiles():
+def buildDemoSourceFiles(solutions=False):
     """Builds the LaTeX source files for the demo.
 
     Returns:
         bool -- Returns True if successful, False if it failed.
     """
     os.makedirs("sourceVersions", exist_ok=True)
+    # make the test PDFs without solutions
     print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplate.tex")
     if not buildLaTeXExam2(content, Path("sourceVersions") / "version1.pdf"):
@@ -51,6 +52,24 @@ def buildDemoSourceFiles():
     content = pkg_resources.resource_string("plom", "testTemplates/latexTemplatev2.tex")
     if not buildLaTeXExam2(content, Path("sourceVersions") / "version2.pdf"):
         return False
+
+    # if requested then also make the pdfs with solutions
+    if solutions:
+        print("LaTeXing example solution file: latexTemplate.tex -> solution1.pdf")
+        content = pkg_resources.resource_string(
+            "plom", "testTemplates/latexTemplate.tex"
+        ).replace(b"% \\printanswers", b"\\printanswers")
+        # uncomment the line "% \printanswers..."
+        if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions1.pdf"):
+            return False
+        print("LaTeXing example exam file: latexTemplatev2.tex -> solutions2.pdf")
+        content = pkg_resources.resource_string(
+            "plom", "testTemplates/latexTemplatev2.tex"
+        ).replace(b"% \\printanswers", b"\\printanswers")
+        # uncomment the line "% \printanswers..."
+        if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions2.pdf"):
+            return False
+    # all done
     return True
 
 

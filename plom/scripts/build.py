@@ -225,8 +225,10 @@ def main():
         if not args.demo:
             print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
         if args.demo:
-            print("DEMO MODE: building source files: version1.pdf, version2.pdf")
-            if not buildDemoSourceFiles():
+            print(
+                "DEMO MODE: building source files: version1.pdf, version2.pdf, solution1.pdf, solutions2.pdf"
+            )
+            if not buildDemoSourceFiles(solutions=True):
                 exit(1)
             print('DEMO MODE: continuing as if "parse" command was run...')
             parseAndVerifySpecification(fname)
