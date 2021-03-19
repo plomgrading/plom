@@ -16,6 +16,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTakenException,
     PlomNoMoreException,
+    PlomNoSolutionException,
     PlomRangeException,
 )
 from plom.baseMessenger import BaseMessenger
