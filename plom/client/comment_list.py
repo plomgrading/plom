@@ -1264,6 +1264,26 @@ class RubricTable(QTableWidget):
         a = QAction("Add new pane", self)
         a.triggered.connect(lambda: self.parent.add_new_tab())
         menu.addAction(a)
+        a = QAction("Remove this pane...", self)
+
+        def _local_delete_thyself():
+            # TODO: can we put all this in some close event?
+            # TODO: I don't like that we're hardcoding the parent structure here
+            msg = SimpleMessage(
+                f"<p>Are you sure you want to delete the pane &ldquo;{self.shortname}&rdquo;?</p>"
+                "<p>(The rubrics themselves will not be deleted).<p>"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            for n in range(self.parent.RTW.count()):
+                tab = self.parent.RTW.widget(n)
+                if tab == self:
+                    self.parent.RTW.removeTab(n)
+            self.clear()
+            self.deleteLater()
+
+        a.triggered.connect(_local_delete_thyself)
+        menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
 
