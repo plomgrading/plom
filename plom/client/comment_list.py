@@ -1266,7 +1266,7 @@ class RubricTable(QTableWidget):
         menu.addAction(a)
         a = QAction("Remove this pane...", self)
 
-        def foo():
+        def _local_delete_thyself():
             # TODO: can we put all this in some close event?
             # TODO: I don't like that we're hardcoding the parent structure here
             msg = SimpleMessage(
@@ -1282,7 +1282,7 @@ class RubricTable(QTableWidget):
             self.clear()
             self.deleteLater()
 
-        a.triggered.connect(foo)
+        a.triggered.connect(_local_delete_thyself)
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
