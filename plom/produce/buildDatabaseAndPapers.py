@@ -12,7 +12,7 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 
 
-def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=False):
+def build_papers(server=None, password=None, fakepdf=False, no_qr=False):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -26,21 +26,11 @@ def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=Fals
     msgr.requestAndSaveToken("manager", password)
     try:
         spec = msgr.get_spec()
-        try:
-            status = msgr.TriggerPopulateDB()
-        except PlomBenignException:
-            print("Error: Server already has a populated database")
-            exit(3)
-        print(status)
         pvmap = msgr.getGlobalPageVersionMap()
         os.makedirs(paperdir, exist_ok=True)
 
         if spec["numberToName"] > 0:
-            try:
-                classlist = msgr.IDrequestClasslist()
-            except PlomBenignException as e:
-                print("Failed to download classlist: {}".format(e))
-                exit(4)
+            classlist = msgr.IDrequestClasslist()
             print(
                 'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                     spec["numberToName"],
@@ -91,7 +81,7 @@ def make_random_ver_map(spec):
     return vmap
 
 
-def build_database_from_versions(server=None, password=None, vermap={}):
+def build_database(server=None, password=None, vermap={}):
     """Build the database from a pre-set version map.
 
     args:
@@ -99,6 +89,9 @@ def build_database_from_versions(server=None, password=None, vermap={}):
             server make its own mapping.
         server (str):
         password (str):
+
+    return:
+        str: long multiline string of all the version DB entries.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -116,20 +109,12 @@ def build_database_from_versions(server=None, password=None, vermap={}):
     except PlomBenignException:
         # TODO this should be a more specific exception
         raise RuntimeError("Server already has a populated database") from None
-    print("TODO: what is this info?  TODO: stop this function from printing")
-    print(status)
 
     # TODO: grab it and sanity check?
     pvmap = msgr.getGlobalPageVersionMap()
     # we want qvmap not pvmap
     #assert pvmap == vermap
 
-    # Not our problem here?
-    # classlist = msgr.IDrequestClasslist()
-    # print("Checking papers produced and updating databases")
-    # confirm_processed(spec, msgr, classlist)
-    # print("Identifying any pre-named papers into the database")
-    # identify_prenamed(spec, msgr, classlist)
-
     msgr.closeUser()
     msgr.stop()
+    return status

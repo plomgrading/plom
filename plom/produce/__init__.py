@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 
@@ -15,4 +15,5 @@ from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .buildClasslist import process_class_list
 from .upload_classlist import upload_classlist
 from .upload_classlist import get_messenger
-from .buildDatabaseAndPapers import buildDatabaseAndPapers
+from .buildDatabaseAndPapers import build_database, build_papers
+from .buildDatabaseAndPapers import make_random_ver_map

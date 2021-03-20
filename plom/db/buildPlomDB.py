@@ -162,5 +162,4 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
                 ok = False
         status += "\n"
 
-    print("ok, status = ", ok, status)
     return ok, status

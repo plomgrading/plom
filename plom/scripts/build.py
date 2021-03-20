@@ -23,7 +23,7 @@ from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
 from plom.produce import process_class_list, get_messenger, upload_classlist
-from plom.produce import buildDatabaseAndPapers
+from plom.produce import build_database, build_papers
 from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
 
@@ -244,7 +244,9 @@ def main():
         print("Last student = {}.".format(cl[-1]))
 
     elif args.command == "make":
-        buildDatabaseAndPapers(args.server, args.password, args.no_pdf, args.without_qr)
+        status = build_database(args.server, args.password)
+        print(status)
+        build_papers(args.server, args.password, args.no_pdf, args.without_qr)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
