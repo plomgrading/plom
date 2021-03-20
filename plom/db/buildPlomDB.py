@@ -7,6 +7,7 @@ import logging
 import random
 
 from plom.db import PlomDB
+from plom.produce import check_version_map
 
 
 log = logging.getLogger("DB")
@@ -74,6 +75,8 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
         ValueError: if database already populated.
         KeyError: question selection scheme is invalid.
     """
+    if preset_ver_map:
+        check_version_map(preset_ver_map)
 
     buildSpecialRubrics(spec, db)
 

@@ -8,6 +8,7 @@ import random
 
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
 from plom.produce import paperdir
+from plom.produce import check_version_map
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 
@@ -56,31 +57,6 @@ def build_papers(server=None, password=None, fakepdf=False, no_qr=False):
         msgr.stop()
 
 
-def make_random_ver_map(spec):
-    """Rough client-side version map.
-
-    args:
-        spec (dict): plom spec as documented elsewhere.  TODO: maybe
-            maybe better to pass only the bits we need.
-
-    return:
-        dict: a dict-of-dicts keyed by paper number (int) and then
-            question number (str, b/c WTF knows).  Values are integers.
-    """
-    vmap = {}
-    for t in range(1, Nspec["numberToProduce"] + 1):
-        vmap[t] = {}
-        for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
-            gs = str(g + 1)  # now a str and 1,2,3,...
-            if spec["question"][gs]["select"] == "fix":
-                vmap[t][g + 1] = 1
-            elif spec["question"][gs]["select"] == "shuffle":
-                vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
-            elif spec["question"][gs]["select"] == "param":
-                vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
-    return vmap
-
-
 def build_database(server=None, password=None, vermap={}):
     """Build the database from a pre-set version map.
 
@@ -102,6 +78,8 @@ def build_database(server=None, password=None, vermap={}):
 
     if not password:
         password = getpass('Please enter the "manager" password: ')
+
+    check_version_map(vermap)
 
     msgr.requestAndSaveToken("manager", password)
     try:
