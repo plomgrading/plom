@@ -23,10 +23,7 @@ def _parfcn(z):
     Args:
         z (tuple): Arguments to reassemble and makeCover.
     """
-    x, y = z
-    if x and y:
-        makeCover(*x)
-        reassemble(*y)
+    reassemble(*z)
 
 
 def checkAllSolutionsPresent(solutionList):
@@ -38,12 +35,32 @@ def checkAllSolutionsPresent(solutionList):
     return True
 
 
-def build_solutions(msgr, testNumber):
-    cpi = msgr.RgetCoverPageInfo(testNumber)
-    # cpi is list of [[sid, sname], [q,v,m], [q,v,m]]
-    version_list = [X[1] for X in cpi[1:]]
-    print("Soln for sid {} = images {}".format(cpi[0][0], version_list))
-    return (testNumber, cpi[0], version_list)
+def build_reassemble_args(msgr, short_name, out_dir, t):
+    """Builds the information for reassembling the entire test.
+
+    Args:
+        msgr (FinishMessenger): Messenger object that talks to the server.
+        short_name (str): name of the test without the student id.
+        out_dir (str): The directory we are putting the cover page in.
+        t (int): Test number.
+
+    Returns:
+       tuple : (outname, short_name, sid, covername, rnames)
+    """
+    info = msgr.RgetCoverPageInfo(t)
+    # info is list of [[sid, sname], [q,v,m], [q,v,m]]
+    sid = info[0][0]
+    # make soln-file-List
+    # solns are hard-coded solutionImages/solution.q.v.png
+    sfiles = []
+    for X in info[1:]:
+        sfiles.append(
+            os.path.join("solutionImages", "solution.{}.{}.png".format(X[0], X[1]))
+        )
+
+    out_dir = Path(out_dir)
+    outname = out_dir / "{}_solutions_{}.pdf".format(short_name, sid)
+    return (outname, short_name, sid, sfiles)
 
 
 def main(server=None, pwd=None):
@@ -78,8 +95,7 @@ def main(server=None, pwd=None):
         msgr.stop()
         exit(1)
 
-    outDir = "reassembled"
-    os.makedirs("solutions", exist_ok=True)
+    outDir = "solutions"
     os.makedirs(outDir, exist_ok=True)
 
     solutionList = msgr.getSolutionStatus()
@@ -93,13 +109,24 @@ def main(server=None, pwd=None):
 
     # dict key = testnumber, then list id'd, #q's marked
     completedTests = msgr.RgetCompletionStatus()
+    # arg-list for reassemble solutions
+    solution_args = []
     for t in completedTests:
         # check if the given test is ready for reassembly (and hence soln ready for reassembly)
         if completedTests[t][0] == True and completedTests[t][1] == numberOfQuestions:
-            build_solutions(msgr, t)
+            # append args for this test to list
+            solution_args.append(build_reassemble_args(msgr, shortName, outDir, t))
 
     msgr.closeUser()
     msgr.stop()
+
+    N = len(solution_args)
+    print("Reassembling {} papers...".format(N))
+    with Pool() as p:
+        r = list(tqdm(p.imap_unordered(_parfcn, solution_args), total=N))
+    # Serial
+    # for z in solution_args
+    #    _parfcn(z)
 
 
 if __name__ == "__main__":
