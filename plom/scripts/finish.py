@@ -104,6 +104,13 @@ spCodedReturn = sub.add_parser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 spCodedReturn.add_argument(
+    "--solutions",
+    action="store_true",
+    help="""
+        Add a 'get solutions' button to the return website.
+    """,
+)
+spCodedReturn.add_argument(
     "--hex",
     action="store_true",
     help="""
@@ -183,7 +190,7 @@ def main():
     elif args.command == "solutions":
         plom.finish.reassemble_solutions.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main(args.hex, args.digits, args.salt)
+        plom.finish.coded_return.main(args.hex, args.digits, args.salt, args.solutions)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
