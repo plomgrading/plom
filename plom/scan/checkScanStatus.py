@@ -93,7 +93,7 @@ def checkStatus(server=None, pwd=None):
                 format_int_list_with_runs(scannedHWPages),
             )
         )
-    print("Number of scanned tests in the system:", len(ST))
+    print("Number of scanned tests in the system: {}".format(len(ST)))
     print("Incomplete scans - listed with their missing pages: ")
     for t in IT:
         missingPagesT = []
