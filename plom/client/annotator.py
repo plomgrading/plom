@@ -300,6 +300,7 @@ class Annotator(QWidget):
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "rubric":  # stores as [a,b]
+            # if no rubric selected then key=None - be careful of this.
             self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
 
         # after grabbed mode information, reset rubric_widget
@@ -416,10 +417,13 @@ class Annotator(QWidget):
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setToolMode(self.modeInformation[0])
         if self.modeInformation[0] == "rubric":
-            self.rubric_widget.setCurrentRubricKeyAndTab(  # stored as [a,b]
+            # self.modeInformation[1] = [a,b] = [key, tab-index]
+            if self.rubric_widget.setCurrentRubricKeyAndTab(
                 self.modeInformation[1][0], self.modeInformation[1][1]
-            )
-            self.rubric_widget.handleClick()
+            ):
+                self.rubric_widget.handleClick()
+            else:  # if that rubric-mode-set fails (eg - no such rubric)
+                self.scene.setToolMode("move")
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.changeMark(self.score, self.maxMark)
         # update the displayed score - fixes #843
