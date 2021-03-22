@@ -1547,6 +1547,8 @@ class RubricTable(QTableWidget):
 
     def selectRubricByKey(self, key):
         """Select row with given key. Return true if works, else false"""
+        if key is None:
+            return False
         for r in range(self.rowCount()):
             if int(self.item(r, 0).text()) == int(key):
                 self.selectRow(r)
@@ -1848,20 +1850,33 @@ class RubricWidget(QWidget):
             tab.selectRubricByRow(0)
 
     def getCurrentRubricKeyAndTab(self):
-        """return the current rubric key and the current tab"""
+        """return the current rubric key and the current tab.
+
+        returns:
+            list: [a,b] where a=rubric-key=(int/none) and b=current tab index = int
+        """
         return [
             self.RTW.currentWidget().getCurrentRubricKey(),
             self.RTW.currentIndex(),
         ]
 
     def setCurrentRubricKeyAndTab(self, key, tab):
-        """set the current rubric key and the current tab"""
-        # check tab in range
+        """set the current rubric key and the current tab
+
+        args
+            key (int/None): which rubric to highlight.  If no None, no action.
+            tab (int): which tab to choose.
+
+        returns:
+            bool: True if we set a row, False if we could not find an appropriate row
+                b/c for example key or tab are invalid or not found.
+        """
+        if key is None:
+            return False
         if tab in range(0, self.RTW.count()):
             self.RTW.setCurrentIndex(tab)
         else:
             return False
-        # then try to set the rubric within that tab by its key - return false if fail
         return self.RTW.currentWidget().selectRubricByKey(key)
 
     def setStyle(self, markStyle):
