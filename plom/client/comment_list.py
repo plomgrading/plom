@@ -1856,8 +1856,13 @@ class RubricWidget(QWidget):
 
     def setCurrentRubricKeyAndTab(self, key, tab):
         """set the current rubric key and the current tab"""
-        self.RTW.setCurrentIndex(tab)
-        self.RTW.currentWidget().selectRubricByKey(key)
+        # check tab in range
+        if tab in range(0, self.RTW.count()):
+            self.RTW.setCurrentIndex(tab)
+        else:
+            return False
+        # then try to set the rubric within that tab by its key - return false if fail
+        return self.RTW.currentWidget().selectRubricByKey(key)
 
     def setStyle(self, markStyle):
         """Adjust to possible changes in marking style between down and up."""
