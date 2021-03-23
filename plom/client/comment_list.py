@@ -58,6 +58,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.comment_utils import comments_apply_default_fields
+from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import ErrorMessage, SimpleMessage
 from .rubric_wrangler import RubricWrangler
 
@@ -1730,6 +1731,8 @@ class RubricWidget(QWidget):
         """
         if not name:
             tab_names = [x.shortname for x in self.user_tabs]
+            name = next_in_longest_subsequence(tab_names)
+        if not name:
             syms = (
                 "\N{Black Star}",
                 "\N{Black Heart Suit}",
