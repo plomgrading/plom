@@ -93,7 +93,8 @@ def next_in_longest_subsequence(items):
     romans.extend(["x" + n for n in romans] + ["xx" + n for n in romans])
     smallints = range(1, 31)
 
-    # these are the sequences we will search for
+    # Each sequence we search is an iterable who iterates are strings
+    # (caution: ascii_lowercase is a string not a list).
     sequences = [
         string.ascii_lowercase,
         [f"{x}." for x in string.ascii_lowercase],
