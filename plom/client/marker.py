@@ -1065,7 +1065,7 @@ class MarkerClient(QWidget):
 
         # load in the rubric tab settings
         log.info("Loading user's rubric tab configuration")
-        rval = self.msgr.MgetUserRubricPanes(self.question)
+        rval = self.msgr.MgetUserRubricTabs(self.question)
         if rval[0]:
             self.annotatorSettings["rubricWranglerState"] = rval[1]
 
@@ -2104,7 +2104,7 @@ class MarkerClient(QWidget):
         self.DNF()
         # now save the annotator rubric tab state to server
 
-        if self.msgr.MsaveUserRubricPanes(
+        if self.msgr.MsaveUserRubricTabs(
             self.question, self.annotatorSettings["rubricWranglerState"]
         ):
             log.info("Saved user's rubric tab configuration to server")
