@@ -271,7 +271,10 @@ class Annotator(QWidget):
 
         km.addSeparator()
         m.addSeparator()
-
+        self.updown_act = QAction("Swap mark mode up/down")
+        self.updown_act.triggered.connect(self.swap_mode)
+        m.addAction(self.updown_act)
+        m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
@@ -2015,3 +2018,14 @@ class Annotator(QWidget):
     def modifyRubric(self, key, updated_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+
+    def swap_mode(self):
+        rubric_sign = self.scene.getSignOfRubrics()
+        if rubric_sign == 0:
+            SimpleMessage(
+                "There are no score-changing rubrics on the page; are you sure you wish to change the marking-style?"
+            )
+        else:
+            ErrorMessage(
+                "There are score-changing rubrics on the page; cannot change marking style."
+            )
