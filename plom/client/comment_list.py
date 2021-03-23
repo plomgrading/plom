@@ -58,6 +58,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.comment_utils import comments_apply_default_fields
+from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import ErrorMessage, SimpleMessage
 from .rubric_wrangler import RubricWrangler
 
@@ -1645,9 +1646,7 @@ class RubricWidget(QWidget):
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
         delta_label = "\N{Plus-minus Sign}\N{Greek Small Letter Delta}"
-        # useful others: \N{Rotated Floral Heart Bullet} \N{Double Dagger}
-        # \N{Black Spade Suit} \N{Black Heart Suit} \N{Black Diamond Suit} \N{Black Club Suit}
-        default_user_tabs = ["\N{Black Star}", "\N{Floral Heart}"]
+        default_user_tabs = ["\N{Black Star}", "\N{Black Heart Suit}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
@@ -1721,15 +1720,41 @@ class RubricWidget(QWidget):
             self.RTW.setTabText(n, self.RTW.widget(n).shortname)
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
 
-    def add_new_tab(self, name="new"):
+    def add_new_tab(self, name=None):
         """Add new user-defined tab either to end or near end.
 
         If the delta tab is last, insert before that.  Otherwise append
         to the end of tab list.
 
         args:
-            name (str): name of the new tab, default "new"
+            name (str/None): name of the new tab.  If omitted or None,
+                generate one from a set of symbols with digits appended
+                if necessary.
         """
+        if not name:
+            tab_names = [x.shortname for x in self.user_tabs]
+            name = next_in_longest_subsequence(tab_names)
+        if not name:
+            syms = (
+                "\N{Black Star}",
+                "\N{Black Heart Suit}",
+                "\N{Black Spade Suit}",
+                "\N{Black Diamond Suit}",
+                "\N{Black Club Suit}",
+                "\N{Double Dagger}",
+                "\N{Floral Heart}",
+                "\N{Rotated Floral Heart Bullet}",
+            )
+            extra = ""
+            counter = 0
+            while not name:
+                for s in syms:
+                    if s + extra not in tab_names:
+                        name = s + extra
+                        break
+                counter += 1
+                extra = f"{counter}"
+
         tab = RubricTable(self, shortname=name)
         n = self.RTW.count()
         if n >= 1 and self.RTW.widget(n - 1).is_delta_tab():
