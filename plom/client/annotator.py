@@ -212,6 +212,10 @@ class Annotator(QWidget):
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
+        self.swap_act = m.addAction("Switch to mark down mode\tF2", self.swap_mode)
+        if self.markStyle == 3:
+            self.swap_act.setText("Switch to mark up mode\tF2")
+        m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
@@ -268,10 +272,9 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
-
-        km.addSeparator()
         m.addSeparator()
 
+        km.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
@@ -1167,6 +1170,7 @@ class Annotator(QWidget):
             ("keyHelp", "?", self.keyPopUp),
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
+            ("swapMode", Qt.Key_F2, self.swap_mode),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -2015,3 +2019,44 @@ class Annotator(QWidget):
     def modifyRubric(self, key, updated_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+
+    def swap_mode(self):
+        rubric_sign = self.scene.getSignOfRubrics()
+        if rubric_sign == 0:
+            if self.markStyle == 2:
+                msg = "from up to down?"
+            else:
+                msg = "from down to up?"
+            if (
+                SimpleMessage(
+                    "There are no score-changing rubrics on the page; are you sure you wish to change the marking-style "
+                    + msg
+                ).exec_()
+                == QMessageBox.Yes
+            ):
+                # change the style (here)
+                if self.markStyle == 2:
+                    self.markStyle = 3
+                else:
+                    self.markStyle = 2
+                # set style in scene and rubric_widget
+                self.rubric_widget.setStyle(self.markStyle)
+                self.scene.setMarkStyle(self.markStyle)
+                # reset the delta rubrics
+                self.rubric_widget.resetDeltaRubrics()
+
+                # set the new mark and menu entry
+                if self.markStyle == 2:
+                    self.changeMark(0)
+                    self.swap_act.setText("Switch to mark down mode\tF2")
+                else:
+                    self.changeMark(self.maxMark)
+                    self.swap_act.setText("Switch to mark up mode\tF2")
+                # if in rubric mode - reselect (fixes ghost)
+                if self.scene.mode == "rubric":
+                    self.rubric_widget.reselectCurrentRubric()
+
+        else:
+            ErrorMessage(
+                "There are score-changing rubrics on the page; you cannot change marking style until those are deleted."
+            ).exec_()

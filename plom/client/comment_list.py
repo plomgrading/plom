@@ -2143,6 +2143,13 @@ class RubricWidget(QWidget):
             "tabs": [t.getKeyList() for t in self.user_tabs],
         }
 
+    def resetDeltaRubrics(self):
+        self.tabDelta.setDeltaRubrics(
+            self.markStyle,
+            self.maxMark,
+            self.rubrics,
+        )
+
 
 class SignedSB(QSpinBox):  # add an explicit sign to spinbox
     def textFromValue(self, n):
