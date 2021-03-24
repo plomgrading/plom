@@ -271,9 +271,7 @@ class Annotator(QWidget):
 
         km.addSeparator()
         m.addSeparator()
-        self.updown_act = QAction("Swap mark mode up/down")
-        self.updown_act.triggered.connect(self.swap_mode)
-        m.addAction(self.updown_act)
+        m.addAction("Swap mark mode up/down", self.swap_mode)
         m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
@@ -2021,11 +2019,40 @@ class Annotator(QWidget):
 
     def swap_mode(self):
         rubric_sign = self.scene.getSignOfRubrics()
+        print("RUBRIC SIGN = {}".format(rubric_sign))
         if rubric_sign == 0:
-            SimpleMessage(
-                "There are no score-changing rubrics on the page; are you sure you wish to change the marking-style?"
-            )
+            if self.markStyle == 2:
+                msg = "from up to down?"
+            else:
+                msg = "from down to up?"
+            if (
+                SimpleMessage(
+                    "There are no score-changing rubrics on the page; are you sure you wish to change the marking-style "
+                    + msg
+                ).exec_()
+                == QMessageBox.Yes
+            ):
+                # change the style (here)
+                if self.markStyle == 2:
+                    self.markStyle = 3
+                else:
+                    self.markStyle = 2
+                # set style in scene and rubric_widget
+                self.rubric_widget.setStyle(self.markStyle)
+                self.scene.setMarkStyle(self.markStyle)
+                # reset the delta rubrics
+                self.rubric_widget.resetDeltaRubrics()
+
+                # set the new mark
+                if self.markStyle == 2:
+                    self.changeMark(0)
+                else:
+                    self.changeMark(self.maxMark)
+                # if in rubric mode - reselect (fixes ghost)
+                if self.scene.mode == "rubric":
+                    self.rubric_widget.reselectCurrentRubric()
+
         else:
             ErrorMessage(
-                "There are score-changing rubrics on the page; cannot change marking style."
-            )
+                "There are score-changing rubrics on the page; you cannot change marking style until those are deleted."
+            ).exec_()

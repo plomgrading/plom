@@ -2101,3 +2101,6 @@ class PageScene(QGraphicsScene):
             "NO ANSWER GIVEN",
         )
         self.undoStack.push(command)
+
+    def setMarkStyle(self, style):
+        self.markStyle = style
