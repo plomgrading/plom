@@ -996,10 +996,6 @@ class RubricWidget(QWidget):
             self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % numtabs)
             self.handleClick()
 
-    # TODO: deprecated, remove soon, before v0.6.0
-    next_pane = next_tab
-    prev_pane = prev_tab
-
     def get_nonrubric_text_from_page(self):
         """Find any text that isn't already part of a formal rubric.
 

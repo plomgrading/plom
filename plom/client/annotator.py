@@ -660,11 +660,11 @@ class Annotator(QWidget):
     def prev_rubric(self):
         self.rubric_widget.previousRubric()
 
-    def next_pane(self):
-        self.rubric_widget.next_pane()
+    def next_tab(self):
+        self.rubric_widget.next_tab()
 
-    def prev_pane(self):
-        self.rubric_widget.prev_pane()
+    def prev_tab(self):
+        self.rubric_widget.prev_tab()
 
     def next_minor_tool(self, dir=1):
         """Switch to current minor tool or advance to next minor tool."""
@@ -921,12 +921,10 @@ class Annotator(QWidget):
     def keyToChangeRubric(self, keyNumber):
         """
         Translates a the numerical key into a selection of that visible
-        row of the current rubric pane.
-
+        row of the current rubric tab.
 
         Returns:
             None: modifies self.rubric_widget
-
         """
         # row is one less than key
         self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
@@ -1075,8 +1073,8 @@ class Annotator(QWidget):
             ("redo", "toRedo"),
             ("nextRubric", "rubricMode"),
             ("previousRubric", "prev_rubric"),
-            ("nextPane", "next_pane"),
-            ("previousPane", "prev_pane"),
+            ("nextTab", "next_tab"),
+            ("previousTab", "prev_tab"),
             ("nextTool", "next_minor_tool"),
             ("previousTool", "prev_minor_tool"),
             ("delete", "toDeleteMode"),
@@ -1125,8 +1123,8 @@ class Annotator(QWidget):
             ("redo", "toRedo"),
             ("nextRubric", "rubricMode"),
             ("previousRubric", "prev_rubric"),
-            ("nextPane", "next_pane"),
-            ("previousPane", "prev_pane"),
+            ("nextTab", "next_tab"),
+            ("previousTab", "prev_tab"),
             ("nextTool", "next_minor_tool"),
             ("previousTool", "prev_minor_tool"),
             ("delete", "toDeleteMode"),
