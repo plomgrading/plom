@@ -2020,7 +2020,6 @@ class Annotator(QWidget):
 
     def swap_mode(self):
         rubric_sign = self.scene.getSignOfRubrics()
-        print("RUBRIC SIGN = {}".format(rubric_sign))
         if rubric_sign == 0:
             if self.markStyle == 2:
                 msg = "from up to down?"
