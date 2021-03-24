@@ -212,7 +212,9 @@ class Annotator(QWidget):
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
-        m.addAction("Swap mark mode up/down\t(F2)", self.swap_mode)
+        self.swap_act = m.addAction("Swap to mark down mode\t(F2)", self.swap_mode)
+        if self.markStyle == 3:
+            self.swap_act.setText("Swap to mark up mode\t(F2)")
         m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
@@ -2043,11 +2045,13 @@ class Annotator(QWidget):
                 # reset the delta rubrics
                 self.rubric_widget.resetDeltaRubrics()
 
-                # set the new mark
+                # set the new mark and menu entry
                 if self.markStyle == 2:
                     self.changeMark(0)
+                    self.swap_act.setText("Swap to mark down mode\t(F2)")
                 else:
                     self.changeMark(self.maxMark)
+                    self.swap_act.setText("Swap to mark up mode\t(F2)")
                 # if in rubric mode - reselect (fixes ghost)
                 if self.scene.mode == "rubric":
                     self.rubric_widget.reselectCurrentRubric()
