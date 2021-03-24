@@ -212,6 +212,8 @@ class Annotator(QWidget):
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
+        m.addAction("Swap mark mode up/down\t(F2)", self.swap_mode)
+        m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
@@ -268,11 +270,9 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
+        m.addSeparator()
 
         km.addSeparator()
-        m.addSeparator()
-        m.addAction("Swap mark mode up/down", self.swap_mode)
-        m.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
@@ -1168,6 +1168,7 @@ class Annotator(QWidget):
             ("keyHelp", "?", self.keyPopUp),
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
+            ("swapMode", Qt.Key_F2, self.swap_mode),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:

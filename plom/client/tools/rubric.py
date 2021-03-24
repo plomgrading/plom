@@ -173,6 +173,16 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
 
+    def sign_of_delta(self):
+        if self.di.delta == ".":
+            return 0
+        elif int(self.di.delta) == 0:
+            return 0
+        elif int(self.di.delta) > 0:
+            return 1
+        else:
+            return -1
+
 
 class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):
