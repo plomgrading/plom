@@ -63,7 +63,7 @@ Some stuff from the package manager:
         python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pil \
-        python3-tqdm libpango-1.0 libpangocairo-1.0
+        python3-tqdm libpango-1.0-0 libpangocairo-1.0-0
 ```
 The pango stuff is needed for weasyprint.
 
