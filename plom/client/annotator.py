@@ -46,7 +46,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
 )
 
-from .comment_list import RubricWidget
+from .rubric_list import RubricWidget
 from .key_wrangler import KeyWrangler, key_layouts
 
 # import the key-help popup window class
