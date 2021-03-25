@@ -58,11 +58,10 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .comment_list import AddTagBox, commentLoadAllToml, commentIsVisible
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import GroupView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import ErrorMessage, SimpleMessage
+from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -2196,11 +2195,13 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
+        print("TODO - how to cache latex comments from rubric list on server")
+
         # TODO: deprecated, remove?  what do we want to do for comment pre-latexing?
         if True:
             return
 
-        clist = commentLoadAllToml()
+        clist = []
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C["text"]))
 
@@ -2220,7 +2221,7 @@ class MarkerClient(QWidget):
         username = self.msgr.whoami()
 
         for X in clist:
-            if commentIsVisible(X, n, username) and X["text"][:4].upper() == "TEX:":
+            if X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
