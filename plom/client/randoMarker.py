@@ -40,14 +40,14 @@ from plom.messenger import Messenger
 # comments which will be made into rubrics by pushing them to server and getting back keys
 # need different ones for each question
 negativeComments = [
-    (0, "Careful"),
+    (-1, "Careful"),
     (-1, "Algebra"),
     (-1, "Arithmetic"),
     (-2, "Sign error"),
     (-2, "Huh?"),
 ]
 positiveComments = [
-    (0, "Yes"),
+    (1, "Yes"),
     (1, "Nice"),
     (1, "Well done"),
     (2, "Good"),
@@ -156,49 +156,6 @@ class SceneParent(QWidget):
             self.scene.undoStack.push(
                 CommandText(self.scene, self.rpt(), rubric["text"])
             )
-
-    # def GDT(self):
-    #     dlt = random.choice([1, -1])
-    #     if self.markStyle == 2:  # mark up
-    #         dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
-    #         if dlt <= 0:  # just text
-    #             self.scene.undoStack.push(
-    #                 CommandText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     random.choice(self.negComments),
-    #                 )
-    #             )
-    #         else:
-    #             self.scene.undoStack.push(
-    #                 CommandGroupDeltaText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     0,
-    #                     dlt,
-    #                     random.choice(self.posComments),
-    #                 )
-    #             )
-    #     else:  # mark up
-    #         dlt *= random.randint(0, self.scene.score) // 2
-    #         if dlt >= 0:  # just text
-    #             self.scene.undoStack.push(
-    #                 CommandText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     random.choice(self.posComments),
-    #                 )
-    #             )
-    #         else:
-    #             self.scene.undoStack.push(
-    #                 CommandGroupDeltaText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     0,
-    #                     dlt,
-    #                     random.choice(self.negComments),
-    #                 )
-    #             )
 
     def doRandomAnnotations(self):
         br = self.scene.underImage.boundingRect()
