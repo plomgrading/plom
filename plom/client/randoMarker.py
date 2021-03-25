@@ -58,11 +58,12 @@ positiveRubrics = {}
 
 
 class SceneParent(QWidget):
-    def __init__(self, question):
+    def __init__(self, question, maxMark):
         super(SceneParent, self).__init__()
         self.view = PageView(self)
         self.ink = QPen(Qt.red, 2)
         self.question = question
+        self.maxMark = maxMark
 
     def doStuff(self, imageNames, saveName, maxMark, markStyle):
         self.saveName = saveName
@@ -70,16 +71,8 @@ class SceneParent(QWidget):
         for f in imageNames:
             src_img_data.append({"filename": f, "orientation": 0})
         self.imageFiles = imageNames
-        self.markStyle = markStyle
-        self.maxMark = maxMark
-        if markStyle == 2:
-            self.score = 0
-        else:
-            self.score = maxMark
 
-        self.scene = PageScene(
-            self, src_img_data, saveName, maxMark, self.score, None, markStyle
-        )
+        self.scene = PageScene(self, src_img_data, saveName, maxMark, None)
         self.view.connectScene(self.scene)
 
     def pickleIt(self):
@@ -88,9 +81,9 @@ class SceneParent(QWidget):
         plomDict = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
             "saveName": os.path.basename(self.saveName),
-            "markStyle": self.markStyle,
+            "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
-            "currentMark": self.score,
+            "currentMark": self.scene.getScore(),
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
@@ -131,17 +124,8 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        # check legality of delta
-        legal = True
-        newScore = self.scene.score + rubric["delta"]
-        if rubric["delta"] < 0 or newScore < 0 or newScore > self.maxMark:
-            legal = False
-        if self.markStyle == 2 and rubric["delta"] < 0:
-            legal = False
-        elif self.markStyle == 3 and rubric["delta"] > 0:
-            legal = False
-
-        if legal:  # legal delta push rubric
+        # only do rubric if it is legal
+        if self.scene.isLegalRubric("relative", rubric["delta"]):
             self.scene.undoStack.push(
                 CommandGroupDeltaText(
                     self.scene,
@@ -194,7 +178,7 @@ def annotatePaper(question, maxMark, task, imageList, aname, tags):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        annot = SceneParent(question)
+        annot = SceneParent(question, maxMark)
         annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
         annot.doRandomAnnotations()
         # Issue #1391: settle annotation events, avoid races with QTimers
@@ -251,7 +235,7 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "randoMarker",
+            "meta": "relative",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
@@ -264,7 +248,7 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "randoMarker",
+            "meta": "relative",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
