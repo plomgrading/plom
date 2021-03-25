@@ -379,6 +379,9 @@ class PageScene(QGraphicsScene):
         # after score and state are recomputed, we need to update a few things
         # the scorebox
         self.scoreBox.changeScore(self.score)
+        # TODO - this is a bit hack, but need to update the rubric-widget
+        self.parent.rubric_widget.changeMark(self.score, self.markingState)
+
         # the ghostcomment
         print("TODO - update ghost after score change")
 

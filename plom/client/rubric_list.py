@@ -67,6 +67,39 @@ colour_legal = QBrush(QColor(0, 0, 0))
 colour_illegal = QBrush(QColor(128, 128, 128, 128))
 
 
+def isLegalRubric(mss, meta, delta):
+    # mss = max, state, score
+    maxMark = mss[0]
+    state = mss[1]
+    score = mss[2]
+
+    # easy cases first
+    # when state is neutral - all rubrics are fine
+    # a neutral rubric is always fine
+    if state == "neutral" or meta == "neutral":
+        return True
+    # now, neither state nor meta are neutral
+
+    # consequently if state is absolute, no remaining rubric is legal
+    # similarly, if meta is absolute, the rubric is not legal since state is not netural
+    if state == "absolute" or meta == "absolute":
+        return False
+
+    # now state must be up or down, and meta must be delta or relative
+    # delta mark = delta = must be an non-zero int.
+    idelta = int(delta)
+    if state == "up":
+        if idelta > 0 and score + idelta <= maxMark:
+            return True
+        else:
+            return False
+    else:  # state == "down"
+        if idelta < 0 and score + idelta >= 0:
+            return True
+        else:
+            return False
+
+
 class RubricTable(QTableWidget):
     def __init__(self, parent, shortname=None, sort=False, tabType=None):
         super().__init__()
@@ -356,21 +389,17 @@ class RubricTable(QTableWidget):
 
         If its a dupe, don't add.
 
-        TODO: legalUp/Down stuff?  Not sure I follow.
-
         args
             key (str/int?): the key associated with a rubric.
 
         raises
             what happens on invalid key?
         """
-        legalDown, legalUp = self.parent.getLegalDownUp()
         # TODO: hmmm, should be dict?
         (rubric,) = [x for x in self.parent.rubrics if x["id"] == key]
-        self.appendNewRubric(rubric, legalDown, legalUp)
+        self.appendNewRubric(rubric)
 
-    def appendNewRubric(self, rubric, legalDown=None, legalUp=None):
-        # TODO: why does the caller need to determine this legalUp/Down stuff?
+    def appendNewRubric(self, rubric):
         rc = self.rowCount()
         # do sanity check for duplications
         for r in range(rc):
@@ -385,17 +414,10 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 4, QTableWidgetItem(rubric["meta"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
-        # set 'illegal' colour if out of range
-        if legalDown is not None and legalUp is not None:
-            v = deltaToInt(rubric["delta"])
-            if v > legalUp or v < legalDown:
-                self.item(rc, 2).setForeground(colour_illegal)
-                self.item(rc, 3).setForeground(colour_illegal)
-            else:
-                self.item(rc, 2).setForeground(colour_legal)
-                self.item(rc, 3).setForeground(colour_legal)
+        # set the legality
+        self.colourLegalRubric(rc, self.parent.mss)
 
-    def setRubricsByKeys(self, rubric_list, key_list, legalDown=None, legalUp=None):
+    def setRubricsByKeys(self, rubric_list, key_list):
         """Clear table and repopulate rubrics in the key_list"""
         # remove everything
         for r in range(self.rowCount()):
@@ -408,11 +430,11 @@ class RubricTable(QTableWidget):
             except (ValueError, KeyError, IndexError):
                 continue
 
-            self.appendNewRubric(rb, legalDown, legalUp)
+            self.appendNewRubric(rb)
 
         self.resizeColumnsToContents()
 
-    def setDeltaRubrics(self, markStyle, maxMark, rubrics):
+    def setDeltaRubrics(self, rubrics):
         """Clear table and repopulate with delta-rubrics"""
         # remove everything
         for r in range(self.rowCount()):
@@ -422,20 +444,11 @@ class RubricTable(QTableWidget):
         for rb in rubrics:
             # make sure you get the ones relevant to the marking style
             if rb["username"] == "manager" and rb["meta"] == "delta":
-                if markStyle == 2 and int(rb["delta"]) >= 0:
-                    delta_rubrics.append(rb)
-                if markStyle == 3 and int(rb["delta"]) <= 0:
-                    delta_rubrics.append(rb)
-        # to make sure the delta is legal, set legalUp,down
-        if markStyle == 2:
-            legalUp = maxMark
-            legalDown = 0
-        else:
-            legalUp = 0
-            legalDown = -maxMark
+                delta_rubrics.append(rb)
+
         # now sort in numerical order away from 0 and add
         for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
-            self.appendNewRubric(rb, legalDown, legalUp)
+            self.appendNewRubric(rb)
 
     def getKeyFromRow(self, row):
         return self.item(row, 0).text()
@@ -528,23 +541,28 @@ class RubricTable(QTableWidget):
             ]
         )
 
-    def updateLegalityOfDeltas(self, legalDown, legalUp):
-        """Style items according to legal range of a<=delta<=b"""
+    def colourLegalRubric(self, r, mss):
+        # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
+        if isLegalRubric(
+            mss, meta=self.item(r, 4).text(), delta=self.item(r, 2).text()
+        ):
+            self.item(r, 2).setForeground(colour_legal)
+            self.item(r, 3).setForeground(colour_legal)
+        else:
+            self.item(r, 2).setForeground(colour_illegal)
+            self.item(r, 3).setForeground(colour_illegal)
+
+    def updateLegalityOfDeltas(self, mss):
+        """Style items according to their legality based on max,state and score (mss)"""
         for r in range(self.rowCount()):
-            v = deltaToInt(self.item(r, 2).text())
-            if v > legalUp or v < legalDown:
-                self.item(r, 2).setForeground(colour_illegal)
-                self.item(r, 3).setForeground(colour_illegal)
-            else:
-                self.item(r, 2).setForeground(colour_legal)
-                self.item(r, 3).setForeground(colour_legal)
+            self.colourLegalRubric(r, mss)
 
     def editRow(self, tableIndex):
         r = tableIndex.row()
         rubricKey = self.item(r, 0).text()
         self.parent.edit_rubric(rubricKey)
 
-    def updateRubric(self, new_rubric, legalDown, legalUp):
+    def updateRubric(self, new_rubric, mss):
         for r in range(self.rowCount()):
             if self.item(r, 0).text() == new_rubric["id"]:
                 self.item(r, 1).setText(new_rubric["username"])
@@ -552,13 +570,7 @@ class RubricTable(QTableWidget):
                 self.item(r, 3).setText(new_rubric["text"])
                 self.item(r, 4).setText(new_rubric["meta"])
                 # update the legality
-                v = deltaToInt(new_rubric["delta"])
-                if v > legalUp or v < legalDown:
-                    self.item(r, 2).setForeground(colour_illegal)
-                    self.item(r, 3).setForeground(colour_illegal)
-                else:
-                    self.item(r, 2).setForeground(colour_legal)
-                    self.item(r, 3).setForeground(colour_legal)
+                self.colourLegalRubric(r, mss)
 
 
 class RubricWidget(QWidget):
@@ -574,9 +586,8 @@ class RubricWidget(QWidget):
         self.tgv = None
         self.parent = parent
         self.username = parent.username
-        self.markStyle = 2  # default to mark-up
         self.maxMark = None
-        self.currentMark = None
+        self.currentScore = None
         self.rubrics = None
 
         grid = QGridLayout()
@@ -773,7 +784,6 @@ class RubricWidget(QWidget):
         del curtabs
 
         # compute legality for putting things in tables
-        legalDown, legalUp = self.getLegalDownUp()
         for n, tab in enumerate(self.user_tabs):
             if n >= len(wranglerState["tabs"]):
                 # not enough data for number of tabs
@@ -783,25 +793,17 @@ class RubricWidget(QWidget):
             tab.setRubricsByKeys(
                 self.rubrics,
                 idlist,
-                legalDown=legalDown,
-                legalUp=legalUp,
             )
         self.tabS.setRubricsByKeys(
             self.rubrics,
             wranglerState["shown"],
-            legalDown=legalDown,
-            legalUp=legalUp,
         )
         self.tabDelta.setDeltaRubrics(
-            self.markStyle,
-            self.maxMark,
             self.rubrics,
         )
         self.tabHide.setRubricsByKeys(
             self.rubrics,
             wranglerState["hidden"],
-            legalDown=legalDown,
-            legalUp=legalUp,
         )
 
         # make sure something selected in each pane
@@ -874,33 +876,21 @@ class RubricWidget(QWidget):
         # TODO: do we need to do something about maxMark, currentMax, markStyle?
         # self.CL.populateTable()
 
-    def changeMark(self, currentMark, maxMark=None):
+    def changeMark(self, currentScore, currentState, maxMark=None):
         # Update the current and max mark and so recompute which deltas are displayed
         if maxMark:
             self.maxMark = maxMark
-
-        self.currentMark = currentMark
+        self.currentScore = currentScore
+        self.currentState = currentState
+        self.mss = [self.maxMark, self.currentState, self.currentScore]
         self.updateLegalityOfDeltas()
 
-    def getLegalDownUp(self):
-        # if score is x/N then largest legal delta = +(N-x)
-        legalUp = self.maxMark - self.currentMark
-        # if score is x/N then smallest legal delta = -x
-        legalDown = -self.currentMark
-        # now change upper/lower bounds depending on marking style
-        if self.markStyle == 2:  # mark up
-            legalDown = 0
-        elif self.markStyle == 3:  # mark down
-            legalUp = 0
-        return legalDown, legalUp
-
     def updateLegalityOfDeltas(self):
-        legalDown, legalUp = self.getLegalDownUp()
         # now redo each tab
-        self.tabS.updateLegalityOfDeltas(legalDown, legalUp)
-        self.tabDelta.updateLegalityOfDeltas(legalDown, legalUp)
+        self.tabS.updateLegalityOfDeltas(self.mss)
+        self.tabDelta.updateLegalityOfDeltas(self.mss)
         for tab in self.user_tabs:
-            tab.updateLegalityOfDeltas(legalDown, legalUp)
+            tab.updateLegalityOfDeltas(self.mss)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
@@ -951,13 +941,11 @@ class RubricWidget(QWidget):
 
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
-        legalDown, legalUp = self.getLegalDownUp()
-        self.tabS.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        self.tabS.appendNewRubric(self.rubrics[index])
 
     def hideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
-        legalDown, legalUp = self.getLegalDownUp()
-        self.tabHide.appendNewRubric(self.rubrics[index], legalDown, legalUp)
+        self.tabHide.appendNewRubric(self.rubrics[index])
 
     def add_new_rubric(self):
         """Open a dialog to create a new comment."""
@@ -1051,15 +1039,13 @@ class RubricWidget(QWidget):
             rubricID = rv[1]
             new_rubric["id"] = rubricID
             # at this point we have an accepted new rubric
-            # compute legaldown/up and add to rubric lists
-            legalDown, legalUp = self.getLegalDownUp()
             # add it to the internal list of rubrics
             self.rubrics.append(new_rubric)
             # append the rubric to the shownList
-            self.tabS.appendNewRubric(new_rubric, legalDown, legalUp)
+            self.tabS.appendNewRubric(new_rubric)
             # also add it to the list in the current rubriclist (if different)
             if self.RTW.currentWidget() != self.tabS:
-                self.RTW.currentWidget().appendNewRubric(new_rubric, legalDown, legalUp)
+                self.RTW.currentWidget().appendNewRubric(new_rubric)
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(rubricID)
         self.handleClick()
@@ -1082,8 +1068,6 @@ class RubricWidget(QWidget):
 
     def resetDeltaRubrics(self):
         self.tabDelta.setDeltaRubrics(
-            self.markStyle,
-            self.maxMark,
             self.rubrics,
         )
 

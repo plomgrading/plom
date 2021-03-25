@@ -386,8 +386,9 @@ class Annotator(QWidget):
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
-        # self.rubric_widget.setStyle(self.markStyle)
-        # self.rubric_widget.changeMark(self.getScore(), self.maxMark)
+        self.rubric_widget.changeMark(
+            self.getScore(), self.getMarkingState(), self.maxMark
+        )
         self.rubric_widget.setQuestionNumber(self.question_num)
         self.rubric_widget.setTestName(testName)
         self.rubric_widget.setEnabled(True)
@@ -404,9 +405,9 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.scene.setToolMode("move")
         # redo this after all the other rubric stuff initialised
-        # self.rubric_widget.changeMark(self.getScore(), self.maxMark)
-        print("TODO - UPDATE THIS")
-        self.rubric_widget.changeMark(0, self.maxMark)
+        self.rubric_widget.changeMark(
+            self.getScore(), self.getMarkingState(), self.maxMark
+        )
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
