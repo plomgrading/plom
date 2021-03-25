@@ -57,6 +57,13 @@ negativeRubrics = {}
 positiveRubrics = {}
 
 
+class RW:
+    """A dummy class needed for compatibility with pagescene."""
+
+    def changeMark(self, a, b):
+        pass
+
+
 class SceneParent(QWidget):
     def __init__(self, question, maxMark):
         super(SceneParent, self).__init__()
@@ -64,6 +71,7 @@ class SceneParent(QWidget):
         self.ink = QPen(Qt.red, 2)
         self.question = question
         self.maxMark = maxMark
+        self.rubric_widget = RW()  # a dummy class needed for compat with pagescene.
 
     def doStuff(self, imageNames, saveName, maxMark, markStyle):
         self.saveName = saveName
@@ -123,6 +131,13 @@ class SceneParent(QWidget):
             rubric = random.choice(positiveRubrics[self.question])
         else:
             rubric = random.choice(negativeRubrics[self.question])
+
+        self.scene.changeTheRubric(
+            rubric["delta"],
+            rubric["text"],
+            rubric["id"],
+            rubric["meta"],
+        )
 
         # only do rubric if it is legal
         if self.scene.isLegalRubric("relative", rubric["delta"]):

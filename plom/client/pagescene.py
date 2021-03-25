@@ -382,8 +382,7 @@ class PageScene(QGraphicsScene):
         # TODO - this is a bit hack, but need to update the rubric-widget
         self.parent.rubric_widget.changeMark(self.score, self.markingState)
 
-        # the ghostcomment
-        print("TODO - update ghost after score change")
+        # update the ghostcomment
         self.updateGhost(
             self.rubricDelta,
             self.rubricText,
