@@ -58,7 +58,6 @@ class CommandGroupDeltaText(QUndoCommand):
         self.scene.refreshStateAndScore()
 
     def undo(self):
-        print("Undo called")
         # Mark decreased by delta - handled by undo flag
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
         # after object removed, refresh the state and score

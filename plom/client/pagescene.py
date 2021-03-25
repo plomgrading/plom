@@ -384,6 +384,11 @@ class PageScene(QGraphicsScene):
 
         # the ghostcomment
         print("TODO - update ghost after score change")
+        self.updateGhost(
+            self.rubricDelta,
+            self.rubricText,
+            self.isLegalRubric(self.rubricMeta, self.rubricDelta),
+        )
 
     def refreshMarkingState(self):
         """Compute the marking-state from the rubrics on the page and store
