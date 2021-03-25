@@ -1447,8 +1447,8 @@ class Annotator(QWidget):
         """Pass comment ID, delta, and text the scene.
 
         Args:
-            dlt_txt (tuple): the comment ID number, delta, and string of
-                text, e.g., `[12345, -2, "missing chain rule"]`
+            dlt_txt (tuple): the delta, string of text, rubric_id, and
+            meta, e.g., `[-2, "missing chain rule", 12345, "relative"]`
 
         Returns:
             None: Modifies self.scene and self.toolMode
@@ -1457,7 +1457,7 @@ class Annotator(QWidget):
         self.setToolMode("rubric", QCursor(Qt.IBeamCursor))
         if self.scene:  # TODO: not sure why, Issue #1283 workaround
             self.scene.changeTheRubric(
-                dlt_txt[0], dlt_txt[1], dlt_txt[2], annotatorUpdate=True
+                dlt_txt[0], dlt_txt[1], dlt_txt[2], dlt_txt[3], annotatorUpdate=True
             )
 
     def changeMark(self, mark):
@@ -1959,9 +1959,9 @@ class Annotator(QWidget):
         """
         # ID for no-answer rubric is defined in the db_create module
         # in the createNoAnswerRubric function.
-        # rID = 1000 + 2 * questionNumber  # +0 for mark-up and +1 for mark-down
-        # build a delta-comment
-        noAnswerCID = 1000 + 2 * self.question_num
+        # rID = 1000 + questionNumber = is absolute rubric
+
+        noAnswerCID = 1000 + self.question_num
         # what we do depends on whether we are marking up or down.
         # mark-up leaves a "0", while mark-down leaves "-N"
         # Of course, have to check that no other delta-marks made.
@@ -1981,7 +1981,7 @@ class Annotator(QWidget):
                 return
             else:
                 # TODO: Linter cases this as an error.
-                self.scene.noAnswer(-self.maxMark, noAnswerCID + 1)
+                self.scene.noAnswer(-self.maxMark, noAnswerCID)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)

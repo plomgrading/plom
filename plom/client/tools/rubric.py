@@ -21,7 +21,7 @@ class CommandGroupDeltaText(QUndoCommand):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, rid, delta, text):
+    def __init__(self, scene, pt, rid, meta, delta, text):
         super().__init__()
         self.scene = scene
         self.gdt = GroupDeltaTextItem(
@@ -29,6 +29,7 @@ class CommandGroupDeltaText(QUndoCommand):
             delta,
             text,
             rid,
+            meta,
             scene=scene,
             style=scene.style,
             fontsize=scene.fontSize,
@@ -70,11 +71,12 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, rid, scene, style, fontsize):
+    def __init__(self, pt, delta, text, rid, meta, scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
         self.rubricID = rid
+        self.meta = meta
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
@@ -189,6 +191,7 @@ class GhostComment(QGraphicsItemGroup):
         super().__init__()
         self.di = GhostDelta(dlt, fontsize)
         self.rubricID = "987654"  # a dummy value
+        self.meta = "relative"  # another dummy value
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)

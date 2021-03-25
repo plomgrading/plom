@@ -355,6 +355,7 @@ class PageScene(QGraphicsScene):
         self.rubricText = ""
         self.rubricDelta = "0"
         self.rubricID = None
+        self.rubricMeta = ""
 
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
@@ -866,7 +867,12 @@ class PageScene(QGraphicsScene):
             pass
         else:
             command = CommandGroupDeltaText(
-                self, pt, self.rubricID, self.rubricDelta, self.rubricText
+                self,
+                pt,
+                self.rubricID,
+                self.rubricMeta,
+                self.rubricDelta,
+                self.rubricText,
             )
             log.debug(
                 "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
@@ -1753,6 +1759,7 @@ class PageScene(QGraphicsScene):
                     self,
                     event.scenePos(),
                     self.rubricID,
+                    self.rubricMeta,
                     self.rubricDelta,
                     self.rubricText,
                 )
@@ -2001,7 +2008,11 @@ class PageScene(QGraphicsScene):
         # TODO: any action on dot needed here?
         if self.mode == "rubric":
             self.changeTheRubric(
-                self.rubricDelta, self.rubricText, self.rubricID, annotatorUpdate=False
+                self.rubricDelta,
+                self.rubricText,
+                self.rubricID,
+                self.rubricMeta,
+                annotatorUpdate=False,
             )
 
     def undo(self):
@@ -2035,7 +2046,7 @@ class PageScene(QGraphicsScene):
                 return False
         return True
 
-    def changeTheRubric(self, delta, text, rubricID, annotatorUpdate=True):
+    def changeTheRubric(self, delta, text, rubricID, rubricMeta, annotatorUpdate=True):
         """
         Changes the new rubric for the paper based on the delta and text.
 
@@ -2068,6 +2079,7 @@ class PageScene(QGraphicsScene):
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID
+        self.rubricMeta = rubricMeta
         self.updateGhost(delta, text, legality)
 
     def noAnswer(self, delta, noAnswerCID):

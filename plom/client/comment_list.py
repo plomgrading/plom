@@ -1170,8 +1170,8 @@ class RubricTable(QTableWidget):
         self.verticalHeader().setFont(f)
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
-        self.setColumnCount(4)
-        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text"])
+        self.setColumnCount(5)
+        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text", "Meta"])
         self.hideColumn(0)
         self.hideColumn(1)
         # could use a subclass
@@ -1376,7 +1376,6 @@ class RubricTable(QTableWidget):
         self.handleClick()
 
     def dropEvent(self, event):
-        # TODO - simplify - only a single row is selected
         # fixed drop event using
         # https://stackoverflow.com/questions/26227885/drag-and-drop-rows-within-qtablewidget
         if event.source() == self:
@@ -1448,6 +1447,7 @@ class RubricTable(QTableWidget):
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
         self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
+        self.setItem(rc, 4, QTableWidgetItem(rubric["meta"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set 'illegal' colour if out of range
@@ -1583,12 +1583,13 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             return
-        # recall columns are ["Key", "Username", "Delta", "Text"])
-        self.parent.rubricSignal.emit(  # send delta, text, rubricID
+        # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
+        self.parent.rubricSignal.emit(  # send delta, text, rubricID, meta
             [
                 self.item(r, 2).text(),
                 self.item(r, 3).text(),
                 self.item(r, 0).text(),
+                self.item(r, 4).text(),
             ]
         )
 
@@ -1614,6 +1615,7 @@ class RubricTable(QTableWidget):
                 self.item(r, 1).setText(new_rubric["username"])
                 self.item(r, 2).setText(new_rubric["delta"])
                 self.item(r, 3).setText(new_rubric["text"])
+                self.item(r, 4).setText(new_rubric["meta"])
                 # update the legality
                 v = deltaToInt(new_rubric["delta"])
                 if v > legalUp or v < legalDown:
@@ -1627,7 +1629,7 @@ class RubricTable(QTableWidget):
 class RubricWidget(QWidget):
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
-    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text]
+    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, meta]
 
     def __init__(self, parent):
         # layout the widget - a table and add/delete buttons.
@@ -2151,7 +2153,20 @@ class RubricWidget(QWidget):
         )
 
 
-class SignedSB(QSpinBox):  # add an explicit sign to spinbox
+class SignedSB(QSpinBox):
+    # add an explicit sign to spinbox and no 0
+    # range is from -(N+1),..,-1,1,...(N-1)
+    def __init__(self, maxMark):
+        super().__init__()
+        self.setRange(-maxMark + 1, maxMark - 1)
+        self.setValue(1)
+
+    def stepBy(self, steps):
+        self.setValue(self.value() + steps)
+        # to skip 0.
+        if self.value() == 0:
+            self.setValue(self.value() + steps)
+
     def textFromValue(self, n):
         t = QSpinBox().textFromValue(n)
         if n > 0:
@@ -2180,16 +2195,16 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Add new rubric")
         self.CB = QComboBox()
         self.TE = QTextEdit()
-        self.SB = SignedSB()
+        self.SB = SignedSB(maxMark)
         # self.SB = QSpinBox()
         self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
-        self.TEmeta = QTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
         self.TEuser = QLabel()
+        self.TEmeta = QLabel("relative")
 
         sizePolicy = QSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
@@ -2199,8 +2214,6 @@ class AddRubricBox(QDialog):
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setVerticalStretch(2)
         self.TEtag.setSizePolicy(sizePolicy)
-        self.TEmeta.setSizePolicy(sizePolicy)
-        # TODO: TE is still a little too tall
         # TODO: make everything wider!
 
         flay = QFormLayout()
@@ -2231,7 +2244,6 @@ class AddRubricBox(QDialog):
         # set up widgets
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        self.SB.setRange(-maxMark, maxMark)
         self.CB.addItem("")
         self.CB.addItems(lst)
         # Set up TE and CB so that when CB changed, text is updated
@@ -2245,9 +2257,6 @@ class AddRubricBox(QDialog):
             if com["tags"]:
                 self.TEtag.clear()
                 self.TEtag.insertPlainText(com["tags"])
-            if com["meta"]:
-                self.TEmeta.clear()
-                self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
                 if com["delta"] == ".":
                     self.SB.setValue(0)
@@ -2264,10 +2273,6 @@ class AddRubricBox(QDialog):
                 'You can "choose text" to harvest existing text from the page.\n\n'
                 'Change "delta" below to associate a point-change.'
             )
-            self.TEmeta.setPlaceholderText(
-                "notes to self, hints on when to use this comment, etc.\n\n"
-                "Not shown to student!"
-            )
             self.TEuser.setText(username)
 
     def changedCB(self):
@@ -2277,5 +2282,7 @@ class AddRubricBox(QDialog):
     def toggleSB(self):
         if self.DE.checkState() == Qt.Checked:
             self.SB.setEnabled(True)
+            self.TEmeta.setText("relative")
         else:
+            self.TEmeta.setText("neutral")
             self.SB.setEnabled(False)
