@@ -205,10 +205,10 @@ class Annotator(QWidget):
         self.setMiscShortCuts()
 
     def currentScore(self):
-        return self.scene.currentScore()
+        return self.scene.getScore()
 
     def markingState(self):
-        return self.scene.markingState()
+        return self.scene.getMarkingState()
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once

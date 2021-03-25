@@ -38,7 +38,7 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, style, fontsize=10, maxScore=1, score=0, question=None):
+    def __init__(self, style, fontsize=10, maxScore=1, score=None, question=None):
         """
         Initialize a new ScoreBox.
 
@@ -68,7 +68,10 @@ class ScoreBox(QGraphicsTextItem):
         s = ""
         if self.question:
             s += "Q{}: ".format(self.question)
-        s += "{} out of {}".format(self.score, self.maxScore)
+        if self.score is None:
+            s += "no mark"
+        else:
+            s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)
 
     def update_style(self):
@@ -278,6 +281,9 @@ class PageScene(QGraphicsScene):
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.saveName = saveName
         self.maxMark = maxMark
+        # Initially both score is None and markingState is neutral
+        self.score = None
+        self.markingState = "neutral"
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
@@ -361,8 +367,19 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
-    def currentMarkingState(self):
-        """Compute the marking-state from the rubrics on the page
+    def getScore(self):
+        return self.score
+
+    def getMarkingState(self):
+        return self.markingState
+
+    def refreshStateAndScore(self):
+        self.refreshMarkingState()
+        self.refreshScore()
+        print("Refresh called {} {}".format(self.markingState, self.score))
+
+    def refreshMarkingState(self):
+        """Compute the marking-state from the rubrics on the page and store
 
         * State can be one of ["neutral", "absolute", "up", "down"]
         * Rubric's meta can be one of ["neutral", "absolute", "delta", "relative"]
@@ -381,26 +398,26 @@ class PageScene(QGraphicsScene):
                 if X.meta == "neutral":  # does not change state
                     continue
                 elif X.meta == "absolute":  # absolute must be unique on page
-                    if state == "blank":
+                    if state == "neutral":
                         state = "absolute"
                     else:
                         raise PlomInconsistentRubricsException
                 elif X.meta in ["delta", "relative"]:  # must be delta>0 or delta<0
                     if X.is_delta_positive():
-                        if state in ["blank", "up"]:
+                        if state in ["neutral", "up"]:
                             state = "up"
                         else:
                             raise PlomInconsistentRubricsException
                     else:
-                        if state in ["blank", "down"]:
+                        if state in ["neutral", "down"]:
                             state = "down"
                         else:
                             raise PlomInconsistentRubricsException
                 else:
                     raise PlomInconsistentRubricsException
-        return state
+        self.markingState = state
 
-    def currentScore(self):
+    def refreshScore(self):
         """Compute the current score by adding up the rubric items on the page
         Note that this assumes that the rubrics are consistent as per currentMarkingState
         """
@@ -409,14 +426,16 @@ class PageScene(QGraphicsScene):
             if isinstance(X, GroupDeltaTextItem):
                 if X.meta == "neutral":
                     continue
-                elif X.meta == "absolute":
-                    return X.get_delta_value()
+                elif X.meta == "absolute":  # there can be only one
+                    score = X.get_delta_value()
+                    print("HERE - ", score)
                 elif X.meta in ["delta", "relative"]:
                     # to avoid handling the None explicitly
                     score = (score or 0) + X.get_delta_value()
                 else:  # this should not happnen if rubrics okay
-                    raise PlomInconsistentRubricsExceptio
-        return score
+                    raise PlomInconsistentRubricsException
+        self.score = score
+        self.scoreBox.changeScore(score)
 
     def how_many_underlying_images_wide(self):
         """How many images wide is the bottom layer?
@@ -854,7 +873,7 @@ class PageScene(QGraphicsScene):
             None
         """
         # if delta not legal, then don't start
-        if not self.isLegalDelta(self.rubricDelta):
+        if not self.isLegalRubric(self.rubricMeta, self.rubricDelta):
             return
 
         # rubric flag explained
@@ -894,7 +913,7 @@ class PageScene(QGraphicsScene):
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
-        if not self.isLegalDelta(self.rubricDelta):
+        if not self.isLegalRubric(self.rubricMeta, self.rubricDelta):
             # cannot paste illegal delta
             # still need to reset rubricFlag below.
             pass
@@ -911,6 +930,7 @@ class PageScene(QGraphicsScene):
                 "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
             )
             self.undoStack.push(command)  # push the delta onto the undo stack.
+            self.refreshStateAndScore()  # and now refresh the markingstate and score
         if self.rubricFlag > 0:
             log.debug(
                 "rubricFlag > 0 so we must be finishing a click-drag rubric: finalizing macro"
@@ -1800,6 +1820,7 @@ class PageScene(QGraphicsScene):
                     "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
                 )
                 self.undoStack.push(command)  # push the delta onto the undo stack.
+                self.refreshStateAndScore()  # and now refresh the markingstate and score
                 self.rubricFlag = 0  # reset the rubric flag
                 return
 
@@ -2056,28 +2077,42 @@ class PageScene(QGraphicsScene):
         """ Redoes a given action."""
         self.undoStack.redo()
 
-    def isLegalDelta(self, n):
+    def isLegalRubric(self, meta, dn):
         """
-        Would this delta value push the paper score below 0 or above maxMark?
+        Is this rubric-type legal, and does the delta move score  below 0 or above maxMark?
 
         Args:
-            n (int/str): the delta integer, either convertable to `int`
+            dn (int/str): the delta integer, either convertable to `int`
                 or the literal string ".".
 
         Returns:
             bool: True if the delta is legal, False otherwise.
         """
-        if n == ".":
+        # a neutral rubric is always fine
+        if meta == "neutral":
             return True
-        n = int(n)
-        # check against markstyle (assuming only up or down)
-        if self.markStyle == 2:  # is mark-up
-            if n < 0 or self.score + n > self.maxMark:
+        elif meta == "absolute":  # can only paste neutral rubrics
+            if self.markingState == "neutral":
+                return True
+            else:
                 return False
-        else:  # is mark-down
-            if n > 0 or self.score + n < 0:
+        # at this point we know that the meta is delta/relative
+        elif int(dn) > 0:  # is positive relative-rubric
+            if self.markingState in ["absolute", "down"]:
                 return False
-        return True
+            elif self.score + int(dn) > self.maxMark:
+                return False
+            else:
+                return True
+        elif int(dn) < 0:  # is negative relative-rubric
+            if self.markingState in ["absolute", "up"]:
+                return False
+            elif self.score + int(dn) < 0:
+                return False
+            else:
+                return True
+        else:  # this should not happen
+            raise PlomInconsistentRubricsException
 
     def changeTheRubric(self, delta, text, rubricID, rubricMeta, annotatorUpdate=True):
         """
@@ -2107,7 +2142,7 @@ class PageScene(QGraphicsScene):
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
-        legality = self.isLegalDelta(delta)
+        legality = self.isLegalRubric(rubricMeta, delta)
 
         self.rubricDelta = delta
         self.rubricText = text
@@ -2153,6 +2188,4 @@ class PageScene(QGraphicsScene):
             "NO ANSWER GIVEN",
         )
         self.undoStack.push(command)
-
-    def setMarkStyle(self, style):
-        self.markStyle = style
+        self.refreshStateAndScore()  # and now refresh the markingstate and score

@@ -51,15 +51,18 @@ class CommandGroupDeltaText(QUndoCommand):
 
     def redo(self):
         # Mark increased by delta
-        self.scene.changeTheMark(self.gdt.di.delta, undo=False)
         self.scene.addItem(self.gdt)
         self.gdt.blurb.flash_redo()
         self.gdt.di.flash_redo()
+        # object added - refresh the state and score
+        self.scene.refreshStateAndScore()
 
     def undo(self):
+        print("Undo called")
         # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.gdt.di.delta, undo=True)
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
+        # after object removed, refresh the state and score
+        QTimer.singleShot(250, self.scene.refreshStateAndScore)
         self.gdt.blurb.flash_undo()
         self.gdt.di.flash_undo()
 

@@ -11,7 +11,8 @@ from plom.client.tools import DeltaItem, GroupDeltaTextItem
 
 class CommandDelete(QUndoCommand):
     # Deletes the graphicsitem. Have to be careful when it is
-    # a delta-item which changes the current mark
+    # a rubric-item - need to refresh score in parent-scene
+    # and be careful that is done once the item is actually deleted.
     def __init__(self, scene, deleteItem):
         super(CommandDelete, self).__init__()
         self.scene = scene
@@ -23,33 +24,28 @@ class CommandDelete(QUndoCommand):
         if self.deleteItem.animateFlag:
             return  # this avoids user deleting same object mid-delete animation.
 
-        # If the object is a DeltaItem then change mark
-        if isinstance(self.deleteItem, DeltaItem):
-            # Mark decreases by delta - since deleting, this is like an "undo"
-            self.scene.changeTheMark(self.deleteItem.delta, undo=True)
-        if isinstance(self.deleteItem, GroupDeltaTextItem):
-            self.scene.changeTheMark(self.deleteItem.di.delta, undo=True)
         # nicely animate the deletion - since deleting, this is like an "undo"
         self.deleteItem.animateFlag = True
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
                 X.flash_undo()
             QTimer.singleShot(200, lambda: self.scene.removeItem(self.deleteItem))
+            # after everything removed - refresh the state and score
+            if isinstance(self.deleteItem, DeltaItem):
+                QTimer.singleShot(250, self.scene.refreshStateAndScore)
         else:
             self.scene.removeItem(self.deleteItem)
+            # after everything removed - refresh the state and score
+            if isinstance(self.deleteItem, DeltaItem):
+                self.scene.refreshStateAndScore()
 
     def undo(self):
-        # If the object is a DeltaItem then change mark.
-        if isinstance(self.deleteItem, DeltaItem):
-            # Mark increases by delta  - since deleting, this is like an "redo"
-            self.scene.changeTheMark(self.deleteItem.delta, undo=False)
-        # If the object is a GroupTextDeltaItem then change mark
-        if isinstance(self.deleteItem, GroupDeltaTextItem):
-            # Mark decreases by delta -  - since deleting, this is like an "redo"
-            self.scene.changeTheMark(self.deleteItem.di.delta, undo=False)
         # nicely animate the undo of deletion
         self.deleteItem.animateFlag = False
         self.scene.addItem(self.deleteItem)
         if self.deleteItem.animator is not None:
             for X in self.deleteItem.animator:
                 X.flash_redo()
+        # If the object is a GroupTextDeltaItem then refresh the state and score
+        if isinstance(self.deleteItem, GroupDeltaTextItem):
+            self.scene.refreshStateAndScore()
