@@ -185,6 +185,19 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         else:
             return -1
 
+    def is_delta_positive(self):
+        if self.di.delta == ".":
+            return False
+        if int(self.di.delta) <= 0:
+            return False
+        return True
+
+    def get_delta_value(self):
+        if self.di.delta == ".":
+            return 0
+        else:
+            return int(self.di.delta)
+
 
 class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):

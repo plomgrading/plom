@@ -258,9 +258,7 @@ class PageScene(QGraphicsScene):
     QTextItems.
     """
 
-    def __init__(
-        self, parent, src_img_data, saveName, maxMark, score, question, markStyle
-    ):
+    def __init__(self, parent, src_img_data, saveName, maxMark, question):
         """
         Initialize a new PageScene.
 
@@ -271,14 +269,8 @@ class PageScene(QGraphicsScene):
                `filename` and `orientation`.
             saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
-            score (int): current score
             question (int): what question number is this scene?  Or None
                 if that is not relevant.
-            markStyle (int): marking style.
-                    1 = mark total = user clicks the total-mark (will be
-                    deprecated in future.)
-                    2 = mark-up = mark starts at 0 and user increments it
-                    3 = mark-down = mark starts at max and user decrements it
         """
         super().__init__(parent)
         self.parent = parent
@@ -286,8 +278,6 @@ class PageScene(QGraphicsScene):
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.saveName = saveName
         self.maxMark = maxMark
-        self.score = score
-        self.markStyle = markStyle
         # Tool mode - initially set it to "move"
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
@@ -371,19 +361,62 @@ class PageScene(QGraphicsScene):
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
-    # def patchImagesTogether(self, imageList):
-    #     x = 0
-    #     n = 0
-    #     for img in imageList:
-    #         self.images[n] = QGraphicsPixmapItem(QPixmap(img))
-    #         self.images[n].setTransformationMode(Qt.SmoothTransformation)
-    #         self.images[n].setPos(x, 0)
-    #         self.addItem(self.images[n])
-    #         x += self.images[n].boundingRect().width()
-    #         self.underImage.addToGroup(self.images[n])
-    #         n += 1
-    #
-    #     self.addItem(self.underImage)
+    def currentMarkingState(self):
+        """Compute the marking-state from the rubrics on the page
+
+        * State can be one of ["neutral", "absolute", "up", "down"]
+        * Rubric's meta can be one of ["neutral", "absolute", "delta", "relative"]
+            * neutral has no effect on state - coexists with everything
+            * absolute must be unique on page
+            * delta/relative can coexist with delta/relative of same sign, and netural
+        * Raise InconsistentRubricsException when one of the following
+            * more than one absolute rubric
+            * mix absolute rubric with delta or relative
+            * mix delta/relative of different signs
+        """
+
+        state = "neutral"
+        for X in self.items():
+            if isinstance(X, GroupDeltaTextItem):
+                if X.meta == "neutral":  # does not change state
+                    continue
+                elif X.meta == "absolute":  # absolute must be unique on page
+                    if state == "blank":
+                        state = "absolute"
+                    else:
+                        raise PlomInconsistentRubricsException
+                elif X.meta in ["delta", "relative"]:  # must be delta>0 or delta<0
+                    if X.is_delta_positive():
+                        if state in ["blank", "up"]:
+                            state = "up"
+                        else:
+                            raise PlomInconsistentRubricsException
+                    else:
+                        if state in ["blank", "down"]:
+                            state = "down"
+                        else:
+                            raise PlomInconsistentRubricsException
+                else:
+                    raise PlomInconsistentRubricsException
+        return state
+
+    def currentScore(self):
+        """Compute the current score by adding up the rubric items on the page
+        Note that this assumes that the rubrics are consistent as per currentMarkingState
+        """
+        score = None
+        for X in self.items():
+            if isinstance(X, GroupDeltaTextItem):
+                if X.meta == "neutral":
+                    continue
+                elif X.meta == "absolute":
+                    return X.get_delta_value()
+                elif X.meta in ["delta", "relative"]:
+                    # to avoid handling the None explicitly
+                    score = (score or 0) + X.get_delta_value()
+                else:  # this should not happnen if rubrics okay
+                    raise PlomInconsistentRubricsExceptio
+        return score
 
     def how_many_underlying_images_wide(self):
         """How many images wide is the bottom layer?

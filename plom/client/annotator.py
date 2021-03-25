@@ -137,7 +137,6 @@ class Annotator(QWidget):
         self.paperDir = None
         self.src_img_data = None
         self.saveName = None
-        self.score = None
         self.maxMark = None
 
         # when rubrics are used, we just outline the rubric widget - not
@@ -204,6 +203,12 @@ class Annotator(QWidget):
         # no initial keybindings - get from the marker if non-default
         self.keyBindings = None
         self.setMiscShortCuts()
+
+    def currentScore(self):
+        return self.scene.currentScore()
+
+    def markingState(self):
+        return self.scene.markingState()
 
     def buildHamburger(self):
         # TODO: use QAction, share with other UI, shortcut keys written once
@@ -911,9 +916,7 @@ class Annotator(QWidget):
             self.src_img_data,
             self.saveName,
             self.maxMark,
-            self.score,
             self.question_num,
-            self.markStyle,
         )
         # connect view to scene
         self.view.connectScene(self.scene)
