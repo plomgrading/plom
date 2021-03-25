@@ -9,18 +9,13 @@
 import logging
 from pathlib import Path
 
-import toml
-import appdirs
-
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
     QColor,
     QPalette,
     QCursor,
     QDropEvent,
-    QStandardItem,
-    QStandardItemModel,
 )
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -33,28 +28,21 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QFormLayout,
     QGridLayout,
-    QGroupBox,
-    QItemDelegate,
-    QMessageBox,
+    QHBoxLayout,
     QMenu,
     QPushButton,
     QToolButton,
-    QSpinBox,
-    QStackedWidget,
-    QTabBar,
-    QTabWidget,
-    QTableView,
-    QTextEdit,
-    QLineEdit,
-    QVBoxLayout,
-    QWidget,
-    QListWidget,
-    QHBoxLayout,
-    QListWidgetItem,
     QSizePolicy,
     QSpacerItem,
+    QSpinBox,
+    QStackedWidget,
+    QTabWidget,
+    QTableView,
     QTableWidget,
     QTableWidgetItem,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from plom.comment_utils import comments_apply_default_fields
@@ -63,9 +51,6 @@ from .useful_classes import ErrorMessage, SimpleMessage
 from .rubric_wrangler import RubricWrangler
 
 log = logging.getLogger("annotr")
-comment_dir = Path(appdirs.user_data_dir("plom", "PlomGrading.org"))
-comment_filename = "plomComments.toml"
-comment_file = comment_dir / comment_filename
 
 
 def deltaToInt(x):
