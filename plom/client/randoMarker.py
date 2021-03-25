@@ -147,6 +147,7 @@ class SceneParent(QWidget):
                     self.scene,
                     self.rpt(),
                     rubric["id"],
+                    rubric["meta"],
                     rubric["delta"],
                     rubric["text"],
                 )
@@ -293,7 +294,7 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "Created for randoMarker",
+            "meta": "randoMarker",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
@@ -306,7 +307,7 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "Created for randoMarker",
+            "meta": "randoMarker",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
