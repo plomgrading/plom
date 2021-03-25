@@ -44,10 +44,10 @@ class CommandGroupDeltaText(QUndoCommand):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 5:
+        if len(X) != 6:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4])
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5])
 
     def redo(self):
         # Mark increased by delta
@@ -158,6 +158,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
             self.rubricID,
+            self.meta,
             self.di.delta,
             self.blurb.getContents(),
         ]

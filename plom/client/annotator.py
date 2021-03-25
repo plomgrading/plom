@@ -204,10 +204,10 @@ class Annotator(QWidget):
         self.keyBindings = None
         self.setMiscShortCuts()
 
-    def currentScore(self):
+    def getScore(self):
         return self.scene.getScore()
 
-    def markingState(self):
+    def getMarkingState(self):
         return self.scene.getMarkingState()
 
     def buildHamburger(self):
@@ -376,29 +376,8 @@ class Annotator(QWidget):
         self.maxMark = maxMark
         del maxMark
 
-        print("MARKSYTLE temp set to 2!!! ")
-
-        log.debug("Plom data (truncated):\n{}".format(str(plomDict)[:255]))
-        if plomDict:
-            self.markStyle = plomDict["markStyle"]
-        else:
-            self.markStyle = 2
-
-        log.debug("markstyle = {}".format(self.markStyle))
-
         if plomDict:
             assert plomDict["maxMark"] == self.maxMark, "mismatch between maxMarks"
-
-        # Set current mark to 0.
-        # 2 = mark-up = mark starts at 0 and user increments it
-        # 3 = mark-down = mark starts at max and user decrements it
-        if self.markStyle == 2:  # markUp
-            self.score = 0
-        elif self.markStyle == 3:  # markDown
-            self.score = self.maxMark
-        else:  # must be mark-total
-            log.warning("Using mark-total. This should not happen.")
-            self.score = 0
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
@@ -407,8 +386,8 @@ class Annotator(QWidget):
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
-        self.rubric_widget.setStyle(self.markStyle)
-        self.rubric_widget.changeMark(self.score, self.maxMark)
+        # self.rubric_widget.setStyle(self.markStyle)
+        # self.rubric_widget.changeMark(self.getScore(), self.maxMark)
         self.rubric_widget.setQuestionNumber(self.question_num)
         self.rubric_widget.setTestName(testName)
         self.rubric_widget.setEnabled(True)
@@ -425,9 +404,9 @@ class Annotator(QWidget):
             else:  # if that rubric-mode-set fails (eg - no such rubric)
                 self.scene.setToolMode("move")
         # redo this after all the other rubric stuff initialised
-        self.rubric_widget.changeMark(self.score, self.maxMark)
-        # update the displayed score - fixes #843
-        self.changeMark(self.score)
+        # self.rubric_widget.changeMark(self.getScore(), self.maxMark)
+        print("TODO - UPDATE THIS")
+        self.rubric_widget.changeMark(0, self.maxMark)
 
         # Very last thing = unpickle scene from plomDict
         if plomDict is not None:
@@ -487,7 +466,7 @@ class Annotator(QWidget):
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
         if self.scene:
             self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
-        self.ui.markLabel.setText("{} out of {}".format(self.score, self.maxMark))
+        self.ui.markLabel.setText("{} out of {}".format(self.getScore(), self.maxMark))
 
     def loadCursors(self):
         """
@@ -1454,31 +1433,6 @@ class Annotator(QWidget):
                 dlt_txt[0], dlt_txt[1], dlt_txt[2], dlt_txt[3], annotatorUpdate=True
             )
 
-    def changeMark(self, mark):
-        """
-        Updates the mark-handler.
-
-        Args:
-            mark: the new mark for the given tgv.
-
-        Returns:
-            None: modifies self.score, self.ui and self.rubric_widget
-
-        """
-        # Tell the mark-handler what the new mark is and force a repaint.
-        assert self.markStyle != 1, "Should not be called if mark-total"
-
-        self.score = mark
-        # update the markline
-        self.ui.markLabel.setText(
-            "{} out of {}".format(self.scene.score, self.scene.maxMark)
-        )
-        #
-        self.rubric_widget.changeMark(self.score)
-        # also tell the scene what the new mark is
-        if self.scene:  # TODO: bit of a hack
-            self.scene.setTheMark(self.score)
-
     def loadWindowSettings(self):
         """ Loads the window settings. """
         # load the window geometry, else maximise.
@@ -1602,10 +1556,16 @@ class Annotator(QWidget):
             msg.exec_()
             return False
 
+        # make sure not still in "neutral" marking-state = no score given
+        if self.getMarkingState() == "neutral":
+            msg = ErrorMessage("You have not yet set a score.")
+            msg.exec_()
+            return False
+
         # warn if points where lost but insufficient annotations
         if (
             self.rubricWarn
-            and 0 < self.score < self.maxMark
+            and 0 < self.getScore() < self.maxMark
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
             msg = SimpleMessageCheckBox(
@@ -1621,14 +1581,6 @@ class Annotator(QWidget):
             if msg.cb.checkState() == Qt.Checked:
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
-
-        if self.score == 0 and self.markStyle != "Down":
-            if not self._zeroMarksWarn():
-                return False
-
-        if self.score == self.maxMark and self.markStyle == "Down":
-            if not self._fullMarkWarn():
-                return False
 
         self.scene.save()
         rubrics = self.scene.getRubrics()
@@ -1646,7 +1598,7 @@ class Annotator(QWidget):
         # some things here hardcoded elsewhere too, and up in marker
         plomFile = self.saveName[:-3] + "plom"
         stuff = [
-            self.score,
+            self.getScore(),
             tim,
             self.paperDir,
             self.saveName,
@@ -1826,9 +1778,9 @@ class Annotator(QWidget):
             "fileNames": [os.path.basename(x["filename"]) for x in self.src_img_data],
             "orientations": [x["orientation"] for x in self.src_img_data],
             "saveName": os.path.basename(self.saveName),
-            "markStyle": self.markStyle,
+            "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
-            "currentMark": self.score,
+            "currentMark": self.getScore(),
             "sceneScale": self.scene.get_scale_factor(),
             "annotationColor": self.scene.ink.color().getRgb()[:3],
             "sceneItems": lst,
@@ -1849,7 +1801,7 @@ class Annotator(QWidget):
                                 pickled .plom file.
 
         Returns:
-            None: modifies self.mark
+            None
 
         """
         self.view.setHidden(True)
@@ -1956,21 +1908,16 @@ class Annotator(QWidget):
         # rID = 1000 + questionNumber = is absolute rubric
 
         noAnswerCID = 1000 + self.question_num
-        # what we do depends on whether we are marking up or down.
-        # mark-up leaves a "0", while mark-down leaves "-N"
-        # Of course, have to check that no other delta-marks made.
-        if self.markStyle == 2:
-            if self.score > 0:  # is mark-up
-                ErrorMessage(
-                    'You have added marks - cannot then set "No answer given". Delete deltas before trying again.'
-                ).exec_()
-                return
-        elif self.markStyle == 3:
-            if self.score < self.maxMark:  # is mark-down
-                ErrorMessage(
-                    'You have deducted marks - cannot then set "No answer given". Delete deltas before trying again.'
-                ).exec()
-                return
+
+        # can only apply this if current marking state is neutral
+        # else user has scored the page
+
+        if self.getMarkingState() != "neutral":
+            ErrorMessage(
+                'You have marked the page - cannot then set "No answer given". Delete mark-changes before trying again.'
+            ).exec_()
+            return
+
         self.scene.noAnswer(noAnswerCID)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:

@@ -376,7 +376,11 @@ class PageScene(QGraphicsScene):
     def refreshStateAndScore(self):
         self.refreshMarkingState()
         self.refreshScore()
-        print("Refresh called {} {}".format(self.markingState, self.score))
+        # after score and state are recomputed, we need to update a few things
+        # the scorebox
+        self.scoreBox.changeScore(self.score)
+        # the ghostcomment
+        print("TODO - update ghost after score change")
 
     def refreshMarkingState(self):
         """Compute the marking-state from the rubrics on the page and store
@@ -428,14 +432,15 @@ class PageScene(QGraphicsScene):
                     continue
                 elif X.meta == "absolute":  # there can be only one
                     score = X.get_delta_value()
-                    print("HERE - ", score)
                 elif X.meta in ["delta", "relative"]:
-                    # to avoid handling the None explicitly
-                    score = (score or 0) + X.get_delta_value()
+                    # handle the score=None case carefully
+                    if score is None:
+                        score = 0 if X.get_delta_value() > 0 else self.maxMark
+                    # now update the score
+                    score += X.get_delta_value()
                 else:  # this should not happnen if rubrics okay
                     raise PlomInconsistentRubricsException
         self.score = score
-        self.scoreBox.changeScore(score)
 
     def how_many_underlying_images_wide(self):
         """How many images wide is the bottom layer?
@@ -1274,12 +1279,6 @@ class PageScene(QGraphicsScene):
                 self.undoStack.push(command)
         # now load up the new items
         for X in lst:
-            # We used to unpickle things ourselves but this is deprecated
-            # functionName = "unpickle{}".format(X[0])
-            # fcn = getattr(self, functionName, None)
-            # if fcn:
-            #    fcn(X[1:])
-            #    continue
             CmdCls = globals().get("Command{}".format(X[0]), None)
             if CmdCls and getattr(CmdCls, "from_pickle", None):
                 # TODO: use try-except here?
@@ -2100,14 +2099,18 @@ class PageScene(QGraphicsScene):
         elif int(dn) > 0:  # is positive relative-rubric
             if self.markingState in ["absolute", "down"]:
                 return False
-            elif self.score + int(dn) > self.maxMark:
+            elif self.markingState == "neutral":  # score is None
+                return True
+            elif self.score + int(dn) > self.maxMark:  # we know score is pos-int here
                 return False
             else:
                 return True
         elif int(dn) < 0:  # is negative relative-rubric
             if self.markingState in ["absolute", "up"]:
                 return False
-            elif self.score + int(dn) < 0:
+            elif self.markingState == "neutral":  # score is None
+                return True
+            elif self.score + int(dn) < 0:  # we know score is pos-int here
                 return False
             else:
                 return True
