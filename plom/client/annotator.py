@@ -212,10 +212,6 @@ class Annotator(QWidget):
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
-        self.swap_act = m.addAction("Switch to mark down mode\tF2", self.swap_mode)
-        if self.markStyle == 3:
-            self.swap_act.setText("Switch to mark up mode\tF2")
-        m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
@@ -331,7 +327,6 @@ class Annotator(QWidget):
         paperdir,
         saveName,
         maxMark,
-        markStyle,
         plomDict,
         integrity_check,
         src_img_data,
@@ -348,11 +343,6 @@ class Annotator(QWidget):
             paperdir (dir): Working directory for the current task
             saveName (str): name the tgv is saved as
             maxMark (int): maximum possible score for that test question
-            markStyle (int): marking style
-                             1 = mark total = user clicks the total-mark (DEPRECATED)
-                             2 = mark-up = mark starts at 0 and user increments it
-                             3 = mark-down = mark starts at max and user decrements it
-                             Note: can be overridden by the plomDict.
             plomDict (dict) : a dictionary of annotation information.
                                 A dict that contains sufficient information to recreate the
                                 annotation objects on the page if you go back to continue annotating a
@@ -381,12 +371,14 @@ class Annotator(QWidget):
         self.maxMark = maxMark
         del maxMark
 
+        print("MARKSYTLE temp set to 2!!! ")
+
         log.debug("Plom data (truncated):\n{}".format(str(plomDict)[:255]))
         if plomDict:
             self.markStyle = plomDict["markStyle"]
         else:
-            self.markStyle = markStyle
-        del markStyle  # prevent use of non-overridden value
+            self.markStyle = 2
+
         log.debug("markstyle = {}".format(self.markStyle))
 
         if plomDict:
@@ -1170,7 +1162,6 @@ class Annotator(QWidget):
             ("keyHelp", "?", self.keyPopUp),
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
-            ("swapMode", Qt.Key_F2, self.swap_mode),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -1971,17 +1962,13 @@ class Annotator(QWidget):
                     'You have added marks - cannot then set "No answer given". Delete deltas before trying again.'
                 ).exec_()
                 return
-            else:
-                self.scene.noAnswer(0, noAnswerCID)
         elif self.markStyle == 3:
             if self.score < self.maxMark:  # is mark-down
                 ErrorMessage(
                     'You have deducted marks - cannot then set "No answer given". Delete deltas before trying again.'
                 ).exec()
                 return
-            else:
-                # TODO: Linter cases this as an error.
-                self.scene.noAnswer(-self.maxMark, noAnswerCID)
+        self.scene.noAnswer(noAnswerCID)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)
@@ -2019,44 +2006,3 @@ class Annotator(QWidget):
     def modifyRubric(self, key, updated_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
-
-    def swap_mode(self):
-        rubric_sign = self.scene.getSignOfRubrics()
-        if rubric_sign == 0:
-            if self.markStyle == 2:
-                msg = "from up to down?"
-            else:
-                msg = "from down to up?"
-            if (
-                SimpleMessage(
-                    "There are no score-changing rubrics on the page; are you sure you wish to change the marking-style "
-                    + msg
-                ).exec_()
-                == QMessageBox.Yes
-            ):
-                # change the style (here)
-                if self.markStyle == 2:
-                    self.markStyle = 3
-                else:
-                    self.markStyle = 2
-                # set style in scene and rubric_widget
-                self.rubric_widget.setStyle(self.markStyle)
-                self.scene.setMarkStyle(self.markStyle)
-                # reset the delta rubrics
-                self.rubric_widget.resetDeltaRubrics()
-
-                # set the new mark and menu entry
-                if self.markStyle == 2:
-                    self.changeMark(0)
-                    self.swap_act.setText("Switch to mark down mode\tF2")
-                else:
-                    self.changeMark(self.maxMark)
-                    self.swap_act.setText("Switch to mark up mode\tF2")
-                # if in rubric mode - reselect (fixes ghost)
-                if self.scene.mode == "rubric":
-                    self.rubric_widget.reselectCurrentRubric()
-
-        else:
-            ErrorMessage(
-                "There are score-changing rubrics on the page; you cannot change marking style until those are deleted."
-            ).exec_()

@@ -2082,12 +2082,11 @@ class PageScene(QGraphicsScene):
         self.rubricMeta = rubricMeta
         self.updateGhost(delta, text, legality)
 
-    def noAnswer(self, delta, noAnswerCID):
+    def noAnswer(self, noAnswerCID):
         """
         Handles annotating the page if there is little or no answer written.
 
         Args:
-            delta (int): the mark to be assigned to the page.
             noAnswerCID (int): the key for the noAnswerRubric used
 
         Returns:
@@ -2116,7 +2115,8 @@ class PageScene(QGraphicsScene):
             self,
             br.center() + br.topRight() / 8,
             noAnswerCID,
-            delta,
+            "absolute",
+            0,
             "NO ANSWER GIVEN",
         )
         self.undoStack.push(command)
