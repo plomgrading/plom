@@ -31,12 +31,12 @@ class CommandDelete(QUndoCommand):
                 X.flash_undo()
             QTimer.singleShot(200, lambda: self.scene.removeItem(self.deleteItem))
             # after everything removed - refresh the state and score
-            if isinstance(self.deleteItem, DeltaItem):
+            if isinstance(self.deleteItem, GroupDeltaTextItem):
                 QTimer.singleShot(250, self.scene.refreshStateAndScore)
         else:
             self.scene.removeItem(self.deleteItem)
             # after everything removed - refresh the state and score
-            if isinstance(self.deleteItem, DeltaItem):
+            if isinstance(self.deleteItem, GroupDeltaTextItem):
                 self.scene.refreshStateAndScore()
 
     def undo(self):
