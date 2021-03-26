@@ -45,7 +45,7 @@ mark = 5
 select = "shuffle"
 
 [question.2]
-label = "Q2"
+label = "Q(2)"
 pages = [4]
 mark = 10
 select = "fix"
