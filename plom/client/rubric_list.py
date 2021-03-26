@@ -509,9 +509,13 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                self.selectRubricByRow(0)
+                self.selectRubricByRow(self.firstUnhiddenRow())
             return
-        r = (r + 1) % self.rowCount()
+        rs = r  # get start row
+        while True:  # move until we get back to start or hit unhidden row
+            r = (r + 1) % self.rowCount()
+            if r == rs or not self.isRowHidden(r):
+                break
         self.selectRubricByRow(r)
         self.handleClick()
 
@@ -520,9 +524,13 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                self.selectRubricByRow(self.rowCount() - 1)
+                self.selectRubricByRow(self.lastUnhiddenRow())
             return
-        r = (r - 1) % self.rowCount()
+        rs = r  # get start row
+        while True:  # move until we get back to start or hit unhidden row
+            r = (r - 1) % self.rowCount()
+            if r == rs or not self.isRowHidden(r):
+                break
         self.selectRubricByRow(r)
         self.handleClick()
 
@@ -530,7 +538,10 @@ class RubricTable(QTableWidget):
         # When an item is clicked, grab the details and emit rubric signal [key, delta, text]
         r = self.getCurrentRubricRow()
         if r is None:
-            return
+            r = self.firstUnhiddenRow()
+            if r is None:  # there is nothing unhidden here.
+                return
+            self.selectRubricByRow(r)
         # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
         self.parent.rubricSignal.emit(  # send delta, text, rubricID, meta
             [
@@ -541,16 +552,30 @@ class RubricTable(QTableWidget):
             ]
         )
 
+    def firstUnhiddenRow(self):
+        for r in range(self.rowCount()):
+            if not self.isRowHidden(r):
+                return r
+        return None
+
+    def lastUnhiddenRow(self):
+        for r in reversed(range(self.rowCount())):
+            if not self.isRowHidden(r):
+                return r
+        return None
+
     def colourLegalRubric(self, r, mss):
         # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
         if isLegalRubric(
             mss, meta=self.item(r, 4).text(), delta=self.item(r, 2).text()
         ):
-            self.item(r, 2).setForeground(colour_legal)
-            self.item(r, 3).setForeground(colour_legal)
+            self.showRow(r)
+            # self.item(r, 2).setForeground(colour_legal)
+            # self.item(r, 3).setForeground(colour_legal)
         else:
-            self.item(r, 2).setForeground(colour_illegal)
-            self.item(r, 3).setForeground(colour_illegal)
+            self.hideRow(r)
+            # self.item(r, 2).setForeground(colour_illegal)
+            # self.item(r, 3).setForeground(colour_illegal)
 
     def updateLegalityOfDeltas(self, mss):
         """Style items according to their legality based on max,state and score (mss)"""
