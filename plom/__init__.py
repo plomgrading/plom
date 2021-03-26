@@ -17,7 +17,7 @@ import sys
 if sys.version_info[0] == 2:
     raise RuntimeError("Plom requires Python 3; it will not work with Python 2")
 
-from .specVerifier import SpecVerifier, specdir
+from .specVerifier import SpecVerifier, specdir, get_question_label
 from .version import __version__
 
 Plom_API_Version = "33"

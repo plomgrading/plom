@@ -10,6 +10,7 @@ from multiprocessing import Pool
 
 from tqdm import tqdm
 
+from plom import get_question_label
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.finish.locationSpecCheck import locationAndSpecCheck
@@ -32,7 +33,7 @@ def _parfcn(z):
         reassemble(*y)
 
 
-def build_cover_page(msgr, outDir, t, maxMarks):
+def build_cover_page_data(msgr, outDir, t, maxMarks):
     """Builds the information used to create cover pages.
 
     Args:
@@ -42,17 +43,19 @@ def build_cover_page(msgr, outDir, t, maxMarks):
         maxMarks (dict): Maxmarks per question str -> int.
 
     Returns:
-        tuple : (testnumber, sname, sid, arg)
+        tuple: (testnumber, sname, sid, tab) where `tab` is a table with
+            rows `[q_label, ver, mark, max_mark]`.
     """
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
     cpi = msgr.RgetCoverPageInfo(t)
+    spec = msgr.get_spec()
     sid = cpi[0][0]
     sname = cpi[0][1]
     # for each Q [q, v, mark, maxPossibleMark]
     arg = []
     for qvm in cpi[1:]:
-        # append quads of [q,v,m,Max]
-        arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
+        question_label = get_question_label(spec, qvm[0])
+        arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     return (int(t), sname, sid, arg)
 
 
@@ -133,7 +136,7 @@ def main(server=None, pwd=None):
                 and completedTests[t][1] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    dat1 = build_cover_page(msgr, outDir, t, maxMarks)
+                    dat1 = build_cover_page_data(msgr, outDir, t, maxMarks)
                     dat2 = reassemble_test_CMD(
                         msgr, shortName, outDir, t, identifiedTests[t][0]
                     )

@@ -25,6 +25,26 @@ check_mark = " [check]"
 chk = check_mark
 
 
+def get_question_label(spec, n):
+    """Print question label for the nth question from spec dict
+
+    args:
+        spec (dict): a spec dict.
+        n (int): which question, current indexed from 1.
+
+    TODO: change spec question keys to int.
+
+    raises:
+        ValueError: `n` is out of range.
+    """
+    if n < 1 or n > spec["numberOfQuestions"]:
+        raise ValueError(f'n={n} out of range [1, {spec["numberOfQuestions"] + 1}]')
+    label = spec["question"][str(n)].get("label", None)
+    if label:
+        return label
+    return "Q{}".format(n)
+
+
 class SpecVerifier:
     """Verify Plom exam specifications.
 
