@@ -27,9 +27,10 @@ Default_Port = 41984
 # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
 PlomImageExts = ("png", "jpg", "jpeg")
 
+# TODO: this should be a default and the PageScene should have a physical size.
 ScenePixelHeight = 2000
 
-# in points; absolute not relative to the above, TODO: should redo in absolute scale
-AnnFontSizePts = 24.0
+# I don't know what units this is, especially after Issue #1071.
+AnnFontSizePts = 34.0
 
 from .rules import isValidStudentNumber
