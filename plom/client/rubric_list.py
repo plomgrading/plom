@@ -53,18 +53,12 @@ from .rubric_wrangler import RubricWrangler
 log = logging.getLogger("annotr")
 
 
-def deltaToInt(x):
-    """Since delta can just be a . """
-    if x == ".":
-        return 0
-    else:
-        return int(x)
-
-
 # colours to indicate whether rubric is legal to paste or not.
 # TODO: how do:  QPalette().color(QPalette.Text), QPalette().color(QPalette.Dark)
 colour_legal = QBrush(QColor(0, 0, 0))
 colour_illegal = QBrush(QColor(128, 128, 128, 128))
+abs_suffix = " / N"
+abs_suffix_length = len(abs_suffix)
 
 
 def isLegalRubric(mss, meta, delta):
@@ -142,6 +136,7 @@ class RubricTable(QTableWidget):
         self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text", "Meta"])
         self.hideColumn(0)
         self.hideColumn(1)
+        self.hideColumn(4)
         # could use a subclass
         if self.tabType == "delta":
             self.hideColumn(3)
@@ -414,7 +409,10 @@ class RubricTable(QTableWidget):
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
-        self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
+        if rubric["meta"] == "absolute":
+            self.setItem(rc, 2, QTableWidgetItem(rubric["delta"] + abs_suffix))
+        else:
+            self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
         self.setItem(rc, 4, QTableWidgetItem(rubric["meta"]))
         # set row header
@@ -580,9 +578,14 @@ class RubricTable(QTableWidget):
                 return
             self.selectRubricByRow(r)
         # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
+        # absolute rubrics have trailing suffix - remove before sending signal
+        delta = self.item(r, 2).text()
+        if self.item(r, 4).text() == "absolute":
+            delta = self.item(r, 2).text()[:-abs_suffix_length]
+
         self.parent.rubricSignal.emit(  # send delta, text, rubricID, meta
             [
-                self.item(r, 2).text(),
+                delta,
                 self.item(r, 3).text(),
                 self.item(r, 0).text(),
                 self.item(r, 4).text(),
