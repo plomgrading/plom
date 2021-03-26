@@ -71,13 +71,14 @@ def test_spec_question_label_printer():
     r["question"]["1"]["label"] = "Track 1"
     r["question"]["2"]["label"] = ""
     s = SpecVerifier(r)
-    assert get_question_label(s, 0) == "Track 1"
-    assert get_question_label(s, 1) == "Q2"
-    assert get_question_label(s, 2) == get_question_label(sd, 2)
+    assert get_question_label(s, 1) == "Track 1"
+    assert get_question_label(s, 2) == "Q2"
+    assert get_question_label(s, 3) == get_question_label(sd, 3)
 
 
 def test_spec_question_label_printer_errors():
     s = SpecVerifier.demo()
     N = s["numberOfQuestions"]
-    raises(ValueError, lambda: get_question_label(s, N))
+    raises(ValueError, lambda: get_question_label(s, N + 1))
     raises(ValueError, lambda: get_question_label(s, -1))
+    raises(ValueError, lambda: get_question_label(s, 0))
