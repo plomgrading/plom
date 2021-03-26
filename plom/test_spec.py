@@ -2,6 +2,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 from pytest import raises
+from copy import deepcopy
 from plom import SpecVerifier, get_question_label
 
 raw = SpecVerifier.demo().spec
@@ -44,6 +45,20 @@ def test_spec_setting_adds_spares():
     # creates some spares
     assert s.numberToProduce > 16
     s.verifySpec(verbose=False)
+
+
+def test_spec_question_extra_key():
+    r = deepcopy(raw)
+    r["question"]["1"]["libel"] = "defamation"
+    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+
+
+def test_spec_question_missing_key():
+    required_keys = ("pages", "select", "mark")
+    for k in required_keys:
+        r = deepcopy(raw)
+        r["question"]["1"].pop(k)
+        raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
 
 
 def test_spec_invalid_shortname():

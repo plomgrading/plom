@@ -509,10 +509,14 @@ class SpecVerifier:
 
     def check_group(self, g, lastPage, print=print):
         print("  Checking question group #{}".format(g))
-        # each group has keys
-        for x in ["pages", "select", "mark"]:
-            if x not in self.spec["question"][g]:
-                raise ValueError("Question error - could not find {} key".format(x))
+        required_keys = set(("pages", "select", "mark"))
+        optional_keys = set(("label",))
+        for k in required_keys:
+            if k not in self.spec["question"][g]:
+                raise ValueError('Question error - could not find "{}" key'.format(k))
+        for k in self.spec["question"][g].keys():
+            if k not in required_keys.union(optional_keys):
+                raise ValueError('Question error - unexpected extra key "{}"'.format(k))
         # check pages is contiguous list of positive integers
         if not self.isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
             raise ValueError(
