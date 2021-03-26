@@ -775,6 +775,10 @@ class PageScene(QGraphicsScene):
 
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
+            # also if in box,line,pen,rubric - stop mid-draw
+            if self.mode in ["box", "line", "pen", "rubric"]:
+                self.stopMidDraw()
+
         else:
             super(PageScene, self).keyPressEvent(event)
 
@@ -2199,3 +2203,43 @@ class PageScene(QGraphicsScene):
         )
         self.undoStack.push(command)
         self.refreshStateAndScore()  # and now refresh the markingstate and score
+
+    def stopMidDraw(self):
+        # look at all the mid-draw flags and cancel accordingly.
+        # the flags are arrowFlag, boxFlag, penFlag, rubricFlag
+        # note - only one should be non-zero at a given time
+        print(
+            "Flags = {}".format(
+                [self.arrowFlag, self.boxFlag, self.penFlag, self.rubricFlag]
+            )
+        )
+        if self.arrowFlag > 0:  # midway through drawing a line
+            self.arrowFlag = 0
+            self.removeItem(self.lineItem)
+        if self.penFlag > 0:  # midway through drawing a path
+            self.penFlag = 0
+            self.removeItem(self.pathItem)
+        # box flag needs a little care since two possibilities mid-draw
+        if self.boxFlag == 1:  # midway through drawing a box
+            self.boxFlag = 0
+            self.removeItem(self.boxItem)
+        if self.boxFlag == 2:  # midway through drawing an ellipse
+            self.boxFlag = 0
+            self.removeItem(self.ellipseItem)
+        # rubric flag needs care - uses undo-macro - need to clean that up
+        # 1 = drawing the box
+        # 2 = drawing the line
+        # 3 = pasting the rubric - this should only be very briefly mid function.
+        if self.rubricFlag == 1:  # drawing the box
+            self.removeItem(self.boxItem)
+            self.rubricFlag = 0
+        if self.rubricFlag == 2:  # undo-macro started, box drawn, mid draw of line
+            self.removeItem(self.lineItem)
+            self.undoStack.endMacro()
+            self.undo()  # removes the drawn box
+            self.rubricFlag = 0
+        if (
+            self.rubricFlag == 3
+        ):  # Should be very hard to reach here - end macro and undo
+            self.undoStack.endMacro()
+            self.undo()  # removes the drawn box
