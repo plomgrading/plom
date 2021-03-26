@@ -312,7 +312,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         self.removeRow(row)
-        self.selectRubricByRow(0)
+        self.selectRubricByVisibleRow(0)
         self.handleClick()
 
     def removeRubricByKey(self, key):
@@ -320,7 +320,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         self.removeRow(row)
-        self.selectRubricByRow(0)
+        self.selectRubricByVisibleRow(0)
         self.handleClick()
 
     def hideCurrentRubric(self):
@@ -330,7 +330,7 @@ class RubricTable(QTableWidget):
         key = self.item(row, 0).text()
         self.parent.hideRubricByKey(key)
         self.removeRow(row)
-        self.selectRubricByRow(0)
+        self.selectRubricByVisibleRow(0)
         self.handleClick()
 
     def unhideCurrentRubric(self):
@@ -340,7 +340,7 @@ class RubricTable(QTableWidget):
         key = self.item(row, 0).text()
         self.parent.unhideRubricByKey(key)
         self.removeRow(row)
-        self.selectRubricByRow(0)
+        self.selectRubricByVisibleRow(0)
         self.handleClick()
 
     def dropEvent(self, event):
@@ -485,7 +485,7 @@ class RubricTable(QTableWidget):
         self.selectRubricByRow(r)
 
     def selectRubricByRow(self, r):
-        """Reset the comment row on a new task to last highlighted comment.
+        """Select the r'th rubric in the list
 
         Args:
             r (int): The row-number in the rubric-table.
@@ -493,6 +493,22 @@ class RubricTable(QTableWidget):
         """
         if r is not None:
             self.selectRow(r)
+
+    def selectRubricByVisibleRow(self, r):
+        """Select the r'th **visible** row
+
+        Args:
+            r (int): The row-number in the rubric-table.
+            If r is None, do nothing.
+        """
+        rc = -1  # start here, so that correctly test after-increment
+        for s in range(self.rowCount()):
+            if not self.isRowHidden(s):
+                rc += 1
+            if rc == r:
+                self.selectRow(s)
+                return
+        return
 
     def selectRubricByKey(self, key):
         """Select row with given key. Return true if works, else false"""
@@ -509,7 +525,7 @@ class RubricTable(QTableWidget):
         r = self.getCurrentRubricRow()
         if r is None:
             if self.rowCount() >= 1:
-                self.selectRubricByRow(self.firstUnhiddenRow())
+                self.selectRubricByVisibleRow(0)
             return
         rs = r  # get start row
         while True:  # move until we get back to start or hit unhidden row
@@ -832,11 +848,11 @@ class RubricWidget(QWidget):
         )
 
         # make sure something selected in each pane
-        self.tabHide.selectRubricByRow(0)
-        self.tabDelta.selectRubricByRow(0)
-        self.tabS.selectRubricByRow(0)
+        self.tabHide.selectRubricByVisibleRow(0)
+        self.tabDelta.selectRubricByVisibleRow(0)
+        self.tabS.selectRubricByVisibleRow(0)
         for tab in self.user_tabs:
-            tab.selectRubricByRow(0)
+            tab.selectRubricByVisibleRow(0)
 
     def getCurrentRubricKeyAndTab(self):
         """return the current rubric key and the current tab.
@@ -926,6 +942,10 @@ class RubricWidget(QWidget):
 
     def selectRubricByRow(self, rowNumber):
         self.RTW.currentWidget().selectRubricByRow(rowNumber)
+        self.handleClick()
+
+    def selectRubricByVisibleRow(self, rowNumber):
+        self.RTW.currentWidget().selectRubricByVisibleRow(rowNumber)
         self.handleClick()
 
     def nextRubric(self):

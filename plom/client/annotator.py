@@ -917,7 +917,8 @@ class Annotator(QWidget):
 
     def keyToChangeRubric(self, keyNumber):
         """
-        Translates a the numerical key into a selection of that row of the current rubric pane.
+        Translates a the numerical key into a selection of that visible
+        row of the current rubric pane.
 
 
         Returns:
@@ -925,7 +926,7 @@ class Annotator(QWidget):
 
         """
         # row is one less than key
-        self.rubric_widget.selectRubricByRow(keyNumber - 1)
+        self.rubric_widget.selectRubricByVisibleRow(keyNumber - 1)
 
     def setToolMode(self, newMode, newCursor, imagePath=None):
         """
