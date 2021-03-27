@@ -7,7 +7,7 @@ import logging
 import random
 
 from plom.db import PlomDB
-from plom.produce import check_version_map
+from plom.produce import check_version_map, make_random_version_map
 
 
 log = logging.getLogger("DB")
@@ -57,13 +57,13 @@ def buildSpecialRubrics(spec, db):
                 )
 
 
-def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
+def buildExamDatabaseFromSpec(spec, db, version_map=None):
     """Build metadata for exams from spec and insert into the database.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         db (database): the database to populate.
-        preset_ver_map (dict/None): optional predetermined version map
+        version_map (dict/None): optional predetermined version map
             keyed by test number and question number.  If None, we will
             build our own random version mapping.  TODO: add details.
 
@@ -75,15 +75,16 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
         ValueError: if database already populated.
         KeyError: question selection scheme is invalid.
     """
-    if preset_ver_map:
-        check_version_map(preset_ver_map)
-
     buildSpecialRubrics(spec, db)
 
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")
 
-    random.seed(spec["privateSeed"])
+    if not version_map:
+        # TODO: move reproducible random seed support to the make fcn?
+        random.seed(spec["privateSeed"])
+        version_map = make_random_version_map(spec)
+    check_version_map(version_map)
 
     ok = True
     status = ""
@@ -100,8 +101,6 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
         ok = False
         status += "Error making bundle for replacement pages"
 
-    # Note: need to produce these in a particular order for random seed to be
-    # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
         log.info(
             "Creating DB entry for test {} of {}.".format(t, spec["numberToProduce"])
@@ -126,31 +125,14 @@ def buildExamDatabaseFromSpec(spec, db, preset_ver_map=None):
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now a str and 1,2,3,...
+            v = version_map[t][g + 1]
+            assert v in range(1, spec["numberOfVersions"] + 1)
             if spec["question"][gs]["select"] == "fix":
-                # there is only one version so all are version 1
-                v = 1
                 vstr = "f{}".format(v)
+                assert v == 1
             elif spec["question"][gs]["select"] == "shuffle":
-                # version selected randomly in [1, 2, ..., #versions]
-                if preset_ver_map:
-                    v = preset_ver_map[t][g + 1]
-                else:
-                    v = random.randint(1, spec["numberOfVersions"])
                 vstr = "v{}".format(v)
             elif spec["question"][gs]["select"] == "param":
-                # If caller does not provide a version, all are version 1.
-                # Caller can provide a version to group their parameters by any
-                # way they wish.  Typically this would be be ease grading, e.g.,
-                #   * map negative parameters to v1 and positive to v2.
-                #   * map tuples (a,b) with common `b` value to same version.
-                # In fact there is no significant difference between `param`
-                # and `shuffle` when user data is provided.  But clients or
-                # other aspects of the software might behave differently.
-                if preset_ver_map:
-                    v = preset_ver_map[t][g + 1]
-                else:
-                    v = 1
-                assert v in range(1, spec["numberOfVersions"] + 1)
                 vstr = "p{}".format(v)
             else:
                 raise KeyError(
