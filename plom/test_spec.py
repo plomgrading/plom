@@ -82,7 +82,7 @@ def test_spec_longname_slash_issue1364():
 
 def test_spec_question_label_printer():
     sd = SpecVerifier.demo()
-    r = raw.copy()
+    r = deepcopy(raw)
     r["question"]["1"]["label"] = "Track 1"
     r["question"]["2"]["label"] = ""
     s = SpecVerifier(r)
@@ -100,13 +100,13 @@ def test_spec_question_label_printer_errors():
 
 
 def test_spec_unique_labels():
-    r = raw.copy()
+    r = deepcopy(raw)
     r["question"]["1"]["label"] = "ExA"
     r["question"]["2"]["label"] = "ExA"
     raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
 
 
 def test_spec_label_too_long():
-    r = raw.copy()
+    r = deepcopy(raw)
     r["question"]["1"]["label"] = "Distrust That Particular Flavour"
     raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
