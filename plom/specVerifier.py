@@ -298,6 +298,23 @@ class SpecVerifier:
         prnt("Checking question groups")
         for g in range(self.spec["numberOfQuestions"]):
             self.check_group(str(g + 1), lastPage, print=prnt)
+        # Note: enable all-or-none check for labels
+        # prnt("Checking either all or no questions have labels")
+        # has_label = [
+        #     "label" in self.spec["question"][str(n + 1)]
+        #     for n in range(self.spec["numberOfQuestions"])
+        # ]
+        # if any(has_label) and not all(has_label):
+        #     raise ValueError("Either all should have labels or none should")
+        prnt("Checking for unique question labels")
+        labels = [
+            self.spec["question"][str(n + 1)].get("label", None)
+            for n in range(self.spec["numberOfQuestions"])
+        ]
+        labels = [x for x in labels if x is not None]
+        if len(set(labels)) != len(labels):
+            raise ValueError(f'Question labels must be unique but we have "{labels}"')
+
         self.check_pages(print=prnt)
 
     def checkCodes(self, verbose=True):

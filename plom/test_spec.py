@@ -97,3 +97,10 @@ def test_spec_question_label_printer_errors():
     raises(ValueError, lambda: get_question_label(s, N + 1))
     raises(ValueError, lambda: get_question_label(s, -1))
     raises(ValueError, lambda: get_question_label(s, 0))
+
+
+def test_spec_unique_labels():
+    r = raw.copy()
+    r["question"]["1"]["label"] = "ExA"
+    r["question"]["2"]["label"] = "ExA"
+    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
