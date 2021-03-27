@@ -12,7 +12,20 @@ import random
 
 
 def check_version_map(vm, spec=None):
-    """Sanity checks on version maps."""
+    """Sanity checks on version maps.
+
+    args:
+        vm (dict): a dict-of-dicts describing versions.  See the output
+            of :func:`plom.finish.make_random_version_map`.
+        spec (plom.SpecVerifier/dict): a plom spec or the underlying
+            dict, see :func:`plom.SpecVerifier`.
+
+    return:
+        None
+
+    raises:
+        AssertionError
+    """
     if spec:
         assert len(vm) == spec["numberToProduce"]
     for t, qd in vm.items():
@@ -27,11 +40,11 @@ def check_version_map(vm, spec=None):
 
 
 def make_random_version_map(spec):
-    """Rough client-side version map.
+    """Build a random version map.
 
     args:
-        spec (dict): plom spec as documented elsewhere.  TODO: maybe
-            maybe better to pass only the bits we need.
+        spec (plom.SpecVerifier/dict): A plom exam specificiation or the
+            underlying dict.  See :func:`plom.SpecVerifier`.
 
     return:
         dict: a dict-of-dicts keyed by paper number (int) and then

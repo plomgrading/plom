@@ -247,7 +247,7 @@ class SpecVerifier:
     def get_public_spec_dict(self):
         """Return a copy of the spec dict with private info removed."""
         d = self.spec.copy()
-        d.pop("privateSeed")
+        d.pop("privateSeed", None)
         return d
 
     def verifySpec(self, verbose=True):
