@@ -314,6 +314,8 @@ class SpecVerifier:
         labels = [x for x in labels if x is not None]
         if len(set(labels)) != len(labels):
             raise ValueError(f'Question labels must be unique but we have "{labels}"')
+        if any(len(x) > 24 for x in labels):
+            raise ValueError(f'Question labels should be at most 24 chars: "{labels}"')
 
         self.check_pages(print=prnt)
 

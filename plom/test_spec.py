@@ -104,3 +104,9 @@ def test_spec_unique_labels():
     r["question"]["1"]["label"] = "ExA"
     r["question"]["2"]["label"] = "ExA"
     raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+
+
+def test_spec_label_too_long():
+    r = raw.copy()
+    r["question"]["1"]["label"] = "Distrust That Particular Flavour"
+    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
