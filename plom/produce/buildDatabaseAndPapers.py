@@ -91,7 +91,7 @@ def build_database(server=None, password=None, vermap={}):
     # TODO: grab it and sanity check?
     pvmap = msgr.getGlobalPageVersionMap()
     # we want qvmap not pvmap
-    #assert pvmap == vermap
+    # assert pvmap == vermap
 
     msgr.closeUser()
     msgr.stop()

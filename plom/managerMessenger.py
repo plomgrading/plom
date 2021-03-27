@@ -8,6 +8,7 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
 
+from plom.produce import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -129,10 +130,7 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         # JSON casts dict keys to str, force back to ints
-        d = {}
-        for k, v in response.json().items():
-            d[int(k)] = {int(kk): vv for kk, vv in v.items()}
-        return d
+        return undo_json_packing_of_version_map(response.json())
 
     # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
     def id_paper(self, code, studentID, studentName):

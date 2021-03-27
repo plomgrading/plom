@@ -65,7 +65,8 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
         db (database): the database to populate.
         version_map (dict/None): optional predetermined version map
             keyed by test number and question number.  If None, we will
-            build our own random version mapping.  TODO: add details.
+            build our own random version mapping.  For the map format
+            see :func:`plom.finish.make_random_version_map`.
 
     Returns:
         bool: True if succuess.

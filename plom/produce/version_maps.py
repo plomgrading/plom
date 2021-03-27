@@ -6,7 +6,6 @@
 
 import random
 
-# TODO: functions to undo json mucking types up
 # TODO: go through and fix all the places with str(q+1)
 # TODO: there is some documentation of "param" below that should move elsewhere
 
@@ -44,11 +43,14 @@ def make_random_version_map(spec):
 
     args:
         spec (plom.SpecVerifier/dict): A plom exam specificiation or the
-            underlying dict.  See :func:`plom.SpecVerifier`.
+            underlying dict.  See :func:`plom.SpecVerifier`.  The most
+            important properties are the `numberToProduce`, the
+            `numberOfQuestions`, and the `select` of each question.
 
     return:
         dict: a dict-of-dicts keyed by paper number (int) and then
-            question number (str, b/c WTF knows).  Values are integers.
+            question number (int, but indexed from 1 not 0).  Values are
+            integers.
     """
     vmap = {}
     for t in range(1, spec["numberToProduce"] + 1):
@@ -71,4 +73,20 @@ def make_random_version_map(spec):
                 # and `shuffle` when user data is provided.  But clients or
                 # other aspects of the software might behave differently.
                 vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
+    return vmap
+
+
+def undo_json_packing_of_version_map(vermap_in):
+    """JSON must have string keys; undo such to int keys for version map.
+
+    Both the test number and the question number have likely been
+    converted to strings by an evil JSON: we build a new dict-of-dicts
+    with both converted explicitly to integers.
+
+    Note: sometimes the dict-of-dicts is key'd by page number instead
+    of question number.  This same function can be used in that case.
+    """
+    vmap = {}
+    for t, question_vers in vermap_in.items():
+        vmap[int(t)] = {int(q): v for q, v in question_vers.items()}
     return vmap

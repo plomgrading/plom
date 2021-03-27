@@ -5,6 +5,7 @@
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
+from plom.produce import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request, log
 
@@ -862,10 +863,7 @@ class UploadHandler:
         if len(data["version_map"]) == 0:
             vmap = None
         else:
-            # undo JSON casting dict keys to str
-            vmap = {}
-            for t, vv in data["version_map"].items():
-                vmap[int(t)] = {int(k): v for k, v in vv.items()}
+            vmap = undo_json_packing_of_version_map(vmap)
 
         try:
             r, summary = buildExamDatabaseFromSpec(
@@ -886,7 +884,7 @@ class UploadHandler:
         """Get the mapping between page number and version for one test.
 
         Returns:
-            dict: keyed by page number.  Note keys are strings b/c of
+            dict: keyed by page number. Note keys will be strings b/c of
                 json limitations; you may want to convert back to int.
         """
         spec = self.server.testSpec

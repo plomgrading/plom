@@ -2,8 +2,10 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 from pytest import raises
+import json
 
 from plom.produce import make_random_version_map, check_version_map
+from plom.produce import undo_json_packing_of_version_map
 from plom import SpecVerifier
 
 
@@ -20,6 +22,27 @@ def test_ver_map_fails_if_too_short():
     vm.pop(1)
     check_version_map(vm)  # passes if we don't know spec
     raises(AssertionError, lambda: check_version_map(vm, spec))
+
+
+def test_ver_map_types():
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    for t, question in vm.items():
+        assert isinstance(t, int)
+        assert isinstance(question, dict)
+        for q, v in question.items():
+            assert isinstance(q, int)
+            assert isinstance(v, int)
+
+
+def test_ver_map_json_roundtrip():
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    s = json.dumps(vm)
+    vm2 = json.loads(s)
+    assert vm != vm2  # I mean, we'd like, but Json doesn't
+    vm3 = undo_json_packing_of_version_map(vm2)
+    assert vm == vm3
 
 
 def test_ver_map_check_spec_or_dict():
