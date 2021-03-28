@@ -38,6 +38,8 @@ def check_version_map(vm, spec=None):
             assert v > 0
             if spec:
                 assert v <= spec["numberOfQuestions"]
+                if spec["question"][str(q)]["select"] == "fix":
+                    assert v == 1
 
 
 def make_random_version_map(spec):

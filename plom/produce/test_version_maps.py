@@ -62,6 +62,14 @@ def test_ver_map_verions_in_range():
     raises(AssertionError, lambda: check_version_map(vm, spec))
 
 
+def test_ver_map_fix_has_ver1_only():
+    # assumes version 2 is fixed in demo: test will need adjusting if that changes
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    vm[1][2] = 2
+    raises(AssertionError, lambda: check_version_map(vm, spec))
+
+
 def test_ver_map_json_roundtrip():
     spec = SpecVerifier.demo()
     vm = make_random_version_map(spec)
