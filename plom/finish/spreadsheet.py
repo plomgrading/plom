@@ -112,9 +112,7 @@ def main(server=None, password=None):
         msgr.stop()
 
     qlabels = [get_question_label(spec, n + 1) for n in range(numberOfQuestions)]
-    existsUnmarked, existsMissingID = writeSpreadsheet(
-        spreadSheetDict, qlabels
-    )
+    existsUnmarked, existsMissingID = writeSpreadsheet(spreadSheetDict, qlabels)
     if existsUnmarked and existsMissingID:
         print(
             'Partial marks written to "{}" (marking is not complete). Warning: not every test is identified.'.format(
