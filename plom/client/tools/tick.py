@@ -13,13 +13,15 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.client.tools import CommandMoveItem
+from plom.client.tools.delete import DeleteObject
 
 
 class CommandTick(QUndoCommand):
     def __init__(self, scene, pt):
         super().__init__()
         self.scene = scene
-        self.obj = TickItemObject(pt, scene.style)
+        self.obj = TickItem(pt, scene.style)
+        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("Tick")
 
     @classmethod
@@ -32,55 +34,24 @@ class CommandTick(QUndoCommand):
         return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):
-        self.obj.flash_redo()
-        self.scene.addItem(self.obj.item)
+        self.scene.addItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        self.obj.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
-
-
-class TickItemObject(QGraphicsObject):
-    def __init__(self, pt, style):
-        super().__init__()
-        self.item = TickItem(pt, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        """Undo animation: thin -> thick -> none."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 3 * t)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        """Redo animation: thin -> med -> thin."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 2 * t)
-        self.anim.setEndValue(t)
-        self.anim.start()
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.item.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        pen = self.item.pen()
-        pen.setWidthF(value)
-        self.item.setPen(pen)
+        self.scene.removeItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class TickItem(QGraphicsPathItem):
     def __init__(self, pt, style, parent=None):
         super().__init__()
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
         self.pt = pt
         self.path = QPainterPath()
         # Draw the checkmark with barycentre under mouseclick.

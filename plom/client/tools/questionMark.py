@@ -12,14 +12,15 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.client.tools import CommandMoveItem
-from plom.client.tools.tick import TickItemObject
+from plom.client.tools.delete import DeleteObject
 
 
 class CommandQMark(QUndoCommand):
     def __init__(self, scene, pt):
         super().__init__()
         self.scene = scene
-        self.obj = QMarkItemObject(pt, scene.style)
+        self.obj = QMarkItem(pt, scene.style)
+        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("QMark")
 
     @classmethod
@@ -32,27 +33,24 @@ class CommandQMark(QUndoCommand):
         return cls(scene, QPointF(X[0], X[1]))
 
     def redo(self):
-        self.obj.flash_redo()
-        self.scene.addItem(self.obj.item)
+        self.scene.addItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        self.obj.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
-
-
-class QMarkItemObject(TickItemObject):
-    def __init__(self, pt, style):
-        super(TickItemObject, self).__init__()
-        self.item = QMarkItem(pt, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
+        self.scene.removeItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class QMarkItem(QGraphicsPathItem):
     def __init__(self, pt, style, parent=None):
         super().__init__()
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
         self.pt = pt
         self.path = QPainterPath()
         # Draw a ?-mark with barycentre under mouseclick
