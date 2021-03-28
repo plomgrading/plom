@@ -91,7 +91,8 @@ def build_database(server=None, password=None, vermap={}):
 
     # grab map and sanity check
     qvmap = msgr.getGlobalQuestionVersionMap()
-    assert qvmap == vermap
+    if vermap:
+        assert qvmap == vermap
 
     msgr.closeUser()
     msgr.stop()
