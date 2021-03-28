@@ -327,6 +327,7 @@ class Annotator(QWidget):
     def loadNewTGV(
         self,
         tgvID,
+        question_label,
         testName,
         paperdir,
         saveName,
@@ -336,14 +337,15 @@ class Annotator(QWidget):
         integrity_check,
         src_img_data,
     ):
-        """Loads new Data into the Toggle View window for marking.
-
-        TODO: maintain current tool not working yet: #799.
+        """Loads new data into the window for marking.
 
         Args:
             tgvID (str):  Test-Group-Version ID.
                             For Example: for Test # 0027, group # 13, Version #2
                                          tgv = t0027g13v2
+            question_label (str): The name of the question we are
+                marking.  This is generally used for display only as
+                there is an integer for precise usage.
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
             saveName (str): name the tgv is saved as
@@ -367,8 +369,9 @@ class Annotator(QWidget):
         """
         self.tgvID = tgvID
         self.question_num = int(re.split(r"\D+", tgvID)[-1])
+        self.question_label = question_label
         self.testName = testName
-        s = "Q{} of {}: {}".format(self.question_num, testName, tgvID)
+        s = "{} of {}: {}".format(self.question_label, testName, tgvID)
         self.setWindowTitle("{} - Plom Annotator".format(s))
         log.info("Annotating {}".format(s))
         self.paperDir = paperdir
@@ -920,7 +923,7 @@ class Annotator(QWidget):
             self.saveName,
             self.maxMark,
             self.score,
-            self.question_num,
+            self.question_label,
             self.markStyle,
         )
         # connect view to scene
