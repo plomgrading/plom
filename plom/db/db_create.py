@@ -275,7 +275,7 @@ def getQuestionVersions(self, t):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         return {}
-    return {q.question: q.version for q in tref.qgroup}
+    return {q.question: q.version for q in tref.qgroups}
 
 
 def produceTest(self, t):
