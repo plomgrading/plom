@@ -8,7 +8,7 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
 
-from plom.produce import undo_json_packing_of_version_map
+from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,

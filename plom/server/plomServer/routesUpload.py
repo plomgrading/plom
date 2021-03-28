@@ -5,7 +5,7 @@
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
-from plom.produce import undo_json_packing_of_version_map
+from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request, log
 

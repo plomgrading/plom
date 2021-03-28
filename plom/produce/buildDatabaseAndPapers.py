@@ -6,9 +6,9 @@ import os
 from getpass import getpass
 import random
 
+from plom import check_version_map
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
 from plom.produce import paperdir
-from plom.produce import check_version_map
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 

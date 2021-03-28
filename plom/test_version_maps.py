@@ -5,8 +5,8 @@ import json
 
 from pytest import raises
 
-from plom.produce import make_random_version_map, check_version_map
-from plom.produce import undo_json_packing_of_version_map
+from plom import make_random_version_map, check_version_map
+from plom import undo_json_packing_of_version_map
 from plom import SpecVerifier
 
 
