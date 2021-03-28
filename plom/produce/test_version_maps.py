@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Colin B. Macdonald
 
-from pytest import raises
 import json
+
+from pytest import raises
 
 from plom.produce import make_random_version_map, check_version_map
 from plom.produce import undo_json_packing_of_version_map
@@ -27,12 +28,38 @@ def test_ver_map_fails_if_too_short():
 def test_ver_map_types():
     spec = SpecVerifier.demo()
     vm = make_random_version_map(spec)
-    for t, question in vm.items():
-        assert isinstance(t, int)
-        assert isinstance(question, dict)
-        for q, v in question.items():
-            assert isinstance(q, int)
-            assert isinstance(v, int)
+    vm["1"] = vm.pop(1)
+    raises(AssertionError, lambda: check_version_map(vm))
+
+
+def test_ver_map_types2():
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    vm[1] = 42
+    raises(AssertionError, lambda: check_version_map(vm))
+
+
+def test_ver_map_types3():
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    vm[1]["2"] = vm[1].pop(2)
+    raises(AssertionError, lambda: check_version_map(vm))
+
+
+def test_ver_map_types4():
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    vm[1][2] = "str"
+    raises(AssertionError, lambda: check_version_map(vm))
+
+
+def test_ver_map_verions_in_range():
+    spec = SpecVerifier.demo()
+    vm = make_random_version_map(spec)
+    vm[1][1] = -1
+    raises(AssertionError, lambda: check_version_map(vm))
+    vm[1][1] = spec["numberOfQuestions"] + 1
+    raises(AssertionError, lambda: check_version_map(vm, spec))
 
 
 def test_ver_map_json_roundtrip():

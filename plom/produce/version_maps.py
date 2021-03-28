@@ -33,9 +33,11 @@ def check_version_map(vm, spec=None):
         if spec:
             assert len(qd) == spec["numberOfQuestions"]
         for q, v in qd.items():
-            # TODO: currently str
-            # assert isinstance(q, int)
+            assert isinstance(q, int)
             assert isinstance(v, int)
+            assert v > 0
+            if spec:
+                assert v <= spec["numberOfQuestions"]
 
 
 def make_random_version_map(spec):
