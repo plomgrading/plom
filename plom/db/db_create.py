@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -21,7 +21,7 @@ log = logging.getLogger("DB")
 def createReplacementBundle(self):
     try:
         bref = Bundle.create(name="replacements")
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error("Create replacement page bundle = {}.{} error - {}".format(e))
         return False
     return True
