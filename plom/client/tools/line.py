@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.client.tools import CommandMoveItem
+from plom.client.tools.delete import DeleteObject
 
 
 class CommandLine(QUndoCommand):
@@ -20,7 +21,8 @@ class CommandLine(QUndoCommand):
         super().__init__()
         self.scene = scene
         # A line from pti(nitial) to ptf(inal)
-        self.lineItem = LineItemObject(pti, ptf, scene.style)
+        self.obj = LineItem(pti, ptf, scene.style)
+        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("Line")
 
     @classmethod
@@ -33,59 +35,24 @@ class CommandLine(QUndoCommand):
         return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
 
     def redo(self):
-        """Item knows how to highlight on undo and redo."""
-        self.lineItem.flash_redo()
-        self.scene.addItem(self.lineItem.item)
+        self.scene.addItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        """Undo animation takes 0.5s, so trigger removal after 0.5s."""
-        self.lineItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.lineItem.item))
-
-
-class LineItemObject(QGraphicsObject):
-    """An object wrapper around LineItem (or subclass) to handle animation."""
-
-    def __init__(self, pti, ptf, style):
-        super().__init__()
-        self.item = LineItem(pti, ptf, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        """Undo animation: thin -> thick -> none."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 3 * t)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        """Redo animation: thin -> med -> thin."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 2 * t)
-        self.anim.setEndValue(t)
-        self.anim.start()
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.item.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        pen = self.item.pen()
-        pen.setWidthF(value)
-        self.item.setPen(pen)
+        self.scene.removeItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class LineItem(QGraphicsLineItem):
     def __init__(self, pti, ptf, style, parent=None):
         super().__init__()
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
         self.pti = pti
         self.ptf = ptf
         self.setLine(QLineF(self.pti, self.ptf))

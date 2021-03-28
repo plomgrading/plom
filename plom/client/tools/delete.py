@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, pyqtProperty, QRectF, QPropertyAnimation
+from PyQt5.QtCore import Qt, QTimer, pyqtProperty, QRectF, QPropertyAnimation
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 
-from plom.client.tools import DeltaItem, GroupDeltaTextItem
+# from plom.client.tools import DeltaItem, GroupDeltaTextItem
 
 
 class CommandDelete(QUndoCommand):
@@ -74,31 +74,27 @@ class DeleteObject(QGraphicsObject):
 
     def flash_undo(self):
         """Undo animation: thin -> thick -> none."""
-        t = self.item.normal_thick
         self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 4 * t)
-        self.anim.setEndValue(0)
+        self.anim.setStartValue(0)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(-4)
         self.anim.start()
 
     def flash_redo(self):
         """Redo animation: thin -> med -> thin."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 3 * t)
-        self.anim.setEndValue(t)
+        self.anim.setStartValue(-4)
+        self.anim.setKeyValueAt(0.5, 8)
+        self.anim.setEndValue(0)
         self.anim.start()
 
     @pyqtProperty(int)
     def thickness(self):
-        return self.item.pen().width()
+        return self.item.padding
 
     @thickness.setter
     def thickness(self, value):
-        pen = self.item.pen()
-        pen.setWidthF(value)
-        self.item.setPen(pen)
+        self.item.padding = value
+        self.item.setRect(self.item.initialRect.adjusted(-value, -value, value, value))
 
 
 class DeleteItem(QGraphicsRectItem):
@@ -107,22 +103,11 @@ class DeleteItem(QGraphicsRectItem):
         self.saveable = True
         self.animator = [parent]
         self.animateFlag = False
-        self.rect = rect
-        self.setRect(self.rect)
+        self.initialRect = rect
+        self.padding = 0
+        self.setRect(self.initialRect)
         self.restyle(style)
 
     def restyle(self, style):
-        self.normal_thick = style["pen_width"]
-        self.setPen(QPen(style["annot_color"], style["pen_width"]))
-        self.setBrush(QBrush(QColor(255, 165, 0, 128)))
-
-    def paint(self, painter, option, widget):
-        if not self.scene().itemWithinBounds(self):
-            # paint a bounding rectangle out-of-bounds warning
-            painter.setPen(QPen(QColor(255, 165, 0), 8))
-            painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
-            painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
-            painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
-            painter.drawRoundedRect(option.rect, 10, 10)
-        # paint the normal item with the default 'paint' method
-        super().paint(painter, option, widget)
+        self.setPen(QPen(QColor(255, 255, 0, 32), 1, style=Qt.DashLine))
+        self.setBrush(QBrush(QColor(255, 255, 0, 16)))

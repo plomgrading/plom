@@ -13,13 +13,15 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.client.tools import CommandMoveItem
+from plom.client.tools.delete import DeleteObject
 
 
 class CommandBox(QUndoCommand):
     def __init__(self, scene, rect):
         super().__init__()
         self.scene = scene
-        self.obj = BoxItemObject(rect, scene.style)
+        self.obj = BoxItem(rect, scene.style)
+        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("Box")
 
     @classmethod
@@ -32,56 +34,24 @@ class CommandBox(QUndoCommand):
         return cls(scene, QRectF(X[0], X[1], X[2], X[3]))
 
     def redo(self):
-        self.obj.flash_redo()
-        self.scene.addItem(self.obj.item)
+        self.scene.addItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        self.obj.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
-
-
-class BoxItemObject(QGraphicsObject):
-    # As per the ArrowItemObject, except animate the opacity of the box.
-    def __init__(self, rect, style):
-        super().__init__()
-        self.item = BoxItem(rect, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
-
-    def flash_undo(self):
-        """Undo animation: thin -> thick -> none."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 4 * t)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        """Redo animation: thin -> med -> thin."""
-        t = self.item.normal_thick
-        self.anim.setDuration(200)
-        self.anim.setStartValue(t)
-        self.anim.setKeyValueAt(0.5, 3 * t)
-        self.anim.setEndValue(t)
-        self.anim.start()
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.item.pen().width()
-
-    @thickness.setter
-    def thickness(self, value):
-        pen = self.item.pen()
-        pen.setWidthF(value)
-        self.item.setPen(pen)
+        self.scene.removeItem(self.obj)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class BoxItem(QGraphicsRectItem):
     def __init__(self, rect, style, parent=None):
         super().__init__()
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
         self.rect = rect
         self.setRect(self.rect)
         self.restyle(style)
