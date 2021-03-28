@@ -1,16 +1,19 @@
-from plom.db.tables import *
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
+import logging
 import uuid
+
+from peewee import fn
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
+from plom.db.tables import *
 
-import logging
 
 log = logging.getLogger("DB")
-
-from peewee import fn
 
 
 class PlomBundleImageDuplicationException(Exception):

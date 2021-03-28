@@ -1,15 +1,17 @@
-from plom.db.tables import *
-
-from datetime import datetime
-
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import logging
 
-log = logging.getLogger("DB")
-
 from peewee import fn
+
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
+from plom.db.tables import *
+
+
+log = logging.getLogger("DB")
 
 
 def getUnknownPageNames(self):

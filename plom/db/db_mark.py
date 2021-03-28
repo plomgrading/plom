@@ -2,12 +2,14 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-from plom.db.tables import *
 from datetime import datetime
-
 import logging
 
+from plom.db.tables import *
+
+
 log = logging.getLogger("DB")
+
 
 # ------------------
 # Marker stuff
