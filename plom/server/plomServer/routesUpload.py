@@ -886,6 +886,9 @@ class UploadHandler:
         Returns:
             dict: keyed by page number. Note keys will be strings b/c of
                 json limitations; you may want to convert back to int.
+
+        Note: likely deprecated: not used by Plom itself and not
+            recommeded for anyone else.
         """
         spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
@@ -904,6 +907,9 @@ class UploadHandler:
                 number.  Both keys are strings b/c of json limitations;
                 you may need to iterate and convert back to int.  Fails
                 with 500 Internal Server Error if a test does not exist.
+
+        Note: careful not to confuse this with /admin/questionVersionMap
+            which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
         vers = {}
@@ -912,8 +918,26 @@ class UploadHandler:
             if not ver:
                 return web.Response(status=500)
             vers[paper_idx] = ver
-        # JSON converts int keys to strings, we'll fix this at the far end
-        # return web.json_response(str(pickle.dumps(vers)), status=200)
+        return web.json_response(vers, status=200)
+
+    @authenticate_by_token_required_fields([])
+    def getGlobalQuestionVersionMap(self, data, request):
+        """Get the mapping between question and version for all tests.
+
+        Returns:
+            dict: dict of dicts, keyed first by paper index then by
+                question number.  Both keys will become strings b/c of
+                json limitations; you may need to convert back to int.
+                Fails with 500 Internal Server Error if a test does not
+                exist.
+        """
+        spec = self.server.testSpec
+        vers = {}
+        for paper_idx in range(1, spec["numberToProduce"] + 1):
+            ver = self.server.DB.getQuestionVersions(paper_idx)
+            if not ver:
+                return web.Response(status=500)
+            vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
     # @route.put("/admin/pdf_produced/{t}")
@@ -998,6 +1022,7 @@ class UploadHandler:
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
+        router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
         router.add_put(
             "/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced
         )
