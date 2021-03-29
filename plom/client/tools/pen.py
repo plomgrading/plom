@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, QPointF
+from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
     QUndoCommand,
@@ -13,12 +13,12 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.client.tools import CommandMoveItem, log
-from plom.client.tools.delete import DeleteObject
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
-class CommandPen(QUndoCommand):
+class CommandPen(CommandTool):
     def __init__(self, scene, path):
-        super().__init__()
+        super().__init__(scene)
         self.scene = scene
         self.obj = PenItem(path, scene.style)
         self.do = DeleteObject(self.obj.boundingRect(), scene.style)
@@ -53,20 +53,6 @@ class CommandPen(QUndoCommand):
                 raise ValueError("malformed Pen-like annotation in interior")
             pth.lineTo(QPointF(x, y))
         return cls(scene, pth)
-
-    def redo(self):
-        self.scene.addItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
-
-    def undo(self):
-        self.scene.removeItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class PenItem(QGraphicsPathItem):

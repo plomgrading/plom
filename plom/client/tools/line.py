@@ -1,24 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt, QLineF, QPointF
+from PyQt5.QtCore import QLineF, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import (
-    QUndoCommand,
-    QGraphicsObject,
-    QGraphicsLineItem,
-    QGraphicsItem,
-)
+from PyQt5.QtWidgets import QGraphicsLineItem, QGraphicsItem
 
 from plom.client.tools import CommandMoveItem
-from plom.client.tools.delete import DeleteObject
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
-class CommandLine(QUndoCommand):
+class CommandLine(CommandTool):
     def __init__(self, scene, pti, ptf):
-        super().__init__()
+        super().__init__(scene)
         self.scene = scene
         # A line from pti(nitial) to ptf(inal)
         self.obj = LineItem(pti, ptf, scene.style)
@@ -33,20 +28,6 @@ class CommandLine(QUndoCommand):
         if len(X) != 4:
             raise ValueError("wrong length of pickle data")
         return cls(scene, QPointF(X[0], X[1]), QPointF(X[2], X[3]))
-
-    def redo(self):
-        self.scene.addItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
-
-    def undo(self):
-        self.scene.removeItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class LineItem(QGraphicsLineItem):

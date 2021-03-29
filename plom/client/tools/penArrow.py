@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
@@ -15,15 +15,13 @@ from PyQt5.QtWidgets import (
 
 from plom.client.tools.pen import CommandPen, PenItem
 from plom.client.tools import CommandMoveItem, log
-from plom.client.tools.delete import DeleteObject
+from plom.client.tools.tool import DeleteObject
 
 
 class CommandPenArrow(CommandPen):
     def __init__(self, scene, path):
-        super(CommandPen, self).__init__()
-        self.scene = scene
+        super().__init__(scene, path)
         self.obj = PenArrowItem(path, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("PenArrow")
 
 

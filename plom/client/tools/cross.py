@@ -1,26 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QPointF, QTimer
+from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
-    QUndoCommand,
-    QGraphicsObject,
     QGraphicsPathItem,
-    QGraphicsRectItem,
     QGraphicsItem,
 )
 
 from plom.client.tools import CommandMoveItem
-from plom.client.tools.delete import DeleteObject
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
-class CommandCross(QUndoCommand):
+class CommandCross(CommandTool):
     def __init__(self, scene, pt):
-        super().__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.obj = CrossItem(pt, scene.style)
         self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("Cross")
@@ -33,20 +29,6 @@ class CommandCross(QUndoCommand):
         if len(X) != 2:
             raise ValueError("wrong length of pickle data")
         return cls(scene, QPointF(X[0], X[1]))
-
-    def redo(self):
-        self.scene.addItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
-
-    def undo(self):
-        self.scene.removeItem(self.obj)
-        # animate
-        self.scene.addItem(self.do.item)
-        self.do.flash_redo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class CrossItem(QGraphicsPathItem):

@@ -5,22 +5,21 @@
 
 from math import sqrt
 
-from PyQt5.QtCore import QPropertyAnimation, Qt, QPointF
+from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.line import CommandLine, LineItem
 from plom.client.tools.move import CommandMoveItem
-from plom.client.tools.delete import DeleteObject
+
+from plom.client.tools.tool import DeleteObject
 
 
 class CommandArrow(CommandLine):
     def __init__(self, scene, pti, ptf):
-        super(CommandLine, self).__init__()
-        self.scene = scene
+        super().__init__(scene, pti, ptf)
         # line starts at pti(nitial) and ends at ptf(inal).
         self.obj = ArrowItem(pti, ptf, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("Arrow")
 
 
@@ -107,13 +106,10 @@ class ArrowItem(QGraphicsPathItem):
 
 class CommandArrowDouble(CommandLine):
     def __init__(self, scene, pti, ptf):
-        super(CommandLine, self).__init__()
+        super().__init__(scene, pti, ptf)
         self.scene = scene
         # line starts at pti(nitial) and ends at ptf(inal).
-        self.pti = pti
-        self.ptf = ptf
-        self.obj = ArrowDoubleItem(self.pti, self.ptf, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
+        self.obj = ArrowDoubleItem(pti, ptf, scene.style)
         self.setText("ArrowDouble")
 
 
