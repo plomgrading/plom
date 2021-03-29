@@ -29,22 +29,15 @@ from plom.server import build_self_signed_SSL_keys
 
 server_instructions = """Overview of running the Plom server:
 
-  0. Decide on a working directory for the server and cd into it.
+  0. Make a new directory and change into it.
 
-  1. Run '%(prog)s init' - create sub-directories and config files.
+  1. Run '%(prog)s init' - creates sub-directories and config files.
 
-  2. Run '%(prog)s users' - This will create a template user list
-     file for you to edit.  Passwords are displayed in plain text.
-     Running with '--demo' option creates a (standard) demo user list,
-     while '--auto N' makes an random-generated list of N users.  Edit
-     as you see fit.
+  2. Run '%(prog)s users' - creates a template user list for you to edit.
 
-  3. Run '%(prog)s users <filename>' - This parses the plain-text
-     user list, performs some simple sanity checks and then hashes the
-     passwords to a new file.
+  3. Run '%(prog)s users <filename>' - parses user list for server.
 
-       3a. Optionally you can now delete the file containing
-           plain-text passwords.
+       3a. Optionally you can delete the plain-text passwords.
 
   4. Add a specfile to '{specdir}': 'plom-build' can do this..
 
@@ -313,9 +306,29 @@ sub = parser.add_subparsers(
     dest="command", description="Perform various server-related tasks."
 )
 
-spI = sub.add_parser("init", help="Initialise server.")
-spU = sub.add_parser("users", help="Create required users.")
-spR = sub.add_parser("launch", help="Launch server.")
+spI = sub.add_parser(
+    "init",
+    help="Initialise server",
+    description="""
+      Initializes the current working directory in preparation for
+      starting a Plom server.  Creates sub-directories and config files.
+    """,
+)
+
+spU = sub.add_parser(
+    "users",
+    help="Create user accounts",
+    description="""
+      Manipulate users accounts.  With no arguments, produce a template
+      file for you to edit, with passwords displayed in plain text.
+      Given a filename, parses a plain-text user list, performs some
+      simple sanity checks and then hashes the passwords a file for the
+      server.
+    """,
+)
+spR = sub.add_parser(
+    "launch", help="Start the server", description="Start the Plom server."
+)
 spR.add_argument(
     "masterToken",
     nargs="?",
@@ -341,13 +354,13 @@ grp.add_argument(
     "--auto",
     type=int,
     metavar="N",
-    help="Construct an auto-generated user list of N users with real-ish usernames.",
+    help="Auto-generate a random user list of N users with real-ish usernames.",
 )
 grp.add_argument(
     "--auto-numbered",
     type=int,
     metavar="N",
-    help='Construct an auto-generated user list of "user17"-like usernames.',
+    help='Auto-generate a random user list of "user17"-like usernames.',
 )
 
 
