@@ -20,6 +20,7 @@ from textwrap import fill, dedent
 import pkg_resources
 
 from plom import __version__
+from plom import Default_Port
 from plom.server import specdir, confdir
 from plom.server import build_server_directories, check_server_directories
 from plom.server import create_server_config, create_blank_predictions
@@ -145,7 +146,7 @@ def doLatexChecks():
     )
 
 
-def initialiseServer():
+def initialiseServer(port):
     print("Build required directories")
     build_server_directories()
     print("Building self-signed SSL key for server")
@@ -156,7 +157,7 @@ def initialiseServer():
 
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config()
+        create_server_config(port=port)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:
@@ -314,6 +315,11 @@ spI = sub.add_parser(
       starting a Plom server.  Creates sub-directories and config files.
     """,
 )
+spI.add_argument(
+    "--port",
+    type=int,
+    help=f"Use alternative port (defaults to {Default_Port} if omitted)",
+)
 
 spU = sub.add_parser(
     "users",
@@ -368,7 +374,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialiseServer()
+        initialiseServer(args.port)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.auto_numbered)
     elif args.command == "launch":

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Vala Vakilian
 
 """Plom script to start a demo server.
 
@@ -24,6 +25,7 @@ import argparse
 from warnings import warn
 
 from plom import __version__
+from plom import Default_Port
 
 
 parser = argparse.ArgumentParser(
@@ -38,6 +40,11 @@ parser.add_argument(
     # default=20,  # we want it to give None
     metavar="N",
     help="How many fake exam papers for the demo (defaults to 20 if omitted)",
+)
+parser.add_argument(
+    "--port",
+    type=int,
+    help=f"Which port to use for the demo server ({Default_Port} if omitted)",
 )
 
 
@@ -59,7 +66,10 @@ def main():
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
-    subprocess.check_call(split("plom-server init"))
+    if args.port:
+        subprocess.check_call(split(f"plom-server init --port {args.port}"))
+    else:
+        subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
     if args.num_papers:
@@ -89,14 +99,18 @@ def main():
 
     print("Server seems to be running, so we move on to building tests and uploading")
 
-    subprocess.check_call(split("plom-build class --demo -w 1234"))
-    subprocess.check_call(split("plom-build make -w 1234"))
-    subprocess.check_call(split("plom-fake-scribbles -w 1234"))
+    if args.port:
+        server = f"localhost:{args.port}"
+    else:
+        server = "localhost"
+    subprocess.check_call(split(f"plom-build class --demo -w 1234 -s {server}"))
+    subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
+    subprocess.check_call(split(f"plom-fake-scribbles -w 1234 -s {server}"))
 
     # TODO:
     # subprocess.check_call(
     #     split(
-    #         "plom-scan all -w 4567 fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
+    #         f"plom-scan all -w 4567 -s {server} fake_scribbled_exams1.pdf fake_scribbled_exams2.pdf fake_scribbled_exams3.pdf"
     #     )
     # )
 
@@ -108,9 +122,9 @@ def main():
         "fake_scribbled_exams3",
     ):
         subprocess.check_call(
-            split("plom-scan process -w 4567 {} {}.pdf".format(opts, f))
+            split(f"plom-scan process -w 4567 -s {server} {opts} {f}.pdf")
         )
-        subprocess.check_call(split("plom-scan upload -w 4567 -u {}".format(f)))
+        subprocess.check_call(split(f"plom-scan upload -w 4567 -s {server} -u {f}"))
 
     time.sleep(0.5)
     try:
