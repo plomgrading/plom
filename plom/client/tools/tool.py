@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
-# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2021 Andrew Rechnitzer
 
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty, Qt
 from PyQt5.QtGui import QPen, QColor, QBrush
@@ -31,7 +29,7 @@ class CommandTool(QUndoCommand):
         self.scene.removeItem(self.obj)
         # animate
         self.scene.addItem(self.do.item)
-        self.do.flash_redo()
+        self.do.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
@@ -49,12 +47,12 @@ class DeleteObject(QGraphicsObject):
         self.anim.setDuration(200)
         self.anim.setStartValue(0)
         self.anim.setKeyValueAt(0.5, 8)
-        self.anim.setEndValue(-4)
+        self.anim.setEndValue(-8)
         self.anim.start()
 
     def flash_redo(self):
         """Redo animation: thin -> med -> thin."""
-        self.anim.setStartValue(-4)
+        self.anim.setStartValue(-8)
         self.anim.setKeyValueAt(0.5, 8)
         self.anim.setEndValue(0)
         self.anim.start()
@@ -79,5 +77,5 @@ class DeleteItem(QGraphicsRectItem):
         self.restyle(style)
 
     def restyle(self, style):
-        self.setPen(QPen(QColor(255, 128, 0, 128), 2, style=Qt.DashLine))
-        self.setBrush(QBrush(QColor(255, 128, 0, 32)))
+        self.setPen(QPen(QColor(8, 232, 222, 128), 2, style=Qt.DashLine))
+        self.setBrush(QBrush(QColor(8, 232, 222, 32)))
