@@ -30,6 +30,14 @@ def test_server_config_load(tmpdir):
     assert cfg["port"] == Default_Port
 
 
+def test_server_config_alt_port(tmpdir):
+    tmp_path = Path(tmpdir)
+    create_server_config(tmp_path, port=41980)
+    with open(tmp_path / "serverDetails.toml") as f:
+        cfg = toml.load(f)
+    assert cfg["port"] == 41980
+
+
 def test_empty_prediction_list(tmpdir):
     create_blank_predictions(tmpdir)
     pl = Path(tmpdir) / "predictionlist.csv"
