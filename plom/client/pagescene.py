@@ -412,20 +412,31 @@ class PageScene(QGraphicsScene):
                     if state == "neutral":
                         state = "absolute"
                     else:
+                        log.error(
+                            "Inconsistent rubric = mixed absolute rubric with non-neutral rubric(s)"
+                        )
                         raise PlomInconsistentRubricsException
                 elif X.meta in ["delta", "relative"]:  # must be delta>0 or delta<0
                     if X.is_delta_positive():
                         if state in ["neutral", "up"]:
                             state = "up"
                         else:
+                            log.error(
+                                "Inconsistent rubric = mixed positive-delta rubric with absolute or negative-delta rubric"
+                            )
                             raise PlomInconsistentRubricsException
                     else:
                         if state in ["neutral", "down"]:
                             state = "down"
                         else:
+                            log.error(
+                                "Inconsistent rubric = mixed negative-delta rubric with absolute or positive-delta rubric"
+                            )
                             raise PlomInconsistentRubricsException
                 else:
-                    print("ARGH '{}'".format(X.meta))
+                    log.error(
+                        "Inconsistent rubric = unknown meta-type = {}".format(X.meta)
+                    )
                     raise PlomInconsistentRubricsException
         self.markingState = state
 
@@ -440,6 +451,7 @@ class PageScene(QGraphicsScene):
                     continue
                 elif X.meta == "absolute":  # there can be only one
                     score = X.get_delta_value()
+                    break
                 elif X.meta in ["delta", "relative"]:
                     # handle the score=None case carefully
                     if score is None:
@@ -447,6 +459,11 @@ class PageScene(QGraphicsScene):
                     # now update the score
                     score += X.get_delta_value()
                 else:  # this should not happnen if rubrics okay
+                    log.error(
+                        "Inconsistent rubric = rubric of unknown type = {}".format(
+                            X.meta
+                        )
+                    )
                     raise PlomInconsistentRubricsException
         self.score = score
 
@@ -2091,6 +2108,7 @@ class PageScene(QGraphicsScene):
             else:
                 return True
         else:  # this should not happen
+            log.warning("{}: {}x{}".format(". ".join(msg), w, h))
             raise PlomInconsistentRubricsException
 
     def changeTheRubric(self, delta, text, rubricID, rubricMeta, annotatorUpdate=True):
