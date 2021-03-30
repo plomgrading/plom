@@ -61,8 +61,9 @@ def build_database(server=None, password=None, vermap={}):
     """Build the database from a pre-set version map.
 
     args:
-        vermap (dict): TODO XREF ver map tools.  If empty dict, we have
-            server make its own mapping.
+        vermap (dict): question version map.  If empty dict, server will
+            make its own mapping.  For the map format see
+            :func:`plom.finish.make_random_version_map`.
         server (str):
         password (str):
 
@@ -88,10 +89,10 @@ def build_database(server=None, password=None, vermap={}):
         # TODO this should be a more specific exception
         raise RuntimeError("Server already has a populated database") from None
 
-    # TODO: grab it and sanity check?
-    pvmap = msgr.getGlobalPageVersionMap()
-    # we want qvmap not pvmap
-    # assert pvmap == vermap
+    # grab map and sanity check
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    if vermap:
+        assert qvmap == vermap
 
     msgr.closeUser()
     msgr.stop()
