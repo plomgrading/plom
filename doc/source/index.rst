@@ -9,11 +9,40 @@ Welcome to Plom's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   getting_started.rst
+
    install.rst
+
+   code.rst
 
 
 .. automodule:: plom
-    :members:
+
+
+The Plom code is organized into several main modules.
+
+  * `plom.client`
+
+    .. automodule:: plom.client
+        :members:
+
+  * `plom.server`
+
+    .. automodule:: plom.server
+
+  * Tools for producing papers, scanning papers, and finishing the grading process.
+
+    .. automodule:: plom.produce
+
+    .. automodule:: plom.finish
+
+    .. automodule:: plom.finish
+
+  * Other supporting code
+
+    .. automodule:: plom.db
+    .. automodule:: plom.manager
+
 
 TeX Tools
 ---------
