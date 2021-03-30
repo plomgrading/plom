@@ -340,7 +340,6 @@ class PageScene(QGraphicsScene):
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
         self.imageItem = QGraphicsPixmapItem
-        self.deleteItem = None
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
@@ -1298,6 +1297,7 @@ class PageScene(QGraphicsScene):
                         GhostComment,
                         GhostDelta,
                         GhostText,
+                        DeleteItem,
                     ]
                 )
                 and X is not isinstance(X, ImageItem)
@@ -1815,6 +1815,8 @@ class PageScene(QGraphicsScene):
             self.ghostItem.di,
             self.ghostItem.blurb,
         ]:
+            return
+        elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
             return
         else:
             command = CommandDelete(self, item)
