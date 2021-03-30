@@ -19,7 +19,7 @@ class CommandHighlight(CommandPen):
     def __init__(self, scene, path):
         super().__init__(scene, path)
         self.obj = HighlightItem(path, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
+        self.do = DeleteObject(self.obj.path)
         self.setText("Highlight")
 
 

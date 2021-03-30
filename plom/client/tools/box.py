@@ -18,7 +18,7 @@ class CommandBox(CommandTool):
     def __init__(self, scene, rect):
         super().__init__(scene)
         self.obj = BoxItem(rect, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
+        self.do = DeleteObject(self.obj.shape(), fill=True)
         self.setText("Box")
 
     @classmethod

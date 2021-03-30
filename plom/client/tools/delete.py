@@ -26,7 +26,7 @@ class CommandDelete(QUndoCommand):
         self.deleteItem = deleteItem
         self.setText("Delete")
         # the delete animation object
-        self.do = DeleteObject(self.deleteItem.boundingRect(), self.scene.style)
+        self.do = DeleteObject(self.deleteItem.shape())
 
     def redo(self):
         # remove the object

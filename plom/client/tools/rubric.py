@@ -36,7 +36,7 @@ class CommandGroupDeltaText(CommandTool):
             style=scene.style,
             fontsize=scene.fontSize,
         )
-        self.do = DeleteObject(self.gdt.boundingRect(), scene.style)
+        self.do = DeleteObject(self.gdt.shape(), fill=True)
         self.setText("GroupDeltaText")
 
     @classmethod
@@ -65,7 +65,7 @@ class CommandGroupDeltaText(CommandTool):
         self.scene.removeItem(self.gdt)
         # animate
         self.scene.addItem(self.do.item)
-        self.do.flash_redo()
+        self.do.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
         #
         self.scene.refreshStateAndScore()
