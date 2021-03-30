@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -10,7 +10,19 @@ import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
-from plom.db.tables import *
+from plom.db.tables import (
+    Annotation,
+    Bundle,
+    DNMGroup,
+    Group,
+    IDGroup,
+    QGroup,
+    Rubric,
+    Test,
+    TPage,
+    User,
+)
+from plom.db.tables import plomdb
 
 log = logging.getLogger("DB")
 
@@ -21,7 +33,7 @@ log = logging.getLogger("DB")
 def createReplacementBundle(self):
     try:
         bref = Bundle.create(name="replacements")
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error("Create replacement page bundle = {}.{} error - {}".format(e))
         return False
     return True
@@ -89,8 +101,7 @@ def nextqueue_position(self):
     lastPos = Group.select(fn.MAX(Group.queue_position)).scalar()
     if lastPos is None:
         return 0
-    else:
-        return lastPos + 1
+    return lastPos + 1
 
 
 def createTest(self, t):
@@ -141,7 +152,7 @@ def createIDGroup(self, t, pages):
             )  # must be unique
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create Group {} of test {} error - {}".format(
+                "Create ID for gid={} test={}: cannot create Group - {}".format(
                     gid, t, e
                 )
             )
@@ -151,8 +162,8 @@ def createIDGroup(self, t, pages):
             iref = IDGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
-                    qref, gref, e
+                "Create ID for gid={} test={} Group={}: cannot create IDGroup - {}.".format(
+                    gid, t, gref, e
                 )
             )
             return False

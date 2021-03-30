@@ -1,9 +1,15 @@
-from plom.db.tables import *
-from datetime import datetime, timedelta
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
+from datetime import datetime, timedelta
 import logging
 
+from plom.db.tables import *
+
+
 log = logging.getLogger("DB")
+
 
 # ------------------
 # Reporting functions
