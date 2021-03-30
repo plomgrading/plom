@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QRectF
 from PyQt5.QtGui import QBrush, QColor, QPen
 from PyQt5.QtWidgets import (
     QGraphicsRectItem,

@@ -382,12 +382,13 @@ class PageScene(QGraphicsScene):
         # TODO - this is a bit hack, but need to update the rubric-widget
         self.parent.rubric_widget.changeMark(self.score, self.markingState)
 
-        # update the ghostcomment
-        self.updateGhost(
-            self.rubricDelta,
-            self.rubricText,
-            self.isLegalRubric(self.rubricMeta, self.rubricDelta),
-        )
+        # update the ghostcomment if in rubric-mode.
+        if self.mode == "rubric":
+            self.updateGhost(
+                self.rubricDelta,
+                self.rubricText,
+                self.isLegalRubric(self.rubricMeta, self.rubricDelta),
+            )
 
     def refreshMarkingState(self):
         """Compute the marking-state from the rubrics on the page and store
@@ -1194,6 +1195,7 @@ class PageScene(QGraphicsScene):
             # Simulate a rubric click.
             self.rubricText = e.mimeData().text()
             self.rubricDelta = "0"
+            self.rubricMeta = "neutral"
             self.mousePressRubric(e)
 
         elif e.mimeData().hasFormat(
@@ -2108,7 +2110,9 @@ class PageScene(QGraphicsScene):
             else:
                 return True
         else:  # this should not happen
-            log.warning("{}: {}x{}".format(". ".join(msg), w, h))
+            log.error(
+                "Inconsistent rubric = {} {} {}".format(self.markingState, meta, dn)
+            )
             raise PlomInconsistentRubricsException
 
     def changeTheRubric(self, delta, text, rubricID, rubricMeta, annotatorUpdate=True):
@@ -2135,6 +2139,7 @@ class PageScene(QGraphicsScene):
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
             self.rubricDelta = delta
+            self.rubricMeta = rubricMeta
             self.setToolMode("rubric")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
