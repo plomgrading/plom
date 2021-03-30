@@ -1071,7 +1071,7 @@ class RubricWidget(QWidget):
         if len(txt) <= 0:
             return
         tag = arb.TEtag.toPlainText().strip()
-        meta = arb.TEmeta.toPlainText().strip()
+        meta = arb.TEmeta.text().strip()
         username = arb.TEuser.text().strip()
         # only meaningful if we're modifying
         rubricID = arb.label_rubric_id.text().strip()
@@ -1116,10 +1116,10 @@ class RubricWidget(QWidget):
         self.handleClick()
 
     def updateRubricInLists(self, new_rubric):
-        self.tabS.updateRubric(new_rubric)
-        self.tabHide.updateRubric(new_rubric)
+        self.tabS.updateRubric(new_rubric, self.mss)
+        self.tabHide.updateRubric(new_rubric, self.mss)
         for tab in self.user_tabs:
-            tab.updateRubric(new_rubric)
+            tab.updateRubric(new_rubric, self.mss)
 
     def get_tab_rubric_lists(self):
         """returns a dict of lists of the current rubrics"""
