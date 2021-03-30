@@ -45,6 +45,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from plom import get_question_label
 from plom.plom_exceptions import (
     PlomRangeException,
     PlomSeriousException,
@@ -925,7 +926,6 @@ class MarkerClient(QWidget):
 
         Args:
             Qapp(QApplication): Main client application
-
         """
         super().__init__()
         self.Qapp = Qapp
@@ -1095,9 +1095,10 @@ class MarkerClient(QWidget):
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
         self.ui.userLabel.setText(self.msgr.whoami())
+        question_label = get_question_label(self.exam_spec, self.question)
         self.ui.infoBox.setTitle(
-            "Marking Q{} (ver. {}) of “{}”".format(
-                self.question, self.version, self.exam_spec["name"]
+            "Marking {} (ver. {}) of “{}”".format(
+                question_label, self.version, self.exam_spec["name"]
             )
         )
 
@@ -1723,11 +1724,19 @@ class MarkerClient(QWidget):
             pdict = None
 
         exam_name = self.exam_spec["name"]
+
+        # TODO: I dislike this packed-string: overdue for refactor
+        assert task[5] == "g"
+        question_num = int(task[6:])
         tgv = task[1:]
+        question_label = get_question_label(self.exam_spec, question_num)
+        markStyle = self.ui.markStyleGroup.checkedId()
+
         integrity_check = self.examModel.getIntegrityCheck(task)
         src_img_data = self.examModel.get_source_image_data(task)
         return (
             tgv,
+            question_label,
             exam_name,
             paperdir,
             aname,
@@ -2148,8 +2157,6 @@ class MarkerClient(QWidget):
 
         Returns:
             (tuple) containing pageData and viewFiles
-
-
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(

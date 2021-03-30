@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 
 from PyQt5.QtCore import (
     QTimer,
@@ -29,8 +29,11 @@ from PyQt5.QtWidgets import (
     QFormLayout,
 )
 
+from plom.client.tools import CommandMoveItem
+from plom.client.tools.tool import CommandTool, DeleteObject
 
-class CommandImage(QUndoCommand):
+
+class CommandImage(CommandTool):
     """ A class for making image commands. """
 
     def __init__(self, scene, pt, image, scale=1, border=True, data=None):
@@ -46,8 +49,7 @@ class CommandImage(QUndoCommand):
             data (str): Base64 data held in a string if the image had
                 previously been json serialized.
         """
-        super(CommandImage, self).__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.width = image.width()
         if data is None:
             toMidpoint = QPoint(-image.width() / 2, -image.height() / 2)
@@ -55,7 +57,8 @@ class CommandImage(QUndoCommand):
         else:
             self.midPt = pt
         self.image = image
-        self.imageItem = ImageItemObject(self.midPt, self.image, scale, border, data)
+        self.obj = ImageItem(self.midPt, self.image, scale, border, data)
+        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
         self.setText("Image")
 
     @classmethod
@@ -74,78 +77,13 @@ class CommandImage(QUndoCommand):
             raise ValueError("Encountered a problem loading image.")
         return cls(scene, QPointF(X[0], X[1]), img, X[3], X[4], X[2])
 
-    def redo(self):
-        """ Redoes adding the image to the scene. """
-        self.imageItem.flash_redo()
-        self.scene.addItem(self.imageItem.ci)
-
-    def undo(self):
-        """ Undoes adding the image to the scene. """
-        self.imageItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.imageItem.ci))
-
-
-class ImageItemObject(QGraphicsObject):
-    """A class which encapsulates the QImage.
-
-    Used primarily for animation when undo or redo is performed.
-    """
-
-    def __init__(self, midPt, image, scale, border, data):
-        """
-        Initializes an new ImageItemObject.
-
-        Args:
-            midPt (QPoint): the point middle of the image.
-            image (QImage): the image being added to the scene.
-            scale (float): the scaling value, <1 decreases size, >1 increases.
-            border (bool): True if the image has a border, false otherwise.
-            data (str): Base64 data held in a string if the image had
-                previously been json serialized.
-        """
-        super(ImageItemObject, self).__init__()
-        self.ci = ImageItem(midPt, image, self, scale, border, data)
-        self.anim = QPropertyAnimation(self, b"thickness")
-        self.border = border
-
-    def flash_undo(self):
-        """Animates the object in an undo sequence."""
-        self.anim.setDuration(200)
-        if self.ci.border:
-            self.anim.setStartValue(4)
-        else:
-            self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 8)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        """Animates the object in a redo sequence. """
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 8)
-        if self.ci.border:
-            self.anim.setEndValue(4)
-        else:
-            self.anim.setEndValue(0)
-        self.anim.start()
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.ci.thick
-
-    @thickness.setter
-    def thickness(self, value):
-        self.ci.thick = value
-        self.ci.update()
-
 
 class ImageItem(QGraphicsPixmapItem):
     """
     An image added to a paper.
     """
 
-    def __init__(self, midPt, qImage, parent, scale, border, data):
+    def __init__(self, midPt, qImage, scale, border, data):
         """
         Initialize a new ImageItem.
 
@@ -161,16 +99,19 @@ class ImageItem(QGraphicsPixmapItem):
         self.qImage = qImage
         self.border = border
         self.setPixmap(QPixmap.fromImage(self.qImage))
-        self.setPos(midPt)
+        self.setOffset(midPt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
-        self.parent = parent
         self.setScale(scale)
         self.data = data
-        self.thick = 0
+        self.thick = 4
+
+    def itemChange(self, change, value):
+        if change == QGraphicsItem.ItemPositionChange and self.scene():
+            command = CommandMoveItem(self, value)
+            self.scene().undoStack.push(command)
+        return super().itemChange(change, value)
 
     def paint(self, painter, option, widget=None):
         """

@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
+from plom import get_question_label
 from plom.plom_exceptions import (
     PlomSeriousException,
     PlomBenignException,
@@ -307,12 +308,12 @@ class Chooser(QDialog):
     def getQuestion(self):
         """Return the integer question or None"""
         if self.ui.pgDrop.isVisible():
-            question = self.ui.pgDrop.currentText().lstrip("Q")
+            question = self.ui.pgDrop.currentIndex() + 1
         else:
             question = self.ui.pgSB.value()
         try:
             return int(question)
-        except:
+        except ValueError:
             return None
 
     def getv(self):
@@ -395,7 +396,7 @@ class Chooser(QDialog):
 
         self.ui.pgDrop.clear()
         self.ui.pgDrop.addItems(
-            ["Q{}".format(x + 1) for x in range(0, spec["numberOfQuestions"])]
+            [get_question_label(spec, n + 1) for n in range(spec["numberOfQuestions"])]
         )
         if question:
             if question >= 1 and question <= spec["numberOfQuestions"]:

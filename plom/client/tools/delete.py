@@ -1,12 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QUndoCommand
+from PyQt5.QtCore import Qt, QTimer, pyqtProperty, QRectF, QPropertyAnimation
+from PyQt5.QtGui import QPen, QColor, QBrush
+from PyQt5.QtWidgets import (
+    QUndoCommand,
+    QGraphicsObject,
+    QGraphicsRectItem,
+    QGraphicsItem,
+)
 
-from plom.client.tools import DeltaItem, GroupDeltaTextItem
+from plom.client.tools.rubric import GroupDeltaTextItem
+from plom.client.tools.tool import DeleteObject
 
 
 class CommandDelete(QUndoCommand):
@@ -18,34 +25,26 @@ class CommandDelete(QUndoCommand):
         self.scene = scene
         self.deleteItem = deleteItem
         self.setText("Delete")
+        # the delete animation object
+        self.do = DeleteObject(self.deleteItem.boundingRect(), self.scene.style)
 
     def redo(self):
-        # check to see if mid-delete
-        if self.deleteItem.animateFlag:
-            return  # this avoids user deleting same object mid-delete animation.
-
-        # nicely animate the deletion - since deleting, this is like an "undo"
-        self.deleteItem.animateFlag = True
-        if self.deleteItem.animator is not None:
-            for X in self.deleteItem.animator:
-                X.flash_undo()
-            QTimer.singleShot(200, lambda: self.scene.removeItem(self.deleteItem))
-            # after everything removed - refresh the state and score
-            if isinstance(self.deleteItem, GroupDeltaTextItem):
-                QTimer.singleShot(250, self.scene.refreshStateAndScore)
-        else:
-            self.scene.removeItem(self.deleteItem)
-            # after everything removed - refresh the state and score
-            if isinstance(self.deleteItem, GroupDeltaTextItem):
-                self.scene.refreshStateAndScore()
+        # remove the object
+        self.scene.removeItem(self.deleteItem)
+        if isinstance(self.deleteItem, GroupDeltaTextItem):
+            self.scene.refreshStateAndScore()
+        ## flash an animated box around the deleted object
+        self.scene.addItem(self.do.item)
+        self.do.flash_undo()  # note - is undo animation since object being removed
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        # nicely animate the undo of deletion
-        self.deleteItem.animateFlag = False
+        ## flash an animated box around the un-deleted object
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()  # is redo animation since object being brought back
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        # put the object back
         self.scene.addItem(self.deleteItem)
-        if self.deleteItem.animator is not None:
-            for X in self.deleteItem.animator:
-                X.flash_redo()
         # If the object is a GroupTextDeltaItem then refresh the state and score
         if isinstance(self.deleteItem, GroupDeltaTextItem):
             self.scene.refreshStateAndScore()

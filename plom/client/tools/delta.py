@@ -10,41 +10,6 @@ from PyQt5.QtWidgets import QUndoCommand, QGraphicsTextItem, QGraphicsItem
 from plom.client.tools.text import CommandMoveText
 
 
-class CommandDelta(QUndoCommand):
-    """Handle the placing and undoing/redoing of Deltas.
-
-    Very similar to CommandLine et al, but undo/redo
-    must send new mark to scene.
-    """
-
-    def __init__(self, scene, pt, delta):
-        super().__init__()
-        self.scene = scene
-        self.item = DeltaItem(pt, delta, style=scene.style, fontsize=scene.fontSize)
-        self.setText("Delta")
-
-    @classmethod
-    def from_pickle(cls, X, *, scene):
-        """Construct a CommandDelta from a serialized form."""
-        assert X[0] == "Delta"
-        X = X[1:]
-        if len(X) != 3:
-            raise ValueError("wrong length of pickle data")
-        return cls(scene, QPointF(X[1], X[2]), X[0])
-
-    def redo(self):
-        # Mark increased by delta
-        self.scene.changeTheMark(self.item.delta, undo=False)
-        self.item.flash_redo()
-        self.scene.addItem(self.item)
-
-    def undo(self):
-        # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.item.delta, undo=True)
-        self.item.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.item))
-
-
 class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta, style, fontsize=10):
         super().__init__()
