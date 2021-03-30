@@ -261,7 +261,7 @@ class PageScene(QGraphicsScene):
     QTextItems.
     """
 
-    def __init__(self, parent, src_img_data, saveName, maxMark, score, question_label):
+    def __init__(self, parent, src_img_data, saveName, maxMark, question_label):
         """
         Initialize a new PageScene.
 
@@ -272,7 +272,6 @@ class PageScene(QGraphicsScene):
                `filename` and `orientation`.
             saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
-            score (int): current score
             question_label (str/None): how to display this question, for
                 example a string like "Q7", or `None` if not relevant.
         """
@@ -426,6 +425,7 @@ class PageScene(QGraphicsScene):
                         else:
                             raise PlomInconsistentRubricsException
                 else:
+                    print("ARGH '{}'".format(X.meta))
                     raise PlomInconsistentRubricsException
         self.markingState = state
 
@@ -2043,42 +2043,6 @@ class PageScene(QGraphicsScene):
         """
         self.score = newMark
         self.scoreBox.changeScore(self.score)
-
-    def changeTheMark(self, deltaMarkString, undo=False):
-        """
-        Changes the new mark/score for the paper based on the delta.
-
-        Args:
-            deltaMarkString(str): a string containing the delta integer.
-            undo (bool): True if delta is being undone or removed,
-                False otherwise.
-
-        Returns:
-            None
-
-        """
-        if deltaMarkString == ".":
-            return
-        # if is an undo then we need a minus-sign here
-        # because we are undoing the delta.
-        # note that this command is passed a string
-        deltaMark = int(deltaMarkString)
-        if undo:
-            self.score -= deltaMark
-        else:
-            self.score += deltaMark
-        self.scoreBox.changeScore(self.score)
-        self.parent.changeMark(self.score)
-        # if we are in rubric mode then the rubric might need updating
-        # TODO: any action on dot needed here?
-        if self.mode == "rubric":
-            self.changeTheRubric(
-                self.rubricDelta,
-                self.rubricText,
-                self.rubricID,
-                self.rubricMeta,
-                annotatorUpdate=False,
-            )
 
     def undo(self):
         """ Undoes a given action."""

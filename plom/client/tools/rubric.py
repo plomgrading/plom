@@ -25,8 +25,7 @@ class CommandGroupDeltaText(CommandTool):
     """
 
     def __init__(self, scene, pt, rid, meta, delta, text):
-        super().__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
             pt,
             delta,
@@ -54,20 +53,22 @@ class CommandGroupDeltaText(CommandTool):
         return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5])
 
     def redo(self):
-        self.scene.changeTheMark(self.gdt.di.delta, undo=False)
         self.scene.addItem(self.gdt)
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_redo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        #
+        self.scene.refreshStateAndScore()
 
     def undo(self):
-        self.scene.changeTheMark(self.gdt.di.delta, undo=True)
         self.scene.removeItem(self.gdt)
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_redo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        #
+        self.scene.refreshStateAndScore()
 
 
 class GroupDeltaTextItem(QGraphicsItemGroup):

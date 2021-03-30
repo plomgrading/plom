@@ -899,7 +899,6 @@ class Annotator(QWidget):
             self.src_img_data,
             self.saveName,
             self.maxMark,
-            self.score,
             self.question_label,
         )
         # connect view to scene
