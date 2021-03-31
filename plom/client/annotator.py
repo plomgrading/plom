@@ -389,6 +389,9 @@ class Annotator(QWidget):
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
+        # update displayed score
+        self.refreshDisplayedMark(self.getScore())
+        # update rubrics
         self.rubric_widget.changeMark(
             self.getScore(), self.getMarkingState(), self.maxMark
         )
@@ -458,19 +461,19 @@ class Annotator(QWidget):
             self.scene.set_annotation_color(c)
         # TODO: save to settings
 
-    def setCurrentMarkMode(self):
+    def refreshDisplayedMark(self, score):
         """
-        TODO: check this.
-        Checks if page scene (self.scene) is not none, in which case
+        Update the marklabel with the current score - triggered by pagescene
 
         Returns:
             None
 
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
-        if self.scene:
-            self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
-        self.ui.markLabel.setText("{} out of {}".format(self.getScore(), self.maxMark))
+        if score is None:
+            self.ui.markLabel.setText("No mark")
+        else:
+            self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
 
     def loadCursors(self):
         """
@@ -678,19 +681,18 @@ class Annotator(QWidget):
         # list of minor modes in order
         L = ["box", "tick", "cross", "text", "line", "pen"]
 
-        if always_move:
-            raise NotImplementedError("TODO")
-
         if not hasattr(self, "_which_tool"):
             self._which_tool = "box"
 
-        try:
-            n = L.index(self.scene.mode)
-            # in minor mode n, so go to the next one in direction
-            self._which_tool = L[(n + dir) % len(L)]
-        except ValueError:
-            # not in a minor mode, so keep the last minor_tool
-            pass
+        # if always-move then select the next/previous tool according to dir
+        # elif in a tool-mode then select next/prev tool according to dir
+        # elif - non-tool mode, so keep the last tool
+        if always_move:  # set index to the last tool we used
+            self._which_tool = L[(L.index(self._which_tool) + dir) % len(L)]
+        elif self.scene.mode in L:
+            self._which_tool = L[(L.index(self.scene.mode) + dir) % len(L)]
+        else:
+            pass  # keep the current tool
         getattr(self.ui, "{}Button".format(self._which_tool)).animateClick()
 
     def prev_minor_tool(self):
