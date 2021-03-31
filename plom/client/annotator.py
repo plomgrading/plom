@@ -668,24 +668,22 @@ class Annotator(QWidget):
 
     def next_minor_tool(self, dir=1):
         """Switch to current minor tool or advance to next minor tool."""
+        # If mode is rubric then we reselect the current minor tool
+
+        # list of minor modes in order
+        L = ["box", "tick", "cross", "text", "line", "pen"]
+
         if not hasattr(self, "_which_tool"):
-            self._which_tool = 0
-        L = [
-            self.ui.boxButton,
-            self.ui.tickButton,
-            self.ui.crossButton,
-            self.ui.textButton,
-            self.ui.lineButton,
-            self.ui.penButton,
-        ]
-        if any([f.isChecked() for f in L]):
-            # TODO: find it, set to in case the shudder *mouse* was used
-            # self._which_tool = L.index(...)
-            self._which_tool += dir
-            self._which_tool %= len(L)
-        # no tool was selected so click the previously-used tool
-        f = L[self._which_tool]
-        f.animateClick()
+            self._which_tool = "box"
+
+        try:
+            n = L.index(self.scene.mode)
+            # in minor mode n, so go to the next one in direction
+            self._which_tool = L[(n + dir) % len(L)]
+        except ValueError:
+            # not in a minor mode, so keep the last minor_tool
+            pass
+        getattr(self.ui, "{}Button".format(self._which_tool)).animateClick()
 
     def prev_minor_tool(self):
         """Switch to current minor tool or go back to prev minor tool."""
