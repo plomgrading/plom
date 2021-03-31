@@ -74,7 +74,7 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
 
     Raises:
         ValueError: if database already populated.
-        KeyError: question selection scheme is invalid.
+        KeyError: invalid question selection scheme in spec.
     """
     buildSpecialRubrics(spec, db)
 
@@ -133,12 +133,12 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
                 assert v == 1
             elif spec["question"][gs]["select"] == "shuffle":
                 vstr = "v{}".format(v)
-            elif spec["question"][gs]["select"] == "param":
-                vstr = "p{}".format(v)
+            # elif spec["question"][gs]["select"] == "param":
+            #     vstr = "p{}".format(v)
             else:
                 raise KeyError(
-                    'problem with spec: expected "fix/shuffle/param" but got "{}".'.format(
-                        spec["question"][gs]["select"]
+                    'Invalid spec: question {} "select" of "{}" is unexpected'.format(
+                        gs, spec["question"][gs]["select"]
                     )
                 )
             if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
