@@ -74,6 +74,9 @@ class ScoreBox(QGraphicsTextItem):
             s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)
 
+    def get_text(self):
+        return self.toPlainText()
+
     def update_style(self):
         self.style = self.scene().style
         self.setDefaultTextColor(self.style["annot_color"])
@@ -380,6 +383,8 @@ class PageScene(QGraphicsScene):
         self.scoreBox.changeScore(self.score)
         # TODO - this is a bit hack, but need to update the rubric-widget
         self.parent.rubric_widget.changeMark(self.score, self.markingState)
+        # also update the marklabel in the annotator - same text as scorebox
+        self.parent.refreshDisplayedMark(self.score)
 
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":

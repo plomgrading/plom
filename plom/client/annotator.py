@@ -389,6 +389,9 @@ class Annotator(QWidget):
         # TODO: see above, can we maintain our zoom b/w images?  Would anyone want that?
         # TODO: see above, don't click a different button: want to keep same tool
 
+        # update displayed score
+        self.refreshDisplayedMark(self.getScore())
+        # update rubrics
         self.rubric_widget.changeMark(
             self.getScore(), self.getMarkingState(), self.maxMark
         )
@@ -458,19 +461,19 @@ class Annotator(QWidget):
             self.scene.set_annotation_color(c)
         # TODO: save to settings
 
-    def setCurrentMarkMode(self):
+    def refreshDisplayedMark(self, score):
         """
-        TODO: check this.
-        Checks if page scene (self.scene) is not none, in which case
+        Update the marklabel with the current score - triggered by pagescene
 
         Returns:
             None
 
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
-        if self.scene:
-            self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
-        self.ui.markLabel.setText("{} out of {}".format(self.getScore(), self.maxMark))
+        if score is None:
+            self.ui.markLabel.setText("No mark")
+        else:
+            self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
 
     def loadCursors(self):
         """
@@ -666,30 +669,35 @@ class Annotator(QWidget):
     def prev_tab(self):
         self.rubric_widget.prev_tab()
 
-    def next_minor_tool(self, dir=1):
-        """Switch to current minor tool or advance to next minor tool."""
+    def next_minor_tool(self, dir=1, always_move=False):
+        """Switch to current minor tool or advance to next minor tool.
+
+        args:
+            dir (int): +1 for next (default), -1 for previous.
+            always_move (bool): the minor tools keep track of the
+                last-used tool.  Often, but not always, we want to
+                switch back to the last-used tool.  False by default.
+        """
+        # list of minor modes in order
+        L = ["box", "tick", "cross", "text", "line", "pen"]
+
         if not hasattr(self, "_which_tool"):
-            self._which_tool = 0
-        L = [
-            self.ui.boxButton,
-            self.ui.tickButton,
-            self.ui.crossButton,
-            self.ui.textButton,
-            self.ui.lineButton,
-            self.ui.penButton,
-        ]
-        if any([f.isChecked() for f in L]):
-            # TODO: find it, set to in case the shudder *mouse* was used
-            # self._which_tool = L.index(...)
-            self._which_tool += dir
-            self._which_tool %= len(L)
-        # no tool was selected so click the previously-used tool
-        f = L[self._which_tool]
-        f.animateClick()
+            self._which_tool = "box"
+
+        # if always-move then select the next/previous tool according to dir
+        # elif in a tool-mode then select next/prev tool according to dir
+        # elif - non-tool mode, so keep the last tool
+        if always_move:  # set index to the last tool we used
+            self._which_tool = L[(L.index(self._which_tool) + dir) % len(L)]
+        elif self.scene.mode in L:
+            self._which_tool = L[(L.index(self.scene.mode) + dir) % len(L)]
+        else:
+            pass  # keep the current tool
+        getattr(self.ui, "{}Button".format(self._which_tool)).animateClick()
 
     def prev_minor_tool(self):
-        """Switch to current minor tool or go back to prev minor tool."""
-        self.next_minor_tool(dir=-1)
+        """Switch backward to the previous minor tool."""
+        self.next_minor_tool(dir=-1, always_move=True)
 
     def viewWholePaper(self):
         """
