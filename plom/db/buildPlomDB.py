@@ -1,11 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
+import logging
 import random
+
+from plom import check_version_map, make_random_version_map
 from plom.db import PlomDB
 
+
+log = logging.getLogger("DB")
 
 managerDemoRubrics = [
     {"delta": "-1", "text": "arithmetic", "meta": "relative"},
@@ -86,31 +91,16 @@ def buildSpecialRubrics(spec, db):
                 )
 
 
-def buildExamDatabaseFromSpec(spec, db):
+def buildExamDatabaseFromSpec(spec, db, version_map=None):
     """Build metadata for exams from spec and insert into the database.
 
     Arguments:
-        spec {dict} -- The spec file for the database that is being setup.
-                          Example below:
-                          {
-                            'name': 'plomdemo',
-                            'longName': 'Midterm Demo using Plom',
-                            'numberOfVersions': 2,
-                            'numberOfPages': 6,
-                            'numberToProduce': 20,
-                            'numberToName': 10,
-                            'numberOfQuestions': 3,
-                            'privateSeed': '1001378822317872',
-                            'publicCode': '270385',
-                            'idPages': {'pages': [1]},
-                            'doNotMark': {'pages': [2]},
-                            'question': {
-                                '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
-                                '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
-                                '3': {'pages': [5, 6], 'mark': 10, 'select': 'shuffle'} }
-                            }
-                          }
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         db (database): the database to populate.
+        version_map (dict/None): optional predetermined version map
+            keyed by test number and question number.  If None, we will
+            build our own random version mapping.  For the map format
+            see :func:`plom.finish.make_random_version_map`.
 
     Returns:
         bool: True if succuess.
@@ -118,18 +108,18 @@ def buildExamDatabaseFromSpec(spec, db):
 
     Raises:
         ValueError: if database already populated.
+        KeyError: invalid question selection scheme in spec.
     """
-    # fire up logging
-    import logging
-
-    log = logging.getLogger("DB")
-
     buildSpecialRubrics(spec, db)
 
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")
 
-    random.seed(spec["privateSeed"])
+    if not version_map:
+        # TODO: move reproducible random seed support to the make fcn?
+        random.seed(spec["privateSeed"])
+        version_map = make_random_version_map(spec)
+    check_version_map(version_map)
 
     ok = True
     status = ""
@@ -146,8 +136,6 @@ def buildExamDatabaseFromSpec(spec, db):
         ok = False
         status += "Error making bundle for replacement pages"
 
-    # Note: need to produce these in a particular order for random seed to be
-    # reproducibile: so this really must be a loop, not a Pool.
     for t in range(1, spec["numberToProduce"] + 1):
         log.info(
             "Creating DB entry for test {} of {}.".format(t, spec["numberToProduce"])
@@ -172,21 +160,19 @@ def buildExamDatabaseFromSpec(spec, db):
 
         for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
             gs = str(g + 1)  # now a str and 1,2,3,...
-            if (
-                spec["question"][gs]["select"] == "fix"
-            ):  # there is only one version so all are version 1
-                v = 1
+            v = version_map[t][g + 1]
+            assert v in range(1, spec["numberOfVersions"] + 1)
+            if spec["question"][gs]["select"] == "fix":
                 vstr = "f{}".format(v)
-            elif (
-                spec["question"][gs]["select"] == "shuffle"
-            ):  # version selected randomly in [1, 2, ..., #versions]
-                v = random.randint(1, spec["numberOfVersions"])
+                assert v == 1
+            elif spec["question"][gs]["select"] == "shuffle":
                 vstr = "v{}".format(v)
+            # elif spec["question"][gs]["select"] == "param":
+            #     vstr = "p{}".format(v)
             else:
-                # TODO: or RuntimeError?
-                raise ValueError(
-                    'problem with spec: expected "fix" or "shuffle" but got "{}".'.format(
-                        spec["question"][gs]["select"]
+                raise KeyError(
+                    'Invalid spec: question {} "select" of "{}" is unexpected'.format(
+                        gs, spec["question"][gs]["select"]
                     )
                 )
             if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
@@ -196,5 +182,4 @@ def buildExamDatabaseFromSpec(spec, db):
                 ok = False
         status += "\n"
 
-    print("ok, status = ", ok, status)
     return ok, status

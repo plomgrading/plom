@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Colin B. Macdonald
 # Copyright (C) 2021 Jenny Li
@@ -25,24 +27,34 @@ import os
 import binascii
 import pandas as pd
 
+from plom.finish import salted_hex_hash_from_str, rand_hex
+
+
 where_csv = Path(".")
 in_csv = where_csv / "produced_papers.csv"
 out_csv = where_csv / "random_codes.csv"
 
 df = pd.read_csv(in_csv, dtype="object")
 
+hexdigits = 6
 
 # *** IMPORTANT TO CHANGE
 name = "quiz1"
 # TODO take from spec instead?
-input('WARNING: "name" hardcoded to "{}": is that correct? Ctrl-C to cancel, Enter to continue '.format(name))
+print('WARNING: "name" hardcoded to "{}": is that correct?'.format(name))
 
-NN = 6  # 12 hex digits
+print("A salt string will make your random codes reproducible from student numbers.")
+salt = input("Enter a salt string (enter for truly random, ctrl-c to cancel): ")
 
 
-# todo: does plom already have this function somewhere?
-def random_hex():
-    return binascii.b2a_hex(os.urandom(NN)).decode()
+def codefcn(r):
+    # sID is from the produced_papers file not canvas!
+    # some are null b/c of the extra papers: presumably no need for reproducible?
+    if pd.isnull(r["sID"]):
+        return rand_hex(digits=hexdigits)
+    if salt:
+        return salted_hex_hash_from_str(r["sID"], salt=salt, digits=hexdigits)
+    return rand_hex(digits=hexdigits)
 
 
 def make_file_name(r):
@@ -55,7 +67,7 @@ def make_file_name(r):
     )
 
 
-df["test_hex"] = df.apply(lambda row: random_hex(), axis=1)
+df["test_hex"] = df.apply(lambda row: codefcn(row), axis=1)
 df["test_filename"] = df.apply(lambda row: make_file_name(row), axis=1)
 
 df.to_csv(out_csv, index=False)

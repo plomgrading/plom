@@ -613,7 +613,7 @@ class Ui_Manager(object):
 
     def retranslateUi(self, Manager):
         _translate = QtCore.QCoreApplication.translate
-        Manager.setWindowTitle(_translate("Manager", "Overview and Management"))
+        Manager.setWindowTitle(_translate("Manager", "Plom: Overview and Management"))
         self.userGBox.setTitle(_translate("Manager", "User Information"))
         self.label.setText(_translate("Manager", "Username:"))
         self.userLE.setText(_translate("Manager", "manager"))

@@ -5,6 +5,7 @@
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
+from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request, log
 
@@ -847,22 +848,27 @@ class UploadHandler:
         update_count = self.server.processTUploads()
         return web.json_response(update_count, status=200)
 
-    @authenticate_by_token_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user", "version_map"])
     def populateExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database.
 
         TODO: maybe the api call should just be for one row of the database.
-
-        TODO: or maybe we can pass the page-to-version mapping to this?
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
 
+        # TODO: talking to DB directly is not design we use elsewhere: call helper?
         from plom.db import buildExamDatabaseFromSpec
 
-        # TODO this is not the design we have elsewhere, should call helper function
+        if len(data["version_map"]) == 0:
+            vmap = None
+        else:
+            vmap = undo_json_packing_of_version_map(vmap)
+
         try:
-            r, summary = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+            r, summary = buildExamDatabaseFromSpec(
+                self.server.testSpec, self.server.DB, vmap
+            )
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"
@@ -878,8 +884,11 @@ class UploadHandler:
         """Get the mapping between page number and version for one test.
 
         Returns:
-            dict: keyed by page number.  Note keys are strings b/c of
+            dict: keyed by page number. Note keys will be strings b/c of
                 json limitations; you may want to convert back to int.
+
+        Note: likely deprecated: not used by Plom itself and not
+            recommeded for anyone else.
         """
         spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
@@ -898,6 +907,9 @@ class UploadHandler:
                 number.  Both keys are strings b/c of json limitations;
                 you may need to iterate and convert back to int.  Fails
                 with 500 Internal Server Error if a test does not exist.
+
+        Note: careful not to confuse this with /admin/questionVersionMap
+            which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
         vers = {}
@@ -906,8 +918,26 @@ class UploadHandler:
             if not ver:
                 return web.Response(status=500)
             vers[paper_idx] = ver
-        # JSON converts int keys to strings, we'll fix this at the far end
-        # return web.json_response(str(pickle.dumps(vers)), status=200)
+        return web.json_response(vers, status=200)
+
+    @authenticate_by_token_required_fields([])
+    def getGlobalQuestionVersionMap(self, data, request):
+        """Get the mapping between question and version for all tests.
+
+        Returns:
+            dict: dict of dicts, keyed first by paper index then by
+                question number.  Both keys will become strings b/c of
+                json limitations; you may need to convert back to int.
+                Fails with 500 Internal Server Error if a test does not
+                exist.
+        """
+        spec = self.server.testSpec
+        vers = {}
+        for paper_idx in range(1, spec["numberToProduce"] + 1):
+            ver = self.server.DB.getQuestionVersions(paper_idx)
+            if not ver:
+                return web.Response(status=500)
+            vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
     # @route.put("/admin/pdf_produced/{t}")
@@ -992,6 +1022,7 @@ class UploadHandler:
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
+        router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
         router.add_put(
             "/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced
         )
