@@ -216,30 +216,30 @@ class RubricTable(QTableWidget):
             for tab in self.parent.user_tabs:
                 if tab == self:
                     continue
-                a = QAction(f"Move to Pane {tab.shortname}", self)
+                a = QAction(f"Move to tab {tab.shortname}", self)
                 a.triggered.connect(func_factory_add(tab, key))
                 a.triggered.connect(func_factory_del(self, key))
                 menu.addAction(a)
             menu.addSeparator()
 
-            remAction = QAction("Remove from this pane", self)
+            remAction = QAction("Remove from this tab", self)
             remAction.triggered.connect(func_factory_del(self, key))
             menu.addAction(remAction)
             menu.addSeparator()
 
-        renameTabAction = QAction("Rename this pane...", self)
+        renameTabAction = QAction("Rename this tab...", self)
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
-        a = QAction("Add new pane", self)
+        a = QAction("Add new tab", self)
         a.triggered.connect(lambda: self.parent.add_new_tab())
         menu.addAction(a)
-        a = QAction("Remove this pane...", self)
+        a = QAction("Remove this tab...", self)
 
         def _local_delete_thyself():
             # TODO: can we put all this in some close event?
             # TODO: I don't like that we're hardcoding the parent structure here
             msg = SimpleMessage(
-                f"<p>Are you sure you want to delete the pane &ldquo;{self.shortname}&rdquo;?</p>"
+                f"<p>Are you sure you want to delete the tab &ldquo;{self.shortname}&rdquo;?</p>"
                 "<p>(The rubrics themselves will not be deleted).<p>"
             )
             if msg.exec_() == QMessageBox.No:
@@ -281,7 +281,7 @@ class RubricTable(QTableWidget):
             # TODO: walk in another order for moveable tabs?
             # [self.parent.RTW.widget(n) for n in range(1, 5)]
             for tab in self.parent.user_tabs:
-                a = QAction(f"Add to Pane {tab.shortname}", self)
+                a = QAction(f"Add to tab {tab.shortname}", self)
                 a.triggered.connect(function_factory(tab, key))
                 menu.addAction(a)
             menu.addSeparator()
@@ -290,10 +290,10 @@ class RubricTable(QTableWidget):
             hideAction.triggered.connect(self.hideCurrentRubric)
             menu.addAction(hideAction)
             menu.addSeparator()
-        renameTabAction = QAction("Rename this pane...", self)
+        renameTabAction = QAction("Rename this tab...", self)
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
-        a = QAction("Add new pane", self)
+        a = QAction("Add new tab", self)
         a.triggered.connect(lambda: self.parent.add_new_tab())
         menu.addAction(a)
         menu.popup(QCursor.pos())
@@ -372,14 +372,14 @@ class RubricTable(QTableWidget):
             return
         curname = curtab_widget.shortname
         s1, ok1 = QInputDialog.getText(
-            self, 'Rename pane "{}"'.format(curname), "Enter new name"
+            self, 'Rename tab "{}"'.format(curname), "Enter new name"
         )
         if not ok1:
             return
         # TODO: hint that "wh&ot" will enable "alt-o" shortcut on most OSes
         # TODO: use a custom dialog
         # s2, ok2 = QInputDialog.getText(
-        #     self, 'Rename pane "{}"'.format(curname), "Enter long name"
+        #     self, 'Rename tab "{}"'.format(curname), "Enter long name"
         # )
         log.debug('refresh tab text from "%s" to "%s"', curname, s1)
         curtab_widget.set_name(s1)
@@ -881,7 +881,7 @@ class RubricWidget(QWidget):
             wranglerState["hidden"],
         )
 
-        # make sure something selected in each pane
+        # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
         self.tabDelta.selectRubricByVisibleRow(0)
         self.tabAbsolute.selectRubricByVisibleRow(0)
@@ -969,28 +969,28 @@ class RubricWidget(QWidget):
         self.handleClick()
 
     def nextRubric(self):
-        # change rubrics in the right pane
+        # change rubrics in the correct tab
         if self.showHideW.currentIndex() == 0:
             self.RTW.currentWidget().nextRubric()
         else:
             self.tabHide.nextRubric()
 
     def previousRubric(self):
-        # change rubrics in the right pane
+        # change rubrics in the correct tab
         if self.showHideW.currentIndex() == 0:
             self.RTW.currentWidget().previousRubric()
         else:
             self.tabHide.previousRubric()
 
-    def next_pane(self):
-        # only change panes if they are shown
+    def next_tab(self):
+        """Move to next tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
             self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % numtabs)
             self.handleClick()
 
-    def prev_pane(self):
-        # only change panes if they are shown
+    def prev_tab(self):
+        """Move to previous tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
             self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % numtabs)

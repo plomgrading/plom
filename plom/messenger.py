@@ -991,8 +991,8 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return messenger_response
 
-    def MgetUserRubricPanes(self, question):
-        """Ask server for the user's rubric-pane config file for this question
+    def MgetUserRubricTabs(self, question):
+        """Ask server for the user's rubric-tabs config file for this question
 
         Args:
             question (int): the current question number
@@ -1002,7 +1002,11 @@ class Messenger(BaseMessenger):
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            paneConfig: [True, A json of the dict required to set up panes] or [False]
+            tuple: First element is bool for success.  If True, second
+                is a json of the dict required to set up tabs.
+                TODO: json of a dict? like a str? why not the dict?
+                TODO: how about returning an empty dict or a full
+                dict and forget about this True/False stuff?
         """
         self.SRmutex.acquire()
         try:
@@ -1044,19 +1048,20 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return messenger_response
 
-    def MsaveUserRubricPanes(self, question, paneConfig):
-        """Ask server for the user's rubric-pane config file for this question
+    def MsaveUserRubricTabs(self, question, tab_config):
+        """Cache the user's rubric-tabs config for this question onto the server
 
         Args:
             question (int): the current question number
-            paneConfig (dict): the user's rubric pane configuration for this question
+            tab_config (dict): the user's rubric pane configuration for
+                this question.
 
         Raises:
             PlomAuthenticationException: Authentication error.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            paneConfig: [True] or [False]
+            bool
         """
         self.SRmutex.acquire()
         try:
@@ -1066,7 +1071,7 @@ class Messenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                     "question": question,
-                    "rubric_config": paneConfig,
+                    "rubric_config": tab_config,
                 },
                 verify=False,
             )
