@@ -19,9 +19,8 @@ from plom.client.tools.tool import CommandTool, DeleteObject
 class CommandPen(CommandTool):
     def __init__(self, scene, path):
         super().__init__(scene)
-        self.scene = scene
         self.obj = PenItem(path, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
+        self.do = DeleteObject(self.obj.shape())
         self.setText("Pen")
 
     @classmethod

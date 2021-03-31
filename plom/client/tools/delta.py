@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
@@ -14,8 +14,6 @@ class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta, style, fontsize=10):
         super().__init__()
         self.saveable = True
-        self.animator = [self]
-        self.animateFlag = False
         self.delta = delta
         self.restyle(style)
         self.setPlainText(" {} ".format(self.delta))
@@ -61,22 +59,6 @@ class DeltaItem(QGraphicsTextItem):
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
 
-    def flash_undo(self):
-        # Animate border when undo thin->thick->none
-        self.anim.setDuration(200)
-        self.anim.setStartValue(self.normal_thick)
-        self.anim.setKeyValueAt(0.5, 4 * self.normal_thick)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        # Animate border when undo thin->med->thin
-        self.anim.setDuration(200)
-        self.anim.setStartValue(self.normal_thick)
-        self.anim.setKeyValueAt(0.5, 2 * self.normal_thick)
-        self.anim.setEndValue(self.normal_thick)
-        self.anim.start()
-
     def pickle(self):
         return [
             "Delta",
@@ -84,17 +66,6 @@ class DeltaItem(QGraphicsTextItem):
             self.scenePos().x(),
             self.scenePos().y() - self.offset,
         ]
-
-    # For the animation of border
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.thick
-
-    # For the animation of border
-    @thickness.setter
-    def thickness(self, value):
-        self.thick = value
-        self.update()
 
 
 class GhostDelta(QGraphicsTextItem):

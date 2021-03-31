@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
@@ -40,14 +40,14 @@ from plom.messenger import Messenger
 # comments which will be made into rubrics by pushing them to server and getting back keys
 # need different ones for each question
 negativeComments = [
-    (0, "Careful"),
+    (-1, "Careful"),
     (-1, "Algebra"),
     (-1, "Arithmetic"),
     (-2, "Sign error"),
     (-2, "Huh?"),
 ]
 positiveComments = [
-    (0, "Yes"),
+    (1, "Yes"),
     (1, "Nice"),
     (1, "Well done"),
     (2, "Good"),
@@ -57,12 +57,21 @@ negativeRubrics = {}
 positiveRubrics = {}
 
 
+class RW:
+    """A dummy class needed for compatibility with pagescene."""
+
+    def changeMark(self, a, b):
+        pass
+
+
 class SceneParent(QWidget):
-    def __init__(self, question):
+    def __init__(self, question, maxMark):
         super(SceneParent, self).__init__()
         self.view = PageView(self)
         self.ink = QPen(Qt.red, 2)
         self.question = question
+        self.maxMark = maxMark
+        self.rubric_widget = RW()  # a dummy class needed for compat with pagescene.
 
     def doStuff(self, imageNames, saveName, maxMark, markStyle):
         self.saveName = saveName
@@ -70,16 +79,8 @@ class SceneParent(QWidget):
         for f in imageNames:
             src_img_data.append({"filename": f, "orientation": 0})
         self.imageFiles = imageNames
-        self.markStyle = markStyle
-        self.maxMark = maxMark
-        if markStyle == 2:
-            self.score = 0
-        else:
-            self.score = maxMark
 
-        self.scene = PageScene(
-            self, src_img_data, saveName, maxMark, self.score, None, markStyle
-        )
+        self.scene = PageScene(self, src_img_data, saveName, maxMark, None)
         self.view.connectScene(self.scene)
 
     def pickleIt(self):
@@ -88,9 +89,9 @@ class SceneParent(QWidget):
         plomDict = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
             "saveName": os.path.basename(self.saveName),
-            "markStyle": self.markStyle,
+            "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
-            "currentMark": self.score,
+            "currentMark": self.scene.getScore(),
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
@@ -131,22 +132,21 @@ class SceneParent(QWidget):
         else:
             rubric = random.choice(negativeRubrics[self.question])
 
-        # check legality of delta
-        legal = True
-        newScore = self.scene.score + rubric["delta"]
-        if rubric["delta"] < 0 or newScore < 0 or newScore > self.maxMark:
-            legal = False
-        if self.markStyle == 2 and rubric["delta"] < 0:
-            legal = False
-        elif self.markStyle == 3 and rubric["delta"] > 0:
-            legal = False
+        self.scene.changeTheRubric(
+            rubric["delta"],
+            rubric["text"],
+            rubric["id"],
+            rubric["meta"],
+        )
 
-        if legal:  # legal delta push rubric
+        # only do rubric if it is legal
+        if self.scene.isLegalRubric("relative", rubric["delta"]):
             self.scene.undoStack.push(
                 CommandGroupDeltaText(
                     self.scene,
                     self.rpt(),
                     rubric["id"],
+                    rubric["meta"],
                     rubric["delta"],
                     rubric["text"],
                 )
@@ -155,49 +155,6 @@ class SceneParent(QWidget):
             self.scene.undoStack.push(
                 CommandText(self.scene, self.rpt(), rubric["text"])
             )
-
-    # def GDT(self):
-    #     dlt = random.choice([1, -1])
-    #     if self.markStyle == 2:  # mark up
-    #         dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
-    #         if dlt <= 0:  # just text
-    #             self.scene.undoStack.push(
-    #                 CommandText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     random.choice(self.negComments),
-    #                 )
-    #             )
-    #         else:
-    #             self.scene.undoStack.push(
-    #                 CommandGroupDeltaText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     0,
-    #                     dlt,
-    #                     random.choice(self.posComments),
-    #                 )
-    #             )
-    #     else:  # mark up
-    #         dlt *= random.randint(0, self.scene.score) // 2
-    #         if dlt >= 0:  # just text
-    #             self.scene.undoStack.push(
-    #                 CommandText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     random.choice(self.posComments),
-    #                 )
-    #             )
-    #         else:
-    #             self.scene.undoStack.push(
-    #                 CommandGroupDeltaText(
-    #                     self.scene,
-    #                     self.rpt(),
-    #                     0,
-    #                     dlt,
-    #                     random.choice(self.negComments),
-    #                 )
-    #             )
 
     def doRandomAnnotations(self):
         br = self.scene.underImage.boundingRect()
@@ -236,7 +193,7 @@ def annotatePaper(question, maxMark, task, imageList, aname, tags):
             inames.append(tmp)
             with open(tmp, "wb+") as fh:
                 fh.write(imageList[i])
-        annot = SceneParent(question)
+        annot = SceneParent(question, maxMark)
         annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
         annot.doRandomAnnotations()
         # Issue #1391: settle annotation events, avoid races with QTimers
@@ -293,7 +250,7 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "Created for randoMarker",
+            "meta": "relative",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
@@ -306,7 +263,7 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "Created for randoMarker",
+            "meta": "relative",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]

@@ -58,7 +58,7 @@ class CommandImage(CommandTool):
             self.midPt = pt
         self.image = image
         self.obj = ImageItem(self.midPt, self.image, scale, border, data)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
+        self.do = DeleteObject(self.obj.shape())
         self.setText("Image")
 
     @classmethod

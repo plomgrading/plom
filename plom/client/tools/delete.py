@@ -18,33 +18,33 @@ from plom.client.tools.tool import DeleteObject
 
 class CommandDelete(QUndoCommand):
     # Deletes the graphicsitem. Have to be careful when it is
-    # a delta-item which changes the current mark
+    # a rubric-item - need to refresh score in parent-scene
+    # and be careful that is done once the item is actually deleted.
     def __init__(self, scene, deleteItem):
         super(CommandDelete, self).__init__()
         self.scene = scene
         self.deleteItem = deleteItem
         self.setText("Delete")
         # the delete animation object
-        self.do = DeleteObject(self.deleteItem.boundingRect(), self.scene.style)
+        self.do = DeleteObject(self.deleteItem.shape())
 
     def redo(self):
-        # If the object is a DeltaItem then change mark
-        if isinstance(self.deleteItem, GroupDeltaTextItem):
-            self.scene.changeTheMark(self.deleteItem.di.delta, undo=True)
         # remove the object
         self.scene.removeItem(self.deleteItem)
+        if isinstance(self.deleteItem, GroupDeltaTextItem):
+            self.scene.refreshStateAndScore()
         ## flash an animated box around the deleted object
         self.scene.addItem(self.do.item)
         self.do.flash_undo()  # note - is undo animation since object being removed
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        # If the object is a GroupTextDeltaItem then change mark
-        if isinstance(self.deleteItem, GroupDeltaTextItem):
-            # Mark decreases by delta -  - since deleting, this is like an "redo"
-            self.scene.changeTheMark(self.deleteItem.di.delta, undo=False)
-        self.scene.addItem(self.deleteItem)
         ## flash an animated box around the un-deleted object
         self.scene.addItem(self.do.item)
         self.do.flash_redo()  # is redo animation since object being brought back
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        # put the object back
+        self.scene.addItem(self.deleteItem)
+        # If the object is a GroupTextDeltaItem then refresh the state and score
+        if isinstance(self.deleteItem, GroupDeltaTextItem):
+            self.scene.refreshStateAndScore()

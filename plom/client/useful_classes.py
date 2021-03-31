@@ -1,7 +1,6 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPixmap
@@ -22,6 +21,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
     QVBoxLayout,
 )
+
 from plom import isValidStudentNumber
 
 
@@ -325,3 +325,38 @@ class ClientSettingsDialog(QDialog):
             self.leftHandMouse.checkState() == Qt.Checked,
             self.checkSidebarOnRight.checkState() == Qt.Checked,
         )
+
+
+class AddTagBox(QDialog):
+    def __init__(self, parent, currentTag, tagList=[]):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+
+        flay = QFormLayout()
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
+        flay.addRow("Choose tag", self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(tagList)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if currentTag is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(currentTag)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())

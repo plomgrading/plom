@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -440,15 +440,9 @@ class Chooser(QDialog):
         self.setEnabled(True)
         if not stuff:
             return
-        # update mouse-hand and up/down style for lasttime file
-        markStyle, mouseHand, sidebarRight = stuff
+        # update mouse-hand and for lasttime file
+        mouseHand, sidebarRight = stuff
         global lastTime
-        if markStyle == 2:
-            lastTime["upDown"] = "up"
-        elif markStyle == 3:
-            lastTime["upDown"] = "down"
-        else:
-            raise RuntimeError("tertium non datur")
         if mouseHand == 0:
             lastTime["mouse"] = "right"
         elif mouseHand == 1:

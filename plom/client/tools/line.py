@@ -17,7 +17,7 @@ class CommandLine(CommandTool):
         self.scene = scene
         # A line from pti(nitial) to ptf(inal)
         self.obj = LineItem(pti, ptf, scene.style)
-        self.do = DeleteObject(self.obj.boundingRect(), scene.style)
+        self.do = DeleteObject(self.obj.shape())
         self.setText("Line")
 
     @classmethod

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
@@ -374,7 +374,7 @@ def id_paper(self, paper_num, user_name, sid, sname):
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
 
-    Each question needs 2 such rubrics - for mark-up and mark-down styles
+    Each question needs one such rubric
 
     Args:
         questionNumber (int)
@@ -383,7 +383,7 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
     Returns:
         Bool: True if successful, False if rubric already exists.
     """
-    rID = 1000 + 2 * questionNumber  # +0 for mark-up and +1 for mark-down
+    rID = 1000 + questionNumber
     uref = User.get(name="HAL")
 
     if Rubric.get_or_none(rID) is None:
@@ -391,12 +391,13 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
             key=rID,
             delta="0",
             text="No answer given",
+            meta="absolute",
             question=questionNumber,
             user=uref,
             creationTime=datetime.now(),
             modificationTime=datetime.now(),
         )
-        log.info("Created no-answer-rubric (up) for question {}".format(questionNumber))
+        log.info("Created no-answer-rubric for question {}".format(questionNumber))
     else:
         log.info(
             "No-answer-rubric (up) for question {} already exists".format(
@@ -405,25 +406,4 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
         )
         return False
 
-    rID += 1
-    if Rubric.get_or_none(rID) is None:
-        Rubric.create(
-            key=rID,
-            delta="-{}".format(maxMark),
-            text="No answer given",
-            question=questionNumber,
-            user=uref,
-            creationTime=datetime.now(),
-            modificationTime=datetime.now(),
-        )
-        log.info(
-            "Created no-answer-rubric (down) for question {}".format(questionNumber)
-        )
-    else:
-        log.info(
-            "No-answer-rubric (down) for question {} already exists".format(
-                questionNumber
-            )
-        )
-        return False
     return True

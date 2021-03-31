@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
+
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
 class CommandMoveText(QUndoCommand):
@@ -49,13 +51,13 @@ class CommandMoveText(QUndoCommand):
         return True
 
 
-class CommandText(QUndoCommand):
+class CommandText(CommandTool):
     def __init__(self, scene, pt, text):
-        super().__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.blurb = TextItem(
             pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
         )
+        self.do = DeleteObject(self.blurb.shape(), fill=True)
         self.setText("Text")
 
     @classmethod
@@ -69,12 +71,24 @@ class CommandText(QUndoCommand):
         return cls(scene, QPointF(X[1], X[2]), X[0])
 
     def redo(self):
-        self.blurb.flash_redo()
         self.scene.addItem(self.blurb)
+        # update the deleteobject since the text may have been updated
+        # use getshape - takes offset into account
+        self.do.item.setPath(self.blurb.getShape())
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        self.blurb.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.blurb))
+        self.scene.removeItem(self.blurb)
+        # update the deleteobject since the text may have been updated
+        # use getshape - takes offset into account
+        self.do.item.setPath(self.blurb.getShape())
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class TextItem(QGraphicsTextItem):
@@ -97,14 +111,9 @@ class TextItem(QGraphicsTextItem):
     def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
         super().__init__()
         self.saveable = True
-        self.animator = [self]
-        self.animateFlag = False
         # TODO: really this is PageScene or Marker: someone who can TeX for us
         # TODO: its different from e.g., BoxItem (where parent is the animator)
         self.parent = parent
-        # Thick is thickness of bounding box hightlight used
-        # to highlight the object when undo / redo happens.
-        self.thick = 0
         self.setDefaultTextColor(color)
         self.setPlainText(text)
         font = QFont("Helvetica")
@@ -113,8 +122,6 @@ class TextItem(QGraphicsTextItem):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
-        # Undo/redo animates via the thickness property
-        self.anim = QPropertyAnimation(self, b"thickness")
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
@@ -123,6 +130,12 @@ class TextItem(QGraphicsTextItem):
             # instead, hide latency of API call: meanwhile source text displayed
             # Issue #1391: unfortunately causes a race, at least in randomarker
             QTimer.singleShot(5, self.textToPng)
+
+    def getShape(self):
+        # returns shape, but with offset
+        shp = self.shape()
+        shp.translate(self.pos())
+        return shp
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
@@ -246,11 +259,6 @@ class TextItem(QGraphicsTextItem):
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
                 painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
                 painter.drawRoundedRect(option.rect, 10, 10)
-        else:
-            # paint a bounding rectangle for undo/redo highlighting
-            if self.thick > 0:
-                painter.setPen(QPen(self.defaultTextColor(), self.thick))
-                painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)
 
@@ -261,36 +269,9 @@ class TextItem(QGraphicsTextItem):
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
 
-    def flash_undo(self):
-        """Undo animation: thin -> thick -> none border around text"""
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 8)  # TODO: should be 4*style["pen_width"]
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        """Redo animation: thin -> med -> thin border around text."""
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 4)  # TODO: should be 2*style["pen_width"]
-        self.anim.setEndValue(0)
-        self.anim.start()
-
     def pickle(self):
         src = self.toPlainText()
         return ["Text", src, self.scenePos().x(), self.scenePos().y()]
-
-    # For the animation of border
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.thick
-
-    # For the animation of border
-    @thickness.setter
-    def thickness(self, value):
-        self.thick = value
-        self.update()
 
 
 class GhostText(QGraphicsTextItem):

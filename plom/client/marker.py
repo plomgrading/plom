@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -59,11 +59,10 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .comment_list import AddTagBox, commentLoadAllToml, commentIsVisible
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import GroupView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import ErrorMessage, SimpleMessage
+from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -1013,7 +1012,6 @@ class MarkerClient(QWidget):
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
-        self.setMarkStyleID()
 
         if not self.getMaxMark():  # indicates exception was caught
             return
@@ -1079,12 +1077,6 @@ class MarkerClient(QWidget):
             self.allowBackgroundOps = False
 
         self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
-
-        if lastTime["upDown"] == "up":
-            self.ui.markUpRB.animateClick()
-
-        elif lastTime["upDown"] == "down":
-            self.ui.markDownRB.animateClick()
 
         if lastTime["mouse"] == "left":
             self.ui.leftMouseCB.setChecked(True)
@@ -1166,29 +1158,6 @@ class MarkerClient(QWidget):
             self.throwSeriousError(err, rethrow=False)
             return False
         return True
-
-    def setMarkStyleID(self):
-        """
-        Give IDs to the radio-buttons which select the marking style.
-
-        Notes:
-            Hides "mark total" style by default
-            Mark style ID's are as follows
-                1 = mark total = user clicks the total-mark, will likely be
-                    removed in the future.
-                2 = mark-up = mark starts at 0 and user increments it
-                3 = mark-down = mark starts at max and user decrements it
-
-        Returns:
-            None
-
-        """
-        self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
-        self.ui.markTotalRB.hide()
-        self.ui.markTotalRB.setEnabled(False)
-        # continue with the other buttons
-        self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
-        self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
 
     def resizeEvent(self, event):
         """
@@ -1755,13 +1724,12 @@ class MarkerClient(QWidget):
             pdict = None
 
         exam_name = self.exam_spec["name"]
+
         # TODO: I dislike this packed-string: overdue for refactor
         assert task[5] == "g"
         question_num = int(task[6:])
         tgv = task[1:]
         question_label = get_question_label(self.exam_spec, question_num)
-        markStyle = self.ui.markStyleGroup.checkedId()
-
         integrity_check = self.examModel.getIntegrityCheck(task)
         src_img_data = self.examModel.get_source_image_data(task)
         return (
@@ -1771,7 +1739,6 @@ class MarkerClient(QWidget):
             paperdir,
             aname,
             self.maxMark,
-            markStyle,
             pdict,
             integrity_check,
             src_img_data,
@@ -2151,10 +2118,9 @@ class MarkerClient(QWidget):
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
-        markStyle = self.ui.markStyleGroup.checkedId()
         mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
         sidebarRight = self.ui.sidebarRightCB.isChecked()
-        self.my_shutdown_signal.emit(2, [markStyle, mouseHand, sidebarRight])
+        self.my_shutdown_signal.emit(2, [mouseHand, sidebarRight])
 
     def DNF(self):
         """
@@ -2234,11 +2200,13 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
+        print("TODO - how to cache latex comments from rubric list on server")
+
         # TODO: deprecated, remove?  what do we want to do for comment pre-latexing?
         if True:
             return
 
-        clist = commentLoadAllToml()
+        clist = []
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C["text"]))
 
@@ -2258,7 +2226,7 @@ class MarkerClient(QWidget):
         username = self.msgr.whoami()
 
         for X in clist:
-            if commentIsVisible(X, n, username) and X["text"][:4].upper() == "TEX:":
+            if X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version

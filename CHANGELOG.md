@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Annotator can now swap up/down marking mode in situ (providing no mark-changing rubrics present). Menu item or F2 triggers this.
+* There is now no marking mode - it is set by the rubrics used.
+* The escape-key will now cancel an annotation mid-draw (box,ellipse,line,arrows,rubric)
 * Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
 * `plom-demo` now has `--port` option.
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
@@ -24,18 +24,19 @@ class CommandGroupDeltaText(CommandTool):
     Note: must change mark
     """
 
-    def __init__(self, scene, pt, rid, delta, text):
+    def __init__(self, scene, pt, rid, meta, delta, text):
         super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
             pt,
             delta,
             text,
             rid,
+            meta,
             scene=scene,
             style=scene.style,
             fontsize=scene.fontSize,
         )
-        self.do = DeleteObject(self.gdt.boundingRect(), scene.style)
+        self.do = DeleteObject(self.gdt.shape(), fill=True)
         self.setText("GroupDeltaText")
 
     @classmethod
@@ -46,26 +47,28 @@ class CommandGroupDeltaText(CommandTool):
         """
         assert X[0] == "GroupDeltaText"
         X = X[1:]
-        if len(X) != 5:
+        if len(X) != 6:
             raise ValueError("wrong length of pickle data")
         # knows to latex it if needed.
-        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4])
+        return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4], X[5])
 
     def redo(self):
-        self.scene.changeTheMark(self.gdt.di.delta, undo=False)
         self.scene.addItem(self.gdt)
         # animate
         self.scene.addItem(self.do.item)
         self.do.flash_redo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        #
+        self.scene.refreshStateAndScore()
 
     def undo(self):
-        self.scene.changeTheMark(self.gdt.di.delta, undo=True)
         self.scene.removeItem(self.gdt)
         # animate
         self.scene.addItem(self.do.item)
-        self.do.flash_redo()
+        self.do.flash_undo()
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
+        #
+        self.scene.refreshStateAndScore()
 
 
 class GroupDeltaTextItem(QGraphicsItemGroup):
@@ -75,11 +78,12 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, rid, scene, style, fontsize):
+    def __init__(self, pt, delta, text, rid, meta, scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
         self.rubricID = rid
+        self.meta = meta
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
@@ -158,6 +162,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             self.pt.x() + self.x(),
             self.pt.y() + self.y(),
             self.rubricID,
+            self.meta,
             self.di.delta,
             self.blurb.getContents(),
         ]
@@ -188,12 +193,26 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         else:
             return -1
 
+    def is_delta_positive(self):
+        if self.di.delta == ".":
+            return False
+        if int(self.di.delta) <= 0:
+            return False
+        return True
+
+    def get_delta_value(self):
+        if self.di.delta == ".":
+            return 0
+        else:
+            return int(self.di.delta)
+
 
 class GhostComment(QGraphicsItemGroup):
     def __init__(self, dlt, txt, fontsize):
         super().__init__()
         self.di = GhostDelta(dlt, fontsize)
         self.rubricID = "987654"  # a dummy value
+        self.meta = "relative"  # another dummy value
         self.blurb = GhostText(txt, fontsize)
         self.changeComment(dlt, txt)
         self.setFlag(QGraphicsItem.ItemIsMovable)

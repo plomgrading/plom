@@ -12,16 +12,15 @@ from plom.db import PlomDB
 
 log = logging.getLogger("DB")
 
-
-managerRubrics = [
-    {"delta": "-1", "text": "arithmetic", "meta": "standardComment"},
-    {"delta": ".", "text": "be careful", "meta": "standardComment"},
+managerDemoRubrics = [
+    {"delta": "-1", "text": "arithmetic", "meta": "relative"},
+    {"delta": ".", "text": "be careful", "meta": "neutral"},
     {
-        "delta": "0",
+        "delta": ".",
         "text": r"tex: you can write \LaTeX, $e^{i\pi} + 1 = 0$",
-        "meta": "LaTeX works",
+        "meta": "neutral",
     },
-    {"delta": "+1", "text": "good", "meta": "give constructive feedback"},
+    {"delta": "+1", "text": "good", "meta": "relative"},
 ]
 
 
@@ -30,22 +29,45 @@ def buildSpecialRubrics(spec, db):
     for q in range(1, 1 + spec["numberOfQuestions"]):
         if not db.createNoAnswerRubric(q, spec["question"]["{}".format(q)]["mark"]):
             raise ValueError("No answer rubric for q.{} already exists".format(q))
-    # create standard manager rubrics
-    for rubric in managerRubrics:
+    # create demo manager rubrics
+    for rubric in managerDemoRubrics:
         rubric["tags"] = ""
         for q in range(1, 1 + spec["numberOfQuestions"]):
             rubric["question"] = "{}".format(q)
             if not db.McreateRubric("manager", rubric):
                 raise ValueError("Manager rubric for q.{} already exists".format(q))
-    # create standard manager delta-rubrics - but no 0
+    # create standard manager delta-rubrics - but no 0, nor +/- max-mark
     for q in range(1, 1 + spec["numberOfQuestions"]):
         mx = spec["question"]["{}".format(q)]["mark"]
-        for m in range(-mx, mx + 1):
-            if m == 0:
-                continue
+        # make zero mark and full mark rubrics
+        rubric = {
+            "delta": "0",
+            "text": "no marks",
+            "tags": "",
+            "meta": "absolute",
+            "question": q,
+        }
+        if not db.McreateRubric("manager", rubric):
+            raise ValueError(
+                "Manager no-marks-rubric for q.{} already exists".format(q)
+            )
+        rubric = {
+            "delta": "{}".format(mx),
+            "text": "full marks",
+            "tags": "",
+            "meta": "absolute",
+            "question": q,
+        }
+        if not db.McreateRubric("manager", rubric):
+            raise ValueError(
+                "Manager full-marks-rubric for q.{} already exists".format(q)
+            )
+
+        # now make delta-rubrics
+        for m in range(1, mx):
+            # make positive delta
             rubric = {
-                # make '+' explicit for positive delta
-                "delta": "{}".format(m) if m <= 0 else "+{}".format(m),
+                "delta": "+{}".format(m),
                 "text": ".",
                 "tags": "",
                 "meta": "delta",
@@ -53,7 +75,19 @@ def buildSpecialRubrics(spec, db):
             }
             if not db.McreateRubric("manager", rubric):
                 raise ValueError(
-                    "Manager delta-rubric {} for q.{} already exists".format(m, q)
+                    "Manager delta-rubric +{} for q.{} already exists".format(m, q)
+                )
+            # make negative delta
+            rubric = {
+                "delta": "-{}".format(m),
+                "text": ".",
+                "tags": "",
+                "meta": "delta",
+                "question": q,
+            }
+            if not db.McreateRubric("manager", rubric):
+                raise ValueError(
+                    "Manager delta-rubric -{} for q.{} already exists".format(m, q)
                 )
 
 
