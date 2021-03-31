@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `plom-demo` now has `--port` option.
 
 ### Changed
+* The left-hand-on-mouse option has been removed from annotator/marker
 * Rubrics have had significant change: they are now shared between users and can be grouped into "panes" within the user interface.
 * Rubrics are not longer saved on disc on client systems.
 * Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
