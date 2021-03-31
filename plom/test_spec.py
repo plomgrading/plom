@@ -80,6 +80,11 @@ def test_spec_longname_slash_issue1364():
     SpecVerifier(r).verifySpec(verbose=False)
 
 
+def test_spec_invalid_select():
+    r = raw.copy()
+    r["question"]["1"]["select"] = "consult the oracle"
+
+
 def test_spec_question_label_printer():
     sd = SpecVerifier.demo()
     r = deepcopy(raw)

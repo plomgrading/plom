@@ -8,6 +8,7 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
 
+from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -34,12 +35,14 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def TriggerPopulateDB(self):
+    def TriggerPopulateDB(self, version_map={}):
         """Instruct the server to generate paper data in the database.
 
         Returns:
             str: a big block of largely useless status or summary info
                 from the database commands.
+
+        TODO: would be more symmetric to use PUT:/admin/pageVersionMap
 
         Raises:
             PlomBenignException: already has a populated database.
@@ -51,7 +54,11 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.put(
                 "https://{}/admin/populateDB".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "version_map": version_map,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -123,10 +130,29 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         # JSON casts dict keys to str, force back to ints
-        d = {}
-        for k, v in response.json().items():
-            d[int(k)] = {int(kk): vv for kk, vv in v.items()}
-        return d
+        return undo_json_packing_of_version_map(response.json())
+
+    def getGlobalQuestionVersionMap(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/questionVersionMap".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        # JSON casts dict keys to str, force back to ints
+        return undo_json_packing_of_version_map(response.json())
 
     # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
     def id_paper(self, code, studentID, studentName):

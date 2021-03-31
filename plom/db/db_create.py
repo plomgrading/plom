@@ -270,9 +270,23 @@ def getPageVersions(self, t):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         return {}
-    else:
-        pvDict = {p.page_number: p.version for p in tref.tpages}
-        return pvDict
+    return {p.page_number: p.version for p in tref.tpages}
+
+
+def getQuestionVersions(self, t):
+    """Get the mapping between question numbers and versions for a test.
+
+    Args:
+        t (int): a paper number.
+
+    Returns:
+        dict: keys are question numbers (int) and value is the question
+            version (int), or empty dict if there was no such paper.
+    """
+    tref = Test.get_or_none(test_number=t)
+    if tref is None:
+        return {}
+    return {q.question: q.version for q in tref.qgroups}
 
 
 def produceTest(self, t):
