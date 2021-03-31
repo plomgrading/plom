@@ -1,7 +1,6 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPixmap
@@ -22,6 +21,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
     QVBoxLayout,
 )
+
 from plom import isValidStudentNumber
 
 
