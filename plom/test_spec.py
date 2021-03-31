@@ -63,3 +63,9 @@ def test_spec_longname_slash_issue1364():
     r = raw.copy()
     r["longName"] = 'Math123 / Bio321 Midterm ∫∇·Fdv — "have fun!"😀'
     SpecVerifier(r).verifySpec(verbose=False)
+
+
+def test_spec_invalid_select():
+    r = raw.copy()
+    r["question"]["1"]["select"] = "consult the oracle"
+    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
