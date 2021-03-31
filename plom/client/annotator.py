@@ -666,12 +666,20 @@ class Annotator(QWidget):
     def prev_pane(self):
         self.rubric_widget.prev_pane()
 
-    def next_minor_tool(self, dir=1):
-        """Switch to current minor tool or advance to next minor tool."""
-        # If mode is rubric then we reselect the current minor tool
+    def next_minor_tool(self, dir=1, always_move=False):
+        """Switch to current minor tool or advance to next minor tool.
 
+        args:
+            dir (int): +1 for next (default), -1 for previous.
+            always_move (bool): the minor tools keep track of the
+                last-used tool.  Often, but not always, we want to
+                switch back to the last-used tool.  False by default.
+        """
         # list of minor modes in order
         L = ["box", "tick", "cross", "text", "line", "pen"]
+
+        if always_move:
+            raise NotImplementedError("TODO")
 
         if not hasattr(self, "_which_tool"):
             self._which_tool = "box"
@@ -686,8 +694,8 @@ class Annotator(QWidget):
         getattr(self.ui, "{}Button".format(self._which_tool)).animateClick()
 
     def prev_minor_tool(self):
-        """Switch to current minor tool or go back to prev minor tool."""
-        self.next_minor_tool(dir=-1)
+        """Switch backward to the previous minor tool."""
+        self.next_minor_tool(dir=-1, always_move=True)
 
     def viewWholePaper(self):
         """
