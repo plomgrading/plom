@@ -58,6 +58,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.comment_utils import comments_apply_default_fields
+from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import ErrorMessage, SimpleMessage
 from .rubric_wrangler import RubricWrangler
 
@@ -1264,6 +1265,26 @@ class RubricTable(QTableWidget):
         a = QAction("Add new pane", self)
         a.triggered.connect(lambda: self.parent.add_new_tab())
         menu.addAction(a)
+        a = QAction("Remove this pane...", self)
+
+        def _local_delete_thyself():
+            # TODO: can we put all this in some close event?
+            # TODO: I don't like that we're hardcoding the parent structure here
+            msg = SimpleMessage(
+                f"<p>Are you sure you want to delete the pane &ldquo;{self.shortname}&rdquo;?</p>"
+                "<p>(The rubrics themselves will not be deleted).<p>"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            for n in range(self.parent.RTW.count()):
+                tab = self.parent.RTW.widget(n)
+                if tab == self:
+                    self.parent.RTW.removeTab(n)
+            self.clear()
+            self.deleteLater()
+
+        a.triggered.connect(_local_delete_thyself)
+        menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
 
@@ -1527,6 +1548,8 @@ class RubricTable(QTableWidget):
 
     def selectRubricByKey(self, key):
         """Select row with given key. Return true if works, else false"""
+        if key is None:
+            return False
         for r in range(self.rowCount()):
             if int(self.item(r, 0).text()) == int(key):
                 self.selectRow(r)
@@ -1623,9 +1646,7 @@ class RubricWidget(QWidget):
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
         delta_label = "\N{Plus-minus Sign}\N{Greek Small Letter Delta}"
-        # useful others: \N{Rotated Floral Heart Bullet} \N{Double Dagger}
-        # \N{Black Spade Suit} \N{Black Heart Suit} \N{Black Diamond Suit} \N{Black Club Suit}
-        default_user_tabs = ["\N{Black Star}", "\N{Floral Heart}"]
+        default_user_tabs = ["\N{Black Star}", "\N{Black Heart Suit}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
         self.RTW = QTabWidget()
@@ -1699,15 +1720,41 @@ class RubricWidget(QWidget):
             self.RTW.setTabText(n, self.RTW.widget(n).shortname)
             # self.RTW.setTabToolTip(n, self.RTW.widget(n).longname)
 
-    def add_new_tab(self, name="new"):
+    def add_new_tab(self, name=None):
         """Add new user-defined tab either to end or near end.
 
         If the delta tab is last, insert before that.  Otherwise append
         to the end of tab list.
 
         args:
-            name (str): name of the new tab, default "new"
+            name (str/None): name of the new tab.  If omitted or None,
+                generate one from a set of symbols with digits appended
+                if necessary.
         """
+        if not name:
+            tab_names = [x.shortname for x in self.user_tabs]
+            name = next_in_longest_subsequence(tab_names)
+        if not name:
+            syms = (
+                "\N{Black Star}",
+                "\N{Black Heart Suit}",
+                "\N{Black Spade Suit}",
+                "\N{Black Diamond Suit}",
+                "\N{Black Club Suit}",
+                "\N{Double Dagger}",
+                "\N{Floral Heart}",
+                "\N{Rotated Floral Heart Bullet}",
+            )
+            extra = ""
+            counter = 0
+            while not name:
+                for s in syms:
+                    if s + extra not in tab_names:
+                        name = s + extra
+                        break
+                counter += 1
+                extra = f"{counter}"
+
         tab = RubricTable(self, shortname=name)
         n = self.RTW.count()
         if n >= 1 and self.RTW.widget(n - 1).is_delta_tab():
@@ -1828,16 +1875,34 @@ class RubricWidget(QWidget):
             tab.selectRubricByRow(0)
 
     def getCurrentRubricKeyAndTab(self):
-        """return the current rubric key and the current tab"""
+        """return the current rubric key and the current tab.
+
+        returns:
+            list: [a,b] where a=rubric-key=(int/none) and b=current tab index = int
+        """
         return [
             self.RTW.currentWidget().getCurrentRubricKey(),
             self.RTW.currentIndex(),
         ]
 
     def setCurrentRubricKeyAndTab(self, key, tab):
-        """set the current rubric key and the current tab"""
-        self.RTW.setCurrentIndex(tab)
-        self.RTW.currentWidget().selectRubricByKey(key)
+        """set the current rubric key and the current tab
+
+        args
+            key (int/None): which rubric to highlight.  If no None, no action.
+            tab (int): which tab to choose.
+
+        returns:
+            bool: True if we set a row, False if we could not find an appropriate row
+                b/c for example key or tab are invalid or not found.
+        """
+        if key is None:
+            return False
+        if tab in range(0, self.RTW.count()):
+            self.RTW.setCurrentIndex(tab)
+        else:
+            return False
+        return self.RTW.currentWidget().selectRubricByKey(key)
 
     def setStyle(self, markStyle):
         """Adjust to possible changes in marking style between down and up."""
@@ -2077,6 +2142,13 @@ class RubricWidget(QWidget):
             "hidden": self.tabHide.getKeyList(),
             "tabs": [t.getKeyList() for t in self.user_tabs],
         }
+
+    def resetDeltaRubrics(self):
+        self.tabDelta.setDeltaRubrics(
+            self.markStyle,
+            self.maxMark,
+            self.rubrics,
+        )
 
 
 class SignedSB(QSpinBox):  # add an explicit sign to spinbox

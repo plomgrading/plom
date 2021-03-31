@@ -25,6 +25,26 @@ check_mark = " [check]"
 chk = check_mark
 
 
+def get_question_label(spec, n):
+    """Print question label for the nth question from spec dict
+
+    args:
+        spec (dict): a spec dict.
+        n (int): which question, current indexed from 1.
+
+    TODO: change spec question keys to int.
+
+    raises:
+        ValueError: `n` is out of range.
+    """
+    if n < 1 or n > spec["numberOfQuestions"]:
+        raise ValueError(f'n={n} out of range [1, {spec["numberOfQuestions"] + 1}]')
+    label = spec["question"][str(n)].get("label", None)
+    if label:
+        return label
+    return "Q{}".format(n)
+
+
 class SpecVerifier:
     """Verify Plom exam specifications.
 
@@ -278,6 +298,25 @@ class SpecVerifier:
         prnt("Checking question groups")
         for g in range(self.spec["numberOfQuestions"]):
             self.check_group(str(g + 1), lastPage, print=prnt)
+        # Note: enable all-or-none check for labels
+        # prnt("Checking either all or no questions have labels")
+        # has_label = [
+        #     "label" in self.spec["question"][str(n + 1)]
+        #     for n in range(self.spec["numberOfQuestions"])
+        # ]
+        # if any(has_label) and not all(has_label):
+        #     raise ValueError("Either all should have labels or none should")
+        prnt("Checking for unique question labels")
+        labels = [
+            self.spec["question"][str(n + 1)].get("label", None)
+            for n in range(self.spec["numberOfQuestions"])
+        ]
+        labels = [x for x in labels if x is not None]
+        if len(set(labels)) != len(labels):
+            raise ValueError(f'Question labels must be unique but we have "{labels}"')
+        if any(len(x) > 24 for x in labels):
+            raise ValueError(f'Question labels should be at most 24 chars: "{labels}"')
+
         self.check_pages(print=prnt)
 
     def checkCodes(self, verbose=True):
@@ -489,10 +528,14 @@ class SpecVerifier:
 
     def check_group(self, g, lastPage, print=print):
         print("  Checking question group #{}".format(g))
-        # each group has keys
-        for x in ["pages", "select", "mark"]:
-            if x not in self.spec["question"][g]:
-                raise ValueError("Question error - could not find {} key".format(x))
+        required_keys = set(("pages", "select", "mark"))
+        optional_keys = set(("label",))
+        for k in required_keys:
+            if k not in self.spec["question"][g]:
+                raise ValueError('Question error - could not find "{}" key'.format(k))
+        for k in self.spec["question"][g].keys():
+            if k not in required_keys.union(optional_keys):
+                raise ValueError('Question error - unexpected extra key "{}"'.format(k))
         # check pages is contiguous list of positive integers
         if not self.isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
             raise ValueError(

@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pkg_resources
 
+from plom import Default_Port
 from plom.server import specdir, confdir
 
 
@@ -49,10 +50,11 @@ def check_server_directories():
             )
 
 
-def create_server_config(dur=confdir):
+def create_server_config(dur=confdir, *, port=None):
     """Create a default server configuration file.
 
     args:
+        port (int/None): port on which to run the server.
         dur (pathlib.Path): where to put the file.
 
     raises:
@@ -62,6 +64,8 @@ def create_server_config(dur=confdir):
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
     template = pkg_resources.resource_string("plom", "serverDetails.toml")
+    if port:
+        template = template.replace(f"{Default_Port}".encode(), str(port).encode())
     with open(sd, "wb") as fh:
         fh.write(template)
 

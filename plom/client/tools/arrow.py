@@ -5,29 +5,22 @@
 
 from math import sqrt
 
-from PyQt5.QtCore import QPropertyAnimation, Qt, QPointF
+from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
-from plom.client.tools.line import CommandLine, LineItemObject, LineItem
+from plom.client.tools.line import CommandLine, LineItem
 from plom.client.tools.move import CommandMoveItem
+
+from plom.client.tools.tool import DeleteObject
 
 
 class CommandArrow(CommandLine):
     def __init__(self, scene, pti, ptf):
-        super(CommandLine, self).__init__()
-        self.scene = scene
+        super().__init__(scene, pti, ptf)
         # line starts at pti(nitial) and ends at ptf(inal).
-        self.lineItem = ArrowItemObject(pti, ptf, scene.style)
+        self.obj = ArrowItem(pti, ptf, scene.style)
         self.setText("Arrow")
-
-
-class ArrowItemObject(LineItemObject):
-    def __init__(self, pti, ptf, style):
-        # TODO: use a ABC here?
-        super(LineItemObject, self).__init__()
-        self.item = ArrowItem(pti, ptf, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
 
 
 # TODO: LineItem is a QGraphicsLineItem, so cannot inherit (?)
@@ -38,8 +31,6 @@ class ArrowItem(QGraphicsPathItem):
         """
         super().__init__()
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
         self.ptf = ptf
         self.pti = pti
         self.path = self._make_path(pti, ptf)
@@ -115,22 +106,11 @@ class ArrowItem(QGraphicsPathItem):
 
 class CommandArrowDouble(CommandLine):
     def __init__(self, scene, pti, ptf):
-        super(CommandLine, self).__init__()
+        super().__init__(scene, pti, ptf)
         self.scene = scene
         # line starts at pti(nitial) and ends at ptf(inal).
-        self.pti = pti
-        self.ptf = ptf
-        self.lineItem = ArrowDoubleItemObject(self.pti, self.ptf, scene.style)
+        self.obj = ArrowDoubleItem(pti, ptf, scene.style)
         self.setText("ArrowDouble")
-
-
-class ArrowDoubleItemObject(LineItemObject):
-    # An object wrapper around the arrowitem to handle the
-    # animation of its thickness
-    def __init__(self, pti, ptf, style):
-        super(LineItemObject, self).__init__()
-        self.item = ArrowDoubleItem(pti, ptf, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
 
 
 class ArrowDoubleItem(ArrowItem):

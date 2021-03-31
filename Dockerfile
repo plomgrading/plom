@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -15,7 +16,7 @@ RUN apt-get -y update && \
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
-        libpango-1.0 libpangocairo-1.0 \
+        libpango-1.0-0 libpangocairo-1.0-0 \
         libzbar0 \
         libjpeg-dev \
         libjpeg-turbo8-dev \

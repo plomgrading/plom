@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import AnnFontSizePts, ScenePixelHeight
+from plom.plom_exceptions import PlomInconsistentRubricsException
 
 # Import all the tool commands for undo/redo stack.
 from .tools import *
@@ -37,21 +38,21 @@ class ScoreBox(QGraphicsTextItem):
     Drawn with a rounded-rectangle border.
     """
 
-    def __init__(self, style, fontsize=10, maxScore=1, score=0, question=None):
-        """
-        Initialize a new ScoreBox.
+    def __init__(self, style, fontsize, maxScore, score, question_label=None):
+        """Initialize a new ScoreBox.
 
         Args:
             fontsize (int): A non-zero, positive font value.
             maxScore (int): A non-zero, positive maximum score.
             score (int): A non-zero, positive current score for the paper.
-            question (int): question number to display, or `None` to
-                not display "Qn:" at the beginning of the score box.
+            question_label (str/None): how to display the question
+                number, or `None` to display no label at the beginning
+                of the score box.
         """
         super().__init__()
         self.score = score
         self.maxScore = maxScore
-        self.question = question
+        self.question_label = question_label
         self.style = style
         self.setDefaultTextColor(self.style["annot_color"])
         font = QFont("Helvetica")
@@ -65,8 +66,8 @@ class ScoreBox(QGraphicsTextItem):
     def _update_text(self):
         """Update the displayed text."""
         s = ""
-        if self.question:
-            s += "Q{}: ".format(self.question)
+        if self.question_label:
+            s += self.question_label + ": "
         s += "{} out of {}".format(self.score, self.maxScore)
         self.setPlainText(s)
 
@@ -258,7 +259,7 @@ class PageScene(QGraphicsScene):
     """
 
     def __init__(
-        self, parent, src_img_data, saveName, maxMark, score, question, markStyle
+        self, parent, src_img_data, saveName, maxMark, score, question_label, markStyle
     ):
         """
         Initialize a new PageScene.
@@ -271,8 +272,8 @@ class PageScene(QGraphicsScene):
             saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
             score (int): current score
-            question (int): what question number is this scene?  Or None
-                if that is not relevant.
+            question_label (str/None): how to display this question, for
+                example a string like "Q7", or `None` if not relevant.
             markStyle (int): marking style.
                     1 = mark total = user clicks the total-mark (will be
                     deprecated in future.)
@@ -359,7 +360,7 @@ class PageScene(QGraphicsScene):
         # so that it cannot be overwritten.
         # set up "k out of n" where k=current score, n = max score.
         self.scoreBox = ScoreBox(
-            self.style, self.fontSize, self.maxMark, self.score, question=question
+            self.style, self.fontSize, self.maxMark, self.score, question_label
         )
         self.scoreBox.setZValue(10)
         self.addItem(self.scoreBox)
@@ -537,6 +538,29 @@ class PageScene(QGraphicsScene):
             if isinstance(X, GroupDeltaTextItem):
                 rubrics.append(X.rubricID)
         return rubrics
+
+    def getSignOfRubrics(self):
+        """
+        Get the sign of the rubrics associated with this paper.
+
+        Returns:
+            int: +1, -1, 0 being the sign of the rubrics currently on paper. if no rubrics then 0.
+
+        """
+        r = 0  # the running "sign"
+        for X in self.items():
+            if isinstance(X, GroupDeltaTextItem):
+                s = X.sign_of_delta()
+                # 0 okay with everything, and if same, all ok
+                if s == 0 or r == s:
+                    continue
+                # now s is not zero and s!=r...
+                if r == 0:  # this is fine - set running sign = current sign
+                    r = s
+                    continue
+                else:  # now s non-zero and different from r - so problem
+                    raise PlomInconsistentRubricsException
+        return r
 
     def countComments(self):
         """
@@ -2084,3 +2108,6 @@ class PageScene(QGraphicsScene):
             "NO ANSWER GIVEN",
         )
         self.undoStack.push(command)
+
+    def setMarkStyle(self, style):
+        self.markStyle = style

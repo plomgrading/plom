@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
@@ -13,36 +13,16 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
 )
 
-from plom.client.tools.pen import CommandPen, PenItemObject, PenItem
+from plom.client.tools.pen import CommandPen, PenItem
 from plom.client.tools import CommandMoveItem, log
+from plom.client.tools.tool import DeleteObject
 
 
 class CommandPenArrow(CommandPen):
     def __init__(self, scene, path):
-        super(CommandPen, self).__init__()
-        self.scene = scene
-        self.penobj = PenArrowItemObject(path, scene.style)
+        super().__init__(scene, path)
+        self.obj = PenArrowItem(path, scene.style)
         self.setText("PenArrow")
-
-
-class PenArrowItemObject(PenItemObject):
-    def __init__(self, path, style):
-        super(PenItemObject, self).__init__()
-        self.item = PenArrowItem(path, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
-
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.item.pi.pen().width()
-
-    # TODO: Item could have a method for these, avoiding this custom method here
-    @thickness.setter
-    def thickness(self, value):
-        pen = self.item.pi.pen()
-        pen.setWidthF(value)
-        self.item.pi.setPen(pen)
-        self.item.endi.setPen(pen)
-        self.item.endf.setPen(pen)
 
 
 class PenArrowItem(QGraphicsItemGroup):
@@ -51,8 +31,6 @@ class PenArrowItem(QGraphicsItemGroup):
         self.saveable = True
         self.pi = QGraphicsPathItem()
         self.path = path
-        self.animator = [parent]
-        self.animateFlag = False
 
         # set arrowhead initial
         e0 = self.path.elementAt(0)

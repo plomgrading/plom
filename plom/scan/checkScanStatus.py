@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Jed Yeo
 
 import getpass
 
@@ -93,7 +94,7 @@ def checkStatus(server=None, pwd=None):
                 format_int_list_with_runs(scannedHWPages),
             )
         )
-
+    print("Number of scanned tests in the system: {}".format(len(ST)))
     print("Incomplete scans - listed with their missing pages: ")
     for t in IT:
         missingPagesT = []

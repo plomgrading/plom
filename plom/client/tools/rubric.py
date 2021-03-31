@@ -7,12 +7,15 @@ from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
 
-from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.move import CommandMoveItem
+from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
 
 
-class CommandGroupDeltaText(QUndoCommand):
+from plom.client.tools.tool import CommandTool, DeleteObject
+
+
+class CommandGroupDeltaText(CommandTool):
     """A group of delta and text.
 
     Command to do a delta and a textitem together (a "rubric" or
@@ -22,8 +25,7 @@ class CommandGroupDeltaText(QUndoCommand):
     """
 
     def __init__(self, scene, pt, rid, delta, text):
-        super().__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.gdt = GroupDeltaTextItem(
             pt,
             delta,
@@ -33,6 +35,7 @@ class CommandGroupDeltaText(QUndoCommand):
             style=scene.style,
             fontsize=scene.fontSize,
         )
+        self.do = DeleteObject(self.gdt.boundingRect(), scene.style)
         self.setText("GroupDeltaText")
 
     @classmethod
@@ -49,18 +52,20 @@ class CommandGroupDeltaText(QUndoCommand):
         return cls(scene, QPointF(X[0], X[1]), X[2], X[3], X[4])
 
     def redo(self):
-        # Mark increased by delta
         self.scene.changeTheMark(self.gdt.di.delta, undo=False)
         self.scene.addItem(self.gdt)
-        self.gdt.blurb.flash_redo()
-        self.gdt.di.flash_redo()
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        # Mark decreased by delta - handled by undo flag
         self.scene.changeTheMark(self.gdt.di.delta, undo=True)
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.gdt))
-        self.gdt.blurb.flash_undo()
-        self.gdt.di.flash_undo()
+        self.scene.removeItem(self.gdt)
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class GroupDeltaTextItem(QGraphicsItemGroup):
@@ -172,6 +177,16 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
         super().paint(painter, option, widget)
+
+    def sign_of_delta(self):
+        if self.di.delta == ".":
+            return 0
+        elif int(self.di.delta) == 0:
+            return 0
+        elif int(self.di.delta) > 0:
+            return 1
+        else:
+            return -1
 
 
 class GhostComment(QGraphicsItemGroup):

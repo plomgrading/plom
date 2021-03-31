@@ -212,6 +212,10 @@ class Annotator(QWidget):
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addSeparator()
+        self.swap_act = m.addAction("Switch to mark down mode\tF2", self.swap_mode)
+        if self.markStyle == 3:
+            self.swap_act.setText("Switch to mark up mode\tF2")
+        m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
         m.addAction("View whole paper", self.viewWholePaper)
@@ -268,10 +272,9 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
-
-        km.addSeparator()
         m.addSeparator()
 
+        km.addSeparator()
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
@@ -300,6 +303,7 @@ class Annotator(QWidget):
         # Attempt at keeping mode information.
         self.modeInformation = [self.scene.mode]
         if self.scene.mode == "rubric":  # stores as [a,b]
+            # if no rubric selected then key=None - be careful of this.
             self.modeInformation.append(self.rubric_widget.getCurrentRubricKeyAndTab())
 
         # after grabbed mode information, reset rubric_widget
@@ -323,6 +327,7 @@ class Annotator(QWidget):
     def loadNewTGV(
         self,
         tgvID,
+        question_label,
         testName,
         paperdir,
         saveName,
@@ -332,14 +337,15 @@ class Annotator(QWidget):
         integrity_check,
         src_img_data,
     ):
-        """Loads new Data into the Toggle View window for marking.
-
-        TODO: maintain current tool not working yet: #799.
+        """Loads new data into the window for marking.
 
         Args:
             tgvID (str):  Test-Group-Version ID.
                             For Example: for Test # 0027, group # 13, Version #2
                                          tgv = t0027g13v2
+            question_label (str): The name of the question we are
+                marking.  This is generally used for display only as
+                there is an integer for precise usage.
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
             saveName (str): name the tgv is saved as
@@ -363,8 +369,9 @@ class Annotator(QWidget):
         """
         self.tgvID = tgvID
         self.question_num = int(re.split(r"\D+", tgvID)[-1])
+        self.question_label = question_label
         self.testName = testName
-        s = "Q{} of {}: {}".format(self.question_num, testName, tgvID)
+        s = "{} of {}: {}".format(self.question_label, testName, tgvID)
         self.setWindowTitle("{} - Plom Annotator".format(s))
         log.info("Annotating {}".format(s))
         self.paperDir = paperdir
@@ -416,10 +423,13 @@ class Annotator(QWidget):
         log.debug("Restore mode info = {}".format(self.modeInformation))
         self.scene.setToolMode(self.modeInformation[0])
         if self.modeInformation[0] == "rubric":
-            self.rubric_widget.setCurrentRubricKeyAndTab(  # stored as [a,b]
+            # self.modeInformation[1] = [a,b] = [key, tab-index]
+            if self.rubric_widget.setCurrentRubricKeyAndTab(
                 self.modeInformation[1][0], self.modeInformation[1][1]
-            )
-            self.rubric_widget.handleClick()
+            ):
+                self.rubric_widget.handleClick()
+            else:  # if that rubric-mode-set fails (eg - no such rubric)
+                self.scene.setToolMode("move")
         # redo this after all the other rubric stuff initialised
         self.rubric_widget.changeMark(self.score, self.maxMark)
         # update the displayed score - fixes #843
@@ -913,7 +923,7 @@ class Annotator(QWidget):
             self.saveName,
             self.maxMark,
             self.score,
-            self.question_num,
+            self.question_label,
             self.markStyle,
         )
         # connect view to scene
@@ -1163,6 +1173,7 @@ class Annotator(QWidget):
             ("keyHelp", "?", self.keyPopUp),
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
+            ("swapMode", Qt.Key_F2, self.swap_mode),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -2011,3 +2022,44 @@ class Annotator(QWidget):
     def modifyRubric(self, key, updated_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+
+    def swap_mode(self):
+        rubric_sign = self.scene.getSignOfRubrics()
+        if rubric_sign == 0:
+            if self.markStyle == 2:
+                msg = "from up to down?"
+            else:
+                msg = "from down to up?"
+            if (
+                SimpleMessage(
+                    "There are no score-changing rubrics on the page; are you sure you wish to change the marking-style "
+                    + msg
+                ).exec_()
+                == QMessageBox.Yes
+            ):
+                # change the style (here)
+                if self.markStyle == 2:
+                    self.markStyle = 3
+                else:
+                    self.markStyle = 2
+                # set style in scene and rubric_widget
+                self.rubric_widget.setStyle(self.markStyle)
+                self.scene.setMarkStyle(self.markStyle)
+                # reset the delta rubrics
+                self.rubric_widget.resetDeltaRubrics()
+
+                # set the new mark and menu entry
+                if self.markStyle == 2:
+                    self.changeMark(0)
+                    self.swap_act.setText("Switch to mark down mode\tF2")
+                else:
+                    self.changeMark(self.maxMark)
+                    self.swap_act.setText("Switch to mark up mode\tF2")
+                # if in rubric mode - reselect (fixes ghost)
+                if self.scene.mode == "rubric":
+                    self.rubric_widget.reselectCurrentRubric()
+
+        else:
+            ErrorMessage(
+                "There are score-changing rubrics on the page; you cannot change marking style until those are deleted."
+            ).exec_()

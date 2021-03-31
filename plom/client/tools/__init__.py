@@ -10,11 +10,13 @@ import logging
 
 log = logging.getLogger("tools")
 
+from plom.client.tools.tool import *
 from plom.client.tools.move import *
+from plom.client.tools.delete import *
+
 from plom.client.tools.box import *
 from plom.client.tools.rubric import *
 from plom.client.tools.cross import *
-from plom.client.tools.delete import *
 from plom.client.tools.delta import *
 from plom.client.tools.ellipse import *
 from plom.client.tools.highlight import *

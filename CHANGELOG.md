@@ -8,8 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Annotator can now swap up/down marking mode in situ (providing no mark-changing rubrics present). Menu item or F2 triggers this.
+* Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
+* `plom-demo` now has `--port` option.
 
 ### Changed
+* Rubrics have had significant change: they are now shared between users and can be grouped into "panes" within the user interface.
+* Rubrics are not longer saved on disc on client systems.
+* Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
 * Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
 
 ### Fixed

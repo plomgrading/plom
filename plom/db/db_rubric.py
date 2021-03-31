@@ -1,8 +1,17 @@
-from plom.db.tables import *
-from datetime import datetime
-from plom.comment_utils import generate_new_comment_ID
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
 
+from datetime import datetime
 import logging
+
+from plom.comment_utils import generate_new_comment_ID
+from plom.db.tables import (
+    Rubric,
+    User,
+)
+from plom.db.tables import plomdb
+
 
 log = logging.getLogger("DB")
 
