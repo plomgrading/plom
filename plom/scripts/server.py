@@ -295,6 +295,12 @@ def launchTheServer(masterToken):
     theServer.launch(masterToken)
 
 
+def check_positive(arg):
+    if int(arg) < 0:
+        raise ValueError
+    return int(arg)
+
+
 #################
 
 parser = argparse.ArgumentParser(
@@ -364,7 +370,7 @@ grp.add_argument(
 )
 grp.add_argument(
     "--auto-numbered",
-    type=int,
+    type=check_positive,
     metavar="N",
     help='Auto-generate a random user list of "user17"-like usernames.',
 )
