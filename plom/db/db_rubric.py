@@ -58,7 +58,7 @@ def MgetRubrics(self, question_number=None):
     # return the rubric sorted by meta, then delta, then text
     rubric_list = []
     if question_number is None:
-        query = Rubric.select().order_by(Rubric.meta, Rubric.delta)
+        query = Rubric.select().order_by(Rubric.meta, Rubric.delta, Rubric.text)
     else:
         query = (
             Rubric.select()
