@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
+
 import logging
 from pathlib import Path
 
@@ -1246,7 +1247,8 @@ class AddRubricBox(QDialog):
                 "For any user tags you might want. (mostly future use)"
             )
             self.TEmeta.setPlaceholderText(
-                "Put any relevant use information here. (mostly future use)"
+                "Notes about this rubric such as hints on when to use it.\n\n"
+                "Not shown to student!"
             )
             self.Luser.setText(username)
 
