@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty, QPointF
+from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsTextItem, QGraphicsItem
 
@@ -25,8 +25,6 @@ class DeltaItem(QGraphicsTextItem):
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        # Has an animated border for undo/redo.
-        self.anim = QPropertyAnimation(self, b"thickness")
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()

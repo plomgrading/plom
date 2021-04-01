@@ -116,10 +116,6 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
             self.blurb.setVisible(True)
             self.addToGroup(self.blurb)
 
-        # set up animators for delete
-        self.animator = [self.di, self.blurb]
-        self.animateFlag = False
-
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
 
