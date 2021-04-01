@@ -922,6 +922,8 @@ class RubricWidget(QWidget):
         self.currentState = currentState
         self.mss = [self.maxMark, self.currentState, self.currentScore]
         self.updateLegalityOfDeltas()
+        # now re-click in case the current rubric no longer legal
+        self.handleClick()
 
     def updateLegalityOfDeltas(self):
         # now redo each tab
