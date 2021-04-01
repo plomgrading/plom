@@ -462,17 +462,20 @@ class Annotator(QWidget):
 
     def refreshDisplayedMark(self, score):
         """
-        Update the marklabel with the current score - triggered by pagescene
+        Update the marklabel (and narrow one) with the current score - triggered by pagescene
 
         Returns:
             None
 
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
+        self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
         if score is None:
             self.ui.markLabel.setText("No mark")
+            self.ui.narrowMarkLabel.setText("No mark")
         else:
             self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
+            self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
 
     def loadCursors(self):
         """
@@ -1388,6 +1391,9 @@ class Annotator(QWidget):
         m.addAction("Cancel", self.close)
         self.ui.finishedButton.setMenu(m)
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
+
+        # connect the "wide" button in the narrow-view
+        self.ui.wideButton.clicked.connect(self.wideLayout)
 
     def handleRubric(self, dlt_txt):
         """Pass rubric ID, delta, and text the scene.

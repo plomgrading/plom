@@ -597,6 +597,8 @@ class PageScene(QGraphicsScene):
             self.views()[0].setDragMode(1)
         else:
             self.views()[0].setDragMode(0)
+        # update the modelabel for the narrow view
+        self.parent.ui.narrowModeLabel.setText(" {} ".format(self.mode))
 
     def get_nonrubric_text_from_page(self):
         """
