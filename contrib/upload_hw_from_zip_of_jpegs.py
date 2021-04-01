@@ -37,8 +37,8 @@ from plom.messenger import ScanMessenger
 from plom.scan import bundle_name_and_md5
 
 
-where_csv = Path('../../')
-in_csv = where_csv / 'classlist_section_sorted_noblank.csv'
+where_csv = Path("../../")
+in_csv = where_csv / "classlist_section_sorted_noblank.csv"
 df = pd.read_csv(in_csv)
 
 
@@ -46,12 +46,12 @@ def sid_name_from_cid(df, cid):
     """Get the name and Student ID associated with a Canvas User ID.
 
     TODO: for now, this needs the spreadsheet passed in."""
-    L = df[df['ID'] == int(cid)].index.tolist()
+    L = df[df["ID"] == int(cid)].index.tolist()
     assert len(L) == 1
-    i, = L
+    (i,) = L
     name = df["Student"].iloc[i]
     sid = df["Student Number"].iloc[i]
-    sid = int(sid)   # json grumpy about numpy.int64
+    sid = int(sid)  # json grumpy about numpy.int64
     return (sid, name)
 
 
@@ -123,31 +123,33 @@ if __name__ == "__main__":
     print('TODO: Question hardcoded to "{}"'.format(q))
 
     try:
-        server = os.environ['PLOM_SERVER']
+        server = os.environ["PLOM_SERVER"]
     except KeyError:
         server = None
-    scan_pw = os.environ['PLOM_SCAN_PASSWORD']
+    scan_pw = os.environ["PLOM_SCAN_PASSWORD"]
     msgr = get_and_start_scan_msgr(server=server, password=scan_pw)
 
-    done = Path('done')
+    done = Path("done")
     os.makedirs(done, exist_ok=True)
 
-    for f in Path('.').glob('*.zip'):
-        print("="*80)
-        print("="*80)
+    for f in Path(".").glob("*.zip"):
+        print("=" * 80)
+        print("=" * 80)
         print(f)
         cid, name_from_file = cid_name_from_canvas_submitted_filename(f)
         sid, name = sid_name_from_cid(df, cid)
         print("Canvas ID number: {}\tStudent ID: {}".format(cid, sid))
         if not name[0].lower() in name_from_file.lower():
-            print('sanity failure: name "{}" matches "{}"?'.format(name, name_from_file))
+            print(
+                'sanity failure: name "{}" matches "{}"?'.format(name, name_from_file)
+            )
             input("Press <enter> to continue or <ctrl>-c to stop ")
 
         # TODO: maybe can support bz2 gzip lzma too?
         assert zipfile.is_zipfile(f)
         with zipfile.ZipFile(f) as z:
             stuff = z.infolist()
-            #stuff = z.namelist()
+            # stuff = z.namelist()
             # shovel up the mac droppings
             stuff = [x for x in stuff if not "__macosx" in x.filename.lower()]
             print("\n  ".join([str(x) for x in stuff]))
@@ -159,22 +161,26 @@ if __name__ == "__main__":
                 raise RuntimeError("bundle making failed?")
             input("Press <enter> to continue or <ctrl>-c to stop ")
             for n, x in enumerate(stuff):
-                print("-"*80)
+                print("-" * 80)
                 print(x)
-                if x.filename.lower().endswith(".jpg") or x.filename.lower().endswith(".jpeg") or x.filename.lower().endswith(".png"):
+                if (
+                    x.filename.lower().endswith(".jpg")
+                    or x.filename.lower().endswith(".jpeg")
+                    or x.filename.lower().endswith(".png")
+                ):
                     print('we get got jpeg/png in "{}"'.format(x.filename))
                 elif x.filename.lower().endswith(".pdf"):
-                    print('*** Oh no, a pdf---please deal with this manually.')
+                    print("*** Oh no, a pdf---please deal with this manually.")
                     print('we are extracting "{}" for you'.format(x))
                     z.extract(x)
-                    input('skip and keep going? (enter or ctrl-c) ')
+                    input("skip and keep going? (enter or ctrl-c) ")
                     continue
                 else:
                     print('zip contents "{}" are being skipped'.format(x.filename))
                     continue
                 with z.open(x, "r") as thefile:
                     md5 = hashlib.md5(thefile.read()).hexdigest()
-                    input('keep going?')
+                    input("keep going?")
                 cwd = os.getcwd()
                 with tempfile.TemporaryDirectory() as d:
                     print(d)
@@ -184,12 +190,21 @@ if __name__ == "__main__":
                     z.extract(x)
                     shortName = Path(x.filename).stem
                     bundle_order = n
-                    args = (sid, q, n, shortName, x.filename, md5, bundle_name, bundle_order)
+                    args = (
+                        sid,
+                        q,
+                        n,
+                        shortName,
+                        x.filename,
+                        md5,
+                        bundle_name,
+                        bundle_order,
+                    )
                     print(args)
                     rmsg = msgr.uploadHWPage(*args)
                     if not rmsg[0]:
                         print(rmsg)
-                        raise ValueError('stopping')
+                        raise ValueError("stopping")
                     os.chdir(cwd)
             updates = msgr.triggerUpdateAfterHWUpload()
             print(updates)

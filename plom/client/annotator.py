@@ -96,14 +96,12 @@ class Annotator(QWidget):
     annotator_done_closing = pyqtSignal(str)
     annotator_done_reject = pyqtSignal(str)
 
-    def __init__(self, username, mouseHand, parentMarkerUI=None, initialData=None):
+    def __init__(self, username, parentMarkerUI=None, initialData=None):
         """
         Initializes a new annotator window.
 
         Args:
             username (str): username of Marker
-            mouseHand (int): The location of the grader's mouse hand. (
-                Right = 0, Left != 0)
             parentMarkerUI (MarkerClient): the parent of annotator UI.
             initialData (dict): as documented by the arguments to "loadNewTGV"
         """
@@ -143,9 +141,6 @@ class Annotator(QWidget):
         # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
 
-        # Window depends on mouse-hand - si
-        # right-hand mouse = 0, left-hand mouse = 1
-        self.mouseHand = mouseHand
         self.ui = Ui_annotator()
 
         # Set up the gui.
@@ -585,12 +580,12 @@ class Annotator(QWidget):
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
 
-        def load_tools(mouse_hand):
+        def load_tools():
             """
-            Loads tools based on left or right handed mouse.
+            Loads tools
 
             Args:
-                mouse_hand(int): left or right handed mouse. Right = 0, Left != 0
+                None
 
             Returns:
                 None: adds tool widgets to self.ui.toolLayout
@@ -625,16 +620,9 @@ class Annotator(QWidget):
             row_index = 0
             for row in tools:
                 column_index = 0
-                # right handed mouse
-                if mouse_hand == 0:
-                    for tool in row:
-                        self.ui.toolLayout.addWidget(tool, row_index, column_index)
-                        column_index += 1
-                else:
-                    # if left handed, loads column elements in reverse order (right to left)
-                    for tool in reversed(row):
-                        self.ui.toolLayout.addWidget(tool, row_index, column_index)
-                        column_index += 1
+                for tool in row:
+                    self.ui.toolLayout.addWidget(tool, row_index, column_index)
+                    column_index += 1
                 row_index += 1
 
         # TODO: not polite to be grubbing around in parent.ui, fix with QSetting
@@ -647,7 +635,7 @@ class Annotator(QWidget):
             self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
             self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
 
-        load_tools(self.mouseHand)
+        load_tools()
 
         self.ui.ebLayout.addWidget(self.ui.modeLabel)
         self.ui.modeLayout.addWidget(self.ui.hamMenuButton)

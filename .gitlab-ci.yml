@@ -2,6 +2,7 @@
 # Copyright (C) 2019 John Hsu
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2021 Morgan Arnold
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -139,7 +140,7 @@ black:
   before_script:
     - pip3 install "black~=20.8b"
   script:
-    - black --check --diff plom
+    - black --check --diff .
   allow_failure: true
 
 
