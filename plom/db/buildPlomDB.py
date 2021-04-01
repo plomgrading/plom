@@ -13,14 +13,14 @@ from plom.db import PlomDB
 log = logging.getLogger("DB")
 
 managerDemoRubrics = [
-    {"delta": "-1", "text": "arithmetic", "meta": "relative"},
-    {"delta": ".", "text": "be careful", "meta": "neutral"},
+    {"delta": "-1", "text": "arithmetic", "kind": "relative"},
+    {"delta": ".", "text": "be careful", "kind": "neutral"},
     {
         "delta": ".",
         "text": r"tex: you can write \LaTeX, $e^{i\pi} + 1 = 0$",
-        "meta": "neutral",
+        "kind": "neutral",
     },
-    {"delta": "+1", "text": "good", "meta": "relative"},
+    {"delta": "+1", "text": "good", "kind": "relative"},
 ]
 
 
@@ -32,6 +32,7 @@ def buildSpecialRubrics(spec, db):
     # create demo manager rubrics
     for rubric in managerDemoRubrics:
         rubric["tags"] = ""
+        rubric["meta"] = ""
         for q in range(1, 1 + spec["numberOfQuestions"]):
             rubric["question"] = "{}".format(q)
             if not db.McreateRubric("manager", rubric):
@@ -41,21 +42,23 @@ def buildSpecialRubrics(spec, db):
         mx = spec["question"]["{}".format(q)]["mark"]
         # make zero mark and full mark rubrics
         rubric = {
+            "question": q,
             "delta": "0",
             "text": "no marks",
             "tags": "",
-            "meta": "absolute",
-            "question": q,
+            "meta": "",
+            "kind": "absolute",
         }
         if not db.McreateRubric("manager", rubric):
             raise ValueError(
                 "Manager no-marks-rubric for q.{} already exists".format(q)
             )
         rubric = {
+            "kind": "absolute",
             "delta": "{}".format(mx),
             "text": "full marks",
             "tags": "",
-            "meta": "absolute",
+            "meta": "",
             "question": q,
         }
         if not db.McreateRubric("manager", rubric):
@@ -70,7 +73,8 @@ def buildSpecialRubrics(spec, db):
                 "delta": "+{}".format(m),
                 "text": ".",
                 "tags": "",
-                "meta": "delta",
+                "kind": "delta",
+                "meta": "",
                 "question": q,
             }
             if not db.McreateRubric("manager", rubric):
@@ -82,7 +86,8 @@ def buildSpecialRubrics(spec, db):
                 "delta": "-{}".format(m),
                 "text": ".",
                 "tags": "",
-                "meta": "delta",
+                "kind": "delta",
+                "meta": "",
                 "question": q,
             }
             if not db.McreateRubric("manager", rubric):

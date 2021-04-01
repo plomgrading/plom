@@ -61,7 +61,7 @@ abs_suffix = " / N"
 abs_suffix_length = len(abs_suffix)
 
 
-def isLegalRubric(mss, meta, delta):
+def isLegalRubric(mss, kind, delta):
     # mss = max, state, score
     maxMark = mss[0]
     state = mss[1]
@@ -70,16 +70,16 @@ def isLegalRubric(mss, meta, delta):
     # easy cases first
     # when state is neutral - all rubrics are fine
     # a neutral rubric is always fine
-    if state == "neutral" or meta == "neutral":
+    if state == "neutral" or kind == "neutral":
         return True
-    # now, neither state nor meta are neutral
+    # now, neither state nor kind are neutral
 
     # consequently if state is absolute, no remaining rubric is legal
-    # similarly, if meta is absolute, the rubric is not legal since state is not netural
-    if state == "absolute" or meta == "absolute":
+    # similarly, if kind is absolute, the rubric is not legal since state is not netural
+    if state == "absolute" or kind == "absolute":
         return False
 
-    # now state must be up or down, and meta must be delta or relative
+    # now state must be up or down, and kind must be delta or relative
     # delta mark = delta = must be an non-zero int.
     idelta = int(delta)
     if state == "up":
@@ -133,7 +133,7 @@ class RubricTable(QTableWidget):
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setColumnCount(5)
-        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text", "Meta"])
+        self.setHorizontalHeaderLabels(["Key", "Username", "Delta", "Text", "Kind"])
         self.hideColumn(0)
         self.hideColumn(1)
         self.hideColumn(4)
@@ -404,16 +404,27 @@ class RubricTable(QTableWidget):
         self.insertRow(rc)
         self.setItem(rc, 0, QTableWidgetItem(rubric["id"]))
         self.setItem(rc, 1, QTableWidgetItem(rubric["username"]))
-        if rubric["meta"] == "absolute":
+        if rubric["kind"] == "absolute":
             self.setItem(rc, 2, QTableWidgetItem(rubric["delta"] + abs_suffix))
         else:
             self.setItem(rc, 2, QTableWidgetItem(rubric["delta"]))
         self.setItem(rc, 3, QTableWidgetItem(rubric["text"]))
-        self.setItem(rc, 4, QTableWidgetItem(rubric["meta"]))
+        self.setItem(rc, 4, QTableWidgetItem(rubric["kind"]))
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
         self.colourLegalRubric(rc, self.parent.mss)
+        # set a tooltip over delta that tells user the type of rubric
+        self.item(rc, 2).setToolTip("{}-rubric".format(rubric["kind"]))
+        # set a tooltip that contains tags and meta info when someone hovers over text
+        hoverText = ""
+        if rubric["tags"] != "":
+            hoverText += '[tags] = "{}"\n'.format(rubric["tags"])
+        if rubric["meta"] != "":
+            hoverText += '[meta] = "{}"\n'.format(rubric["meta"])
+        if hoverText == "":
+            hoverText = "no additional information"
+        self.item(rc, 3).setToolTip(hoverText.strip())
 
     def setRubricsByKeys(self, rubric_list, key_list):
         """Clear table and repopulate rubrics in the key_list"""
@@ -440,7 +451,7 @@ class RubricTable(QTableWidget):
         delta_rubrics = []
         for rb in rubrics:
             # take the manager generated delta rubrics
-            if rb["username"] == "manager" and rb["meta"] == "delta":
+            if rb["username"] == "manager" and rb["kind"] == "delta":
                 delta_rubrics.append(rb)
 
         # now sort in numerical order away from 0 and add
@@ -555,13 +566,13 @@ class RubricTable(QTableWidget):
             if r is None:  # there is nothing unhidden here.
                 return
             self.selectRubricByRow(r)
-        # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
+        # recall columns are ["Key", "Username", "Delta", "Text", "Kind"])
         # absolute rubrics have trailing suffix - remove before sending signal
         delta = self.item(r, 2).text()
         if self.item(r, 4).text() == "absolute":
             delta = self.item(r, 2).text()[:-abs_suffix_length]
 
-        self.parent.rubricSignal.emit(  # send delta, text, rubricID, meta
+        self.parent.rubricSignal.emit(  # send delta, text, rubricID, kind
             [
                 delta,
                 self.item(r, 3).text(),
@@ -583,17 +594,13 @@ class RubricTable(QTableWidget):
         return None
 
     def colourLegalRubric(self, r, mss):
-        # recall columns are ["Key", "Username", "Delta", "Text", "Meta"])
+        # recall columns are ["Key", "Username", "Delta", "Text", "Kind"])
         if isLegalRubric(
-            mss, meta=self.item(r, 4).text(), delta=self.item(r, 2).text()
+            mss, kind=self.item(r, 4).text(), delta=self.item(r, 2).text()
         ):
             self.showRow(r)
-            # self.item(r, 2).setForeground(colour_legal)
-            # self.item(r, 3).setForeground(colour_legal)
         else:
             self.hideRow(r)
-            # self.item(r, 2).setForeground(colour_illegal)
-            # self.item(r, 3).setForeground(colour_illegal)
 
     def updateLegalityOfDeltas(self, mss):
         """Style items according to their legality based on max,state and score (mss)"""
@@ -611,7 +618,7 @@ class RubricTable(QTableWidget):
                 self.item(r, 1).setText(new_rubric["username"])
                 self.item(r, 2).setText(new_rubric["delta"])
                 self.item(r, 3).setText(new_rubric["text"])
-                self.item(r, 4).setText(new_rubric["meta"])
+                self.item(r, 4).setText(new_rubric["kind"])
                 # update the legality
                 self.colourLegalRubric(r, mss)
 
@@ -619,7 +626,7 @@ class RubricTable(QTableWidget):
 class RubricWidget(QWidget):
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
-    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, meta]
+    rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
 
     def __init__(self, parent):
         # layout the widget - a table and add/delete buttons.
@@ -790,7 +797,7 @@ class RubricWidget(QWidget):
             if X["username"] == "HAL":
                 continue
             # exclude manager-delta rubrics
-            if X["username"] == "manager" and X["meta"] == "delta":
+            if X["username"] == "manager" and X["kind"] == "delta":
                 continue
             wranglerState["shown"].append(X["id"])
         # then set state from this
@@ -1041,12 +1048,14 @@ class RubricWidget(QWidget):
         if len(txt) <= 0:
             return
         tag = arb.TEtag.toPlainText().strip()
-        meta = arb.TEmeta.text().strip()
-        username = arb.TEuser.text().strip()
+        meta = arb.TEmeta.toPlainText().strip()
+        kind = arb.Lkind.text().strip()
+        username = arb.Luser.text().strip()
         # only meaningful if we're modifying
         rubricID = arb.label_rubric_id.text().strip()
 
         new_rubric = {
+            "kind": kind,
             "delta": dlt,
             "text": txt,
             "tags": tag,
@@ -1141,27 +1150,34 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Modify rubric")
         else:
             self.setWindowTitle("Add new rubric")
+        ## TODO - I know we shouldn't set size to absolute values, but...
+        self.resize(800, 480)  # make window wider - was defaulting to 640x480.
+        ##
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = SignedSB(maxMark)
-        # self.SB = QSpinBox()
         self.DE = QCheckBox("enabled")
         self.DE.setCheckState(Qt.Checked)
         self.DE.stateChanged.connect(self.toggleSB)
         self.TEtag = QTextEdit()
+        self.TEmeta = QTextEdit()
         # cannot edit these
         self.label_rubric_id = QLabel("Will be auto-assigned")
-        self.TEuser = QLabel()
-        self.TEmeta = QLabel("relative")
+        self.Luser = QLabel()
+        self.Lkind = QLabel("relative")
 
         sizePolicy = QSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
         )
         sizePolicy.setVerticalStretch(3)
+
+        print(self.size())
+        ##
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy.setVerticalStretch(2)
+        sizePolicy.setVerticalStretch(1)
         self.TEtag.setSizePolicy(sizePolicy)
+        self.TEmeta.setSizePolicy(sizePolicy)
         # TODO: make everything wider!
 
         flay = QFormLayout()
@@ -1177,10 +1193,11 @@ class AddRubricBox(QDialog):
         lay.addWidget(self.SB)
         flay.addRow("Delta mark", lay)
         flay.addRow("Tags", self.TEtag)
-
         flay.addRow("Meta", self.TEmeta)
+
+        flay.addRow("kind", self.Lkind)
         flay.addRow("Rubric ID", self.label_rubric_id)
-        flay.addRow("User who created", self.TEuser)
+        flay.addRow("User who created", self.Luser)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
@@ -1205,6 +1222,9 @@ class AddRubricBox(QDialog):
             if com["tags"]:
                 self.TEtag.clear()
                 self.TEtag.insertPlainText(com["tags"])
+            if com["meta"]:
+                self.TEmeta.clear()
+                self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
                 if com["delta"] == ".":
                     self.SB.setValue(0)
@@ -1214,14 +1234,20 @@ class AddRubricBox(QDialog):
             if com["id"]:
                 self.label_rubric_id.setText(str(com["id"]))
             if com["username"]:
-                self.TEuser.setText(com["username"])
+                self.Luser.setText(com["username"])
         else:
             self.TE.setPlaceholderText(
                 'Prepend with "tex:" to use math.\n\n'
                 'You can "choose text" to harvest existing text from the page.\n\n'
                 'Change "delta" below to associate a point-change.'
             )
-            self.TEuser.setText(username)
+            self.TEtag.setPlaceholderText(
+                "For any user tags you might want. (mostly future use)"
+            )
+            self.TEmeta.setPlaceholderText(
+                "Put any relevant use information here. (mostly future use)"
+            )
+            self.Luser.setText(username)
 
     def changedCB(self):
         self.TE.clear()
@@ -1230,7 +1256,7 @@ class AddRubricBox(QDialog):
     def toggleSB(self):
         if self.DE.checkState() == Qt.Checked:
             self.SB.setEnabled(True)
-            self.TEmeta.setText("relative")
+            self.Lkind.setText("relative")
         else:
-            self.TEmeta.setText("neutral")
+            self.Lkind.setText("neutral")
             self.SB.setEnabled(False)
