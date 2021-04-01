@@ -186,6 +186,10 @@ class SceneParent(QWidget):
         # needed for compat with pagescene.py
         pass
 
+    def setNarrowModeLabel(self, mode):
+        # needed for compat with pagescene.py
+        pass
+
 
 def annotatePaper(question, maxMark, task, imageList, aname, tags):
     print("Starting random marking to task {}".format(task))

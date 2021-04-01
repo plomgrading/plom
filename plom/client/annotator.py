@@ -960,6 +960,9 @@ class Annotator(QWidget):
         # refresh everything.
         self.repaint()
 
+    def setNarrowModeLabel(self, mode):
+        self.ui.narrowModeLabel.setText(" {} ".format(mode))
+
     def setIcon(self, toolButton, iconName, absoluteIconPath):
         """
         Sets a name and svg icon for a given QToolButton.
