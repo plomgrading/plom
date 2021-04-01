@@ -55,11 +55,16 @@ def McreateRubric(self, user_name, rubric):
 
 
 def MgetRubrics(self, question_number=None):
+    # return the rubric sorted by meta, then abs of delta
     rubric_list = []
     if question_number is None:
-        query = Rubric.select()
+        query = Rubric.select().order_by(Rubric.meta, Rubric.delta)
     else:
-        query = Rubric.select().where(Rubric.question == question_number)
+        query = (
+            Rubric.select()
+            .where(Rubric.question == question_number)
+            .order_by(Rubric.meta, Rubric.delta)
+        )
     for r in query:
         rubric_list.append(
             {
