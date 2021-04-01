@@ -2104,12 +2104,10 @@ class MarkerClient(QWidget):
         self.DNF()
         # now save the annotator rubric tab state to server
 
-        if self.msgr.MsaveUserRubricTabs(
+        log.info("Saving user's rubric tab configuration to server")
+        self.msgr.MsaveUserRubricTabs(
             self.question, self.annotatorSettings["rubricWranglerState"]
-        ):
-            log.info("Saved user's rubric tab configuration to server")
-        else:
-            log.error("Problem saving user's rubric tab configuration to server")
+        )
 
         # Then send a 'user closing' message - server will revoke
         # authentication token.

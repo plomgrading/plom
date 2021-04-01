@@ -995,18 +995,16 @@ class Messenger(BaseMessenger):
         """Ask server for the user's rubric-tabs config file for this question
 
         Args:
-            question (int): the current question number
+            question (int): which question to save to (rubric tabs are
+                generally per-question).
 
         Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
+            PlomAuthenticationException
+            PlomSeriousException
 
         Returns:
             tuple: First element is bool for success.  If True, second
-                is a json of the dict required to set up tabs.
-                TODO: json of a dict? like a str? why not the dict?
-                TODO: how about returning an empty dict or a full
-                dict and forget about this True/False stuff?
+                element is a dict of information about user's tabs.
         """
         self.SRmutex.acquire()
         try:
@@ -1023,30 +1021,26 @@ class Messenger(BaseMessenger):
 
             if response.status_code == 200:
                 paneConfig = response.json()
-                messenger_response = [True, paneConfig]
+                return [True, paneConfig]
             elif response.status_code == 204:
-                messenger_response = [False]  # no content
+                return [False]  # server has no data
             else:
                 raise PlomSeriousException(
-                    "No other 20x error should come from server."
+                    "No other 20x response should come from server."
                 ) from None
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 403:
-                raise PlomSeriousException(
-                    "Username or question mismatch in request."
-                ) from None
+                raise PlomSeriousException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Error of type {} when creating new rubric".format(e)
                 ) from None
-            messenger_response = [False]
 
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def MsaveUserRubricTabs(self, question, tab_config):
         """Cache the user's rubric-tabs config for this question onto the server
@@ -1057,11 +1051,11 @@ class Messenger(BaseMessenger):
                 this question.
 
         Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
+            PlomAuthenticationException
+            PlomSeriousException
 
         Returns:
-            bool
+            None
         """
         self.SRmutex.acquire()
         try:
@@ -1077,25 +1071,15 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
 
-            messenger_response = True
-
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Username or question mismatch in request."
-                ) from None
-            elif response.status_code == 406:
-                raise PlomSeriousException(
-                    "Problem writing pane configuration on server."
-                ) from None
+            elif response.status_code == 403:
+                raise PlomSeriousException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Error of type {} when creating new rubric".format(e)
                 ) from None
-            messenger_response = False
 
         finally:
             self.SRmutex.release()
-        return messenger_response
