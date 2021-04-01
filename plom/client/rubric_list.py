@@ -490,7 +490,7 @@ class RubricTable(QTableWidget):
                 return
             else:
                 r = 0
-        self.selectRubricByRow(r)
+        self.selectRubricByVisibleRow(r)
 
     def selectRubricByRow(self, r):
         """Select the r'th rubric in the list
@@ -534,13 +534,14 @@ class RubricTable(QTableWidget):
         if r is None:
             if self.rowCount() >= 1:
                 self.selectRubricByVisibleRow(0)
+                self.handleClick()  # actually force a click
             return
         rs = r  # get start row
         while True:  # move until we get back to start or hit unhidden row
             r = (r + 1) % self.rowCount()
             if r == rs or not self.isRowHidden(r):
                 break
-        self.selectRubricByRow(r)
+        self.selectRubricByRow(r)  # we know that row is not hidden
         self.handleClick()
 
     def previousRubric(self):
@@ -922,8 +923,6 @@ class RubricWidget(QWidget):
         self.currentState = currentState
         self.mss = [self.maxMark, self.currentState, self.currentScore]
         self.updateLegalityOfDeltas()
-        # now re-click in case the current rubric no longer legal
-        self.handleClick()
 
     def updateLegalityOfDeltas(self):
         # now redo each tab
