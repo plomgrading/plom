@@ -136,7 +136,7 @@ class SceneParent(QWidget):
             rubric["delta"],
             rubric["text"],
             rubric["id"],
-            rubric["meta"],
+            rubric["kind"],
         )
 
         # only do rubric if it is legal
@@ -146,7 +146,7 @@ class SceneParent(QWidget):
                     self.scene,
                     self.rpt(),
                     rubric["id"],
-                    rubric["meta"],
+                    rubric["kind"],
                     rubric["delta"],
                     rubric["text"],
                 )
@@ -254,7 +254,8 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "relative",
+            "meta": "Randomness",
+            "kind": "relative",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
@@ -267,7 +268,8 @@ def buildRubrics(question):
             "delta": d,
             "text": t,
             "tags": "Random",
-            "meta": "relative",
+            "meta": "Randomness",
+            "kind": "relative",
             "question": question,
         }
         com["id"] = messenger.McreateRubric(com)[1]
