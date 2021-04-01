@@ -55,7 +55,7 @@ def McreateRubric(self, user_name, rubric):
 
 
 def MgetRubrics(self, question_number=None):
-    # return the rubric sorted by meta, then abs of delta
+    # return the rubric sorted by meta, then delta, then text
     rubric_list = []
     if question_number is None:
         query = Rubric.select().order_by(Rubric.meta, Rubric.delta)
@@ -63,7 +63,7 @@ def MgetRubrics(self, question_number=None):
         query = (
             Rubric.select()
             .where(Rubric.question == question_number)
-            .order_by(Rubric.meta, Rubric.delta)
+            .order_by(Rubric.meta, Rubric.delta, Rubric.text)
         )
     for r in query:
         rubric_list.append(
