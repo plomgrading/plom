@@ -1078,9 +1078,6 @@ class MarkerClient(QWidget):
 
         self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
 
-        if lastTime["mouse"] == "left":
-            self.ui.leftMouseCB.setChecked(True)
-
     def UIInitialization(self):
         """
         Startup procedure for the user interface
@@ -1608,11 +1605,8 @@ class MarkerClient(QWidget):
             None
 
         """
-        mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
-
         annotator = Annotator(
             self.ui.userLabel.text(),
-            mouseHand,
             parentMarkerUI=self,
             initialData=initialData,
         )
@@ -2118,9 +2112,8 @@ class MarkerClient(QWidget):
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
-        mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
         sidebarRight = self.ui.sidebarRightCB.isChecked()
-        self.my_shutdown_signal.emit(2, [mouseHand, sidebarRight])
+        self.my_shutdown_signal.emit(2, [sidebarRight])
 
     def DNF(self):
         """

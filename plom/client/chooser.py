@@ -70,7 +70,6 @@ def readLastTime():
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
-    lastTime["mouse"] = "right"
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
     # update default from config file
@@ -173,8 +172,7 @@ class Chooser(QDialog):
         lastTime["LogToFile"] = stuff[2]
         lastTime["CommentsWarnings"] = stuff[3]
         lastTime["MarkWarnings"] = stuff[4]
-        lastTime["mouse"] = "left" if stuff[5] else "right"
-        lastTime["SidebarOnRight"] = stuff[6]
+        lastTime["SidebarOnRight"] = stuff[5]
         logging.getLogger().setLevel(lastTime["LogLevel"].upper())
 
     def validate(self):
@@ -440,13 +438,8 @@ class Chooser(QDialog):
         self.setEnabled(True)
         if not stuff:
             return
-        # update mouse-hand and for lasttime file
-        mouseHand, sidebarRight = stuff
+        # note that stuff is list of options - used to contain more... may contain more in future
+        # update sidebar for lasttime file
+        sidebarRight = stuff[0]
         global lastTime
-        if mouseHand == 0:
-            lastTime["mouse"] = "right"
-        elif mouseHand == 1:
-            lastTime["mouse"] = "left"
-        else:
-            raise RuntimeError("tertium non datur")
         lastTime["SidebarOnRight"] = sidebarRight
