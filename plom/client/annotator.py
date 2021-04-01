@@ -1396,6 +1396,7 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Cancel", self.close)
         self.ui.finishedButton.setMenu(m)
+        self.ui.finishedButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
 
         # connect the "wide" button in the narrow-view
