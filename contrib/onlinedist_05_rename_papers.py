@@ -26,6 +26,7 @@ dist_pdf = Path("distribute")
 # sid = "sID"  # if using random-codes.csv
 sid = "Student Number"
 
+
 def do_renaming_simple(r):
     """Rename files based on info from each row of the spreadsheet."""
     if pd.isnull(r[sid]):

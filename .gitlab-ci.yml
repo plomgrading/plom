@@ -139,7 +139,7 @@ black:
   before_script:
     - pip3 install "black~=20.8b"
   script:
-    - black --check --diff plom
+    - black --check --diff .
   allow_failure: true
 
 
