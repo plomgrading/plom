@@ -295,7 +295,7 @@ def launchTheServer(masterToken):
     theServer.launch(masterToken)
 
 
-def checkPositive(arg):
+def check_positive(arg):
     if int(arg) < 0:
         raise ValueError
     return int(arg)
@@ -370,7 +370,7 @@ grp.add_argument(
 )
 grp.add_argument(
     "--auto-numbered",
-    type=checkPositive,
+    type=check_positive,
     metavar="N",
     help='Auto-generate a random user list of "user17"-like usernames.',
 )
