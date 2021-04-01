@@ -29,6 +29,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QMenu,
+    QMessageBox,
     QPushButton,
     QToolButton,
     QSizePolicy,
