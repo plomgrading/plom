@@ -93,7 +93,7 @@ def MmodifyRubric(self, user_name, key, rubric):
         key(str): key for the rubric
         rubric (dict): dict containing the rubric details.
             For example
-            {kind: "relative", delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah", "key:blahblayh"}
+            {kind: "relative", delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah", key:"1234"}
 
     Returns:
         list: [True, key] - the new key generated, [False, "noSuchRubric"]
