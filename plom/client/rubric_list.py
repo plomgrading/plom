@@ -420,11 +420,9 @@ class RubricTable(QTableWidget):
         # set a tooltip that contains tags and meta info when someone hovers over text
         hoverText = ""
         if rubric["tags"] != "":
-            hoverText += '[tags] = "{}"\n'.format(rubric["tags"])
+            hoverText += "Tagged as {}\n".format(rubric["tags"])
         if rubric["meta"] != "":
-            hoverText += '[meta] = "{}"\n'.format(rubric["meta"])
-        if hoverText == "":
-            hoverText = "no additional information"
+            hoverText += "{}\n".format(rubric["meta"])
         self.item(rc, 3).setToolTip(hoverText.strip())
 
     def setRubricsByKeys(self, rubric_list, key_list):
@@ -623,6 +621,13 @@ class RubricTable(QTableWidget):
                 self.item(r, 4).setText(new_rubric["kind"])
                 # update the legality
                 self.colourLegalRubric(r, mss)
+                # set a tooltip that contains tags and meta info when someone hovers over text
+                hoverText = ""
+                if new_rubric["tags"] != "":
+                    hoverText += "Tagged as {}\n".format(new_rubric["tags"])
+                if new_rubric["meta"] != "":
+                    hoverText += "{}\n".format(new_rubric["meta"])
+                self.item(r, 3).setToolTip(hoverText.strip())
 
 
 class RubricWidget(QWidget):
