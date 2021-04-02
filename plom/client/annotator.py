@@ -1390,9 +1390,7 @@ class Annotator(QWidget):
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
         m = QMenu()
-        m.addAction("Next", self.saveAndGetNext)
         m.addAction("Done", self.saveAndGetNext)
-        m.addSeparator()
         m.addSeparator()
         m.addAction("Cancel", self.close)
         self.ui.finishedButton.setMenu(m)
