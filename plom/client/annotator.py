@@ -981,7 +981,7 @@ class Annotator(QWidget):
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(iconName, iconName)))
         toolButton.setIcon(QIcon(QPixmap(absoluteIconPath)))
-        toolButton.setIconSize(QSize(40, 40))
+        # toolButton.setIconSize(QSize(40, 40))
 
     def setAllIcons(self):
         """
