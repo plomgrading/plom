@@ -2193,10 +2193,8 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
-        print("TODO - how to cache latex comments from rubric list on server")
-
-        # TODO: deprecated, remove?  what do we want to do for comment pre-latexing?
         if True:
+            log.debug("TODO: currently skipping LaTeX pre-rendering, see Issue #1491")
             return
 
         clist = []
