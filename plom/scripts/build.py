@@ -179,6 +179,32 @@ spB.add_argument(
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
+sp = sub.add_parser(
+    "rubric",
+    help="Add pre-build rubrics",
+    description="""
+        Add pre-made rubrics to the server.  Your graders will be able to
+        build their own rubrics but if you have premade rubrics you can
+        add them here or by using the plom-manager tool.""",
+)
+sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
+group = sp.add_mutually_exclusive_group(required=True)
+group.add_argument(
+    "rubric_file",
+    nargs="?",
+    help="""
+        Filename of a pre-build list of rubrics.
+        This can be a .toml file or a .csv file
+        (TODO: later not implemented).
+        TODO: link to docs about what the file should look like.""",
+)
+group.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use auto-generated rubric list.",
+)
+
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
@@ -247,6 +273,13 @@ def main():
         status = build_database(args.server, args.password)
         print(status)
         build_papers(args.server, args.password, args.no_pdf, args.without_qr)
+
+    elif args.command == "rubric":
+        if args.demo:
+            print("TODO: add pre-made demo rubrics")
+        else:
+            print(f'TODO: add rubrics from file "{args.rubric_file}"')
+
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
