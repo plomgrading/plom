@@ -11,8 +11,9 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import io
+import json
 import os
+from pathlib import Path
 from textwrap import dedent, wrap
 
 # import tools for dealing with resource files
@@ -185,18 +186,25 @@ sp = sub.add_parser(
     description="""
         Add pre-made rubrics to the server.  Your graders will be able to
         build their own rubrics but if you have premade rubrics you can
-        add them here or by using the plom-manager tool.""",
+        add them here or by using the plom-manager tool.
+        This tool can also dump the current rubrics from a running server.""",
 )
 sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
 group = sp.add_mutually_exclusive_group(required=True)
 group.add_argument(
+    "--dump",
+    type=str,
+    metavar="FILE",
+    help="""Dump the current rubrics from SERVER into a file "FILE.json".""",
+)
+group.add_argument(
     "rubric_file",
     nargs="?",
     help="""
         Filename of a pre-build list of rubrics.
-        This can be a .toml file or a .csv file
-        (TODO: later not implemented).
+        This can be a .json, .toml or .csv file
+        (TODO: only json is currently implemented).
         TODO: link to docs about what the file should look like.""",
 )
 group.add_argument(
@@ -275,10 +283,27 @@ def main():
         build_papers(args.server, args.password, args.no_pdf, args.without_qr)
 
     elif args.command == "rubric":
-        if args.demo:
-            print("TODO: add pre-made demo rubrics")
-        else:
-            print(f'TODO: add rubrics from file "{args.rubric_file}"')
+        msgr = get_messenger(args.server, args.password)
+        try:
+            if args.demo:
+                raise NotImplementedError("add pre-made demo rubrics")
+            elif args.dump:
+                filename = Path(args.dump)
+                if not filename.suffix.casefold() == ".json":
+                    filename = filename.with_suffix(filename.suffix + ".json")
+                print(f'Saving server\'s current rubrics to "{filename}"')
+                rval = msgr.MgetRubrics()
+                if rval[0]:
+                    with open(filename, "w") as f:
+                        json.dump(rval[1], f, indent="  ")
+            else:
+                filename = Path(args.rubric_file)
+                if not filename.suffix.casefold() == ".json":
+                    filename = filename.with_suffix(filename.suffix + ".json")
+                raise NotImplementedError(f'add rubrics from file "{filename}"')
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
