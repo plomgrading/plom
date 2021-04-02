@@ -9,7 +9,7 @@
 import logging
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import (
     QBrush,
     QColor,
@@ -780,7 +780,12 @@ class RubricWidget(QWidget):
         self.updateLegalityOfDeltas()
 
     def wrangleRubrics(self):
-        wr = RubricWrangler(self.rubrics, self.get_tab_rubric_lists(), self.username)
+        wr = RubricWrangler(
+            self.rubrics,
+            self.get_tab_rubric_lists(),
+            self.username,
+            annotator_size=self.parent.size(),
+        )
         if wr.exec_() != QDialog.Accepted:
             return
         else:
@@ -1044,7 +1049,13 @@ class RubricWidget(QWidget):
             log.error("Not allowed to create rubric while question number undefined.")
             return
         reapable = self.get_nonrubric_text_from_page()
-        arb = AddRubricBox(self.username, self.maxMark, reapable, com)
+        arb = AddRubricBox(
+            self.username,
+            self.maxMark,
+            reapable,
+            com,
+            annotator_size=self.parent.size(),
+        )
         if arb.exec_() != QDialog.Accepted:
             return
         if arb.DE.checkState() == Qt.Checked:
@@ -1140,7 +1151,7 @@ class SignedSB(QSpinBox):
 
 
 class AddRubricBox(QDialog):
-    def __init__(self, username, maxMark, lst, com=None):
+    def __init__(self, username, maxMark, lst, com=None, annotator_size=None):
         """Initialize a new dialog to edit/create a comment.
 
         Args:
@@ -1150,6 +1161,7 @@ class AddRubricBox(QDialog):
                 annotations and morph them into comments.
             com (dict/None): if None, we're creating a new rubric.
                 Otherwise, this has the current comment data.
+            annotator_size (QSize/None): size of the parent annotator
         """
         super().__init__()
 
@@ -1157,8 +1169,10 @@ class AddRubricBox(QDialog):
             self.setWindowTitle("Modify rubric")
         else:
             self.setWindowTitle("Add new rubric")
-        ## TODO - I know we shouldn't set size to absolute values, but...
-        self.resize(800, 480)  # make window wider - was defaulting to 640x480.
+
+        ## Set self to be 1/2 the size of the annotator
+        if annotator_size:
+            self.resize(annotator_size / 2)
         ##
         self.CB = QComboBox()
         self.TE = QTextEdit()
