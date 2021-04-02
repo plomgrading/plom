@@ -62,6 +62,33 @@ abs_suffix = " / N"
 abs_suffix_length = len(abs_suffix)
 
 
+def rubricIsInRange(mss, kind, delta):
+    # assume that this is called **after** is legal
+    # mss = max, state, score
+    maxMark = mss[0]
+    state = mss[1]
+    score = mss[2]
+
+    if state == "up":  # must have kind = relative, delta or neutral
+        if kind == "neutral":
+            return True
+        else:  # we know kind is relative or delta, since is a legal rubric
+            if int(delta) + score > maxMark:
+                return False
+            else:
+                return True
+    if state == "down":  # must have kind = relative, delta or neutral
+        if kind == "neutral":
+            return True
+        else:  # we know kind is relative or delta, since is a legal rubric
+            if int(delta) + score < 0:
+                return False
+            else:
+                return True
+    # state must be neutral, so return true
+    return True
+
+
 def isLegalRubric(mss, kind, delta):
     # mss = max, state, score
     maxMark = mss[0]
@@ -84,12 +111,12 @@ def isLegalRubric(mss, kind, delta):
     # delta mark = delta = must be an non-zero int.
     idelta = int(delta)
     if state == "up":
-        if idelta > 0 and score + idelta <= maxMark:
+        if idelta > 0:
             return True
         else:
             return False
     else:  # state == "down"
-        if idelta < 0 and score + idelta >= 0:
+        if idelta < 0:
             return True
         else:
             return False
@@ -599,6 +626,14 @@ class RubricTable(QTableWidget):
             mss, kind=self.item(r, 4).text(), delta=self.item(r, 2).text()
         ):
             self.showRow(r)
+            if rubricIsInRange(
+                mss, kind=self.item(r, 4).text(), delta=self.item(r, 2).text()
+            ):
+                self.item(r, 2).setForeground(colour_legal)
+                self.item(r, 3).setForeground(colour_legal)
+            else:
+                self.item(r, 2).setForeground(colour_illegal)
+                self.item(r, 3).setForeground(colour_illegal)
         else:
             self.hideRow(r)
 
