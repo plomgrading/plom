@@ -26,7 +26,7 @@ def McreateRubric(self, user_name, rubric):
         user_name (str): name of user creating the rubric element
         rubric (dict): dict containing the rubric details.
             For example
-            {delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah"}
+            {kind: "relative", delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah"}
 
     Returns:
         list: [True, key] - the new key generated
@@ -44,6 +44,7 @@ def McreateRubric(self, user_name, rubric):
             key=key,
             user=uref,
             question=rubric["question"],
+            kind=rubric["kind"],
             delta=rubric["delta"],
             text=rubric["text"],
             creationTime=datetime.now(),
@@ -55,15 +56,21 @@ def McreateRubric(self, user_name, rubric):
 
 
 def MgetRubrics(self, question_number=None):
+    # return the rubric sorted by kind, then delta, then text
     rubric_list = []
     if question_number is None:
-        query = Rubric.select()
+        query = Rubric.select().order_by(Rubric.kind, Rubric.delta, Rubric.text)
     else:
-        query = Rubric.select().where(Rubric.question == question_number)
+        query = (
+            Rubric.select()
+            .where(Rubric.question == question_number)
+            .order_by(Rubric.kind, Rubric.delta, Rubric.text)
+        )
     for r in query:
         rubric_list.append(
             {
                 "id": r.key,
+                "kind": r.kind,
                 "delta": r.delta,
                 "text": r.text,
                 "tags": r.tags,
@@ -86,7 +93,7 @@ def MmodifyRubric(self, user_name, key, rubric):
         key(str): key for the rubric
         rubric (dict): dict containing the rubric details.
             For example
-            {delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah", "key:blahblayh"}
+            {kind: "relative", delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah", key:"1234"}
 
     Returns:
         list: [True, key] - the new key generated, [False, "noSuchRubric"]
@@ -100,6 +107,7 @@ def MmodifyRubric(self, user_name, key, rubric):
         return [False, "noSuchRubric"]
 
     with plomdb.atomic():
+        rref.kind = rubric["kind"]
         rref.delta = rubric["delta"]
         rref.text = rubric["text"]
         rref.modificationTime = datetime.now()

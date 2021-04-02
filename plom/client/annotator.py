@@ -1419,7 +1419,7 @@ class Annotator(QWidget):
 
         Args:
             dlt_txt (tuple): the delta, string of text, rubric_id, and
-            meta, e.g., `[-2, "missing chain rule", 12345, "relative"]`
+            kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
 
         Returns:
             None: Modifies self.scene and self.toolMode

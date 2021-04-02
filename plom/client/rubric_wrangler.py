@@ -335,9 +335,12 @@ class ShowListFrame(QFrame):
 
 
 class RubricWrangler(QDialog):
-    def __init__(self, rubrics, wranglerState, username):
+    def __init__(self, rubrics, wranglerState, username, annotator_size=None):
         super().__init__()
-        self.resize(1200, 768)
+        # set size to be 3/4 or parent annotator
+        if annotator_size:
+            self.resize(annotator_size * 3 / 4)
+        ##
         self.username = username
         self.rubrics = rubrics
         self.model = RubricModel()
