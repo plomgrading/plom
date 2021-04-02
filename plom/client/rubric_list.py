@@ -63,36 +63,54 @@ abs_suffix_length = len(abs_suffix)
 
 
 def isLegalRubric(mss, kind, delta):
-    # mss = max, state, score
+    """Checks the 'legality' of the current rubric - returning one of three possibile states
+    0 = incompatible - the kind of rubric is not compatible with the current state
+    1 = compatible but out of range - the kind of rubric is compatible with the state but applying that rubric will take the score out of range [0, maxmark] (so cannot be used)
+    2 = compatible and in range - is compatible and can be used.
+    Note that the rubric lists use the result to decide which rubrics will be shown (return value 2) which hidden (0 return) and greyed out (1 return)
+
+
+    Args:
+        mss (list): triple that encodes max-mark, state, and current-score
+        kind: the kind of the rubric being checked
+        delta: the delta of the rubric being checked
+
+    Returns:
+        int: 0,1,2.
+    """
     maxMark = mss[0]
     state = mss[1]
     score = mss[2]
 
     # easy cases first
     # when state is neutral - all rubrics are fine
-    # a neutral rubric is always fine
+    # a neutral rubric is always compatible and in range
     if state == "neutral" or kind == "neutral":
-        return True
+        return 2
     # now, neither state nor kind are neutral
 
     # consequently if state is absolute, no remaining rubric is legal
     # similarly, if kind is absolute, the rubric is not legal since state is not netural
     if state == "absolute" or kind == "absolute":
-        return False
+        return 0
 
     # now state must be up or down, and kind must be delta or relative
     # delta mark = delta = must be an non-zero int.
     idelta = int(delta)
     if state == "up":
-        if idelta > 0 and score + idelta <= maxMark:
-            return True
+        if idelta < 0:  # not compat
+            return 0
+        elif idelta + score > maxMark:  # out of range
+            return 1
         else:
-            return False
+            return 2
     else:  # state == "down"
-        if idelta < 0 and score + idelta >= 0:
-            return True
+        if idelta > 0:  # not compat
+            return 0
+        elif idelta + score < 0:  # out of range
+            return 1
         else:
-            return False
+            return 2
 
 
 class RubricTable(QTableWidget):
@@ -595,10 +613,17 @@ class RubricTable(QTableWidget):
 
     def colourLegalRubric(self, r, mss):
         # recall columns are ["Key", "Username", "Delta", "Text", "Kind"])
-        if isLegalRubric(
+        legal = isLegalRubric(
             mss, kind=self.item(r, 4).text(), delta=self.item(r, 2).text()
-        ):
+        )
+        if legal == 2:
             self.showRow(r)
+            self.item(r, 2).setForeground(colour_legal)
+            self.item(r, 3).setForeground(colour_legal)
+        elif legal == 1:
+            self.showRow(r)
+            self.item(r, 2).setForeground(colour_illegal)
+            self.item(r, 3).setForeground(colour_illegal)
         else:
             self.hideRow(r)
 
