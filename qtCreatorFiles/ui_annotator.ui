@@ -204,17 +204,17 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>0</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>press a</string>
              </property>
              <property name="text">
               <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -232,17 +232,17 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>0</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>press q</string>
              </property>
              <property name="text">
               <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -280,17 +280,17 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>0</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>press x</string>
              </property>
              <property name="text">
               <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -308,17 +308,17 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>0</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>press s</string>
              </property>
              <property name="text">
               <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
              </property>
             </widget>
            </item>
@@ -330,17 +330,17 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>0</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>press w</string>
              </property>
              <property name="text">
               <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
              </property>
             </widget>
            </item>
@@ -352,17 +352,17 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="minimumSize">
-              <size>
-               <width>45</width>
-               <height>0</height>
-              </size>
-             </property>
              <property name="toolTip">
               <string>press z</string>
              </property>
              <property name="text">
               <string>...</string>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
              </property>
              <property name="checkable">
               <bool>true</bool>
