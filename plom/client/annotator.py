@@ -960,11 +960,17 @@ class Annotator(QWidget):
         # refresh everything.
         self.repaint()
 
-    def setNarrowModeLabel(self, mode):
+    def setModeLabels(self, mode):
         if mode == "rubric":
             self.ui.narrowModeLabel.setText(
                 " rubric \n {} ".format(self.rubric_widget.getCurrentTabName())
             )
+            self.ui.wideModeLabel.setText(
+                " rubric {} ".format(self.rubric_widget.getCurrentTabName())
+            )
+        else:
+            self.ui.narrowModeLabel.setText(" {} ".format(mode))
+            self.ui.wideModeLabel.setText(" {} ".format(mode))
 
     def setIcon(self, toolButton, iconName, absoluteIconPath):
         """
