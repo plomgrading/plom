@@ -23,12 +23,10 @@ def buildSpecialRubrics(spec, db):
         mx = spec["question"]["{}".format(q)]["mark"]
         # make zero mark and full mark rubrics
         rubric = {
-            "question": q,
+            "kind": "absolute",
             "delta": "0",
             "text": "no marks",
-            "tags": "",
-            "meta": "",
-            "kind": "absolute",
+            "question": q,
         }
         if not db.McreateRubric("manager", rubric):
             raise ValueError(
@@ -38,8 +36,6 @@ def buildSpecialRubrics(spec, db):
             "kind": "absolute",
             "delta": "{}".format(mx),
             "text": "full marks",
-            "tags": "",
-            "meta": "",
             "question": q,
         }
         if not db.McreateRubric("manager", rubric):
@@ -53,9 +49,7 @@ def buildSpecialRubrics(spec, db):
             rubric = {
                 "delta": "+{}".format(m),
                 "text": ".",
-                "tags": "",
                 "kind": "delta",
-                "meta": "",
                 "question": q,
             }
             if not db.McreateRubric("manager", rubric):
@@ -66,9 +60,7 @@ def buildSpecialRubrics(spec, db):
             rubric = {
                 "delta": "-{}".format(m),
                 "text": ".",
-                "tags": "",
                 "kind": "delta",
-                "meta": "",
                 "question": q,
             }
             if not db.McreateRubric("manager", rubric):
