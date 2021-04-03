@@ -32,6 +32,52 @@ from plom.produce.demotools import buildDemoSourceFiles
 from plom.finish import clear_manager_login
 
 
+def upload_rubrics(msgr, rubrics):
+    """Upload a list of rubrics to a server."""
+    for rub in rubrics:
+        # TODO: some autogen ones are also made by manager?
+        if rub.get("username", None) == "HAL":
+            continue
+        # TODO: ask @arechnitzer about this question_number discrepency
+        rub["question"] = rub["question_number"]
+        msgr.McreateRubric(rub)
+
+
+def upload_demo_rubrics(msgr, numquestions=3):
+    """Load some demo rubrics and upload to server.
+
+    The demo data is a bit sparsified: we fill in missing pieces and
+    multiply over questions.
+    """
+    # TODO: take from pkg_resoures
+    with open("demo_rubrics.toml", "r") as f:
+        rubrics_in = toml.load(f)["rubric"]
+    rubrics = []
+    for rub in rubrics_in:
+        if not hasattr(rub, "kind"):
+            if rub["delta"] == ".":
+                rub["kind"] = "neutral"
+            elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
+                rub["kind"] = "relative"
+            else:
+                raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
+        # TODO: I think the API should add these two if missing
+        if "meta" not in rub:
+            rub["meta"] = ""
+        if "tags" not in rub:
+            rub["tags"] = ""
+        # Multiply rubrics w/o question numbers, avoids repetition in demo file
+        if not hasattr(rub, "question_number"):
+            for q in range(1, numquestions + 1):
+                r = rub.copy()
+                r["question_number"] = q
+                rubrics.append(r)
+        else:
+            rubrics.append(rub)
+    print(f"Uploading {len(rubrics)} demo rubrics...")
+    upload_rubrics(msgr, rubrics)
+
+
 def checkTomlExtension(fname):
     """Append a .toml extension if not present.
 
@@ -205,10 +251,9 @@ group.add_argument(
     "rubric_file",
     nargs="?",
     help="""
-        Filename of a pre-build list of rubrics.
+        Upload a pre-build list of rubrics from this file.
         This can be a .json, .toml or .csv file
-        (TODO: only json is currently implemented).
-        TODO: link to docs about what the file should look like.""",
+        (TODO: .csv not yet implemented).""",
 )
 group.add_argument(
     "--demo",
@@ -289,7 +334,8 @@ def main():
         msgr = get_messenger(args.server, args.password)
         try:
             if args.demo:
-                raise NotImplementedError("add pre-made demo rubrics")
+                upload_demo_rubrics(msgr)
+
             elif args.dump:
                 filename = Path(args.dump)
                 if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
@@ -305,12 +351,26 @@ def main():
                     with open(filename, "w") as f:
                         toml.dump({"rubric": rubrics}, f)
                 else:
-                    raise NotImplementedError(f'Don\'t know how to export to "{filename}"')
+                    raise NotImplementedError(
+                        f'Don\'t know how to export to "{filename}"'
+                    )
             else:
                 filename = Path(args.rubric_file)
-                if not filename.suffix.casefold() == ".json":
-                    filename = filename.with_suffix(filename.suffix + ".json")
-                raise NotImplementedError(f'add rubrics from file "{filename}"')
+                if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+                    filename = filename.with_suffix(filename.suffix + ".toml")
+                if filename.suffix == ".json":
+                    with open(filename, "r") as f:
+                        rubrics = json.load(f)
+                elif filename.suffix == ".toml":
+                    with open(filename, "r") as f:
+                        rubrics = toml.load(f)["rubric"]
+                else:
+                    raise NotImplementedError(
+                        f'Don\'t know how to import from "{filename}"'
+                    )
+                print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
+                upload_rubrics(msgr, rubrics)
+
         finally:
             msgr.closeUser()
             msgr.stop()
