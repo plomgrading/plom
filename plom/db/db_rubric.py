@@ -34,12 +34,11 @@ def McreateRubric(self, user_name, rubric):
     """
 
     uref = User.get(name=user_name)  # authenticated, so not-None
-    # build a new key for the rubric - must be unique
-    key = generate_new_comment_ID()
-    while Rubric.get_or_none(key=key) is not None:
-        key = generate_new_comment_ID()
-    # key is now not present in DB
     with plomdb.atomic():
+        # build unique key while holding atomic access
+        key = generate_new_comment_ID()
+        while Rubric.get_or_none(key=key) is not None:
+            key = generate_new_comment_ID()
         Rubric.create(
             key=key,
             user=uref,
