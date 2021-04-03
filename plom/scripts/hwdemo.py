@@ -78,6 +78,7 @@ def main():
     print("Server seems to be running, so we move on to uploading")
 
     subprocess.check_call(split("plom-build class --demo -w 1234"))
+    subprocess.check_call(split("plom-build rubric --demo -w 1234"))
     subprocess.check_call(split("plom-build make -w 1234"))
     # this creates two batches of fake hw - prefixes = hwA and hwB
     subprocess.check_call(split("plom-fake-hwscribbles -w 1234"))
