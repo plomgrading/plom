@@ -210,6 +210,8 @@ class Annotator(QWidget):
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
+        m.addAction("Previous paper", lambda: None).setEnabled(False)
+        m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
@@ -273,8 +275,6 @@ class Annotator(QWidget):
         m.addAction("Help", lambda: None).setEnabled(False)
         m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
-        m.addSeparator()
-        m.addAction("Close without saving\tctrl-c", self.close)
         return m
 
     def closeCurrentTGV(self):
