@@ -1742,18 +1742,14 @@ class MarkerClient(QWidget):
         """Get list of rubrics from server.
 
         Args:
-            none
+            question (int/None)
 
         Returns:
             list: A list of the dictionary objects.
         """
         if question is None:
-            response = self.msgr.MgetRubrics()
-        else:
-            response = self.msgr.MgetRubricsByQuestion(question)
-        if response[0] is False:
-            log.warning("Getting rubrics failed. ")
-        return response
+            return self.msgr.MgetRubrics()
+        return self.msgr.MgetRubricsByQuestion(question)
 
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)

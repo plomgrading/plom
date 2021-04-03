@@ -341,9 +341,7 @@ def main():
                 if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
                     filename = filename.with_suffix(filename.suffix + ".toml")
                 print(f'Saving server\'s current rubrics to "{filename}"')
-                _, rubrics = msgr.MgetRubrics()
-                # TODO: clean this MgetRubrics to just return the list
-                assert _
+                rubrics = msgr.MgetRubrics()
                 if filename.suffix == ".json":
                     with open(filename, "w") as f:
                         json.dump(rubrics, f, indent="  ")

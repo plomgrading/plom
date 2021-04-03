@@ -373,12 +373,11 @@ class BaseMessenger:
 
         Raises:
             PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
+            PlomSeriousException: any other unexpected error.
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, list of rubrics]
+            list: list of dicts, possibly an empty list if server has no
+                rubrics.
         """
         self.SRmutex.acquire()
         try:
@@ -391,8 +390,7 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
-            rubric_list = response.json()
-            messenger_response = [True, rubric_list]
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -400,25 +398,22 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     "Error of type {} getting rubric list".format(e)
                 ) from None
-            messenger_response = [False]
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def MgetRubricsByQuestion(self, question_number):
         """Retrieve list of all rubrics from server for given question.
 
         Args:
-            current_comments_list (list): A list of the comments as dictionaries.
+            question_number (int)
 
         Raises:
             PlomAuthenticationException: Authentication error.
             PlomSeriousException: Other error types, possible needs fix or debugging.
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, list of rubrics]
+            list: list of dicts, possibly an empty list if server has no
+                rubrics for this question.
         """
         self.SRmutex.acquire()
         try:
@@ -431,8 +426,7 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
-            rubric_list = response.json()
-            messenger_response = [True, rubric_list]
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -440,10 +434,8 @@ class BaseMessenger:
                 raise PlomSeriousException(
                     "Error of type {} getting rubric list".format(e)
                 ) from None
-            messenger_response = [False]
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def MmodifyRubric(self, key, new_rubric):
         """Ask server to modify a rubric and get key back.
