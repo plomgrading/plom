@@ -215,7 +215,6 @@ class Annotator(QWidget):
         m.addSeparator()
         m.addAction("Insert image", self.addImageMode)
         m.addSeparator()
-        m.addAction("View whole paper", self.viewWholePaper)
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
