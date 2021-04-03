@@ -15,10 +15,9 @@ import json
 import os
 from pathlib import Path
 from textwrap import dedent, wrap
-import toml
 
-# import tools for dealing with resource files
 import pkg_resources
+import toml
 
 from plom import __version__
 from plom import SpecVerifier
@@ -49,9 +48,11 @@ def upload_demo_rubrics(msgr, numquestions=3):
     The demo data is a bit sparsified: we fill in missing pieces and
     multiply over questions.
     """
-    # TODO: take from pkg_resoures
-    with open("demo_rubrics.toml", "r") as f:
-        rubrics_in = toml.load(f)["rubric"]
+    # How do I toml.load from a resource_stream?
+    rubrics_in = toml.loads(
+        pkg_resources.resource_string("plom", "demo_rubrics.toml").decode()
+    )
+    rubrics_in = rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:
         if not hasattr(rub, "kind"):
@@ -74,8 +75,8 @@ def upload_demo_rubrics(msgr, numquestions=3):
                 rubrics.append(r)
         else:
             rubrics.append(rub)
-    print(f"Uploading {len(rubrics)} demo rubrics...")
     upload_rubrics(msgr, rubrics)
+    return len(rubrics)
 
 
 def checkTomlExtension(fname):
@@ -334,7 +335,9 @@ def main():
         msgr = get_messenger(args.server, args.password)
         try:
             if args.demo:
-                upload_demo_rubrics(msgr)
+                print("Uploading demo rubrics...")
+                N = upload_demo_rubrics(msgr)
+                print(f"Uploaded {N} demo rubrics")
 
             elif args.dump:
                 filename = Path(args.dump)
