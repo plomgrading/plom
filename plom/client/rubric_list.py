@@ -853,7 +853,7 @@ class RubricWidget(QWidget):
                 lists.  Subject to change without notice, your milleage
                 may vary, etc.
 
-        If there is too much data for the number of data, the extra data
+        If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
 
