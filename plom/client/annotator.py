@@ -219,7 +219,8 @@ class Annotator(QWidget):
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         m.addSeparator()
         m.addAction("Compact UI\thome", self.narrowLayout)
-        m.addAction("&Wide UI\thome", self.wideLayout)
+        # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
+        # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
         m.addAction(
             "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
