@@ -863,6 +863,25 @@ class RubricWidget(QWidget):
         # zip truncates shorter list incase of length mismatch
         # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
         #    tab.set_name(name)
+        ##
+        # Fix for #1493 - make sure that all (non-system) rubrics appear in either shared or hidden.
+        # if not explicitly hidden then append to shared.
+        # ie - checking for new rubrics that are not in our list
+        for rubric in self.rubrics:
+            # don't add HAL system rubrics
+            if rubric["username"] == "HAL":
+                continue
+            # exclude manager-delta rubrics
+            if rubric["username"] == "manager" and rubric["kind"] == "delta":
+                continue
+            if (
+                rubric["id"] not in wranglerState["hidden"]
+                and rubric["id"] not in wranglerState["shown"]
+            ):
+                log.info("Appending new rubric with id {}".format(rubric["id"]))
+                wranglerState["shown"].append(rubric["id"])
+
+        ##
         curtabs = self.user_tabs
         newnames = wranglerState["user_tab_names"]
         for n in range(max(len(curtabs), len(newnames))):
