@@ -107,6 +107,8 @@ def MmodifyRubric(self, user_name, key, change):
             Other fields will be ignored.  Note this means you can think
             you are changing, e.g., the question but this will silently
             not happen.
+            TODO: in the future we might prevent changing the "kind"
+            or the sign of the delta.
 
     Returns:
         tuple: `(True, new_key)` containing the newly generated key
