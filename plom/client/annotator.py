@@ -96,14 +96,12 @@ class Annotator(QWidget):
     annotator_done_closing = pyqtSignal(str)
     annotator_done_reject = pyqtSignal(str)
 
-    def __init__(self, username, mouseHand, parentMarkerUI=None, initialData=None):
+    def __init__(self, username, parentMarkerUI=None, initialData=None):
         """
         Initializes a new annotator window.
 
         Args:
             username (str): username of Marker
-            mouseHand (int): The location of the grader's mouse hand. (
-                Right = 0, Left != 0)
             parentMarkerUI (MarkerClient): the parent of annotator UI.
             initialData (dict): as documented by the arguments to "loadNewTGV"
         """
@@ -143,9 +141,6 @@ class Annotator(QWidget):
         # the whole background - so make a style for that.
         self.currentButtonStyleOutline = "border: 2px solid #3daee9; "
 
-        # Window depends on mouse-hand - si
-        # right-hand mouse = 0, left-hand mouse = 1
-        self.mouseHand = mouseHand
         self.ui = Ui_annotator()
 
         # Set up the gui.
@@ -539,43 +534,6 @@ class Annotator(QWidget):
         """
         self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
-        # self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 1)
-        # self.ui.revealLayout.addWidget(self.ui.finishedButton, 0, 2, 1, 1)
-        # # TODO: just use an icon in compact?
-        # # self.ui.finishedButton.setText("N")
-        # # self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
-        # self.ui.finishedButton.setMaximumWidth(44)
-        #
-        # to_reveal = [
-        #     ["box", 4, 1],
-        #     ["tick", 4, 2],
-        #     ["cross", 5, 1],
-        #     ["text", 5, 2],
-        #     ["line", 6, 1],
-        #     ["pen", 6, 2],
-        #     ["delete", 8, 1],
-        #     ["pan", 8, 2],
-        #     ["undo", 8, 1],
-        #     ["redo", 8, 2],
-        #     ["zoom", 9, 1],
-        #     ["move", 9, 2],
-        # ]
-        #
-        # self.ui.revealLayout.addWidget(
-        #     self.ui.zoomCB, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        # )
-        # self.ui.revealLayout.addWidget(
-        #     self.ui.markLabel, 2, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        # )
-        #
-        # for button in to_reveal:
-        #     self.ui.revealLayout.addWidget(
-        #         getattr(self.ui, "{}Button".format(button[0])),
-        #         button[1],
-        #         button[2],
-        #         Qt.AlignHCenter | Qt.AlignTop,
-        #     )
-        #
 
     def wideLayout(self):
         """
@@ -586,69 +544,6 @@ class Annotator(QWidget):
         """
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
-
-        # def load_tools(mouse_hand):
-        #     """
-        #     Loads tools based on left or right handed mouse.
-        #
-        #     Args:
-        #         mouse_hand(int): left or right handed mouse. Right = 0, Left != 0
-        #
-        #     Returns:
-        #         None: adds tool widgets to self.ui.toolLayout
-        #     """
-        #     tools = [
-        #         [
-        #             self.ui.deleteButton,
-        #             self.ui.undoButton,
-        #             self.ui.redoButton,
-        #             self.ui.moveButton,
-        #             self.ui.panButton,
-        #             self.ui.zoomButton,
-        #         ],
-        #         [],
-        #         [
-        #             # TODO: match the order in "next_minor_tool"
-        #             self.ui.boxButton,
-        #             self.ui.tickButton,
-        #             self.ui.crossButton,
-        #             self.ui.textButton,
-        #             self.ui.lineButton,
-        #             self.ui.penButton,
-        #         ],
-        #     ]
-        #     row_index = 0
-        #     for row in tools:
-        #         column_index = 0
-        #         # right handed mouse
-        #         if mouse_hand == 0:
-        #             for tool in row:
-        #                 self.ui.toolLayout.addWidget(tool, row_index, column_index)
-        #                 column_index += 1
-        #         else:
-        #             # if left handed, loads column elements in reverse order (right to left)
-        #             for tool in reversed(row):
-        #                 self.ui.toolLayout.addWidget(tool, row_index, column_index)
-        #                 column_index += 1
-        #         row_index += 1
-        #
-        # # TODO: not polite to be grubbing around in parent.ui, fix with QSetting
-        # if self.parentMarkerUI.ui.sidebarRightCB.isChecked():
-        #     self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-        #     self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
-        #     self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-        # else:
-        #     self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-        #     self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
-        #     self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-        #
-        # load_tools(self.mouseHand)
-        #
-        # self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
-        # self.ui.modeLayout.addWidget(self.ui.finishedButton)
-        # self.ui.finishedButton.setMaximumWidth(16777215)  # back to default
-        # self.ui.buttonsLayout.addWidget(self.ui.markLabel)
-        # self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def next_rubric(self):
         self.rubric_widget.nextRubric()
@@ -1411,7 +1306,7 @@ class Annotator(QWidget):
 
         Args:
             dlt_txt (tuple): the delta, string of text, rubric_id, and
-            meta, e.g., `[-2, "missing chain rule", 12345, "relative"]`
+            kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
 
         Returns:
             None: Modifies self.scene and self.toolMode

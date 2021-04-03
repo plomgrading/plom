@@ -251,16 +251,6 @@
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QCheckBox" name="leftMouseCB">
-            <property name="toolTip">
-             <string>Move keyboard shortcuts to right hand</string>
-            </property>
-            <property name="text">
-             <string>&amp;Left-handed mouse</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QCheckBox" name="sidebarRightCB">
             <property name="text">
              <string>&amp;Sidebar on right</string>
@@ -384,7 +374,4 @@
  </tabstops>
  <resources/>
  <connections/>
- <buttongroups>
-  <buttongroup name="markStyleGroup"/>
- </buttongroups>
 </ui>

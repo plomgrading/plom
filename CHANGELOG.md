@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Rubric information now appears as tooltip on hover over rubric-list. Type shown on hover over the delta and tags/meta shown (if present) on hover over text.
 * There is now no marking mode - it is set by the rubrics used.
 * The escape-key will now cancel an annotation mid-draw (box,ellipse,line,arrows,rubric)
 * Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
 * `plom-demo` now has `--port` option.
 
 ### Changed
+* The left-hand-on-mouse option has been removed from annotator/marker - replaced with better key-binding options.
 * Rubrics have had significant change: they are now shared between users and can be grouped into "panes" within the user interface.
 * Rubrics are not longer saved on disc on client systems.
 * Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.

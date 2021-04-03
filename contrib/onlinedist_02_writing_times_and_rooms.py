@@ -60,12 +60,14 @@ evening = pd.read_csv("evening.csv", dtype="object")
 for mod in (cfa, evening):
     # dict of ID -> test_room
     mymap = mod.set_index("ID")["test_room"].to_dict()
+
     def f(row):
         r = mymap.get(row["ID"], None)
         if r:
             return r
         else:
             return row["test_room"]
+
     df["test_room"] = df.apply(f, axis=1)
 # double check right number of unique rooms
 expect_distinct_rooms = 4

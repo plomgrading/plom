@@ -391,7 +391,7 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
             key=rID,
             delta="0",
             text="No answer given",
-            meta="absolute",
+            kind="absolute",
             question=questionNumber,
             user=uref,
             creationTime=datetime.now(),

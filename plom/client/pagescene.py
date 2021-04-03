@@ -353,7 +353,7 @@ class PageScene(QGraphicsScene):
         self.rubricText = ""
         self.rubricDelta = "0"
         self.rubricID = None
-        self.rubricMeta = ""
+        self.rubricKind = ""
 
         # Build a scorebox and set it above all our other graphicsitems
         # so that it cannot be overwritten.
@@ -391,14 +391,14 @@ class PageScene(QGraphicsScene):
             self.updateGhost(
                 self.rubricDelta,
                 self.rubricText,
-                self.isLegalRubric(self.rubricMeta, self.rubricDelta),
+                self.isLegalRubric(self.rubricKind, self.rubricDelta),
             )
 
     def refreshMarkingState(self):
         """Compute the marking-state from the rubrics on the page and store
 
         * State can be one of ["neutral", "absolute", "up", "down"]
-        * Rubric's meta can be one of ["neutral", "absolute", "delta", "relative"]
+        * Rubric's kind can be one of ["neutral", "absolute", "delta", "relative"]
             * neutral has no effect on state - coexists with everything
             * absolute must be unique on page
             * delta/relative can coexist with delta/relative of same sign, and netural
@@ -411,9 +411,9 @@ class PageScene(QGraphicsScene):
         state = "neutral"
         for X in self.items():
             if isinstance(X, GroupDeltaTextItem):
-                if X.meta == "neutral":  # does not change state
+                if X.kind == "neutral":  # does not change state
                     continue
-                elif X.meta == "absolute":  # absolute must be unique on page
+                elif X.kind == "absolute":  # absolute must be unique on page
                     if state == "neutral":
                         state = "absolute"
                     else:
@@ -421,7 +421,7 @@ class PageScene(QGraphicsScene):
                             "Inconsistent rubric = mixed absolute rubric with non-neutral rubric(s)"
                         )
                         raise PlomInconsistentRubricsException
-                elif X.meta in ["delta", "relative"]:  # must be delta>0 or delta<0
+                elif X.kind in ["delta", "relative"]:  # must be delta>0 or delta<0
                     if X.is_delta_positive():
                         if state in ["neutral", "up"]:
                             state = "up"
@@ -440,7 +440,7 @@ class PageScene(QGraphicsScene):
                             raise PlomInconsistentRubricsException
                 else:
                     log.error(
-                        "Inconsistent rubric = unknown meta-type = {}".format(X.meta)
+                        "Inconsistent rubric = unknown kind-type = {}".format(X.kind)
                     )
                     raise PlomInconsistentRubricsException
         self.markingState = state
@@ -452,12 +452,12 @@ class PageScene(QGraphicsScene):
         score = None
         for X in self.items():
             if isinstance(X, GroupDeltaTextItem):
-                if X.meta == "neutral":
+                if X.kind == "neutral":
                     continue
-                elif X.meta == "absolute":  # there can be only one
+                elif X.kind == "absolute":  # there can be only one
                     score = X.get_delta_value()
                     break
-                elif X.meta in ["delta", "relative"]:
+                elif X.kind in ["delta", "relative"]:
                     # handle the score=None case carefully
                     if score is None:
                         score = 0 if X.get_delta_value() > 0 else self.maxMark
@@ -466,7 +466,7 @@ class PageScene(QGraphicsScene):
                 else:  # this should not happnen if rubrics okay
                     log.error(
                         "Inconsistent rubric = rubric of unknown type = {}".format(
-                            X.meta
+                            X.kind
                         )
                     )
                     raise PlomInconsistentRubricsException
@@ -914,7 +914,7 @@ class PageScene(QGraphicsScene):
             None
         """
         # if delta not legal, then don't start
-        if not self.isLegalRubric(self.rubricMeta, self.rubricDelta):
+        if not self.isLegalRubric(self.rubricKind, self.rubricDelta):
             return
 
         # rubric flag explained
@@ -954,7 +954,7 @@ class PageScene(QGraphicsScene):
 
         pt = event.scenePos()  # grab the location of the mouse-click
 
-        if not self.isLegalRubric(self.rubricMeta, self.rubricDelta):
+        if not self.isLegalRubric(self.rubricKind, self.rubricDelta):
             # cannot paste illegal delta
             # still need to reset rubricFlag below.
             pass
@@ -963,7 +963,7 @@ class PageScene(QGraphicsScene):
                 self,
                 pt,
                 self.rubricID,
-                self.rubricMeta,
+                self.rubricKind,
                 self.rubricDelta,
                 self.rubricText,
             )
@@ -1201,7 +1201,7 @@ class PageScene(QGraphicsScene):
             # Simulate a rubric click.
             self.rubricText = e.mimeData().text()
             self.rubricDelta = "0"
-            self.rubricMeta = "neutral"
+            self.rubricKind = "neutral"
             self.mousePressRubric(e)
 
         elif e.mimeData().hasFormat(
@@ -1851,7 +1851,7 @@ class PageScene(QGraphicsScene):
                     self,
                     event.scenePos(),
                     self.rubricID,
-                    self.rubricMeta,
+                    self.rubricKind,
                     self.rubricDelta,
                     self.rubricText,
                 )
@@ -2080,7 +2080,7 @@ class PageScene(QGraphicsScene):
         """ Redoes a given action."""
         self.undoStack.redo()
 
-    def isLegalRubric(self, meta, dn):
+    def isLegalRubric(self, kind, dn):
         """
         Is this rubric-type legal, and does the delta move score  below 0 or above maxMark?
 
@@ -2092,14 +2092,14 @@ class PageScene(QGraphicsScene):
             bool: True if the delta is legal, False otherwise.
         """
         # a neutral rubric is always fine
-        if meta == "neutral":
+        if kind == "neutral":
             return True
-        elif meta == "absolute":  # can only paste neutral rubrics
+        elif kind == "absolute":  # can only paste neutral rubrics
             if self.markingState == "neutral":
                 return True
             else:
                 return False
-        # at this point we know that the meta is delta/relative
+        # at this point we know that the kind is delta/relative
         elif int(dn) > 0:  # is positive relative-rubric
             if self.markingState in ["absolute", "down"]:
                 return False
@@ -2120,11 +2120,11 @@ class PageScene(QGraphicsScene):
                 return True
         else:  # this should not happen
             log.error(
-                "Inconsistent rubric = {} {} {}".format(self.markingState, meta, dn)
+                "Inconsistent rubric = {} {} {}".format(self.markingState, kind, dn)
             )
             raise PlomInconsistentRubricsException
 
-    def changeTheRubric(self, delta, text, rubricID, rubricMeta, annotatorUpdate=True):
+    def changeTheRubric(self, delta, text, rubricID, rubricKind, annotatorUpdate=True):
         """
         Changes the new rubric for the paper based on the delta and text.
 
@@ -2148,17 +2148,17 @@ class PageScene(QGraphicsScene):
             spt = self.views()[0].mapToScene(vpt)  # mouse pos in scene
             self.ghostItem.setPos(spt)
             self.rubricDelta = delta
-            self.rubricMeta = rubricMeta
+            self.rubricKind = rubricKind
             self.setToolMode("rubric")
             self.exposeGhost()  # unhide the ghostitem
         # if we have passed ".", then we don't need to do any
         # delta calcs, the ghost item knows how to handle it.
-        legality = self.isLegalRubric(rubricMeta, delta)
+        legality = self.isLegalRubric(rubricKind, delta)
 
         self.rubricDelta = delta
         self.rubricText = text
         self.rubricID = rubricID
-        self.rubricMeta = rubricMeta
+        self.rubricKind = rubricKind
         self.updateGhost(delta, text, legality)
 
     def noAnswer(self, noAnswerCID):
