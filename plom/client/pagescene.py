@@ -913,7 +913,7 @@ class PageScene(QGraphicsScene):
         """Mouse press while holding rubric tool.
 
         Usually this creates a rubric, an object consisting of a delta
-        grade and an associated text item.  With shift modifier key, it
+        grade and an associated text item. If user drags then it
         instead starts the multi-stage creation of a box-line-rubric.
         If a box-line-rubric is in-progress, it continues to the next
         stage.
@@ -1058,16 +1058,18 @@ class PageScene(QGraphicsScene):
         return
 
     def mousePressText(self, event):
-        """
-        Create a textObject at the click's location, unless there is already a
-            textobject there.
+        """Mouse press while holding text tool.
+
+        Usually this creates a textobject, but if user drags then, it
+        instead starts the multi-stage creation of a box-line-rubric.
+        If a box-line-rubric is in-progress, it continues to the next
+        stage.
 
         Args:
             event (QMouseEvent): the given mouse click.
 
         Returns:
             None
-
         """
         # text flag explained
         # 0 = initial state - before text click-drag-release-click started
