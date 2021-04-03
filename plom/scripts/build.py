@@ -62,11 +62,6 @@ def upload_demo_rubrics(msgr, numquestions=3):
                 rub["kind"] = "relative"
             else:
                 raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
-        # TODO: I think the API should add these two if missing
-        if "meta" not in rub:
-            rub["meta"] = ""
-        if "tags" not in rub:
-            rub["tags"] = ""
         # Multiply rubrics w/o question numbers, avoids repetition in demo file
         if not hasattr(rub, "question_number"):
             for q in range(1, numquestions + 1):

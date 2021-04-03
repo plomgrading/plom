@@ -26,16 +26,25 @@ def McreateRubric(self, user_name, rubric):
         user_name (str): name of user creating the rubric element
         rubric (dict): dict containing the rubric details.
             Must contain these fields:
-            `{kind: "relative", delta: "-1", text: "blah", question: 2, tags: "blah", meta: "blah"}`
-            Currently, its ok if it contains other fields: they are ignored.
+            `{kind: "relative", delta: "-1", text: "blah", question: 2}`
+            The following fields are optional and empty strings will be
+            substituted:
+            `{tags: "blah", meta: "blah"}`
+            Currently, its ok if it contains other fields: they are
+            ignored.
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
             key for the new rubric.  Can fail if missing fields.
     """
-    need_fields = ("delta", "text", "question", "tags", "meta", "kind")
+    need_fields = ("kind", "delta", "text", "question")
+    optional_fields = ("tags", "meta")
     if any(x not in rubric for x in need_fields):
         return (False, "Must have all fields {}".format(need_field))
+    for f in optional_fields:
+        if f not in rubric:
+            rubric = rubric.copy()  # in case caller uses reference
+            rubric[f] = ""
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
         # build unique key while holding atomic access
