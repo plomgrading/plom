@@ -123,7 +123,8 @@ class RubricTable(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
-        self.verticalHeader().setVisible(True)
+        # Issue #1498: use these for shortcut key indicators
+        self.verticalHeader().setVisible(False)
         self.setShowGrid(False)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
