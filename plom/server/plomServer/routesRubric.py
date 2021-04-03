@@ -21,7 +21,7 @@ class RubricHandler:
 
         Args:
             data (dict): A dictionary including user/token and the new rubric to be created
-            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
+            request (aiohttp.web_request.Request): A request of type PUT /MK/rubric.
 
         Returns:
             aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
