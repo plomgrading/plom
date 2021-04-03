@@ -43,18 +43,17 @@ delta = "-2"
 text = "wrong angles used"
 
 [[rubric]]
-delta = "-1"
-text = "how does this follow?"
-
-[[rubric]]
 delta = "."
-text = "comment specific to Q2"
+text = "a comment specific to Q2"
 question = 2
+meta = "All rubrics are question specific."
 
 [[rubric]]
 delta = "."
 text = "another comment specific to Q2"
 question = 2
+tags = "foo"
+meta = "When the demo rubrics are loaded, most are auto-duplicated over multiple questions."
 
 # a series of rubrics all related to the chain rule
 [[rubric]]
