@@ -15,10 +15,10 @@ import json
 import os
 from pathlib import Path
 from textwrap import dedent, wrap
+import toml
 
 # import tools for dealing with resource files
 import pkg_resources
-import pandas
 
 from plom import __version__
 from plom import SpecVerifier
@@ -196,7 +196,10 @@ group.add_argument(
     "--dump",
     type=str,
     metavar="FILE",
-    help="""Dump the current rubrics from SERVER into a file "FILE.json".""",
+    help="""Dump the current rubrics from SERVER into FILE,
+        which can be a .toml, .json, or .csv
+        (TODO: .csv not yet implemented).
+        Defaults to FILE.toml if no extension specified..""",
 )
 group.add_argument(
     "rubric_file",
@@ -289,13 +292,20 @@ def main():
                 raise NotImplementedError("add pre-made demo rubrics")
             elif args.dump:
                 filename = Path(args.dump)
-                if not filename.suffix.casefold() == ".json":
-                    filename = filename.with_suffix(filename.suffix + ".json")
+                if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+                    filename = filename.with_suffix(filename.suffix + ".toml")
                 print(f'Saving server\'s current rubrics to "{filename}"')
-                rval = msgr.MgetRubrics()
-                if rval[0]:
+                _, rubrics = msgr.MgetRubrics()
+                # TODO: clean this MgetRubrics to just return the list
+                assert _
+                if filename.suffix == ".json":
                     with open(filename, "w") as f:
-                        json.dump(rval[1], f, indent="  ")
+                        json.dump(rubrics, f, indent="  ")
+                elif filename.suffix == ".toml":
+                    with open(filename, "w") as f:
+                        toml.dump({"rubric": rubrics}, f)
+                else:
+                    raise NotImplementedError(f'Don\'t know how to export to "{filename}"')
             else:
                 filename = Path(args.rubric_file)
                 if not filename.suffix.casefold() == ".json":
