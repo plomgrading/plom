@@ -371,9 +371,6 @@ class BaseMessenger:
     def MgetRubrics(self):
         """Retrieve list of all rubrics from server.
 
-        Args:
-            current_comments_list (list): A list of the comments as dictionaries.
-
         Raises:
             PlomAuthenticationException: Authentication error.
             PlomSeriousException: Other error types, possible needs fix or debugging.
