@@ -115,6 +115,7 @@ setup(
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demoUserList.csv",
+                "plom/demo_rubrics.toml",
                 "plom/scan/test_zbar_fails.png",
                 "plom/server/target_Q_latex_plom.png",
                 "plom/testTemplates/latexTemplate.tex",

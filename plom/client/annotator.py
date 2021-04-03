@@ -1817,18 +1817,8 @@ class Annotator(QWidget):
             pass
 
     def getRubrics(self):
-        """Request for a refreshed rubric list and update the current rubric box. Only get rubrics for current question."""
-        wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer(
-            self.question_num
-        )
-        assert wtf
-
-        if len(refreshed_rubrics_list) == 0:
-            ErrorMessage(
-                "Refreshing the rubrics lists did not go through successfully. Rubrics list will remain unchanged."
-            ).exec()
-            return
-        return refreshed_rubrics_list
+        """Request a latest rubric list for current question."""
+        return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
     def refreshRubrics(self):
         """ask the rubric widget to refresh rubrics"""
