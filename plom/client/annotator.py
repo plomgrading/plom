@@ -233,7 +233,7 @@ class Annotator(QWidget):
         self.update_annot_scale_menu_label()
 
         m.addAction(
-            "Decrease annotation scale\tshift-]",
+            "Decrease annotation scale\tshift-[",
             lambda: self.change_annot_scale(1.0 / 1.1),
         )
         # Issue #1350: temporarily?
