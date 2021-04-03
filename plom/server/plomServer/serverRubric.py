@@ -9,9 +9,12 @@ Rubric-related server methods.
 
 import json
 import logging
-import os
+from pathlib import Path
+
 
 log = logging.getLogger("server")
+
+rubric_cfg_dir = Path("userRubricPaneData")
 
 
 def McreateRubric(self, username, new_rubric):
@@ -47,28 +50,15 @@ def MmodifyRubric(self, username, key, updated_rubric):
 
 
 def MgetUserRubricPanes(self, username, question):
-    try:
-        paneConfigFilename = os.path.join(
-            "userRubricPaneData", "rubricPanes.{}.{}.json".format(username, question)
-        )
-        if os.path.isfile(paneConfigFilename):
-            pass
-        else:
-            return [False]
-        with open(paneConfigFilename) as infile:
-            rubricPanes = json.load(infile)
-        return [True, rubricPanes]
-    except:
+    panefile = rubric_cfg_dir / "rubricPanes.{}.{}.json".format(username, question)
+    if not panefile.exists():
         return [False]
+    with open(panefile) as f:
+        rubricPanes = json.load(f)
+    return [True, rubricPanes]
 
 
 def MsaveUserRubricPanes(self, username, question, rubricPanes):
-    try:
-        paneConfigFilename = os.path.join(
-            "userRubricPaneData", "rubricPanes.{}.{}.json".format(username, question)
-        )
-        with open(paneConfigFilename, "w") as outfile:
-            json.dump(rubricPanes, outfile)
-        return True
-    except:
-        return False
+    panefile = rubric_cfg_dir / "rubricPanes.{}.{}.json".format(username, question)
+    with open(panefile, "w") as f:
+        json.dump(rubricPanes, f)
