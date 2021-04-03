@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * The escape-key will now cancel an annotation mid-draw (box,ellipse,line,arrows,rubric)
 * Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
 * `plom-demo` now has `--port` option.
+* New `plom-build rubric` subcommand can upload/download rubric lists from the server.
 
 ### Changed
 * The left-hand-on-mouse option has been removed from annotator/marker - replaced with better key-binding options.
