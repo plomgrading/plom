@@ -982,6 +982,9 @@ class RubricWidget(QWidget):
         self.RTW.currentWidget().selectRubricByVisibleRow(rowNumber)
         self.handleClick()
 
+    def getCurrentTabName(self):
+        return self.RTW.currentWidget().shortname
+
     def nextRubric(self):
         # change rubrics in the correct tab
         if self.showHideW.currentIndex() == 0:

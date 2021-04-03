@@ -55,7 +55,7 @@ from .key_help import KeyHelp
 from .origscanviewer import OriginalScansViewer, RearrangementViewer
 from .pagescene import PageScene
 from .pageview import PageView
-from .uiFiles.ui_annotator_rhm import Ui_annotator_rhm as Ui_annotator
+from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import (
     ErrorMessage,
     SimpleMessage,
@@ -155,10 +155,9 @@ class Annotator(QWidget):
         self.view = PageView(self, self.username)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
-        # Create the comment list widget and put into gui.
+        # Create the rubric list widget and put into gui.
         self.rubric_widget = RubricWidget(self)
-        self.ui.container_commentwidget.addWidget(self.rubric_widget)
-        print("TODO rename comment stuff in qt-creator files to rubric stuff")
+        self.ui.container_rubricwidget.addWidget(self.rubric_widget, 2)
 
         # pass the marking style to the rubric-widget
         # also when we set this up we have to connect various
@@ -458,17 +457,20 @@ class Annotator(QWidget):
 
     def refreshDisplayedMark(self, score):
         """
-        Update the marklabel with the current score - triggered by pagescene
+        Update the marklabel (and narrow one) with the current score - triggered by pagescene
 
         Returns:
             None
 
         """
         self.ui.markLabel.setStyleSheet("color: #ff0000; font: bold;")
+        self.ui.narrowMarkLabel.setStyleSheet("color: #ff0000; font: bold;")
         if score is None:
             self.ui.markLabel.setText("No mark")
+            self.ui.narrowMarkLabel.setText("No mark")
         else:
             self.ui.markLabel.setText("{} out of {}".format(score, self.maxMark))
+            self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
 
     def loadCursors(self):
         """
@@ -532,43 +534,6 @@ class Annotator(QWidget):
         """
         self.ui.revealBox0.show()
         self.ui.hideableBox.hide()
-        self.ui.revealLayout.addWidget(self.ui.hamMenuButton, 0, 1, 1, 1)
-        self.ui.revealLayout.addWidget(self.ui.finishedButton, 0, 2, 1, 1)
-        # TODO: just use an icon in compact?
-        # self.ui.finishedButton.setText("N")
-        # self.ui.finishedButton.setStyleSheet("padding-left: 1px; padding-right: 1px;")
-        self.ui.finishedButton.setMaximumWidth(44)
-
-        to_reveal = [
-            [self.ui.boxButton, 4, 1],
-            [self.ui.tickButton, 4, 2],
-            [self.ui.crossButton, 5, 1],
-            [self.ui.textButton, 5, 2],
-            [self.ui.lineButton, 6, 1],
-            [self.ui.penButton, 6, 2],
-            [self.ui.deleteButton, 8, 1],
-            [self.ui.panButton, 8, 2],
-            [self.ui.undoButton, 8, 1],
-            [self.ui.redoButton, 8, 2],
-            [self.ui.zoomButton, 9, 1],
-            [self.ui.moveButton, 9, 2],
-        ]
-
-        self.ui.revealLayout.addWidget(
-            self.ui.zoomCB, 1, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        )
-        self.ui.revealLayout.addWidget(
-            self.ui.markLabel, 2, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        )
-
-        for button in to_reveal:
-            self.ui.revealLayout.addWidget(
-                button[0], button[1], button[2], Qt.AlignHCenter | Qt.AlignTop
-            )
-
-        self.ui.revealLayout.addWidget(
-            self.ui.modeLabel, 10, 1, 1, 2, Qt.AlignHCenter | Qt.AlignTop
-        )
 
     def wideLayout(self):
         """
@@ -579,71 +544,6 @@ class Annotator(QWidget):
         """
         self.ui.hideableBox.show()
         self.ui.revealBox0.hide()
-
-        def load_tools():
-            """
-            Loads tools
-
-            Args:
-                None
-
-            Returns:
-                None: adds tool widgets to self.ui.toolLayout
-            """
-            tools = [
-                [
-                    self.ui.deleteButton,
-                    self.ui.undoButton,
-                    self.ui.redoButton,
-                    self.ui.moveButton,
-                    self.ui.panButton,
-                    self.ui.zoomButton,
-                    self.ui.commentButton,
-                    self.ui.commentDownButton,
-                    self.ui.commentUpButton,
-                ],
-                [],
-                [
-                    # TODO: match the order in "next_minor_tool"
-                    self.ui.boxButton,
-                    self.ui.tickButton,
-                    self.ui.crossButton,
-                    self.ui.textButton,
-                    self.ui.lineButton,
-                    self.ui.penButton,
-                ],
-            ]
-            self.ui.commentButton.setVisible(False)
-            self.ui.commentDownButton.setVisible(False)
-            self.ui.commentUpButton.setVisible(False)
-            # self.ui.redoButton.setVisible(False)
-            row_index = 0
-            for row in tools:
-                column_index = 0
-                for tool in row:
-                    self.ui.toolLayout.addWidget(tool, row_index, column_index)
-                    column_index += 1
-                row_index += 1
-
-        # TODO: not polite to be grubbing around in parent.ui, fix with QSetting
-        if self.parentMarkerUI.ui.sidebarRightCB.isChecked():
-            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
-            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-        else:
-            self.ui.horizontalLayout.addWidget(self.ui.hideableBox)
-            self.ui.horizontalLayout.addWidget(self.ui.revealBox0)
-            self.ui.horizontalLayout.addWidget(self.ui.pageFrame)
-
-        load_tools()
-
-        self.ui.ebLayout.addWidget(self.ui.modeLabel)
-        self.ui.modeLayout.addWidget(self.ui.hamMenuButton)
-        self.ui.modeLayout.addWidget(self.ui.finishedButton)
-        self.ui.finishedButton.setMaximumWidth(16777215)  # back to default
-        self.ui.modeLayout.addWidget(self.ui.finishNoRelaunchButton)
-        self.ui.buttonsLayout.addWidget(self.ui.markLabel)
-        self.ui.buttonsLayout.addWidget(self.ui.zoomCB)
 
     def next_rubric(self):
         self.rubric_widget.nextRubric()
@@ -936,22 +836,13 @@ class Annotator(QWidget):
         Returns:
             None: Modifies self
         """
-        # A bit of a hack to take care of rubric-mode
-        if self.scene and self.scene.mode == "rubric" and newMode != "rubric":
-            # self.comment_widget.CL.setStyleSheet("")
-            print("TODO - fix up style setting in rubric widget")
         # We have to be a little careful since not all widgets get the styling in the same way.
         # If the mark-handler widget sent us here, it takes care of its own styling - so we update the little tool-tip
 
         if self.sender() in self.ui.frameTools.children():
             # tool buttons change the mode
             self.sender().setChecked(True)
-        elif self.sender() is self.rubric_widget:
-            # self.comment_widget.CL.setStyleSheet(self.currentButtonStyleOutline)
-            # self.ui.commentButton.setChecked(True)
-            pass
         else:
-            # this should also not happen - except by strange async race issues. So we don't change anything.
             pass
 
         if imagePath is not None:
@@ -961,10 +852,20 @@ class Annotator(QWidget):
         if self.scene:
             self.scene.setToolMode(newMode)
             self.view.setCursor(newCursor)
-            # set the modelabel
-            self.ui.modeLabel.setText(" {} ".format(self.scene.mode))
         # refresh everything.
         self.repaint()
+
+    def setModeLabels(self, mode):
+        if mode == "rubric":
+            self.ui.narrowModeLabel.setText(
+                " rubric \n {} ".format(self.rubric_widget.getCurrentTabName())
+            )
+            self.ui.wideModeLabel.setText(
+                " rubric {} ".format(self.rubric_widget.getCurrentTabName())
+            )
+        else:
+            self.ui.narrowModeLabel.setText(" {} ".format(mode))
+            self.ui.wideModeLabel.setText(" {} ".format(mode))
 
     def setIcon(self, toolButton, iconName, absoluteIconPath):
         """
@@ -981,7 +882,7 @@ class Annotator(QWidget):
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(iconName, iconName)))
         toolButton.setIcon(QIcon(QPixmap(absoluteIconPath)))
-        toolButton.setIconSize(QSize(40, 40))
+        # toolButton.setIconSize(QSize(40, 40))
 
     def setAllIcons(self):
         """
@@ -1004,15 +905,6 @@ class Annotator(QWidget):
 
         self.setIcon(
             self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path)
-        )
-        self.setIcon(self.ui.commentButton, "com", "{}/comment.svg".format(base_path))
-        self.setIcon(
-            self.ui.commentDownButton,
-            "com down",
-            "{}/comment_down.svg".format(base_path),
-        )
-        self.setIcon(
-            self.ui.commentUpButton, "com up", "{}/comment_up.svg".format(base_path)
         )
         self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
         self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
@@ -1332,8 +1224,8 @@ class Annotator(QWidget):
         }
         if mode == "rubric" and aux is not None:  # key and tab set as [a,b]
             self.rubric_widget.setCurrentRubricKeyAndTab(aux[0], aux[1])
-            print("TODO - this will be a bit problematic")
-            self.ui.commentButton.animateClick()
+            # simulate a click on the rubric to get everything set.
+            self.rubric_widget.handleClick()
         else:
             self.loadModes.get(mode, lambda *args: None)()
 
@@ -1386,36 +1278,31 @@ class Annotator(QWidget):
         # Pass the undo/redo button clicks on to the view
         self.ui.undoButton.clicked.connect(self.undo)
         self.ui.redoButton.clicked.connect(self.redo)
-        # TODO: messy viz hacks
-        self.ui.cancelButton.setVisible(False)
-
-        # Cancel button closes annotator(QDialog) with a 'reject' via the cleanUpCancel function
-        self.ui.cancelButton.clicked.connect(self.close)
 
         # Connect the rubric buttons to the rubric list
         # They select the item and trigger its handleClick which fires
-        # off a commentSignal which will be picked up by the annotator
-        # First up connect the comment list's signal to the annotator's
-        # handle comment function.
+        # off a rubricSignal which will be picked up by the annotator
+        # First up connect the rubric list's signal to the annotator's
+        # handle rubric function.
         self.rubric_widget.rubricSignal.connect(self.handleRubric)
-        # Now connect up the buttons
-        print("TODO - rename commentbutton to rubricbutton in uifiles.")
-        self.ui.commentButton.clicked.connect(self.rubric_widget.reselectCurrentRubric)
-        self.ui.commentButton.clicked.connect(self.rubric_widget.handleClick)
-        # the previous comment button
-        self.ui.commentUpButton.clicked.connect(self.rubric_widget.previousRubric)
-        self.ui.commentUpButton.clicked.connect(self.rubric_widget.handleClick)
-        # the next comment button
-        self.ui.commentDownButton.clicked.connect(self.rubric_widget.nextRubric)
-        self.ui.commentDownButton.clicked.connect(self.rubric_widget.handleClick)
-        # Connect up the finishing buttons
-        self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
-        self.ui.finishNoRelaunchButton.clicked.connect(self.saveAndClose)
+        # the no-answer button
         self.ui.noAnswerButton.clicked.connect(self.noAnswer)
+        # and the rearrange pages button
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
+        # Connect up the finishing functions - using a dropdown menu
+        m = QMenu()
+        m.addAction("Done", self.saveAndGetNext)
+        m.addSeparator()
+        m.addAction("Cancel", self.close)
+        self.ui.finishedButton.setMenu(m)
+        self.ui.finishedButton.setPopupMode(QToolButton.MenuButtonPopup)
+        self.ui.finishedButton.clicked.connect(self.saveAndGetNext)
+
+        # connect the "wide" button in the narrow-view
+        self.ui.wideButton.clicked.connect(self.wideLayout)
 
     def handleRubric(self, dlt_txt):
-        """Pass comment ID, delta, and text the scene.
+        """Pass rubric ID, delta, and text the scene.
 
         Args:
             dlt_txt (tuple): the delta, string of text, rubric_id, and
@@ -1919,7 +1806,7 @@ class Annotator(QWidget):
         self.scene.noAnswer(noAnswerCID)
         nabValue = NoAnswerBox().exec_()
         if nabValue == 0:
-            # equivalent to cancel - apply undo three times (to remove the noanswer lines+comment)
+            # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
             self.scene.undo()
             self.scene.undo()
             self.scene.undo()
@@ -1930,7 +1817,7 @@ class Annotator(QWidget):
             pass
 
     def getRubrics(self):
-        """Request for a refreshed comments list and update the current comments box. Only get rubrics for current question."""
+        """Request for a refreshed rubric list and update the current rubric box. Only get rubrics for current question."""
         wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer(
             self.question_num
         )
@@ -1938,7 +1825,7 @@ class Annotator(QWidget):
 
         if len(refreshed_rubrics_list) == 0:
             ErrorMessage(
-                "Refreshing the comments lists did not go through successfully. Comments list will remain unchanged."
+                "Refreshing the rubrics lists did not go through successfully. Rubrics list will remain unchanged."
             ).exec()
             return
         return refreshed_rubrics_list
