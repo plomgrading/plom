@@ -25,7 +25,10 @@ def McreateRubric(self, username, new_rubric):
         list: [True, new-key] or [False]
     """
     # check rubric sent has required fields
-    if any(X not in new_rubric for X in ["delta", "text", "question", "tags", "meta"]):
+    if any(
+        X not in new_rubric
+        for X in ("delta", "text", "question", "tags", "meta", "kind")
+    ):
         return [False]
     # else let DB create the new element and return the new key
     return self.DB.McreateRubric(username, new_rubric)
@@ -48,9 +51,8 @@ def MmodifyRubric(self, username, key, updated_rubric):
         list: [True, new-key] or [False]
     """
     # check rubric sent has required fields
-    if any(
-        X not in updated_rubric for X in ["delta", "text", "question", "tags", "meta"]
-    ):
+    # TODO: currently cannot change question
+    if any(X not in updated_rubric for X in ("delta", "text", "tags", "meta", "kind")):
         return [False, "incomplete"]
     # else let DB modify the rubric and return the key.
     return self.DB.MmodifyRubric(username, key, updated_rubric)
