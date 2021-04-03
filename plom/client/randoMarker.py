@@ -186,7 +186,7 @@ class SceneParent(QWidget):
         # needed for compat with pagescene.py
         pass
 
-    def setNarrowModeLabel(self, mode):
+    def setModeLabels(self, mode):
         # needed for compat with pagescene.py
         pass
 
