@@ -213,13 +213,26 @@ class Annotator(QWidget):
         m.addAction("Previous paper", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
-        m.addAction("Insert image", self.addImageMode)
-        m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
-        m.addSeparator()
-        m.addAction("Compact UI\thome", self.narrowLayout)
-        # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
-        # m.addAction("&Wide UI\thome", self.wideLayout)
+        subm = m.addMenu("Tools")
+        # to make these actions checkable, they need to belong to self.
+        # submg = QActionGroup(m)
+        # km.addAction(getattr(self, "kb_{}_act".format(name)))
+        # TODO: add selection indicator
+        # TDDO: and keyboard shortcuts: how to update them?
+        subm.addAction("Box", self.ui.boxButton.animateClick)
+        subm.addAction("Tick", self.ui.tickButton.animateClick)
+        subm.addAction("Cross", self.ui.crossButton.animateClick)
+        subm.addAction("Text", self.ui.textButton.animateClick)
+        subm.addAction("Line", self.ui.lineButton.animateClick)
+        subm.addAction("Pen", self.ui.penButton.animateClick)
+        subm.addSeparator()
+        subm.addAction("Insert image", self.addImageMode)
+        subm.addSeparator()
+        subm.addAction("Move", self.ui.moveButton.animateClick)
+        subm.addAction("Pan", self.ui.panButton.animateClick)
+        subm.addAction("Delete", self.ui.deleteButton.animateClick)
+        subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
         m.addAction(
             "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
@@ -242,7 +255,12 @@ class Annotator(QWidget):
         )
         m.addSeparator()
         m.addAction("Refresh rubrics", self.refreshRubrics)
+        m.addAction("Compact UI\thome", self.narrowLayout)
+        # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
+        # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
+        m.addAction("Help", lambda: None).setEnabled(False)
+        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         # key-binding submenu stuff
         km = m.addMenu("Set major keys")
         # to make these actions checkable, they need to belong to self.
@@ -269,11 +287,6 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
-        m.addSeparator()
-
-        km.addSeparator()
-        m.addAction("Help", lambda: None).setEnabled(False)
-        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         m.addAction("About Plom", lambda: None).setEnabled(False)
         return m
 
