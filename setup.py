@@ -58,7 +58,7 @@ server_install_requires = [
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",
-    "importlib_resources",  # until we drop python 3.7
+    'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
 ]
 
 # Non-Python deps for server
