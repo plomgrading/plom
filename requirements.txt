@@ -16,6 +16,7 @@ Pillow==8.2.0
 aiohttp==3.7.4.post0
 appdirs==1.4.4
 cffi==1.14.5
+importlib_resources==5.1.2
 imutils==0.5.4
 jpegtran-cffi==0.5.2
 lapsolver==1.1.0

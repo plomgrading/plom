@@ -9,14 +9,18 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPLv3"
 
 
-from importlib.resources import files
 import json
 import logging
 import os
 import re
-import sys
 import tempfile
 from textwrap import dedent
+
+try:
+    import importlib.resources as resources
+except ImportError:
+    # use backport until we drop Python 3.6
+    import importlib_resources as resources
 
 from PyQt5.QtCore import (
     Qt,
@@ -514,7 +518,7 @@ class Annotator(QWidget):
         """
         # load pixmaps for cursors and set the hotspots
         def wrap(f):
-            return str(files("plom.client.cursors") / f)
+            return str(resources.files("plom.client.cursors") / f)
 
         self.cursorBox = QCursor(QPixmap(wrap("box.png")), 4, 4)
         self.cursorEllipse = QCursor(QPixmap(wrap("ellipse.png")), 4, 4)
@@ -896,7 +900,7 @@ class Annotator(QWidget):
         Returns:
             None: alters toolButton
         """
-        absoluteIconPath = files("plom.client.icons") / iconfile
+        absoluteIconPath = resources.files("plom.client.icons") / iconfile
         absoluteIconPath = str(absoluteIconPath)  # pyqt5 limitation?
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
