@@ -25,7 +25,6 @@ a = Analysis(['plom/scripts/client.py'],
              pathex=['./'],
              binaries=[],
              datas=[],
-             hiddenimports=['pkg_resources.py2_warn'], # https://github.com/pyinstaller/pyinstaller/issues/4672
              hookspath=[],
              runtime_hooks=[],
              excludes=[],

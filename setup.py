@@ -24,13 +24,6 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
     # Defines __version__
     exec(f.read())
 
-iconList = []
-for fn in glob("plom/client/icons/*.svg"):
-    iconList.append(fn)
-cursorList = []
-for fn in glob("plom/client/cursors/*.png"):
-    cursorList.append(fn)
-
 # TODO: CI requires requirements.txt.tempminima synced with mins here:
 
 client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
@@ -122,12 +115,8 @@ setup(
                 "plom/testTemplates/latexTemplate.tex",
                 "plom/testTemplates/latexTemplatev2.tex",
                 "plom/testTemplates/idBox2.pdf",
-                "plom/client/backGrid1.svg",
-                "plom/client/backGrid2.png",
             ],
         ),
-        ("share/plom/icons", iconList),
-        ("share/plom/cursors", cursorList),
         ("share/applications", ["org.plomgrading.PlomClient.desktop"]),
         ("share/metainfo", ["org.plomgrading.PlomClient.metainfo.xml"]),
         ("share/icons/hicolor/128x128/apps/", ["org.plomgrading.PlomClient.png"]),
