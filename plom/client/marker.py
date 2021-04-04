@@ -2089,7 +2089,7 @@ class MarkerClient(QWidget):
             self.backgroundUploader.wait()
 
         # When shutting down, first alert server of any images that were
-        # not marked - using 'DNF' (did not finish). Sever will put
+        # not marked - using 'DNF' (did not finish). Server will put
         # those files back on the todo pile.
         self.DNF()
         # now save the annotator rubric tab state to server
