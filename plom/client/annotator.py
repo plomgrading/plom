@@ -8,6 +8,8 @@ __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
+
+from importlib.resources import files
 import json
 import logging
 import os
@@ -15,7 +17,6 @@ import re
 import sys
 import tempfile
 from textwrap import dedent
-import random
 
 from PyQt5.QtCore import (
     Qt,
@@ -506,43 +507,26 @@ class Annotator(QWidget):
             self.ui.narrowMarkLabel.setText("{} out of {}".format(score, self.maxMark))
 
     def loadCursors(self):
-        """
-        Loads Cursors by generating a temp folder in _MEIPASS to store cursors.
-
-        Starts by:
-            1. Reads the path to PyInstaller's temporary folder through sys._MEIPASS
-               More info at: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
-            2. uses QCursor to using step 1's path to set the cursor path,
+        """Load custom cursors and set their hotspots.
 
         Returns:
             None
         """
-
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            # a hack - fix soon.
-            base_path = os.path.join(os.path.dirname(__file__), "cursors")
-            # base_path = "./cursors"
-
         # load pixmaps for cursors and set the hotspots
-        self.cursorBox = QCursor(QPixmap("{}/box.png".format(base_path)), 4, 4)
-        self.cursorEllipse = QCursor(QPixmap("{}/ellipse.png".format(base_path)), 4, 4)
-        self.cursorCross = QCursor(QPixmap("{}/cross.png".format(base_path)), 4, 4)
-        self.cursorDelete = QCursor(QPixmap("{}/delete.png".format(base_path)), 4, 4)
-        self.cursorLine = QCursor(QPixmap("{}/line.png".format(base_path)), 4, 4)
-        self.cursorPen = QCursor(QPixmap("{}/pen.png".format(base_path)), 4, 4)
-        self.cursorTick = QCursor(QPixmap("{}/tick.png".format(base_path)), 4, 4)
-        self.cursorQMark = QCursor(
-            QPixmap("{}/question_mark.png".format(base_path)), 4, 4
-        )
-        self.cursorHighlight = QCursor(
-            QPixmap("{}/highlighter.png".format(base_path)), 4, 4
-        )
-        self.cursorArrow = QCursor(QPixmap("{}/arrow.png".format(base_path)), 4, 4)
-        self.cursorDoubleArrow = QCursor(
-            QPixmap("{}/double_arrow.png".format(base_path)), 4, 4
-        )
+        def wrap(f):
+            return str(files("plom.client.cursors") / f)
+
+        self.cursorBox = QCursor(QPixmap(wrap("box.png")), 4, 4)
+        self.cursorEllipse = QCursor(QPixmap(wrap("ellipse.png")), 4, 4)
+        self.cursorCross = QCursor(QPixmap(wrap("cross.png")), 4, 4)
+        self.cursorDelete = QCursor(QPixmap(wrap("delete.png")), 4, 4)
+        self.cursorLine = QCursor(QPixmap(wrap("line.png")), 4, 4)
+        self.cursorPen = QCursor(QPixmap(wrap("pen.png")), 4, 4)
+        self.cursorTick = QCursor(QPixmap(wrap("tick.png")), 4, 4)
+        self.cursorQMark = QCursor(QPixmap(wrap("question_mark.png")), 4, 4)
+        self.cursorHighlight = QCursor(QPixmap(wrap("highlighter.png")), 4, 4)
+        self.cursorArrow = QCursor(QPixmap(wrap("arrow.png")), 4, 4)
+        self.cursorDoubleArrow = QCursor(QPixmap(wrap("double_arrow.png")), 4, 4)
 
     def toggleTools(self):
         """
@@ -900,20 +884,22 @@ class Annotator(QWidget):
             self.ui.narrowModeLabel.setText(" {} ".format(mode))
             self.ui.wideModeLabel.setText(" {} ".format(mode))
 
-    def setIcon(self, toolButton, iconName, absoluteIconPath):
+    def setIcon(self, toolButton, name, iconfile):
         """
         Sets a name and svg icon for a given QToolButton.
 
         Args:
             toolButton (QToolButton): the ui Tool Button for a name and icon to be added to.
-            iconName (str): a name defining toolButton.
-            absoluteIconPath (str): the absolute path to the icon for toolButton.
+            name (str): a name defining toolButton.
+            iconfile (str): svg file name, must be in `plom.client.icons`
 
         Returns:
             None: alters toolButton
         """
+        absoluteIconPath = files("plom.client.icons") / iconfile
+        absoluteIconPath = str(absoluteIconPath)  # pyqt5 limitation?
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        toolButton.setToolTip("{}".format(tipText.get(iconName, iconName)))
+        toolButton.setToolTip("{}".format(tipText.get(name, name)))
         toolButton.setIcon(QIcon(QPixmap(absoluteIconPath)))
         # toolButton.setIconSize(QSize(40, 40))
 
@@ -921,35 +907,21 @@ class Annotator(QWidget):
         """
         Sets all icons for the ui Tool Buttons.
 
-        Does this by:
-            1. Reads the path to PyInstaller's temporary folder through sys._MEIPASS
-               More info at: https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
-            2. calls the setIcon method using step 1's path to set the Icon path.
-
         Returns:
             None: Modifies ui Tool Buttons.
         """
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            # a hack - fix soon.
-            base_path = os.path.join(os.path.dirname(__file__), "icons")
-            # base_path = "./icons"
-
-        self.setIcon(
-            self.ui.boxButton, "box", "{}/rectangle_highlight.svg".format(base_path)
-        )
-        self.setIcon(self.ui.crossButton, "cross", "{}/cross.svg".format(base_path))
-        self.setIcon(self.ui.deleteButton, "delete", "{}/delete.svg".format(base_path))
-        self.setIcon(self.ui.lineButton, "line", "{}/line.svg".format(base_path))
-        self.setIcon(self.ui.moveButton, "move", "{}/move.svg".format(base_path))
-        self.setIcon(self.ui.panButton, "pan", "{}/pan.svg".format(base_path))
-        self.setIcon(self.ui.penButton, "pen", "{}/pen.svg".format(base_path))
-        self.setIcon(self.ui.redoButton, "redo", "{}/redo.svg".format(base_path))
-        self.setIcon(self.ui.textButton, "text", "{}/text.svg".format(base_path))
-        self.setIcon(self.ui.tickButton, "tick", "{}/tick.svg".format(base_path))
-        self.setIcon(self.ui.undoButton, "undo", "{}/undo.svg".format(base_path))
-        self.setIcon(self.ui.zoomButton, "zoom", "{}/zoom.svg".format(base_path))
+        self.setIcon(self.ui.boxButton, "box", "rectangle_highlight.svg")
+        self.setIcon(self.ui.crossButton, "cross", "cross.svg")
+        self.setIcon(self.ui.deleteButton, "delete", "delete.svg")
+        self.setIcon(self.ui.lineButton, "line", "line.svg")
+        self.setIcon(self.ui.moveButton, "move", "move.svg")
+        self.setIcon(self.ui.panButton, "pan", "pan.svg")
+        self.setIcon(self.ui.penButton, "pen", "pen.svg")
+        self.setIcon(self.ui.redoButton, "redo", "redo.svg")
+        self.setIcon(self.ui.textButton, "text", "text.svg")
+        self.setIcon(self.ui.tickButton, "tick", "tick.svg")
+        self.setIcon(self.ui.undoButton, "undo", "undo.svg")
+        self.setIcon(self.ui.zoomButton, "zoom", "zoom.svg")
 
     @pyqtSlot()
     def saveAndGetNext(self):
