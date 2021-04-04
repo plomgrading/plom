@@ -154,7 +154,7 @@ class Annotator(QWidget):
 
         # Set up the graphicsview and graphicsscene of the group-image
         # loads in the image etc
-        self.view = PageView(self, self.username)
+        self.view = PageView(self)
         self.ui.pageFrameGrid.addWidget(self.view, 1, 1)
 
         # Create the rubric list widget and put into gui.
