@@ -13,11 +13,11 @@ import json
 import logging
 import os
 import re
+import sys
 import tempfile
 from textwrap import dedent
-import platform
 
-if platform.sys.version.split()[0]>='3.7':
+if sys.version_info >= (3, 7):
     import importlib.resources as resources
 else:
     import importlib_resources as resources
@@ -518,21 +518,23 @@ class Annotator(QWidget):
         Returns:
             None
         """
-        # load pixmaps for cursors and set the hotspots
-        def wrap(f):
-            return str(resources.files(plom.client.cursors) / f)
 
-        self.cursorBox = QCursor(QPixmap(wrap("box.png")), 4, 4)
-        self.cursorEllipse = QCursor(QPixmap(wrap("ellipse.png")), 4, 4)
-        self.cursorCross = QCursor(QPixmap(wrap("cross.png")), 4, 4)
-        self.cursorDelete = QCursor(QPixmap(wrap("delete.png")), 4, 4)
-        self.cursorLine = QCursor(QPixmap(wrap("line.png")), 4, 4)
-        self.cursorPen = QCursor(QPixmap(wrap("pen.png")), 4, 4)
-        self.cursorTick = QCursor(QPixmap(wrap("tick.png")), 4, 4)
-        self.cursorQMark = QCursor(QPixmap(wrap("question_mark.png")), 4, 4)
-        self.cursorHighlight = QCursor(QPixmap(wrap("highlighter.png")), 4, 4)
-        self.cursorArrow = QCursor(QPixmap(wrap("arrow.png")), 4, 4)
-        self.cursorDoubleArrow = QCursor(QPixmap(wrap("double_arrow.png")), 4, 4)
+        def _pixmap_from(f):
+            pm = QPixmap()
+            pm.loadFromData(resources.read_binary(plom.client.cursors, f))
+            return pm
+
+        self.cursorBox = QCursor(_pixmap_from("box.png"), 4, 4)
+        self.cursorEllipse = QCursor(_pixmap_from("ellipse.png"), 4, 4)
+        self.cursorCross = QCursor(_pixmap_from("cross.png"), 4, 4)
+        self.cursorDelete = QCursor(_pixmap_from("delete.png"), 4, 4)
+        self.cursorLine = QCursor(_pixmap_from("line.png"), 4, 4)
+        self.cursorPen = QCursor(_pixmap_from("pen.png"), 4, 4)
+        self.cursorTick = QCursor(_pixmap_from("tick.png"), 4, 4)
+        self.cursorQMark = QCursor(_pixmap_from("question_mark.png"), 4, 4)
+        self.cursorHighlight = QCursor(_pixmap_from("highlighter.png"), 4, 4)
+        self.cursorArrow = QCursor(_pixmap_from("arrow.png"), 4, 4)
+        self.cursorDoubleArrow = QCursor(_pixmap_from("double_arrow.png"), 4, 4)
 
     def toggleTools(self):
         """
@@ -897,17 +899,17 @@ class Annotator(QWidget):
         Args:
             toolButton (QToolButton): the ui Tool Button for a name and icon to be added to.
             name (str): a name defining toolButton.
-            iconfile (str): svg file name, must be in `plom.client.icons`
+            iconfile (str): filename of .svg, must be in the resource
+                `plom.client.icons`.
 
         Returns:
             None: alters toolButton
         """
-        absoluteIconPath = resources.files(plom.client.icons) / iconfile
-        log.debug("loading icon from %s", absoluteIconPath)
-        absoluteIconPath = str(absoluteIconPath)  # pyqt5 limitation?
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))
-        toolButton.setIcon(QIcon(QPixmap(absoluteIconPath)))
+        pm = QPixmap()
+        pm.loadFromData(resources.read_binary(plom.client.icons, iconfile))
+        toolButton.setIcon(QIcon(pm))
         # toolButton.setIconSize(QSize(40, 40))
 
     def setAllIcons(self):

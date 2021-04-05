@@ -7,13 +7,14 @@
 
 import logging
 from pathlib import Path
+import sys
 
-try:
+if sys.version_info >= (3, 7):
     import importlib.resources as resources
-except ImportError:
-    # use backport until we drop Python 3.6
+else:
     import importlib_resources as resources
 
+import plom
 from plom import Default_Port
 from plom.server import specdir, confdir
 
@@ -67,7 +68,7 @@ def create_server_config(dur=confdir, *, port=None):
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
-    template = resources.files('plom').joinpath("serverDetails.toml").read_text()
+    template = resources.read_text(plom, "serverDetails.toml")
     if port:
         template = template.replace(f"{Default_Port}", str(port))
     with open(sd, "w") as fh:

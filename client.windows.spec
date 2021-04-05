@@ -1,9 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import os
 from pathlib import Path
 # trickery from setup.py to define __version__ without import
-with open(os.path.join("plom", "version.py")) as f:
+with open(Path("plom") / "version.py") as f:
     exec(f.read())
 
 block_cipher = None
@@ -13,6 +12,8 @@ a = Analysis(['plom/scripts/client.py'],
              binaries=[],
              datas=[
                  (HOMEPATH + '\\PyQt5\\Qt\\bin\*', 'PyQt5\\Qt\\bin'),
+                 ('plom/client/*.svg', 'plom/client'),
+                 ('plom/client/*.png', 'plom/client'),
                  ('plom/client/icons/*.svg', 'plom/client/icons'),
                  ('plom/client/cursors/*.png', 'plom/client/cursors'),
              ],
