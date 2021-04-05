@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -10,10 +10,16 @@ import csv
 import os
 import sys
 import tempfile
+import sys
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 import pandas
 
+import plom
 from ..finish.return_tools import import_canvas_csv
 
 
@@ -326,7 +332,7 @@ def process_class_list(student_csv_file_name, demo=False):
     """
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
+        cl = resources.read_binary(plom, "demoClassList.csv")
         # this is dumb, make it work right out of the string/bytes
         with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
             with open(f.name, "wb") as fh:

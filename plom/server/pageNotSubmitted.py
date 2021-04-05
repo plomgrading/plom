@@ -1,19 +1,12 @@
-#!/usr/bin/env python3
-
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Colin B. Macdonald
+
+from pathlib import Path
 
 import fitz
-import json
-import os
-import shutil
-import shlex
-import subprocess
-import sys
-import tempfile
-from pathlib import Path
 
 from plom import specdir
 from plom.textools import buildLaTeX

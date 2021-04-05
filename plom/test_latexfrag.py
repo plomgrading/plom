@@ -14,6 +14,7 @@ from pytest import raises
 
 from PIL import Image
 
+import plom.server
 from .textools import texFragmentToPNG as processFragment
 
 # TODO: this too: pageNotSubmitted
@@ -37,7 +38,7 @@ def test_frag_broken_tex():
 
 
 def test_frag_image_size():
-    with resources.open_binary('plom.server', "target_Q_latex_plom.png") as fh:
+    with resources.open_binary(plom.server, "target_Q_latex_plom.png") as fh:
         imgt = Image.open(fh)
         imgt.load()
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
@@ -56,7 +57,7 @@ def test_frag_image_size():
 def test_frag_image():
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
         with open(target.name, "wb") as fh:
-            fh.write(resources.read_binary("plom.server", "target_Q_latex_plom.png"))
+            fh.write(resources.read_binary(plom.server, "target_Q_latex_plom.png"))
 
         frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
         assert processFragment(frag, f)

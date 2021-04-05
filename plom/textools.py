@@ -9,8 +9,14 @@ import subprocess
 import tempfile
 import shutil
 from pathlib import Path
+import sys
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
+import plom
 
 
 def texFragmentToPNG(fragment, outName, dpi=225):
@@ -78,11 +84,11 @@ def texFragmentToPNG(fragment, outName, dpi=225):
 
 
 def buildLaTeX(src, out):
-    """Compile a string or bytes of latex.
+    """Compile a string of latex.
 
     Args:
-        src (str, bytes):
-        out (file-like):
+        src (str):
+        out (file-like): the binary pdf file will be written into this.
 
     Returns:
         exit value from the subprocess call (zero good, non-zero BAD)
@@ -92,18 +98,9 @@ def buildLaTeX(src, out):
     """
 
     with tempfile.TemporaryDirectory() as tmpdir:
-
-        tmp = pkg_resources.resource_string("plom", "testTemplates/idBox2.pdf")
         with open(Path(tmpdir) / "idBox2.pdf", "wb") as fh:
-            fh.write(tmp)
-
-        # TODO: this is not very duck-type of us!
-        if isinstance(src, bytes):
-            mode = "wb"
-        else:
-            mode = "w"
-
-        with open(Path(tmpdir) / "stuff.tex", mode) as fh:
+            fh.write(resources.read_binary(plom, "idBox2.pdf"))
+        with open(Path(tmpdir) / "stuff.tex", "w") as fh:
             fh.write(src)
 
         latexIt = subprocess.run(

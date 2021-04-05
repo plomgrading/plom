@@ -112,10 +112,7 @@ setup(
                 "plom/demo_rubrics.toml",
                 "plom/scan/test_zbar_fails.png",
                 "plom/server/target_Q_latex_plom.png",
-                "plom/testTemplates/latexTemplate.tex",
-                "plom/testTemplates/latexTemplatev2.tex",
-                "plom/testTemplates/idBox2.pdf",
-                "plom/latexTemplate.tex",  # why?  doens't this put them in share?
+                "plom/latexTemplate.tex",
                 "plom/latexTemplatev2.tex",
                 "plom/idBox2.pdf",
             ],
