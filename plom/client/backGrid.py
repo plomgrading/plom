@@ -3,13 +3,17 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 from time import localtime
+import platform
+
+if platform.sys.version.split()[0]>='3.7':
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 from PyQt5.QtGui import QBrush, QPixmap
 
-try:
-    import importlib.resources as resources
-except ImportError:
-    # use backport until we drop Python 3.6
-    import importlib_resources as resources
+# TODO: does the string form work with Pyinstaller?
+# import plom.client
 
 
 class BackGrid(QBrush):

@@ -15,11 +15,11 @@ import os
 import re
 import tempfile
 from textwrap import dedent
+import platform
 
-try:
+if platform.sys.version.split()[0]>='3.7':
     import importlib.resources as resources
-except ImportError:
-    # use backport until we drop Python 3.6
+else:
     import importlib_resources as resources
 
 from PyQt5.QtCore import (
@@ -52,6 +52,8 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import __version__
+import plom.client.cursors
+import plom.client.icons
 from .rubric_list import RubricWidget
 from .key_wrangler import KeyWrangler, key_layouts
 
@@ -518,7 +520,7 @@ class Annotator(QWidget):
         """
         # load pixmaps for cursors and set the hotspots
         def wrap(f):
-            return str(resources.files("plom.client.cursors") / f)
+            return str(resources.files(plom.client.cursors) / f)
 
         self.cursorBox = QCursor(QPixmap(wrap("box.png")), 4, 4)
         self.cursorEllipse = QCursor(QPixmap(wrap("ellipse.png")), 4, 4)
@@ -900,7 +902,8 @@ class Annotator(QWidget):
         Returns:
             None: alters toolButton
         """
-        absoluteIconPath = resources.files("plom.client.icons") / iconfile
+        absoluteIconPath = resources.files(plom.client.icons) / iconfile
+        log.debug("loading icon from %s", absoluteIconPath)
         absoluteIconPath = str(absoluteIconPath)  # pyqt5 limitation?
         toolButton.setToolButtonStyle(Qt.ToolButtonIconOnly)
         toolButton.setToolTip("{}".format(tipText.get(name, name)))

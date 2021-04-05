@@ -6,25 +6,16 @@ from pathlib import Path
 with open(os.path.join("plom", "version.py")) as f:
     exec(f.read())
 
-CursorList = [x.name for x in Path("plom/client/cursors").glob("*.png")]
-# filter out some unused ones
-CursorList = [x for x in CursorList if not x.startswith("text")]
-print("** Hacky cursor list: {}".format(", ".join(CursorList)))
-
-IconList = [x.name for x in Path("plom/client/icons").glob("*.svg")]
-# filter out some unused ones
-IconList = [x for x in IconList if not x.startswith("manager")]
-IconList = [x for x in IconList if not x in ("rectangle.svg", "zoom_in.svg", "zoom_out.svg")]
-print("** Hacky icon list: {}".format(", ".join(IconList)))
-
-
 block_cipher = None
-
 
 a = Analysis(['plom/scripts/client.py'],
              pathex=['./'],
              binaries=[],
-             datas=[],
+             datas=[
+                 ('plom/client/icons/*.svg', 'plom/client/icons'),
+                 ('plom/client/cursors/*.png', 'plom/client/cursors'),
+             ],
+             hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -34,13 +25,6 @@ a = Analysis(['plom/scripts/client.py'],
              noarchive=False)
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-for icon in IconList:
-   a.datas += [(icon, 'plom/client/icons/{}'.format(icon), 'DATA')]
-
-for cursor in CursorList:
-   a.datas += [(cursor, 'plom/client/cursors/{}'.format(cursor), 'DATA')]
-
 
 exe = EXE(pyz,
           a.scripts,
