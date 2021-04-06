@@ -115,6 +115,9 @@ setup(
                 "plom/testTemplates/latexTemplate.tex",
                 "plom/testTemplates/latexTemplatev2.tex",
                 "plom/testTemplates/idBox2.pdf",
+                "plom/latexTemplate.tex",  # why?  doens't this put them in share?
+                "plom/latexTemplatev2.tex",
+                "plom/idBox2.pdf",
             ],
         ),
         ("share/applications", ["org.plomgrading.PlomClient.desktop"]),

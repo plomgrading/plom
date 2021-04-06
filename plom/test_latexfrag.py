@@ -1,9 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Colin B. Macdonald
+
 import tempfile
 import subprocess
-import pkg_resources
-from PIL import Image
-from io import BytesIO
+import sys
+
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 from pytest import raises
+
+from PIL import Image
 
 from .textools import texFragmentToPNG as processFragment
 
@@ -28,10 +37,9 @@ def test_frag_broken_tex():
 
 
 def test_frag_image_size():
-    imgt = Image.open(
-        BytesIO(pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png"))
-    )
-
+    with resources.open_binary('plom.server', "target_Q_latex_plom.png") as fh:
+        imgt = Image.open(fh)
+        imgt.load()
     frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
     assert processFragment(frag, f)
     img = Image.open(f)
@@ -48,9 +56,7 @@ def test_frag_image_size():
 def test_frag_image():
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as target:
         with open(target.name, "wb") as fh:
-            fh.write(
-                pkg_resources.resource_string("plom.server", "target_Q_latex_plom.png")
-            )
+            fh.write(resources.read_binary("plom.server", "target_Q_latex_plom.png"))
 
         frag = r"$\mathbb{Q}$ \LaTeX\ Plom"
         assert processFragment(frag, f)
