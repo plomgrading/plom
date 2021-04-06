@@ -56,7 +56,9 @@ class ScoreBox(QGraphicsTextItem):
         self.style = style
         self.setDefaultTextColor(self.style["annot_color"])
         font = QFont("Helvetica")
-        font.setPointSizeF(1.25 * fontsize)
+        # Note: PointSizeF seems effected by DPI on Windows (Issue #1071).
+        # Strangely, it seems like setPixelSize gives reliable sizes!
+        font.setPixelSize(1.25 * fontsize)
         self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -306,7 +308,6 @@ class PageScene(QGraphicsScene):
         self.undoStack = QUndoStack()
 
         # we don't want current font size from UI; use fixed physical size
-        # self.fontSize = self.font().pointSizeF()
         self.fontSize = AnnFontSizePts
         self._scale = 1.0
 
@@ -527,13 +528,13 @@ class PageScene(QGraphicsScene):
         self.fontSize = self._scale * AnnFontSizePts
         # TODO: don't like this 1.25 hardcoded
         font = QFont("Helvetica")
-        font.setPointSizeF(1.25 * self.fontSize)
+        font.setPixelSize(1.25 * self.fontSize)
         self.scoreBox.setFont(font)
         font = QFont("Helvetica")
-        font.setPointSizeF(self.fontSize)
+        font.setPixelSize(self.fontSize)
         self.ghostItem.blurb.setFont(font)
         font = QFont("Helvetica")
-        font.setPointSizeF(1.25 * self.fontSize)
+        font.setPixelSize(1.25 * self.fontSize)
         self.ghostItem.di.setFont(font)
         # TODO: position within dotted line, but breaks overall position
         # self.ghostItem.tweakPositions()
