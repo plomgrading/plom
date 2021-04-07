@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 #
 # Copying and distribution of this file, with or without modification,
@@ -43,11 +43,7 @@ RUN apt-get -y update && \
     apt-get --no-install-recommends -y install \
         `apt-cache depends qt5-default  | awk '/Depends:/{print$2}'`
 
-# TODO: I want to install Plom (from current dir) into the Docker image...
-# TODO: don't need/want /src in the docker image
-COPY setup.py README.md org.plomgrading.PlomClient.* /src/
-COPY plom/ /src/plom/
-COPY contrib/ /src/contrib/
+COPY . /src
 WORKDIR /src
 RUN python3 -m pip install .
 
