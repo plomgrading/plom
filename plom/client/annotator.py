@@ -1328,7 +1328,7 @@ class Annotator(QWidget):
 
         # load the state of the rubric list widget
         if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
-            self.rubric_widget.setRubricsFromState(
+            self.rubric_widget.setRubricTabsFromState(
                 self.parentMarkerUI.annotatorSettings["rubricWranglerState"]
             )
 
