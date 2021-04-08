@@ -1375,12 +1375,10 @@ class Annotator(QWidget):
             self.toggleTools()
 
     def saveWindowSettings(self):
-        """
-        saves current window settings
+        """Saves current window settings and other state into the parent.
 
         Returns:
             None: modifies self.parentMarkerUI and self.scene
-
         """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
         self.parentMarkerUI.annotatorSettings[
@@ -1402,12 +1400,10 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
-        # save the rubricWidgetLists
-        self.saveWranglerState(self.rubric_widget.get_tab_rubric_lists())
-
-    def saveWranglerState(self, wranglerState):
-        # save the rubricWidgetLists
-        self.parentMarkerUI.annotatorSettings["rubricWranglerState"] = wranglerState
+        # Marker will keep the tab state: which rubrics user has hidden, in tabs etc
+        self.parentMarkerUI.annotatorSettings[
+            "rubricWranglerState"
+        ] = self.rubric_widget.get_tab_rubric_lists()
 
     def saveAnnotations(self):
         """

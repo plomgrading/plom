@@ -815,8 +815,6 @@ class RubricWidget(QWidget):
             return
         else:
             self.setRubricsFromState(wr.wranglerState)
-            # ask annotator to save this stuff back to marker
-            self.parent.saveWranglerState(wr.wranglerState)
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
