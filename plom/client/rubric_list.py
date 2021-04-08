@@ -708,7 +708,7 @@ class RubricWidget(QWidget):
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.add_new_rubric)
-        self.filtB.clicked.connect(self.wrangleRubrics)
+        self.filtB.clicked.connect(self.wrangleRubricsInteractively)
         self.otherB.clicked.connect(self.refreshRubrics)
         self.hideB.clicked.connect(self.toggleShowHide)
 
@@ -799,12 +799,17 @@ class RubricWidget(QWidget):
         """Get rubrics from server and if non-trivial then repopulate"""
         new_rubrics = self.parent.getRubrics()
         if new_rubrics is not None:
+            old_rubrics = self.rubrics
             self.rubrics = new_rubrics
-            self.wrangleRubrics()
-        # do legality of deltas check
+            # update tabs based on the new rubrics
+            current_wrangler_state = self.get_tab_rubric_lists()
+            self.setRubricTabsFromState(current_wrangler_state)
+            # Popup a dialog if we have any new stuff (TODO: do we really want this?)
+            if new_rubrics != old_rubrics:
+                self.wrangleRubricsInteractively()
         self.updateLegalityOfDeltas()
 
-    def wrangleRubrics(self):
+    def wrangleRubricsInteractively(self):
         wr = RubricWrangler(
             self.rubrics,
             self.get_tab_rubric_lists(),
@@ -814,7 +819,7 @@ class RubricWidget(QWidget):
         if wr.exec_() != QDialog.Accepted:
             return
         else:
-            self.setRubricsFromState(wr.wranglerState)
+            self.setRubricTabsFromState(wr.wranglerState)
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
@@ -826,19 +831,9 @@ class RubricWidget(QWidget):
             "hidden": [],
             "tabs": [],
         }
+        self.setRubricTabsFromState(wranglerState)
 
-        for X in self.rubrics:
-            # exclude HALs system-rubrics
-            if X["username"] == "HAL":
-                continue
-            # exclude manager-delta rubrics
-            if X["username"] == "manager" and X["kind"] == "delta":
-                continue
-            wranglerState["shown"].append(X["id"])
-        # then set state from this
-        self.setRubricsFromState(wranglerState)
-
-    def setRubricsFromState(self, wranglerState):
+    def setRubricTabsFromState(self, wranglerState):
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
