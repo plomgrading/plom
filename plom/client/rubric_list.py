@@ -860,10 +860,6 @@ class RubricWidget(QWidget):
         TODO: if new Annotator, we may want to clear the tabs before
         calling this.
         """
-        # zip truncates shorter list incase of length mismatch
-        # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
-        #    tab.set_name(name)
-        ##
         # Fix for #1493 - make sure that all (non-system) rubrics appear in either shared or hidden.
         # if not explicitly hidden then append to shared.
         # ie - checking for new rubrics that are not in our list
@@ -881,7 +877,9 @@ class RubricWidget(QWidget):
                 log.info("Appending new rubric with id {}".format(rubric["id"]))
                 wranglerState["shown"].append(rubric["id"])
 
-        ##
+        # Nicer code than below but zip truncates shorter list during length mismatch
+        # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
+        #    tab.set_name(name)
         curtabs = self.user_tabs
         newnames = wranglerState["user_tab_names"]
         for n in range(max(len(curtabs), len(newnames))):
