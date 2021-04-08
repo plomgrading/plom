@@ -4,8 +4,6 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-import os
-import sys
 import logging
 
 from PyQt5.QtCore import Qt, QSize
@@ -347,20 +345,8 @@ class RearrangementViewer(QDialog):
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            # a hack - fix soon.
-            base_path = os.path.join(os.path.dirname(__file__), "icons")
-            # base_path = "./icons"
-        self.rotateB_cw = QPushButton(
-            QIcon("{}/rotate_clockwise.svg".format(base_path)), ""
-        )
-        self.rotateB_cw.setText("Rotate CW")
-        self.rotateB_ccw = QPushButton(
-            QIcon("{}/rotate_counter_clockwise.svg".format(base_path)), ""
-        )
-        self.rotateB_ccw.setText("Rotate CCW")
+        self.rotateB_cw = QPushButton("\N{Clockwise Open Circle Arrow} Rotate CW")
+        self.rotateB_ccw = QPushButton("\N{Anticlockwise Open Circle Arrow} Rotate CCW")
 
         self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")
