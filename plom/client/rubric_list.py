@@ -825,27 +825,21 @@ class RubricWidget(QWidget):
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
-
         self.rubrics = self.parent.getRubrics()
-        wranglerState = {
-            "user_tab_names": [],
-            "shown": [],
-            "hidden": [],
-            "tabs": [],
-        }
-        self.setRubricTabsFromState(wranglerState)
+        self.setRubricTabsFromState()
 
-    def setRubricTabsFromState(self, wranglerState):
+    def setRubricTabsFromState(self, wranglerState=None):
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
         The rubrics themselves are uneffected.
 
         args:
-            wranglerState (dict): a representation of the state of the
-                user's tabs.  This could be from a previous session or
-                it could be "stale" in the sense that new rubrics have
-                arrived or some have been deleted.
+            wranglerState (dict/None): a representation of the state of
+                the user's tabs.  This could be from a previous session
+                or it could be "stale" in the sense that new rubrics
+                have arrived or some have been deleted.  Can be None
+                meaning no state.
                 The contents should be documented elsewhere and
                 linked here but must contain at least `shown`, `hidden`,
                 `tabs`, and `user_tab_names`.  The last two may be empty
@@ -855,10 +849,15 @@ class RubricWidget(QWidget):
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
-
-        TODO: if new Annotator, we may want to clear the tabs before
-        calling this.
         """
+        if not wranglerState:
+            wranglerState = {
+                "user_tab_names": [],
+                "shown": [],
+                "hidden": [],
+                "tabs": [],
+            }
+
         # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
         for rubric in self.rubrics:
             # don't add HAL system rubrics
