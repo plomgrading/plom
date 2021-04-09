@@ -1757,6 +1757,11 @@ class MarkerClient(QWidget):
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
 
+    def saveTabStateToServer(self, tab_state):
+        """Upload a tab state to the server."""
+        log.info("Saving user's rubric tab configuration to server")
+        self.msgr.MsaveUserRubricTabs(self.question, tab_state)
+
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
@@ -2093,11 +2098,7 @@ class MarkerClient(QWidget):
         # those files back on the todo pile.
         self.DNF()
         # now save the annotator rubric tab state to server
-
-        log.info("Saving user's rubric tab configuration to server")
-        self.msgr.MsaveUserRubricTabs(
-            self.question, self.annotatorSettings["rubricTabState"]
-        )
+        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
 
         # Then send a 'user closing' message - server will revoke
         # authentication token.

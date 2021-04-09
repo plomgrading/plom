@@ -8,6 +8,7 @@
 
 import logging
 from pathlib import Path
+from textwrap import shorten
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import (
@@ -797,18 +798,40 @@ class RubricWidget(QWidget):
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
+        old_rubrics = self.rubrics
         new_rubrics = self.parent.getRubricsFromServer()
+        # TODO: check does it actually return None?  Seems like no...
         if new_rubrics is not None:
-            old_rubrics = self.rubrics
             self.rubrics = new_rubrics
-            # update tabs based on the new rubrics
-            current_wrangler_state = self.get_tab_rubric_lists()
-            self.setRubricTabsFromState(current_wrangler_state)
-            # Popup a dialog if we have any new stuff (TODO: do we really want this?)
-            if new_rubrics != old_rubrics:
-                self.wrangleRubricsInteractively()
-            else:
-                ErrorMessage("No new rubrics available").exec_()
+            self.setRubricTabsFromState(self.get_tab_rubric_lists())
+        self.parent.saveTabStateToServer(self.get_tab_rubric_lists())
+        msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>"
+        diff = set(d["id"] for d in new_rubrics) - set(d["id"] for d in old_rubrics)
+        if not diff:
+            msg += "<p>\N{Check Mark} <em>No new rubrics</em> are available from the server.</p>"
+        else:
+            diff = [r for r in new_rubrics for i in diff if r["id"] == i]
+            # TODO take first few and last
+            ell = "\N{HORIZONTAL ELLIPSIS}"
+            abbrev2 = "\n".join(
+                f"""
+                <li><tt>{r['delta']:3}</tt> "{shorten(r['text'], 24, placeholder=ell)}" by {r['username']}</li>
+                """
+                for r in diff
+            )
+
+            msg += f"""
+                <p>\N{Check Mark} <em>{len(diff)} new rubrics</em> have been downloaded from the server:</p>
+                <hr/>
+                <ul style="list-style-type:none;">
+                {abbrev2}
+                </ul>
+            """
+        # TODO add title "Finished syncing rubrics", use QMessageBox directly as semantics wrong here
+        ErrorMessage(msg).exec_()
+        # TODO: could add a "Open Rubric Wrangler" button to above dialog?
+        # self.wrangleRubricsInteractively()
+        # TODO: if adding that, it should push tabs *again* on accept but not on cancel
         self.updateLegalityOfDeltas()
 
     def wrangleRubricsInteractively(self):
