@@ -46,6 +46,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
 )
 
+from plom import __version__
 from .rubric_list import RubricWidget
 from .key_wrangler import KeyWrangler, key_layouts
 
@@ -198,6 +199,26 @@ class Annotator(QWidget):
         self.keyBindings = None
         self.setMiscShortCuts()
 
+    def show_about_dialog(self):
+        QMessageBox.about(
+            self,
+            "Plom Client",
+            dedent(
+                f"""
+                <p>Plom Client {__version__}</p>
+
+                <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
+
+                <p>Copyright &copy; 2018-2021 Andrew Rechnitzer,
+                Colin B. Macdonald, and other contributors.</p>
+
+                <p>Plom is Free Software, available under the GNU Affero
+                General Public License version 3, or at your option, any
+                later version.</p>
+                """
+            ),
+        )
+
     def getScore(self):
         return self.scene.getScore()
 
@@ -287,7 +308,7 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
-        m.addAction("About Plom", lambda: None).setEnabled(False)
+        m.addAction("About Plom", self.show_about_dialog)
         return m
 
     def closeCurrentTGV(self):
