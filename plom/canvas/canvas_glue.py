@@ -5,6 +5,8 @@
 """Get information from all the canvas courses and such
 """
 
+from copy import deepcopy
+
 import canvasapi as capi
 
 # Extend the CurrentUser class to add some helpful methods, e.g. one
@@ -15,13 +17,17 @@ class User(capi.current_user.CurrentUser):
         # Ensure that we got the right thing passed in
         assert isinstance(capi_user, capi.current_user.CurrentUser)
 
-        # capi_user.__init__(self)
+        # Keep a copy of the underlying user object
+        self.underlying = capi_user
 
-        self.canvas = capi_user
         return
 
-    def get_courses(self):
-        return self.canvas.get_courses()
+    def __getattr__(self, attr):
+        """
+        Silently pull attributes from the `capi_user` object we're
+        extending here.
+        """
+        return getattr(self.underlying, attr)
 
     def get_courses_teaching(self):
         """
@@ -31,7 +37,7 @@ class User(capi.current_user.CurrentUser):
         for course in list(self.get_courses()):
             try:
                 for enrollee in course.enrollments:  # Necessary?
-                    if (enrollee["user_id"] == self.canvas.id) and (
+                    if (enrollee["user_id"] == self.id) and (
                         enrollee["type"] in ["teacher", "ta"]
                     ):
                         teaching += [course]
@@ -51,6 +57,7 @@ class User(capi.current_user.CurrentUser):
         self.teaching = teaching
         return teaching
 
+
 # Extend the course.Course class to add some helpful methods, e.g. one
 # to fetch all students in the course
 class Course(capi.course.Course):
@@ -59,19 +66,32 @@ class Course(capi.course.Course):
         # Ensure that we got the right thing passed in
         assert isinstance(capi_course, capi.course.Course)
 
+        # Keep a copy of the original course
+        self.underlying = capi_course
+
+        self.populate_class_info()
         return
+
+    def __getattr__(self, attr):
+        """
+        Silently pull attributes from the `capi_course` object we're
+        extending here.
+        """
+        return getattr(self.underlying, attr)
+
+    def __repr__(self):
+        str_rep = f"Course(name={self.course_code})"
+        return str_rep
 
     def get_students(self):
         """
         Get a list of the students in the class
         """
-        students = [
-            _ for _ in course.get_enrollments() if _.role == "StudentEnrollment"
-        ]
+        students = [_ for _ in self.get_enrollments() if _.role == "StudentEnrollment"]
         self.students = students
         return students
 
-    def get_classlist_csv(self):
+    def populate_class_info(self):
         """
         Plom needs a csv with the classlist data
         """
@@ -91,6 +111,10 @@ class Course(capi.course.Course):
                 "Student Number",
             )
         ]
+
+        by_name = {}
+        by_stud_id = {}
+        by_sis_id = {}
 
         for stud in students:
             try:
@@ -114,11 +138,19 @@ class Course(capi.course.Course):
                     )
                 ]
 
+                by_name[stud_name] = stud
+                by_stud_id[stud_id] = stud
+                by_sis_id[stud_sis_id] = stud
+
             except AttributeError:
                 assert stud.user["name"] == "Test Student"
 
-        self.classlist_csv = classlist
-        return classlist
+        self._classlist_csv = classlist
+        self._by_name = by_name
+        self._by_stud_id = by_stud_id
+        self._by_sis_id = by_sis_id
+
+        return
 
 
 def login(API_URL, API_KEY):
@@ -150,3 +182,6 @@ def test_login():
 
 if __name__ == "__main__":
     user = test_login()
+    user.get_courses_teaching()
+    m340 = user.teaching[-3]
+    m340C = Course(m340)
