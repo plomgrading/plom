@@ -842,7 +842,11 @@ class RubricWidget(QWidget):
         The rubrics themselves are uneffected.
 
         args:
-            wranglerState (dict): should be documented elsewhere and
+            wranglerState (dict): a representation of the state of the
+                user's tabs.  This could be from a previous session or
+                it could be "stale" in the sense that new rubrics have
+                arrived or some have been deleted.
+                The contents should be documented elsewhere and
                 linked here but must contain at least `shown`, `hidden`,
                 `tabs`, and `user_tab_names`.  The last two may be empty
                 lists.  Subject to change without notice, your milleage
@@ -855,14 +859,12 @@ class RubricWidget(QWidget):
         TODO: if new Annotator, we may want to clear the tabs before
         calling this.
         """
-        # Fix for #1493 - make sure that all (non-system) rubrics appear in either shared or hidden.
-        # if not explicitly hidden then append to shared.
-        # ie - checking for new rubrics that are not in our list
+        # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
         for rubric in self.rubrics:
             # don't add HAL system rubrics
             if rubric["username"] == "HAL":
                 continue
-            # exclude manager-delta rubrics
+            # exclude manager-delta rubrics, see also Issue #1494
             if rubric["username"] == "manager" and rubric["kind"] == "delta":
                 continue
             if (
