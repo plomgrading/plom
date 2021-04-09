@@ -656,13 +656,14 @@ class RubricTable(QTableWidget):
 
 
 class RubricWidget(QWidget):
+    """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
+
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
 
     def __init__(self, parent):
-        # layout the widget - a table and add/delete buttons.
-        super(RubricWidget, self).__init__()
+        super().__init__()
         self.test_name = None
         self.question_number = None
         self.tgv = None
