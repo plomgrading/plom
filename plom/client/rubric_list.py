@@ -849,6 +849,11 @@ class RubricWidget(QWidget):
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
+
+        TODO: if new Annotator, we may want to clear the tabs before
+        calling this.  For example, user has one tab saved but new
+        Annotator starts with two by default: see Issue #1506 and the
+        `if not None` code in Annotator.
         """
         if not wranglerState:
             wranglerState = {
