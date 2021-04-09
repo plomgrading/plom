@@ -1327,9 +1327,9 @@ class Annotator(QWidget):
             self.showMaximized()
 
         # load the state of the rubric list widget
-        if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
+        if self.parentMarkerUI.annotatorSettings["rubricTabState"] is not None:
             self.rubric_widget.setRubricTabsFromState(
-                self.parentMarkerUI.annotatorSettings["rubricWranglerState"]
+                self.parentMarkerUI.annotatorSettings["rubricTabState"]
             )
 
         # remember the "do not show again" checks
@@ -1402,7 +1402,7 @@ class Annotator(QWidget):
 
         # Marker will keep the tab state: which rubrics user has hidden, in tabs etc
         self.parentMarkerUI.annotatorSettings[
-            "rubricWranglerState"
+            "rubricTabState"
         ] = self.rubric_widget.get_tab_rubric_lists()
 
     def saveAnnotations(self):
