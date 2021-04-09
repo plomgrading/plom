@@ -874,6 +874,9 @@ class RubricWidget(QWidget):
                 log.info("Appending new rubric with id {}".format(rubric["id"]))
                 wranglerState["shown"].append(rubric["id"])
 
+        # TODO: if we later deleting rubrics, this will need to deal with rubrics that
+        # have disappeared from self.rubrics but still appear in some tab
+
         # Nicer code than below but zip truncates shorter list during length mismatch
         # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
         #    tab.set_name(name)
