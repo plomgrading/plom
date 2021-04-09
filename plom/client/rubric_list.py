@@ -797,7 +797,7 @@ class RubricWidget(QWidget):
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
-        new_rubrics = self.parent.getRubrics()
+        new_rubrics = self.parent.getRubricsFromServer()
         if new_rubrics is not None:
             old_rubrics = self.rubrics
             self.rubrics = new_rubrics
@@ -825,7 +825,7 @@ class RubricWidget(QWidget):
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
-        self.rubrics = self.parent.getRubrics()
+        self.rubrics = self.parent.getRubricsFromServer()
         self.setRubricTabsFromState()
 
     def setRubricTabsFromState(self, wranglerState=None):
