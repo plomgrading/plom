@@ -807,6 +807,8 @@ class RubricWidget(QWidget):
             # Popup a dialog if we have any new stuff (TODO: do we really want this?)
             if new_rubrics != old_rubrics:
                 self.wrangleRubricsInteractively()
+            else:
+                ErrorMessage("No new rubrics available").exec_()
         self.updateLegalityOfDeltas()
 
     def wrangleRubricsInteractively(self):
