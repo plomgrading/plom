@@ -6,9 +6,10 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
+import html
 import logging
 from pathlib import Path
-from textwrap import shorten
+from textwrap import shorten, dedent
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import (
@@ -805,28 +806,37 @@ class RubricWidget(QWidget):
             self.rubrics = new_rubrics
             self.setRubricTabsFromState(self.get_tab_rubric_lists())
         self.parent.saveTabStateToServer(self.get_tab_rubric_lists())
-        msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>"
+        msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
         diff = set(d["id"] for d in new_rubrics) - set(d["id"] for d in old_rubrics)
         if not diff:
-            msg += "<p>\N{Check Mark} <em>No new rubrics</em> are available from the server.</p>"
+            msg += "<p>\N{Check Mark} No new rubrics are available.</p>\n"
         else:
+            msg += f"<p>\N{Check Mark} <b>{len(diff)} new rubrics</b> have been downloaded from the server:</p>\n"
             diff = [r for r in new_rubrics for i in diff if r["id"] == i]
-            # TODO take first few and last
             ell = "\N{HORIZONTAL ELLIPSIS}"
-            abbrev2 = "\n".join(
-                f"""
-                <li><tt>{r['delta']:3}</tt> "{shorten(r['text'], 24, placeholder=ell)}" by {r['username']}</li>
+            abbrev = []
+            at_most = 12
+            for n, r in enumerate(diff):
+                delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
+                text = html.escape(shorten(r["text"], 40, placeholder=ell))
+                render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
+                if n < (at_most - 1):
+                    abbrev.append(render)
+                elif n == (at_most - 1) and len(diff) == at_most:
+                    # print the last one if it fits...
+                    abbrev.append(render)
+                elif n == (at_most - 1):
+                    # otherwise ellipsize the remainder
+                    abbrev.append("<li>" + "&nbsp;" * 6 + "\N{VERTICAL ELLIPSIS}</li>")
+                    break
+            msg += dedent(
                 """
-                for r in diff
-            )
-
-            msg += f"""
-                <p>\N{Check Mark} <em>{len(diff)} new rubrics</em> have been downloaded from the server:</p>
-                <hr/>
                 <ul style="list-style-type:none;">
-                {abbrev2}
+                {}
                 </ul>
-            """
+                """
+            ).format("\n".join(abbrev))
+            print(msg)
         # TODO add title "Finished syncing rubrics", use QMessageBox directly as semantics wrong here
         ErrorMessage(msg).exec_()
         # TODO: could add a "Open Rubric Wrangler" button to above dialog?
