@@ -1464,7 +1464,7 @@ class Annotator(QWidget):
                 self.rubricWarn = False
 
         self.scene.save()
-        rubrics = self.scene.getRubrics()
+        rubrics = self.scene.get_rubrics_from_page()
         self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
@@ -1812,7 +1812,7 @@ class Annotator(QWidget):
         else:
             pass
 
-    def getRubrics(self):
+    def getRubricsFromServer(self):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
