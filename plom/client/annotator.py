@@ -46,6 +46,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
 )
 
+from plom import __version__
 from .rubric_list import RubricWidget
 from .key_wrangler import KeyWrangler, key_layouts
 
@@ -198,6 +199,26 @@ class Annotator(QWidget):
         self.keyBindings = None
         self.setMiscShortCuts()
 
+    def show_about_dialog(self):
+        QMessageBox.about(
+            self,
+            "Plom Client",
+            dedent(
+                f"""
+                <p>Plom Client {__version__}</p>
+
+                <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
+
+                <p>Copyright &copy; 2018-2021 Andrew Rechnitzer,
+                Colin B. Macdonald, and other contributors.</p>
+
+                <p>Plom is Free Software, available under the GNU Affero
+                General Public License version 3, or at your option, any
+                later version.</p>
+                """
+            ),
+        )
+
     def getScore(self):
         return self.scene.getScore()
 
@@ -210,14 +231,29 @@ class Annotator(QWidget):
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
+        m.addAction("Previous paper", lambda: None).setEnabled(False)
+        m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
-        m.addAction("Insert image", self.addImageMode)
-        m.addSeparator()
-        m.addAction("View whole paper", self.viewWholePaper)
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
-        m.addSeparator()
-        m.addAction("Compact UI\thome", self.narrowLayout)
-        m.addAction("&Wide UI\thome", self.wideLayout)
+        subm = m.addMenu("Tools")
+        # to make these actions checkable, they need to belong to self.
+        # submg = QActionGroup(m)
+        # km.addAction(getattr(self, "kb_{}_act".format(name)))
+        # TODO: add selection indicator
+        # TDDO: and keyboard shortcuts: how to update them?
+        subm.addAction("Box", self.ui.boxButton.animateClick)
+        subm.addAction("Tick", self.ui.tickButton.animateClick)
+        subm.addAction("Cross", self.ui.crossButton.animateClick)
+        subm.addAction("Text", self.ui.textButton.animateClick)
+        subm.addAction("Line", self.ui.lineButton.animateClick)
+        subm.addAction("Pen", self.ui.penButton.animateClick)
+        subm.addSeparator()
+        subm.addAction("Insert image", self.addImageMode)
+        subm.addSeparator()
+        subm.addAction("Move", self.ui.moveButton.animateClick)
+        subm.addAction("Pan", self.ui.panButton.animateClick)
+        subm.addAction("Delete", self.ui.deleteButton.animateClick)
+        subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
         m.addAction(
             "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
@@ -230,7 +266,7 @@ class Annotator(QWidget):
         self.update_annot_scale_menu_label()
 
         m.addAction(
-            "Decrease annotation scale\tshift-]",
+            "Decrease annotation scale\tshift-[",
             lambda: self.change_annot_scale(1.0 / 1.1),
         )
         # Issue #1350: temporarily?
@@ -240,7 +276,12 @@ class Annotator(QWidget):
         )
         m.addSeparator()
         m.addAction("Refresh rubrics", self.refreshRubrics)
+        m.addAction("Compact UI\thome", self.narrowLayout)
+        # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
+        # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
+        m.addAction("Help", lambda: None).setEnabled(False)
+        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         # key-binding submenu stuff
         km = m.addMenu("Set major keys")
         # to make these actions checkable, they need to belong to self.
@@ -267,14 +308,7 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
-        m.addSeparator()
-
-        km.addSeparator()
-        m.addAction("Help", lambda: None).setEnabled(False)
-        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        m.addAction("About Plom", lambda: None).setEnabled(False)
-        m.addSeparator()
-        m.addAction("Close without saving\tctrl-c", self.close)
+        m.addAction("About Plom", self.show_about_dialog)
         return m
 
     def closeCurrentTGV(self):
