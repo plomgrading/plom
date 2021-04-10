@@ -818,12 +818,12 @@ class RubricWidget(QWidget):
             at_most = 12
             for n, r in enumerate(diff):
                 delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
-                text = html.escape(shorten(r["text"], 40, placeholder=ell))
+                text = html.escape(shorten(r["text"], 36, placeholder=ell))
                 render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
                 if n < (at_most - 1):
                     abbrev.append(render)
                 elif n == (at_most - 1) and len(diff) == at_most:
-                    # print the last one if it fits...
+                    # include the last one if it fits...
                     abbrev.append(render)
                 elif n == (at_most - 1):
                     # otherwise ellipsize the remainder
@@ -836,9 +836,13 @@ class RubricWidget(QWidget):
                 </ul>
                 """
             ).format("\n".join(abbrev))
-            print(msg)
-        # TODO add title "Finished syncing rubrics", use QMessageBox directly as semantics wrong here
-        ErrorMessage(msg).exec_()
+        QMessageBox(
+            QMessageBox.Information,
+            "Finished syncing rubrics",
+            msg,
+            QMessageBox.Ok,
+            self,
+        ).exec_()
         # TODO: could add a "Open Rubric Wrangler" button to above dialog?
         # self.wrangleRubricsInteractively()
         # TODO: if adding that, it should push tabs *again* on accept but not on cancel
@@ -1274,7 +1278,6 @@ class AddRubricBox(QDialog):
         )
         sizePolicy.setVerticalStretch(3)
 
-        print(self.size())
         ##
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
