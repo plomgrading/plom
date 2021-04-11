@@ -9,7 +9,7 @@
 import html
 import logging
 from pathlib import Path
-from textwrap import shorten, dedent
+from textwrap import shorten
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import (
@@ -829,13 +829,9 @@ class RubricWidget(QWidget):
                     # otherwise ellipsize the remainder
                     abbrev.append("<li>" + "&nbsp;" * 6 + "\N{VERTICAL ELLIPSIS}</li>")
                     break
-            msg += dedent(
-                """
-                <ul style="list-style-type:none;">
-                {}
-                </ul>
-                """
-            ).format("\n".join(abbrev))
+            msg += '<ul style="list-style-type:none;">\n  {}\n</ul>'.format(
+                "\n  ".join(abbrev)
+            )
         QMessageBox(
             QMessageBox.Information,
             "Finished syncing rubrics",
