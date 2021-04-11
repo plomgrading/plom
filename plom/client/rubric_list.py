@@ -656,21 +656,22 @@ class RubricTable(QTableWidget):
 
 
 class RubricWidget(QWidget):
+    """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
+
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
 
     def __init__(self, parent):
-        # layout the widget - a table and add/delete buttons.
-        super(RubricWidget, self).__init__()
-        self.test_name = None
+        super().__init__()
         self.question_number = None
-        self.tgv = None
         self.parent = parent
         self.username = parent.username
+        self.rubrics = []
         self.maxMark = None
         self.currentScore = None
-        self.rubrics = None
+        self.currentState = None
+        self.mss = [self.maxMark, self.currentState, self.currentScore]
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -963,13 +964,9 @@ class RubricWidget(QWidget):
         """
         self.question_number = qn
 
-    def setTestName(self, tn):
-        self.test_name = tn
-
     def reset(self):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
-        self.setTestName(None)
         log.debug("TODO - what else needs doing on reset")
 
     def changeMark(self, currentScore, currentState, maxMark=None):
