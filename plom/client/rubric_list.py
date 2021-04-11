@@ -801,19 +801,16 @@ class RubricWidget(QWidget):
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
         old_rubrics = self.rubrics
-        new_rubrics = self.parent.getRubricsFromServer()
-        # TODO: check does it actually return None?  Seems like no...
-        if new_rubrics is not None:
-            self.rubrics = new_rubrics
-            self.setRubricTabsFromState(self.get_tab_rubric_lists())
+        self.rubrics = self.parent.getRubricsFromServer()
+        self.setRubricTabsFromState(self.get_tab_rubric_lists())
         self.parent.saveTabStateToServer(self.get_tab_rubric_lists())
         msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
-        diff = set(d["id"] for d in new_rubrics) - set(d["id"] for d in old_rubrics)
+        diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
         if not diff:
             msg += "<p>\N{Check Mark} No new rubrics are available.</p>\n"
         else:
             msg += f"<p>\N{Check Mark} <b>{len(diff)} new rubrics</b> have been downloaded from the server:</p>\n"
-            diff = [r for r in new_rubrics for i in diff if r["id"] == i]
+            diff = [r for r in self.rubrics for i in diff if r["id"] == i]
             ell = "\N{HORIZONTAL ELLIPSIS}"
             abbrev = []
             at_most = 12
