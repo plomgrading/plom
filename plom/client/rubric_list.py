@@ -702,6 +702,7 @@ class RubricWidget(QWidget):
         self.hideB = QPushButton("Shown/Hidden")
         self.otherB = QToolButton()
         self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
+        self.otherB.setToolTip("Refresh rubrics")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
