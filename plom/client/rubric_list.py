@@ -667,9 +667,11 @@ class RubricWidget(QWidget):
         self.question_number = None
         self.parent = parent
         self.username = parent.username
+        self.rubrics = None
         self.maxMark = None
         self.currentScore = None
-        self.rubrics = None
+        self.currentState = None
+        self.mss = [self.maxMark, self.currentState, self.currentScore]
 
         grid = QGridLayout()
         # assume our container will deal with margins
