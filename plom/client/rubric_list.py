@@ -667,7 +667,7 @@ class RubricWidget(QWidget):
         self.question_number = None
         self.parent = parent
         self.username = parent.username
-        self.rubrics = None
+        self.rubrics = []
         self.maxMark = None
         self.currentScore = None
         self.currentState = None
