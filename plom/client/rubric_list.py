@@ -221,11 +221,17 @@ class RubricTable(QTableWidget):
 
             return foo
 
+        def func_factory_edit(t, k):
+            def foo():
+                t.parent.edit_rubric(k)
+
+            return foo
+
         menu = QMenu(self)
         if key:
-            edit = QAction("Edit rubric", self)
-            edit.setEnabled(False)  # TODO hook it up
-            menu.addAction(edit)
+            a = QAction("Edit rubric", self)
+            a.triggered.connect(func_factory_edit(self, key))
+            menu.addAction(a)
             menu.addSeparator()
 
             for tab in self.parent.user_tabs:
@@ -280,24 +286,30 @@ class RubricTable(QTableWidget):
         key = None if row is None else self.getKeyFromRow(row)
 
         # workaround for Issue #1441, lambdas in a loop
-        def function_factory(t, k):
+        def func_factory_add(t, k):
             def foo():
                 t.appendByKey(k)
 
             return foo
 
+        def func_factory_edit(t, k):
+            def foo():
+                t.parent.edit_rubric(k)
+
+            return foo
+
         menu = QMenu(self)
         if key:
-            edit = QAction("Edit rubric", self)
-            edit.setEnabled(False)  # TODO hook it up
-            menu.addAction(edit)
+            a = QAction("Edit rubric", self)
+            a.triggered.connect(func_factory_edit(self, key))
+            menu.addAction(a)
             menu.addSeparator()
 
             # TODO: walk in another order for moveable tabs?
             # [self.parent.RTW.widget(n) for n in range(1, 5)]
             for tab in self.parent.user_tabs:
                 a = QAction(f"Add to tab {tab.shortname}", self)
-                a.triggered.connect(function_factory(tab, key))
+                a.triggered.connect(func_factory_add(tab, key))
                 menu.addAction(a)
             menu.addSeparator()
 
