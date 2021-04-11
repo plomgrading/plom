@@ -390,7 +390,6 @@ class Annotator(QWidget):
             self.getScore(), self.getMarkingState(), self.maxMark
         )
         self.rubric_widget.setQuestionNumber(self.question_num)
-        self.rubric_widget.setTestName(testName)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.

@@ -664,9 +664,7 @@ class RubricWidget(QWidget):
 
     def __init__(self, parent):
         super().__init__()
-        self.test_name = None
         self.question_number = None
-        self.tgv = None
         self.parent = parent
         self.username = parent.username
         self.maxMark = None
@@ -964,13 +962,9 @@ class RubricWidget(QWidget):
         """
         self.question_number = qn
 
-    def setTestName(self, tn):
-        self.test_name = tn
-
     def reset(self):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
-        self.setTestName(None)
         log.debug("TODO - what else needs doing on reset")
 
     def changeMark(self, currentScore, currentState, maxMark=None):
