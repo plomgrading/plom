@@ -44,6 +44,8 @@ def local_login(API_URL="https://canvas.ubc.ca"):
     return user
 
 
+# TODO: put an `allow other` choice in here to allow the user to
+# supply a custom option.
 def select_from_list(
     options,
     things_choosing="choice",
@@ -51,6 +53,7 @@ def select_from_list(
     request_confirmation=True,
     sep_char="-",
     max_display_cols=70,
+    allow_custom=False,
 ):
     """
     A really simple command line interface for choosing inputs
@@ -77,6 +80,11 @@ def select_from_list(
                   ("[<n>]: <thing>")
 
         max_display_cols: The rightmost limit for the separation bar
+
+        allow_custom: Whether to allow a free-form custom response.
+                      Defaults to False, naturally, but can be useful
+                      to include e.g. when selecting plom server
+                      directories.
     """
 
     ### First, we construct the text menu for the user in three parts.
@@ -90,52 +98,113 @@ def select_from_list(
         [f"{indentation*' '}{i}: {option}" for (i, option) in enumerate(options)]
     )
 
+    if allow_custom:
+        # candidate_list += f"\n{indentation*' '}{((max_display_cols-indentation)*'·')}"
+        candidate_list += f"\n{indentation*' '}{-1}: <CUSTOM>"
+
+    # For printing AFTER we get the user's input.
+    footer = f"\n{max_display_cols*'='}\n\n"
+
     # Print the combined menu thingy.
     print(f"{header}\n{separator}\n{candidate_list}")
 
-    # Thing that separates this list from later inputs
-    footer = f"\n{max_display_cols*'='}\n\n"
+    choice = get_choice_with_validation(
+        options, indentation, request_confirmation, separator, allow_custom
+    )
 
-    ### Enter loop until we can verify that the user presented a valid
-    ### input & that .
-    max_n = len(options) - 1
-    if max_n < 0:
-        print("Course has no assignments to mark.")
+    print(footer)
+
+    return choice
+
+
+def ask_for_confirmation(indentation, choice_index, choice):
+    """
+    Simple helper function for...requesting confirmation in dialogues
+    with the user.
+
+    args:
+        indentation: int, number of columns to indent the things
+                     printed
+
+        choice_index: int giving the index of the selected option in
+                      the list of options presented to the user. Can
+                      be -1 if the user opted for custom input (when
+                      available)
+
+        choice: The choice_index that the user selected, corresponding
+                to `options[choice_index]` in the calling function
+                (unless the user gave a custom input)
+    """
+    if choice_index == -1:  # Customized answer
+        print(f"{indentation*' '}You input: {choice}")
+        confirmation_response = input(f"{indentation*' '}Confirm custom input? [y/n] ")
+    else:  # Noncustomized answer
+        print(f"{indentation*' '}You selected {choice_index}: {choice}")
+        confirmation_response = input(f"{indentation*' '}Confirm choice? [y/n] ")
+
+    # TODO: Should we default to accepting empty inputs?
+    return bool(confirmation_response in ["y", "Y"])
+
+
+def get_choice_with_validation(
+    options, indentation, request_confirmation, separator, allow_custom
+):
+    """
+    Offload the loop from the list selection function above to this
+    helper function.
+
+    FIXME: Does this make the code more readable at all? Maybe this is
+    unnecessary compartmentalization and we should roll it all back
+    into the `select_from_list()` function.
+    """
+
+    min_ind = -1 if allow_custom else 0
+    max_ind = len(options) - 1
+
+    # OK So this `max_ind + allow_custom` thing here is pretty 900IQ
+    # unless I messed it up. Basically, if max_ind == -1, that's OK if
+    # we're allowed to do custom-form input because `allow_custom =
+    # True` will get implicitly cast to the integer `1` and so we get
+    # `max_ind + allow_custom == 0`.
+    if (max_ind + allow_custom) < 0:
+        # Is this print statement necessary?
+        print(f"Nothing available to choose from.")
         return
 
+    # This is implicitly the else case
     while True:
-        choice = input(f"\n{indentation*' '}Choice [0-{max_n}]: ")
+        choice_index = input(f"\n{indentation*' '}Choice [{min_ind}-{max_ind}]: ")
         try:
             # These two lines can trip the exceptions below (this
             # serves as lowkey input verification. We're just vibing
             # here y'all)
-            choice = int(choice)
-            assert choice >= 0 and choice <= max_n
-
-            # Input `verified` by this point
+            choice_index = int(choice_index)
+            assert choice_index >= min_ind and choice_index <= max_ind
             print(separator)
 
-            selection = options[choice]
+            # This implicitly means we must have `allow_custom=True`
+            # by the assertion above
+            if choice_index == -1:
+                choice = input(f"{indentation*' '}Please input your custom choice: ")
+            else:
+                choice = options[choice_index]
 
-            if request_confirmation:
-                print(f"{indentation*' '}You selected {choice}: {selection}")
-                confirmation = input(f"{indentation*' '}Confirm selection? [y/n] ")
-                if confirmation not in ["y", "Y"]:
-                    continue  # Repeat the loop if invalid confirmation
+            proceed = ask_for_confirmation(indentation, choice_index, choice)
 
-            # Vertically separate from whatever's next
-            print(footer)
-
-            return selection
+            if proceed:
+                # Vertically separate from whatever's next
+                return choice
+            else:
+                continue
 
         except ValueError:
             print("Please respond with a nonnegative integer.")
 
         except AssertionError:
-            if choice < 0:
-                print("Choice must be nonnegative.")
+            if choice_index < min_ind:
+                print(f"Choice too small (min is {min_ind}).")
             else:
-                print(f"Choice to large (max is {max_n}).")
+                print(f"Choice to large (max is {max_ind}).")
 
         # This should never happen
         except IndexError:
@@ -174,12 +243,13 @@ def interactive_course_selection(user):
 
     # This can happen if the course has no assignments.
     if assignment is None:
+        print("No assignment selected.")
         return
 
     return (course, assignment)
 
 
-def mcd_server_dirs():
+def mcd_dir(purpose_string=""):
     """
     mcd --> `m` from `mk`, `c` from `ch`, `d` for `dir`. Basically,
     generate the plom server directories if they don't exist;
@@ -189,6 +259,12 @@ def mcd_server_dirs():
     files and such should be deposited. So be sure to put the call to
     `()` inside of some `chdir()` calls if you want files deposited elsewhere.
 
+    kwargs:
+        purpose_string: Will get appended to `things_choosing` to
+                        explain to the user what the purpose of the
+                        subdirectory choice we're making is.
+
+                        TODO: Add an example call
 
     TODO: Might be nice to store a local information file (e.g. in
           `~/.local/share/plom`) that keeps track of
@@ -201,90 +277,130 @@ def mcd_server_dirs():
     """
     _excluded_dirs = ["__pycache__"]  # TODO: Others?
 
-    classdirs = [
-        _ for _ in os.listdir() if os.path.isdir(_) and _ not in _excluded_dirs
-    ]
-    classdir = select_from_list(classdirs, things_choosing="subdir for the class")
+    existing_dirs = sorted(
+        [_ for _ in os.listdir() if os.path.isdir(_) and _ not in _excluded_dirs]
+    )
 
-    # UNFINISHED
+    target_dir = select_from_list(
+        existing_dirs, things_choosing=f"subdir{purpose_string}", allow_custom=True
+    )
+
+    # Definitely would be stupid to cast `existing_dirs` to a set
+    # for this check but part of me really wants to haha
+    if target_dir not in existing_dirs:
+        os.mkdir(target_dir)
+
+    os.chdir(target_dir)
+
+    return
+
+
+def mcd_server_dirs():
+    """
+    Repeat `mcd_dir()` twice, once to select the class dir, the second
+    time to select the assignment dir.
+
+    Return the location of the final plom server dir.
+    """
+    mcd_dir(purpose_string=" for the class")
+    mcd_dir(purpose_string=" for the assignment")
+    return os.getcwd()
+
+
+def test_interactive_directories():
+    user = local_login()
+
+    response = interactive_course_selection(user)
+
+    if response is not None:
+        (course, assignment) = response
+
+        start_dir = os.getcwd()
+        try:
+            plom_server_dir = mcd_server_dirs()
+        except:  # FIXME: Don't leave this as a bare exception clause!
+
+            print("Yikes you hit an error.")
+            print("i ain't reading all that")
+            print("i'm happy for u tho")
+            print("or sorry that happened")
+            os.chdir(start_dir)
+            raise
+
+
+def initialize_plom_server(course, assignment, server_dir):
+    """
+    Generate the `.toml` file and
+    """
+
+    o_dir = os.getcwd()  # original directory
+
+    print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
+    get_classlist(course, server_dir=server_dir)
+
+    print("Generating `canvasSpec.toml`...")
+    get_toml(assignment, server_dir=server_dir)
+
+    os.chdir(server_dir)
+    print("\nSwitched into test server directory.\n")
+
+    print("Parsing `canvasSpec.toml`...")
+    subprocess.run(["plom-build", "parse", "canvasSpec.toml"], capture_output=True)
+
+    print("Running `plom-server init`...")
+    subprocess.run(["plom-server", "init"], capture_output=True)
+
+    print("Autogenerating users...")
+    subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
+
+    print("Temporarily exporting manager password...")
+    user_list = []
+    with open("serverConfiguration/userListRaw.csv", "r") as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            user_list += [row]
+
+    os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1][2:-1]
+
+    del user_list
+
+    print("Processing userlist...")
+    subprocess.run(
+        ["plom-server", "users", "serverConfiguration/userListRaw.csv"],
+        capture_output=True,
+    )
+
+    print("Launching plom server.")
+    # plom_server = subprocess.Popen(["plom-server", "launch"], stdout=subprocess.DEVNULL)
+    plom_server = subprocess.Popen(
+        ["plom-server", "launch"],
+        stdout=subprocess.DEVNULL,
+        preexec_fn=_set_pdeathsig(signal.SIGTERM),  # Linux only?
+    )
+
+    print(
+        "Server *should* be running now (although hopefully you can't because theoretically output should be suppressed). In light of this, be extra sure to explicitly kill the server (e.g., `pkill plom-server`) before trying to start a new one --- it can persist even after the original python process has been killed.\n\nTo verify if the server is running, you can try the command\n  ss -lntu\nto check if the 41984 port has a listener.\n"
+    )
+
+    subprocess.run(["sleep", "3"])
+
+    print("Building classlist...")
+    build_class = subprocess.run(
+        ["plom-build", "class", "classlist.csv"], capture_output=True
+    )
+
+    print("Building the database...")
+    build_class = subprocess.run(
+        ["plom-build", "make", "--no-pdf"], capture_output=True
+    )
+
+    os.chdir(o_dir)
+
+    return plom_server
 
 
 if __name__ == "__main__":
-    user = local_login()
-    (course, assignment) = interactive_course_selection(user)
-
-    # # TODO: Make this give an `os.listdir()`
-    # print("Setting up the workspace now.\n")
-    # print("  Current subdirectories:")
-    # print("  --------------------------------------------------------------------")
-    # excluded_dirs = ["__pycache__"]
-    # subdirs = [
-    #     subdir
-    #     for subdir in os.listdir()
-    #     if os.path.isdir(subdir) and subdir not in excluded_dirs
-    # ]
-    # for subdir in subdirs:
-    #     print(f"    ./{subdir}")
-
-    # classdir_selected = False
-    # while not classdir_selected:
-
-    #     classdir_name = input(
-    #         "\n  Name of dir to use for this class (will create if not found): "
-    #     )
-
-    #     if not classdir_name:
-    #         print("    Please provide a non-empty name.\n")
-    #         continue
-
-    #     print(f"  You selected `{classdir_name}`")
-    #     confirmation = input("  Confirm choice? [y/n] ")
-    #     if confirmation in ["", "\n", "y", "Y"]:
-    #         classdir_selected = True
-    #         classdir = classdir_name
-
-    # print(f"\n  cding into {classdir}...")
-    # if os.path.exists(classdir_name):
-    #     os.chdir(classdir)
-    # else:
-    #     os.mkdir(classdir)
-    #     os.chdir(classdir)
-
-    # print(f"  working directory is now `{os.getcwd()}`")
-
-    # print("\n\n\n")
-
-    # print("  Current subdirectories:")
-    # print("  --------------------------------------------------------------------")
-    # subdirs = [
-    #     subdir
-    #     for subdir in os.listdir()
-    #     if os.path.isdir(subdir) and subdir not in excluded_dirs
-    # ]
-    # # subdirs = [_ for _ in os.listdir if os.path.isdir(_)]
-    # for subdir in subdirs:
-    #     print(f"    ./{subdir}")
-
-    # # Directory for this particular assignment
-    # hwdir_selected = False
-    # while not hwdir_selected:
-
-    #     hwdir_name = input(
-    #         "\n\n\n  Name of dir to use for this assignment (will create if not found): "
-    #     )
-
-    #     print(f"  You selected `{hwdir_name}`")
-    #     confirmation = input("  Confirm choice? [y/n] ")
-    #     if confirmation in ["", "\n", "y", "Y"]:
-    #         hwdir_selected = True
-    #         hwdir = hwdir_name
-
-    # print(f"\n  cding into {hwdir}...")
-    # if os.path.exists(hwdir_name):
-    #     os.chdir(hwdir)
-    # else:
-    #     os.mkdir(hwdir)
-    #     os.chdir(hwdir)
+    test_interactive_directories()
 
     # print(f"  working directory is now `{os.getcwd()}`")
 

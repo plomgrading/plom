@@ -112,8 +112,13 @@ def get_sis_id_to_sub_and_name_table(subs):
     sis_id_to_sub = {}
     for sub in subs:
         canvas_id = sub.user_id
-        name, sis_id = conversion[str(canvas_id)]
-        sis_id_to_sub[sis_id] = (sub, name)
+        try:
+            name, sis_id = conversion[str(canvas_id)]
+            sis_id_to_sub[sis_id] = (sub, name)
+        except KeyError:
+            print(
+                f"couldn't find student information associated with canvas id {canvas_id}..."
+            )
 
     return sis_id_to_sub
 
