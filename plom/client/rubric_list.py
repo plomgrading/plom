@@ -696,7 +696,6 @@ class RubricWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         deltaP_label = "+\N{Greek Small Letter Delta}"
         deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
-        default_user_tabs = ["\N{Black Star}", "\N{Black Heart Suit}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
@@ -704,9 +703,6 @@ class RubricWidget(QWidget):
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
-        for name in default_user_tabs:
-            tab = RubricTable(self, shortname=name)
-            self.RTW.addTab(tab, tab.shortname)
         self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
         self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
