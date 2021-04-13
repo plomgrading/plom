@@ -657,21 +657,22 @@ class RubricTable(QTableWidget):
 
 
 class RubricWidget(QWidget):
+    """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
+
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
 
     def __init__(self, parent):
-        # layout the widget - a table and add/delete buttons.
-        super(RubricWidget, self).__init__()
-        self.test_name = None
+        super().__init__()
         self.question_number = None
-        self.tgv = None
         self.parent = parent
         self.username = parent.username
+        self.rubrics = []
         self.maxMark = None
         self.currentScore = None
-        self.rubrics = None
+        self.currentState = None
+        self.mss = [self.maxMark, self.currentState, self.currentScore]
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -709,7 +710,7 @@ class RubricWidget(QWidget):
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.add_new_rubric)
-        self.filtB.clicked.connect(self.wrangleRubrics)
+        self.filtB.clicked.connect(self.wrangleRubricsInteractively)
         self.otherB.clicked.connect(self.refreshRubrics)
         self.hideB.clicked.connect(self.toggleShowHide)
 
@@ -798,14 +799,21 @@ class RubricWidget(QWidget):
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
-        new_rubrics = self.parent.getRubrics()
+        new_rubrics = self.parent.getRubricsFromServer()
         if new_rubrics is not None:
+            old_rubrics = self.rubrics
             self.rubrics = new_rubrics
-            self.wrangleRubrics()
-        # do legality of deltas check
+            # update tabs based on the new rubrics
+            current_wrangler_state = self.get_tab_rubric_lists()
+            self.setRubricTabsFromState(current_wrangler_state)
+            # Popup a dialog if we have any new stuff (TODO: do we really want this?)
+            if new_rubrics != old_rubrics:
+                self.wrangleRubricsInteractively()
+            else:
+                ErrorMessage("No new rubrics available").exec_()
         self.updateLegalityOfDeltas()
 
-    def wrangleRubrics(self):
+    def wrangleRubricsInteractively(self):
         wr = RubricWrangler(
             self.rubrics,
             self.get_tab_rubric_lists(),
@@ -815,53 +823,67 @@ class RubricWidget(QWidget):
         if wr.exec_() != QDialog.Accepted:
             return
         else:
-            self.setRubricsFromState(wr.wranglerState)
-            # ask annotator to save this stuff back to marker
-            self.parent.saveWranglerState(wr.wranglerState)
+            self.setRubricTabsFromState(wr.wranglerState)
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
+        self.rubrics = self.parent.getRubricsFromServer()
+        self.setRubricTabsFromState()
 
-        self.rubrics = self.parent.getRubrics()
-        wranglerState = {
-            "user_tab_names": [],
-            "shown": [],
-            "hidden": [],
-            "tabs": [],
-        }
-
-        for X in self.rubrics:
-            # exclude HALs system-rubrics
-            if X["username"] == "HAL":
-                continue
-            # exclude manager-delta rubrics
-            if X["username"] == "manager" and X["kind"] == "delta":
-                continue
-            wranglerState["shown"].append(X["id"])
-        # then set state from this
-        self.setRubricsFromState(wranglerState)
-
-    def setRubricsFromState(self, wranglerState):
+    def setRubricTabsFromState(self, wranglerState=None):
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
         The rubrics themselves are uneffected.
 
         args:
-            wranglerState (dict): should be documented elsewhere and
+            wranglerState (dict/None): a representation of the state of
+                the user's tabs.  This could be from a previous session
+                or it could be "stale" in the sense that new rubrics
+                have arrived or some have been deleted.  Can be None
+                meaning no state.
+                The contents should be documented elsewhere and
                 linked here but must contain at least `shown`, `hidden`,
                 `tabs`, and `user_tab_names`.  The last two may be empty
                 lists.  Subject to change without notice, your milleage
                 may vary, etc.
 
-        If there is too much data for the number of data, the extra data
+        If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
 
         TODO: if new Annotator, we may want to clear the tabs before
-        calling this.
+        calling this.  For example, user has one tab saved but new
+        Annotator starts with two by default: see Issue #1506 and the
+        `if not None` code in Annotator.
         """
-        # zip truncates shorter list incase of length mismatch
+        if not wranglerState:
+            wranglerState = {
+                "user_tab_names": [],
+                "shown": [],
+                "hidden": [],
+                "tabs": [],
+            }
+
+        # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
+        for rubric in self.rubrics:
+            # don't add HAL system rubrics
+            if rubric["username"] == "HAL":
+                continue
+            # exclude manager-delta rubrics, see also Issue #1494
+            if rubric["username"] == "manager" and rubric["kind"] == "delta":
+                continue
+            if (
+                rubric["id"] not in wranglerState["hidden"]
+                and rubric["id"] not in wranglerState["shown"]
+            ):
+                log.info("Appending new rubric with id {}".format(rubric["id"]))
+                wranglerState["shown"].append(rubric["id"])
+
+        # TODO: if we later deleting rubrics, this will need to deal with rubrics that
+        # have disappeared from self.rubrics but still appear in some tab
+
+        # Nicer code than below but zip truncates shorter list during length mismatch
         # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
         #    tab.set_name(name)
         curtabs = self.user_tabs
@@ -943,13 +965,9 @@ class RubricWidget(QWidget):
         """
         self.question_number = qn
 
-    def setTestName(self, tn):
-        self.test_name = tn
-
     def reset(self):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
-        self.setTestName(None)
         log.debug("TODO - what else needs doing on reset")
 
     def changeMark(self, currentScore, currentState, maxMark=None):

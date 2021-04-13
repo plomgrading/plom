@@ -424,7 +424,6 @@ class Annotator(QWidget):
             self.getScore(), self.getMarkingState(), self.maxMark
         )
         self.rubric_widget.setQuestionNumber(self.question_num)
-        self.rubric_widget.setTestName(testName)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
@@ -1361,9 +1360,9 @@ class Annotator(QWidget):
             self.showMaximized()
 
         # load the state of the rubric list widget
-        if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
-            self.rubric_widget.setRubricsFromState(
-                self.parentMarkerUI.annotatorSettings["rubricWranglerState"]
+        if self.parentMarkerUI.annotatorSettings["rubricTabState"] is not None:
+            self.rubric_widget.setRubricTabsFromState(
+                self.parentMarkerUI.annotatorSettings["rubricTabState"]
             )
 
         # remember the "do not show again" checks
@@ -1409,12 +1408,10 @@ class Annotator(QWidget):
             self.toggleTools()
 
     def saveWindowSettings(self):
-        """
-        saves current window settings
+        """Saves current window settings and other state into the parent.
 
         Returns:
             None: modifies self.parentMarkerUI and self.scene
-
         """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
         self.parentMarkerUI.annotatorSettings[
@@ -1436,12 +1433,10 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
-        # save the rubricWidgetLists
-        self.saveWranglerState(self.rubric_widget.get_tab_rubric_lists())
-
-    def saveWranglerState(self, wranglerState):
-        # save the rubricWidgetLists
-        self.parentMarkerUI.annotatorSettings["rubricWranglerState"] = wranglerState
+        # Marker will keep the tab state: which rubrics user has hidden, in tabs etc
+        self.parentMarkerUI.annotatorSettings[
+            "rubricTabState"
+        ] = self.rubric_widget.get_tab_rubric_lists()
 
     def saveAnnotations(self):
         """
@@ -1502,7 +1497,7 @@ class Annotator(QWidget):
                 self.rubricWarn = False
 
         self.scene.save()
-        rubrics = self.scene.getRubrics()
+        rubrics = self.scene.get_rubrics_from_page()
         self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
@@ -1850,7 +1845,7 @@ class Annotator(QWidget):
         else:
             pass
 
-    def getRubrics(self):
+    def getRubricsFromServer(self):
         """Request a latest rubric list for current question."""
         return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 

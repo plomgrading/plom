@@ -1067,7 +1067,7 @@ class MarkerClient(QWidget):
         log.info("Loading user's rubric tab configuration")
         rval = self.msgr.MgetUserRubricTabs(self.question)
         if rval[0]:
-            self.annotatorSettings["rubricWranglerState"] = rval[1]
+            self.annotatorSettings["rubricTabState"] = rval[1]
 
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
@@ -2096,7 +2096,7 @@ class MarkerClient(QWidget):
 
         log.info("Saving user's rubric tab configuration to server")
         self.msgr.MsaveUserRubricTabs(
-            self.question, self.annotatorSettings["rubricWranglerState"]
+            self.question, self.annotatorSettings["rubricTabState"]
         )
 
         # Then send a 'user closing' message - server will revoke

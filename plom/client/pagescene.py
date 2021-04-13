@@ -617,9 +617,9 @@ class PageScene(QGraphicsScene):
                     texts.append(X.getContents())
         return texts
 
-    def getRubrics(self):
+    def get_rubrics_from_page(self):
         """
-        Get the rubrics(comments) associated with this paper.
+        Get the rubrics associated with this paper.
 
         Returns:
             list: pairs of IDs and strings from each bit of text.
