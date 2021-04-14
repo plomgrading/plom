@@ -44,7 +44,7 @@ def buildSpecialRubrics(spec, db):
             )
 
         # now make delta-rubrics
-        for m in range(1, mx):
+        for m in range(1, mx + 1):
             # make positive delta
             rubric = {
                 "delta": "+{}".format(m),
