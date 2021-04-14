@@ -5,25 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0]
 
 ### Added
-* Rubric information now appears as tooltip on hover over rubric-list. Type shown on hover over the delta and tags/meta shown (if present) on hover over text.
-* There is now no marking mode - it is set by the rubrics used.
-* The escape-key will now cancel an annotation mid-draw (box,ellipse,line,arrows,rubric)
 * Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
 * `plom-demo` now has `--port` option.
 * New `plom-build rubric` subcommand can upload/download rubric lists from the server.
 
 ### Changed
-* The left-hand-on-mouse option has been removed from annotator/marker - replaced with better key-binding options.
-* Rubrics have had significant change: they are now shared between users and can be grouped into "panes" within the user interface.
+* The left-hand-on-mouse option has been removed from annotator/marker - replaced with general key-binding options.
+* Significant changes to rubrics: now shared between users and can be grouped into "tabs" within the user interface.
+* Client: "Deltas" are now a special kind of rubric with their own tab.
+* New client default keybindings involve a "spatial navigation" metaphor: left-right between tabs, up-down between rubrics.
 * Rubrics are not longer saved on disc on client systems.
 * Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
+* Client: The escape-key will now cancel an annotation mid-draw (box, ellipse, line, arrows, rubric)
+* Client: There is no longer an explicit choice of "marking up/down mode" - it is determined by the rubrics used.
 * Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
-
-### Fixed
-
 
 
 ## [0.5.21] - 2021-03-18
