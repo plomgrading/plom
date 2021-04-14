@@ -232,7 +232,7 @@ mouseRelease = {
 }
 
 
-def getVertFromRect(a_rect):
+def shape_to_sample_points_on_boundary(a_rect):
     """given a rectangle, return list of vertices in the middle of each side.
     given a point - just return that point
     """
@@ -255,9 +255,12 @@ def sqrDistance(vect):
 
 
 def whichLineToDraw(g_rect, b_rect):
-    """given two bounding rectangles, return shortest line between the midpoints of their sides"""
-    gvert = getVertFromRect(g_rect)
-    bvert = getVertFromRect(b_rect)
+    """Get approximately shortest line between two shapes.
+
+    More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
+    """
+    gvert = shape_to_sample_points_on_boundary(g_rect)
+    bvert = shape_to_sample_points_on_boundary(b_rect)
     gp = gvert[0]
     bp = bvert[0]
     dd = sqrDistance(gp - bp)
