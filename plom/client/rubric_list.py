@@ -810,14 +810,12 @@ class RubricWidget(QWidget):
                 extra = f"{counter}"
 
         tab = RubricTable(self, shortname=name)
+        # add this new tab into the correct position
+        # we have 2 delta-tabs, these should always be last.
+        # we have 1 shared-tab, this should always be first.
         n = self.RTW.count()
-        if n >= 1 and (
-            self.RTW.widget(n - 1).is_delta_tab()
-            or self.RTW.widget(n - 1).is_absolute_tab()
-        ):
-            self.RTW.insertTab(n - 1, tab, tab.shortname)
-        else:
-            self.RTW.addTab(tab, tab.shortname)
+        # should always be at least 3 - so we insert the new tab at n-2.
+        self.RTW.insertTab(n - 2, tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
