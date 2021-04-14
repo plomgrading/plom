@@ -694,7 +694,7 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        deltaP_label = "\N{Plus Sign}\N{Greek Small Letter Delta}"
+        deltaP_label = "+\N{Greek Small Letter Delta}"
         deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
         default_user_tabs = ["\N{Black Star}", "\N{Black Heart Suit}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
