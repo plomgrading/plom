@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client now has two tabs for + and - deltas, which improves their shortcut key access.
 
 ### Fixed
 
