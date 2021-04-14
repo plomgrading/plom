@@ -1168,15 +1168,13 @@ class RubricWidget(QWidget):
             com,
             annotator_size=self.parent.size(),
         )
-        if arb.exec_() != QDialog.Accepted:
+        if arb.exec_() != QDialog.Accepted:  # ARB does some simple validation
             return
         if arb.DE.checkState() == Qt.Checked:
             dlt = str(arb.SB.textFromValue(arb.SB.value()))
         else:
             dlt = "."
-        txt = arb.TE.toPlainText().strip()
-        if len(txt) <= 0:
-            return
+        txt = arb.TE.toPlainText().strip()  # we know this has non-zero length.
         tag = arb.TEtag.toPlainText().strip()
         meta = arb.TEmeta.toPlainText().strip()
         kind = arb.Lkind.text().strip()
@@ -1339,7 +1337,7 @@ class AddRubricBox(QDialog):
         self.setLayout(vlay)
 
         # set up widgets
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.validate_and_accept)
         buttons.rejected.connect(self.reject)
         self.CB.addItem("")
         self.CB.addItems(lst)
@@ -1369,7 +1367,8 @@ class AddRubricBox(QDialog):
                 self.Luser.setText(com["username"])
         else:
             self.TE.setPlaceholderText(
-                'Prepend with "tex:" to use math.\n\n'
+                "Your rubric must contain some text.\n\n"
+                'Prepend with "tex:" to use latex.\n\n'
                 'You can "choose text" to harvest existing text from the page.\n\n'
                 'Change "delta" below to associate a point-change.'
             )
@@ -1393,3 +1392,11 @@ class AddRubricBox(QDialog):
         else:
             self.Lkind.setText("neutral")
             self.SB.setEnabled(False)
+
+    def validate_and_accept(self):
+        """Make sure rubric is valid before accepting"""
+        if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
+            ErrorMessage("Your rubric must contain some text.").exec_()
+            return
+        # future checks go here.
+        self.accept()
