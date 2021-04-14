@@ -216,6 +216,7 @@ mouseMove = {
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
     "rubric": "mouseMoveRubric",
+    "text": "mouseMoveText",
     "zoom": "mouseMoveZoom",
 }
 mouseRelease = {
@@ -227,17 +228,25 @@ mouseRelease = {
     "pan": "mouseReleasePan",
     "zoom": "mouseReleaseZoom",
     "rubric": "mouseReleaseRubric",
+    "text": "mouseReleaseText",
 }
 
 
-def getVertFromRect(a_rect):
-    """given a rectangle, return list of vertices in the middle of each side."""
-    return [
-        (a_rect.topLeft() + a_rect.topRight()) / 2,
-        (a_rect.bottomRight() + a_rect.topRight()) / 2,
-        (a_rect.bottomLeft() + a_rect.bottomRight()) / 2,
-        (a_rect.bottomLeft() + a_rect.topLeft()) / 2,
-    ]
+def shape_to_sample_points_on_boundary(a_rect):
+    """given a rectangle, return list of vertices in the middle of each side.
+    given a point - just return that point
+    """
+    if isinstance(a_rect, QRectF):
+        return [
+            (a_rect.topLeft() + a_rect.topRight()) / 2,
+            (a_rect.bottomRight() + a_rect.topRight()) / 2,
+            (a_rect.bottomLeft() + a_rect.bottomRight()) / 2,
+            (a_rect.bottomLeft() + a_rect.topLeft()) / 2,
+        ]
+    elif isinstance(a_rect, QPointF):  # is a point
+        return [a_rect]
+    else:
+        raise ValueError
 
 
 def sqrDistance(vect):
@@ -246,9 +255,12 @@ def sqrDistance(vect):
 
 
 def whichLineToDraw(g_rect, b_rect):
-    """given two bounding rectangles, return shortest line between the midpoints of their sides"""
-    gvert = getVertFromRect(g_rect)
-    bvert = getVertFromRect(b_rect)
+    """Get approximately shortest line between two shapes.
+
+    More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
+    """
+    gvert = shape_to_sample_points_on_boundary(g_rect)
+    bvert = shape_to_sample_points_on_boundary(b_rect)
     gp = gvert[0]
     bp = bvert[0]
     dd = sqrDistance(gp - bp)
@@ -331,6 +343,8 @@ class PageScene(QGraphicsScene):
         # 2 = drawing the line
         # 3 = drawing the rubric - this should only be very briefly mid function.
         self.rubricFlag = 0
+        # similar for text tool
+        self.textFlag = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -803,8 +817,8 @@ class PageScene(QGraphicsScene):
 
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
-            # also if in box,line,pen,rubric - stop mid-draw
-            if self.mode in ["box", "line", "pen", "rubric"]:
+            # also if in box,line,pen,rubric,text - stop mid-draw
+            if self.mode in ["box", "line", "pen", "rubric", "text"]:
                 self.stopMidDraw()
 
         else:
@@ -905,7 +919,7 @@ class PageScene(QGraphicsScene):
         """Mouse press while holding rubric tool.
 
         Usually this creates a rubric, an object consisting of a delta
-        grade and an associated text item.  With shift modifier key, it
+        grade and an associated text item. If user drags then it
         instead starts the multi-stage creation of a box-line-rubric.
         If a box-line-rubric is in-progress, it continues to the next
         stage.
@@ -1050,19 +1064,29 @@ class PageScene(QGraphicsScene):
         return
 
     def mousePressText(self, event):
-        """
-        Create a textObject at the click's location, unless there is already a
-            textobject there.
+        """Mouse press while holding text tool.
+
+        Usually this creates a textobject, but if user drags then, it
+        instead starts the multi-stage creation of a box-line-rubric.
+        If a box-line-rubric is in-progress, it continues to the next
+        stage.
 
         Args:
             event (QMouseEvent): the given mouse click.
 
         Returns:
             None
-
         """
+        # text flag explained
+        # 0 = initial state - before text click-drag-release-click started
+        # 1 = started drawing box
+        # 2 = started drawing line
+
         # Find the object under the click.
-        under = self.itemAt(event.scenePos(), QTransform())
+        # since there might be a line right under the point during stage2, offset the test point by a couple of pixels to the right.
+        # note - chose to the right since when we start typing text it will extend rightwards
+        # from the current point.
+        under = self.itemAt(event.scenePos() + QPointF(2, 0), QTransform())
         # If something is there... (fixes bug reported by MattC)
         if under is not None:
             # If it is part of a group then do nothing
@@ -1070,6 +1094,10 @@ class PageScene(QGraphicsScene):
                 return
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
+                if (
+                    self.textFlag == 2
+                ):  # make sure not trying to start text on top of text
+                    return
                 under.setTextInteractionFlags(Qt.TextEditorInteraction)
                 self.setFocusItem(under, Qt.MouseFocusReason)
                 super().mousePressEvent(event)
@@ -1079,15 +1107,103 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        # Construct empty text object, give focus to start editor
-        pt = event.scenePos()
-        command = CommandText(self, pt, "")
-        # move so centred under cursor   TODO: move into class!
-        pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
-        command.blurb.setPos(pt)
-        command.blurb.enable_interactive()
-        command.blurb.setFocus()
-        self.undoStack.push(command)
+        if self.textFlag == 0:  # time to start drawing a box
+            self.textFlag = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+            return
+        elif self.textFlag == 2:
+            # Construct empty text object, give focus to start editor
+            ept = event.scenePos()
+            command = CommandText(self, ept, "")
+            # move so centred under cursor   TODO: move into class!
+            pt = ept - QPointF(0, command.blurb.boundingRect().height() / 2)
+            command.blurb.setPos(pt)
+            command.blurb.enable_interactive()
+            command.blurb.setFocus()
+            self.undoStack.push(command)
+            # connect up line
+            connectingLine = whichLineToDraw(
+                ept,
+                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+            )
+            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
+            self.undoStack.push(command)
+            self.removeItem(self.lineItem)
+            log.debug(
+                "textFlag > 0 so we must be finishing a click-drag text: finalizing macro"
+            )
+            self.textFlag = 0
+            self.undoStack.endMacro()
+
+    def mouseMoveText(self, event):
+        """
+        Handles mouse moving with a text.
+
+        Args:
+            event (QMouseEvent): the event of the mouse moving.
+
+        Returns:
+            None
+        """
+        if self.textFlag == 1:
+            self.currentPos = event.scenePos()
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        elif self.textFlag == 2:
+            self.currentPos = event.scenePos()
+            self.lineItem.setLine(
+                whichLineToDraw(
+                    self.currentPos,
+                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+                )
+            )
+
+    def mouseReleaseText(self, event):
+        if self.textFlag == 0:
+            return
+        elif self.textFlag == 1:
+            self.removeItem(self.boxItem)
+            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            if (
+                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
+                > 24
+            ):
+                self.undoStack.beginMacro("Click-Drag composite object")
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
+            else:
+                # small box, so build the text item
+                if self.textUnderneathGhost():
+                    self.textFlag = 0  # reset the rubric flag
+                    return  # can't paste it here.
+
+                # Construct empty text object, give focus to start editor
+                pt = event.scenePos()
+                command = CommandText(self, pt, "")
+                # move so centred under cursor   TODO: move into class!
+                pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
+                command.blurb.setPos(pt)
+                command.blurb.enable_interactive()
+                command.blurb.setFocus()
+                self.undoStack.push(command)
+                self.textFlag = 0  # reset the text flag
+                return
+
+            self.textFlag = 2
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
+            self.lineItem.setPen(self.ink)
+            self.addItem(self.lineItem)
 
     def mousePressTick(self, event):
         """
@@ -2210,7 +2326,13 @@ class PageScene(QGraphicsScene):
         # note - only one should be non-zero at a given time
         log.debug(
             "Flags = {}".format(
-                [self.arrowFlag, self.boxFlag, self.penFlag, self.rubricFlag]
+                [
+                    self.arrowFlag,
+                    self.boxFlag,
+                    self.penFlag,
+                    self.rubricFlag,
+                    self.textFlag,
+                ]
             )
         )
         if self.arrowFlag > 0:  # midway through drawing a line
@@ -2243,3 +2365,14 @@ class PageScene(QGraphicsScene):
         ):  # Should be very hard to reach here - end macro and undo
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
+        # text flag needs care - uses undo-macro - need to clean that up
+        # 1 = drawing the box
+        # 2 = drawing the line
+        if self.textFlag == 1:  # drawing the box
+            self.removeItem(self.boxItem)
+            self.textFlag = 0
+        if self.textFlag == 2:  # undo-macro started, box drawn, mid draw of line
+            self.removeItem(self.lineItem)
+            self.undoStack.endMacro()
+            self.undo()  # removes the drawn box
+            self.textFlag = 0
