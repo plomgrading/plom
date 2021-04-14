@@ -812,7 +812,7 @@ class RubricWidget(QWidget):
         tab = RubricTable(self, shortname=name)
         # new tab inserted after rightmost non-delta
         n = self.RTW.count() - 1
-        while self.RTW.widget(n).is_delta_tab():
+        while self.RTW.widget(n).is_delta_tab() and n > 0:  # small sanity check
             n = n - 1
         self.RTW.insertTab(n, tab, tab.shortname)
 
