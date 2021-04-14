@@ -211,36 +211,42 @@ class RubricTable(QTableWidget):
         key = None if row is None else self.getKeyFromRow(row)
 
         # These are workaround for Issue #1441, lambdas in a loop
-        def func_factory_add(t, k):
-            def foo():
+        def add_func_factory(t, k):
+            def add_func():
                 t.appendByKey(k)
 
-            return foo
+            return add_func
 
-        def func_factory_del(t, k):
-            def foo():
+        def del_func_factory(t, k):
+            def del_func():
                 t.removeRubricByKey(k)
 
-            return foo
+            return del_func
+
+        def edit_func_factory(t, k):
+            def edit_func():
+                t.parent.edit_rubric(k)
+
+            return edit_func
 
         menu = QMenu(self)
         if key:
-            edit = QAction("Edit rubric", self)
-            edit.setEnabled(False)  # TODO hook it up
-            menu.addAction(edit)
+            a = QAction("Edit rubric", self)
+            a.triggered.connect(edit_func_factory(self, key))
+            menu.addAction(a)
             menu.addSeparator()
 
             for tab in self.parent.user_tabs:
                 if tab == self:
                     continue
                 a = QAction(f"Move to tab {tab.shortname}", self)
-                a.triggered.connect(func_factory_add(tab, key))
-                a.triggered.connect(func_factory_del(self, key))
+                a.triggered.connect(add_func_factory(tab, key))
+                a.triggered.connect(del_func_factory(self, key))
                 menu.addAction(a)
             menu.addSeparator()
 
             remAction = QAction("Remove from this tab", self)
-            remAction.triggered.connect(func_factory_del(self, key))
+            remAction.triggered.connect(del_func_factory(self, key))
             menu.addAction(remAction)
             menu.addSeparator()
 
@@ -282,24 +288,30 @@ class RubricTable(QTableWidget):
         key = None if row is None else self.getKeyFromRow(row)
 
         # workaround for Issue #1441, lambdas in a loop
-        def function_factory(t, k):
-            def foo():
+        def add_func_factory(t, k):
+            def add_func():
                 t.appendByKey(k)
 
-            return foo
+            return add_func
+
+        def edit_func_factory(t, k):
+            def edit_func():
+                t.parent.edit_rubric(k)
+
+            return edit_func
 
         menu = QMenu(self)
         if key:
-            edit = QAction("Edit rubric", self)
-            edit.setEnabled(False)  # TODO hook it up
-            menu.addAction(edit)
+            a = QAction("Edit rubric", self)
+            a.triggered.connect(edit_func_factory(self, key))
+            menu.addAction(a)
             menu.addSeparator()
 
             # TODO: walk in another order for moveable tabs?
             # [self.parent.RTW.widget(n) for n in range(1, 5)]
             for tab in self.parent.user_tabs:
                 a = QAction(f"Add to tab {tab.shortname}", self)
-                a.triggered.connect(function_factory(tab, key))
+                a.triggered.connect(add_func_factory(tab, key))
                 menu.addAction(a)
             menu.addSeparator()
 
