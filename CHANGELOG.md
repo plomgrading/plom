@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0]
+## [0.6.0] - 2021-04-14
 
 ### Added
 * Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
@@ -426,7 +426,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.21...master
+[0.6.0]: https://gitlab.com/plom/plom/compare/v0.5.21...v0.6.0
 [0.5.21]: https://gitlab.com/plom/plom/compare/v0.5.19...v0.5.21
 [0.5.19]: https://gitlab.com/plom/plom/compare/v0.5.18...v0.5.19
 [0.5.18]: https://gitlab.com/plom/plom/compare/v0.5.17...v0.5.18
