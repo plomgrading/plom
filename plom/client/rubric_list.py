@@ -6,8 +6,10 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
+import html
 import logging
 from pathlib import Path
+from textwrap import shorten
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import (
@@ -702,6 +704,7 @@ class RubricWidget(QWidget):
         self.hideB = QPushButton("Shown/Hidden")
         self.otherB = QToolButton()
         self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
+        self.otherB.setToolTip("Refresh rubrics")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
@@ -799,18 +802,47 @@ class RubricWidget(QWidget):
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
-        new_rubrics = self.parent.getRubricsFromServer()
-        if new_rubrics is not None:
-            old_rubrics = self.rubrics
-            self.rubrics = new_rubrics
-            # update tabs based on the new rubrics
-            current_wrangler_state = self.get_tab_rubric_lists()
-            self.setRubricTabsFromState(current_wrangler_state)
-            # Popup a dialog if we have any new stuff (TODO: do we really want this?)
-            if new_rubrics != old_rubrics:
-                self.wrangleRubricsInteractively()
-            else:
-                ErrorMessage("No new rubrics available").exec_()
+        old_rubrics = self.rubrics
+        self.rubrics = self.parent.getRubricsFromServer()
+        self.setRubricTabsFromState(self.get_tab_rubric_lists())
+        self.parent.saveTabStateToServer(self.get_tab_rubric_lists())
+        msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
+        diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
+        if not diff:
+            msg += "<p>\N{Check Mark} No new rubrics are available.</p>\n"
+        else:
+            msg += f"<p>\N{Check Mark} <b>{len(diff)} new rubrics</b> have been downloaded from the server:</p>\n"
+            diff = [r for r in self.rubrics for i in diff if r["id"] == i]
+            ell = "\N{HORIZONTAL ELLIPSIS}"
+            abbrev = []
+            # We truncate the list to this many
+            display_at_most = 12
+            for n, r in enumerate(diff):
+                delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
+                text = html.escape(shorten(r["text"], 36, placeholder=ell))
+                render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
+                if n < (display_at_most - 1):
+                    abbrev.append(render)
+                elif n == (display_at_most - 1) and len(diff) == display_at_most:
+                    # include the last one if it fits...
+                    abbrev.append(render)
+                elif n == (display_at_most - 1):
+                    # otherwise ellipsize the remainder
+                    abbrev.append("<li>" + "&nbsp;" * 6 + "\N{VERTICAL ELLIPSIS}</li>")
+                    break
+            msg += '<ul style="list-style-type:none;">\n  {}\n</ul>'.format(
+                "\n  ".join(abbrev)
+            )
+        QMessageBox(
+            QMessageBox.Information,
+            "Finished syncing rubrics",
+            msg,
+            QMessageBox.Ok,
+            self,
+        ).exec_()
+        # TODO: could add a "Open Rubric Wrangler" button to above dialog?
+        # self.wrangleRubricsInteractively()
+        # TODO: if adding that, it should push tabs *again* on accept but not on cancel
         self.updateLegalityOfDeltas()
 
     def wrangleRubricsInteractively(self):
@@ -1239,7 +1271,6 @@ class AddRubricBox(QDialog):
         )
         sizePolicy.setVerticalStretch(3)
 
-        print(self.size())
         ##
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
