@@ -814,7 +814,7 @@ class RubricWidget(QWidget):
         n = self.RTW.count() - 1
         while self.RTW.widget(n).is_delta_tab() and n > 0:  # small sanity check
             n = n - 1
-        self.RTW.insertTab(n, tab, tab.shortname)
+        self.RTW.insertTab(n + 1, tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
