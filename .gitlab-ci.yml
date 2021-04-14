@@ -81,6 +81,7 @@ docker-tag-latest:
     - docker push $IM_LATEST
   only:
     - master
+    - tags
 
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
