@@ -813,17 +813,18 @@ class RubricWidget(QWidget):
             diff = [r for r in self.rubrics for i in diff if r["id"] == i]
             ell = "\N{HORIZONTAL ELLIPSIS}"
             abbrev = []
-            at_most = 12
+            # We truncate the list to this many
+            display_at_most = 12
             for n, r in enumerate(diff):
                 delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
                 text = html.escape(shorten(r["text"], 36, placeholder=ell))
                 render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
-                if n < (at_most - 1):
+                if n < (display_at_most - 1):
                     abbrev.append(render)
-                elif n == (at_most - 1) and len(diff) == at_most:
+                elif n == (display_at_most - 1) and len(diff) == display_at_most:
                     # include the last one if it fits...
                     abbrev.append(render)
-                elif n == (at_most - 1):
+                elif n == (display_at_most - 1):
                     # otherwise ellipsize the remainder
                     abbrev.append("<li>" + "&nbsp;" * 6 + "\N{VERTICAL ELLIPSIS}</li>")
                     break
