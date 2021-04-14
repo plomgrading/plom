@@ -24,7 +24,7 @@ class BackGrid(QBrush):
             pm = QPixmap()
             pm.loadFromData(resources.read_binary(plom.client, "backGrid2.png"))
             self.setTexture(pm)
-        else:
-            pm = QPixmap()
-            pm.loadFromData(resources.read_binary(plom.client, "backGrid1.svg"))
-            self.setTexture(pm)
+        # else:
+        #     pm = QPixmap()
+        #     pm.loadFromData(resources.read_binary(plom.client, "backGrid1.svg"))
+        #     self.setTexture(pm)
