@@ -63,7 +63,9 @@ def make_random_version_map(spec):
     # first make a list which cycles through versions
     vlist = [(x % spec["numberOfVersions"]) + 1 for x in range(spec["numberToProduce"])]
     # now assign a copy of this for each question, so qvlist[question][testnumber]=version
-    qvlist = [random.shuffle(vlist.copy()) for q in range(spec["numberOfQuestions"])]
+    qvlist = [
+        random.sample(vlist, len(vlist)) for q in range(spec["numberOfQuestions"])
+    ]
     # we use the above when a question is shuffled, else we just use v=1.
 
     vmap = {}
