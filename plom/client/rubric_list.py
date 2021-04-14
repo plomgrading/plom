@@ -810,12 +810,11 @@ class RubricWidget(QWidget):
                 extra = f"{counter}"
 
         tab = RubricTable(self, shortname=name)
-        # add this new tab into the correct position
-        # we have 2 delta-tabs, these should always be last.
-        # we have 1 shared-tab, this should always be first.
-        n = self.RTW.count()
-        # should always be at least 3 - so we insert the new tab at n-2.
-        self.RTW.insertTab(n - 2, tab, tab.shortname)
+        # new tab inserted after rightmost non-delta
+        n = self.RTW.count() - 1
+        while self.RTW.widget(n).is_delta_tab():
+            n = n - 1
+        self.RTW.insertTab(n, tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -1031,10 +1030,11 @@ class RubricWidget(QWidget):
     def updateLegalityOfDeltas(self):
         # now redo each tab
         self.tabS.updateLegalityOfDeltas(self.mss)
-        self.tabDeltaP.updateLegalityOfDeltas(self.mss)
-        self.tabDeltaN.updateLegalityOfDeltas(self.mss)
         for tab in self.user_tabs:
             tab.updateLegalityOfDeltas(self.mss)
+        # show/hide these on update - TODO - code to make this work
+        self.tabDeltaP.updateLegalityOfDeltas(self.mss)
+        self.tabDeltaN.updateLegalityOfDeltas(self.mss)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
