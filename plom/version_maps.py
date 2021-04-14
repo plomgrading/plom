@@ -59,6 +59,15 @@ def make_random_version_map(spec):
     raises:
         KeyError: invalid question selection scheme in spec.
     """
+    # we want to have nearly equal numbers of each version - issue #1470
+    # first make a list which cycles through versions
+    vlist = [(x % spec["numberOfVersions"]) + 1 for x in range(spec["numberToProduce"])]
+    # now assign a copy of this for each question, so qvlist[question][testnumber]=version
+    qvlist = [
+        random.sample(vlist, len(vlist)) for q in range(spec["numberOfQuestions"])
+    ]
+    # we use the above when a question is shuffled, else we just use v=1.
+
     vmap = {}
     for t in range(1, spec["numberToProduce"] + 1):
         vmap[t] = {}
@@ -69,7 +78,12 @@ def make_random_version_map(spec):
                 vmap[t][g + 1] = 1
             elif spec["question"][gs]["select"] == "shuffle":
                 # version selected randomly in [1, 2, ..., #versions]
-                vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
+                # the below is purely random, so uneven distribution of versions
+                # vmap[t][g + 1] = random.randint(1, spec["numberOfVersions"])
+                # replace with more equal distribution of versions from qvlist above
+                vmap[t][g + 1] = qvlist[g][t - 1]
+                # offset by one due to indices starting from 0
+
             # TODO: we may enable something like this later
             # elif spec["question"][gs]["select"] == "param":
             #    # If caller does not provide a version, all are version 1.
