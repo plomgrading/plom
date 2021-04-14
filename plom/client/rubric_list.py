@@ -474,7 +474,7 @@ class RubricTable(QTableWidget):
 
         self.resizeColumnsToContents()
 
-    def setDeltaRubrics(self, rubrics):
+    def setDeltaRubrics(self, rubrics, positive=True):
         """Clear table and repopulate with delta-rubrics"""
         # remove everything
         for r in range(self.rowCount()):
@@ -484,7 +484,10 @@ class RubricTable(QTableWidget):
         for rb in rubrics:
             # take the manager generated delta rubrics
             if rb["username"] == "manager" and rb["kind"] == "delta":
-                delta_rubrics.append(rb)
+                if (positive and int(rb["delta"]) > 0) or (
+                    not positive and int(rb["delta"]) < 0
+                ):
+                    delta_rubrics.append(rb)
 
         # now sort in numerical order away from 0 and add
         for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
@@ -691,10 +694,12 @@ class RubricWidget(QWidget):
         grid = QGridLayout()
         # assume our container will deal with margins
         grid.setContentsMargins(0, 0, 0, 0)
-        delta_label = "\N{Plus-minus Sign}\N{Greek Small Letter Delta}"
+        deltaP_label = "+\N{Greek Small Letter Delta}"
+        deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
         default_user_tabs = ["\N{Black Star}", "\N{Black Heart Suit}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
-        self.tabDelta = RubricTable(self, shortname=delta_label, tabType="delta")
+        self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
+        self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
         self.RTW = QTabWidget()
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
@@ -702,7 +707,8 @@ class RubricWidget(QWidget):
         for name in default_user_tabs:
             tab = RubricTable(self, shortname=name)
             self.RTW.addTab(tab, tab.shortname)
-        self.RTW.addTab(self.tabDelta, self.tabDelta.shortname)
+        self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
+        self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
         self.tabHide = RubricTable(self, sort=True, tabType="hide")
         self.groupHide = QTabWidget()
@@ -804,14 +810,11 @@ class RubricWidget(QWidget):
                 extra = f"{counter}"
 
         tab = RubricTable(self, shortname=name)
-        n = self.RTW.count()
-        if n >= 1 and (
-            self.RTW.widget(n - 1).is_delta_tab()
-            or self.RTW.widget(n - 1).is_absolute_tab()
-        ):
-            self.RTW.insertTab(n - 1, tab, tab.shortname)
-        else:
-            self.RTW.addTab(tab, tab.shortname)
+        # new tab inserted after rightmost non-delta
+        n = self.RTW.count() - 1
+        while self.RTW.widget(n).is_delta_tab() and n > 0:  # small sanity check
+            n = n - 1
+        self.RTW.insertTab(n + 1, tab, tab.shortname)
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
@@ -957,9 +960,8 @@ class RubricWidget(QWidget):
             self.rubrics,
             wranglerState["shown"],
         )
-        self.tabDelta.setDeltaRubrics(
-            self.rubrics,
-        )
+        self.tabDeltaP.setDeltaRubrics(self.rubrics, positive=True)
+        self.tabDeltaN.setDeltaRubrics(self.rubrics, positive=False)
         self.tabHide.setRubricsByKeys(
             self.rubrics,
             wranglerState["hidden"],
@@ -967,7 +969,8 @@ class RubricWidget(QWidget):
 
         # make sure something selected in each tab
         self.tabHide.selectRubricByVisibleRow(0)
-        self.tabDelta.selectRubricByVisibleRow(0)
+        self.tabDeltaP.selectRubricByVisibleRow(0)
+        self.tabDeltaN.selectRubricByVisibleRow(0)
         self.tabS.selectRubricByVisibleRow(0)
         for tab in self.user_tabs:
             tab.selectRubricByVisibleRow(0)
@@ -1027,9 +1030,20 @@ class RubricWidget(QWidget):
     def updateLegalityOfDeltas(self):
         # now redo each tab
         self.tabS.updateLegalityOfDeltas(self.mss)
-        self.tabDelta.updateLegalityOfDeltas(self.mss)
         for tab in self.user_tabs:
             tab.updateLegalityOfDeltas(self.mss)
+        self.tabDeltaP.updateLegalityOfDeltas(self.mss)
+        self.tabDeltaN.updateLegalityOfDeltas(self.mss)
+        # show/hide pos delta tabs depending on legality
+        if self.mss[1] in ["neutral", "up"]:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaP), True)
+        else:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaP), False)
+        # show/hide neg delta tabs depending on legality
+        if self.mss[1] in ["neutral", "down"]:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaN), True)
+        else:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaN), False)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
@@ -1064,17 +1078,23 @@ class RubricWidget(QWidget):
             self.tabHide.previousRubric()
 
     def next_tab(self):
-        """Move to next tab, only if tabs are shown."""
+        """Move to next visible tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
-            self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % numtabs)
+            nt = (self.RTW.currentIndex() + 1) % numtabs
+            while not self.RTW.isTabVisible(nt):
+                nt = (nt + 1) % numtabs
+            self.RTW.setCurrentIndex(nt)
             self.handleClick()
 
     def prev_tab(self):
-        """Move to previous tab, only if tabs are shown."""
+        """Move to previous visible tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
-            self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % numtabs)
+            pt = (self.RTW.currentIndex() - 1) % numtabs
+            while not self.RTW.isTabVisible(pt):
+                pt = (pt - 1) % numtabs
+            self.RTW.setCurrentIndex(pt)
             self.handleClick()
 
     def get_nonrubric_text_from_page(self):
