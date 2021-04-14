@@ -1032,9 +1032,18 @@ class RubricWidget(QWidget):
         self.tabS.updateLegalityOfDeltas(self.mss)
         for tab in self.user_tabs:
             tab.updateLegalityOfDeltas(self.mss)
-        # show/hide these on update - TODO - code to make this work
         self.tabDeltaP.updateLegalityOfDeltas(self.mss)
         self.tabDeltaN.updateLegalityOfDeltas(self.mss)
+        # show/hide pos delta tabs depending on legality
+        if self.mss[1] in ["neutral", "up"]:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaP), True)
+        else:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaP), False)
+        # show/hide neg delta tabs depending on legality
+        if self.mss[1] in ["neutral", "down"]:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaN), True)
+        else:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaN), False)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
@@ -1069,17 +1078,23 @@ class RubricWidget(QWidget):
             self.tabHide.previousRubric()
 
     def next_tab(self):
-        """Move to next tab, only if tabs are shown."""
+        """Move to next visible tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
-            self.RTW.setCurrentIndex((self.RTW.currentIndex() + 1) % numtabs)
+            nt = (self.RTW.currentIndex() + 1) % numtabs
+            while not self.RTW.isTabVisible(nt):
+                nt = (nt + 1) % numtabs
+            self.RTW.setCurrentIndex(nt)
             self.handleClick()
 
     def prev_tab(self):
-        """Move to previous tab, only if tabs are shown."""
+        """Move to previous visible tab, only if tabs are shown."""
         if self.showHideW.currentIndex() == 0:
             numtabs = self.RTW.count()
-            self.RTW.setCurrentIndex((self.RTW.currentIndex() - 1) % numtabs)
+            pt = (self.RTW.currentIndex() - 1) % numtabs
+            while not self.RTW.isTabVisible(pt):
+                pt = (pt - 1) % numtabs
+            self.RTW.setCurrentIndex(pt)
             self.handleClick()
 
     def get_nonrubric_text_from_page(self):
