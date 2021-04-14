@@ -1148,15 +1148,13 @@ class RubricWidget(QWidget):
             com,
             annotator_size=self.parent.size(),
         )
-        if arb.exec_() != QDialog.Accepted:
+        if arb.exec_() != QDialog.Accepted:  # ARB does some simple validation
             return
         if arb.DE.checkState() == Qt.Checked:
             dlt = str(arb.SB.textFromValue(arb.SB.value()))
         else:
             dlt = "."
-        txt = arb.TE.toPlainText().strip()
-        if len(txt) <= 0:
-            return
+        txt = arb.TE.toPlainText().strip()  # we know this has non-zero length.
         tag = arb.TEtag.toPlainText().strip()
         meta = arb.TEmeta.toPlainText().strip()
         kind = arb.Lkind.text().strip()
