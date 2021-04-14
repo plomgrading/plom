@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+import logging
+
 from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
     QBrush,
@@ -2206,7 +2208,7 @@ class PageScene(QGraphicsScene):
         # look at all the mid-draw flags and cancel accordingly.
         # the flags are arrowFlag, boxFlag, penFlag, rubricFlag
         # note - only one should be non-zero at a given time
-        print(
+        log.debug(
             "Flags = {}".format(
                 [self.arrowFlag, self.boxFlag, self.penFlag, self.rubricFlag]
             )
