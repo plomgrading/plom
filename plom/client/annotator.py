@@ -275,7 +275,7 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
-        m.addAction("Refresh rubrics", self.refreshRubrics)
+        m.addAction("Synchronise rubrics", self.refreshRubrics)
         m.addAction("Compact UI\thome", self.narrowLayout)
         # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
         # m.addAction("&Wide UI\thome", self.wideLayout)
