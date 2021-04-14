@@ -1319,7 +1319,7 @@ class AddRubricBox(QDialog):
         self.setLayout(vlay)
 
         # set up widgets
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.validate_and_accept)
         buttons.rejected.connect(self.reject)
         self.CB.addItem("")
         self.CB.addItems(lst)
@@ -1349,7 +1349,8 @@ class AddRubricBox(QDialog):
                 self.Luser.setText(com["username"])
         else:
             self.TE.setPlaceholderText(
-                'Prepend with "tex:" to use math.\n\n'
+                "Your rubric must contain some text.\n\n"
+                'Prepend with "tex:" to use latex.\n\n'
                 'You can "choose text" to harvest existing text from the page.\n\n'
                 'Change "delta" below to associate a point-change.'
             )
@@ -1373,3 +1374,11 @@ class AddRubricBox(QDialog):
         else:
             self.Lkind.setText("neutral")
             self.SB.setEnabled(False)
+
+    def validate_and_accept(self):
+        """Make sure rubric is valid before accepting"""
+        if len(self.TE.toPlainText()) <= 0:
+            ErrorMessage("Your rubric must contain some text.").exec_()
+            return
+        # future checks go here.
+        self.accept()
