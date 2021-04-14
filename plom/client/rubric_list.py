@@ -1375,7 +1375,7 @@ class AddRubricBox(QDialog):
 
     def validate_and_accept(self):
         """Make sure rubric is valid before accepting"""
-        if len(self.TE.toPlainText()) <= 0:
+        if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
             ErrorMessage("Your rubric must contain some text.").exec_()
             return
         # future checks go here.
