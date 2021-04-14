@@ -1032,9 +1032,18 @@ class RubricWidget(QWidget):
         self.tabS.updateLegalityOfDeltas(self.mss)
         for tab in self.user_tabs:
             tab.updateLegalityOfDeltas(self.mss)
-        # show/hide these on update - TODO - code to make this work
         self.tabDeltaP.updateLegalityOfDeltas(self.mss)
         self.tabDeltaN.updateLegalityOfDeltas(self.mss)
+        # show/hide pos delta tabs depending on legality
+        if self.mss[1] in ["neutral", "up"]:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaP), True)
+        else:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaP), False)
+        # show/hide neg delta tabs depending on legality
+        if self.mss[1] in ["neutral", "down"]:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaN), True)
+        else:
+            self.RTW.setTabVisible(self.RTW.indexOf(self.tabDeltaN), False)
 
     def handleClick(self):
         self.RTW.currentWidget().handleClick()
