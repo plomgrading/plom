@@ -717,7 +717,6 @@ winmintest:
 
 # Build Windows client binaries
 # This section written in PowerShell
-# TODO: consider doing this only on the master branch
 winpyinst:
   extends:
   - .shared_windows_runners
