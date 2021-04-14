@@ -1067,7 +1067,7 @@ class MarkerClient(QWidget):
         log.info("Loading user's rubric tab configuration")
         rval = self.msgr.MgetUserRubricTabs(self.question)
         if rval[0]:
-            self.annotatorSettings["rubricWranglerState"] = rval[1]
+            self.annotatorSettings["rubricTabState"] = rval[1]
 
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
@@ -1742,24 +1742,25 @@ class MarkerClient(QWidget):
         """Get list of rubrics from server.
 
         Args:
-            none
+            question (int/None)
 
         Returns:
             list: A list of the dictionary objects.
         """
         if question is None:
-            response = self.msgr.MgetRubrics()
-        else:
-            response = self.msgr.MgetRubricsByQuestion(question)
-        if response[0] is False:
-            log.warning("Getting rubrics failed. ")
-        return response
+            return self.msgr.MgetRubrics()
+        return self.msgr.MgetRubricsByQuestion(question)
 
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)
 
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
+
+    def saveTabStateToServer(self, tab_state):
+        """Upload a tab state to the server."""
+        log.info("Saving user's rubric tab configuration to server")
+        self.msgr.MsaveUserRubricTabs(self.question, tab_state)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -2093,17 +2094,11 @@ class MarkerClient(QWidget):
             self.backgroundUploader.wait()
 
         # When shutting down, first alert server of any images that were
-        # not marked - using 'DNF' (did not finish). Sever will put
+        # not marked - using 'DNF' (did not finish). Server will put
         # those files back on the todo pile.
         self.DNF()
         # now save the annotator rubric tab state to server
-
-        if self.msgr.MsaveUserRubricTabs(
-            self.question, self.annotatorSettings["rubricWranglerState"]
-        ):
-            log.info("Saved user's rubric tab configuration to server")
-        else:
-            log.error("Problem saving user's rubric tab configuration to server")
+        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
 
         # Then send a 'user closing' message - server will revoke
         # authentication token.

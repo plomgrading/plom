@@ -6,8 +6,10 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
 
+import html
 import logging
 from pathlib import Path
+from textwrap import shorten
 
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import (
@@ -123,7 +125,8 @@ class RubricTable(QTableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.horizontalHeader().setVisible(False)
         self.horizontalHeader().setStretchLastSection(True)
-        self.verticalHeader().setVisible(True)
+        # Issue #1498: use these for shortcut key indicators
+        self.verticalHeader().setVisible(False)
         self.setShowGrid(False)
         self.setAlternatingRowColors(False)
         #  negative padding is probably b/c of fontsize changes
@@ -208,36 +211,42 @@ class RubricTable(QTableWidget):
         key = None if row is None else self.getKeyFromRow(row)
 
         # These are workaround for Issue #1441, lambdas in a loop
-        def func_factory_add(t, k):
-            def foo():
+        def add_func_factory(t, k):
+            def add_func():
                 t.appendByKey(k)
 
-            return foo
+            return add_func
 
-        def func_factory_del(t, k):
-            def foo():
+        def del_func_factory(t, k):
+            def del_func():
                 t.removeRubricByKey(k)
 
-            return foo
+            return del_func
+
+        def edit_func_factory(t, k):
+            def edit_func():
+                t.parent.edit_rubric(k)
+
+            return edit_func
 
         menu = QMenu(self)
         if key:
-            edit = QAction("Edit rubric", self)
-            edit.setEnabled(False)  # TODO hook it up
-            menu.addAction(edit)
+            a = QAction("Edit rubric", self)
+            a.triggered.connect(edit_func_factory(self, key))
+            menu.addAction(a)
             menu.addSeparator()
 
             for tab in self.parent.user_tabs:
                 if tab == self:
                     continue
                 a = QAction(f"Move to tab {tab.shortname}", self)
-                a.triggered.connect(func_factory_add(tab, key))
-                a.triggered.connect(func_factory_del(self, key))
+                a.triggered.connect(add_func_factory(tab, key))
+                a.triggered.connect(del_func_factory(self, key))
                 menu.addAction(a)
             menu.addSeparator()
 
             remAction = QAction("Remove from this tab", self)
-            remAction.triggered.connect(func_factory_del(self, key))
+            remAction.triggered.connect(del_func_factory(self, key))
             menu.addAction(remAction)
             menu.addSeparator()
 
@@ -279,24 +288,30 @@ class RubricTable(QTableWidget):
         key = None if row is None else self.getKeyFromRow(row)
 
         # workaround for Issue #1441, lambdas in a loop
-        def function_factory(t, k):
-            def foo():
+        def add_func_factory(t, k):
+            def add_func():
                 t.appendByKey(k)
 
-            return foo
+            return add_func
+
+        def edit_func_factory(t, k):
+            def edit_func():
+                t.parent.edit_rubric(k)
+
+            return edit_func
 
         menu = QMenu(self)
         if key:
-            edit = QAction("Edit rubric", self)
-            edit.setEnabled(False)  # TODO hook it up
-            menu.addAction(edit)
+            a = QAction("Edit rubric", self)
+            a.triggered.connect(edit_func_factory(self, key))
+            menu.addAction(a)
             menu.addSeparator()
 
             # TODO: walk in another order for moveable tabs?
             # [self.parent.RTW.widget(n) for n in range(1, 5)]
             for tab in self.parent.user_tabs:
                 a = QAction(f"Add to tab {tab.shortname}", self)
-                a.triggered.connect(function_factory(tab, key))
+                a.triggered.connect(add_func_factory(tab, key))
                 menu.addAction(a)
             menu.addSeparator()
 
@@ -656,21 +671,22 @@ class RubricTable(QTableWidget):
 
 
 class RubricWidget(QWidget):
+    """The RubricWidget is a multi-tab interface for displaying, choosing and managing rubrics."""
+
     # This is picked up by the annotator and tells is what is
     # the current comment and delta
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
 
     def __init__(self, parent):
-        # layout the widget - a table and add/delete buttons.
-        super(RubricWidget, self).__init__()
-        self.test_name = None
+        super().__init__()
         self.question_number = None
-        self.tgv = None
         self.parent = parent
         self.username = parent.username
+        self.rubrics = []
         self.maxMark = None
         self.currentScore = None
-        self.rubrics = None
+        self.currentState = None
+        self.mss = [self.maxMark, self.currentState, self.currentScore]
 
         grid = QGridLayout()
         # assume our container will deal with margins
@@ -699,7 +715,9 @@ class RubricWidget(QWidget):
         self.filtB = QPushButton("Arrange/Filter")
         self.hideB = QPushButton("Shown/Hidden")
         self.otherB = QToolButton()
-        self.otherB.setText("\N{Anticlockwise Open Circle Arrow}")
+        # self.otherB.setText("\N{Rightwards Harpoon Over Leftwards Harpoon}")
+        self.otherB.setText("Sync")
+        self.otherB.setToolTip("Synchronise rubrics")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
@@ -708,7 +726,7 @@ class RubricWidget(QWidget):
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.add_new_rubric)
-        self.filtB.clicked.connect(self.wrangleRubrics)
+        self.filtB.clicked.connect(self.wrangleRubricsInteractively)
         self.otherB.clicked.connect(self.refreshRubrics)
         self.hideB.clicked.connect(self.toggleShowHide)
 
@@ -797,14 +815,50 @@ class RubricWidget(QWidget):
 
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
-        new_rubrics = self.parent.getRubrics()
-        if new_rubrics is not None:
-            self.rubrics = new_rubrics
-            self.wrangleRubrics()
-        # do legality of deltas check
+        old_rubrics = self.rubrics
+        self.rubrics = self.parent.getRubricsFromServer()
+        self.setRubricTabsFromState(self.get_tab_rubric_lists())
+        self.parent.saveTabStateToServer(self.get_tab_rubric_lists())
+        msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
+        diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
+        if not diff:
+            msg += "<p>\N{Check Mark} No new rubrics are available.</p>\n"
+        else:
+            msg += f"<p>\N{Check Mark} <b>{len(diff)} new rubrics</b> have been downloaded from the server:</p>\n"
+            diff = [r for r in self.rubrics for i in diff if r["id"] == i]
+            ell = "\N{HORIZONTAL ELLIPSIS}"
+            abbrev = []
+            # We truncate the list to this many
+            display_at_most = 12
+            for n, r in enumerate(diff):
+                delta = ".&nbsp;" if r["delta"] == "." else r["delta"]
+                text = html.escape(shorten(r["text"], 36, placeholder=ell))
+                render = f"<li><tt>{delta}</tt> <i>&ldquo;{text}&rdquo;</i>&nbsp; by {r['username']}</li>"
+                if n < (display_at_most - 1):
+                    abbrev.append(render)
+                elif n == (display_at_most - 1) and len(diff) == display_at_most:
+                    # include the last one if it fits...
+                    abbrev.append(render)
+                elif n == (display_at_most - 1):
+                    # otherwise ellipsize the remainder
+                    abbrev.append("<li>" + "&nbsp;" * 6 + "\N{VERTICAL ELLIPSIS}</li>")
+                    break
+            msg += '<ul style="list-style-type:none;">\n  {}\n</ul>'.format(
+                "\n  ".join(abbrev)
+            )
+        QMessageBox(
+            QMessageBox.Information,
+            "Finished syncing rubrics",
+            msg,
+            QMessageBox.Ok,
+            self,
+        ).exec_()
+        # TODO: could add a "Open Rubric Wrangler" button to above dialog?
+        # self.wrangleRubricsInteractively()
+        # TODO: if adding that, it should push tabs *again* on accept but not on cancel
         self.updateLegalityOfDeltas()
 
-    def wrangleRubrics(self):
+    def wrangleRubricsInteractively(self):
         wr = RubricWrangler(
             self.rubrics,
             self.get_tab_rubric_lists(),
@@ -814,53 +868,67 @@ class RubricWidget(QWidget):
         if wr.exec_() != QDialog.Accepted:
             return
         else:
-            self.setRubricsFromState(wr.wranglerState)
-            # ask annotator to save this stuff back to marker
-            self.parent.saveWranglerState(wr.wranglerState)
+            self.setRubricTabsFromState(wr.wranglerState)
 
     def setInitialRubrics(self):
         """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
+        self.rubrics = self.parent.getRubricsFromServer()
+        self.setRubricTabsFromState()
 
-        self.rubrics = self.parent.getRubrics()
-        wranglerState = {
-            "user_tab_names": [],
-            "shown": [],
-            "hidden": [],
-            "tabs": [],
-        }
-
-        for X in self.rubrics:
-            # exclude HALs system-rubrics
-            if X["username"] == "HAL":
-                continue
-            # exclude manager-delta rubrics
-            if X["username"] == "manager" and X["kind"] == "delta":
-                continue
-            wranglerState["shown"].append(X["id"])
-        # then set state from this
-        self.setRubricsFromState(wranglerState)
-
-    def setRubricsFromState(self, wranglerState):
+    def setRubricTabsFromState(self, wranglerState=None):
         """Set rubric tabs (but not rubrics themselves) from saved data.
 
         The various rubric tabs are updated based on data passed in.
         The rubrics themselves are uneffected.
 
         args:
-            wranglerState (dict): should be documented elsewhere and
+            wranglerState (dict/None): a representation of the state of
+                the user's tabs.  This could be from a previous session
+                or it could be "stale" in the sense that new rubrics
+                have arrived or some have been deleted.  Can be None
+                meaning no state.
+                The contents should be documented elsewhere and
                 linked here but must contain at least `shown`, `hidden`,
                 `tabs`, and `user_tab_names`.  The last two may be empty
                 lists.  Subject to change without notice, your milleage
                 may vary, etc.
 
-        If there is too much data for the number of data, the extra data
+        If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
 
         TODO: if new Annotator, we may want to clear the tabs before
-        calling this.
+        calling this.  For example, user has one tab saved but new
+        Annotator starts with two by default: see Issue #1506 and the
+        `if not None` code in Annotator.
         """
-        # zip truncates shorter list incase of length mismatch
+        if not wranglerState:
+            wranglerState = {
+                "user_tab_names": [],
+                "shown": [],
+                "hidden": [],
+                "tabs": [],
+            }
+
+        # Update the wranglerState for any new rubrics not in shown/hidden (Issue #1493)
+        for rubric in self.rubrics:
+            # don't add HAL system rubrics
+            if rubric["username"] == "HAL":
+                continue
+            # exclude manager-delta rubrics, see also Issue #1494
+            if rubric["username"] == "manager" and rubric["kind"] == "delta":
+                continue
+            if (
+                rubric["id"] not in wranglerState["hidden"]
+                and rubric["id"] not in wranglerState["shown"]
+            ):
+                log.info("Appending new rubric with id {}".format(rubric["id"]))
+                wranglerState["shown"].append(rubric["id"])
+
+        # TODO: if we later deleting rubrics, this will need to deal with rubrics that
+        # have disappeared from self.rubrics but still appear in some tab
+
+        # Nicer code than below but zip truncates shorter list during length mismatch
         # for tab, name in zip(self.user_tabs, wranglerState["user_tab_names"]):
         #    tab.set_name(name)
         curtabs = self.user_tabs
@@ -942,13 +1010,9 @@ class RubricWidget(QWidget):
         """
         self.question_number = qn
 
-    def setTestName(self, tn):
-        self.test_name = tn
-
     def reset(self):
         """Return the widget to a no-TGV-specified state."""
         self.setQuestionNumber(None)
-        self.setTestName(None)
         log.debug("TODO - what else needs doing on reset")
 
     def changeMark(self, currentScore, currentState, maxMark=None):
@@ -1220,7 +1284,6 @@ class AddRubricBox(QDialog):
         )
         sizePolicy.setVerticalStretch(3)
 
-        print(self.size())
         ##
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

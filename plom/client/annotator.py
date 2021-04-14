@@ -46,6 +46,7 @@ from PyQt5.QtWidgets import (
     QColorDialog,
 )
 
+from plom import __version__
 from .rubric_list import RubricWidget
 from .key_wrangler import KeyWrangler, key_layouts
 
@@ -198,6 +199,26 @@ class Annotator(QWidget):
         self.keyBindings = None
         self.setMiscShortCuts()
 
+    def show_about_dialog(self):
+        QMessageBox.about(
+            self,
+            "Plom Client",
+            dedent(
+                f"""
+                <p>Plom Client {__version__}</p>
+
+                <p><a href="https://plomgrading.org">https://plomgrading.org</a></p>
+
+                <p>Copyright &copy; 2018-2021 Andrew Rechnitzer,
+                Colin B. Macdonald, and other contributors.</p>
+
+                <p>Plom is Free Software, available under the GNU Affero
+                General Public License version 3, or at your option, any
+                later version.</p>
+                """
+            ),
+        )
+
     def getScore(self):
         return self.scene.getScore()
 
@@ -210,14 +231,29 @@ class Annotator(QWidget):
         m.addAction("Next paper\tctrl-n", self.saveAndGetNext)
         m.addAction("Done (save and close)", self.saveAndClose)
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
+        m.addAction("Previous paper", lambda: None).setEnabled(False)
+        m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
-        m.addAction("Insert image", self.addImageMode)
-        m.addSeparator()
-        m.addAction("View whole paper", self.viewWholePaper)
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
-        m.addSeparator()
-        m.addAction("Compact UI\thome", self.narrowLayout)
-        m.addAction("&Wide UI\thome", self.wideLayout)
+        subm = m.addMenu("Tools")
+        # to make these actions checkable, they need to belong to self.
+        # submg = QActionGroup(m)
+        # km.addAction(getattr(self, "kb_{}_act".format(name)))
+        # TODO: add selection indicator
+        # TDDO: and keyboard shortcuts: how to update them?
+        subm.addAction("Box", self.ui.boxButton.animateClick)
+        subm.addAction("Tick", self.ui.tickButton.animateClick)
+        subm.addAction("Cross", self.ui.crossButton.animateClick)
+        subm.addAction("Text", self.ui.textButton.animateClick)
+        subm.addAction("Line", self.ui.lineButton.animateClick)
+        subm.addAction("Pen", self.ui.penButton.animateClick)
+        subm.addSeparator()
+        subm.addAction("Insert image", self.addImageMode)
+        subm.addSeparator()
+        subm.addAction("Move", self.ui.moveButton.animateClick)
+        subm.addAction("Pan", self.ui.panButton.animateClick)
+        subm.addAction("Delete", self.ui.deleteButton.animateClick)
+        subm.addAction("Zoom", self.ui.zoomButton.animateClick)
         m.addSeparator()
         m.addAction(
             "Increase annotation scale\tshift-]", lambda: self.change_annot_scale(1.1)
@@ -230,7 +266,7 @@ class Annotator(QWidget):
         self.update_annot_scale_menu_label()
 
         m.addAction(
-            "Decrease annotation scale\tshift-]",
+            "Decrease annotation scale\tshift-[",
             lambda: self.change_annot_scale(1.0 / 1.1),
         )
         # Issue #1350: temporarily?
@@ -239,8 +275,13 @@ class Annotator(QWidget):
             self.change_annotation_colour,
         )
         m.addSeparator()
-        m.addAction("Refresh rubrics", self.refreshRubrics)
+        m.addAction("Synchronise rubrics", self.refreshRubrics)
+        m.addAction("Compact UI\thome", self.narrowLayout)
+        # TODO: this should be an indicator but for now compact doesn't have the hamburg menu
+        # m.addAction("&Wide UI\thome", self.wideLayout)
         m.addSeparator()
+        m.addAction("Help", lambda: None).setEnabled(False)
+        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
         # key-binding submenu stuff
         km = m.addMenu("Set major keys")
         # to make these actions checkable, they need to belong to self.
@@ -267,14 +308,7 @@ class Annotator(QWidget):
         self.kb_custom_act.triggered.connect(self.setKeyBindings)
         kmg.addAction(self.kb_custom_act)
         km.addAction(self.kb_custom_act)
-        m.addSeparator()
-
-        km.addSeparator()
-        m.addAction("Help", lambda: None).setEnabled(False)
-        m.addAction("Show shortcut keys...\t?", self.keyPopUp)
-        m.addAction("About Plom", lambda: None).setEnabled(False)
-        m.addSeparator()
-        m.addAction("Close without saving\tctrl-c", self.close)
+        m.addAction("About Plom", self.show_about_dialog)
         return m
 
     def closeCurrentTGV(self):
@@ -390,7 +424,6 @@ class Annotator(QWidget):
             self.getScore(), self.getMarkingState(), self.maxMark
         )
         self.rubric_widget.setQuestionNumber(self.question_num)
-        self.rubric_widget.setTestName(testName)
         self.rubric_widget.setEnabled(True)
 
         # TODO: Make handling of rubric less hack.
@@ -1291,7 +1324,7 @@ class Annotator(QWidget):
         self.ui.rearrangePagesButton.clicked.connect(self.rearrangePages)
         # Connect up the finishing functions - using a dropdown menu
         m = QMenu()
-        m.addAction("Done", self.saveAndGetNext)
+        m.addAction("Done", self.saveAndClose)
         m.addSeparator()
         m.addAction("Cancel", self.close)
         self.ui.finishedButton.setMenu(m)
@@ -1327,9 +1360,9 @@ class Annotator(QWidget):
             self.showMaximized()
 
         # load the state of the rubric list widget
-        if self.parentMarkerUI.annotatorSettings["rubricWranglerState"] is not None:
-            self.rubric_widget.setRubricsFromState(
-                self.parentMarkerUI.annotatorSettings["rubricWranglerState"]
+        if self.parentMarkerUI.annotatorSettings["rubricTabState"] is not None:
+            self.rubric_widget.setRubricTabsFromState(
+                self.parentMarkerUI.annotatorSettings["rubricTabState"]
             )
 
         # remember the "do not show again" checks
@@ -1375,12 +1408,10 @@ class Annotator(QWidget):
             self.toggleTools()
 
     def saveWindowSettings(self):
-        """
-        saves current window settings
+        """Saves current window settings and other state into the parent.
 
         Returns:
             None: modifies self.parentMarkerUI and self.scene
-
         """
         self.parentMarkerUI.annotatorSettings["geometry"] = self.saveGeometry()
         self.parentMarkerUI.annotatorSettings[
@@ -1402,12 +1433,10 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
-        # save the rubricWidgetLists
-        self.saveWranglerState(self.rubric_widget.get_tab_rubric_lists())
-
-    def saveWranglerState(self, wranglerState):
-        # save the rubricWidgetLists
-        self.parentMarkerUI.annotatorSettings["rubricWranglerState"] = wranglerState
+        # Marker will keep the tab state: which rubrics user has hidden, in tabs etc
+        self.parentMarkerUI.annotatorSettings[
+            "rubricTabState"
+        ] = self.rubric_widget.get_tab_rubric_lists()
 
     def saveAnnotations(self):
         """
@@ -1468,7 +1497,7 @@ class Annotator(QWidget):
                 self.rubricWarn = False
 
         self.scene.save()
-        rubrics = self.scene.getRubrics()
+        rubrics = self.scene.get_rubrics_from_page()
         self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
@@ -1816,19 +1845,13 @@ class Annotator(QWidget):
         else:
             pass
 
-    def getRubrics(self):
-        """Request for a refreshed rubric list and update the current rubric box. Only get rubrics for current question."""
-        wtf, refreshed_rubrics_list = self.parentMarkerUI.getRubricsFromServer(
-            self.question_num
-        )
-        assert wtf
+    def getRubricsFromServer(self):
+        """Request a latest rubric list for current question."""
+        return self.parentMarkerUI.getRubricsFromServer(self.question_num)
 
-        if len(refreshed_rubrics_list) == 0:
-            ErrorMessage(
-                "Refreshing the rubrics lists did not go through successfully. Rubrics list will remain unchanged."
-            ).exec()
-            return
-        return refreshed_rubrics_list
+    def saveTabStateToServer(self, tab_state):
+        """Have Marker upload this tab state to the server."""
+        self.parentMarkerUI.saveTabStateToServer(tab_state)
 
     def refreshRubrics(self):
         """ask the rubric widget to refresh rubrics"""

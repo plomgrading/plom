@@ -21,7 +21,7 @@ class RubricHandler:
 
         Args:
             data (dict): A dictionary including user/token and the new rubric to be created
-            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
+            request (aiohttp.web_request.Request): A request of type PUT /MK/rubric.
 
         Returns:
             aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
@@ -126,22 +126,28 @@ class RubricHandler:
         """Get user's rubric-panes configuration from server
 
         Args:
-            data (dict): A dictionary including user/token and the new rubric to be created
-            request (aiohttp.web_request.Request): A request of type GET /MK/user/{user}/{question}.
+            data (dict): A dictionary including user/token and question number.
+            request (aiohttp.web_request.Request): GET `/MK/user/{user}/{question}`.
 
         Returns:
-            aiohttp.web_response.Response: either 200 and the config (as json), or 403 if asking for other user's data or 410 if nothing there.
+            aiohttp.web_response.Response: success and the config (as json),
+                or 204 if nothing available.  Error responses:
+                HTTPUnauthorized
+                HTTPBadRequest: inconsistent question or missing fields.
+                HTTPForbidden: trying to save to another user.
         """
         username = data["user"]
         question = data["question"]
-        # TODO - remove duplication or check it.
-        usernameCheck = request.match_info["user"]
+        save_to_user = request.match_info["user"]
         questionCheck = request.match_info["question"]
 
-        if username != usernameCheck or int(question) != int(questionCheck):
-            return web.Response(status=403)  # data inconsistent
+        if int(question) != int(questionCheck):
+            raise web.HTTPBadRequest(reason="question numbers inconsistent")
+        if username != save_to_user:
+            # TODO maybe manager should be able to?
+            raise web.HTTPForbidden(reason="you can only access your own rubric data")
 
-        rval = self.server.MgetUserRubricPanes(username, question)
+        rval = self.server.MgetUserRubricPanes(save_to_user, question)
         if rval[0]:  # worked
             return web.json_response(rval[1], status=200)
         else:  # nothing there.
@@ -153,26 +159,30 @@ class RubricHandler:
         """Add new rubric to DB and respond with its key
 
         Args:
-            data (dict): A dictionary including user/token and the new rubric to be created
-            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
+            data (dict): A dictionary including user/token and a blob of data to save
+                for the user's rubric tab setup.
+            request (aiohttp.web_request.Request): PUT `/MK/user/{user}/{question}`.
 
         Returns:
-            aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
+            aiohttp.web_response.Response: 200 on success or
+                HTTPUnauthorized
+                HTTPBadRequest: inconsistent question or missing fields.
+                HTTPForbidden: trying to save to another user.
         """
         username = data["user"]
         question = data["question"]
         rubricConfig = data["rubric_config"]
-        # TODO - remove duplication or check it.
-        usernameCheck = request.match_info["user"]
+        save_to_user = request.match_info["user"]
         questionCheck = request.match_info["question"]
 
-        if username != usernameCheck or int(question) != int(questionCheck):
-            return web.Response(status=409)  # data inconsistent
+        if int(question) != int(questionCheck):
+            raise web.HTTPBadRequest(reason="question numbers inconsistent")
+        if username != save_to_user:
+            # TODO maybe manager should be able to?
+            raise web.HTTPForbidden(reason="you can only save to your own rubric data")
 
-        if self.server.MsaveUserRubricPanes(username, question, rubricConfig):  # worked
-            return web.Response(status=200)
-        else:  # some sort of error
-            return web.Response(status=406)
+        self.server.MsaveUserRubricPanes(save_to_user, question, rubricConfig)
+        return web.Response(status=200)
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.

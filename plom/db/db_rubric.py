@@ -25,21 +25,32 @@ def McreateRubric(self, user_name, rubric):
     Args:
         user_name (str): name of user creating the rubric element
         rubric (dict): dict containing the rubric details.
-            For example
-            {kind: "relative", delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah"}
+            Must contain these fields:
+            `{kind: "relative", delta: "-1", text: "blah", question: 2}`
+            The following fields are optional and empty strings will be
+            substituted:
+            `{tags: "blah", meta: "blah"}`
+            Currently, its ok if it contains other fields: they are
+            ignored.
 
     Returns:
-        list: [True, key] - the new key generated
-    TODO: Needs some fail-case.
+        tuple: `(True, key)` or `(False, err_msg)` where `key` is the
+            key for the new rubric.  Can fail if missing fields.
     """
-
+    need_fields = ("kind", "delta", "text", "question")
+    optional_fields = ("tags", "meta")
+    if any(x not in rubric for x in need_fields):
+        return (False, "Must have all fields {}".format(need_field))
+    for f in optional_fields:
+        if f not in rubric:
+            rubric = rubric.copy()  # in case caller uses reference
+            rubric[f] = ""
     uref = User.get(name=user_name)  # authenticated, so not-None
-    # build a new key for the rubric - must be unique
-    key = generate_new_comment_ID()
-    while Rubric.get_or_none(key=key) is not None:
-        key = generate_new_comment_ID()
-    # key is now not present in DB
     with plomdb.atomic():
+        # build unique key while holding atomic access
+        key = generate_new_comment_ID()
+        while Rubric.get_or_none(key=key) is not None:
+            key = generate_new_comment_ID()
         Rubric.create(
             key=key,
             user=uref,
@@ -52,7 +63,7 @@ def McreateRubric(self, user_name, rubric):
             meta=rubric["meta"],
             tags=rubric["tags"],
         )
-    return [True, key]
+    return (True, key)
 
 
 def MgetRubrics(self, question_number=None):
@@ -85,34 +96,52 @@ def MgetRubrics(self, question_number=None):
     return rubric_list
 
 
-def MmodifyRubric(self, user_name, key, rubric):
-    """Create a new rubric entry in the DB
+def MmodifyRubric(self, user_name, key, change):
+    """Modify or create a rubric based on an existing rubric in the DB.
+
+    Currently this modifies the existing rubric, increasing its revision
+    number.  However, this is subject to change and should be considered
+    an implementation detail.  Its very likely we will move to an
+    immutable model.  At any rate, the returned `new_key` should be
+    considered as replacing the original and the old key should not be
+    used to place new annotations.  It might however be used to find
+    outdated ones to tag or otherwise update papers.
 
     Args:
         user_name (str): name of user creating the rubric element
         key(str): key for the rubric
-        rubric (dict): dict containing the rubric details.
-            For example
-            {kind: "relative", delta: "-1", text: "blah", question: "2", tags: "blah", meta: "meta-blah", key:"1234"}
+        change (dict): dict containing the changes to make to the
+            rubric.  Must contain these fields:
+            `{kind: "relative", delta: "-1", text: "blah", tags: "blah", meta: "blah"}`
+            Other fields will be ignored.  Note this means you can think
+            you are changing, e.g., the question but this will silently
+            not happen.
+            TODO: in the future we might prevent changing the "kind"
+            or the sign of the delta.
 
     Returns:
-        list: [True, key] - the new key generated, [False, "noSuchRubric"]
-
+        tuple: `(True, new_key)` containing the newly generated key
+             (which might be the old key but this is not promised),
+             or `(False, "incomplete")`, or `(False, "noSuchRubric")`.
     """
-
+    need_fields = ("delta", "text", "tags", "meta", "kind")
+    if any(x not in change for x in need_fields):
+        return (False, "incomplete")
     uref = User.get(name=user_name)  # authenticated, so not-None
     # check if the rubric exists made by this user - cannot modify other user's rubric
+    # TODO: should we have another bail case here `(False, "notYours")`?
+    # TODO: maybe manager will be able modify all rubrics.
     rref = Rubric.get_or_none(key=key, user=uref)
     if rref is None:
-        return [False, "noSuchRubric"]
+        return (False, "noSuchRubric")
 
     with plomdb.atomic():
-        rref.kind = rubric["kind"]
-        rref.delta = rubric["delta"]
-        rref.text = rubric["text"]
+        rref.kind = change["kind"]
+        rref.delta = change["delta"]
+        rref.text = change["text"]
         rref.modificationTime = datetime.now()
         rref.revision += 1
-        rref.meta = rubric["meta"]
-        rref.tags = rubric["tags"]
+        rref.meta = change["meta"]
+        rref.tags = change["tags"]
         rref.save()
-    return [True, key]
+    return (True, key)

@@ -20,17 +20,18 @@ if sys.version_info[0] == 2:
 from .specVerifier import SpecVerifier, specdir, get_question_label
 from .version import __version__
 
-Plom_API_Version = "35"
+Plom_API_Version = "36"
 Default_Port = 41984
 
 # Image types we expect the client to be able to handle, in lowercase
 # TODO: think about JBIG, etc: other stuff that commonly lives in PDF
 PlomImageExts = ("png", "jpg", "jpeg")
 
+# TODO: this should be a default and the PageScene should have a physical size.
 ScenePixelHeight = 2000
 
-# in points; absolute not relative to the above, TODO: should redo in absolute scale
-AnnFontSizePts = 24.0
+# I don't know what units this is, especially after Issue #1071.
+AnnFontSizePts = 34.0
 
 from .rules import isValidStudentNumber
 

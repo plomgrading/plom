@@ -177,7 +177,7 @@ class SceneParent(QWidget):
         self.scene.save()
         # Pickle the scene as a plom-file
         self.pickleIt()
-        return self.scene.score, self.scene.getRubrics()
+        return self.scene.score, self.scene.get_rubrics_from_page()
 
     def changeMark(self, delta):
         self.score += delta

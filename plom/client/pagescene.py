@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+import logging
+
 from PyQt5.QtCore import QEvent, QRectF, QPointF
 from PyQt5.QtGui import (
     QBrush,
@@ -56,7 +58,9 @@ class ScoreBox(QGraphicsTextItem):
         self.style = style
         self.setDefaultTextColor(self.style["annot_color"])
         font = QFont("Helvetica")
-        font.setPointSizeF(1.25 * fontsize)
+        # Note: PointSizeF seems effected by DPI on Windows (Issue #1071).
+        # Strangely, it seems like setPixelSize gives reliable sizes!
+        font.setPixelSize(1.25 * fontsize)
         self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -315,7 +319,6 @@ class PageScene(QGraphicsScene):
         self.undoStack = QUndoStack()
 
         # we don't want current font size from UI; use fixed physical size
-        # self.fontSize = self.font().pointSizeF()
         self.fontSize = AnnFontSizePts
         self._scale = 1.0
 
@@ -538,13 +541,13 @@ class PageScene(QGraphicsScene):
         self.fontSize = self._scale * AnnFontSizePts
         # TODO: don't like this 1.25 hardcoded
         font = QFont("Helvetica")
-        font.setPointSizeF(1.25 * self.fontSize)
+        font.setPixelSize(1.25 * self.fontSize)
         self.scoreBox.setFont(font)
         font = QFont("Helvetica")
-        font.setPointSizeF(self.fontSize)
+        font.setPixelSize(self.fontSize)
         self.ghostItem.blurb.setFont(font)
         font = QFont("Helvetica")
-        font.setPointSizeF(1.25 * self.fontSize)
+        font.setPixelSize(1.25 * self.fontSize)
         self.ghostItem.di.setFont(font)
         # TODO: position within dotted line, but breaks overall position
         # self.ghostItem.tweakPositions()
@@ -627,9 +630,9 @@ class PageScene(QGraphicsScene):
                     texts.append(X.getContents())
         return texts
 
-    def getRubrics(self):
+    def get_rubrics_from_page(self):
         """
-        Get the rubrics(comments) associated with this paper.
+        Get the rubrics associated with this paper.
 
         Returns:
             list: pairs of IDs and strings from each bit of text.
@@ -2318,6 +2321,17 @@ class PageScene(QGraphicsScene):
         # look at all the mid-draw flags and cancel accordingly.
         # the flags are arrowFlag, boxFlag, penFlag, rubricFlag
         # note - only one should be non-zero at a given time
+        log.debug(
+            "Flags = {}".format(
+                [
+                    self.arrowFlag,
+                    self.boxFlag,
+                    self.penFlag,
+                    self.rubricFlag,
+                    self.textFlag,
+                ]
+            )
+        )
         if self.arrowFlag > 0:  # midway through drawing a line
             self.arrowFlag = 0
             self.removeItem(self.lineItem)

@@ -104,6 +104,7 @@ def main():
     else:
         server = "localhost"
     subprocess.check_call(split(f"plom-build class --demo -w 1234 -s {server}"))
+    subprocess.check_call(split(f"plom-build rubric --demo -w 1234 -s {server}"))
     subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
     subprocess.check_call(split(f"plom-fake-scribbles -w 1234 -s {server}"))
 

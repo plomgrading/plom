@@ -8,21 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Rubric information now appears as tooltip on hover over rubric-list. Type shown on hover over the delta and tags/meta shown (if present) on hover over text.
-* There is now no marking mode - it is set by the rubrics used.
-* The escape-key will now cancel an annotation mid-draw (box,ellipse,line,arrows,rubric)
-* Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
-* `plom-demo` now has `--port` option.
 
 ### Changed
-* The left-hand-on-mouse option has been removed from annotator/marker - replaced with better key-binding options.
-* Rubrics have had significant change: they are now shared between users and can be grouped into "panes" within the user interface.
-* Rubrics are not longer saved on disc on client systems.
-* Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
-* Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
 
 ### Fixed
 
+
+
+## [0.6.0] - 2021-04-14
+
+### Added
+* Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
+* `plom-demo` now has `--port` option.
+* New `plom-build rubric` subcommand can upload/download rubric lists from the server.
+
+### Changed
+* The left-hand-on-mouse option has been removed from annotator/marker - replaced with general key-binding options.
+* Significant changes to rubrics: now shared between users and can be grouped into "tabs" within the user interface.
+* Client: "Deltas" are now a special kind of rubric with their own tab.
+* New client default keybindings involve a "spatial navigation" metaphor: left-right between tabs, up-down between rubrics.
+* Rubrics are not longer saved on disc on client systems.
+* Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
+* Client: The escape-key will now cancel an annotation mid-draw (box, ellipse, line, arrows, rubric)
+* Client: There is no longer an explicit choice of "marking up/down mode" - it is determined by the rubrics used.
+* Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
 
 
 ## [0.5.21] - 2021-03-18
@@ -427,7 +436,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.21...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.6.0...master
+[0.6.0]: https://gitlab.com/plom/plom/compare/v0.5.21...v0.6.0
 [0.5.21]: https://gitlab.com/plom/plom/compare/v0.5.19...v0.5.21
 [0.5.19]: https://gitlab.com/plom/plom/compare/v0.5.18...v0.5.19
 [0.5.18]: https://gitlab.com/plom/plom/compare/v0.5.17...v0.5.18

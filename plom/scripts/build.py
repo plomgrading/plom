@@ -11,13 +11,13 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import io
+import json
 import os
+from pathlib import Path
 from textwrap import dedent, wrap
 
-# import tools for dealing with resource files
 import pkg_resources
-import pandas
+import toml
 
 from plom import __version__
 from plom import SpecVerifier
@@ -29,6 +29,49 @@ from plom.produce.demotools import buildDemoSourceFiles
 
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
 from plom.finish import clear_manager_login
+
+
+def upload_rubrics(msgr, rubrics):
+    """Upload a list of rubrics to a server."""
+    for rub in rubrics:
+        # TODO: some autogen ones are also made by manager?
+        if rub.get("username", None) == "HAL":
+            continue
+        # TODO: ask @arechnitzer about this question_number discrepency
+        rub["question"] = rub["question_number"]
+        msgr.McreateRubric(rub)
+
+
+def upload_demo_rubrics(msgr, numquestions=3):
+    """Load some demo rubrics and upload to server.
+
+    The demo data is a bit sparsified: we fill in missing pieces and
+    multiply over questions.
+    """
+    # How do I toml.load from a resource_stream?
+    rubrics_in = toml.loads(
+        pkg_resources.resource_string("plom", "demo_rubrics.toml").decode()
+    )
+    rubrics_in = rubrics_in["rubric"]
+    rubrics = []
+    for rub in rubrics_in:
+        if not hasattr(rub, "kind"):
+            if rub["delta"] == ".":
+                rub["kind"] = "neutral"
+            elif rub["delta"].startswith("+") or rub["delta"].startswith("-"):
+                rub["kind"] = "relative"
+            else:
+                raise ValueError(f'not sure how to map "kind" for rubric:\n  {rub}')
+        # Multiply rubrics w/o question numbers, avoids repetition in demo file
+        if not hasattr(rub, "question_number"):
+            for q in range(1, numquestions + 1):
+                r = rub.copy()
+                r["question_number"] = q
+                rubrics.append(r)
+        else:
+            rubrics.append(rub)
+    upload_rubrics(msgr, rubrics)
+    return len(rubrics)
 
 
 def checkTomlExtension(fname):
@@ -179,6 +222,41 @@ spB.add_argument(
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
+sp = sub.add_parser(
+    "rubric",
+    help="Add pre-build rubrics",
+    description="""
+        Add pre-made rubrics to the server.  Your graders will be able to
+        build their own rubrics but if you have premade rubrics you can
+        add them here or by using the plom-manager tool.
+        This tool can also dump the current rubrics from a running server.""",
+)
+sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
+group = sp.add_mutually_exclusive_group(required=True)
+group.add_argument(
+    "--dump",
+    type=str,
+    metavar="FILE",
+    help="""Dump the current rubrics from SERVER into FILE,
+        which can be a .toml, .json, or .csv
+        (TODO: .csv not yet implemented).
+        Defaults to FILE.toml if no extension specified..""",
+)
+group.add_argument(
+    "rubric_file",
+    nargs="?",
+    help="""
+        Upload a pre-build list of rubrics from this file.
+        This can be a .json, .toml or .csv file
+        (TODO: .csv not yet implemented).""",
+)
+group.add_argument(
+    "--demo",
+    action="store_true",
+    help="Use auto-generated rubric list.",
+)
+
 spClear = sub.add_parser(
     "clear",
     help='Clear "manager" login',
@@ -247,6 +325,52 @@ def main():
         status = build_database(args.server, args.password)
         print(status)
         build_papers(args.server, args.password, args.no_pdf, args.without_qr)
+
+    elif args.command == "rubric":
+        msgr = get_messenger(args.server, args.password)
+        try:
+            if args.demo:
+                print("Uploading demo rubrics...")
+                N = upload_demo_rubrics(msgr)
+                print(f"Uploaded {N} demo rubrics")
+
+            elif args.dump:
+                filename = Path(args.dump)
+                if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+                    filename = filename.with_suffix(filename.suffix + ".toml")
+                print(f'Saving server\'s current rubrics to "{filename}"')
+                rubrics = msgr.MgetRubrics()
+                if filename.suffix == ".json":
+                    with open(filename, "w") as f:
+                        json.dump(rubrics, f, indent="  ")
+                elif filename.suffix == ".toml":
+                    with open(filename, "w") as f:
+                        toml.dump({"rubric": rubrics}, f)
+                else:
+                    raise NotImplementedError(
+                        f'Don\'t know how to export to "{filename}"'
+                    )
+            else:
+                filename = Path(args.rubric_file)
+                if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+                    filename = filename.with_suffix(filename.suffix + ".toml")
+                if filename.suffix == ".json":
+                    with open(filename, "r") as f:
+                        rubrics = json.load(f)
+                elif filename.suffix == ".toml":
+                    with open(filename, "r") as f:
+                        rubrics = toml.load(f)["rubric"]
+                else:
+                    raise NotImplementedError(
+                        f'Don\'t know how to import from "{filename}"'
+                    )
+                print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
+                upload_rubrics(msgr, rubrics)
+
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

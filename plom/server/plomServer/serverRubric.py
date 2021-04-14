@@ -9,9 +9,12 @@ Rubric-related server methods.
 
 import json
 import logging
-import os
+from pathlib import Path
+
 
 log = logging.getLogger("server")
+
+rubric_cfg_dir = Path("userRubricPaneData")
 
 
 def McreateRubric(self, username, new_rubric):
@@ -22,12 +25,8 @@ def McreateRubric(self, username, new_rubric):
         rubric (dict): a dict containing the rubric info
 
     Returns:
-        list: [True, new-key] or [False]
+        tuple: `(True, key)` or `(False, err_msg)`.
     """
-    # check rubric sent has required fields
-    if any(X not in new_rubric for X in ["delta", "text", "question", "tags", "meta"]):
-        return [False]
-    # else let DB create the new element and return the new key
     return self.DB.McreateRubric(username, new_rubric)
 
 
@@ -45,40 +44,21 @@ def MmodifyRubric(self, username, key, updated_rubric):
         rubric (dict): a dict containing the rubric info
 
     Returns:
-        list: [True, new-key] or [False]
+        tuple: `(True, new_key)` or `(False, err_msg)`.
     """
-    # check rubric sent has required fields
-    if any(
-        X not in updated_rubric for X in ["delta", "text", "question", "tags", "meta"]
-    ):
-        return [False, "incomplete"]
-    # else let DB modify the rubric and return the key.
     return self.DB.MmodifyRubric(username, key, updated_rubric)
 
 
 def MgetUserRubricPanes(self, username, question):
-    try:
-        paneConfigFilename = os.path.join(
-            "userRubricPaneData", "rubricPanes.{}.{}.json".format(username, question)
-        )
-        if os.path.isfile(paneConfigFilename):
-            pass
-        else:
-            return [False]
-        with open(paneConfigFilename) as infile:
-            rubricPanes = json.load(infile)
-        return [True, rubricPanes]
-    except:
+    panefile = rubric_cfg_dir / "rubricPanes.{}.{}.json".format(username, question)
+    if not panefile.exists():
         return [False]
+    with open(panefile) as f:
+        rubricPanes = json.load(f)
+    return [True, rubricPanes]
 
 
 def MsaveUserRubricPanes(self, username, question, rubricPanes):
-    try:
-        paneConfigFilename = os.path.join(
-            "userRubricPaneData", "rubricPanes.{}.{}.json".format(username, question)
-        )
-        with open(paneConfigFilename, "w") as outfile:
-            json.dump(rubricPanes, outfile)
-        return True
-    except:
-        return False
+    panefile = rubric_cfg_dir / "rubricPanes.{}.{}.json".format(username, question)
+    with open(panefile, "w") as f:
+        json.dump(rubricPanes, f)
