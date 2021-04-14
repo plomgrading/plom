@@ -628,7 +628,7 @@ binary_upload:
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
     - echo "" >> release_desc.md
-    - echo "https://pypi.org/project/plom/$VER  Find Plom on PyPI" >> release_desc.md
+    - echo "https://pypi.org/project/plom  Find Plom on PyPI" >> release_desc.md
     - echo "https://flathub.org/apps/details/org.plomgrading.PlomClient  Install Plom Client from Flathub (GNU/Linux)" >> release_desc.md
     - echo "https://hub.docker.com/r/plomgrading/server  Plom Server on DockerHub" >> release_desc.md
     - cat release_desc.md
