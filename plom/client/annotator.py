@@ -187,7 +187,10 @@ class Annotator(QWidget):
             self.loadNewTGV(*initialData)
 
         # since we now know question etc, we can now fire up initial rubrics
-        self.rubric_widget.setInitialRubrics()
+        # we may have pre-existing user-tab state
+        self.rubric_widget.setInitialRubrics(
+            self.parentMarkerUI.annotatorSettings["rubricTabState"]
+        )
 
         # Grab window settings from parent
         self.loadWindowSettings()
@@ -1358,12 +1361,6 @@ class Annotator(QWidget):
             self.restoreGeometry(self.parentMarkerUI.annotatorSettings["geometry"])
         else:
             self.showMaximized()
-
-        # load the state of the rubric list widget
-        if self.parentMarkerUI.annotatorSettings["rubricTabState"] is not None:
-            self.rubric_widget.setRubricTabsFromState(
-                self.parentMarkerUI.annotatorSettings["rubricTabState"]
-            )
 
         # remember the "do not show again" checks
         if self.parentMarkerUI.annotatorSettings["markWarnings"] is not None:

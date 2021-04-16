@@ -704,7 +704,6 @@ class RubricWidget(QWidget):
         grid.setContentsMargins(0, 0, 0, 0)
         deltaP_label = "+\N{Greek Small Letter Delta}"
         deltaN_label = "\N{Minus Sign}\N{Greek Small Letter Delta}"
-        default_user_tabs = ["\N{Black Star}", "\N{Black Heart Suit}"]
         self.tabS = RubricTable(self, shortname="Shared", tabType="show")
         self.tabDeltaP = RubricTable(self, shortname=deltaP_label, tabType="delta")
         self.tabDeltaN = RubricTable(self, shortname=deltaN_label, tabType="delta")
@@ -712,9 +711,6 @@ class RubricWidget(QWidget):
         self.RTW.setMovable(True)
         self.RTW.tabBar().setChangeCurrentOnDrag(True)
         self.RTW.addTab(self.tabS, self.tabS.shortname)
-        for name in default_user_tabs:
-            tab = RubricTable(self, shortname=name)
-            self.RTW.addTab(tab, tab.shortname)
         self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
         self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
@@ -785,8 +781,10 @@ class RubricWidget(QWidget):
     def add_new_tab(self, name=None):
         """Add new user-defined tab either to end or near end.
 
-        If the delta tab is last, insert before that.  Otherwise append
-        to the end of tab list.
+        The new tab is inserted after the right-most non-delta tab.
+        For example, the default config has delta tabs at the end; if
+        user adds a new tab, it appears before these.  But the user may
+        have rearranged the delta tabs left of their custom tabs.
 
         args:
             name (str/None): name of the new tab.  If omitted or None,
@@ -818,10 +816,11 @@ class RubricWidget(QWidget):
                 extra = f"{counter}"
 
         tab = RubricTable(self, shortname=name)
-        # new tab inserted after rightmost non-delta
+        # find rightmost non-delta
         n = self.RTW.count() - 1
         while self.RTW.widget(n).is_delta_tab() and n > 0:  # small sanity check
             n = n - 1
+        # insert tab after it
         self.RTW.insertTab(n + 1, tab, tab.shortname)
 
     def refreshRubrics(self):
@@ -881,10 +880,24 @@ class RubricWidget(QWidget):
         else:
             self.setRubricTabsFromState(wr.wranglerState)
 
-    def setInitialRubrics(self):
-        """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
+    def setInitialRubrics(self, user_tab_state=None):
+        """Grab rubrics from server and set sensible initial values.
+
+        Note: must be called after annotator knows its tgv etc, so
+        maybe difficult to call from __init__.  TODO: a possible
+        refactor would have the caller (which is probably `parent`)
+        get the server rubrics list and pass in as an argument.
+
+        args:
+            wranglerState (dict/None): a representation of the state of
+                the user's tabs, or None.  If None then initialize with
+                some empty tabs.
+        """
         self.rubrics = self.parent.getRubricsFromServer()
-        self.setRubricTabsFromState()
+        if not user_tab_state:
+            # no user-state: start with single empty tab
+            self.add_new_tab()
+        self.setRubricTabsFromState(user_tab_state)
 
     def setRubricTabsFromState(self, wranglerState=None):
         """Set rubric tabs (but not rubrics themselves) from saved data.
@@ -898,20 +911,13 @@ class RubricWidget(QWidget):
                 or it could be "stale" in the sense that new rubrics
                 have arrived or some have been deleted.  Can be None
                 meaning no state.
-                The contents should be documented elsewhere and
-                linked here but must contain at least `shown`, `hidden`,
-                `tabs`, and `user_tab_names`.  The last two may be empty
-                lists.  Subject to change without notice, your milleage
-                may vary, etc.
+                The contents must contain lists `shown`, `hidden`,
+                `tabs`, and `user_tab_names`.  The last two are lists of
+                lists.  Any of these could be empty.
 
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
-
-        TODO: if new Annotator, we may want to clear the tabs before
-        calling this.  For example, user has one tab saved but new
-        Annotator starts with two by default: see Issue #1506 and the
-        `if not None` code in Annotator.
         """
         if not wranglerState:
             wranglerState = {
