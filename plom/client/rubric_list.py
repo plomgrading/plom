@@ -884,8 +884,7 @@ class RubricWidget(QWidget):
         """
         self.rubrics = self.parent.getRubricsFromServer()
         if not user_tab_state:
-            # no user-state: start with some default tabs
-            self.add_new_tab()
+            # no user-state: start with single empty tab
             self.add_new_tab()
         self.setRubricTabsFromState(user_tab_state)
 
