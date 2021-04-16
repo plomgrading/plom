@@ -869,10 +869,25 @@ class RubricWidget(QWidget):
         else:
             self.setRubricTabsFromState(wr.wranglerState)
 
-    def setInitialRubrics(self):
-        """Grab rubrics from server and set sensible initial values. Called after annotator knows its tgv etc."""
+    def setInitialRubrics(self, user_tab_state=None):
+        """Grab rubrics from server and set sensible initial values.
+
+        Note: must be called after annotator knows its tgv etc, so
+        maybe difficult to call from __init__.  TODO: a possible
+        refactor would have the caller (which is probably `parent`)
+        get the server rubrics list and pass in as an argument.
+
+        args:
+            wranglerState (dict/None): a representation of the state of
+                the user's tabs, or None.  If None then initialize with
+                some empty tabs.
+        """
         self.rubrics = self.parent.getRubricsFromServer()
-        self.setRubricTabsFromState()
+        if not user_tab_state:
+            # no user-state: start with some default tabs
+            self.add_new_tab()
+            self.add_new_tab()
+        self.setRubricTabsFromState(user_tab_state)
 
     def setRubricTabsFromState(self, wranglerState=None):
         """Set rubric tabs (but not rubrics themselves) from saved data.
@@ -886,20 +901,13 @@ class RubricWidget(QWidget):
                 or it could be "stale" in the sense that new rubrics
                 have arrived or some have been deleted.  Can be None
                 meaning no state.
-                The contents should be documented elsewhere and
-                linked here but must contain at least `shown`, `hidden`,
-                `tabs`, and `user_tab_names`.  The last two may be empty
-                lists.  Subject to change without notice, your milleage
-                may vary, etc.
+                The contents must contain lists `shown`, `hidden`,
+                `tabs`, and `user_tab_names`.  The last two are lists of
+                lists.  Any of these could be empty.
 
         If there is too much data for the number of tabs, the extra data
         is discarded.  If there is too few data, pad with empty lists
         and/or leave the current lists as they are.
-
-        TODO: if new Annotator, we may want to clear the tabs before
-        calling this.  For example, user has one tab saved but new
-        Annotator starts with two by default: see Issue #1506 and the
-        `if not None` code in Annotator.
         """
         if not wranglerState:
             wranglerState = {
