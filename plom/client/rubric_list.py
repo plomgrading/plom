@@ -198,9 +198,17 @@ class RubricTable(QTableWidget):
         elif self.is_user_tab():
             self.defaultContextMenuEvent(event)
         elif self.is_delta_tab():
-            event.ignore()
+            self.tabContextMenuEvent(event)
         else:
             event.ignore()
+
+    def tabContextMenuEvent(self, event):
+        menu = QMenu(self)
+        a = QAction("Add new tab", self)
+        a.triggered.connect(lambda: self.parent.add_new_tab())
+        menu.addAction(a)
+        menu.popup(QCursor.pos())
+        event.accept()
 
     def defaultContextMenuEvent(self, event):
         # first try to get the row from the event
