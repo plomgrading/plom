@@ -773,8 +773,10 @@ class RubricWidget(QWidget):
     def add_new_tab(self, name=None):
         """Add new user-defined tab either to end or near end.
 
-        If the delta tab is last, insert before that.  Otherwise append
-        to the end of tab list.
+        The new tab is inserted after the right-most non-delta tab.
+        For example, the default config has delta tabs at the end; if
+        user adds a new tab, it appears before these.  But the user may
+        have rearranged the delta tabs left of their custom tabs.
 
         args:
             name (str/None): name of the new tab.  If omitted or None,
@@ -806,10 +808,11 @@ class RubricWidget(QWidget):
                 extra = f"{counter}"
 
         tab = RubricTable(self, shortname=name)
-        # new tab inserted after rightmost non-delta
+        # find rightmost non-delta
         n = self.RTW.count() - 1
         while self.RTW.widget(n).is_delta_tab() and n > 0:  # small sanity check
             n = n - 1
+        # insert tab after it
         self.RTW.insertTab(n + 1, tab, tab.shortname)
 
     def refreshRubrics(self):
