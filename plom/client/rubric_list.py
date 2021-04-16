@@ -718,6 +718,9 @@ class RubricWidget(QWidget):
         self.RTW.addTab(self.tabDeltaP, self.tabDeltaP.shortname)
         self.RTW.addTab(self.tabDeltaN, self.tabDeltaN.shortname)
         self.RTW.setCurrentIndex(0)  # start on shared tab
+        # connect the 'tab-change'-signal to 'handleClick' to fix #1497
+        self.RTW.currentChanged.connect(self.handleClick)
+
         self.tabHide = RubricTable(self, sort=True, tabType="hide")
         self.groupHide = QTabWidget()
         self.groupHide.addTab(self.tabHide, "Hidden")
@@ -1091,7 +1094,7 @@ class RubricWidget(QWidget):
             numtabs = self.RTW.count()
             nt = (self.RTW.currentIndex() + 1) % numtabs
             self.RTW.setCurrentIndex(nt)
-            self.handleClick()
+            # tab-change signal handles update - do not need 'handleClick' - called automatically
 
     def prev_tab(self):
         """Move to previous tab, only if tabs are shown."""
@@ -1099,7 +1102,7 @@ class RubricWidget(QWidget):
             numtabs = self.RTW.count()
             pt = (self.RTW.currentIndex() - 1) % numtabs
             self.RTW.setCurrentIndex(pt)
-            self.handleClick()
+            # tab-change signal handles update - do not need 'handleClick' - called automatically
 
     def get_nonrubric_text_from_page(self):
         """Find any text that isn't already part of a formal rubric.
