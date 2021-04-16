@@ -500,6 +500,10 @@ class RubricTable(QTableWidget):
         # now sort in numerical order away from 0 and add
         for rb in sorted(delta_rubrics, key=lambda r: abs(int(r["delta"]))):
             self.appendNewRubric(rb)
+        # finally append the manager-created absolute rubrics (not HAL's no-answer ones)
+        for rb in rubrics:
+            if rb["username"] == "manager" and rb["kind"] == "absolute":
+                self.appendNewRubric(rb)
 
     def getKeyFromRow(self, row):
         return self.item(row, 0).text()
