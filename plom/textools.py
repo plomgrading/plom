@@ -68,7 +68,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
                 "-interaction=nonstopmode",
                 "-no-shell-escape",
                 "-pdf-",
-                "-ps-",
+                "-ps",
                 "-dvi",
                 "frag.tex",
             ],
@@ -97,6 +97,23 @@ def texFragmentToPNG(fragment, *, dpi=225):
                 "frag.dvi",
                 "-o",
                 "frag.png",
+            ],
+            cwd=tmpdir,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+        )
+
+        # See https://www.ghostscript.com/doc/9.54.0/Use.htm
+        convertIt2 = subprocess.run(
+            [
+                "gs",
+                "-dSAFER",  # Give gs permission to modify filesystem
+                "-dBATCH",
+                "-dNOPAUSE",  # Skip prompting of user
+                "-sDEVICE=pngalpha",
+                f"-r{dpi}",
+                "-sOutputFile=frag.png",
+                "frag.ps",
             ],
             cwd=tmpdir,
             stderr=subprocess.STDOUT,
