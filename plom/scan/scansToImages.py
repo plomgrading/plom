@@ -213,12 +213,6 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             )
         )
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
-        if pix.height != ScenePixelHeight:
-            warnings.warn(
-                "rounding error: height of {} instead of {}".format(
-                    pix.height, ScenePixelHeight
-                )
-            )
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
