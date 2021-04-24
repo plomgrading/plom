@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Colin B. Macdonald
 
 import fitz
 import json
@@ -85,7 +84,7 @@ def build_test_page_substitute(test_number, page_number, version_number):
 
     page_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
 
-    page_not_submitted_image = page_not_submitted_pdf[0].getPixmap(
+    page_not_submitted_image = page_not_submitted_pdf[0].get_pixmap(
         alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
     )
     page_not_submitted_image.writePNG(
@@ -128,7 +127,7 @@ def build_homework_question_substitute(student_id, question_number):
 
     question_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
 
-    question_not_submitted_image = question_not_submitted_pdf[0].getPixmap(
+    question_not_submitted_image = question_not_submitted_pdf[0].get_pixmap(
         alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
     )
     question_not_submitted_image.writePNG(

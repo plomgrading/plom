@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
@@ -212,7 +212,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 basename, z, "; ".join(msgs)
             )
         )
-        pix = p.getPixmap(matrix=fitz.Matrix(z, z), annots=True)
+        pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
         if pix.height != ScenePixelHeight:
             warnings.warn(
                 "rounding error: height of {} instead of {}".format(
