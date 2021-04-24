@@ -203,15 +203,45 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
-        # looks they use ceil not round so decrease a little bit
-        z = (float(ScenePixelHeight) - 0.01) / p.MediaBoxSize[1]
+        aspect = p.mediabox_size[0] / p.mediabox_size[1]
+        H = ScenePixelHeight
+        W = H * aspect
+        MINWIDTH = 1024
+        MAXHEIGHT = 15999
+        MAXWIDTH = 3 * ScenePixelHeight // 2
+        assert MINWIDTH < ScenePixelHeight
+        # Note logic not same between tall and wide:
+        #   * tall: "Safeway receipt", observed from "infinite paper" software
+        #   * wide: "fortune cookie", little strip cropped from regular sheet
+        # In the tall case, we use extra pixels vertically because there is
+        # actually more to resolve.  But I've never seen a wide case that was
+        # wider than a landscape sheet of paper.  Also, currently, Client's
+        # would display such a thin wide strip at to large a scale.
+        if aspect > 1:
+            if W > MAXWIDTH:
+                # TODO: warn of extreme aspect ratio?  Flag to control this?
+                W = MAXWIDTH
+                H = W / aspect
+                if H < 100:
+                    raise ValueError("Scanned a strip too wide and thin?")
+        else:
+            if W < MINWIDTH:
+                W = MINWIDTH
+                H = W / aspect
+                if H > MAXHEIGHT:
+                    H = MAXHEIGHT
+                    W = H * aspect
+                    if W < 100:
+                        raise ValueError("Scanned a long strip of thin paper?")
+
+        # fitz uses ceil (not round) so decrease a little bit
+        if W > H:
+            z = (float(W) - 0.0001) / p.mediabox_size[0]
+        else:
+            z = (float(H) - 0.0001) / p.mediabox_size[1]
         ## For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
-        print(
-            "{}: Fitz render z={:4.2f}. No extract b/c: {}".format(
-                basename, z, "; ".join(msgs)
-            )
-        )
+        print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
