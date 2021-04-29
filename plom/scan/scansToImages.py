@@ -13,7 +13,7 @@ import subprocess
 from multiprocessing import Pool
 import math
 import tempfile
-import warnings
+from warnings import warn
 
 import toml
 from tqdm import tqdm
@@ -243,6 +243,11 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         # z = random.uniform(1, 5)
         print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
+        if not (W == pix.width or H == pix.height):
+            warn(
+                "Debug: some kind of rounding error in scaling image?"
+                "  Rendered to {pix.width}x{pix.height} from target {W}x{H}"
+            )
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
@@ -352,11 +357,7 @@ def normalizeJPEGOrientation(f):
     im = jpegtran.JPEGImage(f)
     if im.exif_orientation:
         if im.width % 16 or im.height % 16:
-            warnings.warn(
-                '  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(
-                    f
-                )
-            )
+            warn(f'  jpeg "{f}" dims not mult of 16: re-orientations may be lossy')
         im2 = im.exif_autotransform()
         print(
             '  normalizing "{}" {}x{} to "{}" {}x{}'.format(
