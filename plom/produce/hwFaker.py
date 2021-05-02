@@ -41,7 +41,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
             page = doc.new_page(-1, 612, 792)  # put page at end
             if pn == 0:  # put name and student number on start of Q
                 rect1 = fitz.Rect(20, 24, 400, 54)
-                rc = page.insertTextbox(
+                rc = page.insert_textbox(
                     rect1,
                     "LPage for Q.{} -".format(q) + studentName + ":" + studentID,
                     fontsize=14,
@@ -53,7 +53,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
                 assert rc > 0
             else:  # just put Question
                 rect1 = fitz.Rect(20, 24, 400, 54)
-                rc = page.insertTextbox(
+                rc = page.insert_textbox(
                     rect1,
                     "LPage for Q.{} -".format(q),
                     fontsize=14,
@@ -67,7 +67,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
             text = random.choice(possibleAns)
-            rc = page.insertTextbox(
+            rc = page.insert_textbox(
                 rect,
                 text,
                 fontsize=13,
@@ -117,7 +117,7 @@ def scribble_doc(doc, studentID, studentName, maximum_pages, q):
             if pn == 0:
                 # put name and student number on p1 of the Question
                 rect1 = fitz.Rect(20, 24, 300, 44)
-                rc = page.insertTextbox(
+                rc = page.insert_textbox(
                     rect1,
                     "Q.{} -".format(q) + studentName + ":" + studentID,
                     fontsize=14,
@@ -132,7 +132,7 @@ def scribble_doc(doc, studentID, studentName, maximum_pages, q):
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
             text = random.choice(possibleAns)
-            rc = page.insertTextbox(
+            rc = page.insert_textbox(
                 rect,
                 text,
                 fontsize=13,

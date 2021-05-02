@@ -69,7 +69,7 @@ def build_test_page_substitute(test_number, page_number, version_number):
     page_width = page_not_submitted_pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
     text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    insertion_confirmed = page_not_submitted_pdf[0].insertTextbox(
+    insertion_confirmed = page_not_submitted_pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -82,7 +82,7 @@ def build_test_page_substitute(test_number, page_number, version_number):
         insertion_confirmed > 0
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    page_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
+    page_not_submitted_pdf[0].draw_rect(rect, color=[0, 0, 0])
 
     page_not_submitted_image = page_not_submitted_pdf[0].get_pixmap(
         alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
@@ -112,7 +112,7 @@ def build_homework_question_substitute(student_id, question_number):
     page_width = question_not_submitted_pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
     text = "{}.{}".format(student_id, question_number)
-    insertion_confirmed = question_not_submitted_pdf[0].insertTextbox(
+    insertion_confirmed = question_not_submitted_pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -125,7 +125,7 @@ def build_homework_question_substitute(student_id, question_number):
         insertion_confirmed > 0
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    question_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
+    question_not_submitted_pdf[0].draw_rect(rect, color=[0, 0, 0])
 
     question_not_submitted_image = question_not_submitted_pdf[0].get_pixmap(
         alpha=False, matrix=fitz.Matrix(image_scale, image_scale)

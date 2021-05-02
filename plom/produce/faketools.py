@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -165,7 +165,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 # TODO - there should be an assert or something here?
 
             digit_rectangle = fitz.Rect(228, 335, 550, 450)
-            insertion_confirmed = front_page.insertTextbox(
+            insertion_confirmed = front_page.insert_textbox(
                 digit_rectangle,
                 student_name,
                 fontsize=digit_font_size,
@@ -185,7 +185,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
             # TODO: "helv" vs "Helvetica"
             if page_index >= 1:
-                insertion_confirmed = pdf_page.insertTextbox(
+                insertion_confirmed = pdf_page.insert_textbox(
                     random_answer_rect,
                     random_answer_text,
                     fontsize=answer_font_size,
@@ -296,7 +296,7 @@ def make_colliding_pages(paper_dir_path, outfile):
             to_page=test_length - 1,
             start_at=colliding_page_index,
         )
-        insertion_confirmed = all_pdf_documents[colliding_page_index].insertTextbox(
+        insertion_confirmed = all_pdf_documents[colliding_page_index].insert_textbox(
             fitz.Rect(100, 100, 500, 500),
             "I was dropped on the floor and rescanned.",
             fontsize=colliding_page_font_size,
