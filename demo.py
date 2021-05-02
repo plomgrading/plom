@@ -53,11 +53,11 @@ class PlomDemo():
         cwd = os.getcwd()
         try:
             os.chdir(self.tmpdir)
+            subprocess.check_call(split("plom-server init"))
+            subprocess.check_call(split("plom-server users --demo"))
             subprocess.check_call(
                 split("plom-build new --demo --demo-num-papers {}".format(self._numpapers))
             )
-            subprocess.check_call(split("plom-server init"))
-            subprocess.check_call(split("plom-server users --demo"))
         finally:
             os.chdir(cwd)
         # TODO: maybe ServerProcess should do this itself?
