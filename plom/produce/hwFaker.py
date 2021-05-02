@@ -1,28 +1,24 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
-import csv
 import os
 import random
 from pathlib import Path
-from glob import glob
 
 from getpass import getpass
-import json
-import base64
 import fitz
 
-from . import paperdir as _paperdir
 from plom import __version__
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 
 from .faketools import possible_answers as possibleAns
 
