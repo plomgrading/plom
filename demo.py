@@ -6,22 +6,17 @@
 import os
 import shutil
 import time
-from warnings import warn
 from multiprocessing import Process
-from threading import Thread
 import subprocess
 from shlex import split
 import tempfile
 from pathlib import Path
 
-
-# TODO: this seems to run code just by importing... yuck
-#from plom.server import theServer as plomServer
+from plom.server import theServer as plomServer
 
 
 class ServerProcess(Process):
     def run(self):
-        from plom.server import theServer as plomServer
         plomServer.launch()
 
 
