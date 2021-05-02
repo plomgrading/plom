@@ -253,13 +253,13 @@ def extractImageFromFitzPage(page, doc):
             and `ext`.  `d["image"]` is the raw binary data.
     """
 
-    imlist = page.getImageList()
+    imlist = page.get_images()
     if len(imlist) > 1:
         return False, "More than one image"
     if len(imlist) == 0:
         return False, "Image List is Empty"
 
-    d = doc.extractImage(imlist[0][0])
+    d = doc.extract_image(imlist[0][0])
     # TODO: log.debug this:
     # print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
     width = d.get("width")

@@ -38,7 +38,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     for q in doneQ:
         # construct pages
         for pn in range(random.randint(1, 2)):
-            page = doc.newPage(-1, 612, 792)  # put page at end
+            page = doc.new_page(-1, 612, 792)  # put page at end
             if pn == 0:  # put name and student number on start of Q
                 rect1 = fitz.Rect(20, 24, 400, 54)
                 rc = page.insertTextbox(
@@ -113,7 +113,7 @@ def scribble_doc(doc, studentID, studentName, maximum_pages, q):
     if True:
         # construct pages
         for pn in range(random.randint(1, maximum_pages)):
-            page = doc.newPage(-1, 612, 792)  # page at end
+            page = doc.new_page(-1, 612, 792)  # page at end
             if pn == 0:
                 # put name and student number on p1 of the Question
                 rect1 = fitz.Rect(20, 24, 300, 44)
