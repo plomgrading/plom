@@ -459,10 +459,8 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False
     # check if fname is in local archive (by checking md5sum)
     prevname = isInArchive(pdf_fname)
     if prevname:
-        print(
-            "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
-                pdf_fname, prevname
-            )
+        warn(
+            f"{pdf_fname} is in the PDF archive: same md5sum as previous {prevname}; will not process."
         )
         return
     makeBundleDirectories(pdf_fname, bundle_dir)
