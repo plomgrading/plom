@@ -4,19 +4,19 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
-import sys
 import shlex
 import subprocess
 import os
-import fitz
-import pyqrcode
 import tempfile
 from pathlib import Path
 
-from plom.tpv_utils import encodeTPV
-from . import paperdir
+import pyqrcode
+import fitz
 
-# paperdir = "papersToPrint"
+from plom.tpv_utils import encodeTPV
+from . import paperdir as _paperdir
+
+paperdir = Path(_paperdir)
 
 
 # TODO: Complete the test mode functionality
@@ -384,11 +384,9 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.com/plom/plom/issues/284
     if extra:
-        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-            str(test).zfill(4), extra["id"]
-        )
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
     else:
-        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
     # save with ID-number is making named papers = issue 790
     exam.save(
         save_name,
@@ -483,9 +481,7 @@ def make_fakePDF(
 ):
     """Twin to the real make_pdf command - makes empty files."""
     if extra:
-        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-            str(test).zfill(4), extra["id"]
-        )
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
     else:
-        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
     save_name.touch()
