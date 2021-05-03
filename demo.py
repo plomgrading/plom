@@ -17,7 +17,7 @@ from plom import Default_Port
 from plom.server import theServer as plomServer
 
 
-class ServerProcess(Process):
+class _PlomServerProcess(Process):
     def run(self):
         plomServer.launch()
 
@@ -73,7 +73,7 @@ class PlomDemo:
         # TODO: maybe ServerProcess should do this itself?
         try:
             os.chdir(self.tmpdir)
-            self.srv_proc = ServerProcess()
+            self.srv_proc = _PlomServerProcess()
             self.srv_proc.start()
         finally:
             os.chdir(cwd)
