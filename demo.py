@@ -85,12 +85,7 @@ class PlomDemo:
         """make fake data and push it into the plom server."""
         cwd = os.getcwd()
         try:
-            env = {
-                **os.environ,
-                "PLOM_SERVER": f"localhost:{self.port}",
-                "PLOM_MANAGER_PASSWORD": "1234",
-                "PLOM_SCAN_PASSWORD": "4567",
-            }
+            env = {**os.environ, **self.get_env_vars()}
             subprocess.check_call(split("plom-build class --demo"), env=env)
             subprocess.check_call(split("plom-build make"), env=env)
             # TODO: does not respect env vars (Issue #1545)
@@ -115,6 +110,16 @@ class PlomDemo:
         self.srv_proc.close()
         print('Erasing demo tmpdir "{}"'.format(self.tmpdir))
         shutil.rmtree(self.tmpdir)
+
+    def get_env_vars(self):
+        """Return the log details for this server as dict."""
+        return {
+            "PLOM_SERVER": f"localhost:{self.port}",
+            "PLOM_MANAGER_PASSWORD": "1234",
+            "PLOM_SCAN_PASSWORD": "4567",
+            "PLOM_USER": "user0",
+            "PLOM_PASSWORD": "0123",
+        }
 
 
 class QuickDemo(PlomDemo):
