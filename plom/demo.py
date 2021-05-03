@@ -122,13 +122,18 @@ class PlomDemo:
         }
 
 
-class QuickDemo(PlomDemo):
+class PlomQuickDemo(PlomDemo):
+    """Quickly start a Plom demo server.
+
+    Tries to start quickly by only using a few papers.
+    """
+
     def __init__(self, port=None):
         super().__init__(3, port=port)
 
 
 if __name__ == "__main__":
-    demo = QuickDemo(port=41981)
+    demo = PlomQuickDemo(port=41981)
 
     print("*" * 80)
     print("Server is alive?: {}".format(demo.srv_proc.is_alive()))
