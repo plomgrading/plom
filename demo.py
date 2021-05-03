@@ -12,6 +12,7 @@ from shlex import split
 import tempfile
 from pathlib import Path
 
+from plom import Default_Port
 from plom.server import theServer as plomServer
 
 
@@ -21,12 +22,13 @@ class ServerProcess(Process):
 
 
 class PlomDemo():
-    def __init__(self, num_papers=None, scans=True, tmpdir=None):
+    def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None):
         """Start up a demo server.
 
         Args:
             num_papers (int, None): how many papers to use or None for
                 a default value.
+            port (int, None): internet port to use or None for default.
             scans (bool): whether to fill the demo with fake scanned
                 data.
             tmpdir (Path-like, None): a directory for this demo.  If
@@ -38,6 +40,7 @@ class PlomDemo():
         if not tmpdir:
             tmpdir = Path(tempfile.mkdtemp(prefix="plomdemo_", dir=os.getcwd()))
         tmpdir = Path(tmpdir)
+        self.port = port if port else Default_Port
         # TODO: should either exist and be empty or not exist and we create
         print('making a {}-paper demo in "{}"'.format(num_papers, tmpdir))
         self._numpapers = num_papers
@@ -53,7 +56,7 @@ class PlomDemo():
         cwd = os.getcwd()
         try:
             os.chdir(self.tmpdir)
-            subprocess.check_call(split("plom-server init"))
+            subprocess.check_call(split(f"plom-server init --port {self.port}"))
             subprocess.check_call(split("plom-server users --demo"))
             subprocess.check_call(
                 split("plom-build new --demo --demo-num-papers {}".format(self._numpapers))
@@ -76,18 +79,24 @@ class PlomDemo():
         """make fake data and push it into the plom server."""
         cwd = os.getcwd()
         try:
-            subprocess.check_call(split("plom-build class --demo -w 1234"))
-            subprocess.check_call(split("plom-build make -w 1234"))
-            subprocess.check_call(split("plom-fake-scribbles -w 1234"))
+            env = {**os.environ,
+                   "PLOM_SERVER": f"localhost:{self.port}",
+                   "PLOM_MANAGER_PASSWORD": "1234",
+                   "PLOM_SCAN_PASSWORD": "4567",
+                   }
+            subprocess.check_call(split("plom-build class --demo"), env=env)
+            subprocess.check_call(split("plom-build make"), env=env)
+            # TODO: does not respect env vars (Issue #1545)
+            subprocess.check_call(split(f"plom-fake-scribbles -s localhost:{self.port} -w 1234"), env=env)
             for f in (
                     "fake_scribbled_exams1",
                     "fake_scribbled_exams2",
                     "fake_scribbled_exams3",
             ):
                 subprocess.check_call(
-                    split("plom-scan process -w 4567 --no-gamma-shift {}.pdf".format(f))
+                    split(f"plom-scan process --no-gamma-shift {f}.pdf"), env=env
                 )
-            subprocess.check_call(split("plom-scan upload -w 4567 -u {}".format(f)))
+            subprocess.check_call(split(f"plom-scan upload -u {f}"), env=env)
         finally:
             os.chdir(cwd)
 
@@ -108,13 +117,13 @@ class PlomDemo():
 
 
 class QuickDemo(PlomDemo):
-    def __init__(self):
-        super().__init__(3)
+    def __init__(self, port=None):
+        super().__init__(3, port=port)
 
 
 
 
-demo = QuickDemo()
+demo = QuickDemo(port=41981)
 
 print("*"*80)
 print("Server is alive?: {}".format(demo.srv_proc.is_alive()))
