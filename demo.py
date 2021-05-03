@@ -113,8 +113,6 @@ class PlomDemo:
         self.srv_proc.terminate()
         self.srv_proc.join()
         self.srv_proc.close()
-        # TODO: need to do sth like .wait() or close() did already?
-        time.sleep(0.1)
         print('Erasing demo tmpdir "{}"'.format(self.tmpdir))
         shutil.rmtree(self.tmpdir)
 
