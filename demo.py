@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 import os
-import shutil
-import time
 from multiprocessing import Process
-import subprocess
-from shlex import split
-import tempfile
 from pathlib import Path
+from shlex import split
+import shutil
+import subprocess
+import tempfile
+import time
+from warnings import warn
 
 from plom import Default_Port
 from plom.server import theServer as plomServer
@@ -36,13 +37,20 @@ class PlomDemo:
                 `plomdemo_<randomstring>`.  Note: by default this
                 directory will be removed on demo shutdown.
                 TODO: not fully implemented yet!
+
+        Raises:
+            PermissionError: cannot write to `tmpdir`.
+            OSError: e.g., address already in use, various others.
+            ...
         """
         if not tmpdir:
             tmpdir = Path(tempfile.mkdtemp(prefix="plomdemo_", dir=os.getcwd()))
         tmpdir = Path(tmpdir)
+        if any(tmpdir.iterdir()):
+            warn("Demo's target directory not empty: likely touble ahead!")
         self.port = port if port else Default_Port
         # TODO: should either exist and be empty or not exist and we create
-        print('making a {}-paper demo in "{}"'.format(num_papers, tmpdir))
+        print('Making a {}-paper demo in "{}"'.format(num_papers, tmpdir))
         self._numpapers = num_papers
         self.tmpdir = tmpdir
         self._start()
