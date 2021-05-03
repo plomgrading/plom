@@ -21,7 +21,7 @@ class ServerProcess(Process):
         plomServer.launch()
 
 
-class PlomDemo():
+class PlomDemo:
     def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None):
         """Start up a demo server.
 
@@ -49,7 +49,6 @@ class PlomDemo():
         if scans:
             self.fill_the_tank()
 
-
     def _start(self):
         """start the server."""
         # TODO: is there a nice ContextManager to change CWD?
@@ -59,7 +58,7 @@ class PlomDemo():
             subprocess.check_call(split(f"plom-server init --port {self.port}"))
             subprocess.check_call(split("plom-server users --demo"))
             subprocess.check_call(
-                split("plom-build new --demo --demo-num-papers {}".format(self._numpapers))
+                split(f"plom-build new --demo --demo-num-papers {self._numpapers}")
             )
         finally:
             os.chdir(cwd)
@@ -74,32 +73,29 @@ class PlomDemo():
         time.sleep(2)
         assert self.srv_proc.is_alive()
 
-
     def fill_the_tank(self):
         """make fake data and push it into the plom server."""
         cwd = os.getcwd()
         try:
-            env = {**os.environ,
-                   "PLOM_SERVER": f"localhost:{self.port}",
-                   "PLOM_MANAGER_PASSWORD": "1234",
-                   "PLOM_SCAN_PASSWORD": "4567",
-                   }
+            env = {
+                **os.environ,
+                "PLOM_SERVER": f"localhost:{self.port}",
+                "PLOM_MANAGER_PASSWORD": "1234",
+                "PLOM_SCAN_PASSWORD": "4567",
+            }
             subprocess.check_call(split("plom-build class --demo"), env=env)
             subprocess.check_call(split("plom-build make"), env=env)
             # TODO: does not respect env vars (Issue #1545)
-            subprocess.check_call(split(f"plom-fake-scribbles -s localhost:{self.port} -w 1234"), env=env)
-            for f in (
-                    "fake_scribbled_exams1",
-                    "fake_scribbled_exams2",
-                    "fake_scribbled_exams3",
-            ):
+            subprocess.check_call(
+                split(f"plom-fake-scribbles -s localhost:{self.port} -w 1234"), env=env
+            )
+            for f in [f"fake_scribbled_exams{x}" for x in (1, 2, 3)]:
                 subprocess.check_call(
                     split(f"plom-scan process --no-gamma-shift {f}.pdf"), env=env
                 )
             subprocess.check_call(split(f"plom-scan upload -u {f}"), env=env)
         finally:
             os.chdir(cwd)
-
 
     def stop(self):
         """Takedown the demo server.
@@ -115,25 +111,21 @@ class PlomDemo():
         shutil.rmtree(self.tmpdir)
 
 
-
 class QuickDemo(PlomDemo):
     def __init__(self, port=None):
         super().__init__(3, port=port)
 
 
+if __name__ == "__main__":
+    demo = QuickDemo(port=41981)
 
+    print("*" * 80)
+    print("Server is alive?: {}".format(demo.srv_proc.is_alive()))
+    print("Server PID: {}".format(demo.srv_proc.pid))
 
-demo = QuickDemo(port=41981)
+    # run tests, or whatever
+    time.sleep(5)
 
-print("*"*80)
-print("Server is alive?: {}".format(demo.srv_proc.is_alive()))
-print("Server PID: {}".format(demo.srv_proc.pid))
-
-
-# run tests, or whatever
-time.sleep(5)
-
-
-print("*"*80)
-print("Stopping server process")
-demo.stop()
+    print("*" * 80)
+    print("Stopping server process")
+    demo.stop()
