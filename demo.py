@@ -134,7 +134,31 @@ if __name__ == "__main__":
     print("Server is alive?: {}".format(demo.srv_proc.is_alive()))
     print("Server PID: {}".format(demo.srv_proc.pid))
 
-    # run tests, or whatever
+    env = {**os.environ, **demo.get_env_vars()}
+    subprocess.check_call(split("plom-scan status"), env=env)
+    subprocess.check_call(split("plom-finish status"), env=env)
+
+    print("*" * 80)
+    print("Starting some random IDing and random grading...")
+    subprocess.check_call(
+        split(
+            f"python3 -m plom.client.randoIDer "
+            f"-s localhost:{demo.port} "
+            f"-u {env['PLOM_USER']} -w {env['PLOM_PASSWORD']}"
+        ),
+        env=env,
+    )
+    subprocess.check_call(
+        split(
+            f"python3 -m plom.client.randoMarker "
+            f"-s localhost:{demo.port} "
+            f"-u {env['PLOM_USER']} -w {env['PLOM_PASSWORD']}"
+        ),
+        env=env,
+    )
+    subprocess.check_call(split("plom-scan status"), env=env)
+    subprocess.check_call(split("plom-finish status"), env=env)
+
     time.sleep(5)
 
     print("*" * 80)
