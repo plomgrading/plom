@@ -93,9 +93,10 @@ class PlomDemo:
 
     def fill_the_tank(self):
         """make fake data and push it into the plom server."""
+        env = {**os.environ, **self.get_env_vars()}
         cwd = os.getcwd()
         try:
-            env = {**os.environ, **self.get_env_vars()}
+            os.chdir(self.tmpdir)
             subprocess.check_call(
                 split("python3 -m plom.scripts.build class --demo"), env=env
             )
