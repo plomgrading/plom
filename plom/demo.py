@@ -128,7 +128,6 @@ class PlomDemo:
         """
         self.srv_proc.terminate()
         self.srv_proc.join()
-        self.srv_proc.close()
         print('Erasing demo tmpdir "{}"'.format(self.tmpdir))
         shutil.rmtree(self.tmpdir)
 
