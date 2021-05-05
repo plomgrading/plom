@@ -27,8 +27,12 @@ class Test:
 
     def test_scan_finish(self):
         # TODO: we should assert something about values or text output here?
-        subprocess.check_call(split("plom-scan status"), env=self.env)
-        subprocess.check_call(split("plom-finish status"), env=self.env)
+        subprocess.check_call(
+            split("python3 -m plom.scripts.scan status"), env=self.env
+        )
+        subprocess.check_call(
+            split("python3 -m plom.scripts.finish status"), env=self.env
+        )
         assert self.demo.srv_proc.is_alive()
 
     def test_random_IDing(self):
@@ -52,6 +56,10 @@ class Test:
         )
 
     def test_scan_finish_after(self):
-        subprocess.check_call(split("plom-scan status"), env=self.env)
-        subprocess.check_call(split("plom-finish status"), env=self.env)
+        subprocess.check_call(
+            split("python3 -m plom.scripts.scan status"), env=self.env
+        )
+        subprocess.check_call(
+            split("python3 -m plom.scripts.finish status"), env=self.env
+        )
         assert self.demo.srv_proc.is_alive()

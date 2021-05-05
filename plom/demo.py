@@ -14,6 +14,8 @@ import time
 from warnings import warn
 
 from plom import Default_Port
+from plom import SpecVerifier
+from plom.produce.demotools import buildDemoSourceFiles
 from plom.server import theServer as plomServer
 
 
@@ -59,15 +61,23 @@ class PlomDemo:
 
     def _start(self):
         """start the server."""
+        # TODO: move this code elsewhere!
+        from plom.scripts.server import initialiseServer, processUsers
+        from plom.scripts.build import parseAndVerifySpecification
+
         # TODO: is there a nice ContextManager to change CWD?
         cwd = os.getcwd()
         try:
             os.chdir(self.tmpdir)
-            subprocess.check_call(split(f"plom-server init --port {self.port}"))
-            subprocess.check_call(split("plom-server users --demo"))
-            subprocess.check_call(
-                split(f"plom-build new --demo --demo-num-papers {self._numpapers}")
+            initialiseServer(self.port)
+            processUsers(None, True, False, False)
+            fname = "demoSpec.toml"
+            SpecVerifier.create_demo_template(
+                "demoSpec.toml", num_to_produce=self._numpapers
             )
+            if not buildDemoSourceFiles():
+                raise RuntimeError("failed to build demo sources")
+            parseAndVerifySpecification("demoSpec.toml")
         finally:
             os.chdir(cwd)
         # TODO: maybe ServerProcess should do this itself?
@@ -86,17 +96,27 @@ class PlomDemo:
         cwd = os.getcwd()
         try:
             env = {**os.environ, **self.get_env_vars()}
-            subprocess.check_call(split("plom-build class --demo"), env=env)
-            subprocess.check_call(split("plom-build make"), env=env)
+            subprocess.check_call(
+                split("python3 -m plom.scripts.build class --demo"), env=env
+            )
+            subprocess.check_call(split("python3 -m plom.scripts.build make"), env=env)
             # TODO: does not respect env vars (Issue #1545)
             subprocess.check_call(
-                split(f"plom-fake-scribbles -s localhost:{self.port} -w 1234"), env=env
+                split(
+                    f"python3 -m plom.produce.faketools -s localhost:{self.port} -w 1234"
+                ),
+                env=env,
             )
             for f in [f"fake_scribbled_exams{x}" for x in (1, 2, 3)]:
                 subprocess.check_call(
-                    split(f"plom-scan process --no-gamma-shift {f}.pdf"), env=env
+                    split(
+                        f"python3 -m plom.scripts.scan process --no-gamma-shift {f}.pdf"
+                    ),
+                    env=env,
                 )
-            subprocess.check_call(split(f"plom-scan upload -u {f}"), env=env)
+            subprocess.check_call(
+                split(f"python3 -m plom.scripts.scan upload -u {f}"), env=env
+            )
         finally:
             os.chdir(cwd)
 
