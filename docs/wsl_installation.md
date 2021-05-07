@@ -1,3 +1,9 @@
+<!--
+__copyright__ = "Copyright (C) 2021 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2021 Jalal Khouhak"
+__license__ = "AGPL-3.0-or-later"
+ -->
+
 Installing Plom via WSL on Windows
 ==================================
 
