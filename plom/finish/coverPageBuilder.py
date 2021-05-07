@@ -3,6 +3,7 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Liam Yih
 
 import sys
 from weasyprint import HTML, CSS
@@ -76,13 +77,3 @@ def makeCover(test_num, sname, sid, tab):
     )
 
 
-if __name__ == "__main__":
-    # Take the arguments from the commandline.
-    # The args should be
-    #   TestNumber, 'The Name', ID
-    # and then for a list of lists of 4 numbers for each group:
-    #   '[[group, version, mark, maxPossibleMark], [...], [...]]'
-    arg = sys.argv[1:]
-    # build list of lists
-    arg[3] = eval(arg[3])
-    makeCover(*arg)
