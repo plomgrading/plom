@@ -13,7 +13,7 @@ import subprocess
 from multiprocessing import Pool
 import math
 import tempfile
-import warnings
+from warnings import warn
 
 import toml
 from tqdm import tqdm
@@ -203,21 +203,50 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
-        # looks they use ceil not round so decrease a little bit
-        z = (float(ScenePixelHeight) - 0.01) / p.MediaBoxSize[1]
+        aspect = p.mediabox_size[0] / p.mediabox_size[1]
+        H = ScenePixelHeight
+        W = H * aspect
+        MINWIDTH = 1024
+        MAXHEIGHT = 15999
+        MAXWIDTH = 3 * ScenePixelHeight // 2
+        assert MINWIDTH < ScenePixelHeight
+        # Note logic not same between tall and wide:
+        #   * tall: "Safeway receipt", observed from "infinite paper" software
+        #   * wide: "fortune cookie", little strip cropped from regular sheet
+        # In the tall case, we use extra pixels vertically because there is
+        # actually more to resolve.  But I've never seen a wide case that was
+        # wider than a landscape sheet of paper.  Also, currently, Client's
+        # would display such a thin wide strip at to large a scale.
+        if aspect > 1:
+            if W > MAXWIDTH:
+                # TODO: warn of extreme aspect ratio?  Flag to control this?
+                W = MAXWIDTH
+                H = W / aspect
+                if H < 100:
+                    raise ValueError("Scanned a strip too wide and thin?")
+        else:
+            if W < MINWIDTH:
+                W = MINWIDTH
+                H = W / aspect
+                if H > MAXHEIGHT:
+                    H = MAXHEIGHT
+                    W = H * aspect
+                    if W < 100:
+                        raise ValueError("Scanned a long strip of thin paper?")
+
+        # fitz uses ceil (not round) so decrease a little bit
+        if W > H:
+            z = (float(W) - 0.0001) / p.mediabox_size[0]
+        else:
+            z = (float(H) - 0.0001) / p.mediabox_size[1]
         ## For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
-        print(
-            "{}: Fitz render z={:4.2f}. No extract b/c: {}".format(
-                basename, z, "; ".join(msgs)
-            )
-        )
+        print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
-        if pix.height != ScenePixelHeight:
-            warnings.warn(
-                "rounding error: height of {} instead of {}".format(
-                    pix.height, ScenePixelHeight
-                )
+        if not (W == pix.width or H == pix.height):
+            warn(
+                "Debug: some kind of rounding error in scaling image?"
+                "  Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
@@ -328,11 +357,7 @@ def normalizeJPEGOrientation(f):
     im = jpegtran.JPEGImage(f)
     if im.exif_orientation:
         if im.width % 16 or im.height % 16:
-            warnings.warn(
-                '  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(
-                    f
-                )
-            )
+            warn(f'  jpeg "{f}" dims not mult of 16: re-orientations may be lossy')
         im2 = im.exif_autotransform()
         print(
             '  normalizing "{}" {}x{} to "{}" {}x{}'.format(
@@ -434,10 +459,8 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False
     # check if fname is in local archive (by checking md5sum)
     prevname = isInArchive(pdf_fname)
     if prevname:
-        print(
-            "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
-                pdf_fname, prevname
-            )
+        warn(
+            f"{pdf_fname} is in the PDF archive: same md5sum as previous {prevname}; will not process."
         )
         return
     makeBundleDirectories(pdf_fname, bundle_dir)
