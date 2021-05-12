@@ -472,8 +472,13 @@ def MgetWholePaper(self, test_number, question):
     # position in current annotation (or none if not)
     pageFiles = []  # the corresponding filenames.
     question = int(question)
-    # get the current annotation and position of images within it.
-    qref = QGroup.get_or_none(test=tref, question=question)
+    if question == 0:
+        # Issue #1549: Identifier uses special question=0, but we need an aref below
+        # TODO: for now we just get question 1 instead...
+        qref = QGroup.get_or_none(test=tref, question=1)
+    else:
+        # get the current annotation and position of images within it.
+        qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:  # this should not happen
         return [False]
     # dict of image-ids and positions in the current annotation
