@@ -75,5 +75,3 @@ def makeCover(test_num, sname, sid, tab):
     cover.write_pdf(
         "coverPages/cover_{}.pdf".format(str(test_num).zfill(4)), stylesheets=[css]
     )
-
-

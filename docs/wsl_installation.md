@@ -1,3 +1,9 @@
+<!--
+__copyright__ = "Copyright (C) 2021 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2021 Jalal Khouhak"
+__license__ = "AGPL-3.0-or-later"
+ -->
+
 Installing Plom via WSL on Windows
 ==================================
 
@@ -30,7 +36,6 @@ sudo apt install \
 ```
 2. `python3 -m pip install --upgrade --user setuptools`
 3. `pip3 install --user testresources`
-    TODO: what is this for?
 4.  Some libraries that are either no in package manager or too old
 ```
 python3 -m pip install --upgrade --user pymupdf weasyprint imutils \
@@ -40,3 +45,9 @@ python3 -m pip install --upgrade --user pymupdf weasyprint imutils \
 5. `pip3 install --user plom`
 6. Seems to have the same lack of `~/.local/bin` in path, just like on regular Ubuntu.
 
+
+## TODO list
+
+  * what is `testresources` for?
+  * Liam mentioned some IP thing needed
+  * Point users to a soln for the `.local/bin` in Path problem.
