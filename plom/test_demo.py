@@ -2,6 +2,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import os
+from pathlib import Path
 from shlex import split
 import subprocess
 
@@ -44,6 +45,36 @@ class Test:
             ),
             env=self.env,
         )
+
+    def test_get_rubrics_default_extension_is_toml(self, tmpdir):
+        f = Path(tmpdir) / "foo"
+        subprocess.check_call(
+            split(f"python3 -m plom.scripts.build rubric --dump {f}"),
+            env=self.env,
+        )
+        assert f.with_suffix(".toml").exists()
+
+    def test_get_rubrics_toml(self, tmpdir):
+        f = Path(tmpdir) / "foo.toml"
+        subprocess.check_call(
+            split(f"python3 -m plom.scripts.build rubric --dump {f}"),
+            env=self.env,
+        )
+        assert f.exists()
+
+    def test_put_rubrics_demo(self, tmpdir):
+        subprocess.check_call(
+            split(f"python3 -m plom.scripts.build rubric --demo"),
+            env=self.env,
+        )
+        f = Path(tmpdir) / "foo.json"
+        subprocess.check_call(
+            split(f"python3 -m plom.scripts.build rubric --dump {f}"),
+            env=self.env,
+        )
+        with open(f, "r") as fh:
+            L = fh.readlines()
+        assert any("chain rule" in x for x in L)
 
     def test_random_grading(self):
         subprocess.check_call(
