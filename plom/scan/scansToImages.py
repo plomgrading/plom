@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
@@ -212,7 +212,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 basename, z, "; ".join(msgs)
             )
         )
-        pix = p.getPixmap(matrix=fitz.Matrix(z, z), annots=True)
+        pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
         if pix.height != ScenePixelHeight:
             warnings.warn(
                 "rounding error: height of {} instead of {}".format(
@@ -253,13 +253,13 @@ def extractImageFromFitzPage(page, doc):
             and `ext`.  `d["image"]` is the raw binary data.
     """
 
-    imlist = page.getImageList()
+    imlist = page.get_images()
     if len(imlist) > 1:
         return False, "More than one image"
     if len(imlist) == 0:
         return False, "Image List is Empty"
 
-    d = doc.extractImage(imlist[0][0])
+    d = doc.extract_image(imlist[0][0])
     # TODO: log.debug this:
     # print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
     width = d.get("width")

@@ -1,22 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2019 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
-import sys
 import shlex
 import subprocess
 import os
-import fitz
-import pyqrcode
 import tempfile
 from pathlib import Path
 
-from plom.tpv_utils import encodeTPV
-from . import paperdir
+import pyqrcode
+import fitz
 
-# paperdir = "papersToPrint"
+from plom.tpv_utils import encodeTPV
+from . import paperdir as _paperdir
+
+paperdir = Path(_paperdir)
 
 
 # TODO: Complete the test mode functionality
@@ -129,7 +129,7 @@ def create_exam_and_insert_QR(
     # Insert the relevant page-versions into this pdf.
     for page_index in range(1, length + 1):
         # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
-        exam.insertPDF(
+        exam.insert_pdf(
             version_paths_for_pages[page_versions[page_index]],
             from_page=page_index - 1,
             to_page=page_index - 1,
@@ -168,7 +168,7 @@ def create_exam_and_insert_QR(
         # size. Will ask what it mean to do it algorithmically
         rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
         text = "{}.{}".format(str(test).zfill(4), str(page_index + 1).zfill(2))
-        insertion_confirmed = exam[page_index].insertTextbox(
+        insertion_confirmed = exam[page_index].insert_textbox(
             rect,
             text,
             fontsize=18,
@@ -177,7 +177,7 @@ def create_exam_and_insert_QR(
             fontfile=None,
             align=1,
         )
-        exam[page_index].drawRect(rect, color=[0, 0, 0])
+        exam[page_index].draw_rect(rect, color=[0, 0, 0])
         assert insertion_confirmed > 0
 
         if no_qr:
@@ -189,12 +189,12 @@ def create_exam_and_insert_QR(
         # TODO: Perhaps this process could be improved by putting
         # into functions
         rDNW = rDNW_TL if page_index % 2 == 0 else rDNW_TR
-        shape = exam[page_index].newShape()
-        shape.drawLine(rDNW.top_left, rDNW.top_right)
+        shape = exam[page_index].new_shape()
+        shape.draw_line(rDNW.top_left, rDNW.top_right)
         if page_index % 2 == 0:
-            shape.drawLine(rDNW.top_right, rDNW.bottom_left)
+            shape.draw_line(rDNW.top_right, rDNW.bottom_left)
         else:
-            shape.drawLine(rDNW.top_right, rDNW.bottom_right)
+            shape.draw_line(rDNW.top_right, rDNW.bottom_right)
         shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
         shape.commit()
         if page_index % 2 == 0:
@@ -205,7 +205,7 @@ def create_exam_and_insert_QR(
         mat = fitz.Matrix(45 if page_index % 2 == 0 else -45)
         pivot = rDNW.tr / 2 + rDNW.bl / 2
         morph = (pivot, mat)
-        insertion_confirmed = exam[page_index].insertTextbox(
+        insertion_confirmed = exam[page_index].insert_textbox(
             rDNW,
             name,
             fontsize=8,
@@ -214,7 +214,7 @@ def create_exam_and_insert_QR(
             align=1,
             morph=morph,
         )
-        # exam[page_index].drawRect(rDNW, morph=morph)
+        # exam[page_index].draw_rect(rDNW, morph=morph)
         assert (
             insertion_confirmed > 0
         ), "Text didn't fit: shortname too long?  or font issue/bug?"
@@ -315,8 +315,8 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
         student_id_rect_1.x1,
         student_id_rect_1.y1 + 48 * 1.3,
     )
-    exam[0].drawRect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-    exam[0].drawRect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
 
     # TODO: This could be put into one function
     # Also VALA doesn't understand the TODO s
@@ -332,7 +332,7 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
         raise ValueError("Don't know how to write name {} into PDF".format(txt))
 
     # We insert the student id text boxes
-    insertion_confirmed = exam[0].insertTextbox(
+    insertion_confirmed = exam[0].insert_textbox(
         student_id_rect_1,
         txt,
         fontsize=36,
@@ -347,7 +347,7 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
     # We insert the student name text boxes
-    insertion_confirmed = exam[0].insertTextbox(
+    insertion_confirmed = exam[0].insert_textbox(
         student_id_rect_2,
         "Please sign here",
         fontsize=48,
@@ -384,11 +384,9 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.com/plom/plom/issues/284
     if extra:
-        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-            str(test).zfill(4), extra["id"]
-        )
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
     else:
-        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
     # save with ID-number is making named papers = issue 790
     exam.save(
         save_name,
@@ -483,9 +481,7 @@ def make_fakePDF(
 ):
     """Twin to the real make_pdf command - makes empty files."""
     if extra:
-        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-            str(test).zfill(4), extra["id"]
-        )
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
     else:
-        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
     save_name.touch()

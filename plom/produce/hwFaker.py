@@ -1,28 +1,24 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
-import csv
 import os
 import random
 from pathlib import Path
-from glob import glob
 
 from getpass import getpass
-import json
-import base64
 import fitz
 
-from . import paperdir as _paperdir
 from plom import __version__
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 
 from .faketools import possible_answers as possibleAns
 
@@ -42,10 +38,10 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
     for q in doneQ:
         # construct pages
         for pn in range(random.randint(1, 2)):
-            page = doc.newPage(-1, 612, 792)  # put page at end
+            page = doc.new_page(-1, 612, 792)  # put page at end
             if pn == 0:  # put name and student number on start of Q
                 rect1 = fitz.Rect(20, 24, 400, 54)
-                rc = page.insertTextbox(
+                rc = page.insert_textbox(
                     rect1,
                     "LPage for Q.{} -".format(q) + studentName + ":" + studentID,
                     fontsize=14,
@@ -57,7 +53,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
                 assert rc > 0
             else:  # just put Question
                 rect1 = fitz.Rect(20, 24, 400, 54)
-                rc = page.insertTextbox(
+                rc = page.insert_textbox(
                     rect1,
                     "LPage for Q.{} -".format(q),
                     fontsize=14,
@@ -71,7 +67,7 @@ def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
             text = random.choice(possibleAns)
-            rc = page.insertTextbox(
+            rc = page.insert_textbox(
                 rect,
                 text,
                 fontsize=13,
@@ -117,11 +113,11 @@ def scribble_doc(doc, studentID, studentName, maximum_pages, q):
     if True:
         # construct pages
         for pn in range(random.randint(1, maximum_pages)):
-            page = doc.newPage(-1, 612, 792)  # page at end
+            page = doc.new_page(-1, 612, 792)  # page at end
             if pn == 0:
                 # put name and student number on p1 of the Question
                 rect1 = fitz.Rect(20, 24, 300, 44)
-                rc = page.insertTextbox(
+                rc = page.insert_textbox(
                     rect1,
                     "Q.{} -".format(q) + studentName + ":" + studentID,
                     fontsize=14,
@@ -136,7 +132,7 @@ def scribble_doc(doc, studentID, studentName, maximum_pages, q):
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
             text = random.choice(possibleAns)
-            rc = page.insertTextbox(
+            rc = page.insert_textbox(
                 rect,
                 text,
                 fontsize=13,
