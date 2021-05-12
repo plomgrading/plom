@@ -4,11 +4,18 @@
 
 import logging
 from math import ceil
-import random
 from pathlib import Path
-import pkg_resources
+import random
+import sys
+
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
 import toml
+
+import plom
 
 specdir = "specAndDatabase"
 log = logging.getLogger("spec")
@@ -116,12 +123,11 @@ class SpecVerifier:
 
     @classmethod
     def _template_as_bytes(cls):
-        return pkg_resources.resource_string("plom", "templateTestSpec.toml")
+        return resources.read_binary(plom, "templateTestSpec.toml")
 
     @classmethod
     def _template_as_string(cls):
-        # TODO: or just use a triple-quoted inline string
-        return cls._template_as_bytes().decode()
+        return resources.read_text(plom, "templateTestSpec.toml")
 
     @classmethod
     def create_template(cls, fname="testSpec.toml"):

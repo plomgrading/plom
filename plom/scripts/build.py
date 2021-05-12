@@ -14,9 +14,14 @@ import argparse
 import json
 import os
 from pathlib import Path
+import sys
 from textwrap import dedent, wrap
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 import toml
 
 from plom import __version__
@@ -48,10 +53,7 @@ def upload_demo_rubrics(msgr, numquestions=3):
     The demo data is a bit sparsified: we fill in missing pieces and
     multiply over questions.
     """
-    # How do I toml.load from a resource_stream?
-    rubrics_in = toml.loads(
-        pkg_resources.resource_string("plom", "demo_rubrics.toml").decode()
-    )
+    rubrics_in = toml.loads(resources.read_text("plom", "demo_rubrics.toml"))
     rubrics_in = rubrics_in["rubric"]
     rubrics = []
     for rub in rubrics_in:

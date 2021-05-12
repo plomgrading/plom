@@ -16,10 +16,15 @@ import argparse
 import os
 import shutil
 from pathlib import Path
+import sys
 from textwrap import fill, dedent
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
+import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
@@ -219,7 +224,7 @@ def processUsers(userFile, demo, auto, auto_num):
             "Creating a demo user list at {}. "
             "** DO NOT USE ON REAL SERVER **".format(rawfile)
         )
-        cl = pkg_resources.resource_string("plom", "demoUserList.csv")
+        cl = resources.read_binary(plom, "demoUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
         parse_user_list(rawfile)
@@ -255,7 +260,7 @@ def processUsers(userFile, demo, auto, auto_num):
                 rawfile
             )
         )
-        cl = pkg_resources.resource_string("plom", "templateUserList.csv")
+        cl = resources.read_binary(plom, "templateUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
 

@@ -7,9 +7,14 @@
 
 import logging
 from pathlib import Path
+import sys
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
+import plom
 from plom import Default_Port
 from plom.server import specdir, confdir
 
@@ -63,10 +68,10 @@ def create_server_config(dur=confdir, *, port=None):
     sd = Path(dur) / "serverDetails.toml"
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
-    template = pkg_resources.resource_string("plom", "serverDetails.toml")
+    template = resources.read_text(plom, "serverDetails.toml")
     if port:
-        template = template.replace(f"{Default_Port}".encode(), str(port).encode())
-    with open(sd, "wb") as fh:
+        template = template.replace(f"{Default_Port}", str(port))
+    with open(sd, "w") as fh:
         fh.write(template)
 
 

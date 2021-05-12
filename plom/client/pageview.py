@@ -1,13 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-import os
-import sys
-import time
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QCursor, QPainter, QPixmap
+from PyQt5.QtGui import QCursor, QPainter
 from PyQt5.QtWidgets import QGraphicsView, QApplication
 from plom.client.backGrid import BackGrid
 
@@ -20,7 +17,7 @@ class PageView(QGraphicsView):
     comments, delta-marks, save and zoom in /out.
     """
 
-    def __init__(self, parent, username=None):
+    def __init__(self, parent):
         """
         Initializes a new pageView object.
 
@@ -29,14 +26,14 @@ class PageView(QGraphicsView):
             username (str): The username of the marker
 
         """
-        super(PageView, self).__init__(parent)
+        super().__init__(parent)
         self.parent = parent
         # Set scrollbars
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # set the area outside the groupimage to be tiled grid image
         self.setStyleSheet("background: transparent")
-        self.setBackgroundBrush(QBrush(BackGrid(username)))
+        self.setBackgroundBrush(BackGrid())
 
         # Nice antialiasing and scaling of objects (esp the groupimage)
         self.setRenderHint(QPainter.Antialiasing, True)
@@ -78,7 +75,7 @@ class PageView(QGraphicsView):
         # re-zoom
         self.parent.zoomCBChanged()
         # then any other stuff needed by parent class
-        super(PageView, self).resizeEvent(event)
+        super().resizeEvent(event)
 
     def latexAFragment(self, txt):
         """

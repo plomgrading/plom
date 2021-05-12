@@ -6,7 +6,7 @@
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -18,21 +18,25 @@ import argparse
 import json
 import base64
 from getpass import getpass
+import sys
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 import fitz
 
 from . import paperdir as _paperdir
+import plom.produce
 from plom import __version__
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
 # load the digit images
-digits_folder_path = "produce/digits.json"
-digit_array = json.load(pkg_resources.resource_stream("plom", digits_folder_path))
+digit_array = json.loads(resources.read_text(plom.produce, "digits.json"))
 # how many of each digit were collected
-
 number_of_digits = len(digit_array) // 10
 assert len(digit_array) % 10 == 0
 

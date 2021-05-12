@@ -24,13 +24,6 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
     # Defines __version__
     exec(f.read())
 
-iconList = []
-for fn in glob("plom/client/icons/*.svg"):
-    iconList.append(fn)
-cursorList = []
-for fn in glob("plom/client/cursors/*.png"):
-    cursorList.append(fn)
-
 # TODO: CI requires requirements.txt.tempminima synced with mins here:
 
 client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
@@ -58,6 +51,7 @@ server_install_requires = [
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",
+    'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
 ]
 
 # Non-Python deps for server
@@ -110,23 +104,13 @@ setup(
             "share/plom",
             [
                 "plom/templateTestSpec.toml",
-                "plom/produce/digits.json",
-                "plom/serverDetails.toml",
-                "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demoUserList.csv",
                 "plom/demo_rubrics.toml",
-                "plom/scan/test_zbar_fails.png",
-                "plom/server/target_Q_latex_plom.png",
-                "plom/testTemplates/latexTemplate.tex",
-                "plom/testTemplates/latexTemplatev2.tex",
-                "plom/testTemplates/idBox2.pdf",
-                "plom/client/backGrid1.svg",
-                "plom/client/backGrid2.png",
             ],
         ),
-        ("share/plom/icons", iconList),
-        ("share/plom/cursors", cursorList),
+        # TODO: move up from plom
+        ("share/plom/testTemplates", glob("plom/testTemplates/**/*", recursive=True)),
         ("share/applications", ["org.plomgrading.PlomClient.desktop"]),
         ("share/metainfo", ["org.plomgrading.PlomClient.metainfo.xml"]),
         ("share/icons/hicolor/128x128/apps/", ["org.plomgrading.PlomClient.png"]),

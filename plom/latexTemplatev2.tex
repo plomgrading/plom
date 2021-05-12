@@ -1,0 +1,242 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019-2020
+%% This template uses latex exam class.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[12pt]{exam}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This template is for letter-paper, not a4 paper.
+%% The margins have been set so as to work nicely
+%% with the QR-codes etc needed by Plom.
+%%
+%% It has also been designed to use the latex exam class
+%% which auto-computes totals etc and also makes it easy
+%% for the instructor to include solutions in their .tex
+%% We recommend that you use this.
+
+
+\boxedpoints
+\marksnotpoints
+\addpoints
+\extrawidth{-20mm}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% If we want to print out the answers/solns then we should
+% also NOT print those extra spaces and blankpages.
+% To help us do this we define a boolean flag
+% By default we have it set to true, telling latex to put
+% in the extra spacing etc.
+\newboolean{space} \setboolean{space}{true}
+
+%% Now, to print answers/soln and remove the extra spacing
+%% just comment out the line below
+%% vvvvvvv
+%% vvvvv
+%% vvv
+%% v
+
+% \printanswers  \setboolean{space}{false}
+
+%% ^
+%% ^^^
+%% ^^^^^
+%% ^^^^^^^
+%% Try running this with and without the line above
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% A simple warning for your Do-Not-Mark pages
+\newcommand{\dnm}{\noindent \emph{Please do not write on this page --- it will not be marked.}}
+
+% Here are some handy commands for adding spacing / blank pages / answerboxes
+% when printing with or without solns.
+
+% Use this to put a vfill between things when printing
+% without answers/solutions. No space when printing with answers/solns
+\newcommand{\blank}{
+  \ifthenelse{\boolean{space}}{\vfill}{}
+}
+
+% Use this to put a blankpage when printing without answers/solutions.
+% No page when printing with answers/solns
+% This takes an optional argument of a question-number: \blankpage[X]
+% and prints a message telling the student that this blank space is for
+% question X. If no arg given then it prints the same message but for
+% the current question.
+\newcommand{\blankpage}[1][\thequestion]{
+\ifthenelse{\boolean{space}}{
+\pagebreak
+\noindent \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
+\pagebreak
+}{} }
+
+% Use this to make a nice answerbox which will display the correct answer
+% when solutions are printed and is otherwise blank for the students
+% to write their stuff.
+\newcommand{\answerbox}[1]{
+\begin{flushright}
+\fbox{\parbox[l]{60mm}{Answer:
+\ifthenelse{\boolean{space}}{\vspace{10mm}}{#1}{}} }
+\end{flushright}
+}
+% A slightly larger answerbox
+\newcommand{\Answerbox}[1]{
+\begin{flushright}
+\fbox{\parbox[l]{80mm}{Answer:
+\ifbool{space}{\vspace{10mm}}{#1}{}} }
+\end{flushright}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Load packages and things here
+\usepackage{amsmath,amsthm,amsfonts,amssymb}
+\usepackage{enumerate}
+\usepackage{graphicx}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Add "draft" to show mock-up QR codes
+%\usepackage{mockplom}
+%\usepackage[draft]{mockplom}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Make the header blank, but put page info in the footer.
+\chead{}
+\cfoot{Page \thepage\ of \numpages}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Your macros should go here
+%% for example
+\newcommand{\dee}[1]{{\mathrm{d}#1}}
+\newcommand{\diff}[2]{\dfrac{\dee{#1}}{\dee{#2}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Time to start the actual test
+
+\begin{document}
+
+\section*{Mathematics ABC --- Midterm --- 45 minutes}
+\subsection*{October 43th 2318}
+\begin{itemize}
+  \item The test consists of \numpages\ pages and \numquestions\ questions worth a total of \numpoints\ marks.
+  \item This is a closed-book examination. \textbf{None of the following are allowed}: documents, cheat sheets or electronic devices of any kind (including calculators, \underline{cell phones}, etc.)
+  \item No work on this page will be marked.
+  \item Fill in the information below before turning to the questions.
+\end{itemize}
+
+\begin{center}
+  \includegraphics{idBox2}
+\end{center}
+
+
+\vfill
+\newpage
+\dnm
+\subsection*{Additional instructions}
+\begin{itemize}
+  \item Please use the spaces indicated.
+  \item If you require extra paper then put up your hand and ask your instructor.
+  \begin{itemize}
+    \item You must put your name and student number on any extra pages.
+    \item You must indicate the test-number and question-number.
+    \item Please do this \textbf{on both sides} of any extra pages.
+  \end{itemize}
+  \item Please do not dismember your test. You must submit all pages.
+  \item Smoking is strictly prohibited during the test.
+\end{itemize}
+
+\vfill
+\subsection*{Formula sheet}
+You may find the following formulas useful in the questions that follow.
+\begin{align*}
+  a^2 + b^2 &= c^2 \\
+  e^{i\pi}+1 &= 0 \\
+  \sum_{i=1}^n i &= \frac{n(n+1)}{2} \\
+  \diff{}{x}(f+g) &= \diff{f}{x}+\diff{g}{x} \\
+  \int (f+g)\dee{x} &= \int f \dee{x} + \int g \dee{x} \\
+  \cos(a+b) &= \cos a \cos b - \sin a \sin b \\
+  \sin(a+b) &= \sin a \cos b + \cos a \sin b \\
+  A \cup (B \cap C) &= (A\cup B) \cap (A \cup C) \\
+  A \cap (B \cup C) &= (A\cap B) \cup (A \cap C) \\
+  \overline{A \cap B} &= \overline{A} \cup \overline{B} \\
+  \overline{A \cup B} &= \overline{A} \cap \overline{B}
+\end{align*}
+\vfill
+
+\newpage
+
+\begin{questions}
+\question[5] Please place your answers in the boxes provided.
+\begin{parts}
+  \part Answer something simple, \textbf{but this is ver2}
+  \answerbox{ABC}
+  \begin{solution}
+    Some working will go here.
+  \end{solution}
+  \blank
+  % Use \blank to space out the question parts nicely.
+
+  \part Another little thing here, \textbf{but this is ver2}
+  \answerbox{\(\sin(x)\)}
+  \begin{solution}
+    Putting in your solutions ahead of time really helps calibrate your test.
+  \end{solution}
+  \blank
+
+  \part A third thing, \textbf{but this is ver2}
+  \answerbox{\(\int \sin(x) dx\)}
+  \begin{solution}
+    Yet another solution goes here.
+  \end{solution}
+  \blank
+\end{parts}
+\newpage
+
+%% Next question
+
+\question[5]
+Please place your answers in the boxes provided.
+[Note if mark this question as ``fix'' in the spec it will always be chosen
+from version 1; version 2 will never be used.]
+\begin{parts}
+  \part Answer something not quite so simple, \textbf{but this is ver2}
+  \answerbox{ABC}
+  \begin{solution}
+    Some working will go here.
+  \end{solution}
+  \blank
+  % Use \blank to space out the question parts nicely.
+
+  \part Another less simple thing here, \textbf{but this is ver2}
+  \answerbox{\(\sin(x)\)}
+  \begin{solution}
+    Putting in your solutions ahead of time really helps calibrate your test.
+  \end{solution}
+  \blank
+
+  \part A third thing unsimple thing here, \textbf{but this is ver2}
+  \answerbox{\(\int \sin(x) dx\)}
+  \begin{solution}
+    Yet another solution goes here.
+  \end{solution}
+  \blank
+\end{parts}
+\newpage
+
+%% Next question
+
+\question[10] A long question goes here. In fact it is sufficiently long that we make sure you have a whole extra blank page for your work.
+
+[But this is ver2 which is the same question but some details have been changed slightly.]
+
+\begin{solution}
+  A long solution here. Maybe it even contains a diagram?
+\end{solution}
+
+\blankpage
+
+\end{questions}
+\end{document}
