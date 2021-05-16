@@ -171,11 +171,10 @@ def get_toml(assignment, server_dir="."):
     numberOfVersions = 1  # TODO: Make this not hardcoded
     numberOfPages = 20  # TODO: Make this not hardcoded
 
-    # TODO: TEst whether we really need to overshoot numberToProduce
-    # and numberToName
-    numberToProduce = len([_ for _ in assignment.get_gradeable_students()]) + 10
-    # numberToName = assignment.needs_grading_count  # This is bad form
-    numberToName = len([_ for _ in assignment.get_gradeable_students()])
+    numberToProduce = -1
+    numberToName = -1
+    # note potentially useful
+    # assignment.needs_grading_count, assignment.get_gradeable_students()
 
     # What a beautiful wall of +='s
     toml = ""
