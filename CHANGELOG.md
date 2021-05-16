@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
 ### Changed
+* Packaging fixes including a revamp of `.../share/plom`.
 
 ### Fixed
-
+* Workaround for blurry results from very tall scans.
+* Misc bug and documentation fixes.
 
 
 ## [0.6.1] - 2021-04-16
