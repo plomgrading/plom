@@ -126,7 +126,7 @@ class KeyHelp(QDialog):
             ],
             [
                 "Zoom",
-                ["a"],
+                ["z"],
                 "Selects the zoom-tool. Zoom the view in (out) on click (shift-click).",
             ],
             ["Zoom-in", ["+", "="], "Zooms the view in."],
