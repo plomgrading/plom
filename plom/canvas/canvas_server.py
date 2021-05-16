@@ -140,28 +140,6 @@ def get_classlist(course, server_dir="."):
     return
 
 
-def filter_for_qr(info_str):
-    """
-    args:
-
-    (info_str): a string representing a field for one of the entries
-    in a Spec.toml file
-
-    returns:
-
-    (filtered_str): a string with any illegal characters that could
-    mess up a QR code removed
-    """
-    # lower case letters, upper case letters, digits, and the space
-    # character
-    allowed_chars = set(string.ascii_letters + string.digits + " ")
-    filtered_str = ""
-    for char in info_str:
-        if char in allowed_chars:
-            filtered_str += char
-    return filtered_str
-
-
 def get_short_name(long_name):
     """"""
     short_name = ""
@@ -186,7 +164,7 @@ def get_toml(assignment, server_dir="."):
     """
     (assignment): a canvasapi assignment object
     """
-    longName = filter_for_qr(assignment.name)
+    longName = assignment.name
 
     name = get_short_name(longName)
 
