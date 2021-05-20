@@ -1396,6 +1396,9 @@ class AddRubricBox(QDialog):
         if self.DE.checkState() == Qt.Checked:
             self.SB.setEnabled(True)
             self.Lkind.setText("relative")
+            # a fix for #1561 - we need to make sure delta is not zero when we enable deltas
+            if self.SB.value() == 0:
+                self.SB.setValue(1)
         else:
             self.Lkind.setText("neutral")
             self.SB.setEnabled(False)
