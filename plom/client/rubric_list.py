@@ -1247,10 +1247,12 @@ class RubricWidget(QWidget):
 
 class SignedSB(QSpinBox):
     # add an explicit sign to spinbox and no 0
-    # range is from -(N+1),..,-1,1,...(N-1)
+    # range is from -N,..,-1,1,...N
+    # note - to fix #1561 include +/- N in this range.
+    # else 1 point questions become very problematic
     def __init__(self, maxMark):
         super().__init__()
-        self.setRange(-maxMark + 1, maxMark - 1)
+        self.setRange(-maxMark, maxMark)
         self.setValue(1)
 
     def stepBy(self, steps):
