@@ -1256,6 +1256,7 @@ class SignedSB(QSpinBox):
         self.setValue(1)
 
     def stepBy(self, steps):
+        print("A")
         self.setValue(self.value() + steps)
         # to skip 0.
         if self.value() == 0:
@@ -1365,8 +1366,9 @@ class AddRubricBox(QDialog):
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
-                if com["delta"] == ".":
-                    self.SB.setValue(0)
+                if com["delta"] in [".", 0, "0"]:
+                    # part of fixing #1561 - delta-spinbox was set to 0.
+                    self.SB.setValue(1)
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
@@ -1410,5 +1412,13 @@ class AddRubricBox(QDialog):
         if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
             ErrorMessage("Your rubric must contain some text.").exec_()
             return
+        # make sure that when delta-enabled we dont have delta=0
+        # part of fixing #1561
+        if self.SB.value() == 0 and self.DE.checkState() == Qt.Checked:
+            ErrorMessage(
+                "If 'Delta mark' is checked then the rubric cannot have a delta of zero."
+            ).exec_()
+            return
+
         # future checks go here.
         self.accept()
