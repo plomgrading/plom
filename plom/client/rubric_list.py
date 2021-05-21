@@ -1222,8 +1222,9 @@ class RubricWidget(QWidget):
             self.rubrics.append(new_rubric)
             # append the rubric to the shownList
             self.tabS.appendNewRubric(new_rubric)
-            # also add it to the list in the current rubriclist (if different)
-            if self.RTW.currentWidget() != self.tabS:
+            # fix for #1563 - should only add to shared list and user-generated list
+            # also add it to the list in the current rubriclist (if it is a user-generated tab)
+            if self.RTW.currentWidget().is_user_tab():
                 self.RTW.currentWidget().appendNewRubric(new_rubric)
         # finally - select that rubric and simulate a click
         self.RTW.currentWidget().selectRubricByKey(rubricID)
