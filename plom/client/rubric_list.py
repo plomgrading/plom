@@ -1256,7 +1256,6 @@ class SignedSB(QSpinBox):
         self.setValue(1)
 
     def stepBy(self, steps):
-        print("A")
         self.setValue(self.value() + steps)
         # to skip 0.
         if self.value() == 0:

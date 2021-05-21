@@ -198,7 +198,6 @@ class RubricHandler:
             return web.Response(status=400)
 
         if not self.validateRubric(username, updated_rubric):
-            print("TRYING WITH ", updated_rubric)
             return web.Response(status=406)
 
         rval = self.server.MmodifyRubric(username, key, updated_rubric)
