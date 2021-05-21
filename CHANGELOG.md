@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Minor bug fix to stop user being able to create 0-point relative rubrics. Related server-side rubric sanity checking.
 
 
 ## [0.6.2] - 2021-05-16

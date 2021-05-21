@@ -1247,10 +1247,12 @@ class RubricWidget(QWidget):
 
 class SignedSB(QSpinBox):
     # add an explicit sign to spinbox and no 0
-    # range is from -(N+1),..,-1,1,...(N-1)
+    # range is from -N,..,-1,1,...N
+    # note - to fix #1561 include +/- N in this range.
+    # else 1 point questions become very problematic
     def __init__(self, maxMark):
         super().__init__()
-        self.setRange(-maxMark + 1, maxMark - 1)
+        self.setRange(-maxMark, maxMark)
         self.setValue(1)
 
     def stepBy(self, steps):
@@ -1363,8 +1365,9 @@ class AddRubricBox(QDialog):
                 self.TEmeta.clear()
                 self.TEmeta.insertPlainText(com["meta"])
             if com["delta"]:
-                if com["delta"] == ".":
-                    self.SB.setValue(0)
+                if com["delta"] in [".", 0, "0"]:
+                    # part of fixing #1561 - delta-spinbox was set to 0.
+                    self.SB.setValue(1)
                     self.DE.setCheckState(Qt.Unchecked)
                 else:
                     self.SB.setValue(int(com["delta"]))
@@ -1396,6 +1399,9 @@ class AddRubricBox(QDialog):
         if self.DE.checkState() == Qt.Checked:
             self.SB.setEnabled(True)
             self.Lkind.setText("relative")
+            # a fix for #1561 - we need to make sure delta is not zero when we enable deltas
+            if self.SB.value() == 0:
+                self.SB.setValue(1)
         else:
             self.Lkind.setText("neutral")
             self.SB.setEnabled(False)
@@ -1405,5 +1411,13 @@ class AddRubricBox(QDialog):
         if len(self.TE.toPlainText().strip()) <= 0:  # no whitespace only rubrics
             ErrorMessage("Your rubric must contain some text.").exec_()
             return
+        # make sure that when delta-enabled we dont have delta=0
+        # part of fixing #1561
+        if self.SB.value() == 0 and self.DE.checkState() == Qt.Checked:
+            ErrorMessage(
+                "If 'Delta mark' is checked then the rubric cannot have a delta of zero."
+            ).exec_()
+            return
+
         # future checks go here.
         self.accept()

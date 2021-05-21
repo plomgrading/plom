@@ -14,6 +14,89 @@ class RubricHandler:
     def __init__(self, plomServer):
         self.server = plomServer
 
+    def validateRubric(self, username, rubric):
+        """Do some simple validation of the rubric
+
+        Args:
+            username (str): the name of the user trying to create the rubric
+            rubric (dict): a dict containing the rubric info
+        Returns:
+            bool: true if valid, false otherwise"""
+
+        # check rubric has minimal fields needed
+        need_fields = ("kind", "delta", "text", "question")
+        if any(x not in rubric for x in need_fields):
+            return False
+        # check question number is in range
+        if (
+            rubric["question"] <= 0
+            or rubric["question"] > self.server.testSpec["numberOfQuestions"]
+        ):
+            return False
+        # set maxMark for checking marks are in range.
+        maxMark = self.server.testSpec["question"][str(rubric["question"])]["mark"]
+
+        if rubric["kind"] == "neutral":
+            # neutral rubric must have no delta - ie delta == '.'
+            if rubric["delta"] != ".":
+                return False
+            # must have some text
+            if len(rubric["text"].strip()) == 0:
+                return False
+
+        elif rubric["kind"] == "relative":
+            # must have some text
+            if len(rubric["text"].strip()) == 0:
+                return False
+            # the delta must be of the form -k or +k
+            if rubric["delta"][0] not in ["-", "+"]:
+                return False
+            # check rest of delta string is numeric
+            if not rubric["delta"][1:].isnumeric():
+                return False
+            # check delta is in range
+            idelta = int(rubric["delta"])
+            if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
+                return False
+
+        elif rubric["kind"] == "delta":
+            # only HAL and manager can create delta rubrics - this may change in the future
+            if username not in ["HAL", "manager"]:
+                return False
+            # must have text field == '.'
+            if rubric["text"] != ".":
+                return False
+            # the delta must be of the form -k or +k
+            if rubric["delta"][0] not in ["-", "+"]:
+                return False
+            # check rest of delta string is numeric
+            if not rubric["delta"][1:].isnumeric():
+                return False
+            idelta = int(rubric["delta"])
+            if (idelta < -maxMark) or (idelta > maxMark) or (idelta == 0):
+                return False
+
+        elif rubric["kind"] == "absolute":
+            # only HAL and manager can create absolute rubrics - this may change in the future
+            if username not in ["HAL", "manager"]:
+                return False
+            # must have some text
+            if len(rubric["text"].strip()) == 0:
+                return False
+            # must have numeric delta
+            if not rubric["delta"].isnumeric():
+                return False
+            # check score in range
+            idelta = int(rubric["delta"])
+            if (idelta < 0) or (idelta > maxMark):
+                return False
+
+        else:  # rubric kind must be neutral, relative, delta or absolute
+            return False
+
+        # passes tests
+        return True
+
     # @routes.put("/MK/rubric")
     @authenticate_by_token_required_fields(["user", "rubric"])
     def McreateRubric(self, data, request):
@@ -28,6 +111,9 @@ class RubricHandler:
         """
         username = data["user"]
         new_rubric = data["rubric"]
+
+        if not self.validateRubric(username, new_rubric):
+            return web.Response(status=406)
 
         rval = self.server.McreateRubric(username, new_rubric)
         if rval[0]:  # worked - so return key
@@ -110,6 +196,9 @@ class RubricHandler:
 
         if key != updated_rubric["id"]:  # key mismatch
             return web.Response(status=400)
+
+        if not self.validateRubric(username, updated_rubric):
+            return web.Response(status=406)
 
         rval = self.server.MmodifyRubric(username, key, updated_rubric)
         if rval[0]:  # worked - so return key
