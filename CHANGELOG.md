@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Minor bug fix to stop user being able to create 0-point relative rubrics. Related server-side rubric sanity checking.
+* Fix Flatpak and source packaging to include icons and cursors.
+* Misc bug fixes.
 
 
 ## [0.6.2] - 2021-05-16
