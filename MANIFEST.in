@@ -26,4 +26,7 @@ include plom/idBox2.pdf
 include plom/client/backGrid1.svg
 include plom/client/backGrid2.png
 
+include plom/client/cursors/*.png
+include plom/client/icons/*.svg
+
 # TODO: docs?
