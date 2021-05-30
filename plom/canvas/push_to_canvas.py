@@ -6,7 +6,13 @@ import subprocess
 import string
 import time
 import random
+
+import pandas
 from tqdm import tqdm as tqdm
+
+# TODO: or how else to get the classlist and conversion?
+from canvas_server import get_classlist as make_conversion_csv
+
 
 # TODO: Refactor this into a separate canvas methods file
 def get_conversion_table(server_dir="."):
@@ -124,17 +130,11 @@ def get_sis_id_to_sub_and_name_table(subs):
 
 
 def get_sis_id_to_marks():
-    sis_id_to_marks = {}
-    with open("marks.csv", "r") as csvfile:
-        reader = csv.reader(csvfile, delimiter=",", quotechar='"')
-
-        for (i, row) in enumerate(reader):
-            if i == 0:
-                continue
-            else:
-                # print(row[0], row[-3])
-                sis_id_to_marks[row[0]] = row[-3]
-    return sis_id_to_marks
+    """A dictionary of the Student Number ("sis id") to total mark."""
+    df = pandas.read_csv("marks.csv", dtype="object")
+    return df.set_index("StudentID")["Total"].to_dict()
+    # TODO: if specific types are needed
+    # return {str(k): int(v) for k,v in d.items()}
 
 
 def obfuscate_student_name(stud_name):
