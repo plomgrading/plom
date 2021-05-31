@@ -17,7 +17,12 @@ import PIL
 from tqdm import tqdm
 
 from canvas_utils import download_classlist as get_classlist
-from canvas_utils import get_conversion_table, get_courses_teaching
+from canvas_utils import (
+    get_conversion_table,
+    get_courses_teaching,
+    interactively_get_assignment,
+    interactively_get_course,
+)
 
 
 # For making sure the server dies with the python script if we kill
@@ -378,68 +383,9 @@ if __name__ == "__main__":
     # just doing the sensible thing and breaking?
     courses_teaching = stupid_preamble()
 
-    print("\nSelect a course to mark.\n")
-    print("  Available courses:")
-    print("  --------------------------------------------------------------------")
-    for (i, course) in enumerate(courses_teaching):
-        print(f"    {i}: {course.name}")
-
-    course_chosen = False
-    while not course_chosen:
-        choice = input("\n  Choice [0-n]: ")
-
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(courses_teaching):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-
-            selection = courses_teaching[choice]
-            print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                course_chosen = True
-                course = selection
-                break
-
-    # print("\n  ==================================================================  ")
-    print("\n\n")
-
-    print(f"\nSelect an assignment to mark from {course}.\n")
-    print("  Available assignments:")
-    print("  --------------------------------------------------------------------")
-
-    assignments = list(course.get_assignments())
-    for (i, assignment) in enumerate(assignments):
-        print(f"    {i}: {assignment.name}")
-
-    assignment_chosen = False
-    while not assignment_chosen:
-        choice = input("\n  Choice [0-n]: ")
-
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(assignments):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-            selection = assignments[choice]
-            print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                assignment_chosen = True
-                assignment = selection
-
-    print(
-        "\n======================================================================\n\n\n\n"
-    )
+    # TODO: copy commandline arg stuff from push_to_canvas
+    course = interactively_get_course(user)
+    assignment = interactively_get_assignment(user, course)
 
     # TODO: Make this give an `os.listdir()`
     print("Setting up the workspace now.\n")

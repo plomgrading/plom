@@ -14,12 +14,13 @@ import pandas
 from tqdm import tqdm
 from canvasapi import Canvas
 
-# TODO: or how else to get the classlist and conversion?
 from canvas_utils import download_classlist
 from canvas_utils import (
     get_conversion_table,
-    get_sis_id_to_canvas_id_table,
     get_courses_teaching,
+    get_sis_id_to_canvas_id_table,
+    interactively_get_assignment,
+    interactively_get_course,
 )
 
 from plom import __version__
@@ -127,74 +128,6 @@ def obfuscate_reassembled_pdfname(pdfname):
     sis_id, _ = postfix.split(".")  # We don't care about the "pdf"
     sis_id = sis_id[0] + (len(sis_id) - 2) * "*" + sis_id[-1]
     return f"{prefix}_{sis_id}.pdf"
-
-
-def interactively_get_course(user):
-    courses_teaching = get_courses_teaching(user)
-
-    print("\nSelect a course to push grades for.\n")
-    print("  Available courses:")
-    print("  --------------------------------------------------------------------")
-    for (i, course) in enumerate(courses_teaching):
-        print(f"    {i}: {course.name}")
-
-    course_chosen = False
-    while not course_chosen:
-        choice = input("\n  Choice [0-n]: ")
-
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(courses_teaching):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-
-            selection = courses_teaching[choice]
-            print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                course_chosen = True
-                course = selection
-                break
-
-    print("\n")
-    return course
-
-
-def interactively_get_assignment(user, course):
-    print(f"\nSelect an assignment to push for {course}.\n")
-    print("  Available assignments:")
-    print("  --------------------------------------------------------------------")
-
-    assignments = list(course.get_assignments())
-    for (i, assignment) in enumerate(assignments):
-        print(f"    {i}: {assignment.name}")
-
-    assignment_chosen = False
-    while not assignment_chosen:
-        choice = input("\n  Choice [0-n]: ")
-
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(assignments):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-            selection = assignments[choice]
-            print(f"  You selected {choice}: {selection.name}")
-            confirmation = input("  Confirm choice? [y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                assignment_chosen = True
-                assignment = selection
-
-    print("\n")
-    return assignment
 
 
 def get_assignment_by_id_number(user, num):

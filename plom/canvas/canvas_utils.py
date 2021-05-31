@@ -173,3 +173,64 @@ def get_courses_teaching(user):
             pass
 
     return courses_teaching
+
+
+def interactively_get_course(user):
+    courses_teaching = get_courses_teaching(user)
+    print("\nAvailable courses:")
+    print("  --------------------------------------------------------------------")
+    for (i, course) in enumerate(courses_teaching):
+        print(f"    {i}: {course.name}")
+
+    course_chosen = False
+    while not course_chosen:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(courses_teaching):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            selection = courses_teaching[choice]
+            print(f"  You selected {choice}: {selection.name}")
+            confirmation = input("  Confirm choice? [y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                course_chosen = True
+                course = selection
+                break
+    print("\n")
+    return course
+
+
+def interactively_get_assignment(user, course):
+    print(f"\nSelect an assignment to push for {course}.\n")
+    print("  Available assignments:")
+    print("  --------------------------------------------------------------------")
+
+    assignments = list(course.get_assignments())
+    for (i, assignment) in enumerate(assignments):
+        print(f"    {i}: {assignment.name}")
+
+    assignment_chosen = False
+    while not assignment_chosen:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(assignments):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            selection = assignments[choice]
+            print(f"  You selected {choice}: {selection.name}")
+            confirmation = input("  Confirm choice? [y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                assignment_chosen = True
+                assignment = selection
+    print("\n")
+    return assignment
