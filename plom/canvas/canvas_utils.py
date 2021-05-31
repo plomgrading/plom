@@ -234,3 +234,26 @@ def interactively_get_assignment(user, course):
                 assignment = selection
     print("\n")
     return assignment
+
+
+def get_course_by_partial_name(course_name, user):
+    # TODO: currently unused I think
+    # TODO: better to warn if multiple matches instead of first one?
+    for course in get_courses_teaching(user):
+        if course_name in course.name:
+            return course
+    raise ValueError("Could not find a matching course")
+
+
+def get_course_by_id_number(course_number, user):
+    for course in get_courses_teaching(user):
+        if course_number == course.id:
+            return course
+    raise ValueError("Could not find a matching course")
+
+
+def get_assignment_by_id_number(course, num):
+    for assignment in course.get_assignments():
+        if assignment.id == num:
+            return assignment
+    raise ValueError(f"Could not find assignment matching id={num}")

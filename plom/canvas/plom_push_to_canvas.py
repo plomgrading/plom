@@ -16,8 +16,10 @@ from canvasapi import Canvas
 
 from canvas_utils import download_classlist
 from canvas_utils import (
+    get_assignment_by_id_number,
     get_conversion_table,
     get_courses_teaching,
+    get_course_by_id_number,
     get_sis_id_to_canvas_id_table,
     interactively_get_assignment,
     interactively_get_course,
@@ -26,21 +28,6 @@ from canvas_utils import (
 from plom import __version__
 
 __DEFAULT_API_URL = "https://canvas.ubc.ca"
-
-
-def get_course_by_partial_name(course_name, user):
-    # TODO: better to warn if multiple matches instead of first one?
-    for course in get_courses_teaching(user):
-        if course_name in course.name:
-            return course
-    raise ValueError("Could not find a matching course")
-
-
-def get_course_by_id_number(course_number, user):
-    for course in get_courses_teaching(user):
-        if course_number == course.id:
-            return course
-    raise ValueError("Could not find a matching course")
 
 
 def get_student_list(course):
@@ -130,13 +117,6 @@ def obfuscate_reassembled_pdfname(pdfname):
     return f"{prefix}_{sis_id}.pdf"
 
 
-def get_assignment_by_id_number(user, num):
-    for assignment in course.get_assignments():
-        if assignment.id == num:
-            return assignment
-    raise ValueError(f"Could not find assignment matching id={num}")
-
-
 parser = argparse.ArgumentParser(
     description="Upload reassembled Plom papers and grades to Canvas.",
 )
@@ -208,7 +188,7 @@ if __name__ == "__main__":
     print(f"Ok using course: {course}")
 
     if args.assignment:
-        assignment = get_assignment_by_id_number(user, args.assignment)
+        assignment = get_assignment_by_id_number(course, args.assignment)
     else:
         assignment = interactively_get_assignment(user, course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
