@@ -3,11 +3,10 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import argparse
-import os
 from pathlib import Path
+import random
 import string
 import time
-import random
 
 import pandas
 from tqdm import tqdm
@@ -50,15 +49,18 @@ def get_courses_teaching(user):
 
 
 def get_course_by_partial_name(course_name, user):
+    # TODO: better to warn if multiple matches instead of first one?
     for course in get_courses_teaching(user):
         if course_name in course.name:
             return course
+    raise ValueError("Could not find a matching course")
 
 
 def get_course_by_id_number(course_number, user):
     for course in get_courses_teaching(user):
         if course_number == course.id:
             return course
+    raise ValueError("Could not find a matching course")
 
 
 def get_student_list(course):
@@ -67,7 +69,6 @@ def get_student_list(course):
         # TODO: See if we also need to check for active enrollment
         if enrollee.role == "StudentEnrollment":
             students += [enrollee]
-
     return students
 
 
@@ -93,6 +94,7 @@ def login(api_url=None, api_key=None):
     else:
         # TODO: if exists
         from api_secrets import my_key as API_KEY
+
         # TODO: else prompt?  with a message of how to save?
         canvas = Canvas(api_url, API_KEY)
         del API_KEY
@@ -141,6 +143,7 @@ def obfuscate_student_name(stud_name):
 
 
 def obfuscate_reassembled_pdfname(pdfname):
+    """Censors the number in a string of form foo_12345678.pdf"""
     prefix, postfix = pdfname.split("_")
     sis_id, _ = postfix.split(".")  # We don't care about the "pdf"
     sis_id = sis_id[0] + (len(sis_id) - 2) * "*" + sis_id[-1]
@@ -223,7 +226,7 @@ def get_assignment_by_id_number(user, num):
 
 
 parser = argparse.ArgumentParser(
-    description="Upload reassembled Plom papers and graders to Canvas.",
+    description="Upload reassembled Plom papers and grades to Canvas.",
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 parser.add_argument(
