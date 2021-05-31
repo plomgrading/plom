@@ -269,6 +269,14 @@ parser.add_argument(
         Interactively prompt from a list if omitted.
     """,
 )
+parser.add_argument(
+    "--obfuscate",
+    action="store_true",
+    help="""
+        Obscure most of names and student numbers when printing to the screen
+        (default: off).
+    """,
+)
 
 
 if __name__ == "__main__":
@@ -354,56 +362,32 @@ if __name__ == "__main__":
         # except AttributeError:
         #     print("no")
         #     pass
-        # TODO: print mark here
         if args.dry_run:
-            timeouts += [(pdf, name)]
+            timeouts += [(pdf, mark, name)]
         else:
             try:
                 # TODO: it has a return value, maybe we should look, assert etc?
                 sub.upload_comment(pdf)
                 time.sleep(random.uniform(2, 6))
             except:  # Can get a `CanvasException` here from timeouts
-                timeouts += [(pdf, name)]
+                timeouts += [(pdf, mark, name)]
 
             # Push the grade change
             sub.edit(submission={"posted_grade": mark})
 
-    # Ones we'll have to upload manually
-    print(f"  Done. There were {len(timeouts)} timeouts.")
+    if args.dry_run:
+        print("Done with DRY-RUN.  The following data would have been uploaded:")
+    else:
+        print(f"Done.  There were {len(timeouts)} timeouts:")
 
-    continue_after = True
-    while not True:
-        view_timeouts = input("  View them? [y/n]")
-        if view_timeouts in ["", "\n", "y", "Y"]:
-            break
-        elif view_timeouts in ["n", "N"]:
-            continue_after = False
-        else:
-            print("  Please select one of [y/n].")
-
-    while continue_after:
-        obfuscate = input("  Obfuscate student info? [y/n] ")
-        if obfuscate in ["n", "N"]:
-            print(f"         filename      (student name)")
-            print("    --------------------------------")
+    print(f"         filename       mark    (student name)")
+    print("    --------------------------------------------")
+    for (i, (pdf, mark, name)) in enumerate(timeouts):
+        if args.obfuscate:
             print(
-                "    ------------------------------------------------------------------"
+                f"    {obfuscate_reassembled_pdfname(pdf.name)}  {mark}  ({obfuscate_student_name(name)})"
             )
-            for (i, timed_out) in enumerate(timeouts):
-
-                print(f"    {timed_out[0]}  ({timed_out[1]})")
-            print("  These should be uploaded manually.\n")
-            break
-        elif obfuscate in ["", "\n", "y", "Y"]:
-            print(f"        filename      (student name)")
-            for (i, timed_out) in enumerate(timeouts):
-
-                print(
-                    f"    {obfuscate_reassembled_pdfname(timed_out[0])}  ({obfuscate_student_name(timed_out[1])})"
-                )
-            print("  These should be uploaded manually.\n")
-            break
         else:
-            print("  Please select one of [y/n].")
-
-    print("Have a nice day!")
+            print(f"    {pdf.name}  {mark}  ({name})")
+    if not args.dry_run:
+        print("  These should be uploaded manually.\n")
