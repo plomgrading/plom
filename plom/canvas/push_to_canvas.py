@@ -215,6 +215,13 @@ def interactively_get_assignment(user, course):
     return assignment
 
 
+def get_assignment_by_id_number(user, num):
+    for assignment in course.get_assignments():
+        if assignment.id == num:
+            return assignment
+    raise ValueError(f"Could not find assignment matching id={num}")
+
+
 parser = argparse.ArgumentParser(
     description="Upload reassembled Plom papers and graders to Canvas.",
 )
@@ -260,7 +267,6 @@ parser.add_argument(
     help="""
         Specify a Canvas Assignment ID (an integer M).
         Interactively prompt from a list if omitted.
-        TODO: not implemented yet.
     """,
 )
 
@@ -278,8 +284,13 @@ if __name__ == "__main__":
 
     print(f"Ok using course: {course}")
 
-    assignment = interactively_get_assignment(user, course)
-    print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
+    if args.assignment:
+        assignment = get_assignment_by_id_number(user, args.assignment)
+    else:
+        assignment = interactively_get_assignment(user, course)
+        print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
+
+    print(f"Ok uploading to Assignment: {assignment}")
 
     print("\nChecking if you have run `plom-finish`...")
     print("  --------------------------------------------------------------------")
