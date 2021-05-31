@@ -18,9 +18,7 @@ from canvasapi import Canvas
 from canvas_utils import download_classlist
 from canvas_utils import get_conversion_table, get_sis_id_to_canvas_id_table
 
-# TODO: later
-# from plom import __version__
-__version__ = "0.0.1"
+from plom import __version__
 __DEFAULT_API_URL = "https://canvas.ubc.ca"
 
 
