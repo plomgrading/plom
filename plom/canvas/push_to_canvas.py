@@ -49,9 +49,15 @@ def get_courses_teaching(user):
     return courses_teaching
 
 
-def get_course(course_name, user):
+def get_course_by_partial_name(course_name, user):
     for course in get_courses_teaching(user):
         if course_name in course.name:
+            return course
+
+
+def get_course_by_id_number(course_number, user):
+    for course in get_courses_teaching(user):
+        if course_number == course.id:
             return course
 
 
@@ -172,8 +178,7 @@ def interactively_get_course(user):
                 course = selection
                 break
 
-    # print("\n  ==================================================================  ")
-    print("\n\n")
+    print("\n")
     return course
 
 
@@ -206,9 +211,7 @@ def interactively_get_assignment(user, course):
                 assignment_chosen = True
                 assignment = selection
 
-    print(
-        "\n======================================================================\n\n\n\n"
-    )
+    print("\n")
     return assignment
 
 
@@ -260,13 +263,14 @@ if __name__ == "__main__":
 
     if args.course is None:
         course = interactively_get_course(user)
-        print(f'Note: you can use "--course {course.id}" to repeat non-interatively.')
+        print(f'Note: you can use "--course {course.id}" to reselect.\n')
     else:
-        raise NotImplementedError("get to work")
-    print(course)
+        course = get_course_by_id_number(args.course, user)
+
+    print(f"Ok using course: {course}")
 
     assignment = interactively_get_assignment(user, course)
-    print(f'Note: you can use "--assignment {assignment.id}" to repeat non-interatively.')
+    print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
 
     print("\n\n\nChecking if you have run `plom-finish`...")
     print("  --------------------------------------------------------------------")
