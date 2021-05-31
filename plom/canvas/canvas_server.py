@@ -9,10 +9,11 @@ import csv
 import string
 import subprocess
 import os
-import fitz
-import PIL
 import random
 import time
+
+import fitz
+import PIL
 from tqdm import tqdm as tqdm
 
 # For making sure the server dies with the python script if we kill

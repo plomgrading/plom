@@ -5,11 +5,12 @@
 """Scripts that do the actual interfacing with Canvas api
 """
 
-import canvasapi as capi
-import canvasapi_extensions as cext
-
+import csv
 import os
 import subprocess
+
+import canvasapi as capi
+import canvasapi_extensions as cext
 
 
 def login(API_URL, API_KEY):

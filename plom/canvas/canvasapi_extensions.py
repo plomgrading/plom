@@ -1,13 +1,11 @@
-#!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
 
 """Get information from all the canvas courses and such
 """
 
-from copy import deepcopy
-
 import canvasapi as capi
+
 
 ### FIRST UP: Extending the canvas api classes to add some nice
 ### methods for integration with plom.
