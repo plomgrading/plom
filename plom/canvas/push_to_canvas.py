@@ -3,7 +3,6 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import os
-import csv
 import subprocess
 import string
 import time
@@ -14,35 +13,8 @@ from tqdm import tqdm
 from canvasapi import Canvas
 
 # TODO: or how else to get the classlist and conversion?
-from canvas_server import get_classlist as make_conversion_csv
-
-
-# TODO: Refactor this into a separate canvas methods file
-def get_conversion_table(server_dir="."):
-    """
-    convert canvas ID to name and sis id
-    """
-    conversion = {}
-    with open(f"{server_dir}/conversion.csv", "r") as csvfile:
-        reader = csv.reader(csvfile, delimiter=",", quotechar='"')
-        for (i, row) in enumerate(reader):
-            if i == 0:
-                continue
-            else:
-                conversion[row[0]] = row[1:]
-    return conversion
-
-
-def get_sis_id_to_canvas_id_table(server_dir="."):
-    sis_id_to_canvas = {}
-    with open(f"{server_dir}/classlist.csv", "r") as csvfile:
-        reader = csv.reader(csvfile, delimiter=",", quotechar='"')
-        for (i, row) in enumerate(reader):
-            if i == 0:
-                continue
-            else:
-                sis_id_to_canvas[row[-1]] = row[1]
-    return sis_id_to_canvas
+from .canvas_utils import download_classlist
+from .canvas_utils import get_conversion_table, get_sis_id_to_canvas_id_table
 
 
 def get_courses_teaching(user):
@@ -358,7 +330,7 @@ if __name__ == "__main__":
     pdfs = [fname for fname in os.listdir() if fname[-4:] == ".pdf"]
 
     # Hack to get conversion file
-    # make_conversion_csv(course)
+    # download_classlist(course)
 
     dry_run = False  # TODO: make command line arg?
     timeouts = []
