@@ -143,3 +143,33 @@ def get_sis_id_to_canvas_id_table(server_dir="."):
             else:
                 sis_id_to_canvas[row[-1]] = row[1]
     return sis_id_to_canvas
+
+
+def get_courses_teaching(user):
+    """Get a list of the courses a particular user is teaching.
+
+    args:
+        user (canvasapi.current_user.CurrentUser)
+
+    return:
+        list: List of `canvasapi.course.Course` objects.
+    """
+    courses_teaching = []
+    for course in user.get_courses():
+        try:
+            for enrollee in course.enrollments:
+                if enrollee["user_id"] == user.id:
+                    if enrollee["type"] in ["teacher", "ta"]:
+                        courses_teaching += [course]
+                    else:
+                        continue
+
+        except AttributeError:
+            # OK for some reason a requester object is being included
+            # as a course??????
+            #
+            # TODO: INvestigate further?
+            # print(f"WARNING: At least one course is missing some expected attributes")
+            pass
+
+    return courses_teaching

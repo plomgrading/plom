@@ -16,8 +16,8 @@ import fitz
 import PIL
 from tqdm import tqdm
 
-from .canvas_utils import download_classlist as get_classlist
-from .canvas_utils import get_conversion_table
+from canvas_utils import download_classlist as get_classlist
+from canvas_utils import get_conversion_table, get_courses_teaching
 
 
 # For making sure the server dies with the python script if we kill
@@ -366,30 +366,7 @@ def stupid_preamble():
     del API_KEY
     user = canvas.get_current_user()
 
-    # courses = list(user.get_courses())
-
-    courses_teaching = []
-    for course in user.get_courses():
-
-        try:
-            enrollees = course.enrollments
-
-            for enrollee in course.enrollments:
-
-                if enrollee["user_id"] == user.id:
-                    if enrollee["type"] in ["teacher", "ta"]:
-                        courses_teaching += [course]
-                    else:
-                        continue
-
-        except AttributeError:
-            # OK for some reason a requester object is being included
-            # as a course??????
-            #
-            # TODO: INvestigate further?
-            # print(f"WARNING: At least one course is missing some expected attributes")
-            pass
-
+    courses_teaching = get_courses_teaching(user)
     return courses_teaching
 
 

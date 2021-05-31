@@ -16,36 +16,15 @@ from canvasapi import Canvas
 
 # TODO: or how else to get the classlist and conversion?
 from canvas_utils import download_classlist
-from canvas_utils import get_conversion_table, get_sis_id_to_canvas_id_table
+from canvas_utils import (
+    get_conversion_table,
+    get_sis_id_to_canvas_id_table,
+    get_courses_teaching,
+)
 
 from plom import __version__
+
 __DEFAULT_API_URL = "https://canvas.ubc.ca"
-
-
-def get_courses_teaching(user):
-    courses_teaching = []
-    for course in user.get_courses():
-
-        try:
-            enrollees = course.enrollments
-
-            for enrollee in course.enrollments:
-
-                if enrollee["user_id"] == user.id:
-                    if enrollee["type"] in ["teacher", "ta"]:
-                        courses_teaching += [course]
-                    else:
-                        continue
-
-        except AttributeError:
-            # OK for some reason a requester object is being included
-            # as a course??????
-            #
-            # TODO: INvestigate further?
-            # print(f"WARNING: At least one course is missing some expected attributes")
-            pass
-
-    return courses_teaching
 
 
 def get_course_by_partial_name(course_name, user):
