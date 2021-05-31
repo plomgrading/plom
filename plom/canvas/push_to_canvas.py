@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021 Colin B. Macdonald
 
+import argparse
 import os
 from pathlib import Path
 import string
@@ -13,8 +14,13 @@ from tqdm import tqdm
 from canvasapi import Canvas
 
 # TODO: or how else to get the classlist and conversion?
-from .canvas_utils import download_classlist
-from .canvas_utils import get_conversion_table, get_sis_id_to_canvas_id_table
+from canvas_utils import download_classlist
+from canvas_utils import get_conversion_table, get_sis_id_to_canvas_id_table
+
+# TODO: later
+# from plom import __version__
+__version__ = "0.0.1"
+__DEFAULT_API_URL = "https://canvas.ubc.ca"
 
 
 def get_courses_teaching(user):
@@ -73,13 +79,17 @@ def sis_id_to_student_dict(student_list):
     return out_dict
 
 
-def login():
-    from api_secrets import my_key as API_KEY
-
-    API_URL = "https://canvas.ubc.ca"
-
-    canvas = Canvas(API_URL, API_KEY)
-    del API_KEY
+def login(api_url=None, api_key=None):
+    if not api_url:
+        api_url = __DEFAULT_API_URL
+    if api_key:
+        canvas = Canvas(api_url, api_key)
+    else:
+        # TODO: if exists
+        from api_secrets import my_key as API_KEY
+        # TODO: else prompt?  with a message of how to save?
+        canvas = Canvas(api_url, API_KEY)
+        del API_KEY
     this_user = canvas.get_current_user()
     del canvas
     return this_user
@@ -131,12 +141,7 @@ def obfuscate_reassembled_pdfname(pdfname):
     return f"{prefix}_{sis_id}.pdf"
 
 
-if __name__ == "__main__":
-    # TODO: Fix all the `sis` vs `sis_id` garbage here
-    user = login()
-
-    o_dir = os.getcwd()
-
+def interactively_get_course(user):
     courses_teaching = get_courses_teaching(user)
 
     print("\nSelect a course to push grades for.\n")
@@ -169,7 +174,10 @@ if __name__ == "__main__":
 
     # print("\n  ==================================================================  ")
     print("\n\n")
+    return course
 
+
+def interactively_get_assignment(user, course):
     print(f"\nSelect an assignment to push for {course}.\n")
     print("  Available assignments:")
     print("  --------------------------------------------------------------------")
@@ -201,6 +209,64 @@ if __name__ == "__main__":
     print(
         "\n======================================================================\n\n\n\n"
     )
+    return assignment
+
+
+parser = argparse.ArgumentParser(
+    description="Upload reassembled Plom papers and graders to Canvas.",
+)
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--api_url",
+    type=str,
+    default=__DEFAULT_API_URL,
+    action="store",
+    help=f'URL for talking to Canvas, defaults to "{__DEFAULT_API_URL}".',
+)
+parser.add_argument(
+    "--api_key",
+    type=str,
+    action="store",
+    help="""
+        The API Key for talking to Canvas.
+        You can store this in a local file "api_secrets.py" as
+        a string in a variable named "my_key".
+        TODO: If blank, prompt for it?
+    """,
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    help="Perform a dry-run without writing grades or uploading files.",
+)
+parser.add_argument(
+    "--course",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas course ID (an integer N).
+        Interactively prompt for it if omitted.
+    """,
+)
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    # TODO: Fix all the `sis` vs `sis_id` garbage here
+    user = login()
+
+    o_dir = os.getcwd()
+
+    if args.course is None:
+        course = interactively_get_course(user)
+        print(f'Note: you can use "--course {course.id}" to repeat non-interatively.')
+    else:
+        raise NotImplementedError("get to work")
+    print(course)
+
+    assignment = interactively_get_assignment(user, course)
+    print(f'Note: you can use "--assignment {assignment.id}" to repeat non-interatively.')
 
     print("\n\n\nChecking if you have run `plom-finish`...")
     print("  --------------------------------------------------------------------")
@@ -250,8 +316,6 @@ if __name__ == "__main__":
     os.chdir("reassembled")
     pdfs = [fname for fname in os.listdir() if fname[-4:] == ".pdf"]
 
-
-    dry_run = False  # TODO: make command line arg?
     timeouts = []
     for pdf in tqdm(pdfs):
         sis_id = (pdf.split("_")[1]).split(".")[0]
@@ -269,7 +333,8 @@ if __name__ == "__main__":
         # except AttributeError:
         #     print("no")
         #     pass
-        if dry_run:
+        # TODO: print mark here
+        if args.dry_run:
             timeouts += [(pdf, name)]
         else:
             try:
