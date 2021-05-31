@@ -357,7 +357,10 @@ if __name__ == "__main__":
     os.chdir("reassembled")
     pdfs = [fname for fname in os.listdir() if fname[-4:] == ".pdf"]
 
-    dry_run = False
+    # Hack to get conversion file
+    # make_conversion_csv(course)
+
+    dry_run = False  # TODO: make command line arg?
     timeouts = []
     for pdf in tqdm(pdfs):
         sis_id = (pdf.split("_")[1]).split(".")[0]
@@ -379,6 +382,7 @@ if __name__ == "__main__":
             timeouts += [(pdf, name)]
         else:
             try:
+                # TODO: it has a return value, maybe we should look, assert etc?
                 sub.upload_comment(pdf)
                 time.sleep(random.uniform(2, 6))
             except:  # Can get a `CanvasException` here from timeouts
