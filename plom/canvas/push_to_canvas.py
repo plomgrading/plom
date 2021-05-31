@@ -248,8 +248,19 @@ parser.add_argument(
     metavar="N",
     action="store",
     help="""
-        Specify a Canvas course ID (an integer N).
-        Interactively prompt for it if omitted.
+        Specify a Canvas Course ID (an integer N).
+        Interactively prompt from a list if omitted.
+    """,
+)
+parser.add_argument(
+    "--assignment",
+    type=int,
+    metavar="M",
+    action="store",
+    help="""
+        Specify a Canvas Assignment ID (an integer M).
+        Interactively prompt from a list if omitted.
+        TODO: not implemented yet.
     """,
 )
 
@@ -258,8 +269,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # TODO: Fix all the `sis` vs `sis_id` garbage here
     user = login()
-
-    o_dir = os.getcwd()
 
     if args.course is None:
         course = interactively_get_course(user)
@@ -272,57 +281,54 @@ if __name__ == "__main__":
     assignment = interactively_get_assignment(user, course)
     print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
 
-    print("\n\n\nChecking if you have run `plom-finish`...")
+    print("\nChecking if you have run `plom-finish`...")
     print("  --------------------------------------------------------------------")
     if not Path("marks.csv").exists():
         raise ValueError('Missing "marks.csv": run `plom-finish csv`')
-    print("  Found marks.csv")
+    print('  Found "marks.csv" file.')
     if not Path("reassembled").exists():
-        raise ValueError('Missing "reassembed": run `plom-finish reassemble`')
-    print("  Found reassembed/")
+        raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
+    print('  Found "reassembled/" directory.')
 
-    print("\n\n\nFetching data from canvas now...")
+    print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
     print("  Getting student list...")
     student_list = get_student_list(course)
-    print("  Done.\n")
+    print("    done.")
     print("  Getting canvasapi submission objects...")
     subs = assignment.get_submissions()
-    print("  Done.\n")
+    print("    done.")
 
     print("  Getting another classlist and various conversion tables...")
     download_classlist(course)
-    print("  Done.\n")
+    print("    done.")
 
     # Most of these conversion tables are fully irrelevant once we
     # test this code enough to be confident we can remove the
     # assertions down below
     print("  Constructing SIS_ID to student conversion table...")
     sis_id_to_students = sis_id_to_student_dict(student_list)
-    print("  Done.\n")
+    print("    done.")
 
     print("  Constructing SIS_ID to canvasapi submission conversion table...")
     sis_id_to_sub_and_name = get_sis_id_to_sub_and_name_table(subs)
-    print("  Done.\n")
+    print("    done.")
 
     print("  Constructing SIS_ID to canvasapi submission conversion table...")
     # We only need this second one for double-checking everything is
     # in order
     sis_id_to_canvas = get_sis_id_to_canvas_id_table()
-    print("  Done.\n")
+    print("    done.")
 
     print("  Finally, getting SIS_ID to marks conversion table.")
     sis_id_to_marks = get_sis_id_to_marks()
-    print("  Done.\n")
+    print("    done.")
 
-    print("\n\n\nPushing grades to Canvas...")
+    print("\n\nPushing grades to Canvas...")
     print("  --------------------------------------------------------------------")
-    os.chdir("reassembled")
-    pdfs = [fname for fname in os.listdir() if fname[-4:] == ".pdf"]
-
     timeouts = []
-    for pdf in tqdm(pdfs):
-        sis_id = (pdf.split("_")[1]).split(".")[0]
+    for pdf in tqdm(Path("reassembled").glob("*.pdf")):
+        sis_id = pdf.stem.split("_")[1]
         assert len(sis_id) == 8
         assert set(sis_id) <= set(string.digits)
         sub, name = sis_id_to_sub_and_name[sis_id]
@@ -390,4 +396,3 @@ if __name__ == "__main__":
             print("  Please select one of [y/n].")
 
     print("Have a nice day!")
-    os.chdir(o_dir)
