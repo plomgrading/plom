@@ -1,7 +1,9 @@
 # Canvas integration
 This is a collection of scripts meant to help `plom` interface with
-the [Canvas API](https://canvas.instructure.com/doc/api/). The goal is
-to allow one to substitute `plom` for Canvas's `SpeedGrader` feature.
+the [Canvas API](https://canvas.instructure.com/doc/api) using the
+[`canvasapi` Python library](https://github.com/ucfopen/canvasapi).
+
+The goal is to allow one to substitute Plom for Canvas's SpeedGrader.
 
 This is very much pre-alpha.
 
