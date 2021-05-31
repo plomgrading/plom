@@ -8,6 +8,11 @@ import csv
 from pathlib import Path
 import string
 
+from canvasapi import Canvas
+
+
+__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
+
 
 def download_classlist(course, server_dir="."):
     """
@@ -257,3 +262,31 @@ def get_assignment_by_id_number(course, num):
         if assignment.id == num:
             return assignment
     raise ValueError(f"Could not find assignment matching id={num}")
+
+
+def canvas_login(api_url=None, api_key=None):
+    """Login to a Canvas server using an API key.
+
+    args:
+        api_url (str/None): server to login to, uses a default
+            if ommitted.
+        api_key (str/None): the API key.  Will load from disc if
+            ommitted.  TODO: Could consider prompting in future.
+
+    return:
+        canvasapi.current_user.CurrentUser
+    """
+    if not api_url:
+        api_url = __DEFAULT_CANVAS_API_URL__
+    if api_key:
+        canvas = Canvas(api_url, api_key)
+    else:
+        # TODO: if exists
+        from api_secrets import my_key as API_KEY
+
+        # TODO: else prompt?  with a message of how to save?
+        canvas = Canvas(api_url, API_KEY)
+        del API_KEY
+    this_user = canvas.get_current_user()
+    del canvas
+    return this_user

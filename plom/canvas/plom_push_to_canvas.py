@@ -14,8 +14,11 @@ import pandas
 from tqdm import tqdm
 from canvasapi import Canvas
 
+from plom import __version__
+from canvas_utils import __DEFAULT_CANVAS_API_URL__
 from canvas_utils import download_classlist
 from canvas_utils import (
+    canvas_login,
     get_assignment_by_id_number,
     get_conversion_table,
     get_courses_teaching,
@@ -24,10 +27,6 @@ from canvas_utils import (
     interactively_get_assignment,
     interactively_get_course,
 )
-
-from plom import __version__
-
-__DEFAULT_API_URL = "https://canvas.ubc.ca"
 
 
 def get_student_list(course):
@@ -51,23 +50,6 @@ def sis_id_to_student_dict(student_list):
             # print(student.)
         out_dict[student.sis_user_id] = student
     return out_dict
-
-
-def login(api_url=None, api_key=None):
-    if not api_url:
-        api_url = __DEFAULT_API_URL
-    if api_key:
-        canvas = Canvas(api_url, api_key)
-    else:
-        # TODO: if exists
-        from api_secrets import my_key as API_KEY
-
-        # TODO: else prompt?  with a message of how to save?
-        canvas = Canvas(api_url, API_KEY)
-        del API_KEY
-    this_user = canvas.get_current_user()
-    del canvas
-    return this_user
 
 
 def get_sis_id_to_sub_and_name_table(subs):
@@ -124,9 +106,9 @@ parser.add_argument("--version", action="version", version="%(prog)s " + __versi
 parser.add_argument(
     "--api_url",
     type=str,
-    default=__DEFAULT_API_URL,
+    default=__DEFAULT_CANVAS_API_URL__,
     action="store",
-    help=f'URL for talking to Canvas, defaults to "{__DEFAULT_API_URL}".',
+    help=f'URL for talking to Canvas, defaults to "{__DEFAULT_CANVAS_API_URL__}".',
 )
 parser.add_argument(
     "--api_key",
@@ -177,7 +159,7 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
     # TODO: Fix all the `sis` vs `sis_id` garbage here
-    user = login()
+    user = canvas_login()
 
     if args.course is None:
         course = interactively_get_course(user)

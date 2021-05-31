@@ -18,8 +18,8 @@ from tqdm import tqdm
 
 from canvas_utils import download_classlist as get_classlist
 from canvas_utils import (
+    canvas_login,
     get_conversion_table,
-    get_courses_teaching,
     interactively_get_assignment,
     interactively_get_course,
 )
@@ -357,31 +357,13 @@ def scan_submissions(server_dir="."):
     os.chdir(o_dir)
 
 
-def stupid_preamble():
-    """
-    This is the part where we open the connection to canvas
-    """
-    from canvasapi import Canvas
-
-    from api_secrets import my_key as API_KEY
-
-    API_URL = "https://canvas.ubc.ca"
-
-    canvas = Canvas(API_URL, API_KEY)
-    del API_KEY
-    user = canvas.get_current_user()
-
-    courses_teaching = get_courses_teaching(user)
-    return courses_teaching
-
-
 if __name__ == "__main__":
 
     o_dir = os.getcwd()
 
     # Hang on, why do I switch the loop variable to true instead of
     # just doing the sensible thing and breaking?
-    courses_teaching = stupid_preamble()
+    user = canvas_login()
 
     # TODO: copy commandline arg stuff from push_to_canvas
     course = interactively_get_course(user)
