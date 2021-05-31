@@ -3,4 +3,3 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 """Plom features supporting integration with Canvas"""
-
