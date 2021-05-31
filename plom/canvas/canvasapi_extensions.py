@@ -171,10 +171,10 @@ class Course(capi.course.Course):
 
         return
 
-    def write_classlist_csv(plom_server_path):
+    def write_classlist_csv(self, plom_server_path):
         """
         path should be the path of the plom server directory.
         """
-        fname = f"{path}/classlist.csv"
+        fname = f"{plom_server_path}/classlist.csv"
         with open(fname, "w") as f:
             f.write(self.classlist_csv)
