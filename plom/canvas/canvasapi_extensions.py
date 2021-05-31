@@ -4,6 +4,8 @@
 """Get information from all the canvas courses and such
 """
 
+from pathlib import Path
+
 import canvasapi as capi
 
 
@@ -175,6 +177,6 @@ class Course(capi.course.Course):
         """
         path should be the path of the plom server directory.
         """
-        fname = f"{plom_server_path}/classlist.csv"
+        fname = Path(plom_server_path) / "classlist.csv"
         with open(fname, "w") as f:
             f.write(self.classlist_csv)

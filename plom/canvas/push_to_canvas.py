@@ -10,7 +10,7 @@ import time
 import random
 
 import pandas
-from tqdm import tqdm as tqdm
+from tqdm import tqdm
 from canvasapi import Canvas
 
 # TODO: or how else to get the classlist and conversion?
