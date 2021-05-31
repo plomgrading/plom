@@ -3,7 +3,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import os
-import subprocess
+from pathlib import Path
 import string
 import time
 import random
@@ -137,11 +137,6 @@ if __name__ == "__main__":
 
     o_dir = os.getcwd()
 
-    # To avoid having to input things like a billion times
-    # mgr_pass = input("plom manager password: ")
-    # os.environ["PLOM_MANAGER_PASSWORD"] = mgr_pass
-    # del mgr_pass
-
     courses_teaching = get_courses_teaching(user)
 
     print("\nSelect a course to push grades for.\n")
@@ -207,92 +202,14 @@ if __name__ == "__main__":
         "\n======================================================================\n\n\n\n"
     )
 
-    # TODO: Make this give an `os.listdir()`
-    print("Which current subdirectory corresponds to the class?\n")
-    print("  Current subdirectories:")
+    print("\n\n\nChecking if you have run `plom-finish`...")
     print("  --------------------------------------------------------------------")
-    excluded_dirs = ["__pycache__"]
-    subdirs = [
-        subdir
-        for subdir in os.listdir()
-        if os.path.isdir(subdir) and subdir not in excluded_dirs
-    ]
-    for (i, subdir) in enumerate(subdirs):
-        print(f"    {i}: {subdir}")
-
-    subdir_chosen = False
-    while not subdir_chosen:
-        choice = input("\n  Choice [0-n]: ")
-
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(subdirs):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-
-            selection = subdirs[choice]
-            print(f"  You selected {choice}: {selection}")
-            confirmation = input("  Confirm choice? [y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                subdir_chosen = True
-                subdir = selection
-                break
-
-    os.chdir(selection)
-    print(f"  working directory is now `{os.getcwd()}`")
-
-    print("\n\n\n")
-    print("Which current subdirectory corresponds to the assignment?\n")
-    print("  Current subdirectories:")
-    print("  --------------------------------------------------------------------")
-
-    subdirs = [
-        subdir
-        for subdir in os.listdir()
-        if os.path.isdir(subdir) and subdir not in excluded_dirs
-    ]
-    for (i, subdir) in enumerate(subdirs):
-        print(f"    {i}: {subdir}")
-
-    subdir_chosen = False
-    while not subdir_chosen:
-        choice = input("\n  Choice [0-n]: ")
-
-        if not (set(choice) <= set(string.digits)):
-            print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(subdirs):
-            print("Choice too large.")
-        else:
-            choice = int(choice)
-            print(
-                "  --------------------------------------------------------------------"
-            )
-
-            selection = subdirs[choice]
-            print(f"  You selected {choice}: {selection}")
-            confirmation = input("  Confirm choice? [y/n] ")
-            if confirmation in ["", "\n", "y", "Y"]:
-                subdir_chosen = True
-                subdir = selection
-                break
-
-    os.chdir(selection)
-
-    print(f"  working directory is now `{os.getcwd()}`")
-
-    print("\n\n\nRunning `plom-finish`...")
-    print("  --------------------------------------------------------------------")
-    print("  Building csv of marks...")
-    # TODO: Use return value from subprocess to determine whether we
-    # first need to run plom-finish clear
-    subprocess.run(["plom-finish", "csv"])
-    print("\n  Reassembling pdfs...")
-    subprocess.run(["plom-finish", "reassemble"])
-    print("\n  Finished `plom-finish`.")
+    if not Path("marks.csv").exists():
+        raise ValueError('Missing "marks.csv": run `plom-finish csv`')
+    print("  Found marks.csv")
+    if not Path("reassembled").exists():
+        raise ValueError('Missing "reassembed": run `plom-finish reassemble`')
+    print("  Found reassembed/")
 
     print("\n\n\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
@@ -301,6 +218,10 @@ if __name__ == "__main__":
     print("  Done.\n")
     print("  Getting canvasapi submission objects...")
     subs = assignment.get_submissions()
+    print("  Done.\n")
+
+    print("  Getting another classlist and various conversion tables...")
+    download_classlist(course)
     print("  Done.\n")
 
     # Most of these conversion tables are fully irrelevant once we
@@ -317,7 +238,7 @@ if __name__ == "__main__":
     print("  Constructing SIS_ID to canvasapi submission conversion table...")
     # We only need this second one for double-checking everything is
     # in order
-    sis_id_to_canvas = get_sis_id_to_canvas_id_table(server_dir=".")
+    sis_id_to_canvas = get_sis_id_to_canvas_id_table()
     print("  Done.\n")
 
     print("  Finally, getting SIS_ID to marks conversion table.")
@@ -329,8 +250,6 @@ if __name__ == "__main__":
     os.chdir("reassembled")
     pdfs = [fname for fname in os.listdir() if fname[-4:] == ".pdf"]
 
-    # Hack to get conversion file
-    # download_classlist(course)
 
     dry_run = False  # TODO: make command line arg?
     timeouts = []
