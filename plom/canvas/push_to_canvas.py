@@ -1,4 +1,6 @@
-from canvasapi import Canvas
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Forest Kobayashi
+# Copyright (C) 2021 Colin B. Macdonald
 
 import os
 import csv
@@ -9,6 +11,7 @@ import random
 
 import pandas
 from tqdm import tqdm as tqdm
+from canvasapi import Canvas
 
 # TODO: or how else to get the classlist and conversion?
 from canvas_server import get_classlist as make_conversion_csv
