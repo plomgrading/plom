@@ -10,8 +10,7 @@ import string
 
 from canvasapi import Canvas
 
-
-__DEFAULT_CANVAS_API_URL__ = "https://canvas.ubc.ca"
+from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 
 def download_classlist(course, server_dir="."):

@@ -1,8 +1,25 @@
 #!/usr/bin/env python3
+
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
 
-"""Get information from all the canvas courses and such
+"""Build and populate a server from a Canvas Assignment.
+
+The goal is automate using Plom as an alternative to Canvas's
+SpeedGrader.
+
+This is very much *pre-alpha*: not ready for production use, use at
+your own risk, no warranty, etc, etc.
+
+1. Create `api_secrets.py` containing
+   ```
+   my_key = "11224~AABBCCDDEEFF..."
+   ```
+2. Run `python canvas_server.py`
+   You will need the `aria2c` command-line downloader in addition
+   to the usual Plom dependencies.
+3. Follow prompts.
+4. Go the directory you created and run `plom-server launch`.
 """
 
 import csv
@@ -16,15 +33,17 @@ import fitz
 import PIL
 from tqdm import tqdm
 
-from canvas_utils import download_classlist as get_classlist
 from canvas_utils import (
     canvas_login,
+    download_classlist,
     get_conversion_table,
     interactively_get_assignment,
     interactively_get_course,
 )
 
 
+# TODO: Invesitate using [1] here, and can any of this help [1]?
+# [1] https://gitlab.com/plom/plom/-/merge_requests/662
 # For making sure the server dies with the python script if we kill
 # the python script.
 #
@@ -119,7 +138,7 @@ def initialize(course, assignment, server_dir="."):
     o_dir = os.getcwd()  # original directory
 
     print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
-    get_classlist(course, server_dir=server_dir)
+    download_classlist(course, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
     get_toml(assignment, server_dir=server_dir)

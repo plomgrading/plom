@@ -4,6 +4,19 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021 Colin B. Macdonald
 
+"""Upload reassembled Plom papers and grades to Canvas.
+
+Overview:
+
+  1. Finish grading
+  2. Run `plom-finish csv` and `plom-finish reassemble`.
+  3. Create `api_secrets.py` containing:
+     ```
+     my_key = "11224~AABBCCDDEEFF..."
+     ```
+  4. Run this script.
+"""
+
 import argparse
 from pathlib import Path
 import random
@@ -12,16 +25,14 @@ import time
 
 import pandas
 from tqdm import tqdm
-from canvasapi import Canvas
 
 from plom import __version__
-from canvas_utils import __DEFAULT_CANVAS_API_URL__
-from canvas_utils import download_classlist
-from canvas_utils import (
+from plom.canvas import __DEFAULT_CANVAS_API_URL__
+from plom.canvas import (
     canvas_login,
+    download_classlist,
     get_assignment_by_id_number,
     get_conversion_table,
-    get_courses_teaching,
     get_course_by_id_number,
     get_sis_id_to_canvas_id_table,
     interactively_get_assignment,
@@ -100,7 +111,9 @@ def obfuscate_reassembled_pdfname(pdfname):
 
 
 parser = argparse.ArgumentParser(
-    description="Upload reassembled Plom papers and grades to Canvas.",
+    description=__doc__.split("\n")[0],
+    epilog="\n".join(__doc__.split("\n")[1:]),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 parser.add_argument(
