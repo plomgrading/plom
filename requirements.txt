@@ -15,6 +15,7 @@ PyQt5-sip==12.8.1
 Pillow==8.2.0
 aiohttp==3.7.4.post0
 appdirs==1.4.4
+canvasapi==2.2.0
 cffi==1.14.5
 importlib-resources==5.1.4
 imutils==0.5.4
@@ -39,7 +40,3 @@ toml==0.10.2
 tqdm==4.61.0
 urllib3==1.26.5
 weasyprint==52.5
-
-# Need oauth for canvas integration
-oauthlib==3.1.0
-canvasapi==2.0.0

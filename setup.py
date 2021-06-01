@@ -30,6 +30,7 @@ client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQ
 
 server_install_requires = [
     "appdirs>=1.4.3",
+    "canvasapi>=2.0.0",
     "toml>=0.10.0",
     "tqdm",
     "numpy",
