@@ -37,5 +37,5 @@ requests-toolbelt==0.9.1
 scikit-learn==0.24.2
 toml==0.10.2
 tqdm==4.60.0
-urllib3==1.26.4
+urllib3==1.26.5
 weasyprint==52.5
