@@ -293,9 +293,9 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     # Getting the dimentions of the box
     student_id_width = (
         max(
-            fitz.getTextlength(student_id, fontsize=36, fontname="Helvetica"),
-            fitz.getTextlength(student_name, fontsize=36, fontname="Helvetica"),
-            fitz.getTextlength("Please sign here", fontsize=48, fontname="Helvetica"),
+            fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
+            fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
+            fitz.get_text_length("Please sign here", fontsize=48, fontname="Helvetica"),
         )
         * 1.1
         * 0.5
