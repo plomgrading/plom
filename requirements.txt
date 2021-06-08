@@ -21,13 +21,13 @@ imutils==0.5.4
 jpegtran-cffi==0.5.2
 lapsolver==1.1.0
 numpy==1.19.5
-opencv-python==4.5.2.52
+opencv-python==4.5.2.54
 packaging==20.9
 pandas==1.1.5
 passlib==1.7.4
 peewee==3.14.4
 pycparser==2.20
-pymupdf==1.18.13
+pymupdf==1.18.14
 # unlisted dep of pyqrcode
 pypng==0.0.20
 pyqrcode==1.2.1
