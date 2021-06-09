@@ -13,21 +13,21 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPL-3.0-or-later"
 
 
+from collections import defaultdict
+import io
 import json
 import logging
+from math import ceil
 import os
-import secrets
-import io
-
-# in order to get shortcuts under OSX this needs to set this.... but only osx.
-# To test platform
-import platform
 import queue
+import secrets
 import shutil
 import tempfile
-import threading
 import time
-from collections import defaultdict
+import threading
+
+# in order to get shortcuts under OSX this needs to set this.... but only osx.
+import platform
 
 from PyQt5.QtCore import (
     Qt,
@@ -2052,6 +2052,42 @@ class MarkerClient(QWidget):
         if len(idx) > 0:
             self._updateImage(idx[0].row())
 
+    def wait_for_bguploader(self, timeout=0):
+        """Wait for the uploader queue to empty.
+
+        Args:
+            timeout (int): return early after approximately `timeout`
+                seconds.  If 0 then wait forever.
+
+        Returns:
+            bool: True if it shutdown.  False if we timed out.
+        """
+        dt = 0.1  # timestep
+        if timeout != 0:
+            N = ceil(float(timeout) / dt)
+        else:
+            N = 0  # zero/infinity: pretty much same
+        M = ceil(2.0 / dt)  # warn every M seconds
+        if self.backgroundUploader:
+            count = 0
+            while self.backgroundUploader.isRunning():
+                if self.backgroundUploader.isEmpty():
+                    # don't try to quit until the queue is empty
+                    self.backgroundUploader.quit()
+                time.sleep(dt)
+                count += 1
+                if N > 0 and count >= N:
+                    log.warning(
+                        "Timed out after {} seconds waiting for uploader to finish".format(
+                            timeout
+                        )
+                    )
+                    return False
+                if count % M == 0:
+                    log.warning("Still waiting for uploader to finish...")
+            self.backgroundUploader.wait()
+        return True
+
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown even")
         self.do_shutdown_tasks()
@@ -2070,28 +2106,20 @@ class MarkerClient(QWidget):
     def do_shutdown_tasks(self):
         """Shuts down self."""
         log.debug("Marker shutdown from thread " + str(threading.get_ident()))
-        if self.backgroundUploader:
-            count = 42
-            while self.backgroundUploader.isRunning():
-                if self.backgroundUploader.isEmpty():
-                    # don't try to quit until the queue is empty
-                    self.backgroundUploader.quit()
+        timeout = 1
+        while not self.wait_for_bguploader(timeout=timeout):
+            timeout = 5  # subsequent popups are less frequent
+            msg = SimpleMessage(
+                "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                # politely ask one more time
+                self.backgroundUploader.quit()
                 time.sleep(0.1)
-                count += 1
-                if count >= 50:
-                    count = 0
-                    msg = SimpleMessage(
-                        "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
-                    )
-                    if msg.exec_() == QMessageBox.No:
-                        # politely ask one more time
-                        self.backgroundUploader.quit()
-                        time.sleep(0.1)
-                        # then nuke it from orbit
-                        if self.backgroundUploader.isRunning():
-                            self.backgroundUploader.terminate()
-                        break
-            self.backgroundUploader.wait()
+                # then nuke it from orbit
+                if self.backgroundUploader.isRunning():
+                    self.backgroundUploader.terminate()
+                    break
 
         # When shutting down, first alert server of any images that were
         # not marked - using 'DNF' (did not finish). Server will put
