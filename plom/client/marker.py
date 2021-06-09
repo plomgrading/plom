@@ -13,22 +13,21 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPL-3.0-or-later"
 
 
+from collections import defaultdict
+import io
 import json
 import logging
 from math import ceil
 import os
-import secrets
-import io
-
-# in order to get shortcuts under OSX this needs to set this.... but only osx.
-# To test platform
-import platform
 import queue
+import secrets
 import shutil
 import tempfile
-import threading
 import time
-from collections import defaultdict
+import threading
+
+# in order to get shortcuts under OSX this needs to set this.... but only osx.
+import platform
 
 from PyQt5.QtCore import (
     Qt,
