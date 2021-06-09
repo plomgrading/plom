@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 """Start the Plom client."""
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
 import datetime
 import signal
+import os
 import sys
 import traceback as tblib
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom import __version__
-from plom.client.chooser import Chooser
 from plom import Default_Port
+from plom.client.chooser import Chooser
+
 
 # Pop up a dialog for unhandled exceptions and then exit
 sys._excepthook = sys.excepthook
@@ -66,20 +70,34 @@ def main():
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
-    parser.add_argument("user", type=str, nargs="?")
-    parser.add_argument("password", type=str, nargs="?")
+    parser.add_argument(
+        "user",
+        type=str,
+        nargs="?",
+        help="Also checks the environment variable PLOM_USER.",
+    )
+    parser.add_argument(
+        "password",
+        type=str,
+        nargs="?",
+        help="Also checks the environment variable PLOM_PASSWORD.",
+    )
     parser.add_argument(
         "-s",
         "--server",
         metavar="SERVER[:PORT]",
         action="store",
-        help="Which server to contact, port defaults to {}.".format(Default_Port),
+        help="""
+            Which server to contact, port defaults to {}.
+            Also checks the environment variable {} if omitted.
+            """.format(
+            Default_Port, "PLOM_SERVER"
+        ),
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
         "-i", "--identifier", action="store_true", help="Run the identifier"
     )
-    group.add_argument("-t", "--totaler", action="store_true", help="Run the totaler")
     group.add_argument(
         "-m",
         "--marker",
@@ -89,6 +107,22 @@ def main():
         help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
     )
     args = parser.parse_args()
+
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_PASSWORD"]
+        except KeyError:
+            pass
+    if not hasattr(args, "user") or not args.user:
+        try:
+            args.user = os.environ["PLOM_USER"]
+        except KeyError:
+            pass
 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
@@ -106,15 +140,14 @@ def main():
     window = Chooser(app)
     window.show()
 
-    window.ui.userLE.setText(args.user)
+    if args.user:
+        window.ui.userLE.setText(args.user)
     window.ui.passwordLE.setText(args.password)
     if args.server:
         window.setServer(args.server)
 
     if args.identifier:
         window.ui.identifyButton.animateClick()
-    if args.totaler:
-        window.ui.totalButton.animateClick()
     if args.marker:
         if args.marker != "json":
             pg, v = args.marker.split(":")

@@ -17,8 +17,16 @@ class User(BaseModel):
     last_action = pw.CharField(null=True)
 
 
+class Bundle(BaseModel):
+    name = pw.CharField(unique=True, null=True)  # unique names please
+    md5sum = pw.CharField(null=True)  # to check for duplications
+
+
 class Image(BaseModel):
+    bundle = pw.ForeignKeyField(Bundle, backref="images")
     original_name = pw.CharField(null=True)  # can be empty.
+    # the order of the image within its bundle
+    bundle_order = pw.IntegerField(null=True)
     file_name = pw.CharField(null=True)
     md5sum = pw.CharField(null=True)  # to check for duplications
 
@@ -31,19 +39,8 @@ class Test(BaseModel):
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)
     marked = pw.BooleanField(default=False)
-    totalled = pw.BooleanField(default=False)
     # a recentUpload flag to see which tests to check after uploads
     recent_upload = pw.BooleanField(default=False)
-
-
-# Data for totalling the marks
-class SumData(BaseModel):
-    test = pw.ForeignKeyField(Test, backref="sumdata")
-    sum_mark = pw.IntegerField(null=True)
-    status = pw.CharField(default="")
-    user = pw.ForeignKeyField(User, backref="sumdata", null=True)
-    time = pw.DateTimeField(null=True)
-    summed = pw.BooleanField(default=False)
 
 
 class Group(BaseModel):
@@ -52,6 +49,8 @@ class Group(BaseModel):
     group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
+    # a recentUpload flag to see which groups to check after uploads
+    recent_upload = pw.BooleanField(default=False)
 
 
 class IDGroup(BaseModel):
@@ -77,6 +76,7 @@ class QGroup(BaseModel):
     version = pw.IntegerField(null=False, default=1)
     user = pw.ForeignKeyField(User, backref="qgroups", null=True)
     status = pw.CharField(default="")
+    time = pw.DateTimeField(null=True)
     marked = pw.BooleanField(default=False)
 
 
@@ -87,6 +87,7 @@ class TPage(BaseModel):  # a test page that knows its tpgv
     group = pw.ForeignKeyField(Group, backref="tpages")
     image = pw.ForeignKeyField(Image, backref="tpages", null=True)
     scanned = pw.BooleanField(default=False)  # we should get all of them
+    # note - Do not delete - rather set scanned=False
 
 
 class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
@@ -95,6 +96,15 @@ class HWPage(BaseModel):  # a hw page that knows its tgv, but not p.
     order = pw.IntegerField(null=False)
     version = pw.IntegerField(default=1)  # infer from group
     image = pw.ForeignKeyField(Image, backref="hwpages")
+
+
+# an extra page that knows its tgv, but not p. - essentially same as hwpages.
+class EXPage(BaseModel):
+    test = pw.ForeignKeyField(Test, backref="expages")
+    group = pw.ForeignKeyField(Group, backref="expages")
+    order = pw.IntegerField(null=False)
+    version = pw.IntegerField(default=1)  # infer from group
+    image = pw.ForeignKeyField(Image, backref="expages")
 
 
 class LPage(BaseModel):  # a page that just knows its t. - a loose page
@@ -131,11 +141,17 @@ class DNMPage(BaseModel):
     order = pw.IntegerField(null=False)
 
 
+class AImage(BaseModel):  # a class for containing annotation-images
+    file_name = pw.CharField(null=True)
+    md5sum = pw.CharField(null=True)  # to check for duplications
+
+
 class Annotation(BaseModel):
     qgroup = pw.ForeignKeyField(QGroup, backref="annotations")
     user = pw.ForeignKeyField(User, backref="annotations", null=True)
-    image = pw.ForeignKeyField(Image, backref="annotations", null=True)
+    aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
+    integrity_check = pw.CharField(null=True)  # random uuid
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     comment_file = pw.CharField(null=True)
@@ -149,3 +165,45 @@ class APage(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="apages")
     image = pw.ForeignKeyField(Image, backref="apages")
     order = pw.IntegerField(null=False)
+
+
+class OldAnnotation(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="oldannotations")
+    user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
+    aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
+    edition = pw.IntegerField(null=True)
+    integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
+    # we need to order the annotations - want the latest.
+    plom_file = pw.CharField(null=True)
+    comment_file = pw.CharField(null=True)
+    mark = pw.IntegerField(null=True)
+    marking_time = pw.IntegerField(null=True)
+    time = pw.DateTimeField(null=True)
+    tags = pw.CharField(default="")
+
+
+class OAPage(BaseModel):
+    old_annotation = pw.ForeignKeyField(OldAnnotation, backref="oapages")
+    image = pw.ForeignKeyField(Image, backref="oapages")
+    order = pw.IntegerField(null=False)
+
+
+class Rubric(BaseModel):
+    # unique key - user-generated have 12 digits, HAL uses 1XXX.
+    key = pw.CharField(unique=True, null=False)
+    kind = pw.CharField(null=False)  # abs, neut, delt, relative
+    delta = pw.CharField(null=False)
+    text = pw.CharField(null=False)
+    question = pw.IntegerField(null=False)
+    user = pw.ForeignKeyField(User, backref="rubrics", null=False)
+    revision = pw.IntegerField(null=False, default=0)
+    count = pw.IntegerField(null=False, default=0)
+    creationTime = pw.DateTimeField(null=False)
+    modificationTime = pw.DateTimeField(null=False)
+    tags = pw.CharField(default="")
+    meta = pw.CharField(default="")
+
+
+class ARLink(BaseModel):
+    annotation = pw.ForeignKeyField(Annotation, backref="arlinks")
+    rubric = pw.ForeignKeyField(Rubric, backref="arlinks")

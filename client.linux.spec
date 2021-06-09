@@ -1,18 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import os
+from pathlib import Path
 # trickery from setup.py to define __version__ without import
-with open(os.path.join("plom", "version.py")) as f:
+with open(Path("plom") / "version.py") as f:
     exec(f.read())
 
 block_cipher = None
 
-
 a = Analysis(['plom/scripts/client.py'],
              pathex=['./'],
              binaries=[],
-             datas=[],
-             hiddenimports=['pkg_resources.py2_warn'], # https://github.com/pyinstaller/pyinstaller/issues/4672
+             datas=[
+                 ('plom/client/*.svg', 'plom/client'),
+                 ('plom/client/*.png', 'plom/client'),
+                 ('plom/client/icons/*.svg', 'plom/client/icons'),
+                 ('plom/client/cursors/*.png', 'plom/client/cursors'),
+             ],
+             hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -22,13 +26,6 @@ a = Analysis(['plom/scripts/client.py'],
              noarchive=False)
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
-for icon in ['cross', 'delete', 'line', 'move', 'pan', 'pen', 'rectangle_highlight', 'redo', 'text', 'tick', 'undo', 'zoom', 'comment', 'comment_up', 'comment_down', 'delta']:
-   a.datas += [('{}.svg'.format(icon), 'plom/client/icons/{}.svg'.format(icon), 'DATA')]
-
-for cursor in ['box', 'cross', 'delete', 'line', 'pen', 'tick',]:
-   a.datas += [('{}.png'.format(cursor), 'plom/client/cursors/{}.png'.format(cursor), 'DATA')]
-
 
 exe = EXE(pyz,
           a.scripts,

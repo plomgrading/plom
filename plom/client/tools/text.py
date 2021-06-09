@@ -1,6 +1,13 @@
-from PyQt5.QtCore import Qt, QTimer, QPropertyAnimation, pyqtProperty
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+
+from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
+
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
 class CommandMoveText(QUndoCommand):
@@ -9,7 +16,7 @@ class CommandMoveText(QUndoCommand):
     # Don't use this for moving other graphics items
     # Graphicsitems are separate from graphicsTEXTitems
     def __init__(self, xitem, new_pos):
-        super(CommandMoveText, self).__init__()
+        super().__init__()
         self.xitem = xitem
         self.old_pos = xitem.pos()
         self.new_pos = new_pos
@@ -44,76 +51,130 @@ class CommandMoveText(QUndoCommand):
         return True
 
 
-class CommandText(QUndoCommand):
-    def __init__(self, scene, blurb, ink):
-        super(CommandText, self).__init__()
-        self.scene = scene
-        # set no interaction on scene's textitem - this avoids button-mashing
-        # issues where text can be added during pasting in of text
-        iflags = blurb.textInteractionFlags()
-        blurb.setTextInteractionFlags(Qt.NoTextInteraction)
-        # copy that textitem to one for this comment
-        self.blurb = blurb
-        # set the interaction flags back
-        blurb.setTextInteractionFlags(iflags)
-        # if the textitem has contents already then we
-        # have to do some cleanup - give it focus and then
-        # drop focus - correctly sets the text interaction flags
-        if len(self.blurb.toPlainText()) > 0:
-            QTimer.singleShot(1, self.blurb.setFocus)
-            QTimer.singleShot(2, self.blurb.clearFocus)
-            QTimer.singleShot(5, self.blurb.textToPng)
+class CommandText(CommandTool):
+    def __init__(self, scene, pt, text):
+        super().__init__(scene)
+        self.blurb = TextItem(
+            pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
+        )
+        self.do = DeleteObject(self.blurb.shape(), fill=True)
         self.setText("Text")
 
+    @classmethod
+    def from_pickle(cls, X, *, scene):
+        """Construct a CommandText from a serialized form."""
+        assert X[0] == "Text"
+        X = X[1:]
+        if len(X) != 3:
+            raise ValueError("wrong length of pickle data")
+        # knows to latex it if needed.
+        return cls(scene, QPointF(X[1], X[2]), X[0])
+
     def redo(self):
-        self.blurb.flash_redo()
         self.scene.addItem(self.blurb)
+        # update the deleteobject since the text may have been updated
+        # use getshape - takes offset into account
+        self.do.item.setPath(self.blurb.getShape())
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        self.blurb.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.blurb))
+        self.scene.removeItem(self.blurb)
+        # update the deleteobject since the text may have been updated
+        # use getshape - takes offset into account
+        self.do.item.setPath(self.blurb.getShape())
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class TextItem(QGraphicsTextItem):
-    # Textitem is a qgraphicstextitem, has to handle
-    # textinput and double-click to start editing etc.
-    # Shift-return ends the editor
-    def __init__(self, parent, fontsize=10):
-        super(TextItem, self).__init__()
+    """A multiline text annotation with optional LaTeX rendering.
+
+    Textitem has to handle textinput.  Shift-return ends the editor.
+    Ctrl-return ends the editor and forces LaTeX rendering by prepending
+    with `tex:`.
+
+    Has special handling for text that begins with `tex:` which is rendered
+    to an image using LaTeX via a call to the server.  A TextItem knows
+    whether it is displaying source text or rendered text: query the
+    `is_rendered()` method.
+
+    The TextItem is built with no text-field interaction (editor) disabled.
+    Call `enable_interactive()` to enable it: if you also want the editor
+    to open right away, call `setFocus()`.
+    """
+
+    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
+        super().__init__()
         self.saveable = True
-        self.animator = [self]
-        self.animateFlag = False
+        # TODO: really this is PageScene or Marker: someone who can TeX for us
+        # TODO: its different from e.g., BoxItem (where parent is the animator)
         self.parent = parent
-        # Thick is thickness of bounding box hightlight used
-        # to highlight the object when undo / redo happens.
-        self.thick = 0
-        self.setDefaultTextColor(Qt.red)
-        self.setPlainText("")
-        self.contents = ""
-        self.font = QFont("Helvetica")
-        self.font.setPointSizeF(fontsize)
-        self.setFont(self.font)
+        self.setDefaultTextColor(color)
+        self.setPlainText(text)
+        font = QFont("Helvetica")
+        font.setPixelSize(fontsize)
+        self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        # Set it as editably with the text-editor
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.setPos(pt)
+        # If displaying png-rendered-latex, store the original text here
+        self._tex_src_cache = None
+        if text.casefold().startswith("tex:"):
+            # self.textToPng()
+            # instead, hide latency of API call: meanwhile source text displayed
+            # Issue #1391: unfortunately causes a race, at least in randomarker
+            QTimer.singleShot(5, self.textToPng)
+
+    def getShape(self):
+        # returns shape, but with offset
+        shp = self.shape()
+        shp.translate(self.pos())
+        return shp
+
+    def enable_interactive(self):
+        """Set it as editable with the text-editor."""
         self.setTextInteractionFlags(Qt.TextEditorInteraction)
-        # Undo/redo animates via the thickness property
-        self.anim = QPropertyAnimation(self, b"thickness")
-        # for latex png
-        self.state = "TXT"
+
+    def is_rendered(self):
+        """Is this TextItem displaying a rendering of LaTeX?
+
+        Returns:
+            bool: True if currently showing a rendering (such as an
+                png image) or False if displaying either plain text or
+                the source text of what could be rendered.
+        """
+        return self._tex_src_cache is not None
+
+    def restyle(self, style):
+        self.setDefaultTextColor(style["annot_color"])
+        if self.is_rendered():
+            self.retex()
+
+    def retex(self):
+        self.pngToText()
+        self.textToPng()
+
+    def toPlainText(self):
+        """The text itself or underlying source if displaying latex."""
+        if self.is_rendered():
+            return self._tex_src_cache
+        return super().toPlainText()
 
     def getContents(self):
-        if len(self.contents) == 0:
-            return self.toPlainText()
-        else:
-            return self.contents
+        """Older, maybe deprecated way of getting the text/source."""
+        return self.toPlainText()
 
     def focusInEvent(self, event):
-        if self.state == "PNG":
+        """On focus, we switch back to source/test mode."""
+        if self.is_rendered():
             self.pngToText()
-        else:
-            self.contents = self.toPlainText()
-        super(TextItem, self).focusInEvent(event)
+        super().focusInEvent(event)
 
     def focusOutEvent(self, event):
         # When object loses the focus, need to make sure that
@@ -123,137 +184,139 @@ class TextItem(QGraphicsTextItem):
         tc.clearSelection()
         self.setTextCursor(tc)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
-        # if not PNG then update contents
-        if self.state != "PNG":
-            self.contents = self.toPlainText()
-        super(TextItem, self).focusOutEvent(event)
+        super().focusOutEvent(event)
 
-    def textToPng(self):
-        self.contents = self.toPlainText()
-        if self.contents[:4].upper() == "TEX:":
-            texIt = self.contents[4:]
-        else:
-            # is not latex so we don't have to PNG-it
+    def textToPng(self, force=False):
+        """Try to switch to rendering via latex.
+
+        args:
+            force (bool): If True, add the `tex:` prefix if not present.
+        """
+        if self.is_rendered():
             return
+        src = self.toPlainText()
+        if not src.casefold().startswith("tex:"):
+            if force:
+                src = "tex: " + src
+            else:
+                return
+        texIt = src[4:].strip()
 
+        # TODO: maybe nicer/more generally useful to provide access to preamble
+        c = self.defaultTextColor().getRgb()
+
+        assert len(c) == 4
+        if c != (255, 0, 0, 0):
+            # Careful: red is default, using this would cause a cache miss
+            # TODO: maybe its nicer to pass the colour to latexAFragment?
+            texIt = (
+                r"\definecolor{annot}{RGB}{"
+                + ",".join(str(x) for x in c[:3])
+                + "}\n"
+                + "\\color{annot}\n"
+                + texIt
+            )
         fragfilename = self.parent.latexAFragment(texIt)
         if fragfilename:
+            self._tex_src_cache = src
             self.setPlainText("")
             tc = self.textCursor()
             qi = QImage(fragfilename)
             tc.insertImage(qi)
-            self.state = "PNG"
 
     def pngToText(self):
-        if self.contents != "":
-            self.setPlainText(self.contents)
-        self.state = "TXT"
+        """If displaying rendered latex, switch back to source."""
+        if self.is_rendered():
+            self.setPlainText(self._tex_src_cache)
+        self._tex_src_cache = None
 
     def keyPressEvent(self, event):
-        # Shift-return ends the editor and releases the object
-        if event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Return:
+        """Shift/Ctrl-Return ends the editor, and renders with latex.
+
+        Shift-Return will render if the string starts with the magic
+        prefix `tex:`.  Ctrl-Return adds the prefix if necessary.
+        """
+        if (
+            event.modifiers() in (Qt.ShiftModifier, Qt.ControlModifier)
+            and event.key() == Qt.Key_Return
+        ):
             # Clear any highlighted text and release.
             tc = self.textCursor()
             tc.clearSelection()
             self.setTextCursor(tc)
             self.setTextInteractionFlags(Qt.NoTextInteraction)
-            self.contents = self.toPlainText()
-            if self.contents[:4].upper() == "TEX:":
+            if event.modifiers() == Qt.ControlModifier:
+                self.textToPng(force=True)
+            else:
                 self.textToPng()
-
-        # control-return latexs the comment and replaces the text with the resulting image.
-        # ends the editor.
-        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Return:
-            self.textToPng()
-            tc = self.textCursor()
-            tc.clearSelection()
-            self.setTextCursor(tc)
-            self.setTextInteractionFlags(Qt.NoTextInteraction)
-
-        super(TextItem, self).keyPressEvent(event)
+        super().keyPressEvent(event)
 
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
-            if self.group() is None:
+        if not self.scene().itemWithinBounds(self):
+            if self.group() is None:  # make sure not part of a GDT
                 painter.setPen(QPen(QColor(255, 165, 0), 8))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
                 painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
                 painter.drawRoundedRect(option.rect, 10, 10)
-        else:
-            # paint a bounding rectangle for undo/redo highlighting
-            if self.thick > 0:
-                painter.setPen(QPen(Qt.red, self.thick))
-                painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
-        super(TextItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
     def itemChange(self, change, value):
         if change == QGraphicsTextItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)
             # Notice that the value here is the new position, not the delta.
             self.scene().undoStack.push(command)
-        return QGraphicsTextItem.itemChange(self, change, value)
-
-    def flash_undo(self):
-        # When undo-ing, draw a none->thick->none border around text.
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 8)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        # When redo-ing, draw a none->med->none border around text.
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(0)
-        self.anim.start()
+        return super().itemChange(change, value)
 
     def pickle(self):
-        if len(self.contents) == 0:
-            self.contents = self.toPlainText()
-        return ["Text", self.contents, self.scenePos().x(), self.scenePos().y()]
-
-    # For the animation of border
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.thick
-
-    # For the animation of border
-    @thickness.setter
-    def thickness(self, value):
-        self.thick = value
-        self.update()
+        src = self.toPlainText()
+        return ["Text", src, self.scenePos().x(), self.scenePos().y()]
 
 
 class GhostText(QGraphicsTextItem):
-    # Textitem is a qgraphicstextitem, has to handle
-    # textinput and double-click to start editing etc.
-    # Shift-return ends the editor
-    def __init__(self, txt, fontsize=10):
-        super(GhostText, self).__init__()
-        self.setDefaultTextColor(Qt.blue)
-        self.setPlainText(txt)
-        self.font = QFont("Helvetica")
-        self.font.setPointSizeF(fontsize)
-        self.setFont(self.font)
-        self.setFlag(QGraphicsItem.ItemIsMovable)
-        # Set it as editably with the text-editor
-        self.setTextInteractionFlags(Qt.NoTextInteraction)
+    """Blue "ghost" of text indicating what text will be placed in scene."""
 
-    def changeText(self, txt):
+    def __init__(self, txt, fontsize=10, legal=True):
+        super().__init__()
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
         self.setPlainText(txt)
-        if self.scene() is not None and txt[:4].upper() == "TEX:":
-            texIt = (
-                "\\color{blue}\n" + txt[4:].strip()
-            )  # make color blue for ghost rendering
+        font = QFont("Helvetica")
+        font.setPixelSize(fontsize)
+        self.setFont(font)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setTextInteractionFlags(Qt.NoTextInteraction)
+        # If displaying png-rendered-latex, store the original text here
+        self._tex_src_cache = None
+
+    def is_rendered(self):
+        """Is this TextItem displaying a PNG, e.g., of LaTeX?"""
+        return self._tex_src_cache is not None
+
+    def changeText(self, txt, legal=True):
+        self._tex_src_cache = None
+        self.setPlainText(txt)
+        if self.scene() and txt.casefold().startswith("tex:"):
+            if legal:
+                texIt = (
+                    "\\color{blue}\n" + txt[4:].strip()
+                )  # make color blue for ghost rendering
+            else:
+                texIt = (
+                    "\\color{gray}\n" + txt[4:].strip()
+                )  # make color gray for ghost rendering (when delta not legal)
+
             fragfilename = self.scene().latexAFragment(texIt)
             if fragfilename:
+                self._tex_src_cache = txt
                 self.setPlainText("")
                 tc = self.textCursor()
                 qi = QImage(fragfilename)
                 tc.insertImage(qi)
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)

@@ -1,3 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
+
 import hashlib
 import os
 import shlex
@@ -12,7 +18,19 @@ from plom.server import pageNotSubmitted
 log = logging.getLogger("server")
 
 
-def addTestPage(self, t, p, v, fname, image, md5o):
+def doesBundleExist(self, bundle_file, md5):
+    return self.DB.doesBundleExist(bundle_file, md5)
+
+
+def createNewBundle(self, bundle_file, md5):
+    return self.DB.createNewBundle(bundle_file, md5)
+
+
+def sidToTest(self, student_id):
+    return self.DB.sidToTest(student_id)
+
+
+def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -22,7 +40,7 @@ def addTestPage(self, t, p, v, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o)
+    val = self.DB.uploadTestPage(t, p, v, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -34,17 +52,21 @@ def addTestPage(self, t, p, v, fname, image, md5o):
     return val
 
 
-def addHWPage(self, sid, q, o, fname, image, md5o):
+def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
-    prefix = "s{}q{}o{}".format(sid, q, o)
+    if isinstance(q, list):
+        qstr = "_".join([str(x) for x in q])
+    else:
+        qstr = str(q)
+    prefix = "s{}q{}o{}".format(sid, qstr, o)
     while True:
         unique = "." + str(uuid.uuid4())[:8]
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o)
+    val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -56,7 +78,7 @@ def addHWPage(self, sid, q, o, fname, image, md5o):
     return val
 
 
-def addLPage(self, sid, o, fname, image, md5o):
+def addLPage(self, sid, o, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -66,7 +88,7 @@ def addLPage(self, sid, o, fname, image, md5o):
         newName = "pages/originalPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadLPage(sid, o, fname, newName, md5o)
+    val = self.DB.uploadLPage(sid, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -78,7 +100,7 @@ def addLPage(self, sid, o, fname, image, md5o):
     return val
 
 
-def addUnknownPage(self, fname, image, md5o):
+def addUnknownPage(self, fname, image, order, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -88,7 +110,7 @@ def addUnknownPage(self, fname, image, md5o):
         newName = "pages/unknownPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadUnknownPage(fname, newName, md5o)
+    val = self.DB.uploadUnknownPage(fname, newName, order, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -100,7 +122,7 @@ def addUnknownPage(self, fname, image, md5o):
     return val
 
 
-def addCollidingPage(self, t, p, v, fname, image, md5o):
+def addCollidingPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -110,7 +132,9 @@ def addCollidingPage(self, t, p, v, fname, image, md5o):
         newName = "pages/collidingPages/" + prefix + unique + ext
         if not os.path.isfile(newName):
             break
-    val = self.DB.uploadCollidingPage(t, p, v, fname, newName, md5o)
+    val = self.DB.uploadCollidingPage(
+        t, p, v, fname, newName, md5o, bundle, bundle_order
+    )
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -140,7 +164,7 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     # compute md5sum and put into database
     md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
     # now try to put it into place
-    rval = self.DB.replaceMissingPage(
+    rval = self.DB.replaceMissingTestPage(
         testNumber, pageNumber, version, originalName, newName, md5
     )
     # if move successful then actually move file into place, else delete it
@@ -157,6 +181,10 @@ def getTPageImage(self, testNumber, pageNumber, version):
 
 def getHWPageImage(self, testNumber, question, order):
     return self.DB.getHWPageImage(testNumber, question, order)
+
+
+def getEXPageImage(self, testNumber, question, order):
+    return self.DB.getEXPageImage(testNumber, question, order)
 
 
 def getLPageImage(self, testNumber, order):
@@ -191,131 +219,112 @@ def getQuestionImages(self, testNumber, questionNumber):
     return self.DB.getQuestionImages(testNumber, questionNumber)
 
 
-def getTestImages(self, testNumber):
-    return self.DB.getTestImages(testNumber)
+def getAllTestImages(self, testNumber):
+    return self.DB.getAllTestImages(testNumber)
 
 
-def checkPage(self, testNumber, pageNumber):
-    return self.DB.checkPage(testNumber, pageNumber)
+def checkTPage(self, testNumber, pageNumber):
+    return self.DB.checkTPage(testNumber, pageNumber)
 
 
-def removeUnknownImage(self, fname):
-    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
-    if self.DB.removeUnknownImage(fname, newFilename):
-        shutil.move(fname, newFilename)
-        return [True]
-    else:
-        return [False]
+def removeUnknownImage(self, file_name):
+    return self.DB.removeUnknownImage(file_name)
 
 
-def removeCollidingImage(self, fname):
-    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
-    if self.DB.removeCollidingImage(fname, newFilename):
-        shutil.move(fname, newFilename)
-        return [True]
-    else:
-        return [False]
+def discardToUnknown(self, file_name):
+    return self.DB.moveDiscardToUnknown(file_name)
 
 
-def unknownToTestPage(self, fname, test, page, rotation):
-    # first rotate the page
-    subprocess.run(
-        ["mogrify", "-quiet", "-rotate", rotation, fname],
-        stderr=subprocess.STDOUT,
-        shell=False,
-        check=True,
-    )
+def removeCollidingImage(self, file_name):
+    return self.DB.removeCollidingImage(file_name)
+
+
+def unknownToTestPage(self, file_name, test, page, rotation):
     # checkpage returns
-    # -- [False] no such page exists
-    # -- [True, version] page exists but hasnt been scanned
-    # -- or [True, version, image] page exists and has been scanned
-    val = self.DB.checkPage(test, page)
+    # -- [False, reason] no such page exists, or owners logged in
+    # -- [True, 'unscanned', version] page exists but hasnt been scanned
+    # -- or [True, 'collision', version, image] page exists and has been scanned
+    val = self.DB.checkTPage(test, page)
     if val[0]:
-        if len(val) == 3:
-            # existing page in place - create a colliding page
-            newFilename = "pages/collidingPages/" + os.path.split(fname)[1]
-            log.debug("Collide = {}".format(newFilename))
-            if self.DB.moveUnknownToCollision(fname, newFilename, test, page)[0]:
-                shutil.move(fname, newFilename)
-                return [True, "collision"]
-        else:
-            newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-            log.debug("Original = {}".format(newFilename))
-            if self.DB.moveUnknownToPage(fname, newFilename, test, page)[0]:
-                shutil.move(fname, newFilename)
-                return [True, "testPage"]
-    else:  # some sort of problem occurred
-        return [False]
-
-
-def unknownToExtraPage(self, fname, test, question, rotation):
-    newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-    rval = self.DB.moveExtraToPage(fname, newFilename, test, question)
-    # returns [True, [file1,file2,..]] or [False]
-    # the files are annotations to be deleted
-    if rval[0]:
-        # move file into place
-        shutil.move(fname, newFilename)
-        # moved successfully. now rotate the page
+        # rotate the page
         subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, newFilename],
+            ["mogrify", "-quiet", "-rotate", rotation, file_name],
             stderr=subprocess.STDOUT,
             shell=False,
             check=True,
         )
-        # clean up any annotation files
-        for fn in rval[1]:
-            os.unlink(fn)
+        if len(val) == 4:
+            # existing page in place - create a colliding page
+            if self.DB.moveUnknownToCollision(file_name, test, page)[0]:
+                return [True, "collision"]
+            else:
+                return [False, "HUH?"]  # this should not happen
+        else:
+            msg = self.DB.moveUnknownToTPage(file_name, test, page)
+            # returns [True] or [False, reason] or [False, "owners", owner_list]
+            if msg[0]:
+                return [True, "testPage"]
+            else:
+                return msg
+
+    else:  # some sort of problem occurred
+        return val
+
+
+def unknownToExtraPage(self, fname, test, question, rotation):
+    rval = self.DB.moveUnknownToExtraPage(fname, test, question)
+    # returns [True] or [False, reason]
+    if rval[0]:
+        # moved successfully. now rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
     else:
-        return [False]
+        return rval
     return [True]
 
 
-def removeScannedPage(self, testNumber, pageNumber, version):
-    # the scanned page moves to a discardedPage
-    # any annotations are deleted.
-    fname = self.DB.fileOfScannedPage(testNumber, pageNumber, version)
-    # returns either None or [filename, originalName, md5sum]
-    if fname is None:
-        return [False, "Cannot find page"]
-    # need to create a discardedPage object and move files
-    newFilename = "pages/discardedPages/" + os.path.split(fname)[1]
-    rval = self.DB.removeScannedPage(fname, newFilename)
+def unknownToHWPage(self, fname, test, question, rotation):
+    rval = self.DB.moveUnknownToHWPage(fname, test, question)
+    # returns [True] or [False, reason]
     if rval[0]:
-        shutil.move(fname, newFilename)
-        for fn in rval[1]:
-            os.unlink(fn)
-        return [True]
+        # moved successfully. now rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, fname],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
     else:
-        return [False]
+        return rval
+    return [True]
 
 
-def collidingToTestPage(self, fname, test, page, version):
-    # first remove the current scanned page
-    if not self.removeScannedPage(test, page, version)[0]:
-        return [False]
-    # now move the collision into place
-    newFilename = "pages/originalPages/" + os.path.split(fname)[1]
-    if self.DB.moveCollidingToPage(fname, newFilename, test, page, version)[0]:
-        shutil.move(fname, newFilename)
-        return [True]
-    # some sort of problem occurred
-    return [False]
+def removeAllScannedPages(self, test_number):
+    return self.DB.removeAllScannedPages(test_number)
 
 
-def discardToUnknown(self, fname):
-    newFilename = "pages/unknownPages/" + os.path.split(fname)[1]
-    if self.DB.moveDiscardToUnknown(fname, newFilename):
-        shutil.move(fname, newFilename)
-        return [True]
-    else:
-        return [False]
+def collidingToTestPage(self, file_name, test, page, version):
+    return self.DB.moveCollidingToTPage(file_name, test, page, version)
 
 
-def replaceMissingHWQuestion(self, sid, question):
+def replaceMissingHWQuestion(self, sid, test, question):
+    if sid is None:
+        # compute sid from test-number
+        if test is None:
+            return [False, "Need at least one of sid or test"]
+        rval = self.DB.getSIDFromTest(test)
+        if rval[0]:
+            sid = rval[1]
+        else:
+            return rval
+
     # TODO - we should probably have some sort of try/except around this.
     pageNotSubmitted.build_homework_question_substitute(sid, question)
-    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    # produces a file "pns.<sid>.<pageNumber>.<ver>.png"
     originalName = "qns.{}.{}.png".format(sid, question)
     prefix = "pages/originalPages/pns.{}q{}".format(sid, question)
     # make a non-colliding name
@@ -338,6 +347,10 @@ def replaceMissingHWQuestion(self, sid, question):
 
 
 def processHWUploads(self):
+    return self.DB.processUpdatedTests()
+
+
+def processLUploads(self):
     return self.DB.processUpdatedTests()
 
 

@@ -1,9 +1,15 @@
-from plom.db.tables import *
-from datetime import datetime, timedelta
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
+from datetime import datetime, timedelta
 import logging
 
+from plom.db.tables import *
+
+
 log = logging.getLogger("DB")
+
 
 # ------------------
 # Reporting functions
@@ -12,7 +18,7 @@ log = logging.getLogger("DB")
 def RgetScannedTests(self):
     """Get a dict of all scanned tests indexed by test_number.
     Each test lists pairs [page-code, page-version].
-    page-code is t{page}, hw{question}{order}, or l{order}.
+    page-code is t{page}, h{question}{order}, or l{order}.
     """
     scan_dict = {}
     for tref in Test.select().where(Test.scanned == True):
@@ -25,8 +31,13 @@ def RgetScannedTests(self):
         for qref in tref.qgroups:
             gref = qref.group
             for p in gref.hwpages:
-                pScanned.append(["hw.{}.{}".format(qref.question, p.order), p.version])
-        # then append x-pages in order
+                pScanned.append(["h.{}.{}".format(qref.question, p.order), p.version])
+        # then append extra-pages in question-order
+        for qref in tref.qgroups:
+            gref = qref.group
+            for p in gref.expages:
+                pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
+        # then append loose-pages in order
         for p in tref.lpages:
             pScanned.append(["l.{}".format(p.order), 0])  # we don't know the version
         scan_dict[tref.test_number] = pScanned
@@ -38,19 +49,39 @@ def RgetIncompleteTests(self):
     """Get dict of incomplete tests - ie some test pages scanned but not all.
     Indexed by test_number
     Each test lists triples [page-code, page-version, scanned_or_not].
-    page-code is t{page}, hw{question}{order}, or l{order}.
+    page-code is t{page}, h{question}{order}, or l{order}.
+    Note - if no tpages scanned, then it will not return tpages.
+    Similalry, if no hwpages/expages scanned, then it will not return hwpages/expages.
     """
     incomp_dict = {}
     for tref in Test.select().where(Test.scanned == False, Test.used == True):
         page_state = []
-        for p in tref.tpages:
-            page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
-        # then append hw-pages in question-order
-        for qref in tref.qgroups.order_by(QGroup.question):
-            for p in qref.group.hwpages:
-                for p in gref.hwpages:  # hw pages are always scanned
+        # if no tpages scanned then don't display
+        if TPage.select().where(TPage.test == tref, TPage.scanned == True).count() > 0:
+            for p in tref.tpages:
+                page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
+
+        # if no HW pages at all - then don't display.
+        if tref.hwpages.count() > 0:
+            # then append hw-pages in question-order
+            for qref in tref.qgroups.order_by(QGroup.question):
+                # if no HW pages scanned then display a hwpage 1 as unscanned.
+                if qref.group.hwpages.count() == 0:
                     page_state.append(
-                        ["hw.{}.{}".format(qref.question, p.order), p.version, True]
+                        ["h.{}.{}".format(qref.question, 1), qref.version, False]
+                    )
+                else:
+                    for p in qref.group.hwpages:  # hw pages are always scanned
+                        page_state.append(
+                            ["h.{}.{}".format(qref.question, p.order), p.version, True]
+                        )
+        # if no ex pages at all - then don't display.
+        if tref.expages.count() > 0:
+            # then append ex-pages in question-order
+            for qref in tref.qgroups.order_by(QGroup.question):
+                for p in qref.group.expages:  # ex pages are always scanned
+                    page_state.append(
+                        ["ex.{}.{}".format(qref.question, p.order), p.version, True]
                     )
         # then append l-pages in order
         for p in tref.lpages:
@@ -61,9 +92,44 @@ def RgetIncompleteTests(self):
     return incomp_dict
 
 
-def RgetUnusedTests(self):
-    """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned, no loose pages scanned.
+def RgetCompleteHW(self):
+    """Get a list of [test_number, sid] that have complete hw-uploads - ie all questions present."""
+    hw_complete = []
+    # look at all the scanned tests - they will either be hwpages or tpages
+    for tref in Test.select().where(Test.scanned == True):
+        # note - skip those with scanned TPages present.
+        if TPage.get_or_none(test=tref, scanned=True) is None:
+            hw_complete.append([tref.test_number, tref.idgroups[0].student_id])
+    return hw_complete
+
+
+def RgetMissingHWQ(self):
+    """Get dict of tests with missing HW Pages - ie some test pages scanned but not all.
+    Indexed by test_number
+    Each test gives [scanned-tpages-present boolean, sid, missing-question-numbers].
     """
+    incomp_dict = {}
+    # look at tests that are not completely scanned
+    for tref in Test.select().where(
+        Test.scanned == False, Test.used == True, Test.identified == True
+    ):
+        # check if that test has any scanned tpages
+        if TPage.get_or_none(test=tref, scanned=True) is None:
+            question_list = [False, tref.idgroups[0].student_id]
+        else:
+            question_list = [True, tref.idgroups[0].student_id]
+        for qref in tref.qgroups.order_by(QGroup.question):
+            # if no HW pages scanned then display a hwpage 1 as unscanned.
+            if qref.group.hwpages.count() == 0:
+                question_list.append(qref.question)
+        if len(question_list) > 1:
+            incomp_dict[tref.test_number] = question_list
+    log.debug("Sending list of missing hw questions")
+    return incomp_dict
+
+
+def RgetUnusedTests(self):
+    """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned, no loose pages scanned."""
     unused_list = []
     for tref in Test.select().where(Test.used == False):
         unused_list.append(tref.test_number)
@@ -101,7 +167,11 @@ def RgetProgress(self, q, v):
     for qref in (
         QGroup.select()
         .join(Group)
-        .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
+        .where(
+            QGroup.question == q,
+            QGroup.version == v,
+            Group.scanned == True,
+        )
     ):
         NScanned += 1
         if qref.marked == True:
@@ -131,8 +201,7 @@ def RgetProgress(self, q, v):
 
 
 def RgetMarkHistogram(self, q, v):
-    """Return a dict of dicts containing histogram of marks for the given q/v as hist[user][question][mark]=count.
-    """
+    """Return a dict of dicts containing histogram of marks for the given q/v as hist[user][question][mark]=count."""
     histogram = {}
     for qref in (
         QGroup.select()
@@ -157,8 +226,7 @@ def RgetMarkHistogram(self, q, v):
 
 
 def RgetMarked(self, q, v):
-    """Return a list of all marked tasks with that q/v.
-    """
+    """Return a list of all marked tasks with that q/v."""
     marked_list = []
     for qref in (
         QuestionData.select()
@@ -184,7 +252,11 @@ def RgetQuestionUserProgress(self, q, v):
     for qref in (
         QGroup.select()
         .join(Group)
-        .where(QGroup.question == q, QGroup.version == v, Group.scanned == True,)
+        .where(
+            QGroup.question == q,
+            QGroup.version == v,
+            Group.scanned == True,
+        )
     ):
         number_scanned += 1
         if qref.marked == True:
@@ -200,14 +272,13 @@ def RgetQuestionUserProgress(self, q, v):
 
 
 def RgetCompletionStatus(self):
-    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, totalled_or_not, number_of_questions_marked]
-    """
+    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, number_of_questions_marked]"""
     progress = {}
     for tref in Test.select().where(Test.scanned == True):
         number_marked = (
             QGroup.select().where(QGroup.test == tref, QGroup.marked == True).count()
         )
-        progress[tref.test_number] = [tref.identified, tref.totalled, number_marked]
+        progress[tref.test_number] = [tref.identified, number_marked]
     log.debug("Sending list of completed tests")
     return progress
 
@@ -215,7 +286,7 @@ def RgetCompletionStatus(self):
 def RgetOutToDo(self):
     """Return a list of tasks that are currently out with clients. These have status "todo".
     For each task we return a triple of [code, user, time]
-    code = id-t{testnumber} or mrk-t{testnumber}-q{question}-v{version} or tot-t{testnumber}
+    code = id-t{testnumber} or mrk-t{testnumber}-q{question}-v{version}
     note that the datetime object is not jsonable, so we format it using strftime.
     """
     # note - have to format the time as string since not jsonable.
@@ -237,15 +308,7 @@ def RgetOutToDo(self):
                     qref.test.test_number, qref.question, qref.version
                 ),
                 qref.user.name,
-                qref.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
-            ]
-        )
-    for sref in SumData.select().where(SumData.status == "out"):
-        out_tasks.append(
-            [
-                "tot-t{}".format(sref.test.test_number),
-                sref.user.name,
-                sref.time.strftime("%y:%m:%d-%H:%M:%S"),
+                qref.time.strftime("%y:%m:%d-%H:%M:%S"),
             ]
         )
     log.debug("Sending list of tasks that are still out")
@@ -258,14 +321,10 @@ def RgetStatus(self, test_number):
     * number = test_number
     * identified = id'd or not (boolean)
     * marked = marked or not (boolean)
-    * totalled = totalled or not (boolean)
     Then if id'd we also add keys/values
     * sid = student id
     * sname = student name
     * iwho = who did the id-ing.
-    If totalled then add keys/values
-    * total = the total mark
-    * twho = who did the totalling.
     For each question then add a sub-dict with key = that question number, and key/values
     * marked = marked or not
     * version = the version of that question
@@ -280,17 +339,12 @@ def RgetStatus(self, test_number):
         "number": tref.test_number,
         "identified": tref.identified,
         "marked": tref.marked,
-        "totalled": tref.totalled,
     }
     if tref.identified:
         iref = tref.idgroups[0]
         state["sid"] = iref.student_id
         state["sname"] = iref.student_name
         state["iwho"] = iref.user.name
-    if tref.totalled:
-        sref = tref.sumdata[0]
-        state["total"] = sref.sum_mark
-        state["twho"] = sref.user.name
     for qref in tref.qgroups:
         if qref.marked:
             state[qref.question] = {
@@ -310,8 +364,7 @@ def RgetStatus(self, test_number):
 
 
 def RgetSpreadsheet(self):
-    """Return a dict that contains all the information needed to build the spreadsheet.
-    """
+    """Return a dict that contains all the information needed to build the spreadsheet."""
     # build a spreadsheet dict indexed by test_number
     # each value that dict is a dict which contains the info about that test
     sheet = {}
@@ -321,7 +374,6 @@ def RgetSpreadsheet(self):
         this_test = {
             "identified": tref.identified,  # id'd or not
             "marked": tref.marked,  # completely marked or not
-            "totalled": tref.totalled,  # totalled or not.
             "sid": "",  # blank entry for student id - replaced if id'd
             "sname": "",  # blank entry for student name - replaced if id'd
         }
@@ -344,14 +396,13 @@ def RgetSpreadsheet(self):
 
 
 def RgetOriginalFiles(self, test_number):
-    """Return list of the filenames for the original (unannotated) page images for the given test.
-    """
+    """Return list of the filenames for the original (unannotated) page images for the given test."""
     page_files = []
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
         return []
     # append tpages, hwpages and then lpages.
-    for pref in tref.pages.order_by(TPage.page_number):
+    for pref in tref.tpages.order_by(TPage.page_number):
         page_files.append(pref.image.file_name)
     for qref in tref.qgroups.order_by(QGroup.question):
         for pref in qref.group.hwpages:
@@ -384,8 +435,7 @@ def RgetCoverPageInfo(self, test_number):
 
 
 def RgetAnnotatedFiles(self, test_number):
-    """For the given test return a list of the image file names for the idgroup, dnmgroup and the (marked) questions.
-    """
+    """For the given test return a list of the image file names for the idgroup, dnmgroup and the (marked) questions."""
     # todo - put in sanity / safety checks - making sure questions are marked.
 
     image_list = []
@@ -402,7 +452,7 @@ def RgetAnnotatedFiles(self, test_number):
         image_list.append(p.image.file_name)
     # append last annotation from each qgroup
     for g in tref.qgroups.order_by(QGroup.question):
-        image_list.append(g.annotations[-1].image.file_name)
+        image_list.append(g.annotations[-1].aimage.file_name)
     log.debug("Sending annotated images for test {}".format(test_number))
     return image_list
 
@@ -443,8 +493,7 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
 
 
 def RgetAnnotatedImage(self, test_number, question, version):
-    """Return the filename of the annotated image for the given test/question/version.
-    """
+    """Return the filename of the annotated image for the given test/question/version."""
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:  # sanity check
         return [False]
@@ -459,7 +508,7 @@ def RgetAnnotatedImage(self, test_number, question, version):
     log.debug(
         "Sending annotated image of tqv {}.{}.{}".format(test_number, question, version)
     )
-    return [True, qref.annotations[-1].image.file_name]
+    return [True, qref.annotations[-1].aimage.file_name]
 
 
 def RgetIDReview(self):
@@ -482,39 +531,19 @@ def RgetIDReview(self):
     return id_paper_list
 
 
-def RgetTotReview(self):
-    """Return information about every totalled paper.
-    For each paper return a tuple of [test_number, who did the totalling, the time, and the total mark]
-    """
-    tot_paper_list = []
-    query = SumData.select().where(SumData.summed == True)
-    for sref in query:
-        tot_paper_list.append(
-            [
-                sref.test.test_number,
-                sref.user.name,
-                sref.time.strftime("%y:%m:%d-%H:%M:%S"),
-                sref.sum_mark,
-            ]
-        )
-    log.debug("Sending totalling review data")
-    return tot_paper_list
-
-
 def RgetUserFullProgress(self, user_name):
     """Return the number of completed tasks of teach type for the given user.
-    Return [ number_id'd, number_totalled, number_marked]
+    Return [ number_id'd, number_marked]
     number_marked = number marked for all questions.
     """
     uref = User.get_or_none(name=user_name)
     if uref is None:
         return []
-    # return [#IDd, #tot, #marked]
+    # return [#IDd, #marked]
     log.debug("Sending user {} progress data".format(user_name))
     return [
         IDGroup.select()
         .where(IDGroup.user == uref, IDGroup.identified == True)
         .count(),
-        SumData.select().where(SumData.user == uref, SumData.summed == True).count(),
         QGroup.select().where(QGroup.user == uref, QGroup.marked == True).count(),
     ]

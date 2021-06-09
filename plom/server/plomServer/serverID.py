@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+
 import hashlib
 import logging
 import os
@@ -85,19 +90,19 @@ def IDclaimThisTask(self, username, test_number):
 def id_paper(self, *args, **kwargs):
     """Assign a student name/id combination to a paper in the database.
 
-    Used by the HAL user for papers that are preidentified by the system. 
-        TODO: Correct ? 
+    Used by the HAL user for papers that are preidentified by the system.
+        TODO: Correct ?
 
     Args:
-        args (tuple): A tuple including (test_number, user_identifying_paper, 
+        args (tuple): A tuple including (test_number, user_identifying_paper,
             matched_student_id, matched_student_name).
-        kwargs (dict): Empty dict, not sure why TODO: Assuming this is 
-            here only to match ID_id_paper. 
+        kwargs (dict): Empty dict, not sure why TODO: Assuming this is
+            here only to match ID_id_paper.
 
     Returns:
-        list: A list including the results of the identification of 
+        list: A list including the results of the identification of
             the paper on database. Examples are:
-            (True, None, None) for success. 
+            (True, None, None) for success.
             (False, 409, msg) for failure.
     """
 
@@ -111,17 +116,17 @@ def ID_id_paper(self, *args, **kwargs):
         does additional checks.
 
     Args:
-        args (tuple): A tuple including (test_number, user_identifying_paper, 
+        args (tuple): A tuple including (test_number, user_identifying_paper,
             matched_student_id, matched_student_name).
-        kwargs (dict): Empty dict, not sure why TODO: Assuming this is a 
+        kwargs (dict): Empty dict, not sure why TODO: Assuming this is a
             True/False parameter (defaults to True if empty dict) which
             indicates wether checks need to be applied ie the additional
             404,403 error on top of what id_paper would return.
 
     Returns:
-        list: A list including the results of the identification of 
+        list: A list including the results of the identification of
             the paper on database. Examples are:
-            (True, None, None) for success. 
+            (True, None, None) for success.
             (False, 403, msg) for belong to different user failure.
             (False, 404, msg) for paper not found or not scanned yet.
             (False, 409, msg) for already entered failure.
@@ -143,7 +148,7 @@ def IDdidNotFinish(self, username, test_number):
 
 
 def IDgetImageFromATest(self):
-    """Return a random front page exam image for ID box selection by the client. 
+    """Return a random front page exam image for ID box selection by the client.
 
     Returns:
         list: True/False plus a list of the images' paths.
@@ -158,8 +163,8 @@ def IDdeletePredictions(self):
     Log activity.
 
     Returns:
-        list: A list with True/False which includes a message 
-            string if the response is false.
+        list: first entry is True/False for success.  If False, second
+            entry is a string with an explanation.
     """
 
     # check to see if predictor is running
@@ -198,7 +203,7 @@ def IDreviewID(self, test_number):
 # TODO: The use tensorflow model is the keyword to use for choosing the model.
 # BIG BIG TODO, ADD KEYWORDS TO SPECS AS SOON AS THE MODEL IS CONFIRMED.
 def IDrunPredictions(
-    self, rectangle, database_reference_number, ignore_stamp, use_tensorflow_model=True
+    self, rectangle, database_reference_number, ignore_stamp, use_tensorflow_model=False
 ):
     """Run the ML prediction model on the papers and saves the information.
 
@@ -207,18 +212,18 @@ def IDrunPredictions(
     Args:
         rectangle (list): A list of coordinates if the format of:
             [top_left_x, top_left_y, bottom_right_x, bottom_right_y]
-        database_reference_number (int): Number of the files which the cropped 
-            rectangle was extracted from.
-        ignore_stamp (bool): To ignore or not to ignore the timestamp when deciding
-            whether to skip the run.
+        database_reference_number (int): Number of the file which the
+            cropped rectangle was extracted from.
+        ignore_stamp (bool): Whether to ignore the timestamp when
+            deciding whether to skip the run.
 
     Returns:
-        list: A list with first value boolean and second value boolean or a 
+        list: A list with first value boolean and second value boolean or a
             message string of the format:
-            [True, False] for already running.
-            [False, str] for prediction already exists, so return the timestamp
-                for last time prediction were run. TODO: I'm pretty sure this is correct ?
-            [True, True] for started running.
+            [True, False]: it is already running.
+            [False, str]: prediction already exists, `str` is the
+                timestamp of the last time prediction run.
+            [True, True]: we started a new prediction run.
     """
 
     # from plom.server.IDReader.idReader import runIDReader

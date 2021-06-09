@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Vala Vakilian
+
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 import numpy as np
@@ -8,8 +11,7 @@ from sklearn.metrics import accuracy_score
 
 
 def train_model():
-    """Trains the random forest model and saves it.
-    """
+    """Trains the random forest model and saves it."""
 
     # Fetch the MNIST data.
     mnist = fetch_openml("mnist_784")

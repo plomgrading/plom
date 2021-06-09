@@ -1,8 +1,14 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 """
-Digit hunter extracts random digit images from the MNIST database and stores then in a json file (used to create digits.json). The results are used by faketools.py to create ID-pages for the plom-demo.
-This python program not run on a normal Plom (or demo) run, however it is being kept in the repo for posterity. 
+Digit hunter extracts random digit images from the MNIST database
+and stores then in a json file (used to create digits.json).  The
+results are used by faketools.py to create ID-pages for the plom-demo.
+This python program not run on a normal Plom (or demo) run, however it
+is being kept in the repo for posterity.
 
 Dataset used: https://en.wikipedia.org/wiki/MNIST_database
 """
@@ -10,16 +16,16 @@ Dataset used: https://en.wikipedia.org/wiki/MNIST_database
 __copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import base64
-import cv2
 import json
-import numpy as np
 from random import sample
-import tensorflow as tf
 from collections import defaultdict
 import subprocess
+
+import numpy as np
+import tensorflow as tf
+import cv2
 
 # pair (x_train, y_train), (x_test, y_test) from mnist dataset
 mnist = tf.keras.datasets.mnist.load_data()

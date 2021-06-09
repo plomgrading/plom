@@ -1,10 +1,10 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Andreas Buttenschoen
 
-import glob
 import hashlib
 import os
 from pathlib import Path
@@ -12,9 +12,8 @@ import shutil
 import subprocess
 from multiprocessing import Pool
 import math
-import random
 import tempfile
-import warnings
+from warnings import warn
 
 import toml
 from tqdm import tqdm
@@ -22,54 +21,102 @@ import fitz
 from PIL import Image
 import jpegtran
 
-from plom import PlomImageExtWhitelist
+from plom import PlomImageExts
 from plom import ScenePixelHeight
 
 
 # TODO: make some common util file to store all these names?
-archivedir = "archivedPDFs"
+archivedir = Path("archivedPDFs")
 
 
-def archivePDF(fname, hwByQ, hwExtra):
-    print("Archiving {}".format(fname))
-    md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-    # TODO: is ".." portable?  maybe we should keep some absolute paths handy
-    if hwByQ:
-        shutil.move(fname, Path(archivedir) / "submittedHWByQ")
-    elif hwExtra:
-        shutil.move(fname, Path(archivedir) / "submittedHWExtra")
-    else:
-        shutil.move(fname, archivedir)
-    # open the existing archive if it is there
-    arcName = os.path.join(archivedir, "archive.toml")
-    if os.path.isfile(arcName):
-        arch = toml.load(arcName)
-    else:
+def _archiveBundle(file_name, this_archive_dir):
+    """Archive the bundle pdf.
+
+    The bundle.pdf is moved into the appropriate archive directory
+    as given by this_archive_dir. The archive.toml file is updated
+    with the name and md5sum of that bundle.pdf.
+    """
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    shutil.move(file_name, this_archive_dir / Path(file_name).name)
+    try:
+        arch = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
         arch = {}
-    arch[md5] = fname
+    arch[md5] = str(file_name)
     # now save it
-    with open(arcName, "w+") as fh:
+    with open(archivedir / "archive.toml", "w+") as fh:
         toml.dump(arch, fh)
 
 
-def isInArchive(fname):
-    arcName = os.path.join(archivedir, "archive.toml")
-    if not os.path.isfile(arcName):
-        return [False]
-    arch = toml.load(arcName)
-    md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-    if md5 in arch:
-        return [True, arch[md5]]
-    return [False]
+def archiveHWBundle(file_name):
+    """Archive a hw-pages bundle pdf"""
+    print("Archiving homework bundle {}".format(file_name))
+    _archiveBundle(file_name, archivedir / "submittedHWByQ")
 
 
-def processFileToBitmaps(fname):
+def archiveLBundle(file_name):
+    """Archive a loose-pages bundle pdf"""
+    print("Archiving loose-page bundle {}".format(file_name))
+    _archiveBundle(file_name, archivedir / "submittedLoose")
+
+
+def archiveTBundle(file_name):
+    """Archive a test-pages bundle pdf"""
+    print("Archiving test-page bundle {}".format(file_name))
+    _archiveBundle(file_name, archivedir)
+
+
+def _md5sum_in_archive(filename):
+    """Check for a file in the list of archived PDF files.
+
+    Args:
+        filename (str): the basename (not path) of a file to search for
+            in the archive of PDF files that have been processed.
+
+    Returns:
+        None/str: None if not found, else the md5sum.
+
+    Note: Current unused?
+    """
+    try:
+        archive = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
+        return ""
+    for md5, name in archive.items():
+        if filename == name:
+            # if not unique too bad you get 1st one
+            return md5
+
+
+def isInArchive(file_name):
+    """
+    Check given file by md5sum against archived bundles.
+
+    Returns:
+        None/str: None if not found, otherwise filename of archived file
+            with the same md5sum.
+    """
+    try:
+        archive = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
+        return None
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    return archive.get(md5, None)
+
+
+def processFileToBitmaps(file_name, dest, do_not_extract=False):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
       1. Extract a scanned bitmap "as-is"
       2. Render the page with PyMuPDF
       3. Render the page with Ghostscript
+
+    Args:
+        file_name (str, Path): PDF file from which to extract bitmaps.
+        dest (str, Path): where to save the resulting bitmap files.
+        do_not_extract (bool): always render, do no extract even if
+            it seems possible to do so.
 
     For extracting the scanned data as is, we must be careful not to
     just grab any image off the page (for example, it must be the only
@@ -78,16 +125,12 @@ def processFileToBitmaps(fname):
     fall back on rendering with PyMuPDF.
 
     If the above fail, we fall back on calling Ghostscript as a
-    subprocess (the `gs` binary).  NOT IMPLEMENTED YET.
-
-    NOT IMPLEMENTED YET: You can force one of these...
+    subprocess (the `gs` binary).  TODO: NOT IMPLEMENTED YET.
     """
-
-    scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(file_name).stem.replace(" ", "_")
 
-    doc = fitz.open(fname)
+    doc = fitz.open(file_name)
 
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
@@ -113,6 +156,11 @@ def processFileToBitmaps(fname):
             msgs.append("Has text")
             ok_extract = False
 
+        # TODO: Do later to get more info in prep for future change to default
+        if do_not_extract:
+            msgs.append("Disabled by flag")
+            ok_extract = False
+
         if ok_extract:
             r, d = extractImageFromFitzPage(p, doc)
             if not r:
@@ -123,7 +171,7 @@ def processFileToBitmaps(fname):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"].lower() in PlomImageExtWhitelist:
+                if d["ext"].lower() in PlomImageExts:
                     converttopng = False
                     # Bail on jpeg if dimensions are not multiples of 16.
                     # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
@@ -138,34 +186,67 @@ def processFileToBitmaps(fname):
                 else:
                     converttopng = True
                     print(
-                        "  {} format not whitelisted; transcoding to PNG".format(
+                        "  {} format not in allowlist: transcoding to PNG".format(
                             d["ext"]
                         )
                     )
 
                 if not converttopng:
-                    outname = os.path.join("scanPNGs", basename + "." + d["ext"])
+                    outname = os.path.join(dest, basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
                 else:
-                    outname = os.path.join("scanPNGs", basename + ".png")
+                    outname = os.path.join(dest, basename + ".png")
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
                         subprocess.check_call(["convert", g.name, outname])
                 continue
 
-        # looks they use ceil not round so decrease a little bit
-        z = (float(ScenePixelHeight) - 0.01) / p.MediaBoxSize[1]
+        aspect = p.mediabox_size[0] / p.mediabox_size[1]
+        H = ScenePixelHeight
+        W = H * aspect
+        MINWIDTH = 1024
+        MAXHEIGHT = 15999
+        MAXWIDTH = 3 * ScenePixelHeight // 2
+        assert MINWIDTH < ScenePixelHeight
+        # Note logic not same between tall and wide:
+        #   * tall: "Safeway receipt", observed from "infinite paper" software
+        #   * wide: "fortune cookie", little strip cropped from regular sheet
+        # In the tall case, we use extra pixels vertically because there is
+        # actually more to resolve.  But I've never seen a wide case that was
+        # wider than a landscape sheet of paper.  Also, currently, Client's
+        # would display such a thin wide strip at to large a scale.
+        if aspect > 1:
+            if W > MAXWIDTH:
+                # TODO: warn of extreme aspect ratio?  Flag to control this?
+                W = MAXWIDTH
+                H = W / aspect
+                if H < 100:
+                    raise ValueError("Scanned a strip too wide and thin?")
+        else:
+            if W < MINWIDTH:
+                W = MINWIDTH
+                H = W / aspect
+                if H > MAXHEIGHT:
+                    H = MAXHEIGHT
+                    W = H * aspect
+                    if W < 100:
+                        raise ValueError("Scanned a long strip of thin paper?")
+
+        # fitz uses ceil (not round) so decrease a little bit
+        if W > H:
+            z = (float(W) - 0.0001) / p.mediabox_size[0]
+        else:
+            z = (float(H) - 0.0001) / p.mediabox_size[1]
         ## For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
-        print("{}: Fitz render z={:4.2f}. {}".format(basename, z, "; ".join(msgs)))
-        pix = p.getPixmap(fitz.Matrix(z, z), annots=True)
-        if pix.height != ScenePixelHeight:
-            warnings.warn(
-                "rounding error: height of {} instead of {}".format(
-                    pix.height, ScenePixelHeight
-                )
+        print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
+        pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
+        if not (W == pix.width or H == pix.height):
+            warn(
+                "Debug: some kind of rounding error in scaling image?"
+                "  Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
@@ -183,7 +264,7 @@ def processFileToBitmaps(fname):
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
-        outname = os.path.join("scanPNGs", basename + ".png")
+        outname = os.path.join(dest, basename + ".png")
         pix.writeImage(outname)
 
 
@@ -201,11 +282,13 @@ def extractImageFromFitzPage(page, doc):
             and `ext`.  `d["image"]` is the raw binary data.
     """
 
-    imlist = page.getImageList()
-    if len(imlist) != 1:
+    imlist = page.get_images()
+    if len(imlist) > 1:
         return False, "More than one image"
+    if len(imlist) == 0:
+        return False, "Image List is Empty"
 
-    d = doc.extractImage(imlist[0][0])
+    d = doc.extract_image(imlist[0][0])
     # TODO: log.debug this:
     # print("  " + "; ".join(["{}: {}".format(k, v) for k, v in d.items() if not k == "image"]))
     width = d.get("width")
@@ -224,11 +307,10 @@ def extractImageFromFitzPage(page, doc):
     return True, d
 
 
-def processFileToPng_w_ghostscript(fname):
+def processFileToPng_w_ghostscript(fname, dest):
     """Convert each page of pdf into png using ghostscript"""
-    scan, fext = os.path.splitext(fname)
     # issue #126 - replace spaces in names with underscores for output names.
-    safeScan = scan.replace(" ", "_")
+    safeScan = Path(fname).stem.replace(" ", "_")
     try:
         subprocess.run(
             [
@@ -237,7 +319,7 @@ def processFileToPng_w_ghostscript(fname):
                 "-dNOPAUSE",
                 "-sDEVICE=png256",
                 "-o",
-                os.path.join("scanPNGs", safeScan + "-%d.png"),
+                os.path.join(dest, safeScan + "-%d.png"),
                 "-r200",
                 fname,
             ],
@@ -275,11 +357,7 @@ def normalizeJPEGOrientation(f):
     im = jpegtran.JPEGImage(f)
     if im.exif_orientation:
         if im.width % 16 or im.height % 16:
-            warnings.warn(
-                '  JPEG image "{}" dims not mult of 16: re-orientations may be lossy'.format(
-                    f
-                )
-            )
+            warn(f'  jpeg "{f}" dims not mult of 16: re-orientations may be lossy')
         im2 = im.exif_autotransform()
         print(
             '  normalizing "{}" {}x{} to "{}" {}x{}'.format(
@@ -291,75 +369,101 @@ def normalizeJPEGOrientation(f):
                 im2.height,
             )
         )
-        im2.save(f)
+        # str to workaround https://github.com/jbaiter/jpegtran-cffi/issues/28
+        im2.save(str(f))
 
 
-def processScans(fname, hwByQ=False, hwExtra=False):
-    """Process file into bitmap pageimages and archive the pdf.
+def makeBundleDirectories(fname, bundle_dir):
+    """Each bundle needs its own subdirectories: make pageImages, scanPNGs, etc.
 
-    Process each page of a pdf file into bitmaps.  Then move the processed
-    pdf into "alreadyProcessed" so as to avoid duplications.
+    Args:
+        fname (str, Path): the name of a pdf-file, zip-file or whatever
+            from which we create the bundle name.
+        bundle_dir (Path): A directory to contain the various
+            extracted files, QR codes, uploaded stuff etc.
+
+    Returns:
+        None
+    """
+    # TODO: consider refactor viz scripts/scan and scripts/hwscan which has similar
+    for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
+        os.makedirs(bundle_dir / dir, exist_ok=True)
+
+
+def postProcessing(thedir, dest, skip_gamma=False):
+    """Do post processing on a directory of scanned bitmaps.
+
+    Args:
+        thedir (str, Path): a directory full of bitmaps.
+        dest (str, Path): move images here (???).
+        skip_gamma_shift (bool): skip the white balancing.
+    """
+    thedir = Path(thedir)
+    dest = Path(dest)
+
+    print("Normalizing jpeg orientation from Exif metadata")
+    stuff = list(thedir.glob("*.jpg"))
+    stuff.extend(thedir.glob("*.jpeg"))
+    N = len(stuff)
+    with Pool() as p:
+        r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
+
+    if not skip_gamma:
+        # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
+        print("Gamma shift the PNG images")
+        # list and len bit crude here: more pythonic to leave as iterator?
+        stuff = list(thedir.glob("*.png"))
+        N = len(stuff)
+        with Pool() as p:
+            r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
+        # Pool does this loop, but in parallel
+        # for x in glob.glob("..."):
+        #     gamma_adjust(x)
+
+    fileList = []
+    for ext in PlomImageExts:
+        fileList.extend(thedir.glob("*.{}".format(ext)))
+    # move them to pageimages for barcode reading
+    for file in fileList:
+        shutil.move(file, dest / file.name)
+
+
+def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False):
+    """Process files into bitmap pageimages.
+
+    Process each page of a pdf file into bitmaps.
 
     Do a small amount of post-processing when possible to do losslessly
     (e.g., png).  A simple gamma shift to leave white-white but make
     everything else darker.  Improves images when students write in very
     light pencil.
-    """
 
-    # check if fname is in archive (by checking md5sum)
-    tf = isInArchive(fname)
-    if tf[0]:
-        print(
-            "WARNING - {} is in the PDF archive - we checked md5sum - it the same as file {}. It will not be processed.".format(
-                fname, tf[1]
-            )
+    Args:
+        pdf_fname (str, pathlib.Path): the path to a PDF file.  Used to
+            access the file itself.  TODO: is the filename also used for
+            anything else by code called by this function?
+        bundle_dir (pathlib.Path): the filesystem path to the bundle,
+            either as an absolute path or relative the CWD.
+        skip_gamma (bool): skip white balancing in post processing.
+        skip_img_extract (bool): don't try to extract raw images, just
+            render each page.  If `False`, images still may not be
+            extracted: there are a variety of sanity checks that must
+            pass.
+
+    Returns:
+        None
+    """
+    # TODO: potential confusion local archive versus on server: in theory
+    # annot get to local archive unless its uploaded, but what about unknowns, etc?
+
+    # check if fname is in local archive (by checking md5sum)
+    prevname = isInArchive(pdf_fname)
+    if prevname:
+        warn(
+            f"{pdf_fname} is in the PDF archive: same md5sum as previous {prevname}; will not process."
         )
         return
-
-    processFileToBitmaps(fname)
-    archivePDF(fname, hwByQ, hwExtra)
-    os.chdir("scanPNGs")
-    if hwExtra:
-        os.chdir("submittedHWExtra")
-    elif hwByQ:
-        os.chdir("submittedHWByQ")
-
-    print("Normalizing jpeg orientation from Exif metadata")
-    stuff = list(glob.glob("*.jpg"))
-    stuff.extend(glob.glob("*.jpeg"))
-    N = len(stuff)
-    with Pool() as p:
-        r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
-
-    # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
-    print("Gamma shift the PNG images")
-    # list and len bit crude here: more pythonic to leave as iterator?
-    stuff = list(glob.glob("*.png"))
-    N = len(stuff)
-    with Pool() as p:
-        r = list(tqdm(p.imap_unordered(gamma_adjust, stuff), total=N))
-    # Pool does this loop, but in parallel
-    # for x in glob.glob("..."):
-    #     gamma_adjust(x)
-
-    # move all the images into pageimages directory
-    fileList = []
-    for ext in PlomImageExtWhitelist:
-        fileList.extend(glob.glob("*.{}".format(ext)))
-    # move directly to decodedPages/submittedHWByQ or  Extra - there is no "read" step
-    if hwByQ:
-        for file in fileList:
-            shutil.move(
-                file, os.path.join("..", "..", "decodedPages", "submittedHWByQ")
-            )
-        os.chdir(os.path.join("..", ".."))
-    elif hwExtra:
-        for file in fileList:
-            shutil.move(
-                file, os.path.join("..", "..", "decodedPages", "submittedHWExtra")
-            )
-        os.chdir(os.path.join("..", ".."))
-    else:  # move them to pageimages for barcode reading
-        for file in fileList:
-            shutil.move(file, os.path.join("..", "pageImages"))
-        os.chdir("..")
+    makeBundleDirectories(pdf_fname, bundle_dir)
+    bitmaps_dir = bundle_dir / "scanPNGs"
+    processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
+    postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)

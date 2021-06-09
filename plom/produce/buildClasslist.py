@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
 import csv
-import json
 import os
 import sys
-import subprocess
 import tempfile
-from pathlib import Path
+import sys
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 import pandas
 
+import plom
 from ..finish.return_tools import import_canvas_csv
+
 
 possible_surname_fields = ["surname", "familyName", "lastName"]
 
@@ -75,9 +78,7 @@ def clean_non_canvas_csv(csv_file_name):
     # we need one of some approx of last-name field
     firstname_column_title = None
     for column_title in student_info_df.columns:
-        if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_surname_fields
-        ):
+        if column_title.casefold() in (x.casefold() for x in possible_surname_fields):
             print('"{}" column present'.format(column_title))
             firstname_column_title = column_title
             break
@@ -90,7 +91,7 @@ def clean_non_canvas_csv(csv_file_name):
     lastname_column_title = None
     for column_title in student_info_df.columns:
         if column_title.casefold() in (
-            possible_title.casefold() for possible_title in possible_given_name_fields
+            x.casefold() for x in possible_given_name_fields
         ):
             print('"{}" column present'.format(column_title))
             lastname_column_title = column_title
@@ -145,7 +146,7 @@ def check_is_non_canvas_csv(csv_file_name):
         firstname_column_title = None
         for column_title in student_info_df.columns:
             if column_title.casefold() in (
-                possible_title.casefold() for possible_title in possible_lastname_list
+                x.casefold() for x in possible_surname_fields
             ):
                 print('"{}" column present'.format(column_title))
                 firstname_column_title = column_title
@@ -163,7 +164,7 @@ def check_is_non_canvas_csv(csv_file_name):
         lastname_column_title = None
         for column_title in student_info_df.columns:
             if column_title.casefold() in (
-                possible_title.casefold() for possible_title in possible_firstname_list
+                x.casefold() for x in possible_given_name_fields
             ):
                 print('"{}" column present'.format(column_title))
                 lastname_column_title = column_title
@@ -272,24 +273,23 @@ def process_classlist_backend(student_csv_file_name):
     # we need to check it has the minimum information ie student name/id.
     # If not we will fail the process.
 
-    # First we check if this csv file is a Canvas output using check_canvas_csv
+    # First we check if this csv file is a Canvas output
     if check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
         student_info_df = clean_canvas_csv(student_csv_file_name)
         print("We have successfully extracted columns from Canvas data and renaming")
-    # Is not a Canvas formed file, we will check if the canvas data is usable using check_non_canvas_csv
     elif check_is_non_canvas_csv(student_csv_file_name):
         print(
-            "This file looks like it was not exported from Canvas, we will check the function for the required information"
+            "This file looks like it was not exported from Canvas; checking for the required information..."
         )
         student_info_df = clean_non_canvas_csv(student_csv_file_name)
         print(
-            "We have successfully extracted and renamed columns from the non Canvas data and have the required information"
+            "We have successfully extracted and renamed columns from the non Canvas data."
         )
     # Otherwise we have an error
     else:
         print("Problems with the classlist you supplied. See output above.")
-        exit(1)
+        sys.exit(1)
 
     # Check characters in names are latin-1 compatible
     if not check_latin_names(student_info_df):
@@ -332,7 +332,7 @@ def process_class_list(student_csv_file_name, demo=False):
     """
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
+        cl = resources.read_binary(plom, "demoClassList.csv")
         # this is dumb, make it work right out of the string/bytes
         with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
             with open(f.name, "wb") as fh:
@@ -343,11 +343,11 @@ def process_class_list(student_csv_file_name, demo=False):
 
     if not student_csv_file_name:
         print("Please provide a classlist file: see help")
-        exit(1)
+        sys.exit(1)
 
     if not os.path.isfile(student_csv_file_name):
         print('Cannot find file "{}"'.format(student_csv_file_name))
-        exit(1)
+        sys.exit(1)
     df = process_classlist_backend(student_csv_file_name)
     # order is important, leave it as a list
     return list(zip(df.id, df.studentName))

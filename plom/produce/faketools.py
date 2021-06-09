@@ -1,10 +1,12 @@
-# Copyright (C) 2019-2020 Colin B. Macdonald
-# Copyright (C) 2020 Andrew Rechnitzer
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -13,26 +15,28 @@ import random
 from pathlib import Path
 from glob import glob
 import argparse
-import csv
-import random
 import json
 import base64
 from getpass import getpass
+import sys
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 import fitz
 
 from . import paperdir as _paperdir
+import plom.produce
 from plom import __version__
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
 # load the digit images
-digits_folder_path = "produce/digits.json"
-digit_array = json.load(pkg_resources.resource_stream("plom", digits_folder_path))
+digit_array = json.loads(resources.read_text(plom.produce, "digits.json"))
 # how many of each digit were collected
-
 number_of_digits = len(digit_array) // 10
 assert len(digit_array) % 10 == 0
 
@@ -161,11 +165,11 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                     + random.randrange(number_of_digits)
                 ]  # uu-encoded png
                 img_BString = base64.b64decode(uuImg)
-                front_page.insertImage(rect1, stream=img_BString, keep_proportion=True)
+                front_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
                 # TODO - there should be an assert or something here?
 
             digit_rectangle = fitz.Rect(228, 335, 550, 450)
-            insertion_confirmed = front_page.insertTextbox(
+            insertion_confirmed = front_page.insert_textbox(
                 digit_rectangle,
                 student_name,
                 fontsize=digit_font_size,
@@ -185,7 +189,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
             # TODO: "helv" vs "Helvetica"
             if page_index >= 1:
-                insertion_confirmed = pdf_page.insertTextbox(
+                insertion_confirmed = pdf_page.insert_textbox(
                     random_answer_rect,
                     random_answer_text,
                     fontsize=answer_font_size,
@@ -237,7 +241,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
 
 def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
-    """Randomly genertes garbage pages.
+    """Randomly generates garbage pages.
 
     Purely used for testing.
 
@@ -261,6 +265,76 @@ def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
     all_pdf_documents.saveIncr()
+
+
+def make_colliding_pages(paper_dir_path, outfile):
+    """Build two colliding pages - last pages of papers 2 and 3.
+
+    Arguments:
+        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
+        out_file_path {Str} -- Path to write results into this concatenated PDF file.
+
+    Purely used for testing.
+    """
+    paper_dir_path = Path(paper_dir_path)
+    out_file_path = Path(outfile)
+
+    all_pdf_documents = fitz.open(out_file_path)
+    # Customizable data
+    blue = [0, 0, 0.75]
+    colliding_page_font_size = 18
+
+    papers_paths = sorted(glob(str(paper_dir_path / "exam_*.pdf")))
+    for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
+        pdf_document = fitz.open(file_name)
+        test_length = len(pdf_document)
+        colliding_page_index = random.randint(-1, len(all_pdf_documents))
+        print(
+            "Insert colliding page at colliding_page_index={}".format(
+                colliding_page_index
+            )
+        )
+        all_pdf_documents.insertPDF(
+            pdf_document,
+            from_page=test_length - 1,
+            to_page=test_length - 1,
+            start_at=colliding_page_index,
+        )
+        insertion_confirmed = all_pdf_documents[colliding_page_index].insert_textbox(
+            fitz.Rect(100, 100, 500, 500),
+            "I was dropped on the floor and rescanned.",
+            fontsize=colliding_page_font_size,
+            color=blue,
+            fontname="helv",
+            fontfile=None,
+            align=0,
+        )
+        assert insertion_confirmed > 0
+
+    all_pdf_documents.saveIncr()
+
+
+def splitFakeFile(out_file_path):
+    """Split the scribble pdf into three files"""
+
+    print("Splitting PDF into 3 in order to test bundles.")
+    originalPDF = fitz.open(out_file_path)
+    newPDFName = os.path.splitext(out_file_path)[0]
+    length = len(originalPDF) // 3
+
+    doc1 = fitz.open()
+    doc2 = fitz.open()
+    doc3 = fitz.open()
+
+    doc1.insertPDF(originalPDF, from_page=0, to_page=length)
+    doc2.insertPDF(originalPDF, from_page=length + 1, to_page=2 * length)
+    doc3.insertPDF(originalPDF, from_page=2 * length + 1)
+
+    doc1.save(newPDFName + "1.pdf")
+    doc2.save(newPDFName + "2.pdf")
+    doc3.save(newPDFName + "3.pdf")
+
+    os.unlink(out_file_path)
 
 
 def download_classlist(server=None, password=None):
@@ -300,7 +374,7 @@ def download_classlist(server=None, password=None):
 def main():
     """Main function used for running.
 
-    1. Generates teh files.
+    1. Generates the files.
     2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
     3. Deletes from the pdf file using delete_one_page.
     4. We also add some garbage pages using delete_one_page.
@@ -318,6 +392,8 @@ def main():
 
     fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
     make_garbage_page(out_file_path, number_of_grarbage_pages=2)
+    make_colliding_pages(_paperdir, out_file_path)
+    splitFakeFile(out_file_path)
 
 
 if __name__ == "__main__":

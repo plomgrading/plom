@@ -1,48 +1,49 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
 
 import csv
 import getpass
 
+from plom import get_question_label
 from plom.messenger import FinishMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom.finish import CSVFilename
 
 
-def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
-    """Private function that writes all of the current marks to a csv.
+def writeSpreadsheet(spreadSheetDict, labels):
+    """Writes all of the current marks to a local csv file.
 
     Arguments:
-        numberOfQuestions {int} -- Number of questions in this test
-        spreadSheetDict {dict} -- Dictionary containing the tests to be written to a spreadsheet
+        spreadSheetDict (dict): Dictionary containing the tests to be
+            written to a spreadsheet.
+        labels (list): string labels for each question.
 
     Returns:
-        bool, bool -- The first returned boolean is False if each test in spreadSheetDict is marked, True otherwise. The second boolean is False if there is a test with no ID, True otherwise
+        tuple: Two booleans, the first is False if each test in
+            spreadSheetDict is marked, True otherwise . The second
+            is False if there is a test with no ID, True otherwise.
     """
     head = ["StudentID", "StudentName", "TestNumber"]
-    for q in range(1, numberOfQuestions + 1):
-        head.append("Question {} Mark".format(q))
+    # Note: csv library seems smart enough to escape the labels (comma, quotes, etc)
+    for label in labels:
+        head.append(f"{label} mark")
     head.append("Total")
-    for q in range(1, numberOfQuestions + 1):
-        head.append("Question {} Version".format(q))
-    # add a warning column
+    for label in labels:
+        head.append(f"{label} version")
     head.append("Warnings")
 
     with open(CSVFilename, "w") as csvfile:
         testWriter = csv.DictWriter(
-            csvfile, fieldnames=head, quotechar='"', quoting=csv.QUOTE_NONNUMERIC,
+            csvfile,
+            fieldnames=head,
+            quotechar='"',
         )
         testWriter.writeheader()
         existsUnmarked = False
         existsMissingID = False
-        for t in spreadSheetDict:
-            thisTest = spreadSheetDict[t]
-
+        for t, thisTest in spreadSheetDict.items():
             if thisTest["marked"] is False:
                 existsUnmarked = True  # Check for unmarked tests as to return the appropriate warning
             row = {}
@@ -50,11 +51,12 @@ def writeSpreadsheet(numberOfQuestions, spreadSheetDict):
             row["StudentName"] = thisTest["sname"]
             row["TestNumber"] = int(t)
             tot = 0
-            for q in range(1, numberOfQuestions + 1):
+            for i, label in enumerate(labels):
+                q = i + 1
                 if thisTest["marked"]:
                     tot += int(thisTest["q{}m".format(q)])
-                row["Question {} Mark".format(q)] = thisTest["q{}m".format(q)]
-                row["Question {} Version".format(q)] = thisTest["q{}v".format(q)]
+                row[f"{label} mark"] = thisTest["q{}m".format(q)]
+                row[f"{label} version"] = thisTest["q{}v".format(q)]
             if thisTest["marked"]:
                 row["Total"] = tot
             else:
@@ -87,16 +89,10 @@ def main(server=None, password=None):
     msgr.start()
 
     if not password:
-        try:
-            pwd = getpass.getpass("Please enter the 'manager' password:")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
+        password = getpass.getpass("Please enter the 'manager' password:")
 
     try:
-        msgr.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -105,19 +101,18 @@ def main(server=None, password=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(0)
+        exit(10)
 
-    spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
-    spreadSheetDict = msgr.RgetSpreadsheet()
+    try:
+        spec = msgr.get_spec()
+        numberOfQuestions = spec["numberOfQuestions"]
+        spreadSheetDict = msgr.RgetSpreadsheet()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
-    msgr.closeUser()
-    msgr.stop()
-
-    # Write the appropriate warning depending on if everything has been marked or there are warnings present
-    existsUnmarked, existsMissingID = writeSpreadsheet(
-        numberOfQuestions, spreadSheetDict
-    )
+    qlabels = [get_question_label(spec, n + 1) for n in range(numberOfQuestions)]
+    existsUnmarked, existsMissingID = writeSpreadsheet(spreadSheetDict, qlabels)
     if existsUnmarked and existsMissingID:
         print(
             'Partial marks written to "{}" (marking is not complete). Warning: not every test is identified.'.format(

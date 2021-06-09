@@ -1,7 +1,6 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPixmap
@@ -15,12 +14,16 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QFrame,
     QLabel,
+    QLineEdit,
     QMessageBox,
     QPushButton,
     QTableView,
+    QTextEdit,
     QToolButton,
     QVBoxLayout,
 )
+
+from plom import isValidStudentNumber
 
 
 class ErrorMessage(QMessageBox):
@@ -150,7 +153,9 @@ class BlankIDBox(QDialog):
         self.noB.clicked.connect(self.reject)
         grid.addWidget(QLabel("Please check to confirm!"), 1, 2)
         grid.addWidget(
-            QLabel("There is writing on other this or other pages."), 2, 2,
+            QLabel("There is writing on other this or other pages."),
+            2,
+            2,
         )
         grid.addWidget(self.blankB, 1, 1)
         grid.addWidget(self.noIDB, 2, 1)
@@ -158,9 +163,60 @@ class BlankIDBox(QDialog):
         self.setLayout(grid)
 
 
+class SNIDBox(QDialog):
+    def __init__(self, id_name_text):
+        super(SNIDBox, self).__init__()
+        self.sidLE = QLineEdit()
+        self.snameLE = QLineEdit()
+        self.guessInput(id_name_text)
+        self.okB = QPushButton("&Done")
+        self.cancelB = QPushButton("&Cancel")
+        fl = QFormLayout()
+        fl.addRow(QLabel("Student ID:"), self.sidLE)
+        fl.addRow(QLabel("Student name:"), self.snameLE)
+        fl.addRow(self.okB)
+        fl.addRow(self.cancelB)
+        self.setLayout(fl)
+
+        self.okB.clicked.connect(self.check)
+        self.cancelB.clicked.connect(self.reject)
+        self.sid = ""
+        self.sname = ""
+
+    def guessInput(self, id_name_text):
+        """Extract the digits from id_name_text and use it to fill the sid-entry, and then extract alphabetic from id_name_text and use it to fill the sname-entry"""
+        sid = ""
+        sname = ""
+        for c in id_name_text:
+            # if it is a number add it to sid
+            if c.isdigit():
+                sid += c
+            # if it is alphabetic add it to sname
+            elif c.isalpha() or c in [" ", ","]:
+                sname += c
+            else:
+                pass
+        self.sidLE.setText(sid.strip())
+        self.snameLE.setText(sname.strip())
+
+    def check(self):
+        self.sid = self.sidLE.text().strip()
+        self.sname = self.snameLE.text().strip()
+        if not isValidStudentNumber(self.sid):
+            ErrorMessage("Not a valid student number.").exec_()
+            return
+        if not self.sname:
+            ErrorMessage(
+                "<p>Student name should not be blank.</p>"
+                "<p>(If you cannot read it, use &ldquo;Unknown&rdquo;.)</p>"
+            ).exec_()
+            return
+        self.accept()
+
+
 class ClientSettingsDialog(QDialog):
-    def __init__(self, s):
-        super(QDialog, self).__init__()
+    def __init__(self, s, logdir, cfgfile, tmpdir):
+        super().__init__()
         # self.parent = parent
         self.setWindowTitle("Plom client options")
 
@@ -180,6 +236,7 @@ class ClientSettingsDialog(QDialog):
             Qt.Checked if s.get("LogToFile") else Qt.Unchecked
         )
         flay.addWidget(self.checkLogFile)
+        flay.addWidget(QLabel("(Logs stored in {})".format(logdir)))
 
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
@@ -204,12 +261,6 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Sunken)
         flay.addRow(line)
-
-        self.leftHandMouse = QCheckBox("Left-handed mouse")
-        self.leftHandMouse.setCheckState(
-            Qt.Checked if s.get("mouse").lower() == "left" else Qt.Unchecked
-        )
-        flay.addWidget(self.leftHandMouse)
 
         self.checkSidebarOnRight = QCheckBox("Annotator sidebar on right")
         self.checkSidebarOnRight.setCheckState(
@@ -238,6 +289,17 @@ class ClientSettingsDialog(QDialog):
             self.checkWarnCom.setEnabled(False)
             self.checkWarnMark.setEnabled(False)
 
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+        flay.addRow("Config file:", QLabel("{}".format(cfgfile)))
+        tempdir_prefix = "plom_"
+        q = QLabel('{}, in subfolders "{}*"'.format(tmpdir, tempdir_prefix))
+        q.setWordWrap(True)
+        q.setAlignment(Qt.AlignTop)
+        flay.addRow("Temporary files:", q)
+
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
 
         vlay = QVBoxLayout()
@@ -255,6 +317,40 @@ class ClientSettingsDialog(QDialog):
             self.checkLogFile.checkState() == Qt.Checked,
             self.checkWarnCom.checkState() == Qt.Checked,
             self.checkWarnMark.checkState() == Qt.Checked,
-            self.leftHandMouse.checkState() == Qt.Checked,
             self.checkSidebarOnRight.checkState() == Qt.Checked,
         )
+
+
+class AddTagBox(QDialog):
+    def __init__(self, parent, currentTag, tagList=[]):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+
+        flay = QFormLayout()
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
+        flay.addRow("Choose tag", self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(tagList)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if currentTag is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(currentTag)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())

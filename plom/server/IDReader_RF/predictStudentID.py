@@ -1,25 +1,23 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Colin B. Macdonald
 
 """
-Note: Code in this file is very similar to predictStudentID code for the Tensorflow 
-    model.
+Note: Code in this file is very similar to predictStudentID code for the
+Tensorflow model.
 """
 
+import pickle
+import gzip
+from pathlib import Path
+
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
-from imutils import contours
-import numpy as np
-import json
-import os
-import sys
-from PIL import Image
-from sklearn.ensemble import RandomForestClassifier
-import pickle
-from sklearn.metrics import accuracy_score
 
 
 # define this in order to sort by area of bounding rect
@@ -183,7 +181,7 @@ def get_digit_images(ID_box, num_digits):
 
 
 def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
-    """Return a list of probability predictions for the student ID digits on the cropped image. 
+    """Return a list of probability predictions for the student ID digits on the cropped image.
 
     Args:
         prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
@@ -193,7 +191,7 @@ def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
         num_digits (int): Number of digits in the student ID.
 
     Returns:
-        list: A list of lists of probabilities including the model's prediction for 
+        list: A list of lists of probabilities including the model's prediction for
             the digits.
     """
 
@@ -229,8 +227,8 @@ def compute_probabilities(
     """
 
     # load the model
-    model_fname = "model_cache/RF_ML_model.sav"
-    prediction_model = pickle.load(open(model_fname, "rb"))
+    with gzip.open(Path("model_cache") / "RF_ML_model.sav.gz", "rb") as f:
+        prediction_model = pickle.load(f)
 
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom script to start a demo server for homework submissions.
 
@@ -9,10 +12,9 @@ Instructions:
   * In a new terminal, run the Plom Client and connect to localhost.
 """
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
 import subprocess
@@ -25,7 +27,8 @@ from plom import __version__
 
 
 parser = argparse.ArgumentParser(
-    description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
@@ -48,14 +51,13 @@ def main():
         if os.path.exists(f):
             raise RuntimeError('Directory "{}" must not exist for this demo.'.format(f))
 
-    subprocess.check_call(split("plom-build new --demo"))
-    subprocess.check_call(split("plom-build class --demo"))
-    subprocess.check_call(split("plom-build make"))
-    subprocess.check_call(split("plom-fake-hwscribbles"))
     subprocess.check_call(split("plom-server init"))
     subprocess.check_call(split("plom-server users --demo"))
 
+    subprocess.check_call(split("plom-build new --demo"))
+
     # Start server into background
+    print("Running server I hope")
     serverproc = subprocess.Popen(split("plom-server launch"))
     time.sleep(1.0)
     try:
@@ -75,15 +77,30 @@ def main():
 
     print("Server seems to be running, so we move on to uploading")
 
-    subprocess.check_call(split("plom-hwscan submitted"))
-    print("Processing complete hw only")
-    subprocess.check_call(split("plom-hwscan process -w 4567"))
-    print("Processing incomplete hw also")
-    subprocess.check_call(split("plom-hwscan process -i -w 4567"))
-    print("Processing hw extra pages")
-    subprocess.check_call(split("plom-hwscan process -x -w 4567"))
-    print("Now upload the images")
-    subprocess.check_call(split("plom-hwscan upload -w 4567"))
+    subprocess.check_call(split("plom-build class --demo -w 1234"))
+    subprocess.check_call(split("plom-build rubric --demo -w 1234"))
+    subprocess.check_call(split("plom-build make -w 1234"))
+    # this creates two batches of fake hw - prefixes = hwA and hwB
+    subprocess.check_call(split("plom-fake-hwscribbles -w 1234"))
+
+    print("Processing some individually")
+    # TODO: this is fragile, should not hardcode these student numbers!
+    subprocess.check_call(
+        split(
+            "plom-hwscan process submittedHWByQ/semiloose.11015491._.pdf 11015491 -q 1,2,3 -w 4567"
+        )
+    )
+    subprocess.check_call(
+        split(
+            "plom-hwscan process submittedHWByQ/semiloose.11135153._.pdf 11135153 -q 1,2,3 -w 4567"
+        )
+    )
+
+    print("Processing all hw by question submissions.")
+    subprocess.check_call(split("plom-hwscan allbyq -w 4567 -y"))
+    print("Replacing all missing questions.")
+    subprocess.check_call(split("plom-hwscan missing -w 4567 -y"))
+    # print(">> TODO << process loose pages")
 
     time.sleep(0.5)
     try:

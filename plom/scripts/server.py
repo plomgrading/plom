@@ -1,58 +1,54 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
-"""Command line tools to start Plom servers."""
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Morgan Arnold
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+"""Command line tool to start Plom servers."""
+
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import argparse
-import locale
 import os
-import shlex
 import shutil
-import subprocess
 from pathlib import Path
+import sys
 from textwrap import fill, dedent
 
-# import tools for dealing with resource files
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
 
+import plom
 from plom import __version__
-from plom import specdir
-
-#################
+from plom import Default_Port
+from plom.server import specdir, confdir
+from plom.server import build_server_directories, check_server_directories
+from plom.server import create_server_config, create_blank_predictions
+from plom.server import parse_user_list, build_canned_users
+from plom.server import build_self_signed_SSL_keys
 
 
 server_instructions = """Overview of running the Plom server:
 
-  0. Decide on a working directory for the server and cd into it.
+  0. Make a new directory and change into it.
 
-  1. Copy the `{specdir}` directory (not just its contents) to your
-     server directory.
+  1. Run '%(prog)s init' - creates sub-directories and config files.
 
-  2. Run '%(prog)s init' - this will check that everything is in place
-     and create necessary sub-directories *and* create config files for
-     you to edit.
+  2. Run '%(prog)s users' - creates a template user list for you to edit.
 
-  3. Run '%(prog)s users' - This will create a template user list
-     file for you to edit.  Passwords are displayed in plain text.
-     Running with '--demo' option creates a (standard) demo user list,
-     while '--auto N' makes an random-generated list of N users.  Edit
-     as you see fit.
+  3. Run '%(prog)s users <filename>' - parses user list for server.
 
-  4. Run '%(prog)s users <filename>' - This parses the plain-text
-     user list, performs some simple sanity checks and then hashes the
-     passwords to a new file.
+       3a. Optionally you can delete the plain-text passwords.
 
-       4a. Optionally you can now delete the file containing
-           plain-text passwords.
+  4. Add a specfile to '{specdir}': 'plom-build' can do this..
 
   5. Now you can start the server with '%(prog)s launch'.
-
-FUTURE - '%(prog)s stop' will stop the server.
 """.format(
     specdir=specdir
 )
@@ -64,17 +60,17 @@ class PlomServerConfigurationError(Exception):
 
 
 def checkSpecAndDatabase():
-    if os.path.isdir(specdir):
+    if specdir.exists():
         print("Directory '{}' is present.".format(specdir))
     else:
         print(
-            "Cannot find '{}' directory - you must copy this into place before running server. Cannot continue.".format(
+            "Cannot find '{}' directory - have you run 'plom-server init' yet?".format(
                 specdir
             )
         )
         exit(1)
 
-    if os.path.isfile(Path(specdir) / "verifiedSpec.toml"):
+    if (specdir / "verifiedSpec.toml").exists():
         print("Test specification present.")
     else:
         print(
@@ -82,87 +78,16 @@ def checkSpecAndDatabase():
         )
         exit(1)
 
-    if os.path.isfile(Path(specdir) / "plom.db"):
+    if (specdir / "plom.db").exists():
         print("Database present: using existing database.")
     else:
         print("Database not yet present: it will be created on first run.")
         # TODO: or should `plom-server init` create it?")
 
-    if os.path.isfile(Path(specdir) / "classlist.csv"):
+    if (specdir / "classlist.csv").exists():
         print("Classlist present.")
     else:
         print("Cannot find the classlist: expect it later...")
-
-
-def buildRequiredDirectories():
-    lst = [
-        "pages",
-        "pages/discardedPages",
-        "pages/collidingPages",
-        "pages/unknownPages",
-        "pages/originalPages",
-        "markedQuestions",
-        "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
-        "serverConfiguration",
-    ]
-    for dir in lst:
-        os.makedirs(dir, exist_ok=True)
-
-
-def buildSSLKeys():
-    """Make new key and cert files if they do not yet exist."""
-    key = Path("serverConfiguration") / "plom.key"
-    cert = Path("serverConfiguration") / "plom-selfsigned.crt"
-    if os.path.isfile(key) and os.path.isfile(cert):
-        print("SSL key and certificate already exist - will not change.")
-        return
-
-    # Generate new self-signed key/cert
-    sslcmd = "openssl req -x509 -sha256 -newkey rsa:2048"
-    sslcmd += " -keyout {} -nodes -out {} -days 1000 -subj".format(key, cert)
-
-    # TODO: is this the way to get two digit country code?
-    tmp = locale.getdefaultlocale()[0]
-    if tmp:
-        twodigcc = tmp[-2:]
-    else:
-        twodigcc = "CA"
-    sslcmd += " '/C={}/ST=./L=./CN=localhost'".format(twodigcc)
-    try:
-        subprocess.check_call(shlex.split(sslcmd))
-    except Exception as err:
-        raise PlomServerConfigurationError(
-            "Something went wrong building ssl keys.\n{}\nCannot continue.".format(err)
-        )
-
-
-def createServerConfig():
-    sd = os.path.join("serverConfiguration", "serverDetails.toml")
-    if os.path.isfile(sd):
-        print("Server config already exists - will not change.")
-        return
-
-    template = pkg_resources.resource_string("plom", "serverDetails.toml")
-    with open(os.path.join(sd), "wb") as fh:
-        fh.write(template)
-    print(
-        "Please update '{}' with the correct name (or IP) of your server and the port.".format(
-            sd
-        )
-    )
-
-
-def createBlankPredictions():
-    pl = Path(specdir) / "predictionlist.csv"
-    if os.path.isfile(pl):
-        print("Predictionlist already present.")
-        return
-    print(
-        "Predictionlist will be updated when you run ID-prediction from manager-client."
-    )
-    with open(pl, "w") as fh:
-        fh.write("test, id\n")
 
 
 def doLatexChecks():
@@ -171,6 +96,7 @@ def doLatexChecks():
 
     os.makedirs("pleaseCheck", exist_ok=True)
 
+    # TODO: big ol' GETCWD here: we're trying to get rid of those
     # check build of fragment
     cdir = os.getcwd()
     keepfiles = ("checkThing.png", "pns.0.0.0.png")
@@ -226,17 +152,32 @@ def doLatexChecks():
     )
 
 
-def initialiseServer():
-    print("Do simple existence checks on required files.")
-    checkSpecAndDatabase()
+def initialiseServer(port):
     print("Build required directories")
-    buildRequiredDirectories()
-    print("Building self-signed ssl keys for server")
-    buildSSLKeys()
+    build_server_directories()
+    print("Building self-signed SSL key for server")
+    try:
+        build_self_signed_SSL_keys()
+    except FileExistsError as err:
+        print(f"Skipped SSL keygen - {err}")
+
     print("Copy server networking configuration template into place.")
-    createServerConfig()
+    try:
+        create_server_config(port=port)
+    except FileExistsError as err:
+        print(f"Skipping server config - {err}")
+    else:
+        print(
+            "You may want to update '{}' with the correct name (or IP) and "
+            "port of your server.".format(confdir / "serverDetails.toml")
+        )
+
     print("Build blank predictionlist for identifying.")
-    createBlankPredictions()
+    try:
+        create_blank_predictions()
+    except FileExistsError as err:
+        print(f"Skipping prediction list - {err}")
+
     print(
         "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
     )
@@ -246,100 +187,100 @@ def initialiseServer():
 #################
 
 
-def processUsers(userFile, demo, auto):
+def processUsers(userFile, demo, auto, auto_num):
+    """Deal with processing and/or creation of username lists.
+
+    Behaviour different depending on the args.
+
+    args:
+        userFile (str/pathlib.Path): a filename of usernames/passwords
+            for the server.
+        demo (bool): make canned demo with known usernames/passwords.
+        auto (bool): autogenerate usernames and passwords.
+        auto_num (bool): autogenerate usernames like "user03" and pwds.
+
+    return:
+        None
+    """
+    confdir.mkdir(exist_ok=True)
+    userlist = confdir / "userList.json"
     # if we have been passed a userFile then process it and return
     if userFile:
-        print("Processing user file '{}' to 'userList.json'".format(userFile))
-        if os.path.isfile(Path("serverConfiguration") / "userList.json"):
-            print("WARNING - this will overwrite the existing userList.json file.")
-        from plom.server import manageUserFiles
-
-        manageUserFiles.parse_user_list(userFile)
+        print("Processing user file '{}' to {}".format(userFile, userlist))
+        if userlist.exists():
+            print("WARNING - overwriting existing {} file.".format(userlist))
+        parse_user_list(userFile)
         return
 
+    rawfile = confdir / "userListRaw.csv"
     # otherwise we have to make one for the user - check if one already there.
-    if os.path.isfile(os.path.join("serverConfiguration", "userListRaw.csv")):
-        print(
-            "File 'userListRaw.csv' already exists in 'serverConfiguration'. Remove before continuing. Aborting."
+    if rawfile.exists():
+        raise FileExistsError(
+            "File {} already exists.  Remove and try again.".format(rawfile)
         )
-        exit(1)
 
     if demo:
         print(
-            "Creating a demo user list at userListRaw.csv. ** DO NOT USE ON REAL SERVER **"
+            "Creating a demo user list at {}. "
+            "** DO NOT USE ON REAL SERVER **".format(rawfile)
         )
-        from plom.server import manageUserFiles
-
-        rawfile = Path("serverConfiguration") / "userListRaw.csv"
-        cl = pkg_resources.resource_string("plom", "demoUserList.csv")
+        cl = resources.read_binary(plom, "demoUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
-        manageUserFiles.parse_user_list(rawfile)
+        parse_user_list(rawfile)
         return
 
-    if auto is not None:
-        print("Creating an auto-generated user list at userListRaw.csv.")
+    if auto or auto_num:
+        if auto:
+            N = auto
+            numbered = False
+        if auto_num:
+            N = auto_num
+            numbered = True
+        del auto
+        del auto_num
         print(
-            "Please edit as you see fit and then rerun 'plom-server users serverConfiguration/userListRaw.csv'"
+            "Creating an auto-generated {0} user list at '{1}'\n"
+            "Please edit as you see fit and then rerun 'plom-server users {1}'".format(
+                "numbered" if numbered else "named",
+                rawfile,
+            )
         )
-        from plom.server import manageUserFiles
-
         # grab required users and regular users
-        lst = manageUserFiles.build_canned_users(auto)
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "w+") as fh:
+        lst = build_canned_users(N, numbered)
+        with open(rawfile, "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
                 fh.write('"{}", "{}"\n'.format(np[0], np[1]))
-
         return
 
     if not userFile:
         print(
-            "Creating 'serverConfiguration/userListRaw.csv' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters and usernames should be at least 4 alphanumeric characters."
+            "Creating '{}' - please edit passwords for 'manager', 'scanner', 'reviewer', and then add one or more normal users and their passwords. Note that passwords must be at least 4 characters.".format(
+                rawfile
+            )
         )
-        cl = pkg_resources.resource_string("plom", "templateUserList.csv")
-        with open(os.path.join("serverConfiguration", "userListRaw.csv"), "wb") as fh:
+        cl = resources.read_binary(plom, "templateUserList.csv")
+        with open(rawfile, "wb") as fh:
             fh.write(cl)
 
 
-#################
-def checkDirectories():
-    lst = [
-        "pages",
-        "pages/discardedPages",
-        "pages/collidingPages",
-        "pages/unknownPages",
-        "pages/originalPages",
-        "markedQuestions",
-        "markedQuestions/plomFiles",
-        "markedQuestions/commentFiles",
-        "serverConfiguration",
-    ]
-    for d in lst:
-        if not os.path.isdir(d):
-            print(
-                "Required directories are not present. Have you run 'plom-server init'?"
-            )
-            exit(1)
-
-
 def checkServerConfigured():
-    if not os.path.isfile(os.path.join("serverConfiguration", "serverDetails.toml")):
+    if not (confdir / "serverDetails.toml").exists():
         print("Server configuration file not present. Have you run 'plom-server init'?")
         exit(1)
 
-    if not os.path.isfile(os.path.join("serverConfiguration", "userList.json")):
+    if not (confdir / "userList.json").exists():
         print("Processed userlist is not present. Have you run 'plom-server users'?")
         exit(1)
 
     if not (
-        os.path.isfile(os.path.join("serverConfiguration", "plom.key"))
-        and os.path.isfile(os.path.join("serverConfiguration", "plom-selfsigned.crt"))
+        (confdir / "plom.key").exists() and (confdir / "plom-selfsigned.crt").exists()
     ):
         print("SSL keys not present. Have you run 'plom-server init'?")
         exit(1)
 
-    if os.path.isfile(Path(specdir) / "predictionlist.csv"):
+    if (specdir / "predictionlist.csv").exists():
         print("Predictionlist present.")
     else:
         print(
@@ -348,22 +289,22 @@ def checkServerConfigured():
         exit(1)
 
 
-def prelaunchChecks():
-    # check database, spec and classlist in place
-    checkSpecAndDatabase()
-    # check all directories built
-    checkDirectories()
-    # check serverConf and userlist present (also check predictionlist).
-    checkServerConfigured()
-    # ready to go
-    return True
-
-
 def launchTheServer(masterToken):
     from plom.server import theServer
 
-    if prelaunchChecks():
-        theServer.launch(masterToken)
+    check_server_directories()
+    # check database, spec and classlist in place
+    checkSpecAndDatabase()
+    # check serverConf and userlist present (also check predictionlist).
+    checkServerConfigured()
+
+    theServer.launch(masterToken)
+
+
+def check_positive(arg):
+    if int(arg) < 0:
+        raise ValueError
+    return int(arg)
 
 
 #################
@@ -377,16 +318,45 @@ parser.add_argument("--version", action="version", version="%(prog)s " + __versi
 sub = parser.add_subparsers(
     dest="command", description="Perform various server-related tasks."
 )
-#
-spI = sub.add_parser("init", help="Initialise server.")
-spU = sub.add_parser("users", help="Create required users.")
-spR = sub.add_parser("launch", help="Launch server.")
+
+spI = sub.add_parser(
+    "init",
+    help="Initialise server",
+    description="""
+      Initializes the current working directory in preparation for
+      starting a Plom server.  Creates sub-directories and config files.
+    """,
+)
+spI.add_argument(
+    "--port",
+    type=int,
+    help=f"Use alternative port (defaults to {Default_Port} if omitted)",
+)
+
+spU = sub.add_parser(
+    "users",
+    help="Create user accounts",
+    description="""
+      Manipulate users accounts.  With no arguments, produce a template
+      file for you to edit, with passwords displayed in plain text.
+      Given a filename, parses a plain-text user list, performs some
+      simple sanity checks and then hashes the passwords a file for the
+      server.
+    """,
+)
+spR = sub.add_parser(
+    "launch", help="Start the server", description="Start the Plom server."
+)
 spR.add_argument(
     "masterToken",
     nargs="?",
-    help="The master token is a 32 hex-digit string used to encrypt tokens in database. If you do not supply one then the server will create one. You should record the token somewhere (and reuse it at next server-start) if you want to be able to hot-restart the server (ie - restart the server without requiring users to log-off and log-in again).",
+    help="""A 32 hex-digit string used to encrypt tokens in the database.
+        If you do not supply one then the server will create one.
+        If you record the token somewhere you can hot-restart the server
+        (i.e., restart the server without requiring users to log-off and
+        log-in again).""",
 )
-#
+
 spU.add_argument(
     "userlist",
     nargs="?",
@@ -402,7 +372,13 @@ grp.add_argument(
     "--auto",
     type=int,
     metavar="N",
-    help="Construct an auto-generated user list of N users.",
+    help="Auto-generate a random user list of N users with real-ish usernames.",
+)
+grp.add_argument(
+    "--auto-numbered",
+    type=check_positive,
+    metavar="N",
+    help='Auto-generate a random user list of "user17"-like usernames.',
 )
 
 
@@ -410,10 +386,9 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialiseServer()
+        initialiseServer(args.port)
     elif args.command == "users":
-        # process the class list and copy into place
-        processUsers(args.userlist, args.demo, args.auto)
+        processUsers(args.userlist, args.demo, args.auto, args.auto_numbered)
     elif args.command == "launch":
         launchTheServer(args.masterToken)
     else:

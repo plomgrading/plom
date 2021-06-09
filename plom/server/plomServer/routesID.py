@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
 
 import csv
 import os
 from pathlib import Path
 
-from aiohttp import web, MultipartWriter, MultipartReader
+from aiohttp import web, MultipartWriter
 
 from plom import specdir
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
@@ -63,19 +64,42 @@ class IDHandler:
         """Accept classlist upload.
 
         Only "manager" can perform this action.
-        Responds with status success, HTTPBadRequest or HTTPConflict.
 
         The classlist should be provided as a ordered list of (str, str)
         pairs where each pair is (student ID, student name).
 
+        Side effects on the server test spec file:
+          * If numberToName and/or numberToProduce are -1, values are
+            set based on this classlist (spec is permanently altered)/
+          * If numberToName < 0 but numberToProduce is too small for the
+            result, respond with HTTPNotAcceptable.
+
         Returns:
-            aiohttp.web_response.Response: A response indicating whether the operation was a failure or a success.
+            aiohttp.web_response.Response: Success or failure.  Can be:
+                200: success
+                400: authentication problem.
+                HTTPBadRequest: not manager, or malformed request.
+                HTTPConflict: we already have a classlist.
+                    TODO: would be nice to be able to "try again".
+                HTTPNotAcceptable: classlist too short (see above).
         """
         if not data["user"] == "manager":
             raise web.HTTPBadRequest(reason="Not manager")
-        classlist = data["classlist"]
         if os.path.isfile(Path(specdir) / "classlist.csv"):
             raise web.HTTPConflict(reason="we already have a classlist")
+        classlist = data["classlist"]
+        # TODO should we make copy until sure it passes verification?
+        spec = self.server.testSpec
+        if spec.numberToName < 0 or spec.numberToProduce < 0:
+            if spec.number_to_name < 0:
+                spec.set_number_papers_to_name(len(classlist))
+            if spec.number_to_produce < 0:
+                spec.set_number_papers_add_spares(len(classlist))
+            try:
+                spec.verifySpec(verbose="log")
+            except ValueError as e:
+                raise web.HTTPNotAcceptable(reason=str(e))
+            spec.saveVerifiedSpec()
         with open(Path(specdir) / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["id", "studentName"])

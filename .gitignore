@@ -117,6 +117,15 @@ dmypy.json
 # backups
 *~
 
+# ML model info
+*.sav
+*.pb
+*.index
+*.data-00000-of-00001
+model_cache/
+plomBuzzword/
+
+
 # mac detritus
 .DS_Store
 
@@ -137,3 +146,12 @@ dmypy.json
 *.json
 *.csv
 *.db
+
+# API secrets
+**/api_secrets*
+
+# Poetry lockfile
+poetry.lock
+
+# Course testing directories
+plom/canvas/**/

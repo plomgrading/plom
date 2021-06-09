@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright (C) 2020 Colin B. Macdonald
+  Copyright (C) 2020-2021 Colin B. Macdonald
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -43,6 +43,28 @@
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2021-05-28" version="0.6.3"/>
+    <release date="2021-05-16" version="0.6.2"/>
+    <release date="2021-04-16" version="0.6.1"/>
+    <release date="2021-04-14" version="0.6.0"/>
+    <release date="2021-03-18" version="0.5.21"/>
+    <release date="2021-03-09" version="0.5.19"/>
+    <release date="2021-03-02" version="0.5.18"/>
+    <release date="2021-02-10" version="0.5.17"/>
+    <release date="2021-01-29" version="0.5.16"/>
+    <release date="2021-01-25" version="0.5.15"/>
+    <release date="2021-01-06" version="0.5.13"/>
+    <release date="2020-12-16" version="0.5.11"/>
+    <release date="2020-12-06" version="0.5.10"/>
+    <release date="2020-11-27" version="0.5.9"/>
+    <release date="2020-11-25" version="0.5.8"/>
+    <release date="2020-11-07" version="0.5.7"/>
+    <release date="2020-11-06" version="0.5.6"/>
+    <release date="2020-10-23" version="0.5.5"/>
+    <release date="2020-10-22" version="0.5.3"/>
+    <release date="2020-10-06" version="0.5.2"/>
+    <release date="2020-09-25" version="0.5.1"/>
+    <release date="2020-08-26" version="0.5.0"/>
     <release date="2020-04-21" version="0.4.2"/>
     <release date="2020-04-13" version="0.4.1"/>
     <release date="2020-04-04" version="0.4.0"/>

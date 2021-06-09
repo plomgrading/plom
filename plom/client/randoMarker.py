@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+
+"""Randomly scribble on papers to mark them for testing purposes.
+
+This is a very very cut-down version of Annotator, used to
+automate some random marking of papers.
+"""
+
+__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and others"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
 
 import argparse
 import getpass
@@ -14,64 +21,67 @@ import os
 import random
 import sys
 import tempfile
-import toml
+import time
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainterPath, QPen
 from PyQt5.QtWidgets import QApplication, QWidget
 
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomTakenException, PlomExistingLoginException
 from plom.client.pageview import PageView
 from plom.client.pagescene import PageScene
 from plom import AnnFontSizePts
 
-from plom.client.tools import (
-    DeltaItem,
-    GroupDTItem,
-)
-from plom.client.tools.delete import CommandDelete
 from plom.client.tools import *
 
-from plom import __version__, Plom_API_Version
 from plom.messenger import Messenger
 
 
-# -------------------------------------------
-# This is a very very cut-down version of annotator
-# So we can automate some random marking of papers
+# comments which will be made into rubrics by pushing them to server and getting back keys
+# need different ones for each question
+negativeComments = [
+    (-1, "Careful"),
+    (-1, "Algebra"),
+    (-1, "Arithmetic"),
+    (-2, "Sign error"),
+    (-2, "Huh?"),
+]
+positiveComments = [
+    (1, "Yes"),
+    (1, "Nice"),
+    (1, "Well done"),
+    (2, "Good"),
+    (2, "Clever approach"),
+]
+negativeRubrics = {}
+positiveRubrics = {}
+
+
+class RW:
+    """A dummy class needed for compatibility with pagescene."""
+
+    def changeMark(self, a, b):
+        pass
 
 
 class SceneParent(QWidget):
-    def __init__(self):
+    def __init__(self, question, maxMark):
         super(SceneParent, self).__init__()
         self.view = PageView(self)
-        self.negComments = ["Careful", "Algebra", "Arithmetic", "Sign error", "Huh?"]
-        self.posComments = ["Nice", "Well done", "Good", "Clever approach"]
         self.ink = QPen(Qt.red, 2)
+        self.question = question
+        self.maxMark = maxMark
+        self.rubric_widget = RW()  # a dummy class needed for compat with pagescene.
 
     def doStuff(self, imageNames, saveName, maxMark, markStyle):
         self.saveName = saveName
+        src_img_data = []
+        for f in imageNames:
+            src_img_data.append({"filename": f, "orientation": 0})
         self.imageFiles = imageNames
-        self.markStyle = markStyle
-        self.maxMark = maxMark
-        if markStyle == 2:
-            self.score = 0
-        else:
-            self.score = maxMark
 
-        self.scene = PageScene(
-            self, imageNames, saveName, maxMark, self.score, markStyle
-        )
+        self.scene = PageScene(self, src_img_data, saveName, maxMark, None)
         self.view.connectScene(self.scene)
-
-    def getComments(self):
-        return self.scene.getComments()
-
-    def saveMarkerComments(self):
-        commentList = self.getComments()
-        # savefile is <blah>.png, save comments as <blah>.json
-        with open(self.saveName[:-3] + "json", "w") as commentFile:
-            json.dump(commentList, commentFile)
 
     def pickleIt(self):
         lst = self.scene.pickleSceneItems()  # newest items first
@@ -79,15 +89,16 @@ class SceneParent(QWidget):
         plomDict = {
             "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
             "saveName": os.path.basename(self.saveName),
-            "markStyle": self.markStyle,
+            "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
-            "currentMark": self.score,
+            "currentMark": self.scene.getScore(),
             "sceneItems": lst,
         }
         # save pickled file as <blah>.plom
         plomFile = self.saveName[:-3] + "plom"
         with open(plomFile, "w") as fh:
-            json.dump(plomDict, fh)
+            json.dump(plomDict, fh, indent="  ")
+            fh.write("\n")
 
     def rpt(self):
         return QPointF(
@@ -115,31 +126,35 @@ class SceneParent(QWidget):
         c = random.choice([CommandPen, CommandHighlight, CommandPenArrow])
         self.scene.undoStack.push(c(self.scene, pth))
 
-    def GDT(self):
-        blurb = TextItem(self, AnnFontSizePts)
-        dlt = random.choice([1, -1])
-        if self.markStyle == 2:  # mark up
-            dlt *= random.randint(0, self.maxMark - self.scene.score) // 2
-            if dlt <= 0:  # just text
-                blurb.setPlainText(random.choice(self.negComments))
-                blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
-            else:
-                blurb.setPlainText(random.choice(self.posComments))
-                self.scene.undoStack.push(
-                    CommandGDT(self.scene, self.rpt(), dlt, blurb, AnnFontSizePts)
+    def doRubric(self):
+        if random.choice([-1, 1]) == 1:
+            rubric = random.choice(positiveRubrics[self.question])
+        else:
+            rubric = random.choice(negativeRubrics[self.question])
+
+        self.scene.changeTheRubric(
+            rubric["delta"],
+            rubric["text"],
+            rubric["id"],
+            rubric["kind"],
+        )
+
+        # only do rubric if it is legal
+        if self.scene.isLegalRubric("relative", rubric["delta"]):
+            self.scene.undoStack.push(
+                CommandGroupDeltaText(
+                    self.scene,
+                    self.rpt(),
+                    rubric["id"],
+                    rubric["kind"],
+                    rubric["delta"],
+                    rubric["text"],
                 )
-        else:  # mark up
-            dlt *= random.randint(0, self.scene.score) // 2
-            if dlt >= 0:  # just text
-                blurb.setPlainText(random.choice(self.posComments))
-                blurb.setPos(self.rpt())
-                self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
-            else:
-                blurb.setPlainText(random.choice(self.negComments))
-                self.scene.undoStack.push(
-                    CommandGDT(self.scene, self.rpt(), dlt, blurb, AnnFontSizePts)
-                )
+            )
+        else:  # not legal - push text
+            self.scene.undoStack.push(
+                CommandText(self.scene, self.rpt(), rubric["text"])
+            )
 
     def doRandomAnnotations(self):
         br = self.scene.underImage.boundingRect()
@@ -149,53 +164,56 @@ class SceneParent(QWidget):
         for k in range(8):
             random.choice([self.TQX, self.BE, self.LA, self.PTH])()
         for k in range(5):
-            self.GDT()
-        # add comment about radom annotations
-        blurb = TextItem(self, AnnFontSizePts)
-        blurb.setPlainText("Random annotations for testing only.")
-        blurb.setPos(QPointF(200, 100))
-        self.scene.undoStack.push(CommandText(self.scene, blurb, self.ink))
+            # self.GDT()
+            self.doRubric()
+        self.scene.undoStack.push(
+            CommandText(
+                self.scene, QPointF(200, 100), "Random annotations for testing only."
+            )
+        )
 
     def doneAnnotating(self):
         plomFile = self.saveName[:-3] + "plom"
-        commentFile = self.saveName[:-3] + "json"
         self.scene.save()
-        # Save the marker's comments
-        self.saveMarkerComments()
         # Pickle the scene as a plom-file
         self.pickleIt()
-        return self.scene.score
+        return self.scene.score, self.scene.get_rubrics_from_page()
 
     def changeMark(self, delta):
         self.score += delta
 
+    def refreshDisplayedMark(self, score):
+        # needed for compat with pagescene.py
+        pass
 
-def annotatePaper(maxMark, task, imageList, aname, tags):
-    print("Do stuff to task ", task)
-    print("Tags are ", tags)
+    def setModeLabels(self, mode):
+        # needed for compat with pagescene.py
+        pass
+
+
+def annotatePaper(question, maxMark, task, imageList, aname, tags):
+    print("Starting random marking to task {}".format(task))
     # Image names = "<task>.<imagenumber>.<ext>"
-    try:
-        with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "{}.{}.image".format(task, i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            annot = SceneParent()
-            annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
-            annot.doRandomAnnotations()
-            return annot.doneAnnotating()
-    except Exception as e:
-        print("Error making random annotations to task {} = {}".format(task, e))
-        exit(1)
+    with tempfile.TemporaryDirectory() as td:
+        inames = []
+        for i in range(len(imageList)):
+            tmp = os.path.join(td, "{}.{}.image".format(task, i))
+            inames.append(tmp)
+            with open(tmp, "wb+") as fh:
+                fh.write(imageList[i])
+        annot = SceneParent(question, maxMark)
+        annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
+        annot.doRandomAnnotations()
+        # Issue #1391: settle annotation events, avoid races with QTimers
+        Qapp.processEvents()
+        time.sleep(0.25)
+        Qapp.processEvents()
+        return annot.doneAnnotating()
 
 
 def startMarking(question, version):
-    print("Start work on question {} version {}".format(question, version))
     maxMark = messenger.MgetMaxMark(question, version)
-    print("Maximum mark = ", maxMark)
-    k = 0
+
     while True:
         task = messenger.MaskNextTask(question, version)
         if task is None:
@@ -203,17 +221,21 @@ def startMarking(question, version):
             break
         # print("Trying to claim next ask = ", task)
         try:
-            print("Marking task ", task)
-            imageList, tags = messenger.MclaimThisTask(task)
+            image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
         except PlomTakenException as e:
-            print("Another user got that task. Trying again.")
+            print("Another user got task {}. Trying again...".format(task))
             continue
 
+        image_md5s = [row[1] for row in image_metadata]
+        imageList = []
+        for row in image_metadata:
+            imageList.append(messenger.MrequestOneImage(task, row[0], row[1]))
         with tempfile.TemporaryDirectory() as td:
             aFile = os.path.join(td, "argh.png")
             plomFile = aFile[:-3] + "plom"
-            commentFile = aFile[:-3] + "json"
-            score = annotatePaper(maxMark, task, imageList, aFile, tags)
+            score, rubrics = annotatePaper(
+                question, maxMark, task, imageList, aFile, tags
+            )
             print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
                 task,
@@ -224,8 +246,41 @@ def startMarking(question, version):
                 "",
                 aFile,
                 plomFile,
-                commentFile,
+                rubrics,
+                integrity_check,
+                image_md5s,
             )
+
+
+def buildRubrics(question):
+    for (d, t) in positiveComments:
+        com = {
+            "delta": d,
+            "text": t,
+            "tags": "Random",
+            "meta": "Randomness",
+            "kind": "relative",
+            "question": question,
+        }
+        com["id"] = messenger.McreateRubric(com)[1]
+        if question in positiveRubrics:
+            positiveRubrics[question].append(com)
+        else:
+            positiveRubrics[question] = [com]
+    for (d, t) in negativeComments:
+        com = {
+            "delta": d,
+            "text": t,
+            "tags": "Random",
+            "meta": "Randomness",
+            "kind": "relative",
+            "question": question,
+        }
+        com["id"] = messenger.McreateRubric(com)[1]
+        if question in negativeRubrics:
+            negativeRubrics[question].append(com)
+        else:
+            negativeRubrics[question] = [com]
 
 
 if __name__ == "__main__":
@@ -243,6 +298,7 @@ if __name__ == "__main__":
         help="Which server to contact.",
     )
     global messenger
+    global Qapp
     args = parser.parse_args()
     if args.server and ":" in args.server:
         s, p = args.server.split(":")
@@ -282,16 +338,13 @@ if __name__ == "__main__":
     # Headless QT: https://stackoverflow.com/a/35355906
     L = sys.argv
     L.extend(["-platform", "offscreen"])
-    app = QApplication(L)
+    Qapp = QApplication(L)
 
     for q in range(1, spec["numberOfQuestions"] + 1):
+        buildRubrics(q)
         for v in range(1, spec["numberOfVersions"] + 1):
             print("Annotating question {} version {}".format(q, v))
-            try:
-                startMarking(q, v)
-            except Exception as e:
-                print("Error marking q.v {}.{}: {}".format(q, v, e))
-                exit(1)
+            startMarking(q, v)
 
     messenger.closeUser()
     messenger.stop()

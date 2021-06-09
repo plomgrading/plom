@@ -1,11 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+
 from datetime import datetime
 import hashlib
 import imghdr
-import json
 import os
-import subprocess
-import tempfile
-import uuid
 import logging
 
 from plom.textools import texFragmentToPNG
@@ -23,9 +24,9 @@ def MgetQuestionMax(self, question_number, version_number):
 
     Returns:
         list: A list where the first element is a boolean operation
-            status response. The second element is either a string 
+            status response. The second element is either a string
             indicating if question fo version number is incorrect, or,
-            the maximum score for this question as an integer. 
+            the maximum score for this question as an integer.
     """
 
     version_number = int(version_number)
@@ -44,7 +45,7 @@ def MgetAllMax(self):
 
     Returns:
         dict: A dictionary of the form {key: question_number, value: question_max_grade}
-            for the exam questions. 
+            for the exam questions.
     """
 
     max_grades = {}
@@ -61,7 +62,7 @@ def MprogressCount(self, question_number, version_number):
         version_number (int): Version number.
 
     Returns:
-        list: A list of two integers indicating the number of questions graded 
+        list: A list of two integers indicating the number of questions graded
             and the total number of assigned question to be graded of this question number
             and question version.
     """
@@ -101,7 +102,7 @@ def MgetNextTask(self, question_number, version_number):
 
     Returns:
         list: Respond with a list with either value False or the value
-            of True with the question code string for next task. 
+            of True with the question code string for next task.
     """
 
     give = self.DB.MgetNextTask(question_number, version_number)
@@ -112,7 +113,7 @@ def MgetNextTask(self, question_number, version_number):
 
 
 def MlatexFragment(self, username, latex_fragment):
-    """Respond with a path to the latex fragment image. 
+    """Respond with a path to the latex fragment image.
 
     Args:
         username (str): Username string.
@@ -141,7 +142,7 @@ def MclaimThisTask(self, username, task_code):
 
     Returns:
         list: A list which either only has a False value included or
-            [True, `question_tag`, `question_image_path`]
+            [True, `question_tag`, `integrity_check`, `list_of_image_md5s` `image_file1`, `image_file2`,...]
     """
 
     return self.DB.MgiveTaskToClient(username, task_code)
@@ -159,9 +160,6 @@ def MdidNotFinish(self, username, task_code):
     return
 
 
-# TODO: As input to MreturnMarkedTask, the comments string is in a
-# list ie `["comment 1", "comment 2", "comment 3"]`
-# Maybe this should be changed.
 def MreturnMarkedTask(
     self,
     username,
@@ -171,10 +169,12 @@ def MreturnMarkedTask(
     mark,
     image,
     plomdat,
-    comments,
+    rubrics,
     time_spent_marking,
     tags,
     md5_code,
+    integrity_check,
+    image_md5s,
 ):
     """Save the marked paper's information to database and respond with grading progress.
 
@@ -185,12 +185,15 @@ def MreturnMarkedTask(
         version_number (int): Marked question version number.
         mark (int): Question mark.
         image (bytearray): Marked image of question.
-        plomdat (bytearray): Plom data file used for saving marking information in 
+        plomdat (bytearray): Plom data file used for saving marking information in
             editable format.
-        comments (str): Return the String of the comments list.
+        rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
         md5_code (str): MD5 hash key for this task.
+        integrity_check (str): the integrity_check string for this task
+        image_md5s (list[str]): list of image md5sums used.
+
 
     Returns:
         list: Respond with a list which includes:
@@ -202,31 +205,26 @@ def MreturnMarkedTask(
     # image, plomdat are bytearrays, comments = list
     annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
     plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
-    comments_filename = "markedQuestions/commentFiles/G{}.json".format(task_code[1:])
 
-    #  check if those files exist already - back up if so
-    for filename in [annotated_filename, plom_filename, comments_filename]:
-        if os.path.isfile(filename):
-            os.rename(
-                filename, filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+    # do sanity checks on incoming annotation image file
+    # Check the annotated_filename is valid png - just check header presently
+    # notice that 'imghdr.what(name, h=blah)' ignores the name, instead checks stream blah.
+    if imghdr.what(annotated_filename, h=image) != "png":
+        log.error(
+            "Uploaded annotation file is not a PNG. Instead is = {}".format(
+                imghdr.what(annotated_filename, h=image)
             )
-
-    # now write in the files
-    with open(annotated_filename, "wb") as file_header:
-        file_header.write(image)
-    with open(plom_filename, "wb") as file_header:
-        file_header.write(plomdat)
-    with open(comments_filename, "w") as file_header:
-        json.dump(comments, file_header)
-
-    # Should check the annotated_filename is valid png - just check header presently
-    if imghdr.what(annotated_filename) != "png":
-        log.error("EEK = {}".format(imghdr.what(annotated_filename)))
+        )
         return [False, "Misformed image file. Try again."]
 
     # Also check the md5sum matches
-    md5n = hashlib.md5(open(annotated_filename, "rb").read()).hexdigest()
+    md5n = hashlib.md5(image).hexdigest()
     if md5_code != md5n:
+        log.error(
+            "Mismatched between client ({}) and server ({}) md5sums of annotated image.".format(
+                md5_code, md5n
+            )
+        )
         return [
             False,
             "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
@@ -241,25 +239,39 @@ def MreturnMarkedTask(
         mark,
         annotated_filename,
         plom_filename,
-        comments_filename,
+        rubrics,
         time_spent_marking,
         tags,
         md5n,
+        integrity_check,
+        image_md5s,
     )
 
-    if database_task_response:
-        self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
-        # return ack with current counts.
-        return [
-            True,
-            self.DB.McountMarked(question_number, version_number),
-            self.DB.McountAll(question_number, version_number),
-        ]
-    else:
-        return [
-            False,
-            "Database problem - does {} own task {}?".format(username, task_code),
-        ]
+    if database_task_response[0] is False:
+        return database_task_response
+
+    # db successfully updated
+    #  check if those files exist already - back up if so
+    for filename in (annotated_filename, plom_filename):
+        if os.path.isfile(filename):
+            os.rename(
+                filename,
+                filename + ".rgd" + datetime.now().strftime("%d_%H-%M-%S"),
+            )
+
+    # now write in the files
+    with open(annotated_filename, "wb") as file_header:
+        file_header.write(image)
+    with open(plom_filename, "wb") as file_header:
+        file_header.write(plomdat)
+
+    self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
+    # return ack with current counts.
+    return [
+        True,
+        self.DB.McountMarked(question_number, version_number),
+        self.DB.McountAll(question_number, version_number),
+    ]
 
 
 def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
@@ -286,21 +298,22 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
         )
 
 
-def MgetImages(self, username, task_code):
-    """Respond with paths to the marked and original images of a marked question. 
+def MgetImages(self, username, task_code, integrity_check):
+    """Respond with paths to the marked and original images of a marked question.
 
     Args:
         username (str): User who marked the paper.
         task_code (str): Code string for the task.
+        integrity_check (str): Integrity check string for the task.
 
     Returns:
         list: A list of the format:
             [False, Error message string.]
-            [True, Number of papers in the question, Original image path, 
+            [True, Number of papers in the question, md5 list, Original images paths,
             Annotated image path, Plom data file for this page]
     """
 
-    return self.DB.MgetImages(username, task_code)
+    return self.DB.MgetImages(username, task_code, integrity_check)
 
 
 # TODO: Have to figure this out.  Please needs documentation.
@@ -309,7 +322,7 @@ def MgetOriginalImages(self, task):
 
 
 def MsetTag(self, username, task_code, tag):
-    """Assign a tag string to a paper
+    """Assign a tag string to a paper.
 
     Args:
         username (str): User who assigned tag to the paper.
@@ -324,7 +337,7 @@ def MsetTag(self, username, task_code, tag):
 
 
 def MgetWholePaper(self, test_number, question_number):
-    """Respond with all the images of the paper including the given question. 
+    """Respond with all the images of the paper including the given question.
 
     Args:
         test_number (str): A string which has the test number in the format `0011`
@@ -334,7 +347,7 @@ def MgetWholePaper(self, test_number, question_number):
     Returns:
         list: A list including the following information:
             Boolean of wether we got the paper images.
-            A list of lists including [`test_version`, `image_id_reference_number`, `does_page_belong_to_question`].
+            A list of lists including [`test_version`, `image_md5sum_list`, `does_page_belong_to_question`].
             Followed by a series of image paths for the pages of the paper.
     """
 
@@ -360,26 +373,5 @@ def MreviewQuestion(self, test_number, question_number, version_number):
 # TODO: Should be removed.
 def MrevertTask(self, code):
     rval = self.DB.MrevertTask(code)
-    # response is [False, "NST"] or [False, "NAC"] or [True, f1,f2,f3]
-    if rval[0]:
-        for fn in rval[1:]:  # clean up any annotation files
-            os.unlink(fn)
-        return [True]
-    else:
-        return rval
-
-
-def MshuffleImages(self, username, task_code, image_references_permutation):
-    """Saves the rearranged pages for this task/question in the database.
-
-    Args:
-        username (str): User who assigned tag to the paper.
-        task_code (str): Code string for the task.
-        image_references_permutation (int): A permutation of the images within this exam that are 
-            related for the question. Each image is given by its 
-            `image_id_reference_number`.
-
-    Returns:
-        list: A list with a single value of either True or False.
-    """
-    return self.DB.MshuffleImages(username, task_code, image_references_permutation)
+    # response is [False, "NST"] or [False, "NAC"] or [True]
+    return rval

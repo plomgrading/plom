@@ -7,7 +7,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import os
 
-from plom import SpecParser
+from plom import SpecVerifier
 
 
 def checkDirectories():
@@ -23,7 +23,7 @@ def checkDirectories():
 def checkSpec(spec):
     # This runs after directory check, so we can try to load the local spec file.
     try:
-        localSpec = SpecParser().spec
+        localSpec = SpecVerifier.load_verified()
     except:
         print("Problem finding local spec file. Aborting.")
         return False

@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+
 import os
 import json
 
@@ -98,23 +103,25 @@ class UserInitHandler:
     # @routes.put("/users/{user}")
     async def giveUserToken(self, request):
         log_request("giveUserToken", request)
+        ip = request.remote
         data = await request.json()
-        if not validate_required_fields(data, ["user", "pw", "api"]):
+        if not validate_required_fields(data, ["user", "pw", "api", "client_ver"]):
             return web.Response(status=400)  # malformed request.
         if data["user"] != request.match_info["user"]:
             return web.Response(status=400)  # malformed request.
 
-        rmsg = self.server.giveUserToken(data["user"], data["pw"], data["api"])
+        rmsg = self.server.giveUserToken(
+            data["user"], data["pw"], data["api"], data["client_ver"], ip
+        )
         if rmsg[0]:
             return web.json_response(rmsg[1], status=200)  # all good, return the token
         elif rmsg[1].startswith("API"):
-            return web.json_response(
-                rmsg[1], status=400
-            )  # api error - return the error message
-        elif rmsg[1].startswith("UHT"):
-            return web.json_response(rmsg[1], status=409)  # user has token already.
+            return web.json_response(rmsg[2], status=400)
+        elif rmsg[1].startswith("HasToken"):
+            return web.json_response(rmsg[2], status=409)
         else:
-            return web.json_response(rmsg[1], status=401)  # you are not authorised
+            # various sorts of non-auth conflated: response has details
+            return web.json_response(rmsg[2], status=401)
 
     # @routes.put("/admin/reloadUsers")
     async def adminReloadUsers(self, request):
@@ -136,11 +143,10 @@ class UserInitHandler:
     # @routes.get("/info/spec")
     @no_authentication_only_log_request
     async def info_spec(self, request):
-        r, spec = self.server.info_spec()
-        if r:
-            return web.json_response(spec, status=200)
-        else:  # server does not have a spec
+        spec = self.server.info_spec()
+        if not spec:
             return web.Response(status=404)
+        return web.json_response(spec, status=200)
 
     # @routes.get("/info/shortName")
     @no_authentication_only_log_request

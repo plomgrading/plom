@@ -1,32 +1,47 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018 Elvis Cai
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Forest Kobayashi
+# Copyright (C) 2021 Peter Lee
 
+"""Chooser dialog"""
+
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
+
+from datetime import datetime
+import logging
+from pathlib import Path
+import tempfile
 
 import toml
-import os
-import datetime
-import logging
+import appdirs
 
-from PyQt5.QtCore import pyqtSlot, QTimer
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QDialog, QStyleFactory, QMessageBox
+import urllib3
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QDialog, QMessageBox
 
-from .uiFiles.ui_chooser import Ui_Chooser
-from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
-from plom.plom_exceptions import *
-from . import marker
-from . import identifier
-from . import totaler
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
+from plom import get_question_label
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomAPIException,
+    PlomAuthenticationException,
+    PlomExistingLoginException,
+)
 from plom.messenger import Messenger
+
+from .uiFiles.ui_chooser import Ui_Chooser
+from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
+from . import marker
+from . import identifier
+
 
 # TODO: for now, a global (to this module), later maybe in the QApp?
 messenger = None
@@ -37,6 +52,9 @@ global tempDirectory, directoryPath
 lastTime = {}
 
 log = logging.getLogger("client")
+logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
+cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
+cfgfile = cfgdir / "plomConfig.toml"
 
 
 def readLastTime():
@@ -45,57 +63,60 @@ def readLastTime():
     """
     global lastTime
     # set some reasonable defaults.
+    lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
     lastTime["server"] = "localhost"
     lastTime["question"] = 1
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
-    lastTime["mouse"] = "right"
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
-    # If config file exists, use it to update the defaults
-    if os.path.isfile("plomConfig.toml"):
-        with open("plomConfig.toml") as data_file:
-            lastTime.update(toml.load(data_file))
+    # update default from config file
+    if cfgfile.exists():
+        # too early to log: log.info("Loading config file %s", cfgfile)
+        with open(cfgfile) as f:
+            lastTime.update(toml.load(f))
 
 
 def writeLastTime():
     """Write the options to the config file."""
-    log.info("Saving config file: plomConfig.toml")
+    log.info("Saving config file %s", cfgfile)
     try:
-        with open("plomConfig.toml", "w") as fh:
+        cfgfile.parent.mkdir(exist_ok=True)
+        with open(cfgfile, "w") as fh:
             fh.write(toml.dumps(lastTime))
     except PermissionError as e:
         ErrorMessage(
-            "Cannot write config file!\n\n"
-            "Try moving the Plom client to somewhere else on your"
-            "system where you have write permissions.\n\n"
-            "{}.".format(e)
+            "Cannot write config file:\n"
+            "    {}\n\n"
+            "Any settings will not be saved for future sessions.\n\n"
+            "Error msg: {}.".format(cfgfile, e)
         ).exec_()
-        QApplication.exit(1)
 
 
 class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
-        super(Chooser, self).__init__()
+        super().__init__()
         self.parent = Qapp
 
         readLastTime()
 
+        kwargs = {}
         if lastTime.get("LogToFile"):
-            now = datetime.datetime.now().isoformat("T", "seconds")
-            logging.basicConfig(
-                format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-                datefmt="%b%d %H:%M:%S",
-                filename="plom-{}.log".format(now),
-            )
-        else:
-            logging.basicConfig(
-                format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-                datefmt="%m-%d %H:%M:%S",
-            )
+            logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
+            try:
+                logdir.mkdir(parents=True, exist_ok=True)
+                logfile = logdir / logfile
+            except PermissionError:
+                pass
+            kwargs = {"filename": logfile}
+        logging.basicConfig(
+            format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
+            datefmt="%b%d %H:%M:%S",
+            **kwargs,
+        )
         # Default to INFO log level
         logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper())
 
@@ -110,19 +131,17 @@ class Chooser(QDialog):
         self.ui.setupUi(self)
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
-        self.setLastTime()
-        # connect buttons to functions.
         self.ui.markButton.clicked.connect(self.runMarker)
         self.ui.identifyButton.clicked.connect(self.runIDer)
-        self.ui.totalButton.clicked.connect(self.runTotaler)
         self.ui.closeButton.clicked.connect(self.closeWindow)
-        self.ui.fontButton.clicked.connect(self.setFont)
+        self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
         self.ui.getServerInfoButton.clicked.connect(self.getInfo)
         self.ui.serverLE.textEdited.connect(self.ungetInfo)
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
+        self.setLastTime()
 
     def setLastTime(self):
         # set login etc from last time client ran.
@@ -131,7 +150,6 @@ class Chooser(QDialog):
         self.ui.pgSB.setValue(int(lastTime["question"]))
         self.ui.vSB.setValue(int(lastTime["v"]))
         self.ui.fontSB.setValue(int(lastTime["fontSize"]))
-        self.setFont()
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
@@ -145,7 +163,7 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(lastTime)
+        d = ClientSettingsDialog(lastTime, logdir, cfgfile, tempfile.gettempdir())
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
@@ -154,25 +172,30 @@ class Chooser(QDialog):
         lastTime["LogToFile"] = stuff[2]
         lastTime["CommentsWarnings"] = stuff[3]
         lastTime["MarkWarnings"] = stuff[4]
-        lastTime["mouse"] = "left" if stuff[5] else "right"
-        lastTime["SidebarOnRight"] = stuff[6]
+        lastTime["SidebarOnRight"] = stuff[5]
         logging.getLogger().setLevel(lastTime["LogLevel"].upper())
 
     def validate(self):
         # Check username is a reasonable string
-        user = self.ui.userLE.text()
+        user = self.ui.userLE.text().strip()
+        self.ui.userLE.setText(user)
         if (not user.isalnum()) or (not user):
             return
         # check password at least 4 char long
+        # Don't strip whitespace from passwords
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
             log.warning("Password too short")
             return
+
+        self.partial_parse_address()
         server = self.ui.serverLE.text()
+        self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
+
         # save those settings
         self.saveDetails()
 
@@ -241,15 +264,6 @@ class Chooser(QDialog):
             idwin.show()
             idwin.getToWork(messenger)
             self.parent.identifier = idwin
-        else:
-            # Run the Total client.
-            self.setEnabled(False)
-            self.hide()
-            totalerwin = totaler.TotalClient()
-            totalerwin.my_shutdown_signal.connect(self.on_other_window_close)
-            totalerwin.show()
-            totalerwin.getToWork(messenger)
-            self.parent.totaler = totalerwin
 
     def runMarker(self):
         self.runIt = "Marker"
@@ -264,9 +278,9 @@ class Chooser(QDialog):
         self.validate()
 
     def saveDetails(self):
-        lastTime["user"] = self.ui.userLE.text()
+        lastTime["user"] = self.ui.userLE.text().strip()
         lastTime["server"] = "{}:{}".format(
-            self.ui.serverLE.text(), self.ui.mportSB.value()
+            self.ui.serverLE.text().strip(), self.ui.mportSB.value()
         )
         lastTime["question"] = self.getQuestion()
         lastTime["v"] = self.getv()
@@ -279,21 +293,25 @@ class Chooser(QDialog):
             messenger.stop()
         self.close()
 
-    def setFont(self):
-        v = self.ui.fontSB.value()
+    def setFont(self, n):
+        """Adjust font size of user interface.
+
+        args:
+            n (int): the desired font size in points.
+        """
         fnt = self.parent.font()
-        fnt.setPointSize(v)
+        fnt.setPointSize(n)
         self.parent.setFont(fnt)
 
     def getQuestion(self):
         """Return the integer question or None"""
         if self.ui.pgDrop.isVisible():
-            question = self.ui.pgDrop.currentText().lstrip("Q")
+            question = self.ui.pgDrop.currentIndex() + 1
         else:
             question = self.ui.pgSB.value()
         try:
             return int(question)
-        except:
+        except ValueError:
             return None
 
     def getv(self):
@@ -329,11 +347,14 @@ class Chooser(QDialog):
         messenger = None
 
     def getInfo(self):
+        self.partial_parse_address()
         server = self.ui.serverLE.text()
+        self.ui.serverLE.setText(server)
         if not server:
             log.warning("No server URI")
             return
         mport = self.ui.mportSB.value()
+
         # save those settings
         # self.saveDetails()   # TODO?
 
@@ -354,7 +375,7 @@ class Chooser(QDialog):
         except PlomSeriousException:
             try:
                 spec = messenger.getInfoGeneral()
-            except:
+            except PlomSeriousException:
                 ErrorMessage("Could not connect to server.").exec_()
                 return
 
@@ -373,7 +394,7 @@ class Chooser(QDialog):
 
         self.ui.pgDrop.clear()
         self.ui.pgDrop.addItems(
-            ["Q{}".format(x + 1) for x in range(0, spec["numberOfQuestions"])]
+            [get_question_label(spec, n + 1) for n in range(spec["numberOfQuestions"])]
         )
         if question:
             if question >= 1 and question <= spec["numberOfQuestions"]:
@@ -388,6 +409,22 @@ class Chooser(QDialog):
         else:
             self.ui.userLE.setFocus(True)
 
+    def partial_parse_address(self):
+        """If address has a port number in it, extract and move to the port box.
+
+        If there's a colon in the address (maybe user did not see port
+        entry box or is pasting in a string), then try to extract a port
+        number and put it into the entry box.
+        """
+        address = self.ui.serverLE.text()
+        try:
+            parsedurl = urllib3.util.parse_url(address)
+            if parsedurl.port:
+                self.ui.mportSB.setValue(int(parsedurl.port))
+            self.ui.serverLE.setText(parsedurl.host)
+        except urllib3.exceptions.LocationParseError:
+            return
+
     @pyqtSlot(int)
     def on_other_window_close(self, value):
         assert isinstance(value, int)
@@ -401,19 +438,8 @@ class Chooser(QDialog):
         self.setEnabled(True)
         if not stuff:
             return
-        # update mouse-hand and up/down style for lasttime file
-        markStyle, mouseHand, sidebarRight = stuff
+        # note that stuff is list of options - used to contain more... may contain more in future
+        # update sidebar for lasttime file
+        sidebarRight = stuff[0]
         global lastTime
-        if markStyle == 2:
-            lastTime["upDown"] = "up"
-        elif markStyle == 3:
-            lastTime["upDown"] = "down"
-        else:
-            raise RuntimeError("tertium non datur")
-        if mouseHand == 0:
-            lastTime["mouse"] = "right"
-        elif mouseHand == 1:
-            lastTime["mouse"] = "left"
-        else:
-            raise RuntimeError("tertium non datur")
         lastTime["SidebarOnRight"] = sidebarRight

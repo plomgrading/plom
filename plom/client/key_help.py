@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
+
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -17,37 +21,43 @@ class KeyHelp(QDialog):
     keyTypes = {
         "Annotation": [
             [
-                "Box / Ellipse",
-                ["c", ","],
-                "Draw a hightlighting box (ellipse) on click (shift-click) and drag",
+                "Next tool",
+                ["r"],
+                "Select the next tool",
             ],
             [
-                "Cross / QMark / Tick",
-                ["e", "i"],
-                "Draw a cross (question-mark / tick) on click (ctrl-click / shift-click) - note order.",
+                "Previous tool",
+                ["w"],
+                "Select the previous tool",
             ],
             [
-                "Line / DoubleArrow / Arrow",
-                ["b", "n"],
-                "Draw a straight line (line-with-arrowheads / highlight) on click (ctrl-click / shift-click) and drag.",
+                "Select rubric / Next rubric",
+                ["d"],
+                "Selects the current rubric, or if rubric already selected, then moves to next rubric",
             ],
             [
-                "Pen / DoubleArrow / Highlighter",
-                ["t", "y"],
-                "Draw a free-hand line (line-with-arrowheads / highlight) on click (ctrl-click / shift-click).",
+                "Previous rubric",
+                ["e"],
+                "Select the previous rubric",
             ],
             [
-                "Tick / QMark / Cross",
-                ["d", "k"],
-                "Draw a tick (question-mark / cross) on click (ctrl-click / shift-click) - note order.",
+                "Next tab",
+                ["f"],
+                "Select the next tab of rubrics",
             ],
-        ],
-        "Delete": [
+            [
+                "Previous tab",
+                ["s"],
+                "Select the previous tab of rubrics",
+            ],
+            ["Redo", ["t", "ctrl-y"], "Redo the last undone-action."],
+            ["Undo", ["g", "ctrl-z"], "Undo the last action."],
             [
                 "Delete",
-                ["x", "."],
+                ["q"],
                 "Delete single item on click, or delete items in area on click and drag",
-            ]
+            ],
+            ["Move", ["a"], "Click and drag on an object ot move it."],
         ],
         "Finishing": [
             [
@@ -64,57 +74,16 @@ class KeyHelp(QDialog):
         "General": [
             ["Show key help", ["?"], "Show this window."],
             ["Main menu", ["F10"], "Open the main menu"],
-            ["Redo", ["w", "o", "ctrl-y"], "Redo the last undone-action."],
-            ["Undo", ["s", "l", "ctrl-z"], "Undo the last action."],
-        ],
-        "Marks": [
-            ["Delta=0", ["`"], "Set the delta-mark value to 0."],
-            [
-                "Delta=1",
-                ["1"],
-                "Set the delta-mark value to +1 (-1) when using mark-up (mark-down).",
-            ],
-            ["Delta=2", ["2"], "See delta=1"],
-            ["Delta=3", ["3"], "See delta=1"],
-            ["Delta=4", ["4"], "See delta=1"],
-            ["Delta=5", ["5"], "See delta=1"],
-            ["Delta=5", ["5"], "See delta=1"],
-            ["Delta=6", ["6"], "See delta=1"],
-            ["Delta=7", ["7"], "See delta=1"],
-            ["Delta=8", ["8"], "See delta=1"],
-            ["Delta=9", ["9"], "See delta=1"],
-            ["Delta=10", ["0"], "See delta=1"],
         ],
         "Text": [
-            [
-                "Current comment",
-                ["f", "j"],
-                "Select the current comment from the comment list. A click then pastes the comment under the click.",
-            ],
             [
                 "End text edit",
                 ["shift-enter", "shift-return"],
                 'End the current text-edit and run latex if the text starts with "TEX:"',
             ],
             ["Escape text edit", ["esc"], "Escape from the current text edit."],
-            [
-                "Next comment",
-                ["v", "m"],
-                "Select the next comment from the comment list",
-            ],
-            [
-                "Previous comment",
-                ["r", "u"],
-                "Select the previous comment from the comment list",
-            ],
-            [
-                "Text",
-                ["g", "h"],
-                "Creates a text-item under the mouse click, or opens an existing text-item for editing. End the edit with shift-enter or escape.",
-            ],
         ],
         "View": [
-            ["Pan", ["q", "p"], "Click and drag moves the current view."],
             [
                 "Pan-through",
                 ["space"],
@@ -157,7 +126,7 @@ class KeyHelp(QDialog):
             ],
             [
                 "Zoom",
-                ["a", ";"],
+                ["z"],
                 "Selects the zoom-tool. Zoom the view in (out) on click (shift-click).",
             ],
             ["Zoom-in", ["+", "="], "Zooms the view in."],
@@ -166,7 +135,7 @@ class KeyHelp(QDialog):
     }
 
     def __init__(self, parent=None):
-        super(KeyHelp, self).__init__()
+        super().__init__()
         vb = QVBoxLayout()
         self.tab = QTabWidget()
         self.setTabs()

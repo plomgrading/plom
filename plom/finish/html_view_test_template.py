@@ -1,7 +1,13 @@
-html = """
+htmlsrc = """
 <!DOCTYPE html>
-<!-- Copyright (C) 2018-2019 Colin B. Macdonald <cbm@m.fsf.org>-->
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Copyright (C) 2018-2021 Colin B. Macdonald <cbm@m.fsf.org>-->
+<!-- SPDX-License-Identifier: FSFAP -->
+<!--
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  This file is offered as-is,
+     without any warranty.
+-->
 <html lang="en" dir="ltr" class="client-nojs">
 <head>
 <title>__COURSENAME__ - Online Return</title>
@@ -29,15 +35,15 @@ button {
 </style>
 
 <script>
-	function retrieveMidterm() {
+	function retrievePaper() {
 		var id = document.getElementById('studentID').value;
-		if( !id || id.length!=8 ) {
+		if( !id || id.length!=__SID_LENGTH__ ) {
 			alert("Invalid student number!");
 			return;
 		}
 		var code = document.getElementById('studentCode').value;
 		code = code.replace(/,/g,'')
-		if( !code || code.length!=12 ) {
+		if( !code || code.length!=__CODE_LENGTH__ ) {
 			alert("Invalid code!");
 			return;
 		}
@@ -57,14 +63,15 @@ button {
 
 <hr>
 
-<p>In order to access your midterm you need to fill in your student number and your 12-digit &ldquo;return code&rdquo; from <a href="http://canvas.ubc.ca">canvas</a>.</p>
+<p>In order to access your paper you need to fill in your student number and
+your __CODE_LENGTH__-digit &ldquo;return code&rdquo; from <a href="http://canvas.ubc.ca">canvas</a>.</p>
 
 
 <p><i>NOTE:</i> the request will fail if incorrect information is entered.<p>
 
 <div>
 	<label class="label" for="studentID">Student number: </label>
-	<input id="studentID" name="studentID" type="text" maxlength="8" />
+	<input id="studentID" name="studentID" type="text" maxlength="__SID_LENGTH__" />
 </div>
 <br>
 <div>
@@ -74,7 +81,7 @@ button {
 <br>
 <div>
 	<label class="label" for="retrieve"></label>
-	<button id="retrieve" name="retrieve" onclick="retrieveMidterm()" type="button">Retrieve paper</button>
+	<button id="retrieve" name="retrieve" onclick="retrievePaper()" type="button">Retrieve paper</button>
 </div>
 <div>
 

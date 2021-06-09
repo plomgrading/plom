@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -108,6 +109,7 @@ def clearUserToken(self, uname):
 
 
 def getUserToken(self, uname):
+    """Return user's saved token or None if we have no such user."""
     uref = User.get_or_none(name=uname)
     if uref is None:
         return None
@@ -171,30 +173,16 @@ def resetUsersToDo(self, uname):
             x.save()
             log.info("Reset user {} ID task {}".format(uname, x.group.gid))
     with plomdb.atomic():
-        query = QGroup.select().where(QGroup.user == uref, QGroup.status == "out",)
+        query = QGroup.select().where(
+            QGroup.user == uref,
+            QGroup.status == "out",
+        )
         for x in query:
             x.status = "todo"
             x.user = None
-            x.save()
-            # delete the last annotation and its pages
-            aref = x.annotations[-1]
-            for p in aref.apages:
-                p.delete_instance()
-            aref.delete_instance()
             # now clean up the qgroup
+            # TODO: why is this code different from db_marks->MdidNotFinish?
             x.save()
             log.info(
                 "Reset user {} question-annotation task {}".format(uname, x.group.gid)
-            )
-    with plomdb.atomic():
-        query = SumData.select().where(SumData.user == uref, SumData.status == "out")
-        for x in query:
-            x.status = "todo"
-            x.user = None
-            x.time = datetime.now()
-            x.save()
-            log.info(
-                "Reset user {} totalling test_number {}".format(
-                    uname, x.test.test_number
-                )
             )

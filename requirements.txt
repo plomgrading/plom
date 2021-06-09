@@ -1,43 +1,42 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Michael Zhang
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-
 # Not really server deps
-#PyQt5==5.14.1
-#PyQt5-sip==12.7.1
+PyQt5==5.15.2
+PyQt5-sip==12.8.1
 
-# TODO, surely we don't care what version, list ubuntu 18.04 versions as of 2020-06
-numpy>=1.13.3
-pandas>=0.22.0
-
-toml==0.10.0
-tqdm==4.45.0
-passlib==1.7.2
-pymupdf==1.16.18
-Pillow==7.0.0
-pycparser==2.20
-cffi==1.14.0
+Pillow==8.2.0
+aiohttp==3.7.4.post0
+appdirs==1.4.4
+canvasapi==2.2.0
+cffi==1.14.5
+importlib-resources==5.1.4
+imutils==0.5.4
 jpegtran-cffi==0.5.2
-weasyprint==51
-aiohttp==3.6.2
+lapsolver==1.1.0
+numpy==1.19.5
+opencv-python==4.5.2.54
+packaging==20.9
+pandas==1.1.5
+passlib==1.7.4
+peewee==3.14.4
+pycparser==2.20
+pymupdf==1.18.14
 # unlisted dep of pyqrcode
 pypng==0.0.20
 pyqrcode==1.2.1
 pyzbar==0.1.8
-peewee==3.13.3
-imutils==0.5.3
-opencv-python==4.2.0.34
-tensorflow==2.2.0
-lapsolver==1.1.0
-requests==2.23.0
+requests==2.25.1
 requests-toolbelt==0.9.1
-urllib3==1.25.8
-packaging==20.1
-# For rando forest model
-scikit-learn==0.23.1
+scikit-learn==0.24.2
+toml==0.10.2
+tqdm==4.61.0
+urllib3==1.26.5
+weasyprint==52.5

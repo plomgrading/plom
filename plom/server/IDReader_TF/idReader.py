@@ -1,17 +1,18 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Colin B. Macdonald
 
 """
 Use Tensorflow Neural Network model to read student IDs from ID-pages.
 Relies on use of standard ID template.
 
-Note: Code in this file is very similar to idReader code for the Sklearn 
-    model.
-"""
+Note: has hardcoded 8-digit student numbers.
 
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPLv3"
+Note: Code in this file is very similar to idReader code for the Sklearn
+model.
+"""
 
 import os
 from pathlib import Path
@@ -72,16 +73,14 @@ def download_model():
         if response.status_code != 200:
             print("\tError getting file {}.".format(file_name))
             return False
-        else:
-            print("\tDone.")
         with open(base_path / file_name, "wb+") as file_header:
             file_header.write(response.content)
+        print("\tDone Saving")
     return True
 
 
 def download_or_train_model():
-    """Dowload the ID detection model if possible, if not, train it.
-    """
+    """Dowload the ID detection model if possible, if not, train it."""
 
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"
@@ -106,7 +105,7 @@ def calc_log_likelihood(student_ID, prediction_probs, num_digits):
         num_digits (int): Number of digits in the student ID.
 
     Returns:
-       numpy.float64 : Float probability that the 
+       numpy.float64: log likelihood.
     """
 
     # pass in the student ID-digits and the prediction_probs
@@ -130,8 +129,8 @@ def run_id_reader(files_dict, rectangle):
     Args:
         files_dict (dict): A dictionary of the original paper front page images to
             run the detector on. Of the form {`paper_number`,`paper_image_path`}.
-        rectangle (list): A list of the rectangle information of the form 
-            [top_left_x_coord, top_left_y_coord, x_width, y_height] for the 
+        rectangle (list): A list of the rectangle information of the form
+            [top_left_x_coord, top_left_y_coord, x_width, y_height] for the
             cropped rectangle.
     """
 

@@ -30,8 +30,9 @@ $ pip3 install passlib \
                weasyprint pillow tqdm pytest tex jpegtran-cffi
 ```
 
-More dependencies for the tensorflow-based ID reader:
+More dependencies for the machine-learning-based ID Reader:
 ```
   # pip3 install termcolor wheel grpcio markdown h5py
-  # pip3 install --user imutils lapsolver opencv-python tensorflow
+  # pip3 install --user imutils lapsolver opencv-python scikit-learn
 ```
+(Also `tensorflow` if using that ID Reader instead).

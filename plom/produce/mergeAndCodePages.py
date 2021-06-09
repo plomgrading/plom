@@ -1,21 +1,22 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
-import sys
 import shlex
 import subprocess
 import os
-import fitz
-import pyqrcode
 import tempfile
 from pathlib import Path
 
-from plom.tpv_utils import encodeTPV
-from . import paperdir
+import pyqrcode
+import fitz
 
-# paperdir = "papersToPrint"
+from plom.tpv_utils import encodeTPV
+from . import paperdir as _paperdir
+
+paperdir = Path(_paperdir)
 
 
 # TODO: Complete the test mode functionality
@@ -83,26 +84,34 @@ def create_exam_and_insert_QR(
     qr_file,
     test_mode=False,
     test_folder=None,
+    no_qr=False,
 ):
     """Creates the exam objects and insert the QR codes.
-    
+
     Creates the exams objects from the pdfs stored at sourceVersions.
     Then adds the 3 QR codes for each page.
     (We create 4 QR codes but only add 3 of them because of the staple side, see below).
 
     Arguments:
-        name {Str} -- Document Name.
-        code {Str} -- 6 digit distinguished code for the document.
-        length {int} -- Length of the document or number of pages.
-        versions {int} -- Number of version of this Document.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests .
-        page_versions {dict} -- (int,int) dictionary representing the version of each page for this test.
-        qr_file {dict} -- dict(int: dict(int: Str)) Dictionary that has another embedded dictionary for each page.
-                          The embedded dictionary has a string for QR code paths saved for each corner.
+        name (str): Document Name.
+        code (str): 6 digits distinguishing this document from others.
+        length (int): length of the document, number of pages.
+        versions (int): Number of version of this document.
+        test (int): the test number.
+        page_versions (dict): version number for each page of this test.
+        qr_file (dict): a dict of dicts.  The outer keys are integer
+            page numbers.  The inner keys index the corners with ints,
+            the meaning of which is hopefully documented elsewhere.  The
+            inner values are strings/pathlib.Path for images of the
+            QR codes for each corner.
 
     Keyword Arguments:
-        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents.  (default: {False})
-        test_folder {Str} -- String for where to place the generated test files. (default: {None})
+        test_mode (bool): used for testing, not sure details
+            (default: False).
+        test_folder (test): used with `test_mode`, where to place the
+            generated test files. (default: None)
+        no_qr (bool): whether to paste in QR-codes (default: False)
+            Note backward logic: False means yes to QR-codes.
 
     Returns:
         fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
@@ -120,7 +129,7 @@ def create_exam_and_insert_QR(
     # Insert the relevant page-versions into this pdf.
     for page_index in range(1, length + 1):
         # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
-        exam.insertPDF(
+        exam.insert_pdf(
             version_paths_for_pages[page_versions[page_index]],
             from_page=page_index - 1,
             to_page=page_index - 1,
@@ -151,13 +160,15 @@ def create_exam_and_insert_QR(
     )
 
     for page_index in range(length):
+        # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
+        exam[page_index].clean_contents()
         # test/page stamp in top-centre of page
         # Rectangle size hacked by hand. TODO = do this more algorithmically
         # VALA SAYS: TODO still tands given that the pages are all the same
         # size. Will ask what it mean to do it algorithmically
         rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
         text = "{}.{}".format(str(test).zfill(4), str(page_index + 1).zfill(2))
-        insertion_confirmed = exam[page_index].insertTextbox(
+        insertion_confirmed = exam[page_index].insert_textbox(
             rect,
             text,
             fontsize=18,
@@ -166,20 +177,24 @@ def create_exam_and_insert_QR(
             fontfile=None,
             align=1,
         )
-        exam[page_index].drawRect(rect, color=[0, 0, 0])
+        exam[page_index].draw_rect(rect, color=[0, 0, 0])
         assert insertion_confirmed > 0
+
+        if no_qr:
+            # no more processing of this page if QR codes unwanted
+            continue
 
         # stamp DNW near staple: even/odd pages different
         # Top Left for even pages, Top Right for odd pages
         # TODO: Perhaps this process could be improved by putting
         # into functions
         rDNW = rDNW_TL if page_index % 2 == 0 else rDNW_TR
-        shape = exam[page_index].newShape()
-        shape.drawLine(rDNW.top_left, rDNW.top_right)
+        shape = exam[page_index].new_shape()
+        shape.draw_line(rDNW.top_left, rDNW.top_right)
         if page_index % 2 == 0:
-            shape.drawLine(rDNW.top_right, rDNW.bottom_left)
+            shape.draw_line(rDNW.top_right, rDNW.bottom_left)
         else:
-            shape.drawLine(rDNW.top_right, rDNW.bottom_right)
+            shape.draw_line(rDNW.top_right, rDNW.bottom_right)
         shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
         shape.commit()
         if page_index % 2 == 0:
@@ -190,7 +205,7 @@ def create_exam_and_insert_QR(
         mat = fitz.Matrix(45 if page_index % 2 == 0 else -45)
         pivot = rDNW.tr / 2 + rDNW.bl / 2
         morph = (pivot, mat)
-        insertion_confirmed = exam[page_index].insertTextbox(
+        insertion_confirmed = exam[page_index].insert_textbox(
             rDNW,
             name,
             fontsize=8,
@@ -199,25 +214,29 @@ def create_exam_and_insert_QR(
             align=1,
             morph=morph,
         )
-        # exam[page_index].drawRect(rDNW, morph=morph)
+        # exam[page_index].draw_rect(rDNW, morph=morph)
         assert (
             insertion_confirmed > 0
         ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
+        # paste in the QR-codes
         # Grab the tpv QRcodes for current page and put them on the pdf
         # Remember that we only add 3 of the 4 QR codes for each page since
         # we always have a corner section for staples and such
         qr_code = {}
         for corner_index in range(1, 5):
-            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
+            # TODO: can remove str() once minimum pymupdf is 1.18.9
+            qr_code[corner_index] = fitz.Pixmap(
+                str(qr_file[page_index + 1][corner_index])
+            )
         if page_index % 2 == 0:
-            exam[page_index].insertImage(rTR, pixmap=qr_code[1], overlay=True)
-            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
-            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insert_image(rTR, pixmap=qr_code[1], overlay=True)
+            exam[page_index].insert_image(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insert_image(rBL, pixmap=qr_code[3], overlay=True)
         else:
-            exam[page_index].insertImage(rTL, pixmap=qr_code[2], overlay=True)
-            exam[page_index].insertImage(rBL, pixmap=qr_code[3], overlay=True)
-            exam[page_index].insertImage(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insert_image(rTL, pixmap=qr_code[2], overlay=True)
+            exam[page_index].insert_image(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insert_image(rBR, pixmap=qr_code[4], overlay=True)
 
     return exam
 
@@ -271,16 +290,31 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     # Creating the student id \n name text file
     txt = "{}\n{}".format(student_id, student_name)
 
+    sign_here = "Please sign here"
+
     # Getting the dimentions of the box
-    student_id_width = (
-        max(
-            fitz.getTextlength(student_id, fontsize=36, fontname="Helvetica"),
-            fitz.getTextlength(student_name, fontsize=36, fontname="Helvetica"),
-            fitz.getTextlength("Please sign here", fontsize=48, fontname="Helvetica"),
+    try:
+        student_id_width = (
+            max(
+                fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
+                fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
+                fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
+            )
+            * 1.1
+            * 0.5
         )
-        * 1.1
-        * 0.5
-    )
+    except AttributeError:
+        # workaround https://github.com/pymupdf/PyMuPDF/issues/1085
+        # TODO: drop this code when we dependent on PyMuPDF>=1.18.14
+        student_id_width = (
+            max(
+                fitz.getTextlength(student_id, fontsize=36, fontname="Helvetica"),
+                fitz.getTextlength(student_name, fontsize=36, fontname="Helvetica"),
+                fitz.getTextlength(sign_here, fontsize=48, fontname="Helvetica"),
+            )
+            * 1.1
+            * 0.5
+        )
     student_id_height = 36 * 1.3
 
     # We have 2 rectangles for the student name and student id
@@ -296,8 +330,8 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
         student_id_rect_1.x1,
         student_id_rect_1.y1 + 48 * 1.3,
     )
-    exam[0].drawRect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-    exam[0].drawRect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
 
     # TODO: This could be put into one function
     # Also VALA doesn't understand the TODO s
@@ -313,7 +347,7 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
         raise ValueError("Don't know how to write name {} into PDF".format(txt))
 
     # We insert the student id text boxes
-    insertion_confirmed = exam[0].insertTextbox(
+    insertion_confirmed = exam[0].insert_textbox(
         student_id_rect_1,
         txt,
         fontsize=36,
@@ -328,9 +362,9 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
     # We insert the student name text boxes
-    insertion_confirmed = exam[0].insertTextbox(
+    insertion_confirmed = exam[0].insert_textbox(
         student_id_rect_2,
-        "Please sign here",
+        sign_here,
         fontsize=48,
         color=[0.9, 0.9, 0.9],
         fontname="Helvetica",
@@ -352,8 +386,8 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     Arguments:
         extra {dict} -- A (Str:Str) dictioary with student id and name.
         exam {fitz.Document} -- The same exam object as the input, except we add the extra infor into the first page.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests. 
-    
+        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+
     Keyword Arguments:
         test_mode {bool} -- boolean elements used for testing, testing case with show the documents. (default: {False})
         test_folder {Str} -- A String for where to place the generated test files. (default: {None})
@@ -363,16 +397,17 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
-    # `linear=True` causes https://gitlab.math.ubc.ca/andrewr/MLP/issues/284
+    # `linear=True` causes https://gitlab.com/plom/plom/issues/284
     if extra:
-        save_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-            str(test).zfill(4), extra["id"]
-        )
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
     else:
-        save_name = Path(paperdir) / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
     # save with ID-number is making named papers = issue 790
     exam.save(
-        save_name, garbage=4, deflate=True, clean=True,
+        save_name,
+        garbage=4,
+        deflate=True,
+        clean=True,
     )
 
     return
@@ -387,6 +422,7 @@ def make_PDF(
     test,
     page_versions,
     extra=None,
+    no_qr=False,
     test_mode=False,
     test_folder=None,
 ):
@@ -405,6 +441,7 @@ def make_PDF(
         versions {int} -- Number of version of this Document.
         test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
         page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
+        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes
 
     Keyword Arguments:
         extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
@@ -433,6 +470,7 @@ def make_PDF(
             qr_file,
             test_mode,
             test_folder,
+            no_qr=no_qr,
         )
 
         # If we are provided with the student number and student id,
@@ -445,18 +483,20 @@ def make_PDF(
     save_PDFs(extra, exam, test)
 
 
-if __name__ == "__main__":
-    # Take command line parameters
-    # 1 = name
-    # 2 = code
-    # 3 = length (ie number of pages)
-    # 4 = number of versions
-    # 5 = the test test number
-    # 6 = dict of the version number for each page
-    name = sys.argv[1]
-    code = sys.argv[2]
-    length = int(sys.argv[3])
-    versions = int(sys.argv[4])
-    test = int(sys.argv[5])
-    page_versions = eval(sys.argv[6])
-    make_PDF(name, code, length, versions, test, page_versions)
+def make_fakePDF(
+    name,
+    code,
+    length,
+    versions,
+    test,
+    page_versions,
+    extra=None,
+    test_mode=False,
+    test_folder=None,
+):
+    """Twin to the real make_pdf command - makes empty files."""
+    if extra:
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
+    else:
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
+    save_name.touch()

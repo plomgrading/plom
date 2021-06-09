@@ -1,7 +1,8 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Colin B. Macdonald
 
 import uuid
 from passlib.context import CryptContext
@@ -47,20 +48,18 @@ class Authority:
         """Getter for the masterToken"""
         return self.masterToken
 
-    def check_password(self, password, passwordHash):
-        """Check the password against the hashed one.
+    def check_password(self, password, expected_hash):
+        """Check the password against expected hashed password.
 
         Arguments:
-            password {str} -- Password to check.
-            passwordHash {hex} -- Hashed password.
+            password (str): password to check.
+            expected_hash (str): hashed password on file or None
+                if we have no such user on file.
 
         Returns:
-            bool -- True if passwords are the same, False otherwise.
+            bool: True on match, False otherwise.
         """
-
-        if passwordHash is None:  # if there is no hash, then always fail.
-            return False
-        return self.ctx.verify(password, passwordHash)
+        return self.ctx.verify(password, expected_hash)
 
     def create_token(self):
         """Create a token for a validated user, return that token as hex and int-xor'd version for storage.
@@ -76,16 +75,27 @@ class Authority:
         """Validates a given token against the storageToken.
 
         Arguments:
-            clientToken {hex} -- The token we have.
-            storageToken {hex} -- The token we are checking against.
+            clientToken (str): The token, a hex string provided by the
+                client.  This may be untrusted unsanitized input.
+            storageToken (str): The token we are checking against.
 
         Returns:
-            bool -- True if validated, False otherwise
+            bool/None: True if validated, False/None otherwise.  False
+                indicates an invalid token.  None indicates a malformed
+                token.  This means `if validate_token(...):` works.
         """
-        if hex(int(clientToken, 16) ^ self.mti) == storageToken:
+        if not isinstance(clientToken, str):
+            return None
+        # should not be significantly longer than UUID's 32 hex digits
+        if len(clientToken) > 64:
+            return None
+        try:
+            clientTokenInt = int(clientToken, 16)
+        except ValueError:
+            return None
+        if hex(clientTokenInt ^ self.mti) == storageToken:
             return True
-        else:
-            return False
+        return False
 
     def check_string_is_UUID(self, tau):
         """Checks that a given string is a valid UUID.

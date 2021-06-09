@@ -28,16 +28,6 @@
 * put "/ID/tasks/{task}" - update the ID/Name of the task (ie test)
 * delete "/ID/tasks/{task}" - unclaim task - ie tell server that user did not finish that task - go back on todo list
 
-## Totaller
-* get "/TOT/maxMark" - return max-total-mark for test
-* get "/TOT/progress" - return [#done, #total]
-* get "/TOT/tasks/complete" - return list of tasks completed by that user
-* get "/TOT/tasks/available" - return [next available task] or 204-code (if none)
-* get "/TOT/images/{tgv}" - return imagefile of that tgv
-* patch "/TOT/tasks/{task}" - claim task (if still available) - return imagefile
-* put "/TOT/tasks/{task}" - update the mark of the task (ie test)
-* delete "/TOT/tasks/{task}" - unclaim task
-
 ## Marker
 * get "/MK/maxMark" - return max-mark for the page-group
 * get "/MK/progress" - return [#done, #total]
@@ -73,14 +63,6 @@ Placed a checkmark next to each if appears in lists above.
 * patch("/ID/tasks/{task}") ✓
 * put("/ID/tasks/{task}") ✓
 * delete("/ID/tasks/{task}") ✓
-* get("/TOT/maxMark") ✓
-* get("/TOT/tasks/complete") ✓
-* get("/TOT/progress") ✓
-* get("/TOT/tasks/available") ✓
-* patch("/TOT/tasks/{task}") ✓
-* delete("/TOT/tasks/{task}") ✓
-* get("/TOT/images/{tgv}") ✓
-* put("/TOT/tasks/{task}") ✓
 * get("/MK/maxMark") ✓
 * delete("/MK/tasks/{task}") ✓
 * get("/MK/tasks/complete") ✓

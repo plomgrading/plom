@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom script for post-grading tasks.
@@ -23,13 +23,12 @@ The `webpage` command builds a webpage with individualized secret codes
 to be distributed to each student e.g., via Canvas or another LMS.
 """
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-import shutil
 from textwrap import dedent
 
 from plom import __version__
@@ -82,9 +81,9 @@ spAssemble = sub.add_parser(
     """,
 )
 spAssemble.add_argument(
-    "--totalled_only",
+    "--ided_only",
     action="store_true",
-    help="Reassemble PDF files for ID and totalled (but offline-graded) papers.",
+    help="Reassemble PDF files for ID'ed (but offline-graded) papers.",
 )
 spCodedReturn = sub.add_parser(
     "webpage",
@@ -95,14 +94,43 @@ spCodedReturn = sub.add_parser(
         The webpage will be in `codedReturn` and the secret codes in
         `return_codes.csv`.
 
-        See the numbers scripts in `plom.finish` for various "beta" tools to
-        assist with digital return---we anticipate these tools maturing in
-        future releases.
+        There may be scripts in `share/plom/contrib` to assist with
+        distributing the secret codes.
 
         This command must have access to the results of `reassemble`.
     """
     ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+spCodedReturn.add_argument(
+    "--hex",
+    action="store_true",
+    help="""
+        Use a string of hexadecimal instead of decimal digits for the
+        secret codes.
+        More secure but may cause problems if you use certain Canvas
+        workarounds to distribute the codes.
+    """,
+)
+spCodedReturn.add_argument(
+    "--digits",
+    type=int,
+    default=9,
+    metavar="N",
+    action="store",
+    help="Length of the secret code.  Defaults to 9.",
+)
+spCodedReturn.add_argument(
+    "--salt",
+    type=str,
+    help="""
+        Instead of random codes, use a hash of the student ID, salted
+        with the string SALT.  The codes will then be reproducible by
+        anyone who knows this string (and the student IDs).
+        As its susceptible to offline attacks, a longer string is
+        recommended: you can put quotes around a phrase e.g.,
+        `--salt "Many a slip twixt the cup and the lip"`.
+    """,
 )
 spClear = sub.add_parser(
     "clear",
@@ -117,22 +145,32 @@ for x in (spCheck, spCSV, spAssemble, spClear):
 def main():
     args = parser.parse_args()
 
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
+        except KeyError:
+            pass
+
     if args.command == "status":
         plom.finish.check_completed.main(args.server, args.password)
     elif args.command == "csv":
         plom.finish.spreadsheet.main(args.server, args.password)
     elif args.command == "reassemble":
-        if args.totalled_only:
+        if args.ided_only:
             plom.finish.reassemble_ID_only.main(args.server, args.password)
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main()
+        plom.finish.coded_return.main(args.hex, args.digits, args.salt)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
         parser.print_help()
-    exit(0)
 
 
 if __name__ == "__main__":

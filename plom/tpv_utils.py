@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Andrew Rechnitzer
+
 """Utilities for dealing with TPV codes
 
 A TPV code is a string of 17 digits of the form
@@ -32,12 +36,8 @@ TODO: might encapsulate position code, have ``getPosition`` return
 e.g., the string `"NE"`
 """
 
-__author__ = "Colin Macdonald"
-__copyright__ = "Copyright (C) 2019 Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPLv3"
-
 import random
+
 
 # Changes to this format should bump this.  Possibly changes
 # to the layout of QR codes on the page should too.
@@ -45,8 +45,7 @@ _API = "00"
 
 
 def isValidTPV(tpv):
-    """Is this a valid TPV code?
-    """
+    """Is this a valid TPV code?"""
     tpv = tpv.lstrip("QR-Code:")
     if len(tpv) != len("EETTTTPPVVOCCCCCC"):
         return False

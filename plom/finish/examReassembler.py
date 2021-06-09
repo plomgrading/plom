@@ -1,71 +1,73 @@
-#!/usr/bin/env python3
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
-import fitz
-import os
-import sys
 import tempfile
-import subprocess
+from pathlib import Path
+
+from PIL import Image
+import fitz
 
 from plom import __version__
 
-# hardcoded for letter, https://gitlab.math.ubc.ca/andrewr/MLP/issues/276
+# hardcoded for letter, https://gitlab.com/plom/plom/issues/276
 papersize_portrait = (612, 792)
 papersize_landscape = (792, 612)
 margin = 10
 
 
-def is_wider(f):
-    """True if image is wider than it is high.
-
-    Args:
-        f (str): The name of the file we are checking.
-
-    Returns:
-        boolean : True if the image is wider than it is tall, False otherwise.
-    """
-    # TODO: shell likely SLOW for this task...?
-    ratio = (
-        subprocess.check_output(["identify", "-format", "%[fx:w/h]", f])
-        .decode()
-        .rstrip()
-    )
-    return float(ratio) > 1
-
-
-def reassemble(outname, shortName, sid, coverfname, imglist):
+def reassemble(outname, shortName, sid, coverfname, img_list):
     """Reassemble a pdf from the cover and question images.
 
-    Leave coverfname as None to omit it (e.g., when totalling).
+    args:
+        outname (str, Path): name of a PDF file to write.
+        shortName (str): The name of the exam, written into metadata.
+        sid (str): Student ID, to be written into metadata.
+        coverfname (str, Path): a coversheet already in PDF format.
+            Pass None to omit (deprecated "totalling mode" did this).
+        img_list (list): list of str or Path images to be inserted one
+            per page.
 
-    Return True if successful or False if the pdf file already exists.
-    Note: no attempt is made to check if its correct; merely that it
-    exists.  TODO: check if anything changed here or later [1].
-
-    [1] https://gitlab.math.ubc.ca/andrewr/MLP/issues/392
-
+    return:
+        bool: True if successful or False if PDF file already exists.
+            Note: no attempt is made to check if its correct; merely
+            that it exists.
     """
-    if os.path.isfile(outname):
+    outname = Path(outname)
+    if outname.exists():
         return False
 
     exam = fitz.open()
     if coverfname:
         exam.insertPDF(fitz.open(coverfname))
 
-    for img in imglist:
+    for img_name in img_list:
+        img_name = Path(img_name)
+        png_size = img_name.stat().st_size
+        im = Image.open(img_name)
+
         # Rotate page not the image: we want landscape on screen
-        if is_wider(img):
+        if im.width > im.height:
             w, h = papersize_landscape
         else:
             w, h = papersize_portrait
         pg = exam.newPage(width=w, height=h)
-        rec = [margin, margin, w - margin, h - margin]
-        pg.insertImage(rec, filename=img)
+        rec = fitz.Rect(margin, margin, w - margin, h - margin)
+
+        # Make a jpeg in memory, and use that if its significantly smaller
+        with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
+            im.convert("RGB").save(
+                jpeg_file, format="jpeg", quality=90, optimize=True, subsampling=0
+            )
+            jpeg_size = jpeg_file.tell()  # cannot use stat as above
+            if jpeg_size < 0.75 * png_size:
+                # print("Using smaller JPEG for {}".format(img_name))
+                jpeg_file.seek(0)
+                pg.insert_image(rec, stream=jpeg_file.read())
+            else:
+                # TODO: can remove str() once minimum pymupdf is 1.18.9
+                pg.insert_image(rec, filename=str(img_name))
 
     exam.setMetadata(
         {
@@ -74,19 +76,5 @@ def reassemble(outname, shortName, sid, coverfname, imglist):
         }
     )
 
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as tf:
-        exam.save(outname, deflate=True)
-
-
-if __name__ == "__main__":
-    shortName = sys.argv[1]
-    sid = sys.argv[2]
-    outdir = sys.argv[3]
-    coverfname = sys.argv[4]
-    # the groupimage files
-    imglist = eval(sys.argv[5])
-
-    # note we know the shortname is alphanumeric with no strings
-    # so this is safe.
-    outname = os.path.join(outdir, "{}_{}.pdf".format(shortName, sid))
-    reassemble(outname, shortName, sid, coverfname, imglist)
+    exam.save(outname, deflate=True)
+    return True

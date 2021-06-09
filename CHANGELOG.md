@@ -5,22 +5,295 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 
 ### Added
-* Client now has a menu button for less-commonly used commands.
+* Experimental support for writing graded papers and final marks to Canvas.
 
 ### Changed
-* Various UI tweaks.
-* Scripts can report their version.
+
+### Fixed
+
+
+
+## [0.6.3] - 2021-05-28
+
+### Fixed
+* Minor bug fix to stop user being able to create 0-point relative rubrics. Related server-side rubric sanity checking.
+* Fix Flatpak and source packaging to include icons and cursors.
+* Misc bug fixes.
+
+
+## [0.6.2] - 2021-05-16
+
+### Changed
+* Packaging fixes including a revamp of `.../share/plom`.
+
+### Fixed
+* Workaround for blurry results from very tall scans.
+* Misc bug and documentation fixes.
+
+
+## [0.6.1] - 2021-04-16
+
+### Changed
+* Client now has two tabs for + and - deltas, which improves their shortcut key access.
+* Minor tweaks and bug fixes.
+
+
+## [0.6.0] - 2021-04-14
+
+### Added
+* Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
+* `plom-demo` now has `--port` option.
+* New `plom-build rubric` subcommand can upload/download rubric lists from the server.
+
+### Changed
+* The left-hand-on-mouse option has been removed from annotator/marker - replaced with general key-binding options.
+* Significant changes to rubrics: now shared between users and can be grouped into "tabs" within the user interface.
+* Client: "Deltas" are now a special kind of rubric with their own tab.
+* New client default keybindings involve a "spatial navigation" metaphor: left-right between tabs, up-down between rubrics.
+* Rubrics are not longer saved on disc on client systems.
+* Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
+* Client: The escape-key will now cancel an annotation mid-draw (box, ellipse, line, arrows, rubric)
+* Client: There is no longer an explicit choice of "marking up/down mode" - it is determined by the rubrics used.
+* Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
+
+
+## [0.5.21] - 2021-03-18
+
+### Changed
+* Server has more flexibility in creating demo/auto users with `--auto` and new `--auto-named`.
+
+### Fixed
+* Misc fixes.
+
+
+## [0.5.19] - 2021-03-09
+
+### Changed
+* Client rubrics list can no longer use drag-n-drop to reorder: this feature will return in 0.6.0, but for now its too buggy.
+
+### Fixed
+* Misc bug fixes and UI tweaks.
+* LaTeX appears smoother on non-white backgrounds.
+* Important dependency bumps including a aiohttp security fix.
+
+
+## [0.5.18] - 2021-03-02
+
+### Added
+* Client shows path information in the Options dialog.
+* Server: one can defer choosing number of papers until the classlist is uploaded by using "-1" for numberToName and/or numberToPrint.
+
+### Changed
+* Client background/uploader can operate in parallel.
+* Client no longer looks for config file in the current folder.  The Options dialog shows config and log locations.
+
+
+## [0.5.17] - 2021-02-10
+
+### Added
+* `plom-hwscan -q all` will upload a paper to all questions, a common operation for self-scanned work.
+
+### Fixed
+* Fix a crash with rearranger dialog revisiting a view with re-orientated pages.
+* Rearranger dialog can load previously re-oriented pages.
+* Misc fixes.
+
+
+## [0.5.16] - 2021-01-29
+
+### Changed
+* Rotations in the adjust-pages dialog are now done in metadata.
+
+### Fixed
+* Client: fixed regression loading the default comment file.
+* Improve testing of minimum versions of dependencies.
+
+
+## [0.5.15] - 2021-01-25
+
+### Added
+* Annotation colour defaults to red but can be changed in the Annotator menu.
+
+### Changed
+* Untested scikit-learn used by default for digit recognition.  Tensorflow code still present and could return as default, after someone tests both on real data.
+* Client: Ctrl-return forces LaTeX rendering of text annotations.
+* Client: saves config file and comments in a central location.
+
+### Fixed
+* Flatpak client can save config and comment files.
+* Fixed paper generation by working around a bug present in certain versions of `pymupdf` library.
+
+
+## [0.5.13] - 2021-01-06
+
+### Fixed
+* Patched a memory leak when using the "adjust pages" dialog.
+* Small fixes for various crashes.
+
+
+## [0.5.11] - 2020-12-16
+
+### Added
+* `plom-hwscan` can now upload pages to multiple questions, for use with self-scanned work.
+
+### Changed
+* `plom-build make` now outputs a csv file showing the test numbers, question/page versions and student-info if named paper.
+* `plom-build make --without-qr` builds pdf files without QR codes stamped on them.
+* `plom-build make --no-pdf` builds everything but the PDF files are 0-length files.
+
+### Fixed
+* Adjust-Pages: fix deduping when shared page not included in current question.
+* Fixed some times in manager tool.
+
+
+## [0.5.10] - 2020-12-06
+
+### Fixed
+* Various fixes and minor refactoring.
+
+
+## [0.5.9] - 2020-11-27
+
+### Changed
+* Adjust Pages dialog labels pages that are shared between questions.
+* Minor UI tweaks.
+
+### Fixed
+* Fixed a platform-specific crash on start-up due to invalid chars in log filename.
+
+
+## [0.5.8] - 2020-11-25
+
+### Added
+* Annotator: shift-drag with comment tool draws a highlighting box which is then connected to the rubric element.
+* Annotator: page now has a margin to allow more space for annotations.  The additional space is cropped on submission.
+* Finishing tools: support salted hashes for return codes on the command line.
+
+### Changed
+* Accept QR-coded pages that are landscape.
+* Returned PDF files are often much smaller b/c reassembly now tries both png and jpeg.
+* Server: more logging during authentication, including client version.
+* Adjust Pages: dialog allows multiple selections for add/remove.
+* Adjust Pages: you can have no pages transiently while re-arranging.
+* Adjust Pages: icons resize automatically on dialog resize.
+* Adjust Pages: middle bar can be dragged to resize top or bottom list.
+* Client generates log files by default (disable under More Options).
+
+### Fixed
+* Misc fixes and refactoring of the `pagescene` code.
+* API: refactoring for simpler image download code.
+* Adjust Pages: re-entering dialog shows the current state instead of the original state.
+
+
+## [0.5.7] - 2020-11-07
+
+### Fixed
+* Fix stale-pages from previous papers appearing in the Adjust Pages dialog.
+
+
+## [0.5.6] - 2020-11-06
+
+### Added
+* Preliminary support for changing the overall scale of annotations; adjust using the menu/shortcut keys.
+
+### Changed
+* "Rearrange Pages" is now called "Adjust Pages" with a more prominent button.
+
+### Fixed
+* "Adjust Pages" dialog now opens faster, in some cases much faster.
+* Other misc fixes and minor UI tweaks.
+
+
+## [0.5.5] - 2020-10-23
+
+### Changed
+* Fix crash when drag-and-drop comments.
+
+
+## [0.5.3] - 2020-10-22
+
+### Added
+* Scan now has command line arguments to enable/disable bitmap (jpeg) extraction.
+* Server now logs failed token authentication events.
+
+### Changed
+* Opening the "Rearrange Pages" dialog displays a wait cursor as it may take some time.
+* New command line arguments for `plom-finish` for digital return.
+* Canvas-related return code handing reduced from 12 digits to 9 by default.
+* Scan white balancing disabled by default (now matches `hwscan` behaviour).
+* Scan bitmap extraction disabled by default (again to match `hwscan`).
+* The database now creates Annotation entries upon client submission rather than task assignment.
+
+### Fixed
+* Fixed drag-and-drop reordering of the rubric/comment list.
+* Fixed a bug where reannotating a reannotated paper from previous session doubled the underlying pages.
+* Various bug fixes.
+
+
+## [0.5.2] - 2020-10-06
+
+### Added
+* A collection of utility scripts now ships in `share/plom/contrib`.
+
+### Changed
+* Command-line utilities can load credentials from environment variables.
+
+### Fixed
+* There are now constraints on the returned image resolution preventing huge return images in some cases.
+* Fixed crashes related to deleting comments.
+* Various bug fixes.
+
+
+## [0.5.1] - 2020-09-25
+
+### Added
+* Annotator: Ctrl-r shortcut key for Rearrange Pages tool.
+
+### Changed
+* `plom-hwscan` has command line arguments for gamma shift, off by default as it sometimes worsens already poor scans with large shadows.
+* `plom-hwscan` does not extract jpeg's by default (it may in the future).
+* `plom-hwscan` has new command line arguments for jpeg extraction.
+
+### Fixed
+* Workaround for bug in PyMuPDF 1.17.6.
+* Various packaging improvements and fixes.
+* "Rearrange Pages" dialog resizing improved.
+
+
+## [0.5.0] - 2020-08-26
+
+### Added
+* Client now has a menu button for less-commonly used commands.
+* Client can now insert small images, see "insert image" in menu.
+* Client has experimental "Rearrange pages" dialog to fine-tune page selection and layout.
+* We again offer prebuilt client binaries for some OSes.
+* Server has new experimental "Homework mode" to deal with student-scanned images.
+* Server can use Scikit-learn (instead of the default TensorFlow) for reading student numbers.
+
+### Changed
+* Command line utilities can report their version.
 * Example demo data uses handwritten digits instead of fonts.
 * Annotator remains open between papers.
+* Totaller client was removed.
+* ID-subclient - student name + id is entered in single field which auto-completes on both.
+* Client sidebar can be set to the left or right (independent of mouse handedness).
+* Grades output filename is now "marks.csv".
+* Changes to various command-line tools to streamline uploading and other operations.
+* Scanning is now based more strongly on concept of "bundles" of papers.
+* Most tools now interact with the server via the API instead of using the file system.
+* Server docker image uses pinned dependency information for reproducibility.* Server, Manager and Client handling of "unknown" pages has improved.
+* Client has visual feedback for ctrl-, shift- tool alternatives via mouse cursor.
+* Various client UI tweaks.
+* Various improvements to the manager UI tool.
 
 ### Fixed
 * Fix left-hand mouse mode.
-* Other bug fixes.
-* Our Continuous Integration now builds client binaries for development testing and eventual release.
+* Annotation font sizes no longer directly depend on UI font size (but some issues still remain).
+* Pan mode no longer incorrectly moves objections.
+* Many other bug fixes.
 
 
 ## [0.4.2] - 2020-04-21
@@ -188,11 +461,34 @@ in most cases.
 
 This is the first release of Plom, PaperLess Open Marking.
 
-[Unreleased]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.2...master
-[0.4.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.1...v0.4.2
-[0.4.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.4.0...v0.4.1
-[0.4.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.3.0...v0.4.0
-[0.3.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.2...v0.3.0
-[0.2.2]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.1...v0.2.2
-[0.2.1]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.2.0...v0.2.1
-[0.2.0]: https://gitlab.math.ubc.ca/andrewr/MLP/compare/v0.1.0...v0.2.0
+
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.6.3...master
+[0.6.3]: https://gitlab.com/plom/plom/compare/v0.6.2...v0.6.3
+[0.6.2]: https://gitlab.com/plom/plom/compare/v0.6.1...v0.6.2
+[0.6.1]: https://gitlab.com/plom/plom/compare/v0.6.0...v0.6.1
+[0.6.0]: https://gitlab.com/plom/plom/compare/v0.5.21...v0.6.0
+[0.5.21]: https://gitlab.com/plom/plom/compare/v0.5.19...v0.5.21
+[0.5.19]: https://gitlab.com/plom/plom/compare/v0.5.18...v0.5.19
+[0.5.18]: https://gitlab.com/plom/plom/compare/v0.5.17...v0.5.18
+[0.5.17]: https://gitlab.com/plom/plom/compare/v0.5.16...v0.5.17
+[0.5.16]: https://gitlab.com/plom/plom/compare/v0.5.15...v0.5.16
+[0.5.15]: https://gitlab.com/plom/plom/compare/v0.5.13...v0.5.15
+[0.5.13]: https://gitlab.com/plom/plom/compare/v0.5.11...v0.5.13
+[0.5.11]: https://gitlab.com/plom/plom/compare/v0.5.10...v0.5.11
+[0.5.10]: https://gitlab.com/plom/plom/compare/v0.5.9...v0.5.10
+[0.5.9]: https://gitlab.com/plom/plom/compare/v0.5.8...v0.5.9
+[0.5.8]: https://gitlab.com/plom/plom/compare/v0.5.7...v0.5.8
+[0.5.7]: https://gitlab.com/plom/plom/compare/v0.5.6...v0.5.7
+[0.5.6]: https://gitlab.com/plom/plom/compare/v0.5.5...v0.5.6
+[0.5.5]: https://gitlab.com/plom/plom/compare/v0.5.3...v0.5.5
+[0.5.3]: https://gitlab.com/plom/plom/compare/v0.5.2...v0.5.3
+[0.5.2]: https://gitlab.com/plom/plom/compare/v0.5.1...v0.5.2
+[0.5.1]: https://gitlab.com/plom/plom/compare/v0.5.0...v0.5.1
+[0.5.0]: https://gitlab.com/plom/plom/compare/v0.4.2...v0.5.0
+[0.4.2]: https://gitlab.com/plom/plom/compare/v0.4.1...v0.4.2
+[0.4.1]: https://gitlab.com/plom/plom/compare/v0.4.0...v0.4.1
+[0.4.0]: https://gitlab.com/plom/plom/compare/v0.3.0...v0.4.0
+[0.3.0]: https://gitlab.com/plom/plom/compare/v0.2.2...v0.3.0
+[0.2.2]: https://gitlab.com/plom/plom/compare/v0.2.1...v0.2.2
+[0.2.1]: https://gitlab.com/plom/plom/compare/v0.2.0...v0.2.1
+[0.2.0]: https://gitlab.com/plom/plom/compare/v0.1.0...v0.2.0

@@ -14,8 +14,10 @@ numberOfVersions = 2
 # how many pages
 numberOfPages = 6
 # total number of papers to produce
+# (set to "-1" to use length of classlist + 10%)
 numberToProduce = 20
-# how many of those should be preprinted with names from a classlist - typically 0.
+# how many of those should be preprinted with names from a classlist
+# (again set to "-1" to use the length of the classlist)
 numberToName = 10
 # how many questions to mark
 numberOfQuestions = 3
@@ -30,6 +32,7 @@ pages = [2]  # can be an empty list.
 
 # Now the actual questions (groups of pages) to be marked
 # [question.n] with n a positive integer [1, 2, 3, ... etc] - contiguous please.
+# label = string such as "1", "Q2", or "Exercise 7.3".  Defaults to "Qn" if omitted.
 # pages = [4, 5, 6] - contiguous ordered list of positive integers.
 # mark = positive integer, the marks for this question.
 # select = "shuffle" or "fix".
@@ -42,11 +45,13 @@ mark = 5
 select = "shuffle"
 
 [question.2]
+label = "Q(2)"
 pages = [4]
 mark = 10
 select = "fix"
 
 [question.3]
+label = "Ex.3"
 pages = [5, 6]
 mark = 10
 select = "shuffle"

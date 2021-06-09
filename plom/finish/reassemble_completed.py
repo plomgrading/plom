@@ -1,24 +1,22 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
 
 import getpass
 import os
-import shlex
-import subprocess
+from pathlib import Path
 from multiprocessing import Pool
+
 from tqdm import tqdm
 
+from plom import get_question_label
+from plom.messenger import FinishMessenger
+from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish.locationSpecCheck import locationAndSpecCheck
 from .coverPageBuilder import makeCover
 from .examReassembler import reassemble
 
-from plom.messenger import FinishMessenger
-from plom.plom_exceptions import *
-from plom.finish.locationSpecCheck import locationAndSpecCheck
 
 numberOfQuestions = 0
 
@@ -35,7 +33,7 @@ def _parfcn(z):
         reassemble(*y)
 
 
-def build_cover_page(msgr, outDir, t, maxMarks):
+def build_cover_page_data(msgr, outDir, t, maxMarks):
     """Builds the information used to create cover pages.
 
     Args:
@@ -45,17 +43,19 @@ def build_cover_page(msgr, outDir, t, maxMarks):
         maxMarks (dict): Maxmarks per question str -> int.
 
     Returns:
-        tuple : (testnumber, sname, sid, arg)
+        tuple: (testnumber, sname, sid, tab) where `tab` is a table with
+            rows `[q_label, ver, mark, max_mark]`.
     """
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
     cpi = msgr.RgetCoverPageInfo(t)
+    spec = msgr.get_spec()
     sid = cpi[0][0]
     sname = cpi[0][1]
     # for each Q [q, v, mark, maxPossibleMark]
     arg = []
     for qvm in cpi[1:]:
-        # append quads of [q,v,m,Max]
-        arg.append([qvm[0], qvm[1], qvm[2], maxMarks[str(qvm[0])]])
+        question_label = get_question_label(spec, qvm[0])
+        arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     return (int(t), sname, sid, arg)
 
 
@@ -76,9 +76,11 @@ def reassemble_test_CMD(msgr, short_name, out_dir, t, sid):
     if len(fnames) == 0:
         # TODO: what is supposed to happen here?
         return
-    covername = "coverPages/cover_{}.pdf".format(str(t).zfill(4))
+    testnumstr = str(t).zfill(4)
+    covername = "coverPages/cover_{}.pdf".format(testnumstr)
     rnames = fnames
-    outname = os.path.join(out_dir, "{}_{}.pdf".format(short_name, sid))
+    out_dir = Path(out_dir)
+    outname = out_dir / "{}_{}.pdf".format(short_name, sid)
     return (outname, short_name, sid, covername, rnames)
 
 
@@ -131,10 +133,10 @@ def main(server=None, pwd=None):
         for t in completedTests:
             if (
                 completedTests[t][0] == True
-                and completedTests[t][2] == numberOfQuestions
+                and completedTests[t][1] == numberOfQuestions
             ):
                 if identifiedTests[t][0] is not None:
-                    dat1 = build_cover_page(msgr, outDir, t, maxMarks)
+                    dat1 = build_cover_page_data(msgr, outDir, t, maxMarks)
                     dat2 = reassemble_test_CMD(
                         msgr, shortName, outDir, t, identifiedTests[t][0]
                     )

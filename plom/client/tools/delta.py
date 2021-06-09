@@ -1,66 +1,44 @@
-from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+
+from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsTextItem, QGraphicsItem
 
 from plom.client.tools.text import CommandMoveText
 
 
-class CommandDelta(QUndoCommand):
-    # Very similar to CommandArrow
-    # But must send new mark to scene
-    def __init__(self, scene, pt, delta, fontsize):
-        super(CommandDelta, self).__init__()
-        self.scene = scene
-        self.pt = pt
-        self.delta = delta
-        self.delItem = DeltaItem(self.pt, self.delta, fontsize)
-        self.setText("Delta")
-
-    def redo(self):
-        # Mark increased by delta
-        self.scene.changeTheMark(self.delta, undo=False)
-        self.delItem.flash_redo()
-        self.scene.addItem(self.delItem)
-
-    def undo(self):
-        # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.delta, undo=True)
-        self.delItem.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.delItem))
-
-
 class DeltaItem(QGraphicsTextItem):
-    # Similar to textitem
-    def __init__(self, pt, delta, fontsize=10):
-        super(DeltaItem, self).__init__()
+    def __init__(self, pt, delta, style, fontsize=10):
+        super().__init__()
         self.saveable = True
-        self.animator = [self]
-        self.animateFlag = False
-        self.thick = 2
         self.delta = delta
-        self.setDefaultTextColor(Qt.red)
+        self.restyle(style)
         self.setPlainText(" {} ".format(self.delta))
-        self.font = QFont("Helvetica")
+        font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSizeF(1.25 * fontsize)
-        self.setFont(self.font)
+        font.setPixelSize(1.25 * fontsize)
+        self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        # Has an animated border for undo/redo.
-        self.anim = QPropertyAnimation(self, b"thickness")
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()
         self.offset = -cr.height() / 2
         self.moveBy(0, self.offset)
 
+    def restyle(self, style):
+        self.normal_thick = style["pen_width"]
+        self.thick = self.normal_thick
+        self.setDefaultTextColor(style["annot_color"])
+
     def paint(self, painter, option, widget):
-        if not self.collidesWithItem(
-            self.scene().underImage, mode=Qt.ContainsItemShape
-        ):
-            if self.group() is None:
+        if not self.scene().itemWithinBounds(self):
+            if self.group() is None:  # make sure not part of a GDT
                 painter.setPen(QPen(QColor(255, 165, 0), 4))
                 painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
@@ -68,32 +46,16 @@ class DeltaItem(QGraphicsTextItem):
                 painter.drawRoundedRect(option.rect, 10, 10)
         else:
             # paint the background
-            painter.setPen(QPen(Qt.red, self.thick))
+            painter.setPen(QPen(self.defaultTextColor(), self.thick))
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
-        super(DeltaItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)
 
     def itemChange(self, change, value):
         if change == QGraphicsItem.ItemPositionChange and self.scene():
             command = CommandMoveText(self, value)
             self.scene().undoStack.push(command)
-        return QGraphicsTextItem.itemChange(self, change, value)
-
-    def flash_undo(self):
-        # Animate border when undo thin->thick->none
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 8)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        # Animate border when undo thin->med->thin
-        self.anim.setDuration(200)
-        self.anim.setStartValue(2)
-        self.anim.setKeyValueAt(0.5, 4)
-        self.anim.setEndValue(2)
-        self.anim.start()
+        return super().itemChange(change, value)
 
     def pickle(self):
         return [
@@ -103,36 +65,32 @@ class DeltaItem(QGraphicsTextItem):
             self.scenePos().y() - self.offset,
         ]
 
-    # For the animation of border
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.thick
-
-    # For the animation of border
-    @thickness.setter
-    def thickness(self, value):
-        self.thick = value
-        self.update()
-
 
 class GhostDelta(QGraphicsTextItem):
-    # Similar to textitem
-    def __init__(self, delta, fontsize=10):
-        super(GhostDelta, self).__init__()
-        self.delta = int(delta)
-        self.setDefaultTextColor(Qt.blue)
+    def __init__(self, delta, fontsize=10, legal=True):
+        super().__init__()
+        self.delta = delta
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
+
         self.setPlainText(" {} ".format(self.delta))
-        self.font = QFont("Helvetica")
+        font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        self.font.setPointSizeF(1.25 * fontsize)
-        self.setFont(self.font)
+        font.setPixelSize(1.25 * fontsize)
+        self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
 
-    def changeDelta(self, dlt):
+    def changeDelta(self, dlt, legal=True):
         self.delta = dlt
         self.setPlainText(" {} ".format(self.delta))
+        if legal:
+            self.setDefaultTextColor(Qt.blue)
+        else:
+            self.setDefaultTextColor(Qt.lightGray)
 
     def paint(self, painter, option, widget):
         # paint the background

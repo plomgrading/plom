@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -10,9 +10,85 @@ import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
-from plom.db.tables import *
+from plom.db.tables import (
+    Annotation,
+    Bundle,
+    DNMGroup,
+    Group,
+    IDGroup,
+    QGroup,
+    Rubric,
+    Test,
+    TPage,
+    User,
+)
+from plom.db.tables import plomdb
 
 log = logging.getLogger("DB")
+
+
+########## Bundle creation ##########
+
+
+def createReplacementBundle(self):
+    try:
+        bref = Bundle.create(name="replacements")
+    except pw.IntegrityError as e:
+        log.error("Create replacement page bundle = {}.{} error - {}".format(e))
+        return False
+    return True
+
+
+def doesBundleExist(self, bundle_name, md5):
+    """
+    Checks if bundle with name=bundle_name or md5sum=md5 exists.
+    4 possibilities
+    * neither = no matching bundle, return [False]
+    * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
+    * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
+    * both match = return [True, 'both'] - user could be retrying after
+      network failure (for example) or uploading unknown or colliding
+      pages.
+    """
+    # check if that bundle-name is on file, and if the md5sum is known.
+    bref = Bundle.get_or_none(name=bundle_name)
+    if bref is not None:
+        if bref.md5sum == md5:
+            # name and md5sum match one in system
+            # probably a crash occurred, so also return all the bundle_orders known in this bundle
+            skip_list = []
+            for iref in bref.images:
+                skip_list.append(iref.bundle_order)
+            return [True, "both", skip_list]
+
+        else:
+            return [True, "name"]
+    # name not known, so just check md5sum
+    if Bundle.get_or_none(md5sum=md5) is not None:
+        return [True, "md5sum"]
+    return [False, "no such bundle"]
+
+
+def createNewBundle(self, bundle_name, md5):
+    """
+    Checks to see if bundle exists using 'doesBundleExist'.
+    If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+    If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
+    If no such bundle return [True, []] - create the bundle and return an empty skip-list.
+    """
+    # use the doesBundleExist command logic to sanity check
+    bundle_check = self.doesBundleExist(bundle_name, md5)
+    if bundle_check[0] is False:
+        Bundle.create(name=bundle_name, md5sum=md5)
+        return [True, []]
+    elif bundle_check[1] == "both":  # return [True, skip-list]
+        bref = Bundle.get_or_none(name=bundle_name, md5sum=md5)
+        skip_list = []
+        for iref in bref.images:
+            skip_list.append(iref.bundle_order)
+        return [True, skip_list]
+    else:
+        return [False, bundle_check[1]]
 
 
 ########## Test creation stuff ##############
@@ -25,15 +101,13 @@ def nextqueue_position(self):
     lastPos = Group.select(fn.MAX(Group.queue_position)).scalar()
     if lastPos is None:
         return 0
-    else:
-        return lastPos + 1
+    return lastPos + 1
 
 
 def createTest(self, t):
     with plomdb.atomic():
         try:
             tref = Test.create(test_number=t)  # must be unique
-            sref = SumData.create(test=tref)  # also create the sum-data
         except pw.IntegrityError as e:
             log.error("Create test {} error - {}".format(t, e))
             return False
@@ -49,7 +123,11 @@ def addTPages(self, tref, gref, t, pages, v):
         for p in pages:
             try:
                 TPage.create(
-                    test=tref, group=gref, page_number=p, version=v, scanned=False,
+                    test=tref,
+                    group=gref,
+                    page_number=p,
+                    version=v,
+                    scanned=False,
                 )
             except pw.IntegrityError as e:
                 log.error("Adding page {} for test {} error - {}".format(p, t, e))
@@ -74,7 +152,7 @@ def createIDGroup(self, t, pages):
             )  # must be unique
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create Group {} of test {} error - {}".format(
+                "Create ID for gid={} test={}: cannot create Group - {}".format(
                     gid, t, e
                 )
             )
@@ -84,8 +162,8 @@ def createIDGroup(self, t, pages):
             iref = IDGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
-                    qref, gref, e
+                "Create ID for gid={} test={} Group={}: cannot create IDGroup - {}.".format(
+                    gid, t, gref, e
                 )
             )
             return False
@@ -130,13 +208,14 @@ def createDNMGroup(self, t, pages):
         return self.addTPages(tref, gref, t, pages, 1)
 
 
-def createQGroup(self, t, g, v, pages):
+def createQGroup(self, t, q, v, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         log.warning("Create Q - No test with number {}".format(t))
         return False
 
-    gid = "q{}g{}".format(str(t).zfill(4), g)
+    gid = "q{}g{}".format(str(t).zfill(4), q)
+
     with plomdb.atomic():
         # make the qgroup
         try:
@@ -155,7 +234,7 @@ def createQGroup(self, t, g, v, pages):
             )
             return False
         try:
-            qref = QGroup.create(test=tref, group=gref, question=g, version=v)
+            qref = QGroup.create(test=tref, group=gref, question=q, version=v)
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(
@@ -191,9 +270,23 @@ def getPageVersions(self, t):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         return {}
-    else:
-        pvDict = {p.page_number: p.version for p in tref.tpages}
-        return pvDict
+    return {p.page_number: p.version for p in tref.tpages}
+
+
+def getQuestionVersions(self, t):
+    """Get the mapping between question numbers and versions for a test.
+
+    Args:
+        t (int): a paper number.
+
+    Returns:
+        dict: keys are question numbers (int) and value is the question
+            version (int), or empty dict if there was no such paper.
+    """
+    tref = Test.get_or_none(test_number=t)
+    if tref is None:
+        return {}
+    return {q.question: q.version for q in tref.qgroups}
 
 
 def produceTest(self, t):
@@ -275,3 +368,42 @@ def id_paper(self, paper_num, user_name, sid, sname):
             )
         )
     return True, None, None
+
+
+### Create some default rubrics
+def createNoAnswerRubric(self, questionNumber, maxMark):
+    """Create rubrics for when no answer given for question
+
+    Each question needs one such rubric
+
+    Args:
+        questionNumber (int)
+        maxMark: the max mark for that question
+
+    Returns:
+        Bool: True if successful, False if rubric already exists.
+    """
+    rID = 1000 + questionNumber
+    uref = User.get(name="HAL")
+
+    if Rubric.get_or_none(rID) is None:
+        Rubric.create(
+            key=rID,
+            delta="0",
+            text="No answer given",
+            kind="absolute",
+            question=questionNumber,
+            user=uref,
+            creationTime=datetime.now(),
+            modificationTime=datetime.now(),
+        )
+        log.info("Created no-answer-rubric for question {}".format(questionNumber))
+    else:
+        log.info(
+            "No-answer-rubric (up) for question {} already exists".format(
+                questionNumber
+            )
+        )
+        return False
+
+    return True

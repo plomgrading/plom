@@ -1,14 +1,17 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020 Vala Vakilian
+
+import logging
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QResizeEvent, QTransform
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QDialog,
+    QFrame,
     QFormLayout,
     QHBoxLayout,
     QGridLayout,
@@ -19,65 +22,116 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSplitter,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    QSpacerItem,
+    QSizePolicy,
+    QToolButton,
 )
-from .uiFiles.ui_test_view import Ui_TestView
+
 from .examviewwindow import ExamViewWindow
-from .useful_classes import SimpleMessage
+from .uiFiles.ui_test_view import Ui_TestView
+from .useful_classes import ErrorMessage, SimpleMessage
+
+
+log = logging.getLogger("viewerdialog")
 
 
 class SourceList(QListWidget):
+    """An immutable ordered list of possible pages from the server.
+
+    Some of them may be hidden at any time (e.g., when they are in
+    the other Sink List), but they cannot currently be removed or
+    added too.  In particular, no changes in the Adjust Pages dialog
+    directly make it back to the server.
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setFlow(QListView.LeftToRight)
-        self.setIconSize(QSize(128, 128))
-        self.setSpacing(16)
+        self.setIconSize(QSize(320, 320))
+        self.setSpacing(8)
         self.setWrapping(False)
         self.itemDoubleClicked.connect(self.viewImage)
-        self.originalItems = {}
-        self.potentialItems = {}
+        self.item_positions = {}
+        self.item_files = {}
+        self.item_orientation = {}
+        # self.setSelectionMode(QListView.SingleSelection)
 
-    def addOriginalItem(self, p, pfile):
+    def resizeEvent(self, whatev):
+        A = self.size()
+        x = min(A.width(), A.height())
+        # TODO: must be a way to not hardcode 50 here
+        # TODO: also compensate for scrollbars or not
+        B = QSize(x - 50, x - 50)
+        self.setIconSize(B)
+
+    def addImageItem(self, p, pfile, belongs):
+        current_row = self.count()
         name = str(p)
-        self.addItem(QListWidgetItem(QIcon(pfile), name))
-        self.originalItems[name] = pfile
+        it = QListWidgetItem(QIcon(pfile), name)
+        if belongs:
+            it.setBackground(QBrush(Qt.darkGreen))
+        self.addItem(it)  # item is added at current_row
+        self.item_positions[name] = current_row
+        self.item_files[name] = pfile
+        self.item_orientation[name] = 0
 
-    def addPotentialItem(self, p, pfile):
-        name = str(p)
-        self.potentialItems[name] = pfile
+    def hideItemByName(self, name=None):
+        """Removes (hides) a single named item from source-list.
 
-    def removeItem(self):
-        cr = self.currentRow()
-        ci = self.takeItem(cr)
+        Returns:
+            str: The name of the item we just hid.  If the item was
+                already hidden, we still return name here.
+        """
+        if name is None:
+            raise ValueError("You must provide the 'name' argument")
+
+        ci = self.item(self.item_positions[name])
+
         if ci is None:
             return None
+        ci.setHidden(True)
         self.setCurrentItem(None)
+        assert ci.text() == name, "Something has gone very wrong: expect match"
         return ci.text()
 
-    def returnItem(self, name):
-        if name in self.originalItems:
-            self.addItem(QListWidgetItem(QIcon(self.originalItems[name]), name))
-        elif name in self.potentialItems:
-            it = QListWidgetItem(QIcon(self.potentialItems[name]), name)
-            it.setBackground(QBrush(Qt.darkGreen))
-            self.addItem(it)
-        else:
-            return
-        self.sortItems()
+    def hideSelectedItems(self):
+        """Hides the selected items and passes back name list."""
+        name_list = []
+        for ci in self.selectedItems():
+            ci.setHidden(True)
+            name_list.append(ci.text())
+        self.setCurrentItem(None)
+        return name_list
+
+    def unhideNamedItems(self, name_list):
+        """Unhide the name list of items."""
+        for name in name_list:
+            ci = self.item(self.item_positions[name])
+            if ci:
+                ci.setHidden(False)
 
     def viewImage(self, qi):
-        self.parent.viewImage(self.originalItems[qi.text()])
+        self.parent.viewImage(self.item_files[qi.text()])
 
 
 class SinkList(QListWidget):
+    """An ordered list of pages for this task.
+
+    This holds the current view of pages we're considering for this
+    task.  They can be reordered, removed (and visually put back in
+    the SourceList), rotated, etc.
+    """
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
@@ -85,51 +139,59 @@ class SinkList(QListWidget):
         self.setFlow(QListView.LeftToRight)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
-        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.setFlow(QListView.LeftToRight)
         # self.setResizeMode(QListView.Adjust)
-        self.setIconSize(QSize(128, 128))
-        self.setSpacing(16)
+        self.setIconSize(QSize(320, 320))
+        self.setSpacing(8)
         self.setWrapping(False)
-        self.originalItems = {}
-        self.potentialItems = {}
+        self.item_belongs = (
+            {}
+        )  # whether or not the item 'officially' belongs to the question
+        self.item_files = {}
+        self.item_orientation = {}
         self.itemDoubleClicked.connect(self.viewImage)
+        # self.setSelectionMode(QListView.SingleSelection)
 
-    def addOriginalItem(self, p, pfile):
+    def resizeEvent(self, whatev):
+        A = self.size()
+        x = min(A.width(), A.height())
+        # TODO: must be a way to not hardcode 50 here
+        B = QSize(x - 50, x - 50)
+        self.setIconSize(B)
+
+    def addPotentialItem(self, p, pfile, belongs):
         name = str(p)
-        it = QListWidgetItem(QIcon(pfile), name)
-        it.setBackground(QBrush(Qt.green))
-        self.addItem(it)
-        self.originalItems[name] = pfile
+        self.item_files[name] = pfile
+        self.item_orientation[name] = 0  # TODO
+        self.item_belongs[name] = belongs
 
-    def addPotentialItem(self, p, pfile):
-        name = str(p)
-        self.potentialItems[name] = pfile
-
-    def removeItem(self):
-        cr = self.currentRow()
-        ci = self.currentItem()
-        if ci is None:
-            return None
-        elif self.count() == 1:  # cannot remove all pages
-            return None
-        # elif ci.text() in self.originalItems:
-        # return None
-        else:
+    def removeSelectedItems(self):
+        """Remove the selected items and pass back a name list"""
+        name_list = []
+        # be careful removing things as list indices update as you delete.
+        sel_rows = [x.row() for x in self.selectedIndexes()]
+        for cr in reversed(sorted(sel_rows)):
             ci = self.takeItem(cr)
-            self.setCurrentItem(None)
-            return ci.text()
+            name_list.append(ci.text())
+
+        self.setCurrentItem(None)
+        return name_list
 
     def appendItem(self, name):
         if name is None:
             return
-        if name in self.potentialItems:
-            ci = QListWidgetItem(QIcon(self.potentialItems[name]), name)
-        else:
-            ci = QListWidgetItem(QIcon(self.originalItems[name]), name)
+        ci = QListWidgetItem(QIcon(self.item_files[name]), name)
+        if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
+        # TODO: workaround to force re-orientation on entry to Sink list
+        self.rotateForceRefresh(name)
         self.setCurrentItem(ci)
+
+    def appendItems(self, name_list):
+        for name in name_list:
+            self.appendItem(name)
 
     def shuffleLeft(self):
         cr = self.currentRow()
@@ -156,28 +218,66 @@ class SinkList(QListWidget):
             self.insertItem(n, ri)
             self.insertItem(rc - n - 1, li)
 
-    def rotateImage(self, angle=90):
-        ci = self.currentItem()
-        name = ci.text()
+    def rotateSelectedImages(self, angle=90):
+        """Iterate over selection, rotating each image"""
+        for i in self.selectedIndexes():
+            ci = self.item(i.row())
+            name = ci.text()
+            self.rotateItemBy(name, angle)
+        self.parent.update()
+        # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
+        self.setFlow(QListView.LeftToRight)
+
+    def rotateForceRefresh(self, name):
+        """Force an item to visually update its rotate.
+
+        TODO: make this unnecessary and remove it!  Icons should know
+        how to display themselves properly.
+        """
+        angle = self.item_orientation[name]
+        if angle == 0:
+            return
+        log.info("Forcing orientation to %s", format(angle))
+        self.rotateItemTo(name, angle)
+
+    def rotateItemBy(self, name, delta_angle):
+        """Rotate image by an angle relative to its current state.
+
+        args:
+            name (str)
+            delta_angle (int)
+        """
+        angle = self.item_orientation[name]
+        angle = (angle + delta_angle) % 360
+        self.rotateItemTo(name, angle)
+
+    def rotateItemTo(self, name, angle):
+        """Rotate image to a particular orientation.
+
+        args:
+            name (str)
+            angle (int)
+        """
+        self.item_orientation[name] = angle
         rot = QTransform()
         rot.rotate(angle)
-
-        if name in self.potentialItems:
-            rname = self.potentialItems[name]
-        else:
-            rname = self.originalItems[name]
-
-        cpix = QPixmap(rname)
+        # TODO: instead of loading pixmap again, can we tranform the QIcon?
+        # Also, docs warned QPixmap.transformed() is slow
+        rfile = self.item_files[name]
+        cpix = QPixmap(rfile)
         npix = cpix.transformed(rot)
-        npix.save(rname, format="PNG")
-
-        ci.setIcon(QIcon(rname))
+        # ci = self.item(self.item_positions[name])
+        # TODO: instead we get `ci` with a dumb loop
+        for i in range(self.count()):
+            ci = self.item(i)
+            if ci.text() == name:
+                break
+        ci.setIcon(QIcon(npix))
+        # rotpixmap = ci.getIcon().pixmap().transformed(rot)
+        # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
-        if qi.text() in self.originalItems:
-            self.parent.viewImage(self.originalItems[qi.text()])
-        else:
-            self.parent.viewImage(self.potentialItems[qi.text()])
+        self.parent.viewImage(self.item_files[qi.text()])
 
     def getNameList(self):
         nList = []
@@ -187,126 +287,508 @@ class SinkList(QListWidget):
 
 
 class RearrangementViewer(QDialog):
-    def __init__(self, parent, testNumber, pageData, pageFiles):
+    def __init__(
+        self, parent, testNumber, current_pages, page_data, need_to_confirm=False
+    ):
         super().__init__()
         self.parent = parent
         self.testNumber = testNumber
-        self.numberOfPages = len(pageFiles)
-
-        self.setupUI()
-        self.pageData = pageData
-        self.pageFiles = pageFiles
+        self.need_to_confirm = need_to_confirm
+        self._setupUI()
+        page_data = self.dedupe_by_md5sum(page_data)
+        self.pageData = page_data
         self.nameToIrefNFile = {}
-        # note pagedata  triples [name, image-ref, true/false]
-        self.populateList()
+        if current_pages:
+            self.populateListWithCurrent(current_pages)
+        else:
+            self.populateListOriginal()
 
-    def setupUI(self):
+    def _setupUI(self):
+        """
+        Sets up thee UI for the rearrangement Viewer.
 
+        Notes:
+             helper method for __init__
+
+        Returns:
+            None
+        """
         self.scrollA = QScrollArea()
         self.listA = SourceList(self)
+        self.listA.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollA.setWidget(self.listA)
         self.scrollA.setWidgetResizable(True)
         self.scrollB = QScrollArea()
         self.listB = SinkList(self)
+        self.listB.itemSelectionChanged.connect(self.show_relevant_tools)
         self.scrollB.setWidget(self.listB)
         self.scrollB.setWidgetResizable(True)
 
-        self.appendB = QPushButton("Append")
-        self.removeB = QPushButton("Remove")
-        self.sLeftB = QPushButton("Shuffle Left")
-        self.sRightB = QPushButton("Shuffle Right")
+        self.appendB = QToolButton()
+        # TODO: move &A here and use alt-Enter to Accept dialog?
+        self.appendB.setText("Add &Page(s)")
+        self.appendB.setArrowType(Qt.DownArrow)
+        self.appendB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.removeB = QToolButton()
+        self.removeB.setArrowType(Qt.UpArrow)
+        self.removeB.setText("&Remove Page(s)")
+        self.removeB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.sLeftB = QToolButton()
+        self.sLeftB.setArrowType(Qt.LeftArrow)
+        self.sLeftB.setText("Shift Left")
+        self.sLeftB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.sRightB = QToolButton()
+        self.sRightB.setArrowType(Qt.RightArrow)
+        self.sRightB.setText("Shift Right")
+        self.sRightB.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.reverseB = QPushButton("Reverse Order")
-        self.rotateB = QPushButton("Rotate 90 (local copy only)")
+        self.revertB = QPushButton("Revert to original state")
+        self.revertB.clicked.connect(self.populateListOriginal)
 
-        self.page = ExamViewWindow([])
+        self.rotateB_cw = QPushButton("\N{Clockwise Open Circle Arrow} Rotate CW")
+        self.rotateB_ccw = QPushButton("\N{Anticlockwise Open Circle Arrow} Rotate CCW")
 
-        self.closeB = QPushButton("Close")
-        self.acceptB = QPushButton("Accept new layout")
+        self.closeB = QPushButton("&Cancel")
+        self.acceptB = QPushButton("&Accept")
 
         self.permute = [False]
 
-        hb0 = QHBoxLayout()
-        vb1 = QVBoxLayout()
-        vb1.addWidget(self.scrollA)
-        vb1.addWidget(self.scrollB)
-        hb1 = QHBoxLayout()
-        hb1.addWidget(self.sLeftB)
-        hb1.addWidget(self.reverseB)
-        hb1.addWidget(self.sRightB)
-        vb2 = QVBoxLayout()
-        vb2.addWidget(self.appendB)
-        vb2.addWidget(self.removeB)
-        vb2.addLayout(hb1)
-        vb3 = QVBoxLayout()
-        vb3.addWidget(self.acceptB)
-        vb3.addLayout(vb2)
-        vb3.addWidget(self.rotateB)
-        vb3.addWidget(self.closeB)
-        hb0.addLayout(vb1)
-        hb0.addLayout(vb3)
-        hb0.addWidget(self.page)
+        def GrippyMcGrab():
+            """Grippy bars to spice-up QSplitterHandles."""
+            width = 64
+            pad = 20
+            hb = QHBoxLayout()
+            hb.addItem(
+                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            )
+            vb = QVBoxLayout()
+            hb.addLayout(vb)
+            hb.addItem(
+                QSpacerItem(pad, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            )
 
-        hb0.setStretch(0, 2)
-        hb0.setStretch(2, 3)
-        self.setLayout(hb0)
+            vb.setContentsMargins(0, 1, 0, 1)
+            vb.setSpacing(2)
+            vb.addItem(
+                QSpacerItem(
+                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                )
+            )
+            for i in range(3):
+                f = QFrame()
+                f.setFrameShape(QFrame.HLine)
+                f.setFrameShadow(QFrame.Sunken)
+                vb.addWidget(f)
+            vb.addItem(
+                QSpacerItem(
+                    width, 3, QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+                )
+            )
+            return hb
+
+        hb3 = QHBoxLayout()
+        self.tools = QFrame()
+        hb = QHBoxLayout()
+        self.tools.setLayout(hb)
+        hb.setContentsMargins(0, 0, 0, 0)
+        hb.addWidget(self.rotateB_ccw)
+        hb.addWidget(self.rotateB_cw)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.sLeftB)
+        hb.addWidget(self.sRightB)
+        hb.addItem(QSpacerItem(16, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb3.addWidget(self.tools)
+        hb3.addWidget(self.reverseB)
+        hb3.addItem(
+            QSpacerItem(16, 20, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        )
+        hb3.addWidget(self.acceptB)
+        hb3.addWidget(self.closeB)
+
+        allPages = QLabel("Other Pages in Exam")
+        thisQuestion = QLabel("Pages for this Question")
+
+        # center add/remove buttons on label row
+        hb1 = QHBoxLayout()
+        hb1.addWidget(thisQuestion)
+        hb1.addLayout(GrippyMcGrab())
+        hb = QHBoxLayout()
+        hb.addWidget(self.appendB)
+        hb.addItem(QSpacerItem(64, 20, QSizePolicy.Minimum, QSizePolicy.Minimum))
+        hb.addWidget(self.removeB)
+        hb1.addLayout(hb)
+        hb1.addLayout(GrippyMcGrab())
+        hb1.addWidget(self.revertB)
+
+        vb0 = QVBoxLayout()
+        s = QSplitter()
+        s.setOrientation(Qt.Vertical)
+        # s.setOpaqueResize(False)
+        s.setChildrenCollapsible(False)
+        s.setHandleWidth(50)  # TODO: better not to hardcode, take from children?
+        vb0.addWidget(s)
+        f = QFrame()
+        s.addWidget(f)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(vb)
+        vb.addWidget(allPages)
+        vb.addWidget(self.scrollA)
+        f = QFrame()
+        s.addWidget(f)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        f.setLayout(vb)
+        vb.addWidget(self.scrollB)
+        vb.addLayout(hb3)
+
+        handle = s.handle(1)
+        vb = QVBoxLayout()
+        vb.setContentsMargins(0, 0, 0, 0)
+        vb.setSpacing(0)
+        handle.setLayout(hb1)
+        hb1.setContentsMargins(0, 0, 0, 0)
+        # TODO: Buttons inside the splitter bar, disable drag and custom cursor
+        for b in (self.removeB, self.appendB, self.revertB):
+            b.mouseMoveEvent = lambda *args: None
+            b.setCursor(Qt.ArrowCursor)
+
+        self.setLayout(vb0)
+        self.resize(QSize(self.parent.width() * 7 / 8, self.parent.height() * 9 / 10))
 
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
         self.sRightB.clicked.connect(self.shuffleRight)
         self.reverseB.clicked.connect(self.reverseOrder)
-        self.rotateB.clicked.connect(self.rotateImage)
-        self.sRightB.clicked.connect(self.shuffleRight)
+        self.rotateB_cw.clicked.connect(lambda: self.rotateImages(90))
+        self.rotateB_ccw.clicked.connect(lambda: self.rotateImages(-90))
         self.appendB.clicked.connect(self.sourceToSink)
         self.removeB.clicked.connect(self.sinkToSource)
         self.acceptB.clicked.connect(self.doShuffle)
 
-    def populateList(self):
-        for k in range(len(self.pageData)):
-            self.nameToIrefNFile[self.pageData[k][0]] = [
-                self.pageData[k][1],
-                self.pageFiles[k],
-            ]
-            if self.pageData[k][2]:  # is a question page
-                self.listA.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
-                self.listB.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
+        allPageWidgets = [self.listA, self.listB]
+
+        self.listA.selectionModel().selectionChanged.connect(
+            lambda sel, unsel: self.singleSelect(self.listA, allPageWidgets)
+        )
+        self.listB.selectionModel().selectionChanged.connect(
+            lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
+        )
+
+    def dedupe_by_md5sum(self, pageData):
+        """Collapse entries in the pagedata with duplicated md5sums.
+
+        In the future [1], pages will be shared between questions but we
+        only want to show one copy of each such duplicated page in the
+        "Adjust pages" dialog.
+
+        [1] https://gitlab.com/plom/plom/-/merge_requests/698
+
+        The data looks like the following.  We want to compress rows that
+        have duplicated md5sums:
+        ```
+        ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
+        ['h1.2', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
+        ['h2.1', 'e224c22eda93456143fbac94beb0ffbd', False, 1, 40, '/tmp/plom_zq/tmpx0s.image]
+        ['h2.2', '97521f4122df24ca012a12930391195a', False, 2, 41, '/tmp/plom_zq/tmpd5g.image]
+        ['h2.3', 'abcd1234abcd12314717621412412444', False, 3, 42, '/tmp/plom_zq/tmp012.image]
+        ['h3.1', 'abcd1234abcd12314717621412412444', False, 1, 42, '/tmp/plom_zq/tmp012.image]
+        ```
+        (Possibly filenames are repeated for repeat md5: not required by this code.)
+
+        From this we want something like:
+        ```
+        ['h1.1 (& h2.1)', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
+        ['h1.2 (& h2.2)', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
+        ['h2.3 (& h3.1)', 'abcd1234abcd12314717621412412444', False, 3, 42, '/tmp/plom_zq/tmp012.image]
+        ```
+        where the names of duplicates are shown in parentheses.
+
+        It seems we need to keep the order as much as possible in this file, which complicates this.
+        May not be completely well-posed.  Probably better to refactor before this.  E.g., factor out
+        a dict of md5sum to filenames before we get here.
+
+        "Included" (column 3): include these in the question or maybe server
+        originally had these in the question (TODO: maybe not, True/False
+        generated on API call).
+
+        TODO: if order does not have `h1,1` first, should we move it first?
+              that is, before the parenthetical?  Probably by re-ordering
+              the list.
+        """
+        # List of lists, preserving original order within each list
+        tmp_data = []
+        for x in pageData:
+            md5 = x[1]
+            md5s_so_far = [y[0][1] for y in tmp_data]
+            if md5 in md5s_so_far:
+                i = md5s_so_far.index(md5)
+                tmp_data[i].append(x.copy())
             else:
-                self.listA.addOriginalItem(self.pageData[k][0], self.pageFiles[k])
-                self.listB.addPotentialItem(self.pageData[k][0], self.pageFiles[k])
+                tmp_data.append([x.copy()])
+
+        # Compress each list down to a single item, packing the names
+        new_pageData = []
+        # warn/log if True not in first?
+        for y in tmp_data:
+            z = y[0].copy()
+            other_names = [_[0] for _ in y[1:]]
+            if other_names:
+                z[0] = z[0] + " (& {})".format(", ".join(other_names))
+            # If any entry had True for "included", include this row
+            # TODO: or should we reorder the list, moving True to front?
+            # TODO: depends what is done with the other data
+            z[2] = any([_[2] for _ in y])
+            new_pageData.append(z)
+
+        return new_pageData
+
+    def show_relevant_tools(self):
+        """Hide/show tools based on current selections."""
+        if self.listB.selectionModel().hasSelection():
+            self.removeB.setEnabled(True)
+            self.tools.setEnabled(True)
+        else:
+            self.removeB.setEnabled(False)
+            self.tools.setEnabled(False)
+        if self.listA.selectionModel().hasSelection():
+            self.appendB.setEnabled(True)
+        else:
+            self.appendB.setEnabled(False)
+
+    def populateListOriginal(self):
+        """
+        Populates the QListWidgets with exam pages, using original server view.
+
+        Returns:
+            None: but changes the state of self.
+        """
+        self.nameToIrefNFile = {}
+        self.listA.clear()
+        self.listB.clear()
+        move_order = {}
+        for row in self.pageData:
+            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
+            # add every page image to list A
+            self.listA.addImageItem(row[0], row[5], row[2])
+            # add the potential for every page to listB
+            self.listB.addPotentialItem(row[0], row[5], row[2])
+            # if position in current annot is non-null then add to list of pages to move between lists.
+            if row[2] and row[3]:
+                move_order[row[3]] = row[0]
+        for k in sorted(move_order.keys()):
+            self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
+
+    def populateListWithCurrent(self, current):
+        """
+        Populates the QListWidgets with pages, with current state highlighted.
+
+        Args:
+            current (list): dicts with 'md5' and 'orientation' keys.
+
+        Returns:
+            None: but changes the state of self.
+        """
+        self.nameToIrefNFile = {}
+        self.listA.clear()
+        self.listB.clear()
+        for row in self.pageData:
+            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
+            # add every page image to list A
+            self.listA.addImageItem(row[0], row[5], row[2])
+            # add the potential for every page to listB
+            self.listB.addPotentialItem(row[0], row[5], row[2])
+        for kv in current:
+            match = [row[0] for row in self.pageData if row[1] == kv["md5"]]
+            assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
+            (match,) = match
+            self.listB.appendItem(self.listA.hideItemByName(match))
+            if kv["orientation"] != 0:
+                log.info("Applying orientation of %s", kv["orientation"])
+                # always display unrotated in source ListA
+                # TODO: should reflect server static info (currently always orientation = 0 but...)
+                self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
-        self.listB.appendItem(self.listA.removeItem())
+        """
+        Adds the currently selected page to the list for the current question.
+
+        Notes:
+            If currently selected page is in current question, does nothing.
+
+        Returns:
+            None
+
+        """
+        if self.listA.selectionModel().hasSelection():
+            self.listB.appendItems(self.listA.hideSelectedItems())
+        else:
+            pass
 
     def sinkToSource(self):
-        self.listA.returnItem(self.listB.removeItem())
+        """
+        Removes the currently selected page from the list for the current
+        question.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
+        if self.listB.selectionModel().hasSelection():
+            self.listA.unhideNamedItems(self.listB.removeSelectedItems())
+        else:
+            pass
 
     def shuffleLeft(self):
-        self.listB.shuffleLeft()
+        """
+        Shuffles currently selected page to the left one position.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
+        if self.listB.selectionModel().hasSelection():
+            self.listB.shuffleLeft()
+        else:
+            pass
 
     def shuffleRight(self):
-        self.listB.shuffleRight()
+        """
+        Shuffles currently selected page to the left one position.
+
+        Notes:
+            If currently selected page isn't in current question,
+            does nothing.
+
+        Returns:
+            None
+        """
+        if self.listB.selectionModel().hasSelection():
+            self.listB.shuffleRight()
+        else:
+            pass
 
     def reverseOrder(self):
+        """
+        reverses the order of the pages in current question.
+        """
         self.listB.reverseOrder()
 
-    def rotateImage(self):
-        self.listB.rotateImage()
+    def rotateImages(self, angle=90):
+        """ Rotates the currently selected page by 90 degrees."""
+        self.listB.rotateSelectedImages(angle)
 
     def viewImage(self, fname):
-        self.page.updateImage(fname)
+        """ Shows a larger view of the currently selected page."""
+        ShowExamPage(self, fname)
 
     def doShuffle(self):
-        msg = SimpleMessage(
-            "Are you sure you want to shuffle pages. This will erase all your annotations and relaunch the annotator."
-        )
-        if msg.exec() == QMessageBox.No:
+        """
+        Reorders and saves pages according to user's selections.
+
+        Returns:
+
+        """
+        if self.listB.count() == 0:
+            msg = ErrorMessage("You must have at least one page in the bottom list.")
+            msg.exec()
             return
+        if self.need_to_confirm:
+            msg = SimpleMessage(
+                "Are you sure you want to save this page order? This will erase "
+                "all your annotations."
+            )
+            if msg.exec() == QMessageBox.No:
+                return
 
         self.permute = []
         for n in self.listB.getNameList():
-            self.permute.append(self.nameToIrefNFile[n])
-            # return pairs of [iref, file]
-        print(self.permute)
+            tmp = self.nameToIrefNFile[n]
+            self.permute.append((*tmp, self.listB.item_orientation[n]))
+            # return triples of [iref, file, angle]
         self.accept()
+
+    def singleSelect(self, currentList, allPages):
+        """
+        If item selected by user isnt in currentList, deselects currentList.
+
+        Args:
+            currentList (QListWidget): the list being checked.
+            allPages (List[QListWidget]): all lists in selection
+
+        Notes:
+            from https://stackoverflow.com/questions/45509496/qt-multiple-qlistwidgets-and-only-a-single-entry-selected
+
+        Returns:
+            None
+
+        """
+        for lstViewI in allPages:
+            if lstViewI == currentList:
+                continue
+            # the check is necessary to prevent recursions...
+            if lstViewI.selectionModel().hasSelection():
+                # ...as this causes emission of selectionChanged() signal as well:
+                lstViewI.selectionModel().clearSelection()
+
+
+class ShowExamPage(QDialog):
+    """
+    Shows an expanded view of the Exam.
+    """
+
+    def __init__(self, parent, fname):
+        """
+        Initialize new exam page
+        Args:
+            parent (RearrangementViewer): Parent.
+            fname (str): file name
+
+        """
+        super(ShowExamPage, self).__init__()
+        self.setParent(parent)
+        self.setWindowFlags(Qt.Dialog)
+        grid = QGridLayout()
+        self.testImg = ExamViewWindow(fname)
+        self.closeButton = QPushButton("&Close")
+        grid.addWidget(self.testImg, 1, 1, 6, 6)
+        grid.addWidget(self.closeButton, 7, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.resize(
+            QSize(self.parent().width() * 2 / 3, self.parent().height() * 7 / 8)
+        )
+        self.testImg.forceRedrawOrSomeBullshit()
+        self.show()
+
+    def closeEvent(self, event):
+        """
+        Closes the window.
+
+        Args:
+            event (QEvent): the event of closing the window.
+
+        Returns:
+            None.
+
+        """
+        self.closeWindow()
+
+    def closeWindow(self):
+        """
+        Closes the window.
+
+        Returns:
+            None
+
+        """
+        self.close()
 
 
 class OriginalScansViewer(QWidget):
@@ -344,12 +826,14 @@ class OriginalScansViewer(QWidget):
         if t >= self.ui.groupViewTabWidget.count():
             t = 0
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.ui.groupViewTabWidget.currentIndex() - 1
         if t < 0:
             t = self.ui.groupViewTabWidget.count() - 1
         self.ui.groupViewTabWidget.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
@@ -441,12 +925,14 @@ class WholeTestView(QDialog):
         if t >= self.pageTabs.count():
             t = 0
         self.pageTabs.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.pageTabs.currentIndex() - 1
         if t < 0:
             t = self.pageTabs.count() - 1
         self.pageTabs.setCurrentIndex(t)
+        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def buildTabs(self):
         for k in range(0, self.numberOfPages):

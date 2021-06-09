@@ -40,19 +40,45 @@ Test Preparation
 
 ### My QR codes are badly misplaced
 
-This might be a bad interaction with `\scalebox` in LaTeX.  See
-[this bug](https://gitlab.math.ubc.ca/andrewr/MLP/issues/207).
+This might be a bad interaction with `\scalebox` in LaTeX.
+See [this bug](https://gitlab.com/plom/plom/issues/207).
 
 
 Marking
 -------
 
+### Why doesn't Plom have fractional marks?
+
+Because the main developers of Plom don't use them. We feel that they
+tend to over-complicate marking schemes and that it is better to simply
+make your test out of a larger total rather than mess about with "1/2"s
+or "1/3"s. This also makes things more consistent when a large team is
+trying to mark using the same scheme / rubric. We admit that this is
+forcing our own ideas about marking onto others, however, after
+supervising the marking of many tests and exams, we feel that this is
+the right way to go (the absence of fractional marks, not the forcing
+people to do what we think)
+
+Of course, if an energetic co-developer would like to implement fractional marks, then we won't stop them.
+
+
 ### Why do you have "+0" and "-0" as possible delta-marks?
 
-Mathematics use "epsilon" to represent small number, often in the context of limits. Some markers like to indicate to students via (say) "-0" that there is a small error in their work but it is too small to reduce their overall mark. Similarly some markers use "+0" to indicate that a small amount of progress has been made, but not enough to be worth a full point. This also give the marker the option of deciding that (say) three "-0" on a question will result in a "-1". One can indicate that by drawing arrows from the "-0"s to a "-1" marker. However if there are only one or two "-0"s then the mark is unchanged. Similarly if the question has (say) three "+0" then the marker might decide that is worth "+1".
+Mathematics use "epsilon" to represent small number, often in the
+context of limits. Some markers like to indicate to students via (say)
+"-0" that there is a small error in their work but it is too small to
+reduce their overall mark. Similarly some markers use "+0" to indicate
+that a small amount of progress has been made, but not enough to be
+worth a full point.
 
-### Why don't you just give fractional marks instead?
 
-Because the developers of Plom don't use them. We feel that they tend to over-complicate marking schemes and that it is better to simply make your test out of a larger total rather than mess about with "1/2"s or "1/3"s. This also makes things more consistent when a large team is trying to mark using the same scheme / rubric. We admit that this is forcing our own ideas about marking onto others, however, after supervising the marking of many tests and exams, we feel that this is the right way to go (the absence of fractional marks, not the forcing people to do what we think)
+Server administration
+---------------------
 
-Of course, if an energetic co-developer would like to implement fractional marks, then we won't stop them. 
+### My server sometimes has random disk I/O errors
+
+Like this `peewee.OperationalError: disk I/O error`?
+Plom uses an SQLite database; it
+[should not be run on NFS storage](https://gitlab.com/plom/plom/issues/811).
+Apparently "people" know this but we were just as "thrilled" as you probably
+are to discover it on a production server.

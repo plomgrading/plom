@@ -1,4 +1,32 @@
-include CONTRIBUTORS CHANGELOG.md Dockerfile LICENSE.md
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2020-2021 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
 
-# TODO: requirements.txt
+include CONTRIBUTORS CHANGELOG.md Dockerfile LICENSE.md
+include requirements.txt requirements.txt.client
+
+# It seems I have to list files accessed with importlib.sources
+# Why?  This seems WET...
+include plom/templateTestSpec.toml
+include plom/produce/digits.json
+include plom/serverDetails.toml
+include plom/templateUserList.csv
+include plom/demoClassList.csv
+include plom/demoUserList.csv
+include plom/demo_rubrics.toml
+include plom/scan/test_zbar_fails.png
+include plom/server/target_Q_latex_plom.png
+include plom/latexTemplate.tex
+include plom/latexTemplatev2.tex
+include plom/idBox2.pdf
+include plom/client/backGrid1.svg
+include plom/client/backGrid2.png
+
+include plom/client/cursors/*.png
+include plom/client/icons/*.svg
+
 # TODO: docs?

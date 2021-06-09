@@ -1,18 +1,12 @@
-#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Colin B. Macdonald
 
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer"
-__license__ = "AGPLv3"
+from pathlib import Path
 
 import fitz
-import json
-import os
-import shutil
-import shlex
-import subprocess
-import sys
-import tempfile
-from pathlib import Path
 
 from plom import specdir
 from plom.textools import buildLaTeX
@@ -54,14 +48,13 @@ def build_test_page_substitute(test_number, page_number, version_number):
     """Builds the substitue empty page for test.
 
     Arguments:
-        test_number {int} -- Test number.
-        page_number {int} -- Page number.
-        version_number {int} -- Version number
+        test_number (int): Test number.
+        page_number (int): Page number.
+        version_number (int): Version number
 
     Returns:
-        bool -- True/False
+        bool
     """
-
     page_not_submitted_pdf = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
@@ -69,7 +62,7 @@ def build_test_page_substitute(test_number, page_number, version_number):
     page_width = page_not_submitted_pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
     text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    insertion_confirmed = page_not_submitted_pdf[0].insertTextbox(
+    insertion_confirmed = page_not_submitted_pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -82,9 +75,9 @@ def build_test_page_substitute(test_number, page_number, version_number):
         insertion_confirmed > 0
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    page_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
+    page_not_submitted_pdf[0].draw_rect(rect, color=[0, 0, 0])
 
-    page_not_submitted_image = page_not_submitted_pdf[0].getPixmap(
+    page_not_submitted_image = page_not_submitted_pdf[0].get_pixmap(
         alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
     )
     page_not_submitted_image.writePNG(
@@ -98,21 +91,20 @@ def build_homework_question_substitute(student_id, question_number):
     """Builds the substitue empty page for homeork.
 
     Arguments:
-        student_id {int} -- Student number ID.
-        question_number {int} -- Question number ID,
+        student_id (int): Student number ID.
+        question_number (int): Question number ID,
 
     Returns:
-        bool -- True/False
+        bool
     """
-
     question_not_submitted_pdf = fitz.open(Path(specdir) / "questionNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
     # Get page width and use it to inset this text into the page
     page_width = question_not_submitted_pdf[0].bound().width
-    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
+    rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
     text = "{}.{}".format(student_id, question_number)
-    insertion_confirmed = question_not_submitted_pdf[0].insertTextbox(
+    insertion_confirmed = question_not_submitted_pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -125,9 +117,9 @@ def build_homework_question_substitute(student_id, question_number):
         insertion_confirmed > 0
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    question_not_submitted_pdf[0].drawRect(rect, color=[0, 0, 0])
+    question_not_submitted_pdf[0].draw_rect(rect, color=[0, 0, 0])
 
-    question_not_submitted_image = question_not_submitted_pdf[0].getPixmap(
+    question_not_submitted_image = question_not_submitted_pdf[0].get_pixmap(
         alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
     )
     question_not_submitted_image.writePNG(
@@ -141,12 +133,12 @@ def build_not_submitted_page(output_file_name):
     """Creates the page not submitted document.
 
     Arguments:
-        output_file_name {String} -- Name of the output files for page_not_submitted document.
+        output_file_name (str): Name of the output file for
+            page_not_submitted document.
 
     Returns:
-        bool -- True/False
+        bool
     """
-
     with open(output_file_name, "wb") as file:
         return_code, output = buildLaTeX(page_not_submitted_text, file)
     if return_code != 0:
@@ -162,12 +154,12 @@ def build_not_submitted_question(output_file_name):
     """Creates the page not submitted document.
 
     Arguments:
-        output_file_name {String} -- Name of the out-put files for question_not_submitted document.
+        output_file_name (str): Name of the output file for
+            question_not_submitted document.
 
     Returns:
-        bool -- True/False
+        bool
     """
-
     with open(output_file_name, "wb") as file:
         return_code, output = buildLaTeX(question_not_submitted_text, file)
     if return_code != 0:

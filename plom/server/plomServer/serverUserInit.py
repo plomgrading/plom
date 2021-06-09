@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
+
 import hashlib
 import json
 import os
@@ -10,10 +15,27 @@ confdir = "serverConfiguration"
 
 
 def validate(self, user, token):
-    """Check the user's token is valid"""
+    """Check the user's token is valid.
+
+    Returns:
+        bool
+    """
     # log.debug("Validating user {}.".format(user))
     dbToken = self.DB.getUserToken(user)
-    return self.authority.validate_token(token, dbToken)
+    if not dbToken:
+        log.warning('User "{}" tried a token but we have no such user!'.format(user))
+        return False
+    r = self.authority.validate_token(token, dbToken)
+    # gives None/False/True
+    if r is None:
+        log.warning(
+            'Malformed token from user "{}": client bug? malicious probing?'.format(
+                user
+            )
+        )
+    elif not r:
+        log.info('User "{}" tried to use a stale or invalid token'.format(user))
+    return bool(r)
 
 
 def InfoShortName(self):
@@ -26,19 +48,14 @@ def InfoShortName(self):
 def info_spec(self):
     """Return the exam specification.
 
-    TODO: why not return None if no spec (yet)?
-
     Returns:
-        tuple: first item flags success, second is the spec dict,
-            see :func:`plom.specarser`.  Can fail when the server
+        dict/None: the spec dict or None, e.g., when the server
             does not yet have a spec.  This function is not
-            authenticated so strip the `privateSeed`.
+            authenticated so ask for the public parts of the spec.
     """
     if not self.testSpec:
-        return False, None
-    d = self.testSpec.copy()
-    d.pop("privateSeed")
-    return True, d
+        return None
+    return self.testSpec.get_public_spec_dict()
 
 
 def reloadUsers(self, password):
@@ -77,16 +94,16 @@ def reloadUsers(self, password):
 
 
 def checkPassword(self, user, password):
-    # Check the pwd and enabled. Get the hash from DB
-    passwordHash = self.DB.getUserPasswordHash(user)
-    return self.authority.check_password(password, passwordHash)
+    """Does user's password match the hashed one on file?"""
+    hashed_pwd = self.DB.getUserPasswordHash(user)
+    return self.authority.check_password(password, hashed_pwd)
 
 
 def checkUserEnabled(self, user):
     return self.DB.isUserEnabled(user)
 
 
-def giveUserToken(self, user, password, clientAPI):
+def giveUserToken(self, user, password, clientAPI, client_ver, remote_ip):
     """When a user requests authorisation
     They have sent their name and password
     first check if they are a valid user
@@ -94,40 +111,58 @@ def giveUserToken(self, user, password, clientAPI):
     should be reset as todo.
     Then pass them back the authorisation token
     (the password is only checked on first authorisation - since slow)
+
+    returns:
+        tuple: `(True, token)` on success, `(False, code, user_readable)`
+            on failure.  Here `code` can be one of the strings "API",
+            "NotAuth", "Disabled", "HasToken" and `user_readable` is a
+            longer string appropriate for an user-centred error message.
     """
     if clientAPI != self.API:
-        return [
+        return (
             False,
-            "API"
+            "API",
             'Plom API mismatch: client "{}" =/= server "{}". Server version is "{}"; please check you have the right client.'.format(
                 clientAPI, self.API, self.Version
             ),
-        ]
+        )
 
-    if self.checkPassword(user, password):
-        # Now check if user is enabled
-        if self.checkUserEnabled(user):
-            pass
-        else:
-            return [
-                False,
-                "The name / password pair has been disabled. Contact your instructor.",
-            ]
+    if not self.checkPassword(user, password):
+        log.warning(
+            'Invalid password login attempt by "{}" from {}, client ver "{}"'.format(
+                user, remote_ip, client_ver
+            )
+        )
+        return (False, "NotAuth", "The name / password pair is not authorised")
 
-        # Now check if user already logged in - ie has token already.
-        if self.DB.userHasToken(user):
-            log.debug('User "{}" already has token'.format(user))
-            return [False, "UHT", "User already has token."]
-        # give user a token, and store the xor'd version.
-        [clientToken, storageToken] = self.authority.create_token()
-        self.DB.setUserToken(user, storageToken)
-        # On token request also make sure anything "out" with that user is reset as todo.
-        # We keep this here in case of client crash - todo's get reset on login and logout.
-        self.DB.resetUsersToDo(user)
-        log.info('Authorising user "{}"'.format(user))
-        return [True, clientToken]
-    else:
-        return [False, "The name / password pair is not authorised"]
+    if not self.checkUserEnabled(user):
+        log.info('User "{}" logged in but account is disabled by manager'.format(user))
+        return (
+            False,
+            "Disabled",
+            "User login has been disabled. Contact your administrator?",
+        )
+
+    # Now check if user already logged in - ie has token already.
+    if self.DB.userHasToken(user):
+        log.debug('User "{}" already has token'.format(user))
+        return (
+            False,
+            "HasToken",
+            "User already has token: perhaps logged in elsewhere or previous session crashed?",
+        )
+    # give user a token, and store the xor'd version.
+    [clientToken, storageToken] = self.authority.create_token()
+    self.DB.setUserToken(user, storageToken)
+    # On token request also make sure anything "out" with that user is reset as todo.
+    # We keep this here in case of client crash - todo's get reset on login and logout.
+    self.DB.resetUsersToDo(user)
+    log.info(
+        'Authorising user "{}" from {}, client ver "{}"'.format(
+            user, remote_ip, client_ver
+        )
+    )
+    return (True, clientToken)
 
 
 def setUserEnable(self, user, enableFlag):
@@ -159,8 +194,7 @@ def createModifyUser(self, username, password):
 
 
 def closeUser(self, user):
-    """Client is closing down their app, so remove the authorisation token
-    """
+    """Client is closing down their app, so remove the authorisation token"""
     log.info("Revoking auth token from user {}".format(user))
     self.DB.clearUserToken(user)
     # make sure all their out tasks are returned to "todo"

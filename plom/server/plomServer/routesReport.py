@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
@@ -34,14 +39,14 @@ class ReportHandler:
     def RgetIncompleteTests(self, data, request):
         """Respond with the incomplete exams, providing information on individual pages.
 
-        Responds with status 200/401.   
-    
+        Responds with status 200/401.
+
         Args:
             data (dict): A dictionary having the user/token.
             request (aiohttp.web_request.Request): Request of type GET /REP/incomplete.
 
         Returns:
-            aiohttp.web_response.Response: A response which includes a dictionary of pages for 
+            aiohttp.web_response.Response: A response which includes a dictionary of pages for
                 incomplete exams.
         """
 
@@ -51,6 +56,20 @@ class ReportHandler:
         # {test_number: [[test string, TODO: Version number ?, True/False for page incomplete or not], ...], ...}
         # Ex: {1: [['t.1', 1, True], ['t.2', 1, True], ['t.3', 2, True], ['t.4', 1, True], ['t.5', 2, True], ['t.6', 2, False]]}
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
+
+    # @routes.get("/REP/completeHW")
+    @authenticate_by_token_required_fields(["user"])
+    def RgetCompleteHW(self, d, request):
+        if not d["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+        return web.json_response(self.server.RgetCompleteHW(), status=200)
+
+    # @routes.get("/REP/missingHW")
+    @authenticate_by_token_required_fields(["user"])
+    def RgetMissingHWQ(self, d, request):
+        if not d["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+        return web.json_response(self.server.RgetMissingHWQ(), status=200)
 
     # @routes.get("/REP/unused")
     @authenticate_by_token_required_fields(["user"])
@@ -65,14 +84,14 @@ class ReportHandler:
     def RgetProgress(self, data, request):
         """Respond with an overall progress status of the marking process.
 
-        Responds with status 200/401. 
+        Responds with status 200/401.
 
         Args:
             data (dict): Dictionary including user data in addition to question number and version.
             request (aiohttp.web_request.Request): Request of type GET /REP/progress.
 
         Returns:
-            aiohttp.web_response.Response: A response which includes a dictionary of pages for 
+            aiohttp.web_response.Response: A response which includes a dictionary of pages for
                 incomplete exams.
         """
 
@@ -121,7 +140,7 @@ class ReportHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/markHistogram.
 
         Returns:
-            aiohttp.web_response.Response: A response object with the grading histogram info 
+            aiohttp.web_response.Response: A response object with the grading histogram info
                 for a question.
         """
 
@@ -140,14 +159,14 @@ class ReportHandler:
     def RgetIdentified(self, data, request):
         """Respond with a dictionary of identified papers
 
-        Responds with status 200/401. 
+        Responds with status 200/401.
 
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): GET /REP/identified request type. 
+            request (aiohttp.web_request.Request): GET /REP/identified request type.
 
         Returns:
-            aiohttp.web_response.Response: A response object including a dictionary of 
+            aiohttp.web_response.Response: A response object including a dictionary of
                 identified papers.
 
         """
@@ -189,7 +208,7 @@ class ReportHandler:
             request (aiohttp.web_request.Request): GET /REP/outToDo type request.
 
         Returns:
-            aiohttp.web_response.Response: A response that includes a list of todo 
+            aiohttp.web_response.Response: A response that includes a list of todo
                 tasks.
         """
 
@@ -221,7 +240,7 @@ class ReportHandler:
                 includes the test number.
 
         Returns:
-            aiohttp.web_response.Response: A response including a dictionary for information on 
+            aiohttp.web_response.Response: A response including a dictionary for information on
                 grading status for an exam.
         """
 
@@ -244,7 +263,7 @@ class ReportHandler:
     # @routes.get("/REP/spreadSheet")
     @authenticate_by_token_required_fields(["user"])
     def RgetSpreadsheet(self, data, request):
-        """Creates a spreadsheet csv file of the grading information. 
+        """Creates a spreadsheet csv file of the grading information.
 
         Responds with status 200/401.
 
@@ -357,11 +376,11 @@ class ReportHandler:
 
         Args:
             data (dict): A dictionary which includes the user data in addition to the
-                filter query information sent by the client. 
+                filter query information sent by the client.
             request (aiohttp.web_request.Request): Request of type GET /REP/markReview.
 
         Returns:
-            aiohttp.web_response.Response: Response object including  metadata on the 
+            aiohttp.web_response.Response: Response object including  metadata on the
                 graded exams that match the filter.
         """
 
@@ -461,12 +480,14 @@ class ReportHandler:
         """Adds the response functions to the router object.
 
         Args:
-            router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the 
+            router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the
                 response functions to.
         """
 
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
+        router.add_get("/REP/completeHW", self.RgetCompleteHW)
+        router.add_get("/REP/missingHW", self.RgetMissingHWQ)
         router.add_get("/REP/unused", self.RgetUnusedTests)
         router.add_get("/REP/progress", self.RgetProgress)
         router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)

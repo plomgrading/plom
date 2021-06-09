@@ -1,23 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
-import json
-import os
-import requests
-from requests_toolbelt import MultipartEncoder
-import ssl
-import threading
-import toml
 import urllib3
+import requests
 
-from plom.plom_exceptions import *
-from plom.messenger import BaseMessenger
+from plom.plom_exceptions import PlomSeriousException, PlomAuthenticationException
+from plom.baseMessenger import BaseMessenger
 
 # TODO: how to do this in subclass?
 # TODO: set username method?
@@ -106,7 +95,10 @@ class FinishMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/identified".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -128,7 +120,10 @@ class FinishMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/completions".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()
@@ -150,7 +145,10 @@ class FinishMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/REP/coverPageInfo/{}".format(self.server, test),
                 verify=False,
-                json={"user": self.user, "token": self.token,},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
             )
             response.raise_for_status()
             rval = response.json()

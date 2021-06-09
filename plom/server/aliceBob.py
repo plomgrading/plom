@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Peter Lee
 
 """
 Utilities for canned users and auto-generated (poor) passwords
 """
 
-__author__ = "Colin B. Macdonald, Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Colin B. Macdonald, Andrew Rechnitzer"
-__license__ = "AGPLv3"
-
-
+import math
 import secrets
-from random import sample
+from random import sample, randint
 
 words = """
 about above across act active activity add afraid after again age ago agree
@@ -86,50 +86,53 @@ names = """aiden azami basia bob caris carol dave duska erin evander fatima fran
 names = names.split()
 
 
-def simple_password():
-    """Creates a new simple password of the form word, number, word.
+def simple_password(n=3):
+    """Creates a new simple password containing a number of words.
+
+    args:
+        n (int): number of words for the password. Default n = 3.
 
     Returns:
-        str -- Password.
+        str: Password.
     """
-    return secrets.choice(words) + str(secrets.randbelow(100)) + secrets.choice(words)
+    password = ""
+    for i in range(n):
+        password += secrets.choice(words)
+    return password
 
 
-def make_random_user_list(number=None):
-    """Makes a list of random users.
+def make_random_user_list(number):
+    """Makes a list of random users and passwords.
 
-    Keyword Arguments:
-        number {int} -- Number of names in random user list (if the number is too large it is truncated). If None is given it is selected randomly. (default: {None})
+    args:
+        number (int): how many randomly named users.  For a large number
+            usernames will have random digits postfixed.
 
-    Returns:
-        list -- List of [user, pasword] tuples.
+    returns:
+        list: a list of (user, password) tuples
     """
-    if number is None or number > len(names):
-        nlist = names
+    if number > len(names):
+        digits = max(2, int(math.ceil(math.log10(number / len(names)))))
+        loc_names = [
+            x + "{}".format(n).zfill(digits) for x in names for n in range(10 ** digits)
+        ]
     else:
-        nlist = sample(names, number)
-
-    lst = []
-    for n in sorted(nlist):
-        p = simple_password()
-        lst.append([n, p])
-    return lst
+        loc_names = names
+    loc_names = sample(loc_names, number)
+    return [(name, simple_password()) for name in loc_names]
 
 
-def make_numbered_user_list(number=None):
+def make_numbered_user_list(number):
     """Makes a list of numbered users (rather than named users).
 
-    Keyword Arguments:
-        number {int} -- Number of users to include in the list, if None is given users equal to the number of names is returned. (default: {None})
+    Each user is named like "user018" where the number is zero padded
+    based on the total number of users requested.
+    args:
+        number (int): how many users to create.
 
-    Returns:
-        list -- List of [user, pasword] tuples (user is a number).
+    returns:
+        list: a list of (user, password) tuples.
     """
-    if number is None:
-        number = len(names)
-    lst = []
-    for i in range(0, number):
-        n = "user{}".format(i)
-        p = simple_password()
-        lst.append([n, p])
-    return lst
+    digits = max(1, int(math.ceil(math.log10(number))))
+    names = ["user" + "{}".format(n).zfill(digits) for n in range(number)]
+    return [(name, simple_password()) for name in names]

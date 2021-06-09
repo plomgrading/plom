@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
 
 """Misc routing utilities"""
-
-__author__ = "Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2020"
-__license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 import logging
 import functools
@@ -67,9 +64,9 @@ def authenticate_by_token(f):
         log_request(f.__name__, request)
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
-            return web.Response(status=400)
+            return web.Response(status=400, text="fields did not match those expected")
         if not zelf.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
+            return web.Response(status=401, text="login token could not be validated")
         log.debug('{} authenticated "{}" via token'.format(f.__name__, data["user"]))
         return f(zelf)
 
@@ -112,9 +109,13 @@ def authenticate_by_token_required_fields(fields):
             data = await request.json()
             log.debug("{} validating fields {}".format(f.__name__, fields))
             if not validate_required_fields(data, fields):
-                return web.Response(status=400)
+                return web.Response(
+                    status=400, text="fields did not match those expected"
+                )
             if not zelf.server.validate(data["user"], data["token"]):
-                return web.Response(status=401)
+                return web.Response(
+                    status=401, text="login token could not be validated"
+                )
             log.debug(
                 '{} authenticated "{}" via token'.format(f.__name__, data["user"])
             )
