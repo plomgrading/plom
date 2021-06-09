@@ -290,16 +290,31 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     # Creating the student id \n name text file
     txt = "{}\n{}".format(student_id, student_name)
 
+    sign_here = "Please sign here"
+
     # Getting the dimentions of the box
-    student_id_width = (
-        max(
-            fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
-            fitz.get_text_length("Please sign here", fontsize=48, fontname="Helvetica"),
+    try:
+        student_id_width = (
+            max(
+                fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
+                fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
+                fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
+            )
+            * 1.1
+            * 0.5
         )
-        * 1.1
-        * 0.5
-    )
+    except AttributeError:
+        # workaround https://github.com/pymupdf/PyMuPDF/issues/1085
+        # TODO: drop this code when we dependent on PyMuPDF>=1.18.14
+        student_id_width = (
+            max(
+                fitz.getTextlength(student_id, fontsize=36, fontname="Helvetica"),
+                fitz.getTextlength(student_name, fontsize=36, fontname="Helvetica"),
+                fitz.getTextlength(sign_here, fontsize=48, fontname="Helvetica"),
+            )
+            * 1.1
+            * 0.5
+        )
     student_id_height = 36 * 1.3
 
     # We have 2 rectangles for the student name and student id
@@ -349,7 +364,7 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     # We insert the student name text boxes
     insertion_confirmed = exam[0].insert_textbox(
         student_id_rect_2,
-        "Please sign here",
+        sign_here,
         fontsize=48,
         color=[0.9, 0.9, 0.9],
         fontname="Helvetica",
