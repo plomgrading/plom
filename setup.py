@@ -30,6 +30,7 @@ client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQ
 
 server_install_requires = [
     "appdirs>=1.4.3",
+    "canvasapi>=2.0.0",
     "toml>=0.10.0",
     "tqdm",
     "numpy",
@@ -122,6 +123,7 @@ setup(
                 "contrib/plom-return_codes_to_canvas_csv.py",
                 "contrib/plom-write_grades_to_canvas_csv.py",
                 "contrib/upload_hw_from_zip_of_jpegs.py",
+                "contrib/plom-push-to-canvas.py",
             ],
         ),
     ],

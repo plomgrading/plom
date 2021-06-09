@@ -146,3 +146,12 @@ plomBuzzword/
 *.json
 *.csv
 *.db
+
+# API secrets
+**/api_secrets*
+
+# Poetry lockfile
+poetry.lock
+
+# Course testing directories
+plom/canvas/**/
