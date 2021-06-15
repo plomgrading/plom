@@ -213,7 +213,7 @@ def processUsers(userFile, demo, auto, numbered):
         parse_user_list(userFile)
         return
 
-    rawfile = confdir / "userListRaw.csv"
+    rawfile = Path("userListRaw.csv")
     # otherwise we have to make one for the user - check if one already there.
     if rawfile.exists():
         raise FileExistsError(
