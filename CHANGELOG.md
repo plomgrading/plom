@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Experimental support for writing graded papers and final marks to Canvas.
 
 ### Changed
+* The `userListRaw.csv` file is no longer inside the serverConfiguration directory.
 
 ### Fixed
 
