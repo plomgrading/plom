@@ -13,6 +13,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+import csv
 import os
 import shutil
 from pathlib import Path
@@ -241,9 +242,10 @@ def processUsers(userFile, demo, auto, numbered):
         # grab required users and regular users
         lst = build_canned_users(auto, numbered)
         with open(rawfile, "w+") as fh:
-            fh.write("user, password\n")
+            writer = csv.writer(fh, quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(["user", "password"])
             for np in lst:
-                fh.write('"{}", "{}"\n'.format(np[0], np[1]))
+                writer.writerow(np)
         return
 
     if not userFile:

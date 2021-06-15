@@ -162,7 +162,7 @@ def initialize(course, assignment, server_dir="."):
         for row in reader:
             user_list += [row]
 
-    os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1][2:-1]
+    os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1]
 
     del user_list
 
@@ -350,7 +350,7 @@ def scan_submissions(server_dir="."):
         for row in reader:
             user_list += [row]
 
-    os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1][2:-1]
+    os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
 
     os.chdir("upload")
 
