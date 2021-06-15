@@ -224,7 +224,7 @@ def processUsers(userFile, demo, auto, numbered):
             "Creating a demo user list at {}. "
             "** DO NOT USE ON REAL SERVER **".format(rawfile)
         )
-        cl = resources.read_binary(plom, "demoUserList.csv")
+        cl = resources.read_binary(plom, "templateUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
         parse_user_list(rawfile)
