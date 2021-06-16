@@ -133,6 +133,6 @@ def make_numbered_user_list(number):
     returns:
         list: a list of (user, password) tuples.
     """
-    digits = max(1, int(math.ceil(math.log10(number))))
+    digits = max(1, int(math.ceil(math.log10(number if number > 0 else 1))))
     names = ["user" + "{}".format(n).zfill(digits) for n in range(number)]
     return [(name, simple_password()) for name in names]

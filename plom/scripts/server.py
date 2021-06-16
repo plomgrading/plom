@@ -230,11 +230,11 @@ def processUsers(userFile, demo, auto, auto_num):
         parse_user_list(rawfile)
         return
 
-    if auto or auto_num:
-        if auto:
+    if auto is not None or auto_num is not None:
+        if auto is not None:
             N = auto
             numbered = False
-        if auto_num:
+        if auto_num is not None:
             N = auto_num
             numbered = True
         del auto
