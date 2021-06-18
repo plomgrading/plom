@@ -5,6 +5,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
+# Copyright (C) 2021 Nicholas J H Lai
 
 """Command line tool to start Plom servers."""
 
@@ -355,23 +356,26 @@ spU.add_argument(
     help="Process the given userlist file OR if none given then produce a template.",
 )
 
-spU.add_argument(
-    "--numbered",
-    action="store_true",
-    help='Use numbered usernames, e.g. "user17".',
-)
-
 grp = spU.add_mutually_exclusive_group()
 grp.add_argument(
     "--demo",
     action="store_true",
-    help="Use demo auto-generated userlist and passwords. **DO NOT DO THIS ON REAL SERVER**",
+    help="""
+        Use fixed prepopulated demo userlist and passwords.
+        **DO NOT USE THIS ON REAL SERVER**
+    """,
 )
 grp.add_argument(
     "--auto",
     type=int,
     metavar="N",
     help="Auto-generate a random user list of N users with real-ish usernames.",
+)
+
+spU.add_argument(
+    "--numbered",
+    action="store_true",
+    help='Use numbered usernames, e.g. "user17", for the autogeneration.',
 )
 
 
