@@ -1,7 +1,7 @@
-user,password
-manager,1234
-scanner,4567
-reviewer,7890
-user0,0123
-user1,0123
-user2,0123
+"user","password"
+"manager","1234"
+"scanner","4567"
+"reviewer","7890"
+"user0","0123"
+"user1","0123"
+"user2","0123"
