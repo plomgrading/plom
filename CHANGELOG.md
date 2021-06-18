@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * The `userListRaw.csv` file is no longer inside the serverConfiguration directory.
+* Server saves its log to a file automatically (as well as echoing to stdout).
 
 ### Fixed
-
+* Misc bug fixes.
 
 
 ## [0.6.3] - 2021-05-28
