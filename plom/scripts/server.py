@@ -14,6 +14,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+import csv
 import os
 import shutil
 from pathlib import Path
@@ -213,7 +214,7 @@ def processUsers(userFile, demo, auto, numbered):
         parse_user_list(userFile)
         return
 
-    rawfile = confdir / "userListRaw.csv"
+    rawfile = Path("userListRaw.csv")
     # otherwise we have to make one for the user - check if one already there.
     if rawfile.exists():
         raise FileExistsError(
@@ -225,7 +226,7 @@ def processUsers(userFile, demo, auto, numbered):
             "Creating a demo user list at {}. "
             "** DO NOT USE ON REAL SERVER **".format(rawfile)
         )
-        cl = resources.read_binary(plom, "demoUserList.csv")
+        cl = resources.read_binary(plom, "templateUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
         parse_user_list(rawfile)
@@ -242,9 +243,10 @@ def processUsers(userFile, demo, auto, numbered):
         # grab required users and regular users
         lst = build_canned_users(auto, numbered)
         with open(rawfile, "w+") as fh:
-            fh.write("user, password\n")
-            for np in lst:
-                fh.write('"{}", "{}"\n'.format(np[0], np[1]))
+            writer = csv.writer(fh, quoting=csv.QUOTE_NONNUMERIC)
+            writer.writerow(["user", "password"])
+            for row in lst:
+                writer.writerow(row)
         return
 
     if not userFile:

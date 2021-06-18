@@ -142,7 +142,7 @@ def main():
     print('\n*** Now run "plom-client" ***\n')
     print("  * Server currently running under PID " + str(serverproc.pid) + "\n")
     # TODO: output account info directly, perhaps just "user*"?
-    print('  * See "serverConfiguration/userListRaw.csv" for account info\n')
+    print('  * See "userListRaw.csv" for account info\n')
     print("  * Press Ctrl-C to stop this demo")
     serverproc.wait()
 
