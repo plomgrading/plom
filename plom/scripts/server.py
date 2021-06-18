@@ -356,12 +356,6 @@ spU.add_argument(
     help="Process the given userlist file OR if none given then produce a template.",
 )
 
-spU.add_argument(
-    "--numbered",
-    action="store_true",
-    help='Use numbered usernames, e.g. "user17".',
-)
-
 grp = spU.add_mutually_exclusive_group()
 grp.add_argument(
     "--demo",
@@ -373,6 +367,12 @@ grp.add_argument(
     type=int,
     metavar="N",
     help="Auto-generate a random user list of N users with real-ish usernames.",
+)
+
+spU.add_argument(
+    "--numbered",
+    action="store_true",
+    help='Use numbered usernames, e.g. "user17".',
 )
 
 
