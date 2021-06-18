@@ -374,7 +374,7 @@ nodock_newdeps:
       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
       libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev
       libgl1-mesa-glx libsm6 libxrender1
-      iproute2 psmisc file
+      iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
     - pip3 install --upgrade pip
     - python3 -m pip -V
@@ -470,7 +470,7 @@ nodock_mindeps:
       python3-pyqrcode python3-png python3-dev
       python3-requests-toolbelt python3-pil python3-tqdm
       python3-defusedxml python3-jsmin python3-packaging
-      iproute2 psmisc file
+      iproute2 psmisc file python3-magic
     - pip3 install --upgrade pip
     - python3 -m pip -V
     - python3 -m pip install --upgrade setuptools wheel

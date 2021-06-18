@@ -19,6 +19,7 @@ canvasapi==2.2.0
 cffi==1.14.5
 importlib-resources==5.1.4
 imutils==0.5.4
+file-magic==0.4.0
 jpegtran-cffi==0.5.2
 lapsolver==1.1.0
 numpy==1.19.5

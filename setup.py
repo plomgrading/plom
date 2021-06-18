@@ -54,6 +54,8 @@ server_install_requires = [
     "requests-toolbelt",
     'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
 ]
+# TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
+#   "file-magic || python-magic>=0.4.20",
 
 # Non-Python deps for server
 #   - openssl

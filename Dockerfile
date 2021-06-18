@@ -21,12 +21,16 @@ RUN apt-get -y update && \
         libjpeg-dev \
         libjpeg-turbo8-dev \
         libturbojpeg0-dev \
+        file \
         python3 \
         python3-dev \
         python3-pip \
         python3-setuptools \
         python3-wheel \
-        python3-pytest
+        python3-pytest \
+        python3-magic
+
+# file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
 RUN pip3 install --no-cache-dir --upgrade pip setuptools
 # Note: `python3 -m pip` used below on old Ubuntu 18.04
