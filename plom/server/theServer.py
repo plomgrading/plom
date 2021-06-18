@@ -4,12 +4,13 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 
+from datetime import datetime
 import json
+import logging
+from pathlib import Path
 import ssl
 import subprocess
 import tempfile
-import logging
-from pathlib import Path
 
 import toml
 from aiohttp import web
@@ -33,10 +34,17 @@ from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
 
 
+# TODO: move this to the class?  otherwise, importing this file does logging?
+# TODO: shortname in this?
+logfile = datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
 # 5 is to keep debug/info lined up
 logging.basicConfig(
     format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
     datefmt="%b%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(logfile),
+        logging.StreamHandler(),
+    ],
 )
 log = logging.getLogger("server")
 # We will reset this later after we read the config
