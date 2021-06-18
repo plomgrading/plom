@@ -375,7 +375,7 @@ grp.add_argument(
 spU.add_argument(
     "--numbered",
     action="store_true",
-    help='Use numbered usernames, e.g. "user17".',
+    help='Use numbered usernames, e.g. "user17", for the autogeneration.',
 )
 
 
