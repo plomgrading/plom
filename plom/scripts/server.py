@@ -187,7 +187,7 @@ def initialiseServer(port):
 #################
 
 
-def processUsers(userFile, demo, auto, auto_num):
+def processUsers(userFile, demo, auto, numbered):
     """Deal with processing and/or creation of username lists.
 
     Behaviour different depending on the args.
@@ -196,8 +196,8 @@ def processUsers(userFile, demo, auto, auto_num):
         userFile (str/pathlib.Path): a filename of usernames/passwords
             for the server.
         demo (bool): make canned demo with known usernames/passwords.
-        auto (bool): autogenerate usernames and passwords.
-        auto_num (bool): autogenerate usernames like "user03" and pwds.
+        auto (int or None): number of autogenerate usernames and passwords.
+        numbered (bool): autogenerate usernames like "user03" and pwds.
 
     return:
         None
@@ -230,15 +230,7 @@ def processUsers(userFile, demo, auto, auto_num):
         parse_user_list(rawfile)
         return
 
-    if auto or auto_num:
-        if auto:
-            N = auto
-            numbered = False
-        if auto_num:
-            N = auto_num
-            numbered = True
-        del auto
-        del auto_num
+    if auto is not None:
         print(
             "Creating an auto-generated {0} user list at '{1}'\n"
             "Please edit as you see fit and then rerun 'plom-server users {1}'".format(
@@ -247,7 +239,7 @@ def processUsers(userFile, demo, auto, auto_num):
             )
         )
         # grab required users and regular users
-        lst = build_canned_users(N, numbered)
+        lst = build_canned_users(auto, numbered)
         with open(rawfile, "w+") as fh:
             fh.write("user, password\n")
             for np in lst:
@@ -362,6 +354,13 @@ spU.add_argument(
     nargs="?",
     help="Process the given userlist file OR if none given then produce a template.",
 )
+
+spU.add_argument(
+    "--numbered",
+    action="store_true",
+    help='Use numbered usernames, e.g. "user17".',
+)
+
 grp = spU.add_mutually_exclusive_group()
 grp.add_argument(
     "--demo",
@@ -374,12 +373,6 @@ grp.add_argument(
     metavar="N",
     help="Auto-generate a random user list of N users with real-ish usernames.",
 )
-grp.add_argument(
-    "--auto-numbered",
-    type=check_positive,
-    metavar="N",
-    help='Auto-generate a random user list of "user17"-like usernames.',
-)
 
 
 def main():
@@ -388,7 +381,7 @@ def main():
     if args.command == "init":
         initialiseServer(args.port)
     elif args.command == "users":
-        processUsers(args.userlist, args.demo, args.auto, args.auto_numbered)
+        processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
         launchTheServer(args.masterToken)
     else:
