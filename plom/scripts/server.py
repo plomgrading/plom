@@ -360,7 +360,10 @@ grp = spU.add_mutually_exclusive_group()
 grp.add_argument(
     "--demo",
     action="store_true",
-    help="Use demo auto-generated userlist and passwords. **DO NOT DO THIS ON REAL SERVER**",
+    help="""
+        Use fixed prepopulated demo userlist and passwords.
+        **DO NOT USE THIS ON REAL SERVER**
+    """,
 )
 grp.add_argument(
     "--auto",
