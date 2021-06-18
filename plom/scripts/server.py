@@ -5,6 +5,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
+# Copyright (C) 2021 Nicholas J H Lai
 
 """Command line tool to start Plom servers."""
 
