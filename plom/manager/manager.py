@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
 import os

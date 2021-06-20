@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
 
 from datetime import datetime, timedelta
 import logging
@@ -163,7 +164,9 @@ def RgetProgress(self, spec, q, v):
     NRecent = 0  # number marked in the last hour
     SMark = 0  # sum mark - for computing average
     SMTime = 0  # sum marking time - for computing average
-    FullMark = int(spec["question"][str(q)]["mark"])  # full mark for the given question/version
+    FullMark = int(
+        spec["question"][str(q)]["mark"]
+    )  # full mark for the given question/version
 
     for qref in (
         QGroup.select()

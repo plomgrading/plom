@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
 
 from datetime import datetime
 import logging
@@ -235,10 +236,10 @@ def createQGroup(self, t, q, v, pages):
             )
             return False
         try:
-            qref = QGroup.create(test=tref, group=gref, question=q, version=v)
             # qref = QGroup.create(
             #     test=tref, group=gref, question=q, version=v, fullmark=mark
             # )
+            qref = QGroup.create(test=tref, group=gref, question=q, version=v)
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(
