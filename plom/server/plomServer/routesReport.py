@@ -100,7 +100,7 @@ class ReportHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(
-            self.server.RgetProgress(data["q"], data["v"]), status=200
+            self.server.RgetProgress(self.server.testSpec, data["q"], data["v"]), status=200
         )
 
     # @routes.get("/REP/questionUserProgress")

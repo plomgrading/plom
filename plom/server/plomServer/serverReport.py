@@ -23,8 +23,8 @@ def RgetUnusedTests(self):
     return self.DB.RgetUnusedTests()
 
 
-def RgetProgress(self, qu, v):
-    return self.DB.RgetProgress(qu, v)
+def RgetProgress(self, spec, qu, v):
+    return self.DB.RgetProgress(spec, qu, v)
 
 
 def RgetQuestionUserProgress(self, qu, v):

@@ -208,7 +208,8 @@ def createDNMGroup(self, t, pages):
         return self.addTPages(tref, gref, t, pages, 1)
 
 
-def createQGroup(self, t, q, v, pages, mark):
+# def createQGroup(self, t, q, v, pages, mark):
+def createQGroup(self, t, q, v, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         log.warning("Create Q - No test with number {}".format(t))
@@ -234,9 +235,10 @@ def createQGroup(self, t, q, v, pages, mark):
             )
             return False
         try:
-            qref = QGroup.create(
-                test=tref, group=gref, question=q, version=v, fullmark=mark
-            )
+            qref = QGroup.create(test=tref, group=gref, question=q, version=v)
+            # qref = QGroup.create(
+            #     test=tref, group=gref, question=q, version=v, fullmark=mark
+            # )
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(

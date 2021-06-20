@@ -150,7 +150,7 @@ def RgetIdentified(self):
     return idd_dict
 
 
-def RgetProgress(self, q, v):
+def RgetProgress(self, spec, q, v):
     """For the given question/version return a simple progress summary = a dict with keys
     [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken] and their values
     numberRecent = number done in the last hour.
@@ -163,7 +163,7 @@ def RgetProgress(self, q, v):
     NRecent = 0  # number marked in the last hour
     SMark = 0  # sum mark - for computing average
     SMTime = 0  # sum marking time - for computing average
-    FullMark = 0  # full mark for the given question/version
+    FullMark = int(spec["question"][str(q)]["mark"])  # full mark for the given question/version
 
     for qref in (
         QGroup.select()
@@ -174,7 +174,7 @@ def RgetProgress(self, q, v):
             Group.scanned == True,
         )
     ):
-        FullMark = qref.fullmark
+        # FullMark = qref.fullmark
         NScanned += 1
         if qref.marked == True:
             NMarked += 1
