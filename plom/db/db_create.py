@@ -234,7 +234,9 @@ def createQGroup(self, t, q, v, pages, mark):
             )
             return False
         try:
-            qref = QGroup.create(test=tref, group=gref, question=q, version=v, fullmark=mark)
+            qref = QGroup.create(
+                test=tref, group=gref, question=q, version=v, fullmark=mark
+            )
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create QGroup of question {} error - {}.".format(

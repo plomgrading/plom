@@ -153,7 +153,13 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
                         gs, spec["question"][gs]["select"]
                     )
                 )
-            if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"], int(spec["question"][gs]["mark"])):
+            if db.createQGroup(
+                t, 
+                int(gs), 
+                v, 
+                spec["question"][gs]["pages"], 
+                int(spec["question"][gs]["mark"])
+            ):
                 status += " Q{}{}".format(gs, vstr)
             else:
                 status += "Error creating Question {} ver {}".format(gs, vstr)
