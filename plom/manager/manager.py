@@ -310,7 +310,7 @@ class ProgressBox(QGroupBox):
             self.setVisible(False)
             return
         if self.stats["NMarked"] > 0:
-            self.avgL.setText("Average mark = {:0.2f}".format(self.stats["avgMark"]))
+            self.avgL.setText("Average mark = {:0.2f} / {}".format(self.stats["avgMark"], self.stats["FMark"]))
             self.mtL.setText(
                 "Avg marking time = {:0.1f}s".format(self.stats["avgMTime"])
             )

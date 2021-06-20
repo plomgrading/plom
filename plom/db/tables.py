@@ -78,6 +78,7 @@ class QGroup(BaseModel):
     status = pw.CharField(default="")
     time = pw.DateTimeField(null=True)
     marked = pw.BooleanField(default=False)
+    fullmark = pw.IntegerField(null=False)
 
 
 class TPage(BaseModel):  # a test page that knows its tpgv
