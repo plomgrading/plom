@@ -312,7 +312,7 @@ class ProgressBox(QGroupBox):
         if self.stats["NMarked"] > 0:
             self.avgL.setText(
                 "Average mark = {:0.2f} / {}".format(
-                    self.stats["avgMark"], self.stats["FMark"]
+                    self.stats["avgMark"], self.stats["fullMark"]
                 )
             )
             self.mtL.setText(

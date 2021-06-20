@@ -163,7 +163,7 @@ def RgetProgress(self, q, v):
     NRecent = 0  # number marked in the last hour
     SMark = 0  # sum mark - for computing average
     SMTime = 0  # sum marking time - for computing average
-    FMark = 0  # full mark for the given question/version
+    FullMark = 0  # full mark for the given question/version
 
     for qref in (
         QGroup.select()
@@ -174,7 +174,7 @@ def RgetProgress(self, q, v):
             Group.scanned == True,
         )
     ):
-        FMark = qref.fullmark
+        FullMark = qref.fullmark
         NScanned += 1
         if qref.marked == True:
             NMarked += 1
@@ -189,7 +189,7 @@ def RgetProgress(self, q, v):
             "NScanned": NScanned,
             "NMarked": NMarked,
             "NRecent": NRecent,
-            "FMark": FMark,
+            "fullMark": FullMark,
             "avgMark": None,
             "avgMTime": None,
         }
@@ -198,7 +198,7 @@ def RgetProgress(self, q, v):
             "NScanned": NScanned,
             "NMarked": NMarked,
             "NRecent": NRecent,
-            "FMark": FMark,
+            "fullMark": FullMark,
             "avgMark": SMark / NMarked,
             "avgMTime": SMTime / NMarked,
         }
