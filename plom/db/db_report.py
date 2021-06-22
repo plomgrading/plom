@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
 
 from datetime import datetime, timedelta
 import logging
@@ -150,7 +151,7 @@ def RgetIdentified(self):
     return idd_dict
 
 
-def RgetProgress(self, q, v):
+def RgetProgress(self, spec, q, v):
     """For the given question/version return a simple progress summary = a dict with keys
     [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken] and their values
     numberRecent = number done in the last hour.
@@ -163,6 +164,9 @@ def RgetProgress(self, q, v):
     NRecent = 0  # number marked in the last hour
     SMark = 0  # sum mark - for computing average
     SMTime = 0  # sum marking time - for computing average
+    FullMark = int(
+        spec["question"][str(q)]["mark"]
+    )  # full mark for the given question/version
 
     for qref in (
         QGroup.select()
@@ -173,6 +177,7 @@ def RgetProgress(self, q, v):
             Group.scanned == True,
         )
     ):
+        # FullMark = qref.fullmark
         NScanned += 1
         if qref.marked == True:
             NMarked += 1
@@ -187,6 +192,7 @@ def RgetProgress(self, q, v):
             "NScanned": NScanned,
             "NMarked": NMarked,
             "NRecent": NRecent,
+            "fullMark": FullMark,
             "avgMark": None,
             "avgMTime": None,
         }
@@ -195,6 +201,7 @@ def RgetProgress(self, q, v):
             "NScanned": NScanned,
             "NMarked": NMarked,
             "NRecent": NRecent,
+            "fullMark": FullMark,
             "avgMark": SMark / NMarked,
             "avgMTime": SMTime / NMarked,
         }

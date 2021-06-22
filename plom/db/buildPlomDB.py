@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Nicholas J H Lai
 
 import logging
 import random
@@ -153,6 +154,7 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
                         gs, spec["question"][gs]["select"]
                     )
                 )
+            # if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"], int(spec["question"][gs]["mark"])):
             if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
                 status += " Q{}{}".format(gs, vstr)
             else:

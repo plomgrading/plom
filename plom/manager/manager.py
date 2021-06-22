@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
 import os
@@ -310,7 +311,11 @@ class ProgressBox(QGroupBox):
             self.setVisible(False)
             return
         if self.stats["NMarked"] > 0:
-            self.avgL.setText("Average mark = {:0.2f}".format(self.stats["avgMark"]))
+            self.avgL.setText(
+                "Average mark = {:0.2f} / {}".format(
+                    self.stats["avgMark"], self.stats["fullMark"]
+                )
+            )
             self.mtL.setText(
                 "Avg marking time = {:0.1f}s".format(self.stats["avgMTime"])
             )

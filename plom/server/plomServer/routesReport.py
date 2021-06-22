@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Nicholas J H Lai
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
@@ -100,7 +101,8 @@ class ReportHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(
-            self.server.RgetProgress(data["q"], data["v"]), status=200
+            self.server.RgetProgress(self.server.testSpec, data["q"], data["v"]),
+            status=200,
         )
 
     # @routes.get("/REP/questionUserProgress")
