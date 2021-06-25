@@ -12,15 +12,15 @@ Instructions:
       - foo_files_for_manual_grading.zip
   * Latter two files come from PrairieLearn -> Assessments -> Homework3 -> Downloads
       - unzip the zip file
-  * Get Plom, or use just Docker:
+  * Get Plom, or use a container:
       - `docker pull plomgrading/server`
-      - `docker run -it --rm -p 41981:41984 -v $PWD:/exam:z plomgrading/server bash
+      - `docker run -it --rm -p 41984:41984 -v $PWD:/exam:z plomgrading/server bash
       - You're inside the container: run this script.
       - TODO: probably you can do `python3 <script>` instead of `bash`.
       - `plom-server` will still be running.
   * Any files that cannot be processed are in `someone_elses_problem`.
       - (in theory anyway, its still a bit fragile).
-  * Use Plom-Client and connect to `localhost:41981`.
+  * Use Plom-Client and connect to `localhost:41984`.
 """
 
 import csv
