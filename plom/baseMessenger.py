@@ -52,7 +52,10 @@ class BaseMessenger:
 
     @classmethod
     def clone(cls, m):
-        """Clone an existing messenger, keeps token."""
+        """Clone an existing messenger, keeps token.
+
+        In particular, we have our own mutex.
+        """
         log.debug("cloning a messeger, but building new session...")
         x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1])
         x.start()

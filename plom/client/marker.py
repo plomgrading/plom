@@ -2017,7 +2017,7 @@ class MarkerClient(QWidget):
         ) from None
 
     def backgroundUploadFailed(self, task, errmsg):
-        """An upload has failed, we don't know why, do something LOADLY.
+        """An upload has failed, we don't know why, do something LOUDLY.
 
         Args:
             task (str): the task ID of the current test.
