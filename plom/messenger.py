@@ -619,8 +619,7 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
-        self.SRmutex.acquire()
-        try:
+        if True:
             # doesn't like ints, so convert ints to strings
             param = {
                 "user": self.user,
@@ -643,6 +642,8 @@ class Messenger(BaseMessenger):
                     "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
                 }
             )
+        self.SRmutex.acquire()
+        try:
             response = self.session.put(
                 "https://{}/MK/tasks/{}".format(self.server, code),
                 data=dat,
