@@ -74,8 +74,8 @@ class BaseMessenger:
         else:
             log.debug("starting a new requests-session")
             self.session = requests.Session()
-            # TODO - UBC wifi is crappy: have some sort of "hey you've retried
-            # nn times already, are you sure you want to keep retrying" message.
+            # TODO: not clear retries help: e.g., requests will not redo PUTs.
+            # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
         try:
             response = self.session.get(

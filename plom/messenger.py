@@ -649,9 +649,17 @@ class Messenger(BaseMessenger):
                 data=dat,
                 headers={"Content-Type": dat.content_type},
                 verify=False,
+                timeout=(20, 60),
             )
             response.raise_for_status()
             ret = response.json()
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise PlomSeriousException(
+                "Upload timeout/connect error: {}\n\n".format(e)
+                + "Retries are NOT YET implemented: as a workaround,"
+                + "you can re-open the Annotator on '{}'.\\nn".format(code)
+                + "We will now process any remaining upload queue."
+            ) from None
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
