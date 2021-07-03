@@ -615,6 +615,7 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException
             PlomConflict: integrity check failed, perhaps manager
                 altered task.
+            PlomTimeoutError: network trouble such as timeouts.
             PlomTaskChangedError
             PlomTaskDeletedError
             PlomSeriousException
@@ -654,7 +655,7 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
             ret = response.json()
         except (requests.ConnectionError, requests.Timeout) as e:
-            raise PlomSeriousException(
+            raise PlomTimeoutError(
                 "Upload timeout/connect error: {}\n\n".format(e)
                 + "Retries are NOT YET implemented: as a workaround,"
                 + "you can re-open the Annotator on '{}'.\\nn".format(code)
