@@ -214,6 +214,10 @@ class BackgroundUploader(QThread):
         log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
 
+    def qsize(self):
+        """Return the queue length, the number of papers waiting to upload."""
+        return self.q.qsize()
+
     def isEmpty(self):
         """
         Checks if the upload queue is empty.
@@ -2051,6 +2055,20 @@ class MarkerClient(QWidget):
         idx = newImg.indexes()
         if len(idx) > 0:
             self._updateImage(idx[0].row())
+
+    def get_upload_queue_length(self):
+        """How long is the upload queue?
+
+        An overly long queue might be a sign of network troubles.
+
+        Returns:
+            int: The number of papers waiting to upload
+        """
+        if not self.backgroundUploader:
+            return 0
+        if self.backgroundUploader.isEmpty():
+            return 0
+        return self.backgroundUploader.qsize()
 
     def wait_for_bguploader(self, timeout=0):
         """Wait for the uploader queue to empty.
