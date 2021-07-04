@@ -2062,7 +2062,9 @@ class MarkerClient(QWidget):
         An overly long queue might be a sign of network troubles.
 
         Returns:
-            int: The number of papers waiting to upload
+            int: The number of papers waiting to upload, possibly but
+                not certainly including the current upload-in-progress.
+                Value might also be approximate.
         """
         if not self.backgroundUploader:
             return 0

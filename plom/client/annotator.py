@@ -949,9 +949,9 @@ class Annotator(QWidget):
 
         # Workaround getting too far ahead of Marker's upload queue
         queue_len = self.parentMarkerUI.get_upload_queue_length()
-        if queue_len >= 3:
+        if queue_len >= 2:
             ErrorMessage(
-                f"<p>Plom is still waiting to upload {queue_len} papers.</p>"
+                f"<p>Plom is waiting to upload at least {queue_len} papers.</p>"
                 + "<p>This might indicate network trouble: unfortunately Plom "
                 + "does not yet deal with this gracefully and there is a risk "
                 + "we might lose your non-uploaded work!</p>"
