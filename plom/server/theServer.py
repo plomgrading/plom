@@ -64,10 +64,10 @@ class Server:
         self.DB = db
         self.API = serverAPI
         self.Version = __version__
-        print(
-            "Server launching with masterToken = '{}' {}".format(
+        # TODO: is leaky to have this token in the log/stdout?
+        log.info(
+            'Server launching with masterToken = "{}"'.format(
                 self.authority.get_master_token(),
-                type(self.authority.get_master_token()),
             )
         )
         self.tempDirectory = tempfile.TemporaryDirectory()

@@ -2,10 +2,13 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
-import uuid
+import logging
 from passlib.context import CryptContext
+import uuid
+
+log = logging.getLogger("auth")
 
 
 class Authority:
@@ -25,23 +28,23 @@ class Authority:
         """Creates a new masterToken or validates existing masterToken.
 
         Arguments:
-            token {masterToken} -- Current masterToken, if None, a new one is created.
+            token (str): Current masterToken, if None, a new one is created.
 
         Returns:
-            masterToken -- Valid masterToken.
+            str: a valid masterToken.
+
+        Raises:
+            ValueError: invalid token.
         """
         if token is None:
             masterToken = uuid.uuid4().hex
-            print("No masterToken given, creating one")
+            log.info("No masterToken given, creating one")
         else:
             try:
                 masterToken = uuid.UUID(token).hex
-                print("Supplied masterToken is valid. Using that.")
-            except ValueError:
-                masterToken = uuid.uuid4().hex
-                print(
-                    "Supplied masterToken is not a valid UUID. Creating new masterToken."
-                )
+                log.info("Supplied masterToken is valid. Using that.")
+            except ValueError as e:
+                raise ValueError(f"Supplied masterToken not valid UUID: {e}") from None
         return masterToken
 
     def get_master_token(self):
