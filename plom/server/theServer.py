@@ -65,24 +65,21 @@ class Server:
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
         log = logging.getLogger("server")
-        if (confdir / "userList.json").exists():
-            with open(confdir / "userList.json") as data_file:
-                # load list of users + pwd hashes
-                userList = json.load(data_file)
-                # for each name check if in DB by asking for the hash of its pwd
-                for uname in userList.keys():
-                    passwordHash = self.DB.getUserPasswordHash(uname)
-                    if passwordHash is None:  # not in list
-                        self.DB.createUser(uname, userList[uname])
-                    else:
-                        if passwordHash != userList[uname]:
-                            log.warning("User {} password has changed.".format(uname))
-                        self.DB.setUserPasswordHash(userList[uname], passwordHash)
-            log.debug("Loading users")
-        else:
-            # Cannot find users - give error and quit out.
-            log.error("Cannot find user/password file - aborting.")
-            quit()
+        if not (confdir / "userList.json").exists():
+            raise FileNotFoundError("Cannot find user/password file.")
+        with open(confdir / "userList.json") as data_file:
+            # load list of users + pwd hashes
+            userList = json.load(data_file)
+            # for each name check if in DB by asking for the hash of its pwd
+            for uname in userList.keys():
+                passwordHash = self.DB.getUserPasswordHash(uname)
+                if passwordHash is None:  # not in list
+                    self.DB.createUser(uname, userList[uname])
+                else:
+                    if passwordHash != userList[uname]:
+                        log.warning("User {} password has changed.".format(uname))
+                    self.DB.setUserPasswordHash(userList[uname], passwordHash)
+        log.debug("Loading users")
 
     from .plomServer.serverUserInit import (
         validate,
