@@ -19,9 +19,6 @@ from plom import Default_Port
 from plom.server import specdir, confdir
 
 
-log = logging.getLogger("server")
-
-
 server_dirs = (
     specdir,
     confdir,
@@ -38,7 +35,7 @@ server_dirs = (
 
 def build_server_directories():
     """Build some directories the server will need"""
-
+    log = logging.getLogger("server")
     for d in server_dirs:
         Path(d).mkdir(exist_ok=True)
         log.debug("Building directory {}".format(d))

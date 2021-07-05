@@ -8,8 +8,6 @@ import logging
 from passlib.context import CryptContext
 import uuid
 
-log = logging.getLogger("auth")
-
 
 class Authority:
     """A class to do all our authentication - passwords and tokens."""
@@ -36,6 +34,7 @@ class Authority:
         Raises:
             ValueError: invalid token.
         """
+        log = logging.getLogger("auth")
         if token is None:
             masterToken = uuid.uuid4().hex
             log.info("No masterToken given, creating one")
