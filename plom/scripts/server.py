@@ -30,10 +30,16 @@ import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
-from plom.server import build_server_directories, check_server_directories
-from plom.server import create_server_config, create_blank_predictions
-from plom.server import parse_user_list, build_canned_users
-from plom.server import build_self_signed_SSL_keys
+from plom.server import (
+    build_canned_users,
+    build_self_signed_SSL_keys,
+    build_server_directories,
+    check_server_directories,
+    check_server_fully_configured,
+    create_server_config,
+    create_blank_predictions,
+    parse_user_list,
+)
 
 
 server_instructions = """Overview of running the Plom server:
@@ -59,37 +65,6 @@ server_instructions = """Overview of running the Plom server:
 class PlomServerConfigurationError(Exception):
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
-
-
-def checkSpecAndDatabase():
-    if specdir.exists():
-        print("Directory '{}' is present.".format(specdir))
-    else:
-        print(
-            "Cannot find '{}' directory - have you run 'plom-server init' yet?".format(
-                specdir
-            )
-        )
-        exit(1)
-
-    if (specdir / "verifiedSpec.toml").exists():
-        print("Test specification present.")
-    else:
-        print(
-            "Cannot find the test specification. Have you run 'plom-build' yet?. Aborting."
-        )
-        exit(1)
-
-    if (specdir / "plom.db").exists():
-        print("Database present: using existing database.")
-    else:
-        print("Database not yet present: it will be created on first run.")
-        # TODO: or should `plom-server init` create it?")
-
-    if (specdir / "classlist.csv").exists():
-        print("Classlist present.")
-    else:
-        print("Cannot find the classlist: expect it later...")
 
 
 def doLatexChecks():
@@ -260,38 +235,11 @@ def processUsers(userFile, demo, auto, numbered):
             fh.write(cl)
 
 
-def checkServerConfigured():
-    if not (confdir / "serverDetails.toml").exists():
-        print("Server configuration file not present. Have you run 'plom-server init'?")
-        exit(1)
-
-    if not (confdir / "userList.json").exists():
-        print("Processed userlist is not present. Have you run 'plom-server users'?")
-        exit(1)
-
-    if not (
-        (confdir / "plom.key").exists() and (confdir / "plom-selfsigned.crt").exists()
-    ):
-        print("SSL keys not present. Have you run 'plom-server init'?")
-        exit(1)
-
-    if (specdir / "predictionlist.csv").exists():
-        print("Predictionlist present.")
-    else:
-        print(
-            "Cannot find the predictionlist. Have you run 'plom-server init' yet? Aborting."
-        )
-        exit(1)
-
-
 def launchTheServer(masterToken):
     from plom.server import theServer
 
     check_server_directories()
-    # check database, spec and classlist in place
-    checkSpecAndDatabase()
-    # check serverConf and userlist present (also check predictionlist).
-    checkServerConfigured()
+    check_server_fully_configured()
 
     theServer.launch(masterToken)
 

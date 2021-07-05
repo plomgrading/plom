@@ -15,7 +15,8 @@ from plom import specdir
 specdir = Path(specdir)
 confdir = Path("serverConfiguration")
 
-from .misc import build_server_directories, check_server_directories
+from .misc import build_server_directories
 from .misc import create_server_config, create_blank_predictions
+from .misc import check_server_directories, check_server_fully_configured
 from .cert_utils import build_self_signed_SSL_keys
 from .manageUserFiles import parse_user_list, build_canned_users

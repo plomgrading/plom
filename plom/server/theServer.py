@@ -19,9 +19,8 @@ from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecVerifier
-from plom import specdir
 from plom.db import PlomDB
-from plom.server import confdir, check_server_directories
+from plom.server import specdir, confdir, check_server_directories
 
 from .authenticate import Authority
 
@@ -244,8 +243,16 @@ def launch(masterToken=None):
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
     check_server_directories()
     server_info = get_server_info()
-    examDB = PlomDB(Path(specdir) / "plom.db")
+    if (specdir / "plom.db").exists():
+        log.info("Using existing database.")
+    else:
+        log.info("Database is not yet present: creating...")
+    examDB = PlomDB(specdir / "plom.db")
     peon = Server(examDB, masterToken)
+    if (specdir / "classlist.csv").exists():
+        log.info("Classlist is present.")
+    else:
+        log.info("Cannot find the classlist: we expect it later...")
     userIniter = UserInitHandler(peon)
     uploader = UploadHandler(peon)
     ider = IDHandler(peon)
