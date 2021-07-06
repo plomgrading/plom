@@ -14,7 +14,6 @@ Note: Code in this file is very similar to idReader code for the Sklearn
 model.
 """
 
-import os
 from pathlib import Path
 import csv
 
@@ -27,7 +26,7 @@ from .predictStudentID import compute_probabilities
 from .trainTensorFlowModel import train_model
 
 
-def is_model_absent():
+def is_model_present():
     """Checks if the ML model is available.
 
     Returns:
@@ -42,11 +41,9 @@ def is_model_absent():
         "variables/variables.data-00000-of-00001",
     ]
     for file_name in files:
-        if os.path.isfile(base_path / file_name):
-            continue
-        else:
-            return True
-    return False
+        if not (base_path / file_name).is_file():
+            return False
+    return True
 
 
 def download_model():
@@ -58,8 +55,7 @@ def download_model():
 
     # make a directory into which to save things
     base_path = Path("model_cache")
-    # make both the base_path and its variables subdir
-    os.makedirs(base_path / "variables", exist_ok=True)
+    (base_path / "variables").mkdir(parents=True, exist_ok=True)
     base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
     files = [
         "saved_model.pb",
@@ -146,8 +142,7 @@ def run_id_reader(files_dict, rectangle):
     # will need this for cost-matrix
     test_numbers = list(files_dict.keys())
 
-    # check to see if model already there and if not get it or train it.
-    if is_model_absent():
+    if not is_model_present():
         download_or_train_model()
     # probabilities that digit k of ID is "n" for each file.
     # this is potentially time-consuming - could be parallelized
