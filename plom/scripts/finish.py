@@ -156,6 +156,7 @@ def main():
         except KeyError:
             pass
 
+    # Note: many of these commands use exit() directly
     if args.command == "status":
         plom.finish.check_completed.main(args.server, args.password)
     elif args.command == "csv":

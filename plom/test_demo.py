@@ -31,9 +31,10 @@ class Test:
         subprocess.check_call(
             split("python3 -m plom.scripts.scan status"), env=self.env
         )
-        subprocess.check_call(
+        r = subprocess.call(
             split("python3 -m plom.scripts.finish status"), env=self.env
         )
+        assert r == 1  # numScanned - numberComplete
         assert self.demo.srv_proc.is_alive()
 
     def test_random_IDing(self):
