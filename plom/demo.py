@@ -94,7 +94,6 @@ class PlomServer:
         try:
             os.chdir(basedir)
             sv.saveVerifiedSpec(verbose=True)
-            spec = SpecVerifier.load_verified()
         finally:
             os.chdir(cwd)
         if not buildDemoSourceFiles(basedir):
