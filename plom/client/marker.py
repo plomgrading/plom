@@ -214,8 +214,8 @@ class BackgroundUploader(QThread):
         log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
 
-    def qsize(self):
-        """Return the queue length, the number of papers waiting to upload."""
+    def queue_size(self):
+        """Return the (approx?) queue length, the number of papers waiting to upload."""
         return self.q.qsize()
 
     def isEmpty(self):
@@ -2070,7 +2070,7 @@ class MarkerClient(QWidget):
             return 0
         if self.backgroundUploader.isEmpty():
             return 0
-        return self.backgroundUploader.qsize()
+        return self.backgroundUploader.queue_size()
 
     def wait_for_bguploader(self, timeout=0):
         """Wait for the uploader queue to empty.
