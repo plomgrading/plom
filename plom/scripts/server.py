@@ -42,7 +42,7 @@ from plom.server import (
 )
 
 
-server_instructions = """Overview of running the Plom server:
+server_instructions = f"""Overview of running the Plom server:
 
   0. Make a new directory and change into it.
 
@@ -57,9 +57,7 @@ server_instructions = """Overview of running the Plom server:
   4. Add a specfile to '{specdir}': 'plom-build' can do this..
 
   5. Now you can start the server with '%(prog)s launch'.
-""".format(
-    specdir=specdir
-)
+"""
 
 
 class PlomServerConfigurationError(Exception):

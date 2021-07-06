@@ -4,8 +4,6 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Colin B. Macdonald
 
-from pathlib import Path
-
 import fitz
 
 from plom import specdir
@@ -55,7 +53,7 @@ def build_test_page_substitute(test_number, page_number, version_number):
     Returns:
         bool
     """
-    page_not_submitted_pdf = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
+    page_not_submitted_pdf = fitz.open(specdir / "pageNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
     # Get page width and use it to inset this text into the page
@@ -97,7 +95,7 @@ def build_homework_question_substitute(student_id, question_number):
     Returns:
         bool
     """
-    question_not_submitted_pdf = fitz.open(Path(specdir) / "questionNotSubmitted.pdf")
+    question_not_submitted_pdf = fitz.open(specdir / "questionNotSubmitted.pdf")
 
     # create a box for the test number near top-centre
     # Get page width and use it to inset this text into the page

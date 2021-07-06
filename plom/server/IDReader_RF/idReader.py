@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
 Use sklearn random forest model to read student IDs from ID-pages.
@@ -149,9 +149,7 @@ def run_id_reader(files_dict, rectangle):
 
     # Put student numbers in list
     student_IDs = []
-    with open(
-        Path(specdir) / "classlist.csv", newline=""
-    ) as csvfile:  # todo update file paths
+    with open(specdir / "classlist.csv", newline="") as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
@@ -174,7 +172,7 @@ def run_id_reader(files_dict, rectangle):
     row_IDs, column_IDs = solve_dense(costs)
 
     # now save the result
-    with open(Path(specdir) / "predictionlist.csv", "w") as file_header:
+    with open(specdir / "predictionlist.csv", "w") as file_header:
         file_header.write("test, id\n")
         for r, c in zip(row_IDs, column_IDs):
             # the get test-number of r-th from the test_numbers
