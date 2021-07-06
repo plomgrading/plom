@@ -9,7 +9,6 @@ __copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import os
 from pathlib import Path
 import sys
 
@@ -39,21 +38,22 @@ def getDemoClassListLength():
     return getDemoClassList().shape[0]
 
 
-def buildDemoSourceFiles():
+def buildDemoSourceFiles(basedir=Path(".")):
     """Builds the LaTeX source files for the demo.
 
     Returns:
         bool: True if successful, False if it failed.
     """
-    os.makedirs("sourceVersions", exist_ok=True)
+    src_dir = basedir / "sourceVersions"
+    src_dir.mkdir(exist_ok=True)
     print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
     content = resources.read_text(plom, "latexTemplate.tex")
-    if not buildLaTeXExam2(content, Path("sourceVersions") / "version1.pdf"):
+    if not buildLaTeXExam2(content, src_dir / "version1.pdf"):
         return False
 
     print("LaTeXing example exam file: latexTemplatev2.tex -> version2.pdf")
     content = resources.read_text(plom, "latexTemplatev2.tex")
-    if not buildLaTeXExam2(content, Path("sourceVersions") / "version2.pdf"):
+    if not buildLaTeXExam2(content, src_dir / "version2.pdf"):
         return False
     return True
 
@@ -63,7 +63,7 @@ def buildLaTeXExam2(src, filename):
 
     Arguments:
         src (str): LaTeX source to build.
-        filename (str): The name of the file.
+        filename (str/pathlib.Path): The file to create.
 
     Returns:
         bool: True if everything worked.  Print to stdout and return

@@ -95,10 +95,10 @@ class PlomServer:
             os.chdir(basedir)
             sv.saveVerifiedSpec(verbose=True)
             spec = SpecVerifier.load_verified()
-            if not buildDemoSourceFiles():
-                raise RuntimeError("failed to build demo sources")
         finally:
             os.chdir(cwd)
+        if not buildDemoSourceFiles(basedir):
+            raise RuntimeError("failed to build demo sources")
 
     def __init__(self, dir=None, port=None):
         """Start up Plom server to run in a separate process.
