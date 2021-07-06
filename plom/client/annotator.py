@@ -937,7 +937,7 @@ class Annotator(QWidget):
 
     @pyqtSlot()
     def saveAndGetNext(self):
-        """ Saves the current annotations, and moves on to the next paper. """
+        """Saves the current annotations, and moves on to the next paper."""
         if self.scene:
             if not self.saveAnnotations():
                 return
@@ -946,6 +946,20 @@ class Annotator(QWidget):
             self.closeCurrentTGV()
         else:
             oldtgv = None
+
+        # Workaround getting too far ahead of Marker's upload queue
+        queue_len = self.parentMarkerUI.get_upload_queue_length()
+        if queue_len >= 2:
+            ErrorMessage(
+                f"<p>Plom is waiting to upload at least {queue_len} papers.</p>"
+                + "<p>This might indicate network trouble: unfortunately Plom "
+                + "does not yet deal with this gracefully and there is a risk "
+                + "we might lose your non-uploaded work!</p>"
+                + "<p>You should consider closing the Annotator, and waiting "
+                + "a moment to see if the queue of &ldquo;uploading...&rdquo; "
+                + "papers clear.</p>"
+            ).exec_()
+
         stuff = self.parentMarkerUI.getMorePapers(oldtgv)
         if not stuff:
             ErrorMessage("No more to grade?").exec_()
