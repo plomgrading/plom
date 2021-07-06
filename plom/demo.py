@@ -90,12 +90,7 @@ class PlomServer:
         sv = SpecVerifier.from_toml_file(basedir / "demoSpec.toml")
         sv.verifySpec()
         sv.checkCodes()
-        cwd = os.getcwd()
-        try:
-            os.chdir(basedir)
-            sv.saveVerifiedSpec(verbose=True)
-        finally:
-            os.chdir(cwd)
+        sv.saveVerifiedSpec(verbose=True, basedir=basedir)
         if not buildDemoSourceFiles(basedir):
             raise RuntimeError("failed to build demo sources")
 
