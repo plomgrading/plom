@@ -620,29 +620,28 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
-        if True:
-            # doesn't like ints, so convert ints to strings
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "pg": str(pg),
-                "ver": str(ver),
-                "score": str(score),
-                "mtime": str(mtime),
-                "tags": tags,
-                "rubrics": rubrics,
-                "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
-                "integrity_check": integrity_check,
-                "image_md5s": image_md5_list,
-            }
+        # doesn't like ints, so convert ints to strings
+        param = {
+            "user": self.user,
+            "token": self.token,
+            "pg": str(pg),
+            "ver": str(ver),
+            "score": str(score),
+            "mtime": str(mtime),
+            "tags": tags,
+            "rubrics": rubrics,
+            "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
+            "integrity_check": integrity_check,
+            "image_md5s": image_md5_list,
+        }
 
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "annotated": (aname, open(aname, "rb"), "image/png"),  # image
-                    "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
-                }
-            )
+        dat = MultipartEncoder(
+            fields={
+                "param": json.dumps(param),
+                "annotated": (aname, open(aname, "rb"), "image/png"),  # image
+                "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
+            }
+        )
         self.SRmutex.acquire()
         try:
             response = self.session.put(
