@@ -22,7 +22,6 @@ from plom.server import specdir as specdirname
 # TODO: move these codes elsewhere?  Out of scripts?
 from plom.scripts.server import initialiseServer
 from plom.scripts.server import processUsers
-from plom.scripts.build import parseAndVerifySpecification
 
 
 class _PlomServerProcess(Process):
@@ -72,20 +71,22 @@ class PlomServer:
             os.chdir(cwd)
 
     @classmethod
-    def add_demo_spec(cls, basedir):
+    def add_demo_spec(cls, basedir, num_to_produce=10):
         """Add a spec file to a Plom server, roughly equivalent to `plom-build parse` cmdline.
 
         TODO: add features or other class methods?
 
         Args:
             basedir (Path-like/str): the base directory for the server.
+            num_to_produce (int): the number of papers in the demo,
+                defaults to 10.
         """
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
         specdir = basedir / specdirname
         specdir.mkdir(exist_ok=True)
         SpecVerifier.create_demo_template(
-            basedir / "demoSpec.toml", num_to_produce=10  # self._numpapers
+            basedir / "demoSpec.toml", num_to_produce=num_to_produce
         )
         sv = SpecVerifier.from_toml_file(basedir / "demoSpec.toml")
         sv.verifySpec()
@@ -184,22 +185,12 @@ class PlomDemo:
 
     def _start(self):
         """start the server."""
+        PlomServer.initialise_server(self.tmpdir, port=self.port)
+        PlomServer.add_demo_users(self.tmpdir)
+        PlomServer.add_demo_spec(self.tmpdir, num_to_produce=self._numpapers)
 
         # TODO: is there a nice ContextManager to change CWD?
         cwd = os.getcwd()
-        try:
-            os.chdir(self.tmpdir)
-            initialiseServer(self.port)
-            processUsers(None, True, False, False)
-            fname = "demoSpec.toml"
-            SpecVerifier.create_demo_template(
-                "demoSpec.toml", num_to_produce=self._numpapers
-            )
-            if not buildDemoSourceFiles():
-                raise RuntimeError("failed to build demo sources")
-            parseAndVerifySpecification("demoSpec.toml")
-        finally:
-            os.chdir(cwd)
         # TODO: maybe ServerProcess should do this itself?
         try:
             os.chdir(self.tmpdir)
