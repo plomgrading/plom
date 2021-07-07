@@ -615,42 +615,51 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException
             PlomConflict: integrity check failed, perhaps manager
                 altered task.
+            PlomTimeoutError: network trouble such as timeouts.
             PlomTaskChangedError
             PlomTaskDeletedError
             PlomSeriousException
         """
+        # doesn't like ints, so convert ints to strings
+        param = {
+            "user": self.user,
+            "token": self.token,
+            "pg": str(pg),
+            "ver": str(ver),
+            "score": str(score),
+            "mtime": str(mtime),
+            "tags": tags,
+            "rubrics": rubrics,
+            "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
+            "integrity_check": integrity_check,
+            "image_md5s": image_md5_list,
+        }
+
+        dat = MultipartEncoder(
+            fields={
+                "param": json.dumps(param),
+                "annotated": (aname, open(aname, "rb"), "image/png"),  # image
+                "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
+            }
+        )
         self.SRmutex.acquire()
         try:
-            # doesn't like ints, so convert ints to strings
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "pg": str(pg),
-                "ver": str(ver),
-                "score": str(score),
-                "mtime": str(mtime),
-                "tags": tags,
-                "rubrics": rubrics,
-                "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
-                "integrity_check": integrity_check,
-                "image_md5s": image_md5_list,
-            }
-
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "annotated": (aname, open(aname, "rb"), "image/png"),  # image
-                    "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
-                }
-            )
             response = self.session.put(
                 "https://{}/MK/tasks/{}".format(self.server, code),
                 data=dat,
                 headers={"Content-Type": dat.content_type},
                 verify=False,
+                timeout=(10, 120),
             )
             response.raise_for_status()
             ret = response.json()
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise PlomTimeoutError(
+                "Upload timeout/connect error: {}\n\n".format(e)
+                + "Retries are NOT YET implemented: as a workaround,"
+                + "you can re-open the Annotator on '{}'.\n\n".format(code)
+                + "We will now process any remaining upload queue."
+            ) from None
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
