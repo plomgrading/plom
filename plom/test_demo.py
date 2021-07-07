@@ -35,7 +35,7 @@ class Test:
             split("python3 -m plom.scripts.finish status"), env=self.env
         )
         # TODO: fix up this, seems erratic, perhaps even non-deterministic?
-        # assert r == 1  # numScanned - numberComplete
+        assert r >= 0  # numScanned - numberComplete
         assert self.demo.srv_proc.is_alive()
 
     def test_random_IDing(self):
