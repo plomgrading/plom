@@ -650,7 +650,7 @@ class Messenger(BaseMessenger):
                 data=dat,
                 headers={"Content-Type": dat.content_type},
                 verify=False,
-                timeout=(20, 60),
+                timeout=(10, 120),
             )
             response.raise_for_status()
             ret = response.json()
