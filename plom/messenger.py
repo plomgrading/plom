@@ -657,7 +657,7 @@ class Messenger(BaseMessenger):
             raise PlomTimeoutError(
                 "Upload timeout/connect error: {}\n\n".format(e)
                 + "Retries are NOT YET implemented: as a workaround,"
-                + "you can re-open the Annotator on '{}'.\\nn".format(code)
+                + "you can re-open the Annotator on '{}'.\n\n".format(code)
                 + "We will now process any remaining upload queue."
             ) from None
         except requests.HTTPError as e:
