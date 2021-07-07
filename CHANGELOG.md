@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Client: better handling of rare upload failures: warning dialog pops up if the queue is growing, and a single timeout will no longer block the entire queue.
 
 
 ## [0.6.4] - 2021-06-23
