@@ -3,6 +3,12 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+"""A background Plom server.
+
+This is a Plom server that forks a background process and returns
+control to the caller with the server continuing in the background.
+"""
+
 import os
 from multiprocessing import Process
 from pathlib import Path
@@ -18,12 +24,6 @@ from plom.server import specdir as specdirname
 # TODO: move these codes elsewhere?  Out of scripts?
 from plom.scripts.server import initialiseServer
 from plom.scripts.server import processUsers
-
-"""A background Plom server.
-
-This is a Plom server that forks a background process and returns
-control to the caller with the server continuing in the background.
-"""
 
 
 class _PlomServerProcess(Process):
