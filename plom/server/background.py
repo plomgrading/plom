@@ -13,13 +13,17 @@ import os
 from multiprocessing import Process
 from pathlib import Path
 import shutil
-import time
+
+import toml
 
 from plom import Default_Port
 from plom import SpecVerifier
 from plom.produce.demotools import buildDemoSourceFiles
 from plom.server import theServer
 from plom.server import specdir as specdirname
+from plom.server import confdir
+from plom.messenger import Messenger
+from plom.plom_exceptions import PlomBenignException
 
 # TODO: move these codes elsewhere?  Out of scripts?
 from plom.scripts.server import initialiseServer
@@ -118,22 +122,60 @@ class PlomServer:
         # if not any(self.basedir.iterdir()):
         #     print(f"PlomServer directory {dir} is empty: preparing demo")
 
+        with open(self.basedir / confdir / "serverDetails.toml") as f:
+            self.server_info = toml.load(f)
+
         # TODO: is there a nice ContextManager to change CWD?
         cwd = os.getcwd()
         # TODO: maybe ServerProcess should do this itself?
         try:
             os.chdir(self.basedir)
-            self.srv_proc = _PlomServerProcess()
-            self.srv_proc.start()
+            self._server_proc = _PlomServerProcess()
+            self._server_proc.start()
         finally:
             os.chdir(cwd)
-            # TODO: sleep in a loop until we can "ping"?
-        time.sleep(2)
-        assert self.srv_proc.is_alive()
+        assert self._server_proc.is_alive()
+        if not self.ping_server():
+            # TODO: try to kill it?
+            raise RuntimeError("The server did not successfully start")
+
+    def ping_server(self):
+        """Try to connect to the background server.
+
+        We sleep in a loop until we can ping the server.
+
+        Args:
+            TODO: kwargs number of retries etc?
+            TODO: verbose kwarg?
+
+        Returns
+            bool: False if we cannot get a minimal response from the server.
+        """
+        m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
+        count = 0
+        while True:
+            assert self._server_proc.is_alive()
+            r = self._server_proc.join(0.25)
+            assert r is None and self._server_proc.exitcode is None, "Server died on us!"
+            try:
+                r = m.start()
+            except PlomBenignException:
+                pass
+            else:
+                # successfully talked to server so break loop
+                break
+            count += 1
+            if count >= 10:
+                print("we tried 10 times but server is not up yet!")
+                return False
+        m.stop()
+        assert self._server_proc.is_alive()
+        return True
 
     def __del__(self):
         # at least once I saw it created without this attrib
-        if hasattr(self, "srv_proc"):
+        print(f"deleting PlomServer '{self}' in dir '{self.basedir}'")
+        if hasattr(self, "_server_proc"):
             self.stop()
 
     def stop(self, erase_dir=False):
@@ -144,8 +186,10 @@ class PlomServer:
                 Instead you can pass `True` to erase them.
                 TODO: maybe only subclasses should allow this?
         """
-        self.srv_proc.terminate()
-        self.srv_proc.join()
+        if self._server_proc.is_alive():
+            print(f"Stopping PlomServer '{self}' in dir '{self.basedir}'")
+            self._server_proc.terminate()
+            self._server_proc.join()
         if erase_dir:
             if self.basedir.exists():
                 print(f'Erasing Plom server dir "{self.basedir}"')
