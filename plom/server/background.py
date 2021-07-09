@@ -131,6 +131,11 @@ class PlomServer:
         time.sleep(2)
         assert self.srv_proc.is_alive()
 
+    def __del__(self):
+        # at least once I saw it created without this attrib
+        if hasattr(self, "srv_proc"):
+            self.stop()
+
     def stop(self, erase_dir=False):
         """Take down the Plom server.
 
@@ -142,5 +147,6 @@ class PlomServer:
         self.srv_proc.terminate()
         self.srv_proc.join()
         if erase_dir:
-            print(f'Erasing Plom server dir "{self.basedir}"')
-            shutil.rmtree(self.basedir)
+            if self.basedir.exists():
+                print(f'Erasing Plom server dir "{self.basedir}"')
+                shutil.rmtree(self.basedir)
