@@ -109,7 +109,7 @@ class PlomQuickDemo(PlomDemo):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.pop('num_papers', True)
+        kwargs.pop("num_papers", True)
         super().__init__(*args, num_papers=3, **kwargs)
 
 
