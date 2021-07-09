@@ -95,18 +95,16 @@ class PlomServer:
         if not buildDemoSourceFiles(basedir):
             raise RuntimeError("failed to build demo sources")
 
-    def __init__(self, dir=None, port=None):
+    def __init__(self, dir=None):
         """Start up Plom server to run in a separate process.
 
         Args:
-            port (int, None): internet port to use or None for default.
-                TODO: currently must be specified earlier when preparing dirs.
             dir (Path-like/str): the base directory for the server.
                 Currently this must exist (use `plom-server init` etc).
                 TODO: if does not exist, create and fill?
 
         Raises:
-            PermissionError: cannot write to `tmpdir`.
+            PermissionError: cannot write to `dir`.
             OSError: e.g., address already in use, various others.
             ...
         """
@@ -114,10 +112,9 @@ class PlomServer:
             raise ValueError('You must provide a directory as the "dir" parameter')
         self.dir = Path(dir)
 
-        # TODO: I think its the opposite: if its empty we need to prepare?
-        # if any(self.dir.iterdir()):
-        #     warn(f"PlomServer directory {dir} is not empty: likely touble ahead!")
-        # self.port = port if port else Default_Port
+        # TODO: if its empty we need to prepare?
+        # if not any(self.dir.iterdir()):
+        #     print(f"PlomServer directory {dir} is empty: preparing demo")
 
         # TODO: is there a nice ContextManager to change CWD?
         cwd = os.getcwd()
