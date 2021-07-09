@@ -144,10 +144,9 @@ class PlomServer:
             shutil.rmtree(self.dir)
 
 
-# TODO: eventually a subclass of above?
-class PlomDemo:
+class PlomDemo(PlomServer):
     def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None):
-        """Start up a demo server.
+        """Start up a Plom demo server.
 
         Args:
             num_papers (int, None): how many papers to use or None for
@@ -159,7 +158,6 @@ class PlomDemo:
                 omitted a temporary directory of the form
                 `plomdemo_<randomstring>`.  Note: by default this
                 directory will be removed on demo shutdown.
-                TODO: not fully implemented yet!
 
         Raises:
             PermissionError: cannot write to `tmpdir`.
@@ -173,38 +171,22 @@ class PlomDemo:
             warn("Demo's target directory not empty: likely touble ahead!")
         self.port = port if port else Default_Port
         # TODO: should either exist and be empty or not exist and we create
-        print('Making a {}-paper demo in "{}"'.format(num_papers, tmpdir))
+        print(f'Making a {num_papers}-paper demo in "{tmpdir}"')
         self._numpapers = num_papers
-        self.tmpdir = tmpdir
-        self._start()
+        # A bunch of class methods to initialize stuff
+        self.__class__.initialise_server(tmpdir, port=self.port)
+        self.__class__.add_demo_users(tmpdir)
+        self.__class__.add_demo_spec(tmpdir, num_to_produce=self._numpapers)
+        super().__init__(dir=tmpdir)
         if scans:
             self.fill_the_tank()
-
-    def _start(self):
-        """start the server."""
-        PlomServer.initialise_server(self.tmpdir, port=self.port)
-        PlomServer.add_demo_users(self.tmpdir)
-        PlomServer.add_demo_spec(self.tmpdir, num_to_produce=self._numpapers)
-
-        # TODO: is there a nice ContextManager to change CWD?
-        cwd = os.getcwd()
-        # TODO: maybe ServerProcess should do this itself?
-        try:
-            os.chdir(self.tmpdir)
-            self.srv_proc = _PlomServerProcess()
-            self.srv_proc.start()
-        finally:
-            os.chdir(cwd)
-            # TODO: sleep in a loop until we can "ping"?
-        time.sleep(2)
-        assert self.srv_proc.is_alive()
 
     def fill_the_tank(self):
         """make fake data and push it into the plom server."""
         env = {**os.environ, **self.get_env_vars()}
         cwd = os.getcwd()
         try:
-            os.chdir(self.tmpdir)
+            os.chdir(self.dir)
             subprocess.check_call(
                 split("python3 -m plom.scripts.build class --demo"), env=env
             )
@@ -229,15 +211,14 @@ class PlomDemo:
         finally:
             os.chdir(cwd)
 
-    def stop(self):
-        """Takedown the demo server.
+    def stop(self, erase_dir=True):
+        """Take down the Plom server.
 
-        TODO: add option to leave files behind
+        Args:
+            erase_dir (bool): by default, the demo files are deleted.
+                Instead you can pass `False` to keep them.
         """
-        self.srv_proc.terminate()
-        self.srv_proc.join()
-        print('Erasing demo tmpdir "{}"'.format(self.tmpdir))
-        shutil.rmtree(self.tmpdir)
+        super().stop(erase_dir=erase_dir)
 
     def get_env_vars(self):
         """Return the log details for this server as dict."""
