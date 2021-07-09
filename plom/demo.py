@@ -108,8 +108,9 @@ class PlomQuickDemo(PlomDemo):
     Tries to start quickly by only using a few papers.
     """
 
-    def __init__(self, port=None):
-        super().__init__(3, port=port)
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('num_papers', True)
+        super().__init__(*args, num_papers=3, **kwargs)
 
 
 if __name__ == "__main__":
