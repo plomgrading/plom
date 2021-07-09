@@ -185,7 +185,7 @@ def initialize(course, assignment, server_dir="."):
         "Server *should* be running now (although hopefully you can't because theoretically output should be suppressed). In light of this, be extra sure to explicitly kill the server (e.g., `pkill plom-server`) before trying to start a new one --- it can persist even after the original python process has been killed.\n\nTo verify if the server is running, you can try the command\n  ss -lntu\nto check if the 41984 port has a listener.\n"
     )
 
-    subprocess.run(["sleep", "3"])
+    time.sleep(3)
 
     print("Building classlist...")
     build_class = subprocess.run(

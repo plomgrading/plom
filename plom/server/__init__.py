@@ -22,3 +22,4 @@ from .cert_utils import build_self_signed_SSL_keys
 from .manageUserFiles import parse_user_list, build_canned_users
 
 from .background import PlomServer
+from .demo import PlomDemoServer, PlomQuickDemoServer

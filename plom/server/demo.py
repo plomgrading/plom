@@ -15,7 +15,7 @@ from plom import Default_Port
 from plom.server import PlomServer
 
 
-class PlomDemo(PlomServer):
+class PlomDemoServer(PlomServer):
     def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None):
         """Start up a Plom demo server.
 
@@ -102,7 +102,7 @@ class PlomDemo(PlomServer):
         }
 
 
-class PlomQuickDemo(PlomDemo):
+class PlomQuickDemoServer(PlomDemoServer):
     """Quickly start a Plom demo server.
 
     Tries to start quickly by only using a few papers.
@@ -114,7 +114,7 @@ class PlomQuickDemo(PlomDemo):
 
 
 if __name__ == "__main__":
-    demo = PlomQuickDemo(port=41981)
+    demo = PlomQuickDemoServer(port=41981)
 
     print("*" * 80)
     print("Server is alive?: {}".format(demo.srv_proc.is_alive()))

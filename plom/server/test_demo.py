@@ -6,12 +6,12 @@ from pathlib import Path
 from shlex import split
 import subprocess
 
-from plom.demo import PlomQuickDemo
+from plom.server import PlomQuickDemoServer
 
 
 def setup_module(module):
     # TODO: get a random port from OS instead?
-    module.Test.demo = PlomQuickDemo(port=41981)
+    module.Test.demo = PlomQuickDemoServer(port=41981)
     module.Test.env = {**os.environ, **module.Test.demo.get_env_vars()}
 
 
