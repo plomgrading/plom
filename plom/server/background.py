@@ -97,11 +97,11 @@ class PlomServer:
         if not buildDemoSourceFiles(basedir):
             raise RuntimeError("failed to build demo sources")
 
-    def __init__(self, dir=None):
+    def __init__(self, basedir=None):
         """Start up Plom server to run in a separate process.
 
         Args:
-            dir (Path-like/str): the base directory for the server.
+            basedir (Path-like/str): the base directory for the server.
                 Currently this must exist (use `plom-server init` etc).
                 TODO: if does not exist, create and fill?
 
@@ -110,19 +110,19 @@ class PlomServer:
             OSError: e.g., address already in use, various others.
             ...
         """
-        if not dir:
+        if not basedir:
             raise ValueError('You must provide a directory as the "dir" parameter')
-        self.dir = Path(dir)
+        self.basedir = Path(basedir)
 
         # TODO: if its empty we need to prepare?
-        # if not any(self.dir.iterdir()):
+        # if not any(self.basedir.iterdir()):
         #     print(f"PlomServer directory {dir} is empty: preparing demo")
 
         # TODO: is there a nice ContextManager to change CWD?
         cwd = os.getcwd()
         # TODO: maybe ServerProcess should do this itself?
         try:
-            os.chdir(self.dir)
+            os.chdir(self.basedir)
             self.srv_proc = _PlomServerProcess()
             self.srv_proc.start()
         finally:
@@ -142,5 +142,5 @@ class PlomServer:
         self.srv_proc.terminate()
         self.srv_proc.join()
         if erase_dir:
-            print(f'Erasing Plom server dir "{dir}"')
-            shutil.rmtree(self.dir)
+            print(f'Erasing Plom server dir "{self.basedir}"')
+            shutil.rmtree(self.basedir)

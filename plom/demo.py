@@ -48,7 +48,7 @@ class PlomDemo(PlomServer):
         self.__class__.initialise_server(tmpdir, port=self.port)
         self.__class__.add_demo_users(tmpdir)
         self.__class__.add_demo_spec(tmpdir, num_to_produce=self._numpapers)
-        super().__init__(dir=tmpdir)
+        super().__init__(basedir=tmpdir)
         if scans:
             self.fill_the_tank()
 
@@ -57,7 +57,7 @@ class PlomDemo(PlomServer):
         env = {**os.environ, **self.get_env_vars()}
         cwd = os.getcwd()
         try:
-            os.chdir(self.dir)
+            os.chdir(self.basedir)
             subprocess.check_call(
                 split("python3 -m plom.scripts.build class --demo"), env=env
             )
