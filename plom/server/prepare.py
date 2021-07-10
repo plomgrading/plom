@@ -5,12 +5,24 @@
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
 
+"""Tools to prepare a directory for a Plom Server."""
+
 from pathlib import Path
 from textwrap import fill, dedent
 
 from plom.server import specdir as specdirname
+from plom.server import confdir
 from plom.textools import texFragmentToPNG
 from plom.server import pageNotSubmitted
+from plom.server import (
+    build_self_signed_SSL_keys,
+    build_server_directories,
+    check_server_directories,
+    check_server_fully_configured,
+    create_server_config,
+    create_blank_predictions,
+    parse_user_list,
+)
 
 
 class PlomServerConfigurationError(Exception):
@@ -75,3 +87,35 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
             )
         )
     )
+
+
+def initialise_server(port):
+    print("Build required directories")
+    build_server_directories()
+    print("Building self-signed SSL key for server")
+    try:
+        build_self_signed_SSL_keys()
+    except FileExistsError as err:
+        print(f"Skipped SSL keygen - {err}")
+
+    print("Copy server networking configuration template into place.")
+    try:
+        create_server_config(port=port)
+    except FileExistsError as err:
+        print(f"Skipping server config - {err}")
+    else:
+        print(
+            "You may want to update '{}' with the correct name (or IP) and "
+            "port of your server.".format(confdir / "serverDetails.toml")
+        )
+
+    print("Build blank predictionlist for identifying.")
+    try:
+        create_blank_predictions()
+    except FileExistsError as err:
+        print(f"Skipping prediction list - {err}")
+
+    print(
+        "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
+    )
+    build_not_submitted_and_do_latex_checks()

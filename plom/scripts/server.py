@@ -27,15 +27,11 @@ import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
-from plom.server.prepare import build_not_submitted_and_do_latex_checks
+from plom.server.prepare import initialise_server
 from plom.server import (
     build_canned_users,
-    build_self_signed_SSL_keys,
-    build_server_directories,
     check_server_directories,
     check_server_fully_configured,
-    create_server_config,
-    create_blank_predictions,
     parse_user_list,
 )
 
@@ -56,46 +52,6 @@ server_instructions = f"""Overview of running the Plom server:
 
   5. Now you can start the server with '%(prog)s launch'.
 """
-
-
-class PlomServerConfigurationError(Exception):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-def initialiseServer(port):
-    print("Build required directories")
-    build_server_directories()
-    print("Building self-signed SSL key for server")
-    try:
-        build_self_signed_SSL_keys()
-    except FileExistsError as err:
-        print(f"Skipped SSL keygen - {err}")
-
-    print("Copy server networking configuration template into place.")
-    try:
-        create_server_config(port=port)
-    except FileExistsError as err:
-        print(f"Skipping server config - {err}")
-    else:
-        print(
-            "You may want to update '{}' with the correct name (or IP) and "
-            "port of your server.".format(confdir / "serverDetails.toml")
-        )
-
-    print("Build blank predictionlist for identifying.")
-    try:
-        create_blank_predictions()
-    except FileExistsError as err:
-        print(f"Skipping prediction list - {err}")
-
-    print(
-        "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
-    )
-    build_not_submitted_and_do_latex_checks()
-
-
-#################
 
 
 def processUsers(userFile, demo, auto, numbered):
@@ -267,7 +223,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialiseServer(args.port)
+        initialise_server(args.port)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":

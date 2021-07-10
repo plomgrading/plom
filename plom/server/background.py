@@ -22,12 +22,10 @@ from plom.produce.demotools import buildDemoSourceFiles
 from plom.server import theServer
 from plom.server import specdir as specdirname
 from plom.server import confdir
+from plom.server.prepare import initialise_server
 from plom.messenger import Messenger
 from plom.plom_exceptions import PlomBenignException
 
-# TODO: move these codes elsewhere?  Out of scripts?
-from plom.scripts.server import initialiseServer
-from plom.scripts.server import processUsers
 
 
 class _PlomServerProcess(Process):
@@ -52,7 +50,7 @@ class PlomServer:
         cwd = os.getcwd()
         try:
             os.chdir(basedir)
-            initialiseServer(port)
+            initialise_server(port)
         finally:
             os.chdir(cwd)
 
@@ -67,6 +65,9 @@ class PlomServer:
         Args:
             basedir (Path-like/str): the base directory for the server.
         """
+        # TODO: move these codes elsewhere?  Out of scripts?
+        from plom.scripts.server import processUsers
+
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
         cwd = os.getcwd()
