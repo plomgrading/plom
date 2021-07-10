@@ -12,24 +12,24 @@
 PyQt5==5.15.2
 PyQt5-sip==12.8.1
 
-Pillow==8.2.0
+Pillow==8.3.1
 aiohttp==3.7.4.post0
 appdirs==1.4.4
 canvasapi==2.2.0
 cffi==1.14.5
 file-magic==0.4.0
-importlib-resources==5.1.4
+importlib-resources==5.2.0
 imutils==0.5.4
 jpegtran-cffi==0.5.2
 lapsolver==1.1.0
 numpy==1.19.5
 opencv-python==4.5.2.54
-packaging==20.9
+packaging==21.0
 pandas==1.1.5
 passlib==1.7.4
 peewee==3.14.4
 pycparser==2.20
-pymupdf==1.18.14
+pymupdf==1.18.15
 # unlisted dep of pyqrcode
 pypng==0.0.20
 pyqrcode==1.2.1
@@ -38,6 +38,6 @@ requests==2.25.1
 requests-toolbelt==0.9.1
 scikit-learn==0.24.2
 toml==0.10.2
-tqdm==4.61.1
-urllib3==1.26.5
+tqdm==4.61.2
+urllib3==1.26.6
 weasyprint==52.5
