@@ -21,10 +21,10 @@ def teardown_module(module):
 
 class Test:
     def test_its_alive(self):
-        assert self.demo.srv_proc.is_alive()
+        assert self.demo._server_proc.is_alive()
 
     def test_has_pid(self):
-        assert self.demo.srv_proc.pid
+        assert self.demo._server_proc.pid
 
     def test_scan_finish(self):
         # TODO: we should assert something about values or text output here?
@@ -36,7 +36,7 @@ class Test:
         )
         # TODO: fix up this, seems erratic, perhaps even non-deterministic?
         assert r >= 0  # numScanned - numberComplete
-        assert self.demo.srv_proc.is_alive()
+        assert self.demo._server_proc.is_alive()
 
     def test_random_IDing(self):
         subprocess.check_call(
@@ -95,4 +95,4 @@ class Test:
         subprocess.check_call(
             split("python3 -m plom.scripts.finish status"), env=self.env
         )
-        assert self.demo.srv_proc.is_alive()
+        assert self.demo._server_proc.is_alive()
