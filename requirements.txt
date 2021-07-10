@@ -16,7 +16,7 @@ Pillow==8.3.1
 aiohttp==3.7.4.post0
 appdirs==1.4.4
 canvasapi==2.2.0
-cffi==1.14.5
+cffi==1.14.6
 file-magic==0.4.0
 importlib-resources==5.2.0
 imutils==0.5.4
