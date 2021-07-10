@@ -376,9 +376,9 @@ nodock_newdeps:
       libgl1-mesa-glx libsm6 libxrender1
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - pip3 install --upgrade pip
+    - python3 -m pip install --upgrade pip
     - python3 -m pip -V
-    - python3 -m pip install --upgrade setuptools wheel
+    - python3 -m pip install --upgrade pip setuptools wheel
     - python3 -m pip install packaging
     # https://github.com/jbaiter/jpegtran-cffi/issues/27
     - python3 -m pip install cffi
@@ -471,9 +471,9 @@ nodock_mindeps:
       python3-requests-toolbelt python3-pil python3-tqdm
       python3-defusedxml python3-jsmin python3-packaging
       iproute2 psmisc file python3-magic
-    - pip3 install --upgrade pip
+    - python3 -m pip install --upgrade pip
     - python3 -m pip -V
-    - python3 -m pip install --upgrade setuptools wheel
+    - python3 -m pip install --upgrade pip setuptools wheel
     - python3 -m pip install -r requirements.txt.tempminima
   script:
     - python3 -m pip install .
