@@ -160,7 +160,6 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
         newName = prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
-        newName = "pages/originalPages/" + prefix + unique + ".png"
     # compute md5sum and put into database
     md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
     # now try to put it into place
