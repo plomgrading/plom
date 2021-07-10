@@ -15,11 +15,8 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import csv
-import os
-import shutil
 from pathlib import Path
 import sys
-from textwrap import fill, dedent
 
 if sys.version_info >= (3, 7):
     import importlib.resources as resources
@@ -30,6 +27,7 @@ import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
+from plom.server.prepare import build_not_submitted_and_do_latex_checks
 from plom.server import (
     build_canned_users,
     build_self_signed_SSL_keys,
@@ -65,68 +63,6 @@ class PlomServerConfigurationError(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
-def doLatexChecks():
-    from plom.textools import texFragmentToPNG
-    from plom.server import pageNotSubmitted
-
-    os.makedirs("pleaseCheck", exist_ok=True)
-
-    # TODO: big ol' GETCWD here: we're trying to get rid of those
-    # check build of fragment
-    cdir = os.getcwd()
-    keepfiles = ("checkThing.png", "pns.0.0.0.png")
-    ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
-    pns = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
-    qns = os.path.join(cdir, specdir, "questionNotSubmitted.pdf")
-
-    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
-
-    if not texFragmentToPNG(fragment, ct):
-        raise PlomServerConfigurationError(
-            "Error latex'ing fragment. Please check your latex distribution."
-        )
-
-    # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.build_not_submitted_page(pns):
-        raise PlomServerConfigurationError(
-            "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
-        )
-    # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.build_not_submitted_question(qns):
-        raise PlomServerConfigurationError(
-            "Error building 'questionNotSubmitted.pdf' template page. Please check your latex distribution."
-        )
-
-    # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_test_page_substitute(0, 0, 0):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing test page."
-        )
-    # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_homework_question_substitute(0, 0):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing homework question."
-        )
-
-    shutil.move(keepfiles[1], os.path.join("pleaseCheck", keepfiles[1]))
-    print(
-        fill(
-            dedent(
-                """
-                Simple latex checks done.  If you feel the need, then please
-                examine '{}' and '{}' in the directory 'pleaseCheck'.  The
-                first should be a short latex'd fragment with some mathematics
-                and text, while the second should be a mostly blank page with
-                'page not submitted' stamped across it.  It is safe delete
-                both files and the directory.
-                """.format(
-                    *keepfiles
-                )
-            )
-        )
-    )
-
-
 def initialiseServer(port):
     print("Build required directories")
     build_server_directories()
@@ -156,7 +92,7 @@ def initialiseServer(port):
     print(
         "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
     )
-    doLatexChecks()
+    build_not_submitted_and_do_latex_checks()
 
 
 #################
