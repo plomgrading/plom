@@ -27,7 +27,6 @@ from plom.messenger import Messenger
 from plom.plom_exceptions import PlomBenignException
 
 
-
 class _PlomServerProcess(Process):
     def run(self):
         theServer.launch()
@@ -157,7 +156,9 @@ class PlomServer:
         while True:
             assert self._server_proc.is_alive()
             r = self._server_proc.join(0.25)
-            assert r is None and self._server_proc.exitcode is None, "Server died on us!"
+            assert (
+                r is None and self._server_proc.exitcode is None
+            ), "Server died on us!"
             try:
                 r = m.start()
             except PlomBenignException:
