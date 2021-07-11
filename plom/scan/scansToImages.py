@@ -19,6 +19,8 @@ import toml
 from tqdm import tqdm
 import fitz
 from PIL import Image
+
+# TODO: try?
 import jpegtran
 
 from plom import PlomImageExts
