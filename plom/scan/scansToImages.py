@@ -20,11 +20,9 @@ from tqdm import tqdm
 import fitz
 from PIL import Image
 
-# TODO: try?
-import jpegtran
-
 from plom import PlomImageExts
 from plom import ScenePixelHeight
+from plom.scan import normalizeJPEGOrientation
 
 
 # TODO: make some common util file to store all these names?
@@ -345,34 +343,6 @@ def gamma_adjust(fn):
         shell=False,
         check=True,
     )
-
-
-def normalizeJPEGOrientation(f):
-    """Transform image according to its Exif metadata.
-
-    Gives a warning if size not a multiple 16 b/c underlying library
-    just quietly mucks up the bottom/right edge:
-    https://github.com/jbaiter/jpegtran-cffi/issues/23
-
-    In Plom, we generally transcode jpeg's that are not multiples of 16.
-    """
-    im = jpegtran.JPEGImage(f)
-    if im.exif_orientation:
-        if im.width % 16 or im.height % 16:
-            warn(f'  jpeg "{f}" dims not mult of 16: re-orientations may be lossy')
-        im2 = im.exif_autotransform()
-        print(
-            '  normalizing "{}" {}x{} to "{}" {}x{}'.format(
-                im.exif_orientation,
-                im.width,
-                im.height,
-                im2.exif_orientation,
-                im2.width,
-                im2.height,
-            )
-        )
-        # str to workaround https://github.com/jbaiter/jpegtran-cffi/issues/28
-        im2.save(str(f))
 
 
 def makeBundleDirectories(fname, bundle_dir):
