@@ -38,8 +38,6 @@ server_install_requires = [
     "passlib",
     "pymupdf>=1.18.8",
     "Pillow>=7.0.0",
-    "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
-    "jpegtran-cffi",
     "weasyprint",
     "aiohttp~=3.7.2",
     "pypng",  # unlisted dep of pyqrcode
@@ -54,6 +52,9 @@ server_install_requires = [
     "requests-toolbelt",
     'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
 ]
+# TODO: optional dependency to enable lossless jpeg rotations
+#   "cffi",
+#   "jpegtran-cffi",
 # TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
 #   "file-magic || python-magic>=0.4.20",
 
