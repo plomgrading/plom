@@ -57,11 +57,12 @@ Approx 7500 papers over 7 courses.
 | 220     | exam                    | 460        | Seckin/Andrew       |
 | 256     | exam                    | 420        | Eric/AndreasB       |
 | BMEG220 | quiz x2, midterm, exam  | 120        | 1st non-math        |
-| 340     | 11 homework sets        | 127        | Forest, 1st hw      |
+| 340     | 11 homework sets        | 127        | Forest, 1st homework|
+| 253S1   | 5 quizzes + exam        | 200        |                     |
 
-Approx 7000 papers over 6 courses (+ more to come?)
+Approx 8000 papers over 7 courses
 
 
 ## Totals
 
-  * Approx 20000 papers in approx 25 courses.
+  * Approx 22000 papers in 26 courses.
