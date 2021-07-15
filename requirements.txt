@@ -23,7 +23,7 @@ imutils==0.5.4
 jpegtran-cffi==0.5.2
 lapsolver==1.1.0
 numpy==1.19.5
-opencv-python==4.5.2.54
+opencv-python==4.5.3.56
 packaging==21.0
 pandas==1.1.5
 passlib==1.7.4
@@ -34,7 +34,7 @@ pymupdf==1.18.15
 pypng==0.0.20
 pyqrcode==1.2.1
 pyzbar==0.1.8
-requests==2.25.1
+requests==2.26.0
 requests-toolbelt==0.9.1
 scikit-learn==0.24.2
 toml==0.10.2
