@@ -136,7 +136,7 @@ def launchTheServer(basedir, masterToken):
     theServer.launch(basedir, master_token=masterToken)
 
 
-def check_positive(arg):
+def check_non_negative(arg):
     if int(arg) < 0:
         raise ValueError
     return int(arg)
@@ -216,7 +216,7 @@ grp.add_argument(
 )
 grp.add_argument(
     "--auto",
-    type=int,
+    type=check_non_negative,
     metavar="N",
     help="Auto-generate a random user list of N users with real-ish usernames.",
 )
