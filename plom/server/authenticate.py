@@ -37,13 +37,13 @@ class Authority:
         log = logging.getLogger("auth")
         if token is None:
             masterToken = uuid.uuid4().hex
-            log.info("No masterToken given, creating one")
+            log.info("No master token given, creating one")
         else:
             try:
                 masterToken = uuid.UUID(token).hex
-                log.info("Supplied masterToken is valid. Using that.")
+                log.info("Supplied master token is valid, using it.")
             except ValueError as e:
-                raise ValueError(f"Supplied masterToken not valid UUID: {e}") from None
+                raise ValueError(f"Supplied master token not valid UUID: {e}") from None
         return masterToken
 
     def get_master_token(self):

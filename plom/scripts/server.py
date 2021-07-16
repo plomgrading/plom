@@ -125,13 +125,15 @@ def processUsers(userFile, demo, auto, numbered):
             fh.write(cl)
 
 
-def launchTheServer(masterToken):
+def launchTheServer(basedir, masterToken):
     from plom.server import theServer
 
-    check_server_directories()
-    check_server_fully_configured()
+    if basedir is None:
+        basedir = Path(".")
+    check_server_directories(basedir)
+    check_server_fully_configured(basedir)
 
-    theServer.launch(masterToken)
+    theServer.launch(basedir, master_token=masterToken)
 
 
 def check_positive(arg):
@@ -181,6 +183,13 @@ spR = sub.add_parser(
     "launch", help="Start the server", description="Start the Plom server."
 )
 spR.add_argument(
+    "dir",
+    nargs="?",
+    help="""The directory containing the filespace to be used by this server.
+        If omitted the current directory will be used.""",
+)
+# TODO make into kwarg: --token?
+spR.add_argument(
     "masterToken",
     nargs="?",
     help="""A 32 hex-digit string used to encrypt tokens in the database.
@@ -227,7 +236,7 @@ def main():
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
-        launchTheServer(args.masterToken)
+        launchTheServer(args.dir, args.masterToken)
     else:
         parser.print_help()
 

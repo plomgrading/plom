@@ -41,37 +41,38 @@ def build_server_directories():
         log.debug("Building directory {}".format(d))
 
 
-def check_server_directories():
+def check_server_directories(basedir=Path(".")):
     """Ensure some server directories exist"""
 
     for d in server_dirs:
-        if not d.is_dir():
+        if not (basedir / d).is_dir():
             raise FileNotFoundError(
                 "Required directory '{}' are not present. "
                 "Have you run 'plom-server init'?".format(d)
             )
 
 
-def check_server_fully_configured():
-    if not (confdir / "serverDetails.toml").exists():
+def check_server_fully_configured(basedir):
+    if not (basedir / confdir / "serverDetails.toml").exists():
         raise FileNotFoundError(
             "Server configuration file not present. Have you run 'plom-server init'?"
         )
     if not (
-        (confdir / "plom.key").exists() and (confdir / "plom-selfsigned.crt").exists()
+        (basedir / confdir / "plom.key").exists()
+        and (basedir / confdir / "plom-selfsigned.crt").exists()
     ):
         raise FileNotFoundError(
             "SSL keys not present. Have you run 'plom-server init'?"
         )
-    if not (specdir / "predictionlist.csv").exists():
+    if not (basedir / specdir / "predictionlist.csv").exists():
         raise FileNotFoundError(
             "Cannot find the predictionlist. Have you run 'plom-server init'?"
         )
-    if not (confdir / "userList.json").exists():
+    if not (basedir / confdir / "userList.json").exists():
         raise FileNotFoundError(
             "Processed userlist is not present. Have you run 'plom-server users'?"
         )
-    if not (specdir / "verifiedSpec.toml").exists():
+    if not (basedir / specdir / "verifiedSpec.toml").exists():
         raise FileNotFoundError(
             "Cannot find the test specification. Have you run 'plom-build'?"
         )

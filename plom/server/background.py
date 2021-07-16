@@ -28,8 +28,12 @@ from plom.plom_exceptions import PlomBenignException
 
 
 class _PlomServerProcess(Process):
+    def __init__(self, basedir):
+        super().__init__()
+        self.basedir = basedir
+
     def run(self):
-        theServer.launch()
+        theServer.launch(self.basedir)
 
 
 class PlomServer:
@@ -125,15 +129,9 @@ class PlomServer:
         with open(self.basedir / confdir / "serverDetails.toml") as f:
             self.server_info = toml.load(f)
 
-        # TODO: is there a nice ContextManager to change CWD?
-        cwd = os.getcwd()
         # TODO: maybe ServerProcess should do this itself?
-        try:
-            os.chdir(self.basedir)
-            self._server_proc = _PlomServerProcess()
-            self._server_proc.start()
-        finally:
-            os.chdir(cwd)
+        self._server_proc = _PlomServerProcess(self.basedir)
+        self._server_proc.start()
         assert self._server_proc.is_alive()
         if not self.ping_server():
             # TODO: try to kill it?

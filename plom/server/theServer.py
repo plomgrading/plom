@@ -8,6 +8,7 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
+import os
 import ssl
 import subprocess
 import tempfile
@@ -194,13 +195,13 @@ class Server:
     )
 
 
-def get_server_info():
+def get_server_info(basedir):
     """Read the server info from config file."""
 
     log = logging.getLogger("server")
     serverInfo = {"server": "127.0.0.1", "port": Default_Port}
     try:
-        with open(confdir / "serverDetails.toml") as data_file:
+        with open(basedir / confdir / "serverDetails.toml") as data_file:
             serverInfo = toml.load(data_file)
             logging.getLogger().setLevel(serverInfo["LogLevel"].upper())
             log.debug("Server details loaded: {}".format(serverInfo))
@@ -213,17 +214,20 @@ def get_server_info():
     return serverInfo
 
 
-def launch(masterToken=None):
+def launch(basedir=Path("."), master_token=None):
     """Launches the Plom server.
 
     args:
-        masterToken (str): a 32 hex-digit string used to encrypt tokens
+        basedir (pathlib.Path/str): the directory containing the file
+            space to be used by this server.
+        master_token (str): a 32 hex-digit string used to encrypt tokens
             in the database.  Not needed on server unless you want to
             hot-restart the server without requiring users to log-off
             and log-in again.  If None, a new token is created.
     """
+    basedir = Path(basedir)
     # TODO: shortname in this?
-    logfile = datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
+    logfile = basedir / datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
     # 5 is to keep debug/info lined up
     logging.basicConfig(
         format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
@@ -238,41 +242,52 @@ def launch(masterToken=None):
     logging.getLogger().setLevel("Debug".upper())
 
     log.info("Plom Server {} (communicates with api {})".format(__version__, serverAPI))
-    check_server_directories()
-    server_info = get_server_info()
-    if (specdir / "plom.db").exists():
+    check_server_directories(basedir)
+    server_info = get_server_info(basedir)
+    if (basedir / specdir / "plom.db").exists():
         log.info("Using existing database.")
     else:
         log.info("Database is not yet present: creating...")
-    examDB = PlomDB(specdir / "plom.db")
-    peon = Server(examDB, masterToken)
-    if (specdir / "classlist.csv").exists():
+    examDB = PlomDB(basedir / specdir / "plom.db")
+    if (basedir / specdir / "classlist.csv").exists():
         log.info("Classlist is present.")
     else:
         log.info("Cannot find the classlist: we expect it later...")
-    userIniter = UserInitHandler(peon)
-    uploader = UploadHandler(peon)
-    ider = IDHandler(peon)
-    marker = MarkHandler(peon)
-    rubricker = RubricHandler(peon)
-    reporter = ReportHandler(peon)
+    cwd = os.getcwd()
+    try:
+        os.chdir(basedir)
+        peon = Server(examDB, master_token)
+        userIniter = UserInitHandler(peon)
+        uploader = UploadHandler(peon)
+        ider = IDHandler(peon)
+        marker = MarkHandler(peon)
+        rubricker = RubricHandler(peon)
+        reporter = ReportHandler(peon)
 
-    # construct the web server
-    app = web.Application()
-    log.info("Setting up routes")
-    userIniter.setUpRoutes(app.router)
-    uploader.setUpRoutes(app.router)
-    ider.setUpRoutes(app.router)
-    marker.setUpRoutes(app.router)
-    rubricker.setUpRoutes(app.router)
-    reporter.setUpRoutes(app.router)
+        # construct the web server
+        app = web.Application()
+        log.info("Setting up routes")
+        userIniter.setUpRoutes(app.router)
+        uploader.setUpRoutes(app.router)
+        ider.setUpRoutes(app.router)
+        marker.setUpRoutes(app.router)
+        rubricker.setUpRoutes(app.router)
+        reporter.setUpRoutes(app.router)
+    finally:
+        os.chdir(cwd)
+
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     sslContext.check_hostname = False
-    sslContext.load_cert_chain(confdir / "plom-selfsigned.crt", confdir / "plom.key")
+    sslContext.load_cert_chain(
+        basedir / confdir / "plom-selfsigned.crt", basedir / confdir / "plom.key"
+    )
     log.info("Start the server!")
     try:
+        os.chdir(basedir)
         web.run_app(app, ssl_context=sslContext, port=server_info["port"])
     except KeyboardInterrupt:
         # Above seems to have its own Ctrl-C handler so this never happens?
         log.info("Closing down via keyboard interrupt")
+    finally:
+        os.chdir(cwd)

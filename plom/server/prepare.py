@@ -90,6 +90,7 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
 
 
 def initialise_server(port):
+    """TODO: add basedir and docstring"""
     print("Build required directories")
     build_server_directories()
     print("Building self-signed SSL key for server")
