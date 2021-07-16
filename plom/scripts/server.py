@@ -125,7 +125,7 @@ def processUsers(userFile, demo, auto, numbered):
             fh.write(cl)
 
 
-def launchTheServer(basedir, masterToken):
+def launchTheServer(basedir, master_token):
     from plom.server import theServer
 
     if basedir is None:
@@ -133,7 +133,7 @@ def launchTheServer(basedir, masterToken):
     check_server_directories(basedir)
     check_server_fully_configured(basedir)
 
-    theServer.launch(basedir, master_token=masterToken)
+    theServer.launch(basedir, master_token=master_token)
 
 
 def check_non_negative(arg):
@@ -188,10 +188,9 @@ spR.add_argument(
     help="""The directory containing the filespace to be used by this server.
         If omitted the current directory will be used.""",
 )
-# TODO make into kwarg: --token?
 spR.add_argument(
-    "masterToken",
-    nargs="?",
+    "--mastertoken",
+    metavar="HEX",
     help="""A 32 hex-digit string used to encrypt tokens in the database.
         If you do not supply one then the server will create one.
         If you record the token somewhere you can hot-restart the server
@@ -236,7 +235,7 @@ def main():
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
-        launchTheServer(args.dir, args.masterToken)
+        launchTheServer(args.dir, args.mastertoken)
     else:
         parser.print_help()
 
