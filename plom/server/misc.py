@@ -33,12 +33,12 @@ server_dirs = (
 )
 
 
-def build_server_directories():
+def build_server_directories(basedir=Path(".")):
     """Build some directories the server will need"""
     log = logging.getLogger("server")
     for d in server_dirs:
-        Path(d).mkdir(exist_ok=True)
-        log.debug("Building directory {}".format(d))
+        log.debug("Making directory {}".format(d))
+        (basedir / d).mkdir(exist_ok=True)
 
 
 def check_server_directories(basedir=Path(".")):

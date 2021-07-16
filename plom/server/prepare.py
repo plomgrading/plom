@@ -10,8 +10,7 @@
 from pathlib import Path
 from textwrap import fill, dedent
 
-from plom.server import specdir as specdirname
-from plom.server import confdir
+from plom.server import specdir, confdir
 from plom.textools import texFragmentToPNG
 from plom.server import pageNotSubmitted
 from plom.server import (
@@ -37,8 +36,8 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
 
     # check build of fragment
     ct = please_check / "check_tex.png"
-    pns = basedir / specdirname / "pageNotSubmitted.pdf"
-    qns = basedir / specdirname / "questionNotSubmitted.pdf"
+    pns = basedir / specdir / "pageNotSubmitted.pdf"
+    qns = basedir / specdir / "questionNotSubmitted.pdf"
 
     fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
 
@@ -89,19 +88,25 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
     )
 
 
-def initialise_server(port):
-    """TODO: add basedir and docstring"""
+def initialise_server(basedir, port):
+    """Setup various files needed before a Plom server can be started.
+
+    args:
+        basedir (pathlib.Path/str): the directory to prepare.
+        port (int): the port to use
+    """
+    basedir = Path(basedir)
     print("Build required directories")
-    build_server_directories()
+    build_server_directories(basedir)
     print("Building self-signed SSL key for server")
     try:
-        build_self_signed_SSL_keys()
+        build_self_signed_SSL_keys(basedir / confdir)
     except FileExistsError as err:
         print(f"Skipped SSL keygen - {err}")
 
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config(port=port)
+        create_server_config(basedir / confdir, port=port)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:
@@ -112,11 +117,11 @@ def initialise_server(port):
 
     print("Build blank predictionlist for identifying.")
     try:
-        create_blank_predictions()
+        create_blank_predictions(basedir / specdir)
     except FileExistsError as err:
         print(f"Skipping prediction list - {err}")
 
     print(
         "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
     )
-    build_not_submitted_and_do_latex_checks()
+    build_not_submitted_and_do_latex_checks(basedir)

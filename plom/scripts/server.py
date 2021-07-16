@@ -232,7 +232,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(args.port)
+        initialise_server(".", args.port)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":

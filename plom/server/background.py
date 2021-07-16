@@ -49,13 +49,7 @@ class PlomServer:
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
         port = port if port else Default_Port
-
-        cwd = os.getcwd()
-        try:
-            os.chdir(basedir)
-            initialise_server(port)
-        finally:
-            os.chdir(cwd)
+        initialise_server(basedir, port)
 
     initialize_server = initialise_server
 
