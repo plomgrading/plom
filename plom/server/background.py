@@ -126,10 +126,18 @@ class PlomServer:
         # TODO: maybe ServerProcess should do this itself?
         self._server_proc = _PlomServerProcess(self.basedir)
         self._server_proc.start()
-        assert self._server_proc.is_alive()
+        assert self.process_is_running()
         if not self.ping_server():
             # TODO: try to kill it?
             raise RuntimeError("The server did not successfully start")
+
+    def process_is_running(self):
+        """Forked/background process not yet dead.
+
+        This just checks that the process is still running.  You probably
+        want :py:method:`ping_server` to know if the server is responding.
+        """
+        return self._server_proc.is_alive()
 
     def ping_server(self):
         """Try to connect to the background server.
@@ -146,7 +154,7 @@ class PlomServer:
         m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
         count = 0
         while True:
-            assert self._server_proc.is_alive()
+            assert self.process_is_running()
             r = self._server_proc.join(0.25)
             assert (
                 r is None and self._server_proc.exitcode is None
@@ -163,7 +171,7 @@ class PlomServer:
                 print("we tried 10 times but server is not up yet!")
                 return False
         m.stop()
-        assert self._server_proc.is_alive()
+        assert self.process_is_running()
         return True
 
     def __del__(self):
@@ -180,7 +188,7 @@ class PlomServer:
                 Instead you can pass `True` to erase them.
                 TODO: maybe only subclasses should allow this?
         """
-        if self._server_proc.is_alive():
+        if self.process_is_running():
             print(f"Stopping PlomServer '{self}' in dir '{self.basedir}'")
             self._server_proc.terminate()
             self._server_proc.join()

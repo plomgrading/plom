@@ -117,7 +117,7 @@ if __name__ == "__main__":
     demo = PlomQuickDemoServer(port=41981)
 
     print("*" * 80)
-    print("Server is alive?: {}".format(demo.srv_proc.is_alive()))
+    print("Server is alive?: {}".format(demo.process_is_running()))
     print("Server PID: {}".format(demo.srv_proc.pid))
 
     env = {**os.environ, **demo.get_env_vars()}

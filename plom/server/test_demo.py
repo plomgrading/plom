@@ -21,7 +21,7 @@ def teardown_module(module):
 
 class Test:
     def test_its_alive(self):
-        assert self.demo._server_proc.is_alive()
+        assert self.demo.process_is_running()
 
     def test_has_pid(self):
         assert self.demo._server_proc.pid
@@ -36,7 +36,7 @@ class Test:
         )
         # TODO: fix up this, seems erratic, perhaps even non-deterministic?
         assert r >= 0  # numScanned - numberComplete
-        assert self.demo._server_proc.is_alive()
+        assert self.demo.process_is_running()
 
     def test_random_IDing(self):
         subprocess.check_call(
@@ -95,4 +95,4 @@ class Test:
         subprocess.check_call(
             split("python3 -m plom.scripts.finish status"), env=self.env
         )
-        assert self.demo._server_proc.is_alive()
+        assert self.demo.process_is_running()
