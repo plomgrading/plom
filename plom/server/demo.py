@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     print("*" * 80)
     print("Server is alive?: {}".format(demo.process_is_running()))
-    print("Server PID: {}".format(demo.srv_proc.pid))
+    print("Server PID: {}".format(demo.process_pid()))
 
     env = {**os.environ, **demo.get_env_vars()}
     subprocess.check_call(split("plom-scan status"), env=env)

@@ -139,6 +139,9 @@ class PlomServer:
         """
         return self._server_proc.is_alive()
 
+    def process_pid(self):
+        return self._server_proc.pid
+
     def ping_server(self):
         """Try to connect to the background server.
 

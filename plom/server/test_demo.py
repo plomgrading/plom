@@ -24,7 +24,7 @@ class Test:
         assert self.demo.process_is_running()
 
     def test_has_pid(self):
-        assert self.demo._server_proc.pid
+        assert self.demo.process_pid()
 
     def test_scan_finish(self):
         # TODO: we should assert something about values or text output here?
