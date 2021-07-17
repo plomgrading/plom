@@ -178,8 +178,8 @@ class PlomServer:
         return True
 
     def __del__(self):
+        print(f'Deleting PlomServer object "{self}"')
         # at least once I saw it created without this attrib
-        print(f"deleting PlomServer '{self}' in dir '{self.basedir}'")
         if hasattr(self, "_server_proc"):
             self.stop()
 
@@ -194,6 +194,7 @@ class PlomServer:
         if self.process_is_running():
             print(f"Stopping PlomServer '{self}' in dir '{self.basedir}'")
             self._server_proc.terminate()
+            # TODO: 10 sec timeout, then kill?
             self._server_proc.join()
         if erase_dir:
             if self.basedir.exists():
