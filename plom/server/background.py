@@ -120,7 +120,7 @@ class PlomServer:
             ...
         """
         if not basedir:
-            raise ValueError('You must provide a directory as the "dir" parameter')
+            raise ValueError('You must provide a directory as the "basedir" parameter')
         self.basedir = Path(basedir)
 
         if backend is None:
