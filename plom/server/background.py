@@ -142,6 +142,16 @@ class PlomServer:
     def process_pid(self):
         return self._server_proc.pid
 
+    def _brief_wait(self, how_long=0.1):
+        """Wait briefly on the subprocess, which should not have stopped.
+
+        Returns:
+            bool: True if process is still running, False if it stopped
+                while we were waiting.
+        """
+        r = self._server_proc.join(how_long)
+        return (r is None and self._server_proc.exitcode is None)
+
     def ping_server(self):
         """Try to connect to the background server.
 
@@ -158,10 +168,7 @@ class PlomServer:
         count = 0
         while True:
             assert self.process_is_running()
-            r = self._server_proc.join(0.25)
-            assert (
-                r is None and self._server_proc.exitcode is None
-            ), "Server died on us!"
+            assert self._brief_wait(0.25), "Server died on us!"
             try:
                 r = m.start()
             except PlomBenignException:
