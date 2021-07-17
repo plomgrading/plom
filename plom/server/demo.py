@@ -16,7 +16,7 @@ from plom.server import PlomServer
 
 
 class PlomDemoServer(PlomServer):
-    def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None):
+    def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None, **kwargs):
         """Start up a Plom demo server.
 
         Args:
@@ -48,7 +48,8 @@ class PlomDemoServer(PlomServer):
         self.__class__.initialise_server(tmpdir, port=self.port)
         self.__class__.add_demo_users(tmpdir)
         self.__class__.add_demo_spec(tmpdir, num_to_produce=self._numpapers)
-        super().__init__(basedir=tmpdir)
+        kwargs.pop("basedir", True)
+        super().__init__(basedir=tmpdir, **kwargs)
         if scans:
             self.fill_the_tank()
 

@@ -12,7 +12,9 @@ control to the caller with the server continuing in the background.
 import os
 from multiprocessing import Process
 from pathlib import Path
+from shlex import split
 import shutil
+import subprocess
 
 import toml
 
@@ -99,13 +101,18 @@ class PlomServer:
         if not buildDemoSourceFiles(basedir):
             raise RuntimeError("failed to build demo sources")
 
-    def __init__(self, basedir=None):
+    def __init__(self, basedir=None, backend=None):
         """Start up Plom server to run in a separate process.
 
         Args:
             basedir (Path-like/str): the base directory for the server.
                 Currently this must exist (use `plom-server init` etc).
                 TODO: if does not exist, create and fill?
+            backend (str/None): Controls the precise mechanism used to put
+                the server into the background.  Probably you should not
+                need to use this.  Can be the strings `"subprocess"` or
+                `"multiprocessing"`.  Omit or set to None to choose the
+                default (currently `"subprocess"`; subject to change).
 
         Raises:
             PermissionError: cannot write to `dir`.
@@ -116,6 +123,15 @@ class PlomServer:
             raise ValueError('You must provide a directory as the "dir" parameter')
         self.basedir = Path(basedir)
 
+        if backend is None:
+            backend = "subprocess"
+        if backend == "subprocess":
+            self._pymp = False
+        elif backend == "multiprocessing":
+            self._pymp = True
+        else:
+            raise ValueError(f'background backend of "{backend}" is not supported')
+
         # TODO: if its empty we need to prepare?
         # if not any(self.basedir.iterdir()):
         #     print(f"PlomServer directory {dir} is empty: preparing demo")
@@ -123,9 +139,13 @@ class PlomServer:
         with open(self.basedir / confdir / "serverDetails.toml") as f:
             self.server_info = toml.load(f)
 
-        # TODO: maybe ServerProcess should do this itself?
-        self._server_proc = _PlomServerProcess(self.basedir)
-        self._server_proc.start()
+        if self._pymp:
+            self._server_proc = _PlomServerProcess(self.basedir)
+            self._server_proc.start()
+        else:
+            self._server_proc = subprocess.Popen(
+                split(f"python3 -m plom.scripts.server launch {self.basedir}")
+            )
         assert self.process_is_running()
         if not self.ping_server():
             # TODO: try to kill it?
@@ -137,7 +157,15 @@ class PlomServer:
         This just checks that the process is still running.  You probably
         want :py:method:`ping_server` to know if the server is responding.
         """
-        return self._server_proc.is_alive()
+        if self._pymp:
+            return self._server_proc.is_alive()
+        # for subprocess, its a bit trickier
+        try:
+            self._server_proc.wait(0.01)
+        except subprocess.TimeoutExpired:
+            return True
+        else:
+            return False
 
     def process_pid(self):
         return self._server_proc.pid
@@ -149,8 +177,16 @@ class PlomServer:
             bool: True if process is still running, False if it stopped
                 while we were waiting.
         """
-        r = self._server_proc.join(how_long)
-        return (r is None and self._server_proc.exitcode is None)
+        if self._pymp:
+            r = self._server_proc.join(how_long)
+            return r is None and self._server_proc.exitcode is None
+        # for subprocess, very similar to checking if alive
+        try:
+            self._server_proc.wait(how_long)
+        except subprocess.TimeoutExpired:
+            return True
+        else:
+            return False
 
     def ping_server(self):
         """Try to connect to the background server.
@@ -202,7 +238,10 @@ class PlomServer:
             print(f"Stopping PlomServer '{self}' in dir '{self.basedir}'")
             self._server_proc.terminate()
             # TODO: 10 sec timeout, then kill?
-            self._server_proc.join()
+            if self._pymp:
+                self._server_proc.join()
+            else:
+                self._server_proc.wait()
         if erase_dir:
             if self.basedir.exists():
                 print(f'Erasing Plom server dir "{self.basedir}"')
