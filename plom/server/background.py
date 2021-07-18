@@ -206,16 +206,8 @@ class PlomServer:
             bool: True if process is still running, False if it stopped
                 while we were waiting.
         """
-        if self._pymp:
-            r = self._server_proc.join(how_long)
-            return r is None and self._server_proc.exitcode is None
-        # for subprocess, very similar to checking if alive
-        try:
-            self._server_proc.wait(how_long)
-        except subprocess.TimeoutExpired:
-            return True
-        else:
-            return False
+        self.wait(how_long)
+        return self.exitcode is None
 
     def ping_server(self):
         """Try to connect to the background server.
