@@ -23,21 +23,27 @@ your own risk, no warranty, etc, etc.
 4. Go the directory you created and run `plom-server launch`.
 """
 
+import argparse
 import csv
+import os
+from pathlib import Path
+import random
 import string
 import subprocess
-import os
-import random
 import time
 
 import fitz
 import PIL
 from tqdm import tqdm
 
-from canvas_utils import (
+from plom import __version__
+from plom.canvas import __DEFAULT_CANVAS_API_URL__
+from plom.canvas import (
     canvas_login,
     download_classlist,
+    get_assignment_by_id_number,
     get_conversion_table,
+    get_course_by_id_number,
     interactively_get_assignment,
     interactively_get_course,
 )
@@ -377,91 +383,97 @@ def scan_submissions(server_dir="."):
     os.chdir(o_dir)
 
 
+parser = argparse.ArgumentParser(
+    description=__doc__.split("\n")[0],
+    epilog="\n".join(__doc__.split("\n")[1:]),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--api_url",
+    type=str,
+    default=__DEFAULT_CANVAS_API_URL__,
+    action="store",
+    help=f'URL for talking to Canvas, defaults to "{__DEFAULT_CANVAS_API_URL__}".',
+)
+parser.add_argument(
+    "--api_key",
+    type=str,
+    action="store",
+    help="""
+        The API Key for talking to Canvas.
+        You can store this in a local file "api_secrets.py" as
+        a string in a variable named "my_key".
+        TODO: If blank, prompt for it?
+    """,
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    help="Perform a dry-run without writing grades or uploading files.  TODO: not implemented yet?",
+)
+parser.add_argument(
+    "--dir",
+    type=str,
+    action="store",
+    help="The local directory for the Plom Server files (prompts if omitted)."
+)
+parser.add_argument(
+    "--course",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas Course ID (an integer N).
+        Interactively prompt from a list if omitted.
+    """,
+)
+parser.add_argument(
+    "--assignment",
+    type=int,
+    metavar="M",
+    action="store",
+    help="""
+        Specify a Canvas Assignment ID (an integer M).
+        Interactively prompt from a list if omitted.
+    """,
+)
+
+
 if __name__ == "__main__":
+    args = parser.parse_args()
+    user = canvas_login(args.api_url, args.api_key)
+
+    if args.course is None:
+        course = interactively_get_course(user)
+        print(f'Note: you can use "--course {course.id}" to reselect.\n')
+    else:
+        course = get_course_by_id_number(args.course, user)
+    print(f"Ok using course: {course}")
+
+    if args.assignment:
+        assignment = get_assignment_by_id_number(course, args.assignment)
+    else:
+        assignment = interactively_get_assignment(user, course)
+        print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
+    print(f"Ok uploading to Assignment: {assignment}")
 
     o_dir = os.getcwd()
 
-    # Hang on, why do I switch the loop variable to true instead of
-    # just doing the sensible thing and breaking?
-    user = canvas_login()
-
-    # TODO: copy commandline arg stuff from push_to_canvas
-    course = interactively_get_course(user)
-    assignment = interactively_get_assignment(user, course)
-
-    # TODO: Make this give an `os.listdir()`
-    print("Setting up the workspace now.\n")
-    print("  Current subdirectories:")
-    print("  --------------------------------------------------------------------")
-    excluded_dirs = ["__pycache__"]
-    subdirs = [
-        subdir
-        for subdir in os.listdir()
-        if os.path.isdir(subdir) and subdir not in excluded_dirs
-    ]
-    for subdir in subdirs:
-        print(f"    ./{subdir}")
-
-    classdir_selected = False
-    while not classdir_selected:
-
-        classdir_name = input(
-            "\n  Name of dir to use for this class (will create if not found): "
-        )
-
-        if not classdir_name:
-            print("    Please provide a non-empty name.\n")
-            continue
-
-        print(f"  You selected `{classdir_name}`")
-        confirmation = input("  Confirm choice? [y/n] ")
-        if confirmation in ["", "\n", "y", "Y"]:
-            classdir_selected = True
-            classdir = classdir_name
-
-    print(f"\n  cding into {classdir}...")
-    if os.path.exists(classdir_name):
-        os.chdir(classdir)
+    if args.dir is None:
+        basedir = input("Name of dir to use for this assignment: ")
     else:
-        os.mkdir(classdir)
-        os.chdir(classdir)
+        basedir = args.dir
+    basedir = Path(basedir)
 
-    print(f"  working directory is now `{os.getcwd()}`")
-
-    print("\n\n\n")
-
-    print("  Current subdirectories:")
-    print("  --------------------------------------------------------------------")
-    subdirs = [
-        subdir
-        for subdir in os.listdir()
-        if os.path.isdir(subdir) and subdir not in excluded_dirs
-    ]
-    # subdirs = [_ for _ in os.listdir if os.path.isdir(_)]
-    for subdir in subdirs:
-        print(f"    ./{subdir}")
-
-    # Directory for this particular assignment
-    hwdir_selected = False
-    while not hwdir_selected:
-
-        hwdir_name = input(
-            "\n\n\n  Name of dir to use for this assignment (will create if not found): "
-        )
-
-        print(f"  You selected `{hwdir_name}`")
-        confirmation = input("  Confirm choice? [y/n] ")
-        if confirmation in ["", "\n", "y", "Y"]:
-            hwdir_selected = True
-            hwdir = hwdir_name
-
-    print(f"\n  cding into {hwdir}...")
-    if os.path.exists(hwdir_name):
-        os.chdir(hwdir)
+    if basedir.is_dir():
+        print(f'Using existing dir "{basedir}"')
+        # TODO: ensure empty or warn if somethings exist?
     else:
-        os.mkdir(hwdir)
-        os.chdir(hwdir)
-
+        print(f'Creating dir "{basedir}"')
+        basedir.mkdir(exist_ok=True)
+    # TODO
+    os.chdir(basedir)
     print(f"  working directory is now `{os.getcwd()}`")
 
     plom_server = initialize(course, assignment)
