@@ -95,8 +95,7 @@ def main():
     # TODO: output account info directly, perhaps just "user*"?
     print('  * See "userListRaw.csv" for account info\n')
     # print("  * Press Ctrl-C to stop this demo")
-    # TODO: what to do for this?  Needs frontend at least
-    # background_server._server_proc.wait()
+    # background_server.wait()
     input("Press enter when you want to stop the server...")
     background_server.stop()
     print("Server stopped, goodbye!")

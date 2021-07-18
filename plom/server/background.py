@@ -171,6 +171,34 @@ class PlomServer:
     def pid(self):
         return self._server_proc.pid
 
+    @property
+    def exitcode(self):
+        if self._pymp:
+            return self._server_proc.exitcode
+        else:
+            return self._server_proc.returncode
+
+    def wait(self, timeout=None):
+        """Wait aka join on the subprocess, either forever or with a timeout.
+
+        args:
+            timeout (None/int/float): how long to wait.  If None, wait
+                forever until the process ends.
+
+        return:
+            None: either timed out or stopped.  You can check the return
+                code to know which, see :py:method:`exitcode`: it will
+                be None if we timed-out, otherwise an integer.
+        """
+        if self._pymp:
+            return self._server_proc.join(timeout)
+        try:
+            self._server_proc.wait(timeout)
+        except subprocess.TimeoutExpired:
+            return None
+        else:
+            return None
+
     def _brief_wait(self, how_long=0.1):
         """Wait briefly on the subprocess, which should not have stopped.
 

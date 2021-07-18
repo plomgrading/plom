@@ -30,6 +30,10 @@ class Test:
     def test_can_ping(self):
         assert self.server.ping_server()
 
+    def test_can_wait(self):
+        assert self.server.wait(0.01) is None
+        assert self.server.exitcode is None
+
     def test_is_subprocessing(self):
         assert hasattr(self.server, "_server_proc")
         # subprocess has wait, multiprocessing as join
