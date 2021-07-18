@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom script to start a demo server for homework submissions.
 
@@ -26,6 +26,7 @@ from plom import __version__
 from plom.server import PlomServer
 
 
+# TODO: could add --port like in `demo.py`
 parser = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -92,6 +93,7 @@ def main():
     print("Server seems to still be running: demo setup is complete")
 
     print('\n*** Now run "plom-client" ***\n')
+    print(f"  * Server currently running under PID {background_server.pid}\n")
     # TODO: output account info directly, perhaps just "user*"?
     print('  * See "userListRaw.csv" for account info\n')
     # print("  * Press Ctrl-C to stop this demo")
