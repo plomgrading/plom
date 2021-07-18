@@ -171,15 +171,13 @@ parser.add_argument(
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    # TODO: Fix all the `sis` vs `sis_id` garbage here
-    user = canvas_login()
+    user = canvas_login(args.api_url, args.api_key)
 
     if args.course is None:
         course = interactively_get_course(user)
         print(f'Note: you can use "--course {course.id}" to reselect.\n')
     else:
         course = get_course_by_id_number(args.course, user)
-
     print(f"Ok using course: {course}")
 
     if args.assignment:
@@ -187,7 +185,6 @@ if __name__ == "__main__":
     else:
         assignment = interactively_get_assignment(user, course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
-
     print(f"Ok uploading to Assignment: {assignment}")
 
     print("\nChecking if you have run `plom-finish`...")
