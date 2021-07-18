@@ -21,6 +21,9 @@ your own risk, no warranty, etc, etc.
    to the usual Plom dependencies.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
+
+TODO:
+  * needs to log instead of just discarding so much output
 """
 
 import argparse
@@ -37,6 +40,7 @@ import PIL
 from tqdm import tqdm
 
 from plom import __version__
+from plom.server import PlomServer
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
     canvas_login,
@@ -47,31 +51,6 @@ from plom.canvas import (
     interactively_get_assignment,
     interactively_get_course,
 )
-
-
-# TODO: Invesitate using [1] here, and can any of this help [1]?
-# [1] https://gitlab.com/plom/plom/-/merge_requests/662
-# For making sure the server dies with the python script if we kill
-# the python script.
-#
-# LINUX ONLY I think. See https://stackoverflow.com/a/19448096
-import signal
-import ctypes
-
-libc = ctypes.CDLL("libc.so.6")
-
-
-def _set_pdeathsig(sig=signal.SIGTERM):
-    """
-    For killing subprocess.Popen() things when python dies
-
-    See https://stackoverflow.com/a/19448096
-    """
-
-    def callable():
-        return libc.prctl(1, sig)
-
-    return callable
 
 
 def get_short_name(long_name):
@@ -98,6 +77,7 @@ def get_toml(assignment, server_dir="."):
     """
     (assignment): a canvasapi assignment object
     """
+    server_dir = Path(server_dir)
     longName = assignment.name
 
     name = get_short_name(longName)
@@ -130,7 +110,7 @@ def get_toml(assignment, server_dir="."):
         # intelligently in the future
     toml += 'select="fix"'
 
-    with open(f"{server_dir}/canvasSpec.toml", "w") as f:
+    with open(server_dir / "canvasSpec.toml", "w") as f:
         f.write(toml)
 
 
@@ -139,71 +119,56 @@ def initialize(course, assignment, server_dir="."):
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
     """
-    if not os.path.exists(server_dir):
-        os.mkdir(server_dir)
+    server_dir = Path(server_dir)
+    server_dir.mkdir(exist_ok=True)
 
-    o_dir = os.getcwd()  # original directory
-
-    print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
+    print("\nGetting enrollment data from canvas and building `classlist.csv`...")
     download_classlist(course, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
     get_toml(assignment, server_dir=server_dir)
 
-    os.chdir(server_dir)
-    print("\nSwitched into test server directory.\n")
-
-    print("Parsing `canvasSpec.toml`...")
-    subprocess.run(["plom-build", "parse", "canvasSpec.toml"], capture_output=True)
-
-    print("Running `plom-server init`...")
-    subprocess.run(["plom-server", "init"], capture_output=True)
-
-    print("Autogenerating users...")
-    subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
+    o_dir = os.getcwd()
+    try:
+        os.chdir(server_dir)
+        print("\nSwitched into test server directory.\n")
+        print("Parsing `canvasSpec.toml`...")
+        subprocess.run(["plom-build", "parse", "canvasSpec.toml"], capture_output=True)
+        print("Running `plom-server init`...")
+        subprocess.run(["plom-server", "init"], capture_output=True)
+        print("Autogenerating users...")
+        subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
+        print("Processing userlist...")
+        subprocess.run(["plom-server", "users", "userListRaw.csv"], capture_output=True)
+    finally:
+        os.chdir(o_dir)
 
     print("Temporarily exporting manager password...")
     user_list = []
-    with open("userListRaw.csv", "r") as csvfile:
+    with open(server_dir / "userListRaw.csv", "r") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             user_list += [row]
-
     os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1]
-
     del user_list
 
-    print("Processing userlist...")
-    subprocess.run(
-        ["plom-server", "users", "userListRaw.csv"],
-        capture_output=True,
-    )
-
     print("Launching plom server.")
-    # plom_server = subprocess.Popen(["plom-server", "launch"], stdout=subprocess.DEVNULL)
-    plom_server = subprocess.Popen(
-        ["plom-server", "launch"],
-        stdout=subprocess.DEVNULL,
-        preexec_fn=_set_pdeathsig(signal.SIGTERM),  # Linux only?
-    )
+    plom_server = PlomServer(basedir=server_dir)
+    # TODO: consider surpressing output https://gitlab.com/plom/plom/-/issues/1586
+    # Forest had popen(... ,stdout=subprocess.DEVNULL)
+    print("Server *should* be running now")
 
-    print(
-        "Server *should* be running now (although hopefully you can't because theoretically output should be suppressed). In light of this, be extra sure to explicitly kill the server (e.g., `pkill plom-server`) before trying to start a new one --- it can persist even after the original python process has been killed.\n\nTo verify if the server is running, you can try the command\n  ss -lntu\nto check if the 41984 port has a listener.\n"
-    )
-
-    time.sleep(3)
-
-    print("Building classlist...")
-    build_class = subprocess.run(
-        ["plom-build", "class", "classlist.csv"], capture_output=True
-    )
-
-    print("Building the database...")
-    build_class = subprocess.run(
-        ["plom-build", "make", "--no-pdf"], capture_output=True
-    )
-
-    os.chdir(o_dir)
+    try:
+        print("Building classlist...")
+        build_class = subprocess.run(
+            ["plom-build", "class", "classlist.csv"], capture_output=True
+        )
+        print("Building the database...")
+        build_class = subprocess.run(
+            ["plom-build", "make", "--no-pdf"], capture_output=True
+        )
+    finally:
+        os.chdir(o_dir)
 
     return plom_server
 
@@ -217,6 +182,7 @@ def get_submissions(
     (name_by_info): Whether to make the filenames of the form ID_Last_First.pdf
 
     """
+    server_dir = Path(server_dir)
     o_dir = os.getcwd()
 
     if name_by_info:
@@ -410,13 +376,13 @@ parser.add_argument(
 parser.add_argument(
     "--dry-run",
     action="store_true",
-    help="Perform a dry-run without writing grades or uploading files.  TODO: not implemented yet?",
+    help="Perform a dry-run, for example, don't download papers",
 )
 parser.add_argument(
     "--dir",
     type=str,
     action="store",
-    help="The local directory for the Plom Server files (prompts if omitted)."
+    help="The local directory for the Plom Server files (prompts if omitted).",
 )
 parser.add_argument(
     "--course",
@@ -472,17 +438,15 @@ if __name__ == "__main__":
     else:
         print(f'Creating dir "{basedir}"')
         basedir.mkdir(exist_ok=True)
-    # TODO
-    os.chdir(basedir)
-    print(f"  working directory is now `{os.getcwd()}`")
 
-    plom_server = initialize(course, assignment)
+    plom_server = initialize(course, assignment, server_dir=basedir)
 
     print("\n\ngetting submissions from canvas...")
-    get_submissions(assignment, dry_run=False)
+    get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
 
     print("scanning submissions...")
-    scan_submissions()
+    scan_submissions(server_dir=basedir)
 
-    # Return to starting directory
-    os.chdir(o_dir)
+    input("Press enter when you want to stop the server...")
+    plom_server.stop()
+    print("Server stopped, goodbye!")

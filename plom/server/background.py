@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2020-2021 Forest Kobayashi
 
 """A background Plom server.
 
@@ -27,6 +28,27 @@ from plom.server import confdir
 from plom.server.prepare import initialise_server
 from plom.messenger import Messenger
 from plom.plom_exceptions import PlomBenignException
+
+
+# Ideas from Forest Kobayashi's plom-form-canvas script: ensure the
+# server dies with the python script (e.g., if we kill the script.)
+# LINUX ONLY I think. See https://stackoverflow.com/a/19448096
+# import signal
+# import ctypes
+#
+# libc = ctypes.CDLL("libc.so.6")
+#
+# def _set_pdeathsig(sig=signal.SIGTERM):
+#     """
+#     For killing subprocess.Popen() things when python dies
+#
+#     See https://stackoverflow.com/a/19448096
+#     """
+#     def callable():
+#         return libc.prctl(1, sig)
+#     return callable
+#
+# Popen(..., preexec_fn=_set_pdeathsig(signal.SIGTERM),
 
 
 class _PlomServerProcess(Process):
