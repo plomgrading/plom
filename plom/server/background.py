@@ -167,7 +167,8 @@ class PlomServer:
         else:
             return False
 
-    def process_pid(self):
+    @property
+    def pid(self):
         return self._server_proc.pid
 
     def _brief_wait(self, how_long=0.1):

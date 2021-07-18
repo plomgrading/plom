@@ -25,7 +25,7 @@ class Test:
         assert self.server.process_is_running()
 
     def test_has_pid(self):
-        assert self.server.process_pid()
+        assert self.server.pid
 
     def test_can_ping(self):
         assert self.server.ping_server()
