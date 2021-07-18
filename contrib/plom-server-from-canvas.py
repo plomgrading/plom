@@ -4,7 +4,7 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021 Colin B. Macdonald
 
-"""Build and populate a server from a Canvas Assignment.
+"""Build and populate a Plom server from a Canvas Assignment.
 
 The goal is automate using Plom as an alternative to Canvas's
 SpeedGrader.
@@ -16,7 +16,7 @@ your own risk, no warranty, etc, etc.
    ```
    my_key = "11224~AABBCCDDEEFF..."
    ```
-2. Run `python canvas_server.py`
+2. Run `python plom-server-from-canvas.py`
    You will need the `aria2c` command-line downloader in addition
    to the usual Plom dependencies.
 3. Follow prompts.
