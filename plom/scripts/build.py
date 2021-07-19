@@ -175,7 +175,11 @@ spL = sub.add_parser(
     description="Get student names/numbers from csv, process, and upload to server.",
     epilog=dedent(
         """
-        The classlist can be a .csv file with column headers:
+        The classlist can be a .csv file exported from Canvas (specifically,
+        Canvas -> Grades -> Actions -> Export).  Plom will do some light sanity
+        checking such as dropping names like "Test Student".
+
+        Alternatively, the classlist can be a .csv file with column headers:
           * id - student ID number
           * studentName - student name in a single field
 
@@ -184,8 +188,6 @@ spL = sub.add_parser(
           * id
           * {}
           * {}
-
-        Alternatively, give a .csv exported from Canvas (experimental!)
         """
     ).format(
         "\n    ".join(wrap(", ".join(possible_surname_fields), 72)),
