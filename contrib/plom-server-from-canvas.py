@@ -38,7 +38,7 @@ import subprocess
 import time
 
 import fitz
-import PIL
+import PIL.Image
 from tqdm import tqdm
 
 from plom import __version__
@@ -220,11 +220,18 @@ def get_submissions(
             continue
 
         try:
+            attachments = sub.attachments
+        except AttributeError:  # student didn't submit
+            # TODO: consider just making empty list?
+            unsubmitted += [sub]
+            continue
+
+        if True:
             # If the student submitted multiple times, get _all_
             # the submissions.
             version = 0
             sub_subs = []
-            for obj in sub.attachments:
+            for obj in attachments:
                 # sub-submission name --- prepend with a version
                 # number to make stitching them together easier
                 # TODO what if its not a dict?  assert instead?
@@ -299,9 +306,6 @@ def get_submissions(
                 # Clean up temporary files
                 for sub_sub in sub_subs:
                     (Path(".") / sub_sub).unlink()
-        except AttributeError:  # Catches if student didn't submit
-            unsubmitted += [sub]
-            continue
 
     for sub in unsubmitted:
         print(f"No submission from user_id {sub.user_id}")
