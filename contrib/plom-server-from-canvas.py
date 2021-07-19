@@ -227,6 +227,7 @@ def get_submissions(
             for obj in sub.attachments:
                 # sub-submission name --- prepend with a version
                 # number to make stitching them together easier
+                # TODO what if its not a dict?  assert instead?
                 if type(obj) == dict:
                     # TODO: Test which of these cases are actually
                     # relevant
@@ -244,6 +245,11 @@ def get_submissions(
                     elif obj["content-type"] == "image/jpeg":
                         suffix = ".jpeg"
                         sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+                    # TODO: zip?
+                    else:
+                        raise ValueError(
+                            f"unexpected content-type {obj['content-type']}: what to do?"
+                        )
 
                     version += 1
 
