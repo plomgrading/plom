@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* The `jpegtran-cffi` package which is used for lossless jpeg rotations is not longer a hard dependency.  Jpeg is still only used rarely and improvements to the client means its not a serious problem if a few pages are rotated.
 
 ### Fixed
 * Client: better handling of rare upload failures: warning dialog pops up if the queue is growing, and a single timeout will no longer block the entire queue.
+* Misc bug fixes and doc updates.
 
 
 ## [0.6.4] - 2021-06-23
