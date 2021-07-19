@@ -24,6 +24,8 @@ your own risk, no warranty, etc, etc.
 
 TODO:
   * needs to log instead of just discarding so much output
+  * drop aria2c dep
+  * support an existing configured server in basedir: or fork
 """
 
 import argparse
@@ -189,18 +191,9 @@ def get_submissions(
         print("Fetching conversion table...")
         conversion = get_conversion_table(server_dir=server_dir)
 
-    os.chdir(server_dir)
+    (server_dir / "upload" / "submittedHWByQ").mkdir(exist_ok=True, parents=True)
 
-    if not os.path.exists("upload"):
-        os.mkdir("upload")
-
-    os.chdir("upload")
-
-    if not os.path.exists("submittedHWByQ"):
-        os.mkdir("submittedHWByQ")
-
-    os.chdir("submittedHWByQ")
-
+    os.chdir(server_dir / "upload" / "submittedHWByQ")
     print("Moved into ./upload/submittedHWByQ")
 
     print("Fetching & preprocessing submissions...")
@@ -299,7 +292,7 @@ def get_submissions(
                 doc.save(sub_name)
                 # Clean up temporary files
                 for sub_sub in sub_subs:
-                    subprocess.run(["rm", sub_sub])
+                    (Path(".") / sub_sub).unlink()
         except AttributeError:  # Catches if student didn't submit
             unsubmitted += [sub]
             continue
