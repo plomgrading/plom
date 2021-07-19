@@ -298,7 +298,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changes to various command-line tools to streamline uploading and other operations.
 * Scanning is now based more strongly on concept of "bundles" of papers.
 * Most tools now interact with the server via the API instead of using the file system.
-* Server docker image uses pinned dependency information for reproducibility.* Server, Manager and Client handling of "unknown" pages has improved.
+* Server docker image uses pinned dependency information for reproducibility.
+* Server, Manager and Client handling of "unknown" pages has improved.
 * Client has visual feedback for ctrl-, shift- tool alternatives via mouse cursor.
 * Various client UI tweaks.
 * Various improvements to the manager UI tool.
