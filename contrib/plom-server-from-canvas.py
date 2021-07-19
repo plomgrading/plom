@@ -197,6 +197,7 @@ def get_submissions(
     print("Moved into ./upload/submittedHWByQ")
 
     print("Fetching & preprocessing submissions...")
+    # TODO: why force to list?
     subs = list(assignment.get_submissions())
 
     # TODO: Parallelize requests
@@ -234,8 +235,11 @@ def get_submissions(
             for obj in attachments:
                 # sub-submission name --- prepend with a version
                 # number to make stitching them together easier
-                # TODO what if its not a dict?  assert instead?
-                if type(obj) == dict:
+                assert type(obj) == dict, "Perhaps attachments are not always dicts?"
+                assert "content-type" in obj.keys()
+                assert "url" in obj.keys()
+                assert obj["upload_status"] == "success"  # TODO, or just "continue"
+                if True:
                     # TODO: Test which of these cases are actually
                     # relevant
                     suffix = None
