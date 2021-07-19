@@ -5,9 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
+## [0.6.5] - 2021-07-19
 
 ### Changed
 * The `jpegtran-cffi` package which is used for lossless jpeg rotations is not longer a hard dependency.  Jpeg is still only used rarely and improvements to the client means its not a serious problem if a few pages are rotated.
@@ -477,7 +475,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.6.4...master
+[0.6.5]: https://gitlab.com/plom/plom/compare/v0.6.4...v0.6.5
 [0.6.4]: https://gitlab.com/plom/plom/compare/v0.6.3...v0.6.4
 [0.6.3]: https://gitlab.com/plom/plom/compare/v0.6.2...v0.6.3
 [0.6.2]: https://gitlab.com/plom/plom/compare/v0.6.1...v0.6.2
