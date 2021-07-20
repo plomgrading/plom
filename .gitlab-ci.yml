@@ -68,6 +68,15 @@ quick-pytests:
     - docker build --cache-from $IM_LATEST --tag $IM .
     - docker run $IM pytest-3 -l --pyargs plom
 
+codespell:
+  image: python:3.9
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install codespell
+  script:
+    - codespell -S "*.png,*.po,.git,*.jpg" -f
+  allow_failure: true
+
 
 # If on master branch, tag earlier image as "latest" (in Gitlab Container Registry)
 docker-tag-latest:
