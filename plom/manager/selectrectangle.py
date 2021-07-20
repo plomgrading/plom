@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
@@ -69,7 +70,7 @@ class SelectRectangleWindow(QDialog):
         self.rectB.clicked.connect(self.rectTool)
         self.delRectB.clicked.connect(self.deleteRect)
 
-        self.resetB.setAutoDefault(False)  # return wont click the button by default.
+        self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
         # Layout simply
         grid = QGridLayout()
@@ -257,7 +258,7 @@ class IDViewWindow(QDialog):
         self.acceptB.clicked.connect(self.accept)
 
         self.maxNormB.clicked.connect(self.swapMaxNorm)
-        self.resetB.setAutoDefault(False)  # return wont click the button by default.
+        self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
         self.idL = QLabel("ID: {}".format(self.sid))
         fnt = self.idL.font()
