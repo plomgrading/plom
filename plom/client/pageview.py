@@ -97,14 +97,13 @@ class PageView(QGraphicsView):
 
     def setZoomSelector(self, update=False):
         """
-        Sets Zoom combo box to show current selction.
+        Sets Zoom combo box to show current selection.
 
         Args:
             update (bool): True if combo box needs updating, False otherwise.
 
         Returns:
             None
-
         """
         # sets the current view rect
         self.paperWindow = self.mapToScene(

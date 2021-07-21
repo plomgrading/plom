@@ -1080,7 +1080,7 @@ class Annotator(QWidget):
                 "rubricChange{}SC".format(n),
                 QShortcut(QKeySequence("{}".format(n % 10)), self),
             )
-        # unfortunately couldnt quite get the set command as lambda-function working in the loop
+        # unfortunately couldn't quite get the set command as lambda-function working in the loop
         self.rubricChange1SC.activated.connect(lambda: self.keyToChangeRubric(1))
         self.rubricChange2SC.activated.connect(lambda: self.keyToChangeRubric(2))
         self.rubricChange3SC.activated.connect(lambda: self.keyToChangeRubric(3))

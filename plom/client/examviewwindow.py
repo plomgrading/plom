@@ -1,9 +1,8 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
@@ -37,7 +36,7 @@ class ExamViewWindow(QWidget):
         # reset view button passes to the examview.
         self.resetB = QPushButton("&reset view")
         self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.resetB.setAutoDefault(False)  # return wont click the button by default.
+        self.resetB.setAutoDefault(False)  # return won't click the button by default.
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.view, 1, 1, 10, 4)

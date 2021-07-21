@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
 
 from PyQt5.QtCore import (
     QTimer,
@@ -145,15 +146,15 @@ class ImageItem(QGraphicsPixmapItem):
                     false otherwise.
         """
         if self.data is None:
-            ba = QByteArray()
-            buffer = QBuffer(ba)
+            byte_array = QByteArray()
+            buffer = QBuffer(byte_array)
             buffer.open(QIODevice.WriteOnly)
             self.qImage.save(buffer, "PNG")
             pickle = [
                 "Image",
                 self.x(),
                 self.y(),
-                str(ba.toBase64().data()),
+                str(byte_array.toBase64().data()),
                 self.scale(),
                 self.border,
             ]

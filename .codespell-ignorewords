@@ -1,3 +1,6 @@
 # words that codespell should not complain about
 
+# used for histogram in variable names
 hist
+# TE commonly used for QTextEdit
+te

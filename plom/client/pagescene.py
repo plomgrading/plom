@@ -418,7 +418,7 @@ class PageScene(QGraphicsScene):
         * Rubric's kind can be one of ["neutral", "absolute", "delta", "relative"]
             * neutral has no effect on state - coexists with everything
             * absolute must be unique on page
-            * delta/relative can coexist with delta/relative of same sign, and netural
+            * delta/relative can coexist with delta/relative of same sign, and neutral
         * Raise InconsistentRubricsException when one of the following
             * more than one absolute rubric
             * mix absolute rubric with delta or relative
@@ -2204,7 +2204,7 @@ class PageScene(QGraphicsScene):
         Is this rubric-type legal, and does the delta move score  below 0 or above maxMark?
 
         Args:
-            dn (int/str): the delta integer, either convertable to `int`
+            dn (int/str): the delta integer, either convertible to `int`
                 or the literal string ".".
 
         Returns:
