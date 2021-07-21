@@ -1405,7 +1405,7 @@ class Manager(QWidget):
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
-                    if self.ui.reviewTW.item(r, 4).text() != "reviwer":
+                    if self.ui.reviewTW.item(r, 4).text() != "reviewer":
                         managerMessenger.clearAuthorisationUser(
                             self.ui.reviewTW.item(r, 4).text()
                         )
@@ -1471,7 +1471,7 @@ class Manager(QWidget):
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
-                    if self.ui.reviewIDTW.item(r, 1).text() != "reviwer":
+                    if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
                         managerMessenger.clearAuthorisationUser(
                             self.ui.reviewIDTW.item(r, 1).text()
                         )
