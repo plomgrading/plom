@@ -45,7 +45,7 @@ image_scale = 200 / 72
 
 
 def build_test_page_substitute(test_number, page_number, version_number):
-    """Builds the substitue empty page for test.
+    """Builds the substitute empty page for test.
 
     Arguments:
         test_number (int): Test number.
@@ -88,7 +88,7 @@ def build_test_page_substitute(test_number, page_number, version_number):
 
 
 def build_homework_question_substitute(student_id, question_number):
-    """Builds the substitue empty page for homeork.
+    """Builds the substitute empty page for homeork.
 
     Arguments:
         student_id (int): Student number ID.

@@ -17,7 +17,7 @@ class MarkHandler:
     # @routes.get("/MK/maxMark")
     @authenticate_by_token_required_fields(["q", "v"])
     def MgetQuestionMark(self, data, request):
-        """Retreive the maximum mark for a question.
+        """Retrieve the maximum mark for a question.
 
         Respond with status 200/416.
 
@@ -422,7 +422,7 @@ class MarkHandler:
 
         Args:
             data (dict): A dictionary having the user/token in addition to the tag string.
-                Request object also incudes the task code.
+                Request object also includes the task code.
             request (aiohttp.web_request.Request): PATCH /MK/tags/`task_code` type request.
 
         Returns:

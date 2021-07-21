@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -255,7 +255,7 @@ class ReportHandler:
         # An example of gradding status summary can be seen below:
         #  {'number': 2, 'identified': True, 'marked': False, 'totalled': False, 'sid': '10130103', 'sname': 'Vandeventer, Irene',
         # 'iwho': 'HAL', 1: {'marked': False, 'version': 2}, 2: {'marked': False, 'version': 1}, 3: {'marked': False, 'version': 2}}
-        # TODO: Whats is iwho ?
+        # TODO: What is iwho ?
         if status_response_success:
             marking_status_dict = marking_status_response[1]
             return web.json_response(marking_status_dict, status=200)
@@ -392,7 +392,7 @@ class ReportHandler:
             data["filterQ"], data["filterV"], data["filterU"]
         )
 
-        # A list of lists including metadata information for the graded exams mathing the filter with the format of:
+        # A list of lists including metadata information for the graded exams matching the filter with the format of:
         # [Test number, Question number, Version number, Mark, Username, # TODO: Explain Marking Time, date/time of marking ]
         # Ex:[[3, 1, 1, 5, 'user0', 7, '20:06:21-01:21:56'],
         return web.json_response(rmsg, status=200)

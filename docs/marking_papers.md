@@ -26,9 +26,7 @@ __license__ = "GFDL"
   * *Mark down* - the system assumes that the page-image starts with the maximum possible mark and then you decrement marks (-1,-2,-3,-4,-5) as you find mistakes. So, for example, if the page has two parts, each out of 3 and the student gets marks of 1 and 3 (respectively), then you can stamp "-2" next to the first, and leave the second part alone (though maybe you'll put a tick there).
   * *Total* - you don't assign part-marks, instead you click on the total mark.
 
-* In an attempt to make annotation as efficient as possible, I have tried to set things up so that you can keep one hand on the keyboard (to choose annotation tools), and one hand on the mouse. Rather than inflicting the tyrrany of the majority onto the left-handed, you can choose which is your mouse hand.
-  * The choice changes the layout of the annotation window, and in particular it changes the keyboard shortcuts for the tools.
-  * The tools are mostly set up for right-handed people, but I have done my best to accommodate a left-handed setup. Not everything is easily mirrored (eg mark numbers), so I am happy to get feedback on it.
+* In an attempt to make annotation as efficient as possible, I have tried to set things up so that you can keep one hand on the keyboard (to choose annotation tools), and one hand on the mouse.
   * The keyboard shortcuts mean that you can keep the mouse-pointer over the page-image as much as possible, and not have to move back and forth to the tools. This is supposed to make the annotation window closer to the experience of using a pen hovering over a page.
   * Of course, this requires you to become more fluent with the (one-handed) keyboard short-cuts, but we'll get to that when we get to the annotation window.
 * The image of the current page-group is displayed on the right.
@@ -56,11 +54,11 @@ __license__ = "GFDL"
 * You can get a listing of all the key-codes by typing a question-mark.
 * In both layouts the tools are arranged so that the most common tools (based on my experience) are arranged in the middle row. The keyboard shortcuts correspond to the keys along the "home-row" of a qwerty keyboard.
   * In the right-hand mouse version A, S, D, F and G  correspond to zoom, undo, tick, comment and text (respectively).
-  * In the left-hand mouse version h,j,k,l and semi-colon correspond to text, commend, tick, undo and zoom (respectively).
+  * In the left-hand mouse version h,j,k,l and semi-colon correspond to text, comment, tick, undo and zoom (respectively).
   * The top row of tools correspond to the keys above the home-row. ie, qwert and yuiop.
   * The bottom row of tools correspond to the keys below the home-row. ie, zxcvb and n m comma period slash.
 
-* The tools are (I hope) pretty obvious, but with a few idiosyncracies
+* The tools are (I hope) pretty obvious, but with a few idiosyncrasies
 
   * *Pan* - clicking and dragging moves the page image.
 
@@ -102,7 +100,7 @@ corded
 ![](figs/client_comment1.png)
 * These comments combine both the delta-mark tool and the text tool. When a comment is selected then a left-click will paste both the delta-mark and the text into the window. After that the pasted comment can be treated like any other text object and the text tool will let you edit it.
 
-* The comments should give you a very fast way of leaving consistent feedback. The markers of a particular question should decided on text + deltas to match the given question marking-scheme. Unfortuantely there is not a (seemless) way to share comments between clients.
+* The comments should give you a very fast way of leaving consistent feedback. The markers of a particular question should decided on text + deltas to match the given question marking-scheme.
 
 * The system saves your comments between sessions (in a json file). Giving a copy of this file to another marker means that their system will start with those same comments.
 

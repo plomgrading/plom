@@ -25,7 +25,7 @@ def MgetQuestionMax(self, question_number, version_number):
     Returns:
         list: A list where the first element is a boolean operation
             status response. The second element is either a string
-            indicating if question fo version number is incorrect, or,
+            indicating if question or version number is incorrect, or,
             the maximum score for this question as an integer.
     """
 
@@ -215,7 +215,7 @@ def MreturnMarkedTask(
                 imghdr.what(annotated_filename, h=image)
             )
         )
-        return [False, "Misformed image file. Try again."]
+        return [False, "Malformed image file. Try again."]
 
     # Also check the md5sum matches
     md5n = hashlib.md5(image).hexdigest()
@@ -227,7 +227,7 @@ def MreturnMarkedTask(
         )
         return [
             False,
-            "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
+            "Malformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
                 md5n, md5_code
             ),
         ]
@@ -346,11 +346,10 @@ def MgetWholePaper(self, test_number, question_number):
 
     Returns:
         list: A list including the following information:
-            Boolean of wether we got the paper images.
+            Boolean of whether we got the paper images.
             A list of lists including [`test_version`, `image_md5sum_list`, `does_page_belong_to_question`].
             Followed by a series of image paths for the pages of the paper.
     """
-
     return self.DB.MgetWholePaper(test_number, question_number)
 
 

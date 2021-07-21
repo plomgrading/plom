@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 from io import StringIO
@@ -96,7 +96,7 @@ def test_csv_missing_header_SIS_User_ID():
 
 
 def test_csv_cantfind_return_code():
-    infile = StringIO("""Student,SIS User ID,Retrun C0de ()""")
+    infile = StringIO("""Student,SIS User ID,R3trun C0de ()""")
     outfile = StringIO("")
     raises(
         AssertionError,

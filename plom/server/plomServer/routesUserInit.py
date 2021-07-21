@@ -71,7 +71,7 @@ class UserInitHandler:
         # update password of existing user, or create new user.
         theuser = request.match_info["user"]
         rval = self.server.createModifyUser(theuser, data["password"])
-        if rval[0]:  # successfull
+        if rval[0]:  # successful
             if rval[1]:  # created new user
                 log.info('Manager created new user "{}"'.format(theuser))
                 return web.Response(status=201)

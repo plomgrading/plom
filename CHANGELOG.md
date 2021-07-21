@@ -436,7 +436,7 @@ in most cases.
 * certain file transfers are more robust at reporting errors.
 * userManager was failing to start.
 * return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
-* `mark_reverter` less fragile if files DNE.
+* `mark_reverter` less fragile if files do not exist.
 * if you skip identifying a test, the client will defer it until the end.
 * identifying has various other UI fixes.
 

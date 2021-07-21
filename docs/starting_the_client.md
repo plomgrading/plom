@@ -13,7 +13,7 @@ __license__ = "GFDL"
  ```
  and then run it from the same terminal via
  ```
-./client_linux              
+ ./client_linux
  ## or
  ./client_osx
  ```
@@ -33,7 +33,7 @@ The name of the files might be slightly different (eg they might include a date 
   * If you are marking papers (which almost certainly you will be) then you also need to enter the following
   * *Page group* - the basic chunk of a test that you will mark is a page-group. In many cases this will just be a single page of the test. However, sometimes a page will have multiple questions on it, and sometimes a question might extend over multiple pages. Hence MLP refers to "page-groups" rather than "pages" or "questions". Your IIC will tell you what page group you are assigned to mark.
   * *Version* - since classrooms are crowded, almost certainly the instructors have given multiple versions of the test to their students. The MLP software will present you with just one version of the page group to which you have been assigned. Your IIC will tell you which version you are to mark.
-  * *Font size* - if the displayed font is too big or too large, then please change it here (and click the *set font* button). This will propogate through the rest of the app.
+  * *Font size* - if the displayed font is too big or too large, then please change it here (and click the *set font* button). This will propagate through the rest of the app.
 
 * There are 3 possible tasks
     * *Mark* - this will fire up the marking window which allows you (as the name implies) to mark and annotate pages. You will spend most of your time on this task.

@@ -90,7 +90,7 @@ If you're using the TensorFlow-based ID-Reader, you'll also need
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
 ```
-  # python3 -m pip intall --user -r requirements.txt
+  # python3 -m pip install --user -r requirements.txt
 ```
 You may also want to consider a tool like `virtualenv`.
 

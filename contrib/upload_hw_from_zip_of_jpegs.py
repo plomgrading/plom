@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
 Crawl a directory of zip files and upload contents to Plom.
@@ -13,7 +13,7 @@ Needs access to a Canvas-exported classlist in order to map canvas user
 id's onto student numbers.  See `df` below.
 
 For each zip:
-  * discard non-useful things like `__MACOSX` folders
+  * discard useless things like `__MACOSX` folders
   * upload jpg/jpeg/png files to the appropriate student number
   * warn on any PDF files and extract them for processing by
     `plom-hwscan` or `plom-scan`
@@ -95,7 +95,7 @@ def get_and_start_scan_msgr(server=None, password=None):
         password (str): prompts on the command line if omitted.
 
     Returns:
-        ScanMessenger: authenicated connection to the server.  When you
+        ScanMessenger: authenticated connection to the server.  When you
             are done with this you should call `.closeUser()` and then
             `.stop()`.
 

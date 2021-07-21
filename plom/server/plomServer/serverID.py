@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-import hashlib
-import logging
-import os
-import shutil
-import uuid
-from pathlib import Path
 from datetime import datetime
 import json
+import logging
+import os
+from pathlib import Path
+import shutil
 import subprocess
+
 from plom import specdir
+
 
 log = logging.getLogger("servID")
 
@@ -24,7 +24,6 @@ def IDprogressCount(self):
         list: A list including the number of identified papers
             and the total number of papers.
     """
-
     return [self.DB.IDcountIdentified(), self.DB.IDcountAll()]
 
 
@@ -34,7 +33,6 @@ def IDgetNextTask(self):
     Returns:
         list: A list including the next task number.
     """
-
     # Get number of next unidentified test from the database
     give = self.DB.IDgetNextTask()
     if give is None:
@@ -120,7 +118,7 @@ def ID_id_paper(self, *args, **kwargs):
             matched_student_id, matched_student_name).
         kwargs (dict): Empty dict, not sure why TODO: Assuming this is a
             True/False parameter (defaults to True if empty dict) which
-            indicates wether checks need to be applied ie the additional
+            indicates whether checks need to be applied ie the additional
             404,403 error on top of what id_paper would return.
 
     Returns:

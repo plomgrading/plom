@@ -245,7 +245,7 @@ if __name__ == "__main__":
         #     if sub.submission_comments:
         #         print(sub.submission_comments)
         #     else:
-        #         print("mising")
+        #         print("missing")
         # except AttributeError:
         #     print("no")
         #     pass

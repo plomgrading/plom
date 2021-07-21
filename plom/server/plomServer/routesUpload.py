@@ -39,7 +39,7 @@ class UploadHandler:
         """Try to create bundle with given name/md5sum.
 
         First check name / md5sum of bundle.
-        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldn't happen if scanner working correctly.
         * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
         * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
 
@@ -602,7 +602,7 @@ class UploadHandler:
                     mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
-            return web.Response(status=404)  # couldnt find that test/question
+            return web.Response(status=404)  # couldn't find that test/question
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
@@ -623,7 +623,7 @@ class UploadHandler:
                         mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
-            return web.Response(status=404)  # couldnt find that test/question
+            return web.Response(status=404)  # couldn't find that test/question
 
     async def checkTPage(self, request):
         data = await request.json()
@@ -644,7 +644,7 @@ class UploadHandler:
                     mpwriter.append(open(rmsg[3], "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
-            return web.Response(status=404)  # couldnt find that test/question
+            return web.Response(status=404)  # couldn't find that test/question
 
     async def removeUnknownImage(self, request):
         data = await request.json()
@@ -833,7 +833,7 @@ class UploadHandler:
             aiohttp.web.Response: with status code as below.
 
         Status codes:
-            200 OK: action was taken, report numer of Papers updated.
+            200 OK: action was taken, report number of Papers updated.
             401 Unauthorized: invalid credientials.
             403 Forbidden: only "manager"/"scanner" allowed to do this.
         """
@@ -888,7 +888,7 @@ class UploadHandler:
                 json limitations; you may want to convert back to int.
 
         Note: likely deprecated: not used by Plom itself and not
-            recommeded for anyone else.
+            recommended for anyone else.
         """
         spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]

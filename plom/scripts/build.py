@@ -42,7 +42,7 @@ def upload_rubrics(msgr, rubrics):
         # TODO: some autogen ones are also made by manager?
         if rub.get("username", None) == "HAL":
             continue
-        # TODO: ask @arechnitzer about this question_number discrepency
+        # TODO: ask @arechnitzer about this question_number discrepancy
         rub["question"] = rub["question_number"]
         msgr.McreateRubric(rub)
 
