@@ -1313,26 +1313,18 @@ class MarkerClient(QWidget):
             for r in full_pagedata:
                 if r["md5"] == row[1]:
                     r["local_filename"] = tmp
-        # Parse PlomFile early for orientation data: but PageScene is going
-        # to parse it later.  TODO: seems like duplication of effort.
+        # Parse PlomFile early for orientation data
         plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
         db_ids = plomdata.get("database_ids")
         if db_ids:
             # if present, must match expected: TODO may delete later.
             db_id2 = [x[0] for x in page_metadata]
             assert db_ids == db_id2, f".plom file IDs={db_ids} does not match {db_id2}"
-        ori = plomdata.get("orientations")
-        if not ori:
-            log.warning("plom file has no orientation data: substituting zeros")
-            # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
-            # TODO: we have it in the full_pagedata above...
-            for d in src_img_data:
-                d["orientation"] = 0
-        else:
-            # TODO: looks fragile, assumes order matches etc between page_metadata and the plomfile (which they probably do but still...)
-            log.info("importing orientations from plom file")
-            for i, d in enumerate(src_img_data):
-                d["orientation"] = ori[i]
+        log.info("importing orientations from plom file")
+        for i, d in enumerate(src_img_data):
+            if db_ids:
+                assert db_ids[i] == d["id"], "sanity check failure: orientation data in wrong order?"
+            d["orientation"] = plomdata["orientation"][i]
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
