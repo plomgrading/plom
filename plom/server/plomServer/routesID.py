@@ -50,7 +50,7 @@ class IDHandler:
             class 'aiohttp.web_fileresponse.FileResponse: A file response that includes the classlist.
         """
         try:
-            with open(Path(specdir) / "classlist.csv") as csvfile:
+            with open(specdir / "classlist.csv") as csvfile:
                 reader = csv.reader(csvfile)
                 next(reader)  # skip header row
                 classlist = list(reader)
@@ -85,7 +85,7 @@ class IDHandler:
         """
         if not data["user"] == "manager":
             raise web.HTTPBadRequest(reason="Not manager")
-        if os.path.isfile(Path(specdir) / "classlist.csv"):
+        if os.path.isfile(specdir / "classlist.csv"):
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
         # TODO should we make copy until sure it passes verification?
@@ -100,7 +100,7 @@ class IDHandler:
             except ValueError as e:
                 raise web.HTTPNotAcceptable(reason=str(e))
             spec.saveVerifiedSpec()
-        with open(Path(specdir) / "classlist.csv", "w") as csvfile:
+        with open(specdir / "classlist.csv", "w") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["id", "studentName"])
             writer.writerows(classlist)
@@ -116,8 +116,8 @@ class IDHandler:
         Returns:
             aiohttp.web_fileresponse.FileResponse: File response including the predictions.
         """
-        if os.path.isfile(Path(specdir) / "predictionlist.csv"):
-            return web.FileResponse(Path(specdir) / "predictionlist.csv", status=200)
+        if os.path.isfile(specdir / "predictionlist.csv"):
+            return web.FileResponse(specdir / "predictionlist.csv", status=200)
         else:
             return web.Response(status=404)
 

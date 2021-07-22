@@ -15,11 +15,8 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import csv
-import os
-import shutil
 from pathlib import Path
 import sys
-from textwrap import fill, dedent
 
 if sys.version_info >= (3, 7):
     import importlib.resources as resources
@@ -30,13 +27,16 @@ import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
-from plom.server import build_server_directories, check_server_directories
-from plom.server import create_server_config, create_blank_predictions
-from plom.server import parse_user_list, build_canned_users
-from plom.server import build_self_signed_SSL_keys
+from plom.server.prepare import initialise_server
+from plom.server import (
+    build_canned_users,
+    check_server_directories,
+    check_server_fully_configured,
+    parse_user_list,
+)
 
 
-server_instructions = """Overview of running the Plom server:
+server_instructions = f"""Overview of running the Plom server:
 
   0. Make a new directory and change into it.
 
@@ -51,142 +51,7 @@ server_instructions = """Overview of running the Plom server:
   4. Add a specfile to '{specdir}': 'plom-build' can do this..
 
   5. Now you can start the server with '%(prog)s launch'.
-""".format(
-    specdir=specdir
-)
-
-
-class PlomServerConfigurationError(Exception):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-def checkSpecAndDatabase():
-    if specdir.exists():
-        print("Directory '{}' is present.".format(specdir))
-    else:
-        print(
-            "Cannot find '{}' directory - have you run 'plom-server init' yet?".format(
-                specdir
-            )
-        )
-        exit(1)
-
-    if (specdir / "verifiedSpec.toml").exists():
-        print("Test specification present.")
-    else:
-        print(
-            "Cannot find the test specification. Have you run 'plom-build' yet?. Aborting."
-        )
-        exit(1)
-
-    if (specdir / "plom.db").exists():
-        print("Database present: using existing database.")
-    else:
-        print("Database not yet present: it will be created on first run.")
-        # TODO: or should `plom-server init` create it?")
-
-    if (specdir / "classlist.csv").exists():
-        print("Classlist present.")
-    else:
-        print("Cannot find the classlist: expect it later...")
-
-
-def doLatexChecks():
-    from plom.textools import texFragmentToPNG
-    from plom.server import pageNotSubmitted
-
-    os.makedirs("pleaseCheck", exist_ok=True)
-
-    # TODO: big ol' GETCWD here: we're trying to get rid of those
-    # check build of fragment
-    cdir = os.getcwd()
-    keepfiles = ("checkThing.png", "pns.0.0.0.png")
-    ct = os.path.join(cdir, "pleaseCheck", keepfiles[0])
-    pns = os.path.join(cdir, specdir, "pageNotSubmitted.pdf")
-    qns = os.path.join(cdir, specdir, "questionNotSubmitted.pdf")
-
-    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
-
-    if not texFragmentToPNG(fragment, ct):
-        raise PlomServerConfigurationError(
-            "Error latex'ing fragment. Please check your latex distribution."
-        )
-
-    # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.build_not_submitted_page(pns):
-        raise PlomServerConfigurationError(
-            "Error building 'pageNotSubmitted.pdf' template page. Please check your latex distribution."
-        )
-    # build template pageNotSubmitted.pdf just in case needed
-    if not pageNotSubmitted.build_not_submitted_question(qns):
-        raise PlomServerConfigurationError(
-            "Error building 'questionNotSubmitted.pdf' template page. Please check your latex distribution."
-        )
-
-    # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_test_page_substitute(0, 0, 0):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing test page."
-        )
-    # Try building a replacement for missing page.
-    if not pageNotSubmitted.build_homework_question_substitute(0, 0):
-        raise PlomServerConfigurationError(
-            "Error building replacement for missing homework question."
-        )
-
-    shutil.move(keepfiles[1], os.path.join("pleaseCheck", keepfiles[1]))
-    print(
-        fill(
-            dedent(
-                """
-                Simple latex checks done.  If you feel the need, then please
-                examine '{}' and '{}' in the directory 'pleaseCheck'.  The
-                first should be a short latex'd fragment with some mathematics
-                and text, while the second should be a mostly blank page with
-                'page not submitted' stamped across it.  It is safe delete
-                both files and the directory.
-                """.format(
-                    *keepfiles
-                )
-            )
-        )
-    )
-
-
-def initialiseServer(port):
-    print("Build required directories")
-    build_server_directories()
-    print("Building self-signed SSL key for server")
-    try:
-        build_self_signed_SSL_keys()
-    except FileExistsError as err:
-        print(f"Skipped SSL keygen - {err}")
-
-    print("Copy server networking configuration template into place.")
-    try:
-        create_server_config(port=port)
-    except FileExistsError as err:
-        print(f"Skipping server config - {err}")
-    else:
-        print(
-            "You may want to update '{}' with the correct name (or IP) and "
-            "port of your server.".format(confdir / "serverDetails.toml")
-        )
-
-    print("Build blank predictionlist for identifying.")
-    try:
-        create_blank_predictions()
-    except FileExistsError as err:
-        print(f"Skipping prediction list - {err}")
-
-    print(
-        "Do latex checks and build 'pageNotSubmitted.pdf', 'questionNotSubmitted.pdf' in case needed"
-    )
-    doLatexChecks()
-
-
-#################
+"""
 
 
 def processUsers(userFile, demo, auto, numbered):
@@ -260,43 +125,18 @@ def processUsers(userFile, demo, auto, numbered):
             fh.write(cl)
 
 
-def checkServerConfigured():
-    if not (confdir / "serverDetails.toml").exists():
-        print("Server configuration file not present. Have you run 'plom-server init'?")
-        exit(1)
-
-    if not (confdir / "userList.json").exists():
-        print("Processed userlist is not present. Have you run 'plom-server users'?")
-        exit(1)
-
-    if not (
-        (confdir / "plom.key").exists() and (confdir / "plom-selfsigned.crt").exists()
-    ):
-        print("SSL keys not present. Have you run 'plom-server init'?")
-        exit(1)
-
-    if (specdir / "predictionlist.csv").exists():
-        print("Predictionlist present.")
-    else:
-        print(
-            "Cannot find the predictionlist. Have you run 'plom-server init' yet? Aborting."
-        )
-        exit(1)
-
-
-def launchTheServer(masterToken):
+def launchTheServer(basedir, master_token):
     from plom.server import theServer
 
-    check_server_directories()
-    # check database, spec and classlist in place
-    checkSpecAndDatabase()
-    # check serverConf and userlist present (also check predictionlist).
-    checkServerConfigured()
+    if basedir is None:
+        basedir = Path(".")
+    check_server_directories(basedir)
+    check_server_fully_configured(basedir)
 
-    theServer.launch(masterToken)
+    theServer.launch(basedir, master_token=master_token)
 
 
-def check_positive(arg):
+def check_non_negative(arg):
     if int(arg) < 0:
         raise ValueError
     return int(arg)
@@ -343,8 +183,14 @@ spR = sub.add_parser(
     "launch", help="Start the server", description="Start the Plom server."
 )
 spR.add_argument(
-    "masterToken",
+    "dir",
     nargs="?",
+    help="""The directory containing the filespace to be used by this server.
+        If omitted the current directory will be used.""",
+)
+spR.add_argument(
+    "--mastertoken",
+    metavar="HEX",
     help="""A 32 hex-digit string used to encrypt tokens in the database.
         If you do not supply one then the server will create one.
         If you record the token somewhere you can hot-restart the server
@@ -369,7 +215,7 @@ grp.add_argument(
 )
 grp.add_argument(
     "--auto",
-    type=int,
+    type=check_non_negative,
     metavar="N",
     help="Auto-generate a random user list of N users with real-ish usernames.",
 )
@@ -385,11 +231,11 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialiseServer(args.port)
+        initialise_server(".", args.port)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
-        launchTheServer(args.masterToken)
+        launchTheServer(args.dir, args.mastertoken)
     else:
         parser.print_help()
 

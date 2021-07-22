@@ -44,25 +44,33 @@ page_not_submitted_text = r"""
 image_scale = 200 / 72
 
 
-def build_test_page_substitute(test_number, page_number, version_number):
+def build_test_page_substitute(
+    test_number,
+    page_number,
+    version_number,
+    template=specdir / "pageNotSubmitted.pdf",
+    out_dir=Path("."),
+):
     """Builds the substitute empty page for test.
 
     Arguments:
         test_number (int): Test number.
         page_number (int): Page number.
         version_number (int): Version number
+        template (pathlib.Path/str): the template pdf file.
+        out_dir (pathlib.Path/str): where to save the output.
 
     Returns:
         bool
     """
-    page_not_submitted_pdf = fitz.open(Path(specdir) / "pageNotSubmitted.pdf")
+    pdf = fitz.open(template)
 
     # create a box for the test number near top-centre
     # Get page width and use it to inset this text into the page
-    page_width = page_not_submitted_pdf[0].bound().width
+    page_width = pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
     text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    insertion_confirmed = page_not_submitted_pdf[0].insert_textbox(
+    insertion_confirmed = pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -75,20 +83,26 @@ def build_test_page_substitute(test_number, page_number, version_number):
         insertion_confirmed > 0
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    page_not_submitted_pdf[0].draw_rect(rect, color=[0, 0, 0])
+    pdf[0].draw_rect(rect, color=[0, 0, 0])
 
-    page_not_submitted_image = page_not_submitted_pdf[0].get_pixmap(
-        alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
-    )
-    page_not_submitted_image.writePNG(
-        "pns.{}.{}.{}.png".format(test_number, page_number, version_number)
+    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image.writePNG(
+        str(
+            out_dir
+            / "pns.{}.{}.{}.png".format(test_number, page_number, version_number)
+        )
     )
 
     return True
 
 
-def build_homework_question_substitute(student_id, question_number):
-    """Builds the substitute empty page for homeork.
+def build_homework_question_substitute(
+    student_id,
+    question_number,
+    template=specdir / "questionNotSubmitted.pdf",
+    out_dir=Path("."),
+):
+    """Builds the substitute empty page for homework.
 
     Arguments:
         student_id (int): Student number ID.
@@ -97,14 +111,14 @@ def build_homework_question_substitute(student_id, question_number):
     Returns:
         bool
     """
-    question_not_submitted_pdf = fitz.open(Path(specdir) / "questionNotSubmitted.pdf")
+    pdf = fitz.open(template)
 
     # create a box for the test number near top-centre
     # Get page width and use it to inset this text into the page
-    page_width = question_not_submitted_pdf[0].bound().width
+    page_width = pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
     text = "{}.{}".format(student_id, question_number)
-    insertion_confirmed = question_not_submitted_pdf[0].insert_textbox(
+    insertion_confirmed = pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -117,14 +131,10 @@ def build_homework_question_substitute(student_id, question_number):
         insertion_confirmed > 0
     ), "Text didn't fit: shortname too long?  or font issue/bug?"
 
-    question_not_submitted_pdf[0].draw_rect(rect, color=[0, 0, 0])
+    pdf[0].draw_rect(rect, color=[0, 0, 0])
 
-    question_not_submitted_image = question_not_submitted_pdf[0].get_pixmap(
-        alpha=False, matrix=fitz.Matrix(image_scale, image_scale)
-    )
-    question_not_submitted_image.writePNG(
-        "qns.{}.{}.png".format(student_id, question_number)
-    )
+    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image.writePNG(str(out_dir / "qns.{}.{}.png".format(student_id, question_number)))
 
     return True
 

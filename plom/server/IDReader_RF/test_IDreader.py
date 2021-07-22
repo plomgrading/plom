@@ -1,17 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Colin B. Macdonald
 
 """
 Note: Code in this file is very similar to test_IDreader code for the
 Tensorflow model.
 """
 
-from .idReader import is_model_absent, calc_log_likelihood, download_or_train_model
+import os
 
-
-def test_is_model_absent():
-    assert is_model_absent() == True
+from .idReader import is_model_present, calc_log_likelihood, download_or_train_model
 
 
 def test_log_likelihood():
@@ -38,7 +37,11 @@ def test_log_likelihood():
     )
 
 
-def test_download_or_train_model():
-    assert is_model_absent() == True
-    download_or_train_model()  # Although we cannot directly check the output of download_or_train_model, we can check that the is correct files are present and the function works as intended
-    assert is_model_absent() == False
+def test_download_or_train_model(tmpdir):
+    cdir = os.getcwd()
+    os.chdir(tmpdir)
+    assert not is_model_present()
+    download_or_train_model()
+    # check correct files are present
+    assert is_model_present()
+    os.chdir(cdir)

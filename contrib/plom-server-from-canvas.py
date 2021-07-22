@@ -21,51 +21,36 @@ your own risk, no warranty, etc, etc.
    to the usual Plom dependencies.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
+
+TODO:
+  * needs to log instead of just discarding so much output
 """
 
+import argparse
 import csv
+import os
+from pathlib import Path
+import random
 import string
 import subprocess
-import os
-import random
 import time
 
 import fitz
 import PIL
 from tqdm import tqdm
 
-from canvas_utils import (
+from plom import __version__
+from plom.server import PlomServer
+from plom.canvas import __DEFAULT_CANVAS_API_URL__
+from plom.canvas import (
     canvas_login,
     download_classlist,
+    get_assignment_by_id_number,
     get_conversion_table,
+    get_course_by_id_number,
     interactively_get_assignment,
     interactively_get_course,
 )
-
-
-# TODO: Invesitate using [1] here, and can any of this help [1]?
-# [1] https://gitlab.com/plom/plom/-/merge_requests/662
-# For making sure the server dies with the python script if we kill
-# the python script.
-#
-# LINUX ONLY I think. See https://stackoverflow.com/a/19448096
-import signal
-import ctypes
-
-libc = ctypes.CDLL("libc.so.6")
-
-
-def _set_pdeathsig(sig=signal.SIGTERM):
-    """
-    For killing subprocess.Popen() things when python dies
-
-    See https://stackoverflow.com/a/19448096
-    """
-
-    def callable():
-        return libc.prctl(1, sig)
-
-    return callable
 
 
 def get_short_name(long_name):
@@ -92,6 +77,7 @@ def get_toml(assignment, server_dir="."):
     """
     (assignment): a canvasapi assignment object
     """
+    server_dir = Path(server_dir)
     longName = assignment.name
 
     name = get_short_name(longName)
@@ -124,7 +110,7 @@ def get_toml(assignment, server_dir="."):
         # intelligently in the future
     toml += 'select="fix"'
 
-    with open(f"{server_dir}/canvasSpec.toml", "w") as f:
+    with open(server_dir / "canvasSpec.toml", "w") as f:
         f.write(toml)
 
 
@@ -133,71 +119,56 @@ def initialize(course, assignment, server_dir="."):
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
     """
-    if not os.path.exists(server_dir):
-        os.mkdir(server_dir)
+    server_dir = Path(server_dir)
+    server_dir.mkdir(exist_ok=True)
 
-    o_dir = os.getcwd()  # original directory
-
-    print("\n\nGetting enrollment data from canvas and building `classlist.csv`...")
+    print("\nGetting enrollment data from canvas and building `classlist.csv`...")
     download_classlist(course, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
     get_toml(assignment, server_dir=server_dir)
 
-    os.chdir(server_dir)
-    print("\nSwitched into test server directory.\n")
-
-    print("Parsing `canvasSpec.toml`...")
-    subprocess.run(["plom-build", "parse", "canvasSpec.toml"], capture_output=True)
-
-    print("Running `plom-server init`...")
-    subprocess.run(["plom-server", "init"], capture_output=True)
-
-    print("Autogenerating users...")
-    subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
+    o_dir = os.getcwd()
+    try:
+        os.chdir(server_dir)
+        print("\nSwitched into test server directory.\n")
+        print("Parsing `canvasSpec.toml`...")
+        subprocess.run(["plom-build", "parse", "canvasSpec.toml"], capture_output=True)
+        print("Running `plom-server init`...")
+        subprocess.run(["plom-server", "init"], capture_output=True)
+        print("Autogenerating users...")
+        subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
+        print("Processing userlist...")
+        subprocess.run(["plom-server", "users", "userListRaw.csv"], capture_output=True)
+    finally:
+        os.chdir(o_dir)
 
     print("Temporarily exporting manager password...")
     user_list = []
-    with open("userListRaw.csv", "r") as csvfile:
+    with open(server_dir / "userListRaw.csv", "r") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             user_list += [row]
-
     os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1]
-
     del user_list
 
-    print("Processing userlist...")
-    subprocess.run(
-        ["plom-server", "users", "userListRaw.csv"],
-        capture_output=True,
-    )
-
     print("Launching plom server.")
-    # plom_server = subprocess.Popen(["plom-server", "launch"], stdout=subprocess.DEVNULL)
-    plom_server = subprocess.Popen(
-        ["plom-server", "launch"],
-        stdout=subprocess.DEVNULL,
-        preexec_fn=_set_pdeathsig(signal.SIGTERM),  # Linux only?
-    )
+    plom_server = PlomServer(basedir=server_dir)
+    # TODO: consider suppressing output https://gitlab.com/plom/plom/-/issues/1586
+    # Forest had popen(... ,stdout=subprocess.DEVNULL)
+    print("Server *should* be running now")
 
-    print(
-        "Server *should* be running now (although hopefully you can't because theoretically output should be suppressed). In light of this, be extra sure to explicitly kill the server (e.g., `pkill plom-server`) before trying to start a new one --- it can persist even after the original python process has been killed.\n\nTo verify if the server is running, you can try the command\n  ss -lntu\nto check if the 41984 port has a listener.\n"
-    )
-
-    subprocess.run(["sleep", "3"])
-
-    print("Building classlist...")
-    build_class = subprocess.run(
-        ["plom-build", "class", "classlist.csv"], capture_output=True
-    )
-
-    print("Building the database...")
-    build_class = subprocess.run(
-        ["plom-build", "make", "--no-pdf"], capture_output=True
-    )
-
-    os.chdir(o_dir)
+    try:
+        print("Building classlist...")
+        build_class = subprocess.run(
+            ["plom-build", "class", "classlist.csv"], capture_output=True
+        )
+        print("Building the database...")
+        build_class = subprocess.run(
+            ["plom-build", "make", "--no-pdf"], capture_output=True
+        )
+    finally:
+        os.chdir(o_dir)
 
     return plom_server
 
@@ -211,6 +182,7 @@ def get_submissions(
     (name_by_info): Whether to make the filenames of the form ID_Last_First.pdf
 
     """
+    server_dir = Path(server_dir)
     o_dir = os.getcwd()
 
     if name_by_info:
@@ -377,100 +349,104 @@ def scan_submissions(server_dir="."):
     os.chdir(o_dir)
 
 
+parser = argparse.ArgumentParser(
+    description=__doc__.split("\n")[0],
+    epilog="\n".join(__doc__.split("\n")[1:]),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--api_url",
+    type=str,
+    default=__DEFAULT_CANVAS_API_URL__,
+    action="store",
+    help=f'URL for talking to Canvas, defaults to "{__DEFAULT_CANVAS_API_URL__}".',
+)
+parser.add_argument(
+    "--api_key",
+    type=str,
+    action="store",
+    help="""
+        The API Key for talking to Canvas.
+        You can store this in a local file "api_secrets.py" as
+        a string in a variable named "my_key".
+        TODO: If blank, prompt for it?
+    """,
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    help="Perform a dry-run, for example, don't download papers",
+)
+parser.add_argument(
+    "--dir",
+    type=str,
+    action="store",
+    help="The local directory for the Plom Server files (prompts if omitted).",
+)
+parser.add_argument(
+    "--course",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas Course ID (an integer N).
+        Interactively prompt from a list if omitted.
+    """,
+)
+parser.add_argument(
+    "--assignment",
+    type=int,
+    metavar="M",
+    action="store",
+    help="""
+        Specify a Canvas Assignment ID (an integer M).
+        Interactively prompt from a list if omitted.
+    """,
+)
+
+
 if __name__ == "__main__":
+    args = parser.parse_args()
+    user = canvas_login(args.api_url, args.api_key)
+
+    if args.course is None:
+        course = interactively_get_course(user)
+        print(f'Note: you can use "--course {course.id}" to reselect.\n')
+    else:
+        course = get_course_by_id_number(args.course, user)
+    print(f"Ok using course: {course}")
+
+    if args.assignment:
+        assignment = get_assignment_by_id_number(course, args.assignment)
+    else:
+        assignment = interactively_get_assignment(user, course)
+        print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
+    print(f"Ok uploading to Assignment: {assignment}")
 
     o_dir = os.getcwd()
 
-    # Hang on, why do I switch the loop variable to true instead of
-    # just doing the sensible thing and breaking?
-    user = canvas_login()
-
-    # TODO: copy commandline arg stuff from push_to_canvas
-    course = interactively_get_course(user)
-    assignment = interactively_get_assignment(user, course)
-
-    # TODO: Make this give an `os.listdir()`
-    print("Setting up the workspace now.\n")
-    print("  Current subdirectories:")
-    print("  --------------------------------------------------------------------")
-    excluded_dirs = ["__pycache__"]
-    subdirs = [
-        subdir
-        for subdir in os.listdir()
-        if os.path.isdir(subdir) and subdir not in excluded_dirs
-    ]
-    for subdir in subdirs:
-        print(f"    ./{subdir}")
-
-    classdir_selected = False
-    while not classdir_selected:
-
-        classdir_name = input(
-            "\n  Name of dir to use for this class (will create if not found): "
-        )
-
-        if not classdir_name:
-            print("    Please provide a non-empty name.\n")
-            continue
-
-        print(f"  You selected `{classdir_name}`")
-        confirmation = input("  Confirm choice? [y/n] ")
-        if confirmation in ["", "\n", "y", "Y"]:
-            classdir_selected = True
-            classdir = classdir_name
-
-    print(f"\n  cding into {classdir}...")
-    if os.path.exists(classdir_name):
-        os.chdir(classdir)
+    if args.dir is None:
+        basedir = input("Name of dir to use for this assignment: ")
     else:
-        os.mkdir(classdir)
-        os.chdir(classdir)
+        basedir = args.dir
+    basedir = Path(basedir)
 
-    print(f"  working directory is now `{os.getcwd()}`")
-
-    print("\n\n\n")
-
-    print("  Current subdirectories:")
-    print("  --------------------------------------------------------------------")
-    subdirs = [
-        subdir
-        for subdir in os.listdir()
-        if os.path.isdir(subdir) and subdir not in excluded_dirs
-    ]
-    # subdirs = [_ for _ in os.listdir if os.path.isdir(_)]
-    for subdir in subdirs:
-        print(f"    ./{subdir}")
-
-    # Directory for this particular assignment
-    hwdir_selected = False
-    while not hwdir_selected:
-
-        hwdir_name = input(
-            "\n\n\n  Name of dir to use for this assignment (will create if not found): "
-        )
-
-        print(f"  You selected `{hwdir_name}`")
-        confirmation = input("  Confirm choice? [y/n] ")
-        if confirmation in ["", "\n", "y", "Y"]:
-            hwdir_selected = True
-            hwdir = hwdir_name
-
-    print(f"\n  cding into {hwdir}...")
-    if os.path.exists(hwdir_name):
-        os.chdir(hwdir)
+    if basedir.is_dir():
+        print(f'Using existing dir "{basedir}"')
+        # TODO: ensure empty or warn if somethings exist?
     else:
-        os.mkdir(hwdir)
-        os.chdir(hwdir)
+        print(f'Creating dir "{basedir}"')
+        basedir.mkdir(exist_ok=True)
 
-    print(f"  working directory is now `{os.getcwd()}`")
-
-    plom_server = initialize(course, assignment)
+    plom_server = initialize(course, assignment, server_dir=basedir)
 
     print("\n\ngetting submissions from canvas...")
-    get_submissions(assignment, dry_run=False)
+    get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
 
     print("scanning submissions...")
-    scan_submissions()
+    scan_submissions(server_dir=basedir)
 
-    # Return to starting directory
-    os.chdir(o_dir)
+    input("Press enter when you want to stop the server...")
+    plom_server.stop()
+    print("Server stopped, goodbye!")

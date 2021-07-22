@@ -166,18 +166,16 @@ def IDdeletePredictions(self):
     """
 
     # check to see if predictor is running
-    lock_file = os.path.join(specdir, "IDReader.lock")
+    lock_file = specdir / "IDReader.lock"
     if os.path.isfile(lock_file):
         log.info("ID reader currently running.")
         return [False, "ID reader is currently running"]
 
     # move old file out of way
-    if not os.path.isfile(Path(specdir) / "predictionlist.csv"):
+    if not os.path.isfile(specdir / "predictionlist.csv"):
         return [False, "No prediction file present."]
-    shutil.move(
-        Path(specdir) / "predictionlist.csv", Path(specdir) / "predictionlist.bak"
-    )
-    with open(Path(specdir) / "predictionlist.csv", "w") as fh:
+    shutil.move(specdir / "predictionlist.csv", specdir / "predictionlist.bak")
+    with open(specdir / "predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
     log.info("ID prediction list deleted")
 
@@ -225,8 +223,8 @@ def IDrunPredictions(
     """
 
     # from plom.server.IDReader.idReader import runIDReader
-    lock_file = os.path.join(specdir, "IDReader.lock")
-    timestamp = os.path.join(specdir, "IDReader.timestamp")
+    lock_file = specdir / "IDReader.lock"
+    timestamp = specdir / "IDReader.timestamp"
     if os.path.isfile(lock_file):
         log.info("ID reader is already running.")
         return [True, False]

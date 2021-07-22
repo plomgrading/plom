@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom script to start a demo server for homework submissions.
 
@@ -19,13 +19,14 @@ __license__ = "AGPL-3.0-or-later"
 import os
 import subprocess
 from shlex import split
-import time
 import argparse
 from warnings import warn
 
 from plom import __version__
+from plom.server import PlomServer
 
 
+# TODO: could add --port like in `demo.py`
 parser = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -56,25 +57,10 @@ def main():
 
     subprocess.check_call(split("plom-build new --demo"))
 
-    # Start server into background
-    print("Running server I hope")
-    serverproc = subprocess.Popen(split("plom-server launch"))
-    time.sleep(1.0)
-    try:
-        serverproc.wait(1.0)
-    except subprocess.TimeoutExpired:
-        pass
-    else:
-        r = serverproc.returncode
-        print("Server has prematurely stopped with return code {}".format(r))
-        # TODO: server could send specific return code for "address already in use"?
-        msg = "Server didn't start.  Is one already running?  See errors above."
-        # raise RuntimeError(msg) from None
-        print(msg)
-        exit(r)
+    background_server = PlomServer(basedir=".")
 
-    assert serverproc.returncode is None, "has the server died?"
-
+    assert background_server.process_is_running(), "has the server died?"
+    assert background_server.ping_server(), "cannot ping server, something gone wrong?"
     print("Server seems to be running, so we move on to uploading")
 
     subprocess.check_call(split("plom-build class --demo -w 1234"))
@@ -102,23 +88,19 @@ def main():
     subprocess.check_call(split("plom-hwscan missing -w 4567 -y"))
     # print(">> TODO << process loose pages")
 
-    time.sleep(0.5)
-    try:
-        serverproc.wait(0.5)
-    except subprocess.TimeoutExpired:
-        pass
-    else:
-        r = serverproc.returncode
-        print("Server has prematurely stopped with return code {}".format(r))
-        msg = "Server may have unexpectedly died during uploading.  See errors above."
-        print(msg)
-        exit(r)
+    assert background_server.process_is_running(), "has the server died?"
+    assert background_server.ping_server(), "cannot ping server, something gone wrong?"
+    print("Server seems to still be running: demo setup is complete")
 
     print('\n*** Now run "plom-client" ***\n')
+    print(f"  * Server currently running under PID {background_server.pid}\n")
     # TODO: output account info directly, perhaps just "user*"?
     print('  * See "userListRaw.csv" for account info\n')
-    print("  * Press Ctrl-C to stop this demo")
-    serverproc.wait()
+    # print("  * Press Ctrl-C to stop this demo")
+    # background_server.wait()
+    input("Press enter when you want to stop the server...")
+    background_server.stop()
+    print("Server stopped, goodbye!")
 
 
 if __name__ == "__main__":
