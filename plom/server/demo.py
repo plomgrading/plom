@@ -16,6 +16,59 @@ from plom.server import PlomServer
 
 
 class PlomDemoServer(PlomServer):
+    """Start a Plom demo server.
+
+    For example:
+
+    >>> demo = PlomDemoServer(port=41981, num_papers=5, scans=False)    # doctest: +ELLIPSIS
+    Making a 5-paper demo...
+
+    >>> demo.process_is_running()
+    True
+
+    >>> demo.pid     # doctest: +SKIP
+    14242
+
+    We can then get the credientials needed to interact with the server:
+    >>> demo.get_env_vars()    # doctest: +NORMALIZE_WHITESPACE
+      {'PLOM_SERVER': 'localhost:41981',
+       'PLOM_MANAGER_PASSWORD': '1234',
+       'PLOM_SCAN_PASSWORD': '4567',
+       'PLOM_USER': 'user0',
+       'PLOM_PASSWORD': '0123'}
+
+    We can communicate with the demo server using command line tools:
+    >>> import os, subprocess
+    >>> env = {**os.environ, **demo.get_env_vars()}
+    >>> subprocess.check_call(["plom-scan", "status"], env=env)
+    0
+    >>> subprocess.call(["plom-finish", "status"], env=env)   # doctest: +SKIP
+    1
+
+    (Here these are performed in an interactive Python shell but could
+    also be done from the command line).
+
+    TODO: maybe better to give direct (non-subprocess-based) methods.
+    TODO: make the demo less random so that we get predictable output from plom-finish.
+
+    Currently its a little more verbose (https://gitlab.com/plom/plom/-/issues/1545)
+    but we can also simulate some nonsense student work (TODO: make into doctest)
+    ```
+    subprocess.check_call(
+        split(
+            f"python3 -m plom.client.randoMarker "
+            f"-s localhost:{demo.port} "
+            f"-u {env['PLOM_USER']} -w {env['PLOM_PASSWORD']}"
+        ),
+        env=env,
+    )
+    ```
+
+    Finally we stop the server:
+    >>> demo.stop()
+    Stopping PlomServer ...
+    """
+
     def __init__(self, num_papers=None, port=None, scans=True, tmpdir=None, **kwargs):
         """Start up a Plom demo server.
 
@@ -106,48 +159,25 @@ class PlomDemoServer(PlomServer):
 class PlomQuickDemoServer(PlomDemoServer):
     """Quickly start a Plom demo server.
 
-    Tries to start quickly by only using a few papers.
+    Tries to start quickly by only using a few papers.  This can be used
+    as follows:
+
+    >>> demo = PlomQuickDemoServer(port=41981)     # doctest: +ELLIPSIS
+    Making a 3-paper demo...
+
+    >>> demo.process_is_running()
+    True
+
+    >>> demo.pid     # doctest: +SKIP
+    14242
+
+    Finally we stop the server:
+    >>> demo.stop()
+    Stopping PlomServer ...
+
+    See also :py:class:`PlomDemoServer`.
     """
 
     def __init__(self, *args, **kwargs):
         kwargs.pop("num_papers", True)
         super().__init__(*args, num_papers=3, **kwargs)
-
-
-if __name__ == "__main__":
-    demo = PlomQuickDemoServer(port=41981)
-
-    print("*" * 80)
-    print("Server is alive?: {}".format(demo.process_is_running()))
-    print(f"Server PID: {demo.pid}")
-
-    env = {**os.environ, **demo.get_env_vars()}
-    subprocess.check_call(split("plom-scan status"), env=env)
-    subprocess.check_call(split("plom-finish status"), env=env)
-
-    print("*" * 80)
-    print("Starting some random IDing and random grading...")
-    subprocess.check_call(
-        split(
-            f"python3 -m plom.client.randoIDer "
-            f"-s localhost:{demo.port} "
-            f"-u {env['PLOM_USER']} -w {env['PLOM_PASSWORD']}"
-        ),
-        env=env,
-    )
-    subprocess.check_call(
-        split(
-            f"python3 -m plom.client.randoMarker "
-            f"-s localhost:{demo.port} "
-            f"-u {env['PLOM_USER']} -w {env['PLOM_PASSWORD']}"
-        ),
-        env=env,
-    )
-    subprocess.check_call(split("plom-scan status"), env=env)
-    subprocess.check_call(split("plom-finish status"), env=env)
-
-    time.sleep(5)
-
-    print("*" * 80)
-    print("Stopping server process")
-    demo.stop()
