@@ -154,7 +154,7 @@ def initialize(course, assignment, server_dir="."):
 
     print("Launching plom server.")
     plom_server = PlomServer(basedir=server_dir)
-    # TODO: consider surpressing output https://gitlab.com/plom/plom/-/issues/1586
+    # TODO: consider suppressing output https://gitlab.com/plom/plom/-/issues/1586
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
 

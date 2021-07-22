@@ -92,7 +92,7 @@ class PlomDemoServer(PlomServer):
             tmpdir = Path(tempfile.mkdtemp(prefix="plomdemo_", dir=os.getcwd()))
         tmpdir = Path(tmpdir)
         if any(tmpdir.iterdir()):
-            warn("Demo's target directory not empty: likely touble ahead!")
+            warn("Demo's target directory not empty: likely trouble ahead!")
         self.port = port if port else Default_Port
         # TODO: should either exist and be empty or not exist and we create
         print(f'Making a {num_papers}-paper demo in "{tmpdir}"')
