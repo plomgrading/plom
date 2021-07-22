@@ -5,12 +5,12 @@ import os
 from pathlib import Path
 from pytest import raises
 
-from plom.server import PlomQuickDemoServer
+from plom.server import PlomLiteDemoServer
 
 
 def setup_module(module):
     # TODO: get a random port from OS instead?
-    module.Test.server = PlomQuickDemoServer(
+    module.Test.server = PlomLiteDemoServer(
         port=41981, scans=False, backend="subprocess"
     )
     module.Test.env = {**os.environ, **module.Test.server.get_env_vars()}

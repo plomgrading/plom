@@ -156,13 +156,13 @@ class PlomDemoServer(PlomServer):
         }
 
 
-class PlomQuickDemoServer(PlomDemoServer):
-    """Quickly start a Plom demo server.
+class PlomLiteDemoServer(PlomDemoServer):
+    """Quickly start a minimal Plom demo server.
 
     Tries to start quickly by only using a few papers.  This can be used
     as follows:
 
-    >>> demo = PlomQuickDemoServer(port=41981)     # doctest: +ELLIPSIS
+    >>> demo = PlomLiteDemoServer(port=41981)     # doctest: +ELLIPSIS
     Making a 3-paper demo...
 
     >>> demo.process_is_running()
