@@ -33,6 +33,8 @@ from plom.plom_exceptions import PlomBenignException
 # Ideas from Forest Kobayashi's plom-form-canvas script: ensure the
 # server dies with the python script (e.g., if we kill the script.)
 # LINUX ONLY I think. See https://stackoverflow.com/a/19448096
+# See also https://gitlab.com/plom/plom/-/issues/804
+#
 # import signal
 # import ctypes
 #
