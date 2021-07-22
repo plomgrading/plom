@@ -1437,16 +1437,16 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        print("=" * 80)
-        print(task)
         num = int(task[1:5])
         full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
         for r in full_pagedata:
             r["local_filename"] = None
         self._full_pagedata[num] = full_pagedata
-        print("\n".join([str(x) for x in full_pagedata]))
-        print("\n".join([str(x) for x in page_metadata]))
-        print("=" * 80)
+        # print("=" * 80)
+        # print(task)
+        # print("\n".join([str(x) for x in full_pagedata]))
+        # print("\n".join([str(x) for x in page_metadata]))
+        # print("=" * 80)
 
         # TODO: hardcoding orientation to 0, Issue #1306
         src_img_data = [
