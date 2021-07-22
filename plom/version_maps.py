@@ -46,7 +46,7 @@ def make_random_version_map(spec):
     """Build a random version map.
 
     args:
-        spec (plom.SpecVerifier/dict): A plom exam specificiation or the
+        spec (plom.SpecVerifier/dict): A plom exam specification or the
             underlying dict.  See :func:`plom.SpecVerifier`.  The most
             important properties are the `numberToProduce`, the
             `numberOfQuestions`, and the `select` of each question.

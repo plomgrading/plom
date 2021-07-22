@@ -154,8 +154,6 @@ class IDHandler:
             aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
                 includes a multipart object with the images.
         """
-
-        # A string having the sting number.
         test_number = request.match_info["test"]
 
         image_path = self.server.IDgetImage(data["user"], test_number)
@@ -337,7 +335,7 @@ class IDHandler:
         if data["user"] != "manager":
             return web.Response(status=401)  # only manager
 
-        # A list with a boolean (indicating wether the objects exist) and a list of the exam images.
+        # A list with a boolean (indicating whether the objects exist) and a list of the exam images.
         random_image_paths = self.server.IDgetImageFromATest()
 
         allow_access = random_image_paths[0]

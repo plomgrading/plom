@@ -261,7 +261,7 @@ class SinkList(QListWidget):
         self.item_orientation[name] = angle
         rot = QTransform()
         rot.rotate(angle)
-        # TODO: instead of loading pixmap again, can we tranform the QIcon?
+        # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
         rfile = self.item_files[name]
         cpix = QPixmap(rfile)
@@ -716,7 +716,7 @@ class RearrangementViewer(QDialog):
 
     def singleSelect(self, currentList, allPages):
         """
-        If item selected by user isnt in currentList, deselects currentList.
+        If item selected by user isn't in currentList, deselects currentList.
 
         Args:
             currentList (QListWidget): the list being checked.

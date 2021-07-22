@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
+
 import peewee as pw
 
 plomdb = pw.SqliteDatabase(None)

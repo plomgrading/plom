@@ -65,7 +65,7 @@ abs_suffix_length = len(abs_suffix)
 
 
 def isLegalRubric(mss, kind, delta):
-    """Checks the 'legality' of the current rubric - returning one of three possibile states
+    """Checks the 'legality' of the current rubric - returning one of three possible states
     0 = incompatible - the kind of rubric is not compatible with the current state
     1 = compatible but out of range - the kind of rubric is compatible with the state but applying that rubric will take the score out of range [0, maxmark] (so cannot be used)
     2 = compatible and in range - is compatible and can be used.
@@ -92,7 +92,7 @@ def isLegalRubric(mss, kind, delta):
     # now, neither state nor kind are neutral
 
     # consequently if state is absolute, no remaining rubric is legal
-    # similarly, if kind is absolute, the rubric is not legal since state is not netural
+    # similarly, if kind is absolute, the rubric is not legal since state is not neutral
     if state == "absolute" or kind == "absolute":
         return 0
 
@@ -413,7 +413,7 @@ class RubricTable(QTableWidget):
         )
         if not ok1:
             return
-        # TODO: hint that "wh&ot" will enable "alt-o" shortcut on most OSes
+        # TODO: hint that "&nice" will enable "alt-n" shortcut on most OSes
         # TODO: use a custom dialog
         # s2, ok2 = QInputDialog.getText(
         #     self, 'Rename tab "{}"'.format(curname), "Enter long name"

@@ -57,7 +57,7 @@ def QRextract(image, write_to_file=True, try_harder=True):
 
     Without the `try_harder` flag, we observe high failure rates when
     the vertical resolution is near 2000 pixels (our current default).
-    This is Issue #967 [1].  It is not prevelant in real-life images,
+    This is Issue #967 [1].  It is not prevalent in real-life images,
     but causes a roughly 5%-10% failure rate in our synthetic CI runs.
     The workaround (on by default) uses Pillow's `.reduce()` to quickly
     downscale the image.  This does increase the run time (have not

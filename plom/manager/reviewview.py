@@ -1,7 +1,6 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QGuiApplication, QPainter, QPixmap
@@ -101,7 +100,7 @@ class ReviewViewWindow(QDialog):
         self.resetB.clicked.connect(lambda: self.view.resetView())
         self.maxNormB.clicked.connect(self.swapMaxNorm)
 
-        self.resetB.setAutoDefault(False)  # return wont click the button by default.
+        self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
         # Layout simply
         grid = QGridLayout()

@@ -51,9 +51,7 @@ def download_model():
     """
     base_path = Path("model_cache")
     base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
-    files = [
-        "RF_ML_model.sav.gz",
-    ]
+    files = ["RF_ML_model.sav.gz"]
     for file_name in files:
         url = base_url + file_name
         print("Getting {} - ".format(file_name))
@@ -68,7 +66,7 @@ def download_model():
 
 
 def download_or_train_model():
-    """Dowload the ID detection model if possible, if not, train it."""
+    """Download the ID detection model if possible, if not, train it."""
 
     # make a directory into which to save things
     base_path = Path("model_cache")

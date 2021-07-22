@@ -74,14 +74,13 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     """Fill-in exams with fake data for demo or testing.
 
     Arguments:
-        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
+        paper_dir_path (str/pathlib.Path): Directory containing the blank exams.
         classlist (list): ordered list of (sid, sname) pairs.
-        outfile {Str} -- Path to write results into this concatenated PDF file.
+        outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
     Keyword Arguments:
-        which {type} -- by default, scribble on all exams or specify
-                           something like `which=range(10, 16)` here to scribble on a
-                           subset. (default: {None})
+        which: by default ("`which=None`") scribble on all exams or specify
+            something like `which=range(10, 16)` to scribble on a subset.
     """
 
     # Customizable data
@@ -208,7 +207,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
         # We then add the pdfs into the document collection
         all_pdf_documents.insertPDF(pdf_document)
 
-        # For a comprehensive test, we will add some extrapages with the probability of 0.2 precent
+        # For a comprehensive test, we will add some extrapages with the probability of 0.2 percent
         if random.random() < extra_page_probability:
             # folder_name/exam_XXXX.pdf or folder_name/exam_XXXX_YYYYYYY.pdf,
             # file_pdf_name drops the folder name and the .pdf parts
@@ -271,8 +270,8 @@ def make_colliding_pages(paper_dir_path, outfile):
     """Build two colliding pages - last pages of papers 2 and 3.
 
     Arguments:
-        paper_dir_path {Str or convertable to pathlib obj} -- Directory containing the blank exams.
-        out_file_path {Str} -- Path to write results into this concatenated PDF file.
+        paper_dir_path (str/pathlib.Path): Directory containing the blank exams.
+        out_file_path (str/pathlib.Path): write results into this concatenated PDF file.
 
     Purely used for testing.
     """

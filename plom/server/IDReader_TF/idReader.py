@@ -80,7 +80,7 @@ def download_model():
 
 
 def download_or_train_model():
-    """Dowload the ID detection model if possible, if not, train it."""
+    """Download the ID detection model if possible, if not, train it."""
 
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"

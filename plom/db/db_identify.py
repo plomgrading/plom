@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -84,7 +84,7 @@ def IDgiveTaskToClient(self, user_name, test_number):
         tref = Test.get_or_none(Test.test_number == test_number)
         if (
             tref is None
-        ):  # should not happen - user should not be asking for nonexistant tests
+        ):  # should not happen - user should not be asking for nonexistent tests
             log.info("ID task - That test number {} not known".format(test_number))
             return [False]
         # grab the ID group of that test
@@ -220,7 +220,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             owner (e.g., during automated IDing of prenamed papers.)
 
     Returns:
-        tuple: `(True, None, None)` if succesful, `(False, 409, msg)`
+        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
             means `sid` is in use elsewhere, a serious problem for
             the caller to deal with.  `(False, int, msg)` covers all
             other errors.  `msg` gives details about errors.  Some

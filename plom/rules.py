@@ -10,7 +10,7 @@ StudentIDLength = 8
 def isValidUBCStudentNumber(n):
     """Is this a valid student number for UBC?
 
-    Input must be a string or string like or convertable by str().
+    Input must be a string or string like or convertible by str().
     """
     try:
         sid = int(str(n))

@@ -633,7 +633,7 @@ class Ui_Manager(object):
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.scanTab), _translate("Manager", "&Scan Status"))
         self.actionUButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.unknownTab), _translate("Manager", "&Unknown Pages"))
-        self.actionCButton.setText(_translate("Manager", "Perfrom actions"))
+        self.actionCButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.collideTab), _translate("Manager", "&Colliding Pages"))
         self.actionDButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.discardTab), _translate("Manager", "&Discarded Pages"))

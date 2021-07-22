@@ -7,7 +7,7 @@ __license__ = "AGPL-3.0-or-later"
 Installing Plom via WSL on Windows
 ==================================
 
-These instructions are for getting a developement environment, or perhaps for hosting a **Plom Server** on Windows.
+These instructions are for getting a development environment, or perhaps for hosting a **Plom Server** on Windows.
 If you only want to grade some papers, then you don't need all this, instead go to https://plomgrading.org and follow instructions for getting started with a **Plom Client**.
 
 **Plom** has been developed primarily on Unix systems: here we discuss how it can be used on Windows system using **WSL**: *"Windows subsystem for Linux"*.

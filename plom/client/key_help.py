@@ -57,7 +57,7 @@ class KeyHelp(QDialog):
                 ["q"],
                 "Delete single item on click, or delete items in area on click and drag",
             ],
-            ["Move", ["a"], "Click and drag on an object ot move it."],
+            ["Move", ["a"], "Click and drag on an object to move it."],
         ],
         "Finishing": [
             [
@@ -151,7 +151,7 @@ class KeyHelp(QDialog):
         tw = QTableWidget()
         tw.setColumnCount(3)
         tw.verticalHeader().hide()
-        tw.setHorizontalHeaderLabels(["Function", "Keys", "Decription"])
+        tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
         tw.setAlternatingRowColors(True)
         tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
         tw.setSortingEnabled(True)

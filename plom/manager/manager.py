@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -723,7 +723,7 @@ class Manager(QWidget):
             question, order = pvi[0].text(1)[2:].split(".")
             # drop the "h.", then split on "." - don't need 'order'
             self.substituteHWQuestion(test, int(question))
-        else:  # can't subtitute other sorts of pages
+        else:  # can't substitute other sorts of pages
             return
 
     def initUnknownTab(self):
@@ -1405,7 +1405,7 @@ class Manager(QWidget):
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
-                    if self.ui.reviewTW.item(r, 4).text() != "reviwer":
+                    if self.ui.reviewTW.item(r, 4).text() != "reviewer":
                         managerMessenger.clearAuthorisationUser(
                             self.ui.reviewTW.item(r, 4).text()
                         )
@@ -1471,7 +1471,7 @@ class Manager(QWidget):
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
-                    if self.ui.reviewIDTW.item(r, 1).text() != "reviwer":
+                    if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
                         managerMessenger.clearAuthorisationUser(
                             self.ui.reviewIDTW.item(r, 1).text()
                         )

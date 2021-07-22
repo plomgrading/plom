@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2019 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 import logging
 
@@ -177,7 +177,7 @@ class MarkHandler(QWidget):
         if self.style == "Total":
             pass  # don't clear the styling when marking total.
         else:
-            # Try this one wierd trick...
+            # Try this one weird trick...
             self.ve.setExclusive(False)
             for k, x in self.markButtons.items():
                 x.setChecked(False)

@@ -106,7 +106,7 @@ class BackgroundDownloader(QThread):
             msgr_clone (Messenger): use this for the actual downloads.
                 Note Messenger is not multithreaded and blocks using
                 mutexes, so you may want to pass a clone of your
-                Messenger, rather than the one you are using youself!
+                Messenger, rather than the one you are using yourself!
 
         Notes:
             question/version may be able to be type int as well.
@@ -211,7 +211,7 @@ class BackgroundUploader(QThread):
         Returns:
             None
         """
-        log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
+        log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
 
     def queue_size(self):
@@ -359,7 +359,7 @@ class ExamQuestion:
     A class storing identifying information for one Exam Question.
 
     A simple container for storing a groupimage's task ID,
-    numer, group, version, status, the mark, the original image
+    number, group, version, status, the mark, the original image
     filename, the annotated image filename, the mark, and the
     time spent marking the groupimage.
     """
@@ -2007,7 +2007,7 @@ class MarkerClient(QWidget):
             '<p>Background upload of "{}" has failed because the server '
             "changed something underneath us.</p>\n\n"
             '<p>Specifically, the server says: "{}"</p>\n\n'
-            "<p>This is a rare situation; no data corruption has occured but "
+            "<p>This is a rare situation; no data corruption has occurred but "
             "your annotations have been discarded just in case.  You will be "
             "asked to redo the task later.</p>\n\n"
             "<p>For now you've been logged out and we'll now force a shutdown "
@@ -2174,7 +2174,7 @@ class MarkerClient(QWidget):
         """
         for r in range(self.examModel.rowCount()):
             if self.examModel.data(self.examModel.index(r, 1)) != "marked":
-                # Tell server the task fo any paper that is not marked.
+                # Tell server the task of any paper that is not marked.
                 # server will put that back on the todo-pile.
                 try:
                     self.msgr.MdidNotFinishTask(

@@ -21,7 +21,7 @@ paperdir = Path(_paperdir)
 
 # TODO: Complete the test mode functionality
 def create_QR_file_dictionary(
-    length, test, page_versions, code, tmp_dir, test_mode=False, test_folder=None
+    length, test, page_versions, code, dur, test_mode=False, test_folder=None
 ):
     """Creates a dictionary of the QR codes and save them.
 
@@ -30,7 +30,7 @@ def create_QR_file_dictionary(
         test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
         page_versions {dict} -- (int:int) Dictionary representing the version of each page for this test.
         code {Str} -- 6 digit distinguished code for the document.
-        tmp_dir {Str} -- Path string representing the directory paht of a QR code.
+        dur (pathlib.Path): a directory to save the QR codes.
 
     Keyword Arguments:
         test_mode {bool} -- boolean elements used for testing, testing case with show the documents (default: {False}).
@@ -59,8 +59,8 @@ def create_QR_file_dictionary(
             qr_code = pyqrcode.create(tpv, error="H")
 
             # save it in the associated file
-            qr_file[page_index][corner_index] = os.path.join(
-                tmp_dir, "page{}_{}.png".format(page_index, corner_index)
+            qr_file[page_index][corner_index] = (
+                dur / f"page{page_index}_{corner_index}.png"
             )
             qr_code.png(qr_file[page_index][corner_index], scale=4)
 
@@ -261,11 +261,11 @@ def is_possible_to_encode_as(s, x):
 
 # TODO: Complete the test mode functionality
 def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
-    """Creates the extra info (ususally student name and id) boxes and places them in the first page.
+    """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
-        extra {dict} -- (Str:Str) dictioary with student id and name.
-        exam {fitz.Document} -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
+        extra (dict): dictionary with student id and name.
+        exam (fitz.Document): PDF document.
 
     Keyword Arguments:
         test_mode {bool} -- Boolean elements used for testing, testing case with show the documents. (default: {False})
@@ -275,7 +275,8 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
         ValueError: Raise error if the student name and number is not encodable.
 
     Returns:
-        fitz.Document -- The same exam object as the input, except we add the extra infor into the first page.
+        fitz.Document: the exam object from the input, but with the extra
+            info added into the first page.
     """
 
     # Get page width and height
@@ -292,7 +293,7 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
 
     sign_here = "Please sign here"
 
-    # Getting the dimentions of the box
+    # Getting the dimensions of the box
     try:
         student_id_width = (
             max(
@@ -384,33 +385,30 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     """Used for saving the exams in paperdir.
 
     Arguments:
-        extra {dict} -- A (Str:Str) dictioary with student id and name.
-        exam {fitz.Document} -- The same exam object as the input, except we add the extra infor into the first page.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
+        extra (dict/None): dictionary with student id and name.
+        exam (fitz.Document): the pdf document.
+        test (int): Test number.
 
     Keyword Arguments:
         test_mode {bool} -- boolean elements used for testing, testing case with show the documents. (default: {False})
         test_folder {Str} -- A String for where to place the generated test files. (default: {None})
     """
-
+    # save with ID-number is making named papers: issue #790
+    if extra:
+        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
+    else:
+        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.com/plom/plom/issues/284
-    if extra:
-        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
-    else:
-        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
-    # save with ID-number is making named papers = issue 790
     exam.save(
         save_name,
         garbage=4,
         deflate=True,
         clean=True,
     )
-
-    return
 
 
 # TODO: Complete the test mode functionality
@@ -444,7 +442,7 @@ def make_PDF(
         no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes
 
     Keyword Arguments:
-        extra {dict} -- (Str:Str) Dictioary with student id and name (default: {None})
+        extra (dict/None): Dictionary with student id and name or None.
         test_mode {bool} -- Boolean elements used for testing, testing case with show the documents (default: {False})
         test_folder {Str} -- String for where to place the generated test files (default: {None})
 
@@ -456,7 +454,7 @@ def make_PDF(
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create QR codes and other stamps for each test/page/version
         qr_file = create_QR_file_dictionary(
-            length, test, page_versions, code, tmp_dir, test_mode, test_folder
+            length, test, page_versions, code, Path(tmp_dir), test_mode, test_folder
         )
 
         # We then create the exam pdfs while adding the QR codes to it

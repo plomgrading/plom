@@ -129,7 +129,7 @@ Types of pages:
 
 * TPage - this corresponds to a test-page. To be more precise, a page we'd get when giving physical test-papers to students which we then scan. Very structured. As opposed to homework. It points to an image and knows its test-number, page-number and some other stuff.
 
-* HWPage - this corresponds to a page of student-uploaded homework (when each question is uploaded separately). It knows which student it belongs to (and so via some look-ups) it knows which test-number, which question, but it doesn't actually have a well-defined page-number, rather it only knows its "order" within the submission. This is because one student's HW response to a given question might be 2 pages, and anothers might be 7. So it no longer makes sense to talk about page numbers like we do for "test pages".
+* HWPage - this corresponds to a page of student-uploaded homework (when each question is uploaded separately). It knows which student it belongs to (and so via some look-ups) it knows which test-number, which question, but it doesn't actually have a well-defined page-number, rather it only knows its "order" within the submission. This is because one student's HW response to a given question might be 2 pages, and another's might be 7. So it no longer makes sense to talk about page numbers like we do for "test pages".
 
 * EXPage - an extra page - primarily for tests. Functionally similar to HWPages - they have an "order" but not a page number.
 

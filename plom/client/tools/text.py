@@ -27,19 +27,19 @@ class CommandMoveText(QUndoCommand):
         return 102
 
     def redo(self):
-        # Temporarily disable the item emiting "I've changed" signals
+        # Temporarily disable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
         # Move the object
         self.xitem.setPos(self.new_pos)
-        # Reenable the item emiting "I've changed" signals
+        # Re-enable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def undo(self):
-        # Temporarily disable the item emiting "I've changed" signals
+        # Temporarily disable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
         # Move the object back
         self.xitem.setPos(self.old_pos)
-        # Reenable the item emiting "I've changed" signals
+        # Re-enable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def mergeWith(self, other):

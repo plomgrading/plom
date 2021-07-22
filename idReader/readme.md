@@ -18,7 +18,7 @@
   * either as tikz image in your latex, or
   * as an included svg/eps/pdf in your document
     - e.g., `\includegraphics{idBox}`, without changing the size.
-    - It doens't matter where it is on the first page.
+    - It doesn't matter where it is on the first page.
 * **Future** - the system stamps the template onto the front page automatically?
 
 ## Training the model

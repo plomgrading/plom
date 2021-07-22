@@ -268,9 +268,9 @@ def canvas_login(api_url=None, api_key=None):
 
     args:
         api_url (str/None): server to login to, uses a default
-            if ommitted.
+            if omitted.
         api_key (str/None): the API key.  Will load from disc if
-            ommitted.  TODO: Could consider prompting in future.
+            omitted.  TODO: Could consider prompting in future.
 
     return:
         canvasapi.current_user.CurrentUser

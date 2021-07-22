@@ -437,7 +437,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
 def uploadUnknownPage(
     self, original_name, file_name, order, md5, bundle_name, bundle_order
 ):
-    # TODO - remove 'order' here - it is superceded by 'bundle_order'
+    # TODO - remove 'order' here - it is superseded by 'bundle_order'
 
     iref = Image.get_or_none(md5sum=md5)
     if iref is not None:

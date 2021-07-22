@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Matthew Coles
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
@@ -67,7 +67,9 @@ def find_partial_column_name(df, parthead, at_start=True):
     Args:
         df (pandas.DataFrame): the dataframe that we get the column from.
         parthead (str): the first part of the column name(s) we are interested.
-        at_start (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+        at_start (bool, optional): if True we search for `parthead` from the
+            beginning of the column name, if False then `parthead` can be
+            anywhere in the column name. Defaults to True.
 
     Raises:
         ValueError: If there are no possible matches (or no unique matches).
@@ -98,7 +100,9 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
     Args:
         canvas_fromfile (str): name of the csv file containing student information from canvas.
         canvas_tofile (str): name of the csv file we are writing the marks to.
-        test_parthead (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+        test_parthead (bool, optional): if True we search for `test_parthead`
+            from the beginning of the column name, if False then it can be
+            anywhere in the column name.  Defaults to True.
 
     Returns:
         pandas.DataFrame : the dataframe with student information (it is also written to a csv).
@@ -122,7 +126,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
         input("Press Enter to continue and overwrite...")
 
     print('Loading "{}" data'.format(CSVFilename))
-    # TODO: should we be doing all this whereever the csv file is created?
+    # TODO: should we be doing all this wherever the csv file is created?
     marks = pandas.read_csv(CSVFilename, dtype="object")
 
     # Make dict: this looks fragile, try merge instead...

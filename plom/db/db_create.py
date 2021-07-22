@@ -73,7 +73,7 @@ def doesBundleExist(self, bundle_name, md5):
 def createNewBundle(self, bundle_name, md5):
     """
     Checks to see if bundle exists using 'doesBundleExist'.
-    If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+    If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldn't happen if scanner working correctly.
     If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
     If no such bundle return [True, []] - create the bundle and return an empty skip-list.
     """
@@ -332,7 +332,7 @@ def id_paper(self, paper_num, user_name, sid, sname):
         sname (str): student name.
 
     Returns:
-        tuple: `(True, None, None)` if succesful, `(False, 409, msg)`
+        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
             means `sid` is in use elsewhere, a serious problem for
             the caller to deal with.  `(False, int, msg)` covers all
             other errors.  `msg` gives details about errors.  Some

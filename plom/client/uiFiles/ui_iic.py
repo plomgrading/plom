@@ -511,7 +511,7 @@ class Ui_IIC(object):
         self.actionUButton.setText(_translate("IIC", "Perform actions"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.unknownTab), _translate("IIC", "&Unknown Pages"))
         self.refreshCButton.setText(_translate("IIC", "&Refresh"))
-        self.actionCButton.setText(_translate("IIC", "Perfrom actions"))
+        self.actionCButton.setText(_translate("IIC", "Perform actions"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.collideTab), _translate("IIC", "&Colliding Pages"))
         self.refreshDButton.setText(_translate("IIC", "Refresh"))
         self.actionDButton.setText(_translate("IIC", "Perform actions"))

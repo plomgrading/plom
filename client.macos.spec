@@ -1,4 +1,6 @@
-# -*- mode: python ; coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from pathlib import Path
 # trickery from setup.py to define __version__ without import
