@@ -511,7 +511,9 @@ class MarkHandler:
             included in question number `question`?.  Note that clients
             may pull other pages into their annotating; you can only
             rely on this information for initializing a new annotating
-            session.  If you're say editting an existing annotation,
+            session.  If you're e.g., editing an existing annotation,
+            you should rely on the info from that existing annotation
+            instead of this.
 
         `order`: None or an integer specifying the relative ordering of
             pages within a question.  As with `included`,
