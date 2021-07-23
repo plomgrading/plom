@@ -657,11 +657,7 @@ class Annotator(QWidget):
         self.parentMarkerUI.Qapp.processEvents()
         testNumber = self.tgvID[:4]
         # TODO: maybe download should happen in Marker?
-        # TODO: all ripe for refactoring as the src_img_data improves
         image_md5_list = [x["md5"] for x in self.src_img_data]
-        # note we'll md5 match within one paper only: low birthday probability
-        md5_to_file_map = {x["md5"]: x["filename"] for x in self.src_img_data}
-        log.info("adjustpgs: md5-to-file map: {}".format(md5_to_file_map))
         if len(set(image_md5_list)) != len(image_md5_list):
             s = dedent(
                 """
@@ -677,9 +673,10 @@ class Annotator(QWidget):
             log.error(s)
             ErrorMessage(s).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        page_data = self.parentMarkerUI.downloadWholePaperMetadata(testNumber)
+        page_data = self.parentMarkerUI._full_pagedata[int(testNumber)]
+        page_data.copy()  # keep original readonly?
         for x in image_md5_list:
-            if x not in [p[1] for p in page_data]:
+            if x not in [p["md5"] for p in page_data]:
                 s = dedent(
                     """
                     Unexpectedly situation!\n
@@ -696,47 +693,56 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec_()
-        # Crawl over the page_data, append a filename for each file
-        # download what's needed but avoid re-downloading duplicate files
+        # Crawl over the page_data, download any images we don't have
         # TODO: could defer downloading to background thread of dialog
         page_adjuster_downloads = []
-        for (i, p) in enumerate(page_data):
-            md5 = p[1]
-            image_id = p[-1]
-            fname = md5_to_file_map.get(md5)
-            if fname:
+        for (i, pg) in enumerate(page_data):
+            if pg["local_filename"]:
                 log.info(
-                    "adjustpgs: not downloading image id={}; we have it already at i={}, {}".format(
-                        image_id, i, fname
+                    "adjustpgs: already have image id={}: {}".format(
+                        pg["id"], pg["local_filename"]
                     )
                 )
-            else:
-                tmp = self.parentMarkerUI.downloadOneImage(self.tgvID, image_id, md5)
-                # TODO: wrong to put these in the paperdir (?)
-                # Maybe Marker should be doing this downloading
-                workdir = self.parentMarkerUI.workingDirectory
-                fname = tempfile.NamedTemporaryFile(
-                    dir=workdir,
-                    prefix="adj_pg_{}_".format(i),
-                    suffix=".image",
-                    delete=False,
-                ).name
-                log.info(
-                    'adjustpages: writing "{}" from id={}, md5={}'.format(
-                        fname, image_id, md5
-                    )
+                continue
+            md5 = pg["md5"]
+            image_id = pg["id"]
+            tmp = self.parentMarkerUI.downloadOneImage(self.tgvID, image_id, md5)
+            # TODO: wrong to put these in the paperdir (?)
+            # Maybe Marker should be doing this downloading
+            workdir = self.parentMarkerUI.workingDirectory
+            fname = tempfile.NamedTemporaryFile(
+                dir=workdir,
+                prefix="adj_pg_{}_".format(i),
+                suffix=".image",
+                delete=False,
+            ).name
+            log.info(
+                'adjustpages: writing "{}" from id={}, md5={}'.format(
+                    fname, image_id, md5
                 )
-                with open(fname, "wb") as f:
-                    f.write(tmp)
-                assert md5_to_file_map.get(md5) is None
-                md5_to_file_map[md5] = fname
-                page_adjuster_downloads.append(fname)
-            p.append(fname)
+            )
+            with open(fname, "wb") as f:
+                f.write(tmp)
+            page_adjuster_downloads.append(fname)
+            pg["local_filename"] = fname
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
+        # pull stuff out of dict (TODO: for now)
+        page_data_list = []
+        for d in page_data:
+            page_data_list.append(
+                [
+                    d["pagename"],
+                    d["md5"],
+                    d["included"],
+                    d["order"],
+                    d["id"],
+                    d["local_filename"],
+                ]
+            )
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data, is_dirty
+            self, testNumber, self.src_img_data, page_data_list, is_dirty
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
@@ -1683,6 +1689,7 @@ class Annotator(QWidget):
         plomData = {
             "fileNames": [os.path.basename(x["filename"]) for x in self.src_img_data],
             "orientations": [x["orientation"] for x in self.src_img_data],
+            "database_ids": [x["id"] for x in self.src_img_data],
             "saveName": os.path.basename(self.saveName),
             "markState": self.getMarkingState(),
             "maxMark": self.maxMark,

@@ -486,29 +486,105 @@ class MarkHandler:
             request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
 
         Returns:
-            aiohttp.web_response.Response: JSON data, a list of lists
-                where each list in the form documented below.
+            aiohttp.web_response.Response: JSON data, a list of dicts
+                where each dict has keys:
+                pagename, md5, included, order, id, orientation, server_path
+                as documented below.
 
-        Each row of the data looks like:
-           `[name, md5, true/false, pos_in_current_annotation, image_id]`
+        Dictionary contents per-row
+        ---------------------------
+
+        `pagename`: A string something like `"t2"`.  Reasonable to use
+            as a thumbnail label for the image or in other cases where
+            a very short string label is required.
+
+        `md5': A string of the md5sum of the image.
+
+        `id`: an integer like 19.  This is the key in the database to
+            the image of this page.  It is (I think) possible to have
+            two pages pointing to the same image, in which case the md5
+            and the id could be repeated.  TODO: determine if this only
+            happens b/c of bugs/upload issues or if its a reasonably
+            normal state.
+
+        `included`: boolean, did the server *originally* have this page
+            included in question number `question`?.  Note that clients
+            may pull other pages into their annotating; you can only
+            rely on this information for initializing a new annotating
+            session.  If you're e.g., editing an existing annotation,
+            you should rely on the info from that existing annotation
+            instead of this.
+
+        `order`: None or an integer specifying the relative ordering of
+            pages within a question.  As with `included`,
+            this information only reflects the initial (typically
+            scan-time) ordering of the images.  If its None, server has
+            no info about what order might be appropriate, for example
+            because this image is not thought to belong in `question`.
+
+        `orientation`: relative to the natural orientation of the image.
+            This is an integer for the degrees of rotation.  Probably
+            only multiples of 90 work and perhaps only [0, 90, 180, 270]
+            but could/should (TODO) be generalized for arbitrary
+            rotations.  This should be applied *after* any metadata
+            rotations from inside the file instead (such as jpeg exif
+            orientation).  As with `included` and `order`, this is only
+            the initial state.  Clients may rotate images and that
+            information belongs their annotation.
+
+        `server_path`: a string of a path and filename where the server
+            might have the file stored, such as
+            `"pages/originalPages/t0004p02v1.86784dd1.png"`.
+            This is guaranteed unique (such as by the random bit before
+            `.png`).  It is *not* guaranteed that the server actually
+            stores the file in this location, although the current
+            implementation does.
+
+        Example
+        -------
+        ```
+          [
+           {'pagename': 't2',
+            'md5': 'e4e131f476bfd364052f2e1d866533ea',
+            'included': False,
+            'order': None,
+            'id': 19',
+            'orientation': 0
+            'server_path': 'pages/originalPages/t0004p02v1.86784dd1.png',
+           }
+           {'pagename': 't3',
+            'md5': 'a896cb05f2616cb101df175a94c2ef95',
+            'included': True,
+            'order': 1,
+            'id': 20,
+            'orientation': 270
+            'server_path': 'pages/originalPages/t0004p03v2.ef7f9754.png',
+           }
+          ]
+        ```
         """
         test_number = request.match_info["number"]
-        # TODO: who cares about this?
+        # this is used to determine the true/false "included" info
         question_number = request.match_info["question"]
 
         # return [True, pageData, f1, f2, f3, ...] or [False]
         # 1. True/False for operation status.
-        # 2. A list of lists, documented elsewhere (TODO: I hope)
+        # 2. A list of lists, as doc'd above
         # 3. 3rd element onward: paths for each page of the paper in server.
         r = self.server.MgetWholePaper(test_number, question_number)
 
         if not r[0]:
             return web.Response(status=404)
 
-        pages_data = r[1]
-        # We just discard this, its legacy from previous API call
-        # TODO: fold into the pages_data; then we can sanity check it when it comes back!
         all_pages_paths = r[2:]
+        assert len(r[1]) == len(all_pages_paths)
+        rownames = ("pagename", "md5", "included", "order", "id", "server_path")
+        pages_data = []
+        for i, row in enumerate(r[1]):
+            pages_data.append({k: v for k, v in zip(rownames, row)})
+            pages_data[i]["server_path"] = all_pages_paths[i]
+            # For now, server has no orientation data but callers expect it
+            pages_data[i]["orientation"] = 0
         return web.json_response(pages_data, status=200)
 
     # @routes.get("/MK/allMax")

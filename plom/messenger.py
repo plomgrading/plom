@@ -751,7 +751,7 @@ class Messenger(BaseMessenger):
     def MrequestWholePaperMetadata(self, code, questionNumber=0):
         """Get metadata about the images in this paper.
 
-        TODO: questionnumber?  why?
+        For now, questionNumber effects the "included" column...
 
         TODO: returns 404, so why not raise that instead?
         """
