@@ -160,22 +160,31 @@ class BackgroundDownloader(QThread):
 
         num = int(task[1:5])
         full_pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
 
-        # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [
-            {"id": x[0], "md5": x[1], "orientation": 0} for x in page_metadata
-        ]
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
+
+        # Populate the orientation keys from the full pagedata
+        for i, row in enumerate(src_img_data):
+            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+            # There could easily be more than one: what if orientation is contradictory?
+            row["orientation"] = ori[0]  # just take first one
+
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
-            # TODO: add a "aggressive download" option to get all now
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
+            # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self._msgr.MrequestOneImage(task, row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-            src_img_data[i]["filename"] = tmp
+            row["filename"] = tmp
             for r in full_pagedata:
-                if r["md5"] == row[1]:
+                if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
 
         self.downloadSuccess.emit(
@@ -1299,32 +1308,34 @@ class MarkerClient(QWidget):
         paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
         log.debug("create paperDir {} for already-graded download".format(paperDir))
 
-        # TODO: keep more image_id, md5, server_path_filename
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
-            # TODO: use server filename?
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-            src_img_data[i]["filename"] = tmp
+            row["filename"] = tmp
             for r in full_pagedata:
-                if r["md5"] == row[1]:
+                if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
         # Parse PlomFile early for orientation data
         plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
         db_ids = plomdata.get("database_ids")
         if db_ids:
             # if present, must match expected: TODO may delete later.
-            db_id2 = [x[0] for x in page_metadata]
+            db_id2 = [x["id"] for x in src_img_data]
             assert db_ids == db_id2, f".plom file IDs={db_ids} does not match {db_id2}"
         log.info("importing orientations from plom file")
-        for i, d in enumerate(src_img_data):
+        for i, row in enumerate(src_img_data):
             if db_ids:
-                assert db_ids[i] == d["id"], "sanity check failure: orientation data in wrong order?"
-            d["orientation"] = plomdata["orientation"][i]
+                assert (
+                    db_ids[i] == row["id"]
+                ), "sanity check failure: orientation data in wrong order?"
+            row["orientation"] = plomdata["orientations"][i]
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1448,20 +1459,27 @@ class MarkerClient(QWidget):
         # print("\n".join([str(x) for x in page_metadata]))
         # print("=" * 80)
 
-        # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [
-            {"id": x[0], "md5": x[1], "orientation": 0} for x in page_metadata
-        ]
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
+
+        # Populate the orientation keys from the full pagedata
+        for i, row in enumerate(src_img_data):
+            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+            # There could easily be more than one: what if orientation is contradictory?
+            row["orientation"] = ori[0]  # just take first one
+
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
+            # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-            src_img_data[i]["filename"] = tmp
+            row["filename"] = tmp
             for r in full_pagedata:
-                if r["md5"] == row[1]:
+                if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
 
         self.examModel.addPaper(
