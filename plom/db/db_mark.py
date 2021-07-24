@@ -5,7 +5,9 @@
 from datetime import datetime
 import logging
 
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
+from plom.db.tables import Image, Group, QGroup, LPage, Rubric, Test, TPage, User
 
 
 log = logging.getLogger("DB")
@@ -94,7 +96,7 @@ def MgetNextTask(self, q, v):
                 )
                 .get()
             )
-        except QGroup.DoesNotExist as e:
+        except QGroup.DoesNotExist:
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None
 
@@ -631,5 +633,5 @@ def MrevertTask(self, task):
             aref.aimage.delete_instance()
             # finally delete the annotation itself.
             aref.delete_instance()
-    log.info("Reverting tq {}.{}".format(test_number, question))
+    log.info(f"Reverted tq {task}")
     return [True]
