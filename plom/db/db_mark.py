@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
+import json
 import logging
 
 from plom.db.tables import plomdb
@@ -409,6 +410,48 @@ def MgetImages(self, user_name, task, integrity_check):
         if aref.aimage is not None:
             rval.extend([aref.aimage.file_name, aref.plom_file])
         return rval
+
+
+def Mget_annotations(self, number, question, epoch=None):
+    """Retrive the latest annotations, or a particular set of annotations.
+
+    args:
+        number (int): paper number.
+        question (int): question number.
+        epoch (None/int): TODO, not implemented yet
+
+    Returns:
+        list: `[True, plom_file_data, annotation_image]` on success or
+            on error `[False, error_msg]`.  If the task is not yet
+            annotated, the error will be `"no_such_task"`.
+    """
+    if epoch is not None:
+        raise NotImplementedError("Lazy devs")
+    task = f"q{number:04}g{question}"
+    with plomdb.atomic():
+        gref = Group.get_or_none(Group.gid == task)
+        if gref is None:
+            log.info("M_get_annotations - task {} not known".format(task))
+            return [False, "no_such_task"]
+        if gref.scanned is False:  # perhaps this should not happen?
+            return [False, "no_such_task"]
+        qref = gref.qgroups[0]
+        # TODO: push the user (qref.user) into the plom_file?
+        # check the integrity_check code against the db
+        aref = qref.annotations[-1]
+        # if aref.integrity_check != integrity_check:
+        #     return [False, "integrity_fail"]
+        # TODO: all of this should be inside the plom file: how to ensure it is consistent?
+        # metadata = []
+        # for p in aref.apages.order_by(APage.order):
+        #     metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
+        if aref.aimage is None:
+            return [False, "no_such_task"]
+        plom_file = aref.plom_file
+        img_file = aref.aimage.file_name
+    with open(plom_file, "r") as f:
+        plom_data = json.load(f)
+    return (True, plom_data, img_file)
 
 
 def MgetOriginalImages(self, task):

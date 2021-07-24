@@ -352,10 +352,9 @@ class MarkHandler:
                 multipart_writer.append(open(file_name, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
-
     # @routes.get("/MK/annotations/{number}/{question}/{epoch}")
     @authenticate_by_token_required_fields([])
-    def MgetAnnotations(self, data, request):
+    def Mget_annotations(self, data, request):
         """Get the annotations of a marked question as JSON.
 
         Args:
@@ -366,6 +365,7 @@ class MarkHandler:
                 `epoch` can be used to get a particular annotation from
                 the history of all annotations.  If `epoch` is omitted,
                 return the latest annotations.
+                TODO: currently instead of omitting you must pass "_".
 
         Returns:
             aiohttp.json_response.Response: JSON of the annotations with
@@ -380,16 +380,23 @@ class MarkHandler:
         Getting data back from this function does not imply permission
         to submit to this task.
         """
-        number = request.match_info["number"]
-        question = request.match_info["question"]
-        # TODO: how to make optional?
+        number = int(request.match_info["number"])
+        question = int(request.match_info["question"])
+        # TODO: how to make optional?  for now, must pass "_"
         epoch = request.match_info["epoch"]
-        raise NotImplementedError("TODO")
-
+        assert epoch == "_"
+        results = self.server.DB.Mget_annotations(number, question, epoch=None)
+        if not results[0]:
+            if results[1] == "no_such_task":
+                return web.Response(status=410)  # task deleted
+            else:
+                return web.Response(status=400)  # some other error
+        plomdata = results[1]
+        return web.json_response(plomdata, status=200)
 
     # @routes.get("/MK/annotations_image/{number}/{question}/{epoch}")
     @authenticate_by_token_required_fields([])
-    def MgetAnnotationsImage(self, data, request):
+    def Mget_annotations_image(self, data, request):
         """Get the image of an annotated question (a marked question).
 
         Args:
@@ -417,12 +424,19 @@ class MarkHandler:
         Getting data back from this function does not imply permission
         to submit to this task.
         """
-        number = request.match_info["number"]
-        question = request.match_info["question"]
-        # TODO: how to make optional?
+        number = int(request.match_info["number"])
+        question = int(request.match_info["question"])
+        # TODO: how to make optional?  for now, must pass "_"
         epoch = request.match_info["epoch"]
-        raise NotImplementedError("TODO")
-
+        assert epoch == "_"
+        results = self.server.DB.Mget_annotations(number, question, epoch=None)
+        if not results[0]:
+            if results[1] == "no_such_task":
+                return web.Response(status=410)  # task deleted
+            else:
+                return web.Response(status=400)  # some other error
+        filename = results[2]
+        return web.FileResponse(filename, status=200)
 
     # @routes.get(...)
     @authenticate_by_token_required_fields(["user"])
@@ -736,7 +750,12 @@ class MarkHandler:
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
-        router.add_get("/MK/annotations/{number}/{question}/{epoch}", self.MgetAnnotations)
-        router.add_get("/MK/annotations_image/{number}/{question}/{epoch}", self.MgetAnnotationsImage)
+        router.add_get(
+            "/MK/annotations/{number}/{question}/{epoch}", self.Mget_annotations
+        )
+        router.add_get(
+            "/MK/annotations_image/{number}/{question}/{epoch}",
+            self.Mget_annotations_image,
+        )
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)

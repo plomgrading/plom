@@ -1273,12 +1273,21 @@ class MarkerClient(QWidget):
         if len(self.examModel.getOriginalFiles(task)) > 0:
             return True
 
-        # TODO: plom file is lovely json: why we pack it around as binary bytes?
         # TODO:
         # - [ ] new api calls
         # - [ ] put annotation_id inside the .plom data
         # - [ ] use new api in marker
         #     - [ ] uncertain about Task{Changed/Deleted}Error: separate API for that?
+        assert task[0] == "q"
+        assert task[5] == "g"
+        num = int(task[1:5])
+        question = int(task[6:])
+        assert question == self.question
+
+        plomdata0 = self.msgr.get_annotations(num, self.question)
+        # TODO: should get "epoch" from plomdata...  HACK: server stuffs it in at last minute?
+        anImage0 = self.msgr.get_annotations_image(num, self.question)
+
         try:
             [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
@@ -1300,11 +1309,12 @@ class MarkerClient(QWidget):
             self.throwSeriousError(e)
             return False
 
+        assert anImage == anImage0
+
         # TODO: not trivial to replace page_metadata with the full_pagedata:
         # "included" column means different things.  Maybe we need to
         # pull down the DB's Annotation records, applied to read-only
         # image data.  Maybe a shortcut is grab from the plom file.
-        num = int(task[1:5])
         full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
         for r in full_pagedata:
             r["local_filename"] = None
