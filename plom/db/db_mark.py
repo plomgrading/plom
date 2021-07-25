@@ -413,7 +413,7 @@ def MgetImages(self, user_name, task, integrity_check):
 
 
 def Mget_annotations(self, number, question, epoch=None):
-    """Retrive the latest annotations, or a particular set of annotations.
+    """Retrieve the latest annotations, or a particular set of annotations.
 
     args:
         number (int): paper number.
