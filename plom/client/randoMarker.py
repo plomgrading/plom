@@ -77,8 +77,9 @@ class SceneParent(QWidget):
         self.saveName = saveName
         src_img_data = []
         for f in imageNames:
-            src_img_data.append({"filename": f, "orientation": 0})
-        self.imageFiles = imageNames
+            # TODO: made up 0 for id and md5: bad things surely happen!
+            src_img_data.append({"filename": f, "orientation": 0, "id": 0, "md5": ""})
+        self.src_img_data = src_img_data
 
         self.scene = PageScene(self, src_img_data, saveName, maxMark, None)
         self.view.connectScene(self.scene)
@@ -87,7 +88,7 @@ class SceneParent(QWidget):
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         plomDict = {
-            "fileNames": [os.path.basename(fn) for fn in self.imageFiles],
+            "base_images": self.src_img_data,
             "saveName": os.path.basename(self.saveName),
             "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,

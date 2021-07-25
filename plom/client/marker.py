@@ -1273,27 +1273,27 @@ class MarkerClient(QWidget):
         if len(self.examModel.getOriginalFiles(task)) > 0:
             return True
 
-        # TODO:
-        # - [ ] new api calls
-        # - [ ] put annotation_id inside the .plom data
-        # - [ ] use new api in marker
-        #     - [ ] uncertain about Task{Changed/Deleted}Error: separate API for that?
         assert task[0] == "q"
         assert task[5] == "g"
         num = int(task[1:5])
         question = int(task[6:])
         assert question == self.question
 
-        plomdata0 = self.msgr.get_annotations(num, self.question)
-        # TODO: should get "epoch" from plomdata...  HACK: server stuffs it in at last minute?
-        anImage0 = self.msgr.get_annotations_image(num, self.question)
-
         try:
+            plomdata = self.msgr.get_annotations(num, self.question)
+            # TODO: should get "epoch" from plomdata...  HACK: server stuffs it in at last minute?
+            annotated_image = self.msgr.get_annotations_image(num, self.question)
+            # TODO: deprecated, not in use
             [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
+            plomdata_deprecated = json.loads(io.BytesIO(plomfile_data).getvalue())
+            assert annotated_image == anImage
+            assert plomdata == plomdata_deprecated
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
+            # TODO: the real problem here is that the full_pagedata is potentially out of date!
+            # TODO: we also need (and maybe already have) a mechanism to invalidate existing annotations
             ErrorMessage(
                 '<p>The task "{}" has changed in some way by the manager; it '
                 "may need to be remarked.</p>\n\n"
@@ -1309,22 +1309,16 @@ class MarkerClient(QWidget):
             self.throwSeriousError(e)
             return False
 
-        assert anImage == anImage0
-
-        # TODO: not trivial to replace page_metadata with the full_pagedata:
-        # "included" column means different things.  Maybe we need to
-        # pull down the DB's Annotation records, applied to read-only
-        # image data.  Maybe a shortcut is grab from the plom file.
+        # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
+        # column means different things).  Instead, extract from .plom file.
         full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
         for r in full_pagedata:
             r["local_filename"] = None
         self._full_pagedata[num] = full_pagedata
 
-        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        log.debug("create paperDir {} for already-graded download".format(paperDir))
-
-        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
-        del page_metadata
+        log.info("importing source image data (orientations etc) from .plom file")
+        # filenames likely stale
+        src_img_data = plomdata["base_images"]
 
         # Image names = "<task>.<imagenumber>.<extension>"
         # TODO: use server filename from server_path_filename
@@ -1337,33 +1331,19 @@ class MarkerClient(QWidget):
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
-        # Parse PlomFile early for orientation data
-        plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
-        db_ids = plomdata.get("database_ids")
-        if db_ids:
-            # if present, must match expected: TODO may delete later.
-            db_id2 = [x["id"] for x in src_img_data]
-            assert db_ids == db_id2, f".plom file IDs={db_ids} does not match {db_id2}"
-        log.info("importing orientations from plom file")
-        for i, row in enumerate(src_img_data):
-            if db_ids:
-                assert (
-                    db_ids[i] == row["id"]
-                ), "sanity check failure: orientation data in wrong order?"
-            row["orientation"] = plomdata["orientations"][i]
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
-        if anImage is None:
-            return True
-
+        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
+        log.debug("create paperDir {} for already-graded download".format(paperDir))
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
         pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
         with open(aname, "wb+") as fh:
-            fh.write(anImage)
-        with open(pname, "wb+") as fh:
-            fh.write(plomfile_data)
+            fh.write(annotated_image)
+        with open(pname, "w") as f:
+            json.dump(plomdata, f, indent="  ")
+            f.write("\n")
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 

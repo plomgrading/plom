@@ -441,7 +441,7 @@ def Mget_annotations(self, number, question, epoch=None):
         aref = qref.annotations[-1]
         # if aref.integrity_check != integrity_check:
         #     return [False, "integrity_fail"]
-        # TODO: all of this should be inside the plom file: how to ensure it is consistent?
+        # TODO: compute this metadata and double-check its same/consistent inside plom file
         # metadata = []
         # for p in aref.apages.order_by(APage.order):
         #     metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
