@@ -189,6 +189,7 @@ class PlomDB:
         IDgetDoneTasks,
         IDgetImages,
         IDgetImageByNumber,
+        ID_get_donotmark_images,
         IDdidNotFinish,
         ID_id_paper,
         IDgetImageFromATest,

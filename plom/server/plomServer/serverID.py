@@ -60,13 +60,24 @@ def IDgetImages(self, username, test_number):
 
     Args:
         username (str): Username requesting ID'd paper's image.
-        test_number (str): Test ID number.
+        test_number (str): Test number.
 
     Returns:
-        list: True/False plus a list of the image paths for ID'd task.
+        list: True/False plus a list of the image paths or a short error code.
     """
-
     return self.DB.IDgetImages(username, test_number)
+
+
+def ID_get_donotmark_images(self, paper_number):
+    """Respond with a list of image paths for the Do Not Mark pages of a paper.
+
+    Args:
+        test_number (str): Test number.
+
+    Returns:
+        list: True/False plus a list of the image paths or a short error code.
+    """
+    return self.DB.ID_get_donotmark_images(paper_number)
 
 
 def IDclaimThisTask(self, username, test_number):

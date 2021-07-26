@@ -150,6 +150,21 @@ def IDgetImages(self, user_name, test_number):
     return rval
 
 
+def ID_get_donotmark_images(self, test_number):
+    """Return the DoNotMark page images of a paper."""
+    tref = Test.get_or_none(Test.test_number == test_number)
+    if tref is None:
+        return [False, "NoTest"]
+    iref = tref.dnmgroups[0]
+    if iref.group.scanned is False:
+        return [False, "NoScan"]
+    rval = [True]
+    for p in iref.dnmpages.order_by(DNMPage.order):
+        rval.append(p.image.file_name)
+    log.debug(f"Sending DNMpages of test {test_number}")
+    return rval
+
+
 def IDgetImageByNumber(self, image_number):
     """
     For every test, find the imageNumber'th page in the ID Pages and return the corresponding image filename. So gives returns a dictionary of testNumber -> filename.

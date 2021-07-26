@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import getpass
@@ -79,7 +79,12 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
         fnames.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-    print("TODO: DNW pages are skipped!")
+    img_dnw_list = msgr.request_DNW_images(t)
+    for i, obj in enumerate(img_dnw_list):
+        filename = tmpdir / f"img_{int(t):04}_dnw{i:02}.png"
+        fnames.append(filename)
+        with open(filename, "wb") as f:
+            f.write(obj)
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
         # Hardcoded to PNG here (and elsewhere!)

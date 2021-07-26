@@ -534,6 +534,38 @@ class BaseMessenger:
 
         return imageList
 
+    def request_donotmark_images(self, papernum):
+        """Get the various Do Not Mark images for a paper."""
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                f"https://{self.server}/ID/donotmark_images/{papernum}",
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            response.raise_for_status()
+            return [
+                BytesIO(img.content).getvalue()
+                for img in MultipartDecoder.from_response(response).parts
+            ]
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    f"Cannot find DNW image files for {papernum}."
+                ) from None
+            elif response.status_code == 410:
+                raise PlomBenignException(
+                    f"The DNM group of {papernum} has not been scanned."
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
     def get_annotations(self, num, question, epoch=None):
         """Download the latest annotations (or a particular set of annotations).
 

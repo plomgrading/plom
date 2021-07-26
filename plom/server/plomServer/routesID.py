@@ -148,22 +148,20 @@ class IDHandler:
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
-            request (aiohttp.web_request.Request): DELETE /ID/predictedID type request object.
+            request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: A response including a aiohttp object which
-                includes a multipart object with the images.
+            aiohttp.web_fileresponse.FileResponse: a multipart object with the images.
         """
         test_number = request.match_info["test"]
 
-        image_path = self.server.IDgetImages(data["user"], test_number)
+        r = self.server.IDgetImages(data["user"], test_number)
         # is either user allowed access - returns [true, fname0, fname1,...]
         # or fails - return [false, message]
 
-        allow_access = image_path[0]
-        if not allow_access:
+        if not r[0]:
             # can fail for 3 reasons - "not owner", "no such scan", "no such test"
-            fail_message = image_path[1]
+            fail_message = r[1]
             if fail_message == "NotOwner":
                 return web.Response(status=409)  # someone else has that image
             elif fail_message == "NoScan":
@@ -172,8 +170,43 @@ class IDHandler:
                 return web.Response(status=404)
 
         with MultipartWriter("images") as writer:
-            image_paths = image_path[1:]
+            image_paths = r[1:]
+            for file_name in image_paths:
+                if os.path.isfile(file_name):
+                    writer.append(open(file_name, "rb"))
+                else:
+                    return web.Response(status=404)
+            return web.Response(body=writer, status=200)
 
+    # @routes.get("/ID/donotmark_images/{test}")
+    @authenticate_by_token_required_fields([])
+    def ID_get_donotmark_images(self, data, request):
+        """Return the Do Not Mark page images for a specified paper number.
+
+        Responds with status 200/404/409/410.
+
+        Args:
+            data (dict): A (str:str) dictionary having keys `user` and `token`.
+            request (aiohttp.web_request.Request):
+
+        Returns:
+            aiohttp.web_fileresponse.FileResponse: a multipart object with the images.
+        """
+        test_number = request.match_info["test"]
+
+        r = self.server.ID_get_donotmark_images(test_number)
+        # is either user allowed access - returns [true, fname0, fname1,...]
+        # or fails - return [false, message]
+
+        if not r[0]:
+            fail_message = r[1]
+            if fail_message == "NoScan":
+                return web.Response(status=410)
+            else:  # fail_message == "NoTest":
+                return web.Response(status=404)
+
+        with MultipartWriter("images") as writer:
+            image_paths = r[1:]
             for file_name in image_paths:
                 if os.path.isfile(file_name):
                     writer.append(open(file_name, "rb"))
@@ -449,6 +482,7 @@ class IDHandler:
         router.add_get("/ID/predictions", self.IDgetPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
         router.add_get("/ID/images/{test}", self.IDgetImages)
+        router.add_get("/ID/donotmark_images/{test}", self.ID_get_donotmark_images)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/{papernum}", self.IdentifyPaper)
