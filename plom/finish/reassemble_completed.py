@@ -72,30 +72,32 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
        tuple : (outname, short_name, sid, covername, page_filenames)
     """
     fnames_deprecated = msgr.RgetAnnotatedFiles(t)  # TODO: delete
-    fnames = []
-    im_id_list = msgr.request_ID_images(t)
-    for i, obj in enumerate(im_id_list):
+    id_image_blobs = msgr.request_ID_images(t)
+    id_pages = []
+    for i, obj in enumerate(id_image_blobs):
         filename = tmpdir / f"img_{int(t):04}_id{i:02}.png"
-        fnames.append(filename)
+        id_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-    img_dnw_list = msgr.request_DNW_images(t)
-    for i, obj in enumerate(img_dnw_list):
-        filename = tmpdir / f"img_{int(t):04}_dnw{i:02}.png"
-        fnames.append(filename)
-        with open(filename, "wb") as f:
-            f.write(obj)
+    marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
         # Hardcoded to PNG here (and elsewhere!)
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.png"
-        fnames.append(filename)
+        marked_pages.append(filename)
+        with open(filename, "wb") as f:
+            f.write(obj)
+    dnm_image_blobs = msgr.request_donotmark_images(t)
+    dnm_pages = []
+    for i, obj in enumerate(dnm_image_blobs):
+        filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.png"
+        dnm_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
     outname = outdir / f"{short_name}_{sid}.pdf"
-    return (outname, short_name, sid, covername, fnames)
+    return (outname, short_name, sid, covername, id_pages, marked_pages, dnm_pages)
 
 
 def main(server=None, pwd=None):
