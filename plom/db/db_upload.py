@@ -687,7 +687,6 @@ def cleanQGroup(self, qref):
                     aimage=aref.aimage,
                     edition=ed,
                     plom_file=aref.plom_file,
-                    comment_file=aref.comment_file,
                     mark=aref.mark,
                     marking_time=aref.marking_time,
                     time=aref.time,

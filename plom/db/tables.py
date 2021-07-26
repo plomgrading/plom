@@ -160,7 +160,6 @@ class Annotation(BaseModel):
     integrity_check = pw.CharField(null=True)  # random uuid
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
-    comment_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
@@ -181,7 +180,6 @@ class OldAnnotation(BaseModel):
     integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
-    comment_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
