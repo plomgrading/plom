@@ -128,7 +128,7 @@ def IDgetDoneTasks(self, user_name):
 
 
 def IDgetImage(self, user_name, test_number):
-    """Return ID page images (+ Lpages) of test #test_number to user."""
+    """Return ID page images of a paper."""
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
