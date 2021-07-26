@@ -163,42 +163,6 @@ class Messenger(BaseMessenger):
 
         return idList
 
-    def IDrequestImage(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return imageList
-
     # ------------------------
 
     # TODO - API needs improve. Both of these throw a put/patch to same url = /ID/tasks/{tgv}

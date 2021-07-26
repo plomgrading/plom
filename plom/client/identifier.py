@@ -413,7 +413,7 @@ class IDClient(QWidget):
             return
         # else try to grab it from server
         try:
-            imageList = messenger.IDrequestImage(test)
+            imageList = messenger.ID_request_images(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return

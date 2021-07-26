@@ -1187,7 +1187,7 @@ class Manager(QWidget):
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
-            imageList = managerMessenger.IDrequestImage(test)
+            imageList = managerMessenger.request_ID_images(test)
         except PlomException as err:
             ErrorMessage(err).exec_()
             return
@@ -1459,7 +1459,7 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        imageList = managerMessenger.IDrequestImage(test)
+        imageList = managerMessenger.request_ID_images(test)
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
