@@ -107,29 +107,27 @@ def main(server=None, pwd=None):
         )
         exit(1)
 
-    shortName = msgr.getInfoShortName()
-    spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
-    if not locationAndSpecCheck(spec):
-        print("Problems confirming location and specification. Exiting.")
-        msgr.closeUser()
-        msgr.stop()
-        exit(1)
+    try:
+        shortName = msgr.getInfoShortName()
+        spec = msgr.get_spec()
+        numberOfQuestions = spec["numberOfQuestions"]
+        if not locationAndSpecCheck(spec):
+            raise RuntimeError("Problems confirming location and specification.")
 
-    outDir = "reassembled"
-    os.makedirs("coverPages", exist_ok=True)
-    os.makedirs(outDir, exist_ok=True)
+        outDir = "reassembled"
+        os.makedirs("coverPages", exist_ok=True)
+        os.makedirs(outDir, exist_ok=True)
 
-    completedTests = msgr.RgetCompletionStatus()
-    # dict key = testnumber, then list id'd, tot'd, #q's marked
-    identifiedTests = msgr.RgetIdentified()
-    # dict key = testNumber, then pairs [sid, sname]
-    maxMarks = msgr.MgetAllMax()
+        completedTests = msgr.RgetCompletionStatus()
+        # dict key = testnumber, then list id'd, tot'd, #q's marked
+        identifiedTests = msgr.RgetIdentified()
+        # dict key = testNumber, then pairs [sid, sname]
+        maxMarks = msgr.MgetAllMax()
 
-    # get data for cover pages and reassembly
-    pagelists = []
-    coverpagelist = []
-    if True:
+        # get data for cover pages and reassembly
+        pagelists = []
+        coverpagelist = []
+
         for t in completedTests:
             if (
                 completedTests[t][0] == True
@@ -144,9 +142,9 @@ def main(server=None, pwd=None):
                     pagelists.append(dat2)
                 else:
                     print(">>WARNING<< Test {} has no ID".format(t))
-
-    msgr.closeUser()
-    msgr.stop()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     N = len(coverpagelist)
     print("Reassembling {} papers...".format(N))
