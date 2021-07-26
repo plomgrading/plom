@@ -4,9 +4,8 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import getpass
-import os
-from pathlib import Path
 from multiprocessing import Pool
+from pathlib import Path
 
 from tqdm import tqdm
 
@@ -16,9 +15,6 @@ from plom.plom_exceptions import PlomExistingLoginException
 from plom.finish.locationSpecCheck import locationAndSpecCheck
 from .coverPageBuilder import makeCover
 from .examReassembler import reassemble
-
-
-numberOfQuestions = 0
 
 
 def _parfcn(z):
@@ -33,12 +29,11 @@ def _parfcn(z):
         reassemble(*y)
 
 
-def build_cover_page_data(msgr, outDir, t, maxMarks):
+def build_cover_page_data(msgr, tmpdir, t, maxMarks):
     """Builds the information used to create cover pages.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
-        outDir (str): The directory we are putting the cover page in.
         t (int): Test number.
         maxMarks (dict): Maxmarks per question str -> int.
 
@@ -56,32 +51,46 @@ def build_cover_page_data(msgr, outDir, t, maxMarks):
     for qvm in cpi[1:]:
         question_label = get_question_label(spec, qvm[0])
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    return (int(t), sname, sid, arg)
+    testnumstr = str(t).zfill(4)
+    covername = tmpdir / "cover_{}.pdf".format(testnumstr)
+    return (int(t), sname, sid, arg, covername)
 
 
-def reassemble_test_CMD(msgr, short_name, out_dir, t, sid):
+def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid):
     """Builds the information for reassembling the entire test.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path): directory to save the temp images.
+        outdir (pathlib.Path): directory for the reassembled papers.
         short_name (str): name of the test without the student id.
-        out_dir (str): The directory we are putting the cover page in.
-        t (int): Test number.
+        num_questions (int): number of questions.
+        t (str/int): Test number.
         sid (str): student number.
 
     Returns:
-       tuple : (outname, short_name, sid, covername, rnames)
+       tuple : (outname, short_name, sid, covername, page_filenames)
     """
-    fnames = msgr.RgetAnnotatedFiles(t)
-    if len(fnames) == 0:
-        # TODO: what is supposed to happen here?
-        return
+    fnames_deprecated = msgr.RgetAnnotatedFiles(t)  # TODO: delete
+    fnames = []
+    im_id_list = msgr.request_ID_images(t)
+    for i, obj in enumerate(im_id_list):
+        filename = tmpdir / f"img_{int(t):04}_id{i:02}.png"
+        fnames.append(filename)
+        with open(filename, "wb") as f:
+            f.write(obj)
+    print("TODO: DNW pages are skipped!")
+    for q in range(1, num_questions + 1):
+        obj = msgr.get_annotations_image(t, q)
+        # Hardcoded to PNG here (and elsewhere!)
+        filename = tmpdir / f"img_{int(t):04}_q{q:02}.png"
+        fnames.append(filename)
+        with open(filename, "wb") as f:
+            f.write(obj)
     testnumstr = str(t).zfill(4)
-    covername = "coverPages/cover_{}.pdf".format(testnumstr)
-    rnames = fnames
-    out_dir = Path(out_dir)
-    outname = out_dir / "{}_{}.pdf".format(short_name, sid)
-    return (outname, short_name, sid, covername, rnames)
+    covername = tmpdir / "cover_{}.pdf".format(testnumstr)
+    outname = outdir / f"{short_name}_{sid}.pdf"
+    return (outname, short_name, sid, covername, fnames)
 
 
 def main(server=None, pwd=None):
@@ -110,13 +119,14 @@ def main(server=None, pwd=None):
     try:
         shortName = msgr.getInfoShortName()
         spec = msgr.get_spec()
-        numberOfQuestions = spec["numberOfQuestions"]
+        num_questions = spec["numberOfQuestions"]
         if not locationAndSpecCheck(spec):
             raise RuntimeError("Problems confirming location and specification.")
 
-        outDir = "reassembled"
-        os.makedirs("coverPages", exist_ok=True)
-        os.makedirs(outDir, exist_ok=True)
+        outdir = Path("reassembled")
+        outdir.mkdir(exist_ok=True)
+        tmpdir = Path("tmp_images")
+        tmpdir.mkdir(exist_ok=True)
 
         completedTests = msgr.RgetCompletionStatus()
         # dict key = testnumber, then list id'd, tot'd, #q's marked
@@ -129,14 +139,17 @@ def main(server=None, pwd=None):
         coverpagelist = []
 
         for t in completedTests:
-            if (
-                completedTests[t][0] == True
-                and completedTests[t][1] == numberOfQuestions
-            ):
+            if completedTests[t][0] == True and completedTests[t][1] == num_questions:
                 if identifiedTests[t][0] is not None:
-                    dat1 = build_cover_page_data(msgr, outDir, t, maxMarks)
-                    dat2 = reassemble_test_CMD(
-                        msgr, shortName, outDir, t, identifiedTests[t][0]
+                    dat1 = build_cover_page_data(msgr, tmpdir, t, maxMarks)
+                    dat2 = download_page_images(
+                        msgr,
+                        tmpdir,
+                        outdir,
+                        shortName,
+                        num_questions,
+                        t,
+                        identifiedTests[t][0],
                     )
                     coverpagelist.append(dat1)
                     pagelists.append(dat2)
@@ -157,11 +170,6 @@ def main(server=None, pwd=None):
     # Serial
     # for z in zip(coverpagelist, pagelists):
     #    _parfcn(z)
-
-    print(">>> Warning <<<")
-    print(
-        "This still gets files by looking into server directory. In future this should be done over http."
-    )
 
 
 if __name__ == "__main__":
