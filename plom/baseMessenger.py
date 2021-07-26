@@ -3,9 +3,10 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 
+from io import BytesIO
+import logging
 import ssl
 import threading
-import logging
 
 import urllib3
 import requests
@@ -16,6 +17,8 @@ from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomAPIException,
     PlomExistingLoginException,
+    PlomTaskChangedError,
+    PlomTaskDeletedError,
 )
 
 log = logging.getLogger("messenger")
@@ -489,3 +492,109 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
         return messenger_response
+
+    def get_annotations(self, num, question, epoch=None):
+        """Download the latest annotations (or a particular set of annotations).
+
+        Args:
+            num (int): the paper number.
+            question (int): the question number.
+            epoch (int/None): which annotation set or None for latest.
+
+        Returns:
+            dict: contents of the plom file.
+
+        Raises:
+            PlomAuthenticationException
+            PlomTaskChangedError: TODO: add this back again, with integriy_check??
+            PlomTaskDeletedError
+            PlomSeriousException
+        """
+        if epoch is None:
+            epoch = "_"  # TODO: use two URLs?
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                f"https://{self.server}/MK/annotations/{num}/{question}/{epoch}",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Cannot find image file for {}.".format(num)
+                ) from None
+            elif response.status_code == 406:
+                raise PlomTaskChangedError(
+                    "Task {} has been changed by manager.".format(num)
+                ) from None
+            elif response.status_code == 410:
+                raise PlomTaskDeletedError(
+                    "Task {} has been deleted by manager.".format(num)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+    def get_annotations_image(self, num, question, epoch=None):
+        """Download image of the latest annotations (or a particular set of annotations).
+
+        Args:
+            num (int): the paper number.
+            question (int): the question number.
+            epoch (int/None): which annotation set or None for latest.
+
+        Returns:
+            dict: contents of the plom file.
+
+        Raises:
+            PlomAuthenticationException
+            PlomTaskChangedError: TODO: add this back again, with integriy_check??
+            PlomTaskDeletedError
+            PlomSeriousException
+        """
+        if epoch is None:
+            epoch = "_"  # TODO: use two URLs?
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                f"https://{self.server}/MK/annotations_image/{num}/{question}/{epoch}",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+            return BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            elif response.status_code == 404:
+                raise PlomSeriousException(
+                    "Cannot find image file for {}.".format(num)
+                ) from None
+            elif response.status_code == 406:
+                raise PlomTaskChangedError(
+                    "Task {} has been changed by manager.".format(num)
+                ) from None
+            elif response.status_code == 410:
+                raise PlomTaskDeletedError(
+                    "Task {} has been deleted by manager.".format(num)
+                ) from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
