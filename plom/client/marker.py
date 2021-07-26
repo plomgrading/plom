@@ -1280,16 +1280,17 @@ class MarkerClient(QWidget):
         assert question == self.question
 
         try:
+            # TODO: self.examModel.getIntegrityCheck(task))
             plomdata = self.msgr.get_annotations(num, self.question)
-            # TODO: should get "epoch" from plomdata...  HACK: server stuffs it in at last minute?
-            annotated_image = self.msgr.get_annotations_image(num, self.question)
+            annotated_image = self.msgr.get_annotations_image(
+                num, self.question, epoch=plomdata["annotation_reference"]
+            )
             # TODO: deprecated, not in use
             [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
                 task, self.examModel.getIntegrityCheck(task)
             )
             plomdata_deprecated = json.loads(io.BytesIO(plomfile_data).getvalue())
             assert annotated_image == anImage
-            assert plomdata == plomdata_deprecated
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
             # TODO: the real problem here is that the full_pagedata is potentially out of date!

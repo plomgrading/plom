@@ -562,12 +562,13 @@ class Messenger(BaseMessenger):
 
         return image_metadata, anImage, plDat
 
-    def get_annotations(self, num, question):
+    def get_annotations(self, num, question, epoch=None):
         """Download the latest annotations (or a particular set of annotations).
 
         Args:
             num (int): the paper number.
             question (int): the question number.
+            epoch (int/None): which annotation set or None for latest.
 
         Returns:
             dict: contents of the plom file.
@@ -578,10 +579,12 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
+        if epoch is None:
+            epoch = "_"  # TODO: use two URLs?
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/MK/annotations/{}/{}/_".format(self.server, num, question),
+                f"https://{self.server}/MK/annotations/{num}/{question}/{epoch}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -612,12 +615,13 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def get_annotations_image(self, num, question):
+    def get_annotations_image(self, num, question, epoch=None):
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
             num (int): the paper number.
             question (int): the question number.
+            epoch (int/None): which annotation set or None for latest.
 
         Returns:
             dict: contents of the plom file.
@@ -628,12 +632,12 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
+        if epoch is None:
+            epoch = "_"  # TODO: use two URLs?
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/MK/annotations_image/{}/{}/_".format(
-                    self.server, num, question
-                ),
+                f"https://{self.server}/MK/annotations_image/{num}/{question}/{epoch}",
                 json={
                     "user": self.user,
                     "token": self.token,

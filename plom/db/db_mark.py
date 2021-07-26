@@ -418,15 +418,17 @@ def Mget_annotations(self, number, question, epoch=None):
     args:
         number (int): paper number.
         question (int): question number.
-        epoch (None/int): TODO, not implemented yet
+        epoch (None/int): None means get the latest annotation, otherwise
+            this is a key into the list of annotation sets.  TODO: still
+            sorting out how this should work viz `edition`.
 
     Returns:
         list: `[True, plom_file_data, annotation_image]` on success or
             on error `[False, error_msg]`.  If the task is not yet
             annotated, the error will be `"no_such_task"`.
     """
-    if epoch is not None:
-        raise NotImplementedError("Lazy devs")
+    if epoch is None:
+        epoch = -1
     task = f"q{number:04}g{question}"
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
@@ -436,9 +438,8 @@ def Mget_annotations(self, number, question, epoch=None):
         if gref.scanned is False:  # perhaps this should not happen?
             return [False, "no_such_task"]
         qref = gref.qgroups[0]
-        # TODO: push the user (qref.user) into the plom_file?
+        aref = qref.annotations[epoch]
         # check the integrity_check code against the db
-        aref = qref.annotations[-1]
         # if aref.integrity_check != integrity_check:
         #     return [False, "integrity_fail"]
         # TODO: compute this metadata and double-check its same/consistent inside plom file
@@ -451,6 +452,10 @@ def Mget_annotations(self, number, question, epoch=None):
         img_file = aref.aimage.file_name
     with open(plom_file, "r") as f:
         plom_data = json.load(f)
+    plom_data["user"] = aref.user.name
+    # TODO: need to sort out edition versus key here!
+    plom_data["annotation_edition"] = aref.edition
+    plom_data["annotation_reference"] = int(str(aref))  # TODO wtf?
     return (True, plom_data, img_file)
 
 

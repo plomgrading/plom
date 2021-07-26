@@ -384,7 +384,8 @@ class MarkHandler:
         question = int(request.match_info["question"])
         # TODO: how to make optional?  for now, must pass "_"
         epoch = request.match_info["epoch"]
-        assert epoch == "_"
+        if epoch == "_":
+            epoch = None
         results = self.server.DB.Mget_annotations(number, question, epoch=None)
         if not results[0]:
             if results[1] == "no_such_task":
@@ -428,7 +429,8 @@ class MarkHandler:
         question = int(request.match_info["question"])
         # TODO: how to make optional?  for now, must pass "_"
         epoch = request.match_info["epoch"]
-        assert epoch == "_"
+        if epoch == "_":
+            epoch = None
         results = self.server.DB.Mget_annotations(number, question, epoch=None)
         if not results[0]:
             if results[1] == "no_such_task":
