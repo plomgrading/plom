@@ -455,7 +455,7 @@ def Mget_annotations(self, number, question, epoch=None):
     plom_data["user"] = aref.user.name
     # TODO: need to sort out edition versus key here!
     plom_data["annotation_edition"] = aref.edition
-    plom_data["annotation_reference"] = int(str(aref))  # TODO wtf?
+    plom_data["annotation_reference"] = aref.id
     # Some annoying duplication in DB and plomfile: at least assert they match!
     for x, y in zip(metadata, plom_data["base_images"]):
         assert x[0] == y["id"]
