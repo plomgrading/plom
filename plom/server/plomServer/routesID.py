@@ -141,8 +141,8 @@ class IDHandler:
 
     # @routes.get("/ID/images/{test}")
     @authenticate_by_token_required_fields(["user"])
-    def IDgetImage(self, data, request):
-        """Return the images for a specified paper number.
+    def IDgetImages(self, data, request):
+        """Return the ID page images for a specified paper number.
 
         Responds with status 200/404/409/410.
 
@@ -156,7 +156,7 @@ class IDHandler:
         """
         test_number = request.match_info["test"]
 
-        image_path = self.server.IDgetImage(data["user"], test_number)
+        image_path = self.server.IDgetImages(data["user"], test_number)
         # is either user allowed access - returns [true, fname0, fname1,...]
         # or fails - return [false, message]
 
@@ -448,7 +448,7 @@ class IDHandler:
         router.add_put("/ID/classlist", self.IDputClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
-        router.add_get("/ID/images/{test}", self.IDgetImage)
+        router.add_get("/ID/images/{test}", self.IDgetImages)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/{papernum}", self.IdentifyPaper)

@@ -55,8 +55,8 @@ def IDgetDoneTasks(self, username):
     return self.DB.IDgetDoneTasks(username)
 
 
-def IDgetImage(self, username, test_number):
-    """Respond with a list of image paths for an already ID'd paper.
+def IDgetImages(self, username, test_number):
+    """Respond with a list of image paths the ID pages of a paper.
 
     Args:
         username (str): Username requesting ID'd paper's image.
@@ -66,7 +66,7 @@ def IDgetImage(self, username, test_number):
         list: True/False plus a list of the image paths for ID'd task.
     """
 
-    return self.DB.IDgetImage(username, test_number)
+    return self.DB.IDgetImages(username, test_number)
 
 
 def IDclaimThisTask(self, username, test_number):

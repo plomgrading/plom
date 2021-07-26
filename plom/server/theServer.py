@@ -134,7 +134,7 @@ class Server:
         IDprogressCount,
         IDgetNextTask,
         IDgetDoneTasks,
-        IDgetImage,
+        IDgetImages,
         IDgetImageFromATest,
         IDclaimThisTask,
         IDdidNotFinish,
