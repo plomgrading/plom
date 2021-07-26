@@ -442,10 +442,10 @@ def Mget_annotations(self, number, question, epoch=None):
         # check the integrity_check code against the db
         # if aref.integrity_check != integrity_check:
         #     return [False, "integrity_fail"]
-        # TODO: compute this metadata and double-check its same/consistent inside plom file
-        # metadata = []
-        # for p in aref.apages.order_by(APage.order):
-        #     metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
+        # metadata for double-checking consistency with plom file
+        metadata = []
+        for p in aref.apages.order_by(APage.order):
+            metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
         if aref.aimage is None:
             return [False, "no_such_task"]
         plom_file = aref.plom_file
@@ -456,6 +456,10 @@ def Mget_annotations(self, number, question, epoch=None):
     # TODO: need to sort out edition versus key here!
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = int(str(aref))  # TODO wtf?
+    # Some annoying duplication in DB and plomfile: at least assert they match!
+    for x, y in zip(metadata, plom_data["base_images"]):
+        assert x[0] == y["id"]
+        assert x[1] == y["md5"]
     return (True, plom_data, img_file)
 
 
