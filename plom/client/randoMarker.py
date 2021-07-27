@@ -10,7 +10,7 @@ This is a very very cut-down version of Annotator, used to
 automate some random marking of papers.
 """
 
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer and others"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -66,7 +66,7 @@ class RW:
 
 class SceneParent(QWidget):
     def __init__(self, question, maxMark):
-        super(SceneParent, self).__init__()
+        super().__init__()
         self.view = PageView(self)
         self.ink = QPen(Qt.red, 2)
         self.question = question
@@ -180,9 +180,6 @@ class SceneParent(QWidget):
         self.pickleIt()
         return self.scene.score, self.scene.get_rubrics_from_page()
 
-    def changeMark(self, delta):
-        self.score += delta
-
     def refreshDisplayedMark(self, score):
         # needed for compat with pagescene.py
         pass
@@ -223,7 +220,7 @@ def startMarking(question, version):
         # print("Trying to claim next ask = ", task)
         try:
             image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
-        except PlomTakenException as e:
+        except PlomTakenException:
             print("Another user got task {}. Trying again...".format(task))
             continue
 
