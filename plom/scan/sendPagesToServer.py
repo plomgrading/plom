@@ -4,7 +4,7 @@
 
 from collections import defaultdict
 from glob import glob
-import getpass
+import stdiomask
 import hashlib
 import json
 import os
@@ -318,7 +318,7 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = stdiomask.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
     else:
@@ -378,7 +378,7 @@ def uploadHWPages(
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = stdiomask.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
     else:
@@ -440,7 +440,7 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = stdiomask.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
     else:
@@ -502,7 +502,7 @@ def checkTestHasThatSID(student_id, server=None, password=None):
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = stdiomask.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
     else:
@@ -588,7 +588,7 @@ def doesBundleExist(bundle_file, server=None, password=None):
 
     # get the password if not specified
     if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
+        pwd = stdiomask.getpass("Please enter the 'scanner' password:")
     else:
         pwd = password
 
@@ -637,7 +637,7 @@ def createNewBundle(bundle_name, md5, server=None, password=None):
     msgr.start()
 
     if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password: ")
+        pwd = stdiomask.getpass("Please enter the 'scanner' password: ")
     else:
         pwd = password
 

@@ -4,7 +4,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-import getpass
+import stdiomask
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import FinishMessenger
@@ -68,7 +68,7 @@ def main(server=None, password=None):
     msgr.start()
 
     if not password:
-        password = getpass.getpass("Please enter the 'manager' password:")
+        password = stdiomask.getpass("Please enter the 'manager' password:")
 
     try:
         msgr.requestAndSaveToken("manager", password)

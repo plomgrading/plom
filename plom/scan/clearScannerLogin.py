@@ -6,7 +6,7 @@ __credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
 __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import getpass
+import stdiomask
 
 from plom.messenger import ScanMessenger
 
@@ -22,7 +22,7 @@ def clearLogin(server=None, password=None):
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = stdiomask.getpass("Please enter the 'scanner' password:")
         except Exception as error:
             print("ERROR", error)
             exit(1)

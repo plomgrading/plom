@@ -13,7 +13,7 @@ import os
 import random
 from pathlib import Path
 
-from getpass import getpass
+import stdiomask
 import fitz
 
 from plom import __version__
@@ -154,7 +154,7 @@ def download_classlist_and_spec(server=None, password=None):
     msgr.start()
 
     if not password:
-        password = getpass('Please enter the "manager" password: ')
+        password = stdiomask.getpass('Please enter the "manager" password: ')
 
     try:
         msgr.requestAndSaveToken("manager", password)

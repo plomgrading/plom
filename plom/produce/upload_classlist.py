@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 import sys
-from getpass import getpass
+import stdiomask
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import (
@@ -23,7 +23,7 @@ def get_messenger(server=None, password=None):
     msgr.start()
 
     if not password:
-        password = getpass('Please enter the "manager" password: ')
+        password = stdiomask.getpass('Please enter the "manager" password: ')
 
     try:
         msgr.requestAndSaveToken("manager", password)
