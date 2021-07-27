@@ -353,12 +353,17 @@ class MarkHandler:
         return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/MK/annotations/{number}/{question}/{epoch}")
-    @authenticate_by_token_required_fields([])
+    # TODO: optionally have this integrity field?
+    @authenticate_by_token_required_fields(["integrity"])
     def Mget_annotations(self, data, request):
         """Get the annotations of a marked question as JSON.
 
         Args:
-            data (dict): A dictionary having the user/token.
+            data (dict): A dictionary having the user/token, and `integrity`
+                which is a checksum that can be used to check that the
+                server hasn't changed state (for example added new scans to
+                this question.  Pass the empty string `""` to omit such
+                checks.
             request (aiohttp.web_request.Request): A GET request with url
                 "/MK/annotations/{number}/{question}/{epoch}".
                 `number` and `question` identify which question.
@@ -386,9 +391,14 @@ class MarkHandler:
         epoch = request.match_info["epoch"]
         if epoch == "_":
             epoch = None
-        results = self.server.DB.Mget_annotations(number, question, epoch)
+        integrity = data.get("integrity")
+        if integrity == "":
+            integrity = None
+        results = self.server.DB.Mget_annotations(number, question, epoch, integrity)
         if not results[0]:
-            if results[1] == "no_such_task":
+            if results[1] == "integrity_fail":
+                return web.Response(status=406)  # task changed
+            elif results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error

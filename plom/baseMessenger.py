@@ -566,25 +566,29 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def get_annotations(self, num, question, epoch=None):
+    def get_annotations(self, num, question, epoch=None, integrity=None):
         """Download the latest annotations (or a particular set of annotations).
 
         Args:
             num (int): the paper number.
             question (int): the question number.
             epoch (int/None): which annotation set or None for latest.
+            integrity (str/None): a checksum to ensure the server hasn't
+                changed under us.  Can be omitted if not relevant.
 
         Returns:
             dict: contents of the plom file.
 
         Raises:
             PlomAuthenticationException
-            PlomTaskChangedError: TODO: add this back again, with integriy_check??
+            PlomTaskChangedError
             PlomTaskDeletedError
             PlomSeriousException
         """
         if epoch is None:
             epoch = "_"  # TODO: use two URLs?
+        if integrity is None:
+            integrity = ""
         self.SRmutex.acquire()
         try:
             response = self.session.get(
@@ -592,6 +596,7 @@ class BaseMessenger:
                 json={
                     "user": self.user,
                     "token": self.token,
+                    "integrity": integrity,
                 },
                 verify=False,
             )

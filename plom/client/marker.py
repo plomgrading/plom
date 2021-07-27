@@ -1280,8 +1280,10 @@ class MarkerClient(QWidget):
         assert question == self.question
 
         try:
-            # TODO: self.examModel.getIntegrityCheck(task))
-            plomdata = self.msgr.get_annotations(num, self.question)
+            integrity = self.examModel.getIntegrityCheck(task)
+            plomdata = self.msgr.get_annotations(
+                num, self.question, epoch=None, integrity=integrity
+            )
             annotated_image = self.msgr.get_annotations_image(
                 num, self.question, epoch=plomdata["annotation_reference"]
             )

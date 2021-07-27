@@ -414,7 +414,7 @@ def MgetImages(self, user_name, task, integrity_check):
         return rval
 
 
-def Mget_annotations(self, number, question, epoch=None):
+def Mget_annotations(self, number, question, epoch=None, integrity=None):
     """Retrieve the latest annotations, or a particular set of annotations.
 
     args:
@@ -423,6 +423,8 @@ def Mget_annotations(self, number, question, epoch=None):
         epoch (None/int): None means get the latest annotation, otherwise
             this is a key into the list of annotation sets.  TODO: still
             sorting out how this should work viz `edition`.
+        integrity (None/str): an optional checksum system the details of
+            which I have forgotten.
 
     Returns:
         list: `[True, plom_file_data, annotation_image]` on success or
@@ -441,9 +443,9 @@ def Mget_annotations(self, number, question, epoch=None):
             return [False, "no_such_task"]
         qref = gref.qgroups[0]
         aref = qref.annotations[epoch]
-        # check the integrity_check code against the db
-        # if aref.integrity_check != integrity_check:
-        #     return [False, "integrity_fail"]
+        if integrity:
+            if aref.integrity_check != integrity:
+                return [False, "integrity_fail"]
         # metadata for double-checking consistency with plom file
         metadata = []
         for p in aref.apages.order_by(APage.order):
