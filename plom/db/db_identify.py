@@ -9,7 +9,8 @@ import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import DNMGroup, DNMPage, Group, IDGroup, IDPage, Test, User
 
 
 log = logging.getLogger("DB")
@@ -33,7 +34,7 @@ def IDcountAll(self):
             )
             .count()
         )
-    except Group.DoesNotExist:
+    except pw.DoesNotExist:
         return 0
 
 
@@ -49,7 +50,7 @@ def IDcountIdentified(self):
             )
             .count()
         )
-    except IDGroup.DoesNotExist:
+    except pw.DoesNotExist:
         return 0
 
 
@@ -67,7 +68,7 @@ def IDgetNextTask(self):
                 .get()
             )
             # note - test need not be all scanned, just the ID pages.
-        except IDGroup.DoesNotExist:
+        except pw.DoesNotExist:
             log.info("Nothing left on ID to-do pile")
             return None
 

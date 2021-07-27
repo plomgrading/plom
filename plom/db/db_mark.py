@@ -6,6 +6,8 @@ from datetime import datetime
 import json
 import logging
 
+import peewee as pw
+
 from plom.db.tables import plomdb
 from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
 from plom.db.tables import Image, Group, QGroup, LPage, Rubric, Test, TPage, User
@@ -31,7 +33,7 @@ def McountAll(self, q, v):
             )
             .count()
         )
-    except QGroup.DoesNotExist:
+    except pw.DoesNotExist:
         return 0
 
 
@@ -49,7 +51,7 @@ def McountMarked(self, q, v):
             )
             .count()
         )
-    except QGroup.DoesNotExist:
+    except pw.DoesNotExist:
         return 0
 
 
@@ -97,7 +99,7 @@ def MgetNextTask(self, q, v):
                 )
                 .get()
             )
-        except QGroup.DoesNotExist:
+        except pw.DoesNotExist:
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None
 
