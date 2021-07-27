@@ -386,7 +386,7 @@ class MarkHandler:
         epoch = request.match_info["epoch"]
         if epoch == "_":
             epoch = None
-        results = self.server.DB.Mget_annotations(number, question, epoch=None)
+        results = self.server.DB.Mget_annotations(number, question, epoch)
         if not results[0]:
             if results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
@@ -431,7 +431,7 @@ class MarkHandler:
         epoch = request.match_info["epoch"]
         if epoch == "_":
             epoch = None
-        results = self.server.DB.Mget_annotations(number, question, epoch=None)
+        results = self.server.DB.Mget_annotations(number, question, epoch)
         if not results[0]:
             if results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
