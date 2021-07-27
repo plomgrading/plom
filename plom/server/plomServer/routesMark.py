@@ -303,7 +303,7 @@ class MarkHandler:
                 log.warning("Returning with error 400 = {}".format(marked_task_status))
                 return web.Response(status=400)
 
-    # @routes.get("/MK/annotations/{number}/{question}/{epoch}")
+    # @routes.get("/MK/annotations/{number}/{question}/{edition}")
     # TODO: optionally have this integrity field?
     @authenticate_by_token_required_fields(["integrity"])
     def Mget_annotations(self, data, request):
@@ -316,10 +316,10 @@ class MarkHandler:
                 this question.  Pass the empty string `""` to omit such
                 checks.
             request (aiohttp.web_request.Request): A GET request with url
-                "/MK/annotations/{number}/{question}/{epoch}".
+                "/MK/annotations/{number}/{question}/{edition}".
                 `number` and `question` identify which question.
-                `epoch` can be used to get a particular annotation from
-                the history of all annotations.  If `epoch` is omitted,
+                `edition` can be used to get a particular annotation from
+                the history of all annotations.  If `edition` is omitted,
                 return the latest annotations.
                 TODO: currently instead of omitting you must pass "_".
 
@@ -329,8 +329,8 @@ class MarkHandler:
                 authentication problems.
 
         Note: if you want the annotated image corresponding to these
-        annotations, extract the epoch from the JSON, then call
-        "GET:/MK/annotations_image/" with that epoch.
+        annotations, extract the edition from the JSON, then call
+        "GET:/MK/annotations_image/" with that edition.
 
         Ownership: note that you need not be the "owner" of this task.
         Getting data back from this function does not imply permission
@@ -339,15 +339,15 @@ class MarkHandler:
         number = int(request.match_info["number"])
         question = int(request.match_info["question"])
         # TODO: how to make optional?  for now, must pass "_"
-        epoch = request.match_info["epoch"]
-        if epoch == "_":
-            epoch = None
-        if epoch is not None:
-            epoch = int(epoch)
+        edition = request.match_info["edition"]
+        if edition == "_":
+            edition = None
+        if edition is not None:
+            edition = int(edition)
         integrity = data.get("integrity")
         if integrity == "":
             integrity = None
-        results = self.server.DB.Mget_annotations(number, question, epoch, integrity)
+        results = self.server.DB.Mget_annotations(number, question, edition, integrity)
         if not results[0]:
             if results[1] == "integrity_fail":
                 return web.Response(status=406)  # task changed
@@ -358,7 +358,7 @@ class MarkHandler:
         plomdata = results[1]
         return web.json_response(plomdata, status=200)
 
-    # @routes.get("/MK/annotations_image/{number}/{question}/{epoch}")
+    # @routes.get("/MK/annotations_image/{number}/{question}/{edition}")
     @authenticate_by_token_required_fields([])
     def Mget_annotations_image(self, data, request):
         """Get the image of an annotated question (a marked question).
@@ -366,10 +366,10 @@ class MarkHandler:
         Args:
             data (dict): A dictionary having the user/token.
             request (aiohttp.web_request.Request): A GET request with url
-                "/MK/annotations_image/{number}/{question}/{epoch}"
+                "/MK/annotations_image/{number}/{question}/{edition}"
                 `number` and `question` identify which question we want.
-                `epoch` can be used to get a particular annotation from
-                the history of all annotations.  If `epoch` is omitted,
+                `edition` can be used to get a particular annotation from
+                the history of all annotations.  If `edition` is omitted,
                 return the latest annotated image.
 
         Returns:
@@ -379,10 +379,10 @@ class MarkHandler:
 
         Note: if you want *both* the latest annotated image and the
         latest annotations (in `.plom` format), do not simply omit the
-        epoch in both calls: someone might upload a new annotation
+        edition in both calls: someone might upload a new annotation
         between your calls!  Instead, call "GET:/MK/annotations/"
-        first (without epoch), then extract the epoch from the `.plom`
-        data.  Finally, call this with that epoch.
+        first (without edition), then extract the edition from the `.plom`
+        data.  Finally, call this with that edition.
 
         Ownership: note that you need not be the "owner" of this task.
         Getting data back from this function does not imply permission
@@ -391,10 +391,12 @@ class MarkHandler:
         number = int(request.match_info["number"])
         question = int(request.match_info["question"])
         # TODO: how to make optional?  for now, must pass "_"
-        epoch = request.match_info["epoch"]
-        if epoch == "_":
-            epoch = None
-        results = self.server.DB.Mget_annotations(number, question, epoch)
+        edition = request.match_info["edition"]
+        if edition == "_":
+            edition = None
+        if edition is not None:
+            edition = int(edition)
+        results = self.server.DB.Mget_annotations(number, question, edition)
         if not results[0]:
             if results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
@@ -715,10 +717,10 @@ class MarkHandler:
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_get(
-            "/MK/annotations/{number}/{question}/{epoch}", self.Mget_annotations
+            "/MK/annotations/{number}/{question}/{edition}", self.Mget_annotations
         )
         router.add_get(
-            "/MK/annotations_image/{number}/{question}/{epoch}",
+            "/MK/annotations_image/{number}/{question}/{edition}",
             self.Mget_annotations_image,
         )
         router.add_patch("/MK/review", self.MreviewQuestion)

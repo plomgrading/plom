@@ -370,15 +370,14 @@ def MtakeTaskFromClient(
         return [True, "test_done"]
 
 
-def Mget_annotations(self, number, question, epoch=None, integrity=None):
+def Mget_annotations(self, number, question, edition=None, integrity=None):
     """Retrieve the latest annotations, or a particular set of annotations.
 
     args:
         number (int): paper number.
         question (int): question number.
-        epoch (None/int): None means get the latest annotation, otherwise
-            this is a key into the list of annotation sets.  TODO: still
-            sorting out how this should work viz `edition`.
+        edition (None/int): None means get the latest annotation, otherwise
+            this controls which annotation set.  Larger number is newer.
         integrity (None/str): an optional checksum system the details of
             which I have forgotten.
 
@@ -387,9 +386,9 @@ def Mget_annotations(self, number, question, epoch=None, integrity=None):
             on error `[False, error_msg]`.  If the task is not yet
             annotated, the error will be `"no_such_task"`.
     """
-    if epoch is None:
-        epoch = -1
-    epoch = int(epoch)
+    if edition is None:
+        edition = -1
+    edition = int(edition)
     task = f"q{number:04}g{question}"
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
@@ -399,10 +398,10 @@ def Mget_annotations(self, number, question, epoch=None, integrity=None):
         if gref.scanned is False:  # perhaps this should not happen?
             return [False, "no_such_task"]
         qref = gref.qgroups[0]
-        if epoch == -1:
+        if edition == -1:
             aref = qref.annotations[-1]
         else:
-            aref = Annotation.get_or_none(qgroup=qref, id=epoch)
+            aref = Annotation.get_or_none(qgroup=qref, edition=edition)
         if integrity:
             if aref.integrity_check != integrity:
                 return [False, "integrity_fail"]
@@ -417,7 +416,6 @@ def Mget_annotations(self, number, question, epoch=None, integrity=None):
     with open(plom_file, "r") as f:
         plom_data = json.load(f)
     plom_data["user"] = aref.user.name
-    # TODO: need to sort out edition versus key here!
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = aref.id
     # Some annoying duplication in DB and plomfile: at least assert they match!

@@ -1282,10 +1282,10 @@ class MarkerClient(QWidget):
         try:
             integrity = self.examModel.getIntegrityCheck(task)
             plomdata = self.msgr.get_annotations(
-                num, self.question, epoch=None, integrity=integrity
+                num, self.question, edition=None, integrity=integrity
             )
             annotated_image = self.msgr.get_annotations_image(
-                num, self.question, epoch=plomdata["annotation_reference"]
+                num, self.question, edition=plomdata["annotation_edition"]
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?

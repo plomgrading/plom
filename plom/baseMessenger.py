@@ -566,13 +566,13 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def get_annotations(self, num, question, epoch=None, integrity=None):
+    def get_annotations(self, num, question, edition=None, integrity=None):
         """Download the latest annotations (or a particular set of annotations).
 
         Args:
             num (int): the paper number.
             question (int): the question number.
-            epoch (int/None): which annotation set or None for latest.
+            edition (int/None): which annotation set or None for latest.
             integrity (str/None): a checksum to ensure the server hasn't
                 changed under us.  Can be omitted if not relevant.
 
@@ -585,14 +585,14 @@ class BaseMessenger:
             PlomTaskDeletedError
             PlomSeriousException
         """
-        if epoch is None:
-            epoch = "_"  # TODO: use two URLs?
+        if edition is None:
+            edition = "_"  # TODO: use two URLs?
         if integrity is None:
             integrity = ""
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                f"https://{self.server}/MK/annotations/{num}/{question}/{epoch}",
+                f"https://{self.server}/MK/annotations/{num}/{question}/{edition}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -624,13 +624,13 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def get_annotations_image(self, num, question, epoch=None):
+    def get_annotations_image(self, num, question, edition=None):
         """Download image of the latest annotations (or a particular set of annotations).
 
         Args:
             num (int): the paper number.
             question (int): the question number.
-            epoch (int/None): which annotation set or None for latest.
+            edition (int/None): which annotation set or None for latest.
 
         Returns:
             dict: contents of the plom file.
@@ -641,12 +641,12 @@ class BaseMessenger:
             PlomTaskDeletedError
             PlomSeriousException
         """
-        if epoch is None:
-            epoch = "_"  # TODO: use two URLs?
+        if edition is None:
+            edition = "_"  # TODO: use two URLs?
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                f"https://{self.server}/MK/annotations_image/{num}/{question}/{epoch}",
+                f"https://{self.server}/MK/annotations_image/{num}/{question}/{edition}",
                 json={
                     "user": self.user,
                     "token": self.token,
