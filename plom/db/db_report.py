@@ -403,14 +403,18 @@ def RgetSpreadsheet(self):
 
 
 def RgetOriginalFiles(self, test_number):
-    """Return list of the filenames for the original (unannotated) page images for the given test."""
+    """Return list of the filenames for the original (unannotated) page images for the given test.
+
+    Lightly deprecated: but still used by reassembly of only-IDed (offline graded) papers.
+    """
     page_files = []
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
         return []
     # append tpages, hwpages and then lpages.
     for pref in tref.tpages.order_by(TPage.page_number):
-        page_files.append(pref.image.file_name)
+        if pref.scanned:
+            page_files.append(pref.image.file_name)
     for qref in tref.qgroups.order_by(QGroup.question):
         for pref in qref.group.hwpages:
             page_files.append(pref.image.file_name)

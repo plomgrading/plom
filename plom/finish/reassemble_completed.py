@@ -13,8 +13,8 @@ from plom import get_question_label
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.finish.locationSpecCheck import locationAndSpecCheck
-from .coverPageBuilder import makeCover
-from .examReassembler import reassemble
+from plom.finish.coverPageBuilder import makeCover
+from plom.finish.examReassembler import reassemble
 
 
 def _parfcn(z):
