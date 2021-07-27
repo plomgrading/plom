@@ -399,7 +399,10 @@ def Mget_annotations(self, number, question, epoch=None, integrity=None):
         if gref.scanned is False:  # perhaps this should not happen?
             return [False, "no_such_task"]
         qref = gref.qgroups[0]
-        aref = qref.annotations[epoch]
+        if epoch == -1:
+            aref = qref.annotations[-1]
+        else:
+            aref = Annotation.get_or_none(qgroup=qref, id=epoch)
         if integrity:
             if aref.integrity_check != integrity:
                 return [False, "integrity_fail"]
