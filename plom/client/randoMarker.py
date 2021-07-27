@@ -18,6 +18,7 @@ import argparse
 import getpass
 import json
 import os
+from pathlib import Path
 import random
 import sys
 import tempfile
@@ -73,12 +74,8 @@ class SceneParent(QWidget):
         self.maxMark = maxMark
         self.rubric_widget = RW()  # a dummy class needed for compat with pagescene.
 
-    def doStuff(self, imageNames, saveName, maxMark, markStyle):
+    def doStuff(self, src_img_data, saveName, maxMark, markStyle):
         self.saveName = saveName
-        src_img_data = []
-        for f in imageNames:
-            # TODO: made up 0 for id and md5: bad things surely happen!
-            src_img_data.append({"filename": f, "orientation": 0, "id": 0, "md5": ""})
         self.src_img_data = src_img_data
 
         self.scene = PageScene(self, src_img_data, saveName, maxMark, None)
@@ -189,24 +186,16 @@ class SceneParent(QWidget):
         pass
 
 
-def annotatePaper(question, maxMark, task, imageList, aname, tags):
+def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
     print("Starting random marking to task {}".format(task))
-    # Image names = "<task>.<imagenumber>.<ext>"
-    with tempfile.TemporaryDirectory() as td:
-        inames = []
-        for i in range(len(imageList)):
-            tmp = os.path.join(td, "{}.{}.image".format(task, i))
-            inames.append(tmp)
-            with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
-        annot = SceneParent(question, maxMark)
-        annot.doStuff(inames, aname, maxMark, random.choice([2, 3]))
-        annot.doRandomAnnotations()
-        # Issue #1391: settle annotation events, avoid races with QTimers
-        Qapp.processEvents()
-        time.sleep(0.25)
-        Qapp.processEvents()
-        return annot.doneAnnotating()
+    annot = SceneParent(question, maxMark)
+    annot.doStuff(src_img_data, aname, maxMark, random.choice([2, 3]))
+    annot.doRandomAnnotations()
+    # Issue #1391: settle annotation events, avoid races with QTimers
+    Qapp.processEvents()
+    time.sleep(0.25)
+    Qapp.processEvents()
+    return annot.doneAnnotating()
 
 
 def startMarking(question, version):
@@ -224,15 +213,20 @@ def startMarking(question, version):
             print("Another user got task {}. Trying again...".format(task))
             continue
 
-        image_md5s = [row[1] for row in image_metadata]
-        imageList = []
-        for row in image_metadata:
-            imageList.append(messenger.MrequestOneImage(task, row[0], row[1]))
+        src_img_data = [
+            {"id": r[0], "md5": r[1], "orientation": 0} for r in image_metadata
+        ]
         with tempfile.TemporaryDirectory() as td:
+            for i, r in enumerate(src_img_data):
+                obj = messenger.MrequestOneImage(task, r["id"], r["md5"])
+                tmp = os.path.join(td, f"{task}.{i}.image")
+                with open(tmp, "wb") as f:
+                    f.write(obj)
+                r["filename"] = tmp
             aFile = os.path.join(td, "argh.png")
             plomFile = aFile[:-3] + "plom"
             score, rubrics = annotatePaper(
-                question, maxMark, task, imageList, aFile, tags
+                question, maxMark, task, src_img_data, aFile, tags
             )
             print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
@@ -246,7 +240,7 @@ def startMarking(question, version):
                 plomFile,
                 rubrics,
                 integrity_check,
-                image_md5s,
+                [r["md5"] for r in src_img_data],
             )
 
 
