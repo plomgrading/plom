@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime
 import logging
 
 import peewee as pw
 
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import IDGroup, QGroup, User
+
 
 log = logging.getLogger("DB")
 

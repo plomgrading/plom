@@ -6,7 +6,8 @@
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import Group, IDGroup, QGroup, LPage, Test, TPage, User
 
 
 log = logging.getLogger("DB")

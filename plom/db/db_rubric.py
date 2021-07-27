@@ -6,10 +6,7 @@ from datetime import datetime
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
-from plom.db.tables import (
-    Rubric,
-    User,
-)
+from plom.db.tables import Rubric, User
 from plom.db.tables import plomdb
 
 
