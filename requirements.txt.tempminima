@@ -21,3 +21,4 @@ peewee==3.13.3
 pymupdf==1.18.8
 scikit-learn==0.23.1
 toml==0.10.0
+stdiomask==0.0.6
