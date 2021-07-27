@@ -47,7 +47,7 @@ def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
             question_pagess: we pass all pages here
             dnm_pages: pages flagged as do-not-mark, empty
     """
-    fnames = msgr.RgetOriginalFiles(t)   # uses deprecated filesystem access
+    fnames = msgr.RgetOriginalFiles(t)  # uses deprecated filesystem access
     outname = outdir / f"{short_name}_{sid}.pdf"
     return (outname, short_name, sid, None, [], fnames, [])
 
@@ -90,7 +90,9 @@ def main(server=None, pwd=None):
         pagelists = []
         for t in identifiedTests:
             if identifiedTests[t][0] is not None:
-                dat = download_page_images(msgr, tmpdir, outdir, shortName, t, identifiedTests[t][0])
+                dat = download_page_images(
+                    msgr, tmpdir, outdir, shortName, t, identifiedTests[t][0]
+                )
                 pagelists.append(dat)
             else:
                 print(">>WARNING<< Test {} has no ID".format(t))
