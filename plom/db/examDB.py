@@ -174,7 +174,6 @@ class PlomDB:
         RgetSpreadsheet,
         RgetOriginalFiles,
         RgetCoverPageInfo,
-        RgetAnnotatedFiles,
         RgetMarkReview,
         RgetAnnotatedImage,
         RgetIDReview,

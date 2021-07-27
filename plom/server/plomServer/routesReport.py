@@ -312,20 +312,6 @@ class ReportHandler:
         else:
             return web.Response(status=404)
 
-    # @routes.get("/REP/annotatedFiles/{test}")
-    @authenticate_by_token_required_fields(["user"])
-    def RgetAnnotatedFiles(self, d, request):
-        # TODO: Requires documentation.
-        if not d["user"] == "manager":
-            return web.Response(status=401)
-        testNumber = request.match_info["test"]
-        rmsg = self.server.RgetAnnotatedFiles(testNumber)
-
-        if len(rmsg) > 0:
-            return web.json_response(rmsg, status=200)
-        else:
-            return web.Response(status=404)
-
     # @routes.get("/REP/userList")
     @authenticate_by_token_required_fields(["user"])
     def RgetUserList(self, data, request):
@@ -502,7 +488,6 @@ class ReportHandler:
         router.add_get("/REP/spreadSheet", self.RgetSpreadsheet)
         router.add_get("/REP/originalFiles/{test}", self.RgetOriginalFiles)
         router.add_get("/REP/coverPageInfo/{test}", self.RgetCoverPageInfo)
-        router.add_get("/REP/annotatedFiles/{test}", self.RgetAnnotatedFiles)
         router.add_get("/REP/userList", self.RgetUserList)
         router.add_get("/REP/userDetails", self.RgetUserDetails)
         router.add_get("/REP/markReview", self.RgetMarkReview)

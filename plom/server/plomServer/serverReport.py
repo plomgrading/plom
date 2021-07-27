@@ -67,10 +67,6 @@ def RgetOriginalFiles(self, testNumber):
     return self.DB.RgetOriginalFiles(testNumber)
 
 
-def RgetAnnotatedFiles(self, testNumber):
-    return self.DB.RgetAnnotatedFiles(testNumber)
-
-
 def RgetMarkReview(self, filterQ, filterV, filterU):
     return self.DB.RgetMarkReview(filterQ, filterV, filterU)
 

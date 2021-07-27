@@ -441,29 +441,6 @@ def RgetCoverPageInfo(self, test_number):
     return coverpage
 
 
-def RgetAnnotatedFiles(self, test_number):
-    """For the given test return a list of the image file names for the idgroup, dnmgroup and the (marked) questions."""
-    # todo - put in sanity / safety checks - making sure questions are marked.
-
-    image_list = []
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:
-        return []
-    # append ID-pages, then DNM-pages, then QuestionGroups
-    idref = IDGroup.get_or_none(test=tref)
-    for p in idref.idpages.order_by(IDPage.order):
-        image_list.append(p.image.file_name)
-    # append DNM pages
-    dnmref = DNMGroup.get_or_none(test=tref)
-    for p in dnmref.dnmpages.order_by(DNMPage.order):
-        image_list.append(p.image.file_name)
-    # append last annotation from each qgroup
-    for g in tref.qgroups.order_by(QGroup.question):
-        image_list.append(g.annotations[-1].aimage.file_name)
-    log.debug("Sending annotated images for test {}".format(test_number))
-    return image_list
-
-
 def RgetMarkReview(self, filterQ, filterV, filterU):
     """Return a list of all marked qgroups satisfying the filter conditions.
     Filter on question-number, version, and user-name.

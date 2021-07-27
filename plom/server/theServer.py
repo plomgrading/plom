@@ -187,7 +187,6 @@ class Server:
         RgetSpreadsheet,
         RgetCoverPageInfo,
         RgetOriginalFiles,
-        RgetAnnotatedFiles,
         RgetMarkReview,
         RgetIDReview,
         RgetAnnotatedImage,
