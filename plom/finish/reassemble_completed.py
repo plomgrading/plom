@@ -5,7 +5,10 @@
 
 import getpass
 from multiprocessing import Pool
+import os
 from pathlib import Path
+import shutil
+import tempfile
 
 from tqdm import tqdm
 
@@ -131,8 +134,8 @@ def main(server=None, pwd=None):
 
         outdir = Path("reassembled")
         outdir.mkdir(exist_ok=True)
-        tmpdir = Path("tmp_images")
-        tmpdir.mkdir(exist_ok=True)
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        print(f"Downloading to temp directory {tmpdir}")
 
         completedTests = msgr.RgetCompletionStatus()
         # dict key = testnumber, then list id'd, tot'd, #q's marked
@@ -176,6 +179,7 @@ def main(server=None, pwd=None):
     # Serial
     # for z in zip(coverpagelist, pagelists):
     #    _parfcn(z)
+    shutil.rmtree(tmpdir)
 
 
 if __name__ == "__main__":

@@ -5,7 +5,10 @@
 
 import getpass
 from multiprocessing import Pool
+import os
 from pathlib import Path
+import shutil
+import tempfile
 
 from tqdm import tqdm
 
@@ -83,8 +86,8 @@ def main(server=None, pwd=None):
 
         outdir = Path("reassembled_ID_but_not_marked")
         outdir.mkdir(exist_ok=True)
-        tmpdir = Path("tmp_images")
-        tmpdir.mkdir(exist_ok=True)
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        print(f"Downloading to temp directory {tmpdir}")
 
         identifiedTests = msgr.RgetIdentified()
         pagelists = []
@@ -109,6 +112,7 @@ def main(server=None, pwd=None):
     print(
         "This still gets files by looking into server directory. In future this should be done over http."
     )
+    shutil.rmtree(tmpdir)
 
 
 if __name__ == "__main__":
