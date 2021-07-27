@@ -448,7 +448,6 @@ class Messenger(BaseMessenger):
 
         return image
 
-
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()
         try:
