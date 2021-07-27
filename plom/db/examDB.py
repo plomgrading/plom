@@ -202,7 +202,6 @@ class PlomDB:
         MgiveTaskToClient,
         MdidNotFinish,
         MtakeTaskFromClient,
-        MgetImages,
         Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,

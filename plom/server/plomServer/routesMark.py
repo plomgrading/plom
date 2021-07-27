@@ -303,55 +303,6 @@ class MarkHandler:
                 log.warning("Returning with error 400 = {}".format(marked_task_status))
                 return web.Response(status=400)
 
-    # @routes.get("/MK/images/{task}")
-    @authenticate_by_token_required_fields(["user", "integrity_check"])
-    def MgetImages(self, data, request):
-        """Return underlying image data and annotations of a question/task.
-
-        Main API call for the client to get the image data (original and annotated).
-        Respond with status 200/409.
-
-        Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /MK/images/"task code"
-                which the task code is extracted from.
-
-        Returns:
-            aiohttp.web_response.Response: A response which includes the multipart writer object
-                wrapping the task images.
-
-        DEPRECATED: remove in 0.6.0?
-        """
-
-        task_code = request.match_info["task"]
-        results = self.server.MgetImages(
-            data["user"], task_code, data["integrity_check"]
-        )
-        # Format is one of:
-        # [False, error]
-        # [True, image_data]
-        # [True, image_data, annotated_fname, plom_filename]
-        if not results[0]:
-            if results[1] == "owner":
-                return web.Response(status=409)  # someone else has that task_image
-            elif results[1] == "integrity_fail":
-                return web.Response(status=406)  # task changed
-            elif results[1] == "no_such_task":
-                return web.Response(status=410)  # task deleted
-            else:
-                return web.Response(status=400)  # some other error
-
-        with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-            image_metadata = results[1]
-            files = []
-            # append the annotated_fname, plom_filename if present
-            files.extend(results[2:])
-
-            multipart_writer.append_json(image_metadata)
-            for file_name in files:
-                multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
-
     # @routes.get("/MK/annotations/{number}/{question}/{epoch}")
     # TODO: optionally have this integrity field?
     @authenticate_by_token_required_fields(["integrity"])
@@ -756,7 +707,6 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
-        router.add_get("/MK/images/{task}", self.MgetImages)  # deprecate
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)

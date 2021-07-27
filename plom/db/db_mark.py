@@ -370,50 +370,6 @@ def MtakeTaskFromClient(
         return [True, "test_done"]
 
 
-def MgetImages(self, user_name, task, integrity_check):
-    """Send image list back to user for the given marking task.
-    If question has been annotated then send back the annotated image and the plom file as well.
-    Use integrity_check to make sure client is not asking for something outdated.
-
-    Returns:
-        list: On error, return `[False, msg]`, maybe details in 3rd entry.
-            On success it can be:
-            `[True, metadata]`
-            Or if annotated already:
-            `[True, metadata, annotatedFile, plom_file]`
-
-    """
-    uref = User.get(name=user_name)  # authenticated, so not-None
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == task)
-        # some sanity checks
-        if gref is None:
-            log.info("Mgetimage - task {} not known".format(task))
-            return [False, "no_such_task"]
-        if gref.scanned == False:  # this should not happen either
-            return [False, "no_such_task"]
-        # grab associated qdata
-        qref = gref.qgroups[0]
-        if qref.user != uref:
-            # belongs to another user - should not happen
-            return [
-                False,
-                "owner",
-                "Task {} does not belong to user {}".format(task, user_name),
-            ]
-        # check the integrity_check code against the db
-        aref = qref.annotations[-1]
-        if aref.integrity_check != integrity_check:
-            return [False, "integrity_fail"]
-        metadata = []
-        for p in aref.apages.order_by(APage.order):
-            metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
-        rval = [True, metadata]
-        if aref.aimage is not None:
-            rval.extend([aref.aimage.file_name, aref.plom_file])
-        return rval
-
-
 def Mget_annotations(self, number, question, epoch=None, integrity=None):
     """Retrieve the latest annotations, or a particular set of annotations.
 
@@ -468,10 +424,7 @@ def Mget_annotations(self, number, question, epoch=None, integrity=None):
 
 
 def MgetOriginalImages(self, task):
-    """Return the original (unannotated) page images of the given task to the user.
-
-    Differs from MgetImages in that you need not be the owner.
-    """
+    """Return the original (unannotated) page images of the given task to the user."""
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:  # should not happen

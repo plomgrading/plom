@@ -156,7 +156,6 @@ class Server:
         MdidNotFinish,
         MrecordMark,
         MreturnMarkedTask,
-        MgetImages,
         MgetOriginalImages,
         MsetTag,
         MgetWholePaper,
