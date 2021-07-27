@@ -221,14 +221,6 @@ class ReportHandler:
         # Ex: [['mrk-t11-q1-v1', 'user0', '20:06:21-01:21:47'], ... ]
         return web.json_response(self.server.RgetOutToDo(), status=200)
 
-    # @routes.get("/REP/marked")
-    @authenticate_by_token_required_fields(["user", "q", "v"])
-    def RgetMarked(self, d, request):
-        # TODO: Requires documentation.
-        if not d["user"] == "manager":
-            return web.Response(status=401)
-        return web.json_response(self.server.RgetMarked(d["q"], d["v"]), status=200)
-
     # @routes.get("/REP/status/{test}")
     @authenticate_by_token_required_fields(["user"])
     def RgetStatus(self, data, request):
@@ -480,7 +472,6 @@ class ReportHandler:
         router.add_get("/REP/progress", self.RgetProgress)
         router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
-        router.add_get("/REP/marked", self.RgetMarked)
         router.add_get("/REP/identified", self.RgetIdentified)
         router.add_get("/REP/completionStatus", self.RgetCompletionStatus)
         router.add_get("/REP/outToDo", self.RgetOutToDo)

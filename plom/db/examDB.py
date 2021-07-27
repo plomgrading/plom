@@ -166,7 +166,6 @@ class PlomDB:
         RgetIdentified,
         RgetProgress,
         RgetMarkHistogram,
-        RgetMarked,
         RgetQuestionUserProgress,
         RgetCompletionStatus,
         RgetOutToDo,

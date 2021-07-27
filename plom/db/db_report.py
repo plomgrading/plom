@@ -233,24 +233,6 @@ def RgetMarkHistogram(self, q, v):
     return histogram
 
 
-def RgetMarked(self, q, v):
-    """Return a list of all marked tasks with that q/v."""
-    marked_list = []
-    for qref in (
-        QuestionData.select()
-        .join(Group)
-        .where(
-            QuestionData.questionNumber == q,
-            QuestionData.version == v,
-            QuestionData.marked == True,
-            Group.scanned == True,  # this might be redundant.
-        )
-    ):
-        marked_list.append(qref.group.gid)
-    log.debug("Sending list of marked tasks for Q{}V{}".format(q, v))
-    return marked_list
-
-
 def RgetQuestionUserProgress(self, q, v):
     """For the given q/v return the number of questions marked by each user (who marked something in this q/v - so no zeros).
     Return a list of the form [ number_scanned, [user, nmarked], [user, nmarked], etc]

@@ -179,7 +179,6 @@ class Server:
         RgetProgress,
         RgetQuestionUserProgress,
         RgetMarkHistogram,
-        RgetMarked,
         RgetIdentified,
         RgetCompletionStatus,
         RgetOutToDo,
