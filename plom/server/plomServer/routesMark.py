@@ -342,6 +342,8 @@ class MarkHandler:
         epoch = request.match_info["epoch"]
         if epoch == "_":
             epoch = None
+        if epoch is not None:
+            epoch = int(epoch)
         integrity = data.get("integrity")
         if integrity == "":
             integrity = None

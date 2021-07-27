@@ -389,6 +389,7 @@ def Mget_annotations(self, number, question, epoch=None, integrity=None):
     """
     if epoch is None:
         epoch = -1
+    epoch = int(epoch)
     task = f"q{number:04}g{question}"
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
