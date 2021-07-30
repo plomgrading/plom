@@ -3,9 +3,11 @@
 
 """Plom tools related to post-grading finishing tasks."""
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
+
+from plom import __version__
 
 CSVFilename = "marks.csv"
 
