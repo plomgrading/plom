@@ -36,11 +36,9 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
 )
 from plom.messenger import Messenger
-
+from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
-from . import marker
-from . import identifier
 
 
 # TODO: for now, a global (to this module), later maybe in the QApp?
@@ -250,7 +248,7 @@ class Chooser(QDialog):
             v = self.getv()
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(self.parent)
+            markerwin = MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             markerwin.setup(messenger, question, v, lastTime)
@@ -259,7 +257,7 @@ class Chooser(QDialog):
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient()
+            idwin = IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
             idwin.setup(messenger)
