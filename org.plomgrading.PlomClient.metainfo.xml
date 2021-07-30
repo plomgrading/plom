@@ -47,6 +47,10 @@
     <display_length compare="ge">medium</display_length>
   </requires>
 
+  <kudos>
+    <kudo>ModernToolkit</kudo>
+  </kudos>
+
   <url type="homepage">https://plomgrading.org</url>
   <update_contact>devs@plomgrading.org</update_contact>
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald and others</developer_name>
