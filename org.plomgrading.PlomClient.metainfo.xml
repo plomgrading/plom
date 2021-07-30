@@ -38,6 +38,19 @@
     <binary>plom-client</binary>
   </provides>
 
+  <!-- don't list "touch" unless test with it -->
+  <requires>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </requires>
+  <requires>
+    <display_length compare="ge">medium</display_length>
+  </requires>
+
+  <kudos>
+    <kudo>ModernToolkit</kudo>
+  </kudos>
+
   <url type="homepage">https://plomgrading.org</url>
   <update_contact>devs@plomgrading.org</update_contact>
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
