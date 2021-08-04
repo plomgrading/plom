@@ -799,50 +799,18 @@ linuxbin_centos:
     - md5sum
 
 
-macos_tests:
-  image: macos-10.15-xcode-11
-  tags:
-  - macos
-  stage: test
-  needs: []
-  script:
-  - echo "hello from the mac"
-  - sw_vers
-  - echo $SHELL
-  - which python
-  - python --version
-  - python3 --version
-  # brew --version
-  - pip --version
-  - pip3 --version
-  - echo $USER
-  # asdf list-all python
-  # asdf install python-dev
-  - brew install imagemagick zbar jsmin openssl
-  # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
-  # pip install jpegtran-cffi
-  - pip install .
-  - pip -m plom.scripts.build --version
-  - pip -m plom.scripts.client --version
-
-
-# just testing
-macos_install:
+macos11_client:
   image: macos-11-xcode-12
   tags:
   - macos
   stage: test
   needs: []
   script:
-  - echo "hello from the mac"
   - sw_vers
   - echo $SHELL
   - which python
   - python --version
-  - python -m pip install --upgrade pip
   - pip --version
-  - brew --version
-  - brew --help
   - asdf current
   - asdf which python
   # from https://github.com/danhper/asdf-python/issues/38
@@ -854,52 +822,49 @@ macos_install:
   - python -m pip install --upgrade pip
   - pip --version
   # asdf list-all python,  # list-all python-dev  # no such thing
-  # brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar libffi jsmin python3 openssl
-  # brew install python3-pip
-  # python3.7 -m pip --version
-  # python3.7 -m pip install toml requests requests-toolbelt PyQt5
-  # python3.7 -m pip install pyinstaller
   - pip install toml requests requests-toolbelt PyQt5
-  # use "pip install -v -v pyinstaller" to learn harded pyinstall path
-  - pip install pyinstaller
-  # /Users/gitlab/.asdf/installs/python/3.9.1/bin/pyinstaller -h
+  - pip install pyinstaller  # -v -v to learn hardcoded path
   - /Users/gitlab/.asdf/installs/python/3.9.1/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
   artifacts:
     paths:
     - dist/PlomClient*
     expire_in: 2 weeks
 
-# just testing
-macos_inst_helloworld:
+
+macos1015_client:
   image: macos-10.15-xcode-11
   tags:
   - macos
   stage: test
   needs: []
   script:
-  - echo "hello from the mac"
-  - pwd
+  - sw_vers
   - echo $SHELL
   - which python
   - python --version
-  - python -m pip --version
+  - pip --version
+  - asdf current
+  - asdf which python
+  # from https://github.com/danhper/asdf-python/issues/38
+  - asdf uninstall python 3.8.0
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.8.11
+  - asdf which python
+  - asdf shell python 3.8.11
+  - python --version
+  - pip --version
   - python -m pip install --upgrade pip
   - pip --version
-  - asdf plugin-add imagemagick
-  - asdf install imagemagick 7.0.11-5
-  - convert --version
-  # use "pip install -v -v pyinstaller" to learn harded pyinstall path
-  - pip install pyinstaller==4.3
-  # /Users/gitlab/.asdf/installs/python/3.8.0/bin/pyinstaller -h
-  - /Users/gitlab/.asdf/installs/python/3.8.0/bin/pyinstaller hello_world.py --onefile --windowed --clean
-  - ls dist
-  - dist/hello_world
-  - echo "done done done"
+  - pip install toml requests requests-toolbelt PyQt5
+  - pip install pyinstaller  # -v -v to learn hardcoded path
+  - /Users/gitlab/.asdf/installs/python/3.8.11/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
   artifacts:
     paths:
-    - dist/hello_world
+    - dist/PlomClient*
     expire_in: 2 weeks
-
 
 
 .shared_windows_runners:
