@@ -845,9 +845,15 @@ macos_install:
   - brew --help
   - asdf current
   - asdf which python
-  - asdf list-all python
-  - asdf list-all python-dev
-  - asdf install python-dev
+  # from https://github.com/danhper/asdf-python/issues/38
+  - asdf uninstall python 3.9.1
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.1
+  - asdf which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  # asdf list-all python,  # list-all python-dev  # no such thing
   # brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar libffi jsmin python3 openssl
   # brew install python3-pip
   # python3.7 -m pip --version
@@ -879,6 +885,9 @@ macos_inst_helloworld:
   - python -m pip --version
   - python -m pip install --upgrade pip
   - pip --version
+  - asdf plugin-add imagemagick
+  - asdf install imagemagick 7.0.11-5
+  - convert --version
   # use "pip install -v -v pyinstaller" to learn harded pyinstall path
   - pip install pyinstaller==4.3
   # /Users/gitlab/.asdf/installs/python/3.8.0/bin/pyinstaller -h
