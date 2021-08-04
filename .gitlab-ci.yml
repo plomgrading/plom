@@ -799,54 +799,65 @@ linuxbin_centos:
     - md5sum
 
 
-# just testing
-macostest:
+macos_tests:
+  image: macos-10.15-xcode-11
   tags:
-  - osx
+  - macos
   stage: test
   needs: []
   script:
   - echo "hello from the mac"
   - sw_vers
-  - pwd
-  - ls
   - echo $SHELL
+  - which python
   - python --version
   - python3 --version
-  - brew --help
-  # pip --version
-  # pip3 --version
+  # brew --version
+  - pip --version
+  - pip3 --version
   - echo $USER
-  - set
-  - whoami
+  # asdf list-all python
+  # asdf install python-dev
+  - brew install imagemagick zbar jsmin openssl
+  # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
+  # pip install jpegtran-cffi
+  - pip install .
+  - pip -m plom.scripts.build --version
+  - pip -m plom.scripts.client --version
 
 
 # just testing
 macos_install:
+  image: macos-11-xcode-12
   tags:
-  - osx
+  - macos
   stage: test
   needs: []
   script:
   - echo "hello from the mac"
-  - pwd
-  - ls
-  - echo $SHELL
   - sw_vers
+  - echo $SHELL
+  - which python
   - python --version
-  - python3 --version
-  # brew --help
+  - python -m pip install --upgrade pip
+  - pip --version
+  - brew --version
+  - brew --help
+  - asdf current
+  - asdf which python
+  - asdf list-all python
+  - asdf list-all python-dev
+  - asdf install python-dev
   # brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar libffi jsmin python3 openssl
   # brew install python3-pip
   # python3.7 -m pip --version
   # python3.7 -m pip install toml requests requests-toolbelt PyQt5
   # python3.7 -m pip install pyinstaller
-  - pip3 --version
-  - pip3 install toml requests requests-toolbelt PyQt5
-  - pip3 install pyinstaller
-  - ls
-  - /nfs/andrewr/Library/Python/3.7/bin/pyinstaller client.macos.spec
-  - pyinstaller client.macos.spec
+  - pip install toml requests requests-toolbelt PyQt5
+  # use "pip install -v -v pyinstaller" to learn harded pyinstall path
+  - pip install pyinstaller
+  # /Users/gitlab/.asdf/installs/python/3.9.1/bin/pyinstaller -h
+  - /Users/gitlab/.asdf/installs/python/3.9.1/bin/pyinstaller client.macos.spec
   artifacts:
     paths:
     - dist/PlomClient*
@@ -854,6 +865,7 @@ macos_install:
 
 # just testing
 macos_inst_helloworld:
+  image: macos-10.15-xcode-11
   tags:
   - macos
   stage: test
@@ -861,15 +873,16 @@ macos_inst_helloworld:
   script:
   - echo "hello from the mac"
   - pwd
-  - ls
   - echo $SHELL
+  - which python
   - python --version
-  - python3 --version
-  - python3 -m pip --version
-  - python3 -m pip install pyinstaller
-  - ls
-  - /nfs/andrewr/Library/Python/3.7/bin/pyinstaller -h
-  - /nfs/andrewr/Library/Python/3.7/bin/pyinstaller hello_world.py --onefile --windowed --clean
+  - python -m pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  # use "pip install -v -v pyinstaller" to learn harded pyinstall path
+  - pip install pyinstaller==4.3
+  # /Users/gitlab/.asdf/installs/python/3.8.0/bin/pyinstaller -h
+  - /Users/gitlab/.asdf/installs/python/3.8.0/bin/pyinstaller hello_world.py --onefile --windowed --clean
   - ls dist
   - dist/hello_world
   - echo "done done done"
