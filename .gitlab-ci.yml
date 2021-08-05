@@ -1129,6 +1129,33 @@ macos_tests:
   - pip -m plom.scripts.client --version
 
 
+macos_tests1015:
+  image: macos-10.15-xcode-11
+  tags:
+  - macos
+  stage: test
+  needs: []
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - echo $USER
+  # asdf list-all python
+  - brew --version
+  # HOMEBREW_NO_AUTO_UPDATE=1 brew install zbar
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install openssl
+  # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
+  # pip install jpegtran-cffi
+  - pip install .
+  - pip -m plom.scripts.build --version
+  - pip -m plom.scripts.client --version
+
+
 .shared_windows_runners:
   tags:
   - shared-windows
