@@ -126,7 +126,6 @@ def create_exam_and_insert_QR(
             start_at=-1,
         )
 
-    # Get page width and height
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
 
@@ -136,12 +135,10 @@ def create_exam_and_insert_QR(
 
     # 70x70 page-corner boxes for the QR codes
     # TL: Top Left, TR: Top Right, BL: Bottom Left, BR: Bottom Right
-    rTL = fitz.Rect(15, 20, 85, 90)
-    rTR = fitz.Rect(page_width - 85, 20, page_width - 15, 90)
-    rBL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
-    rBR = fitz.Rect(
-        page_width - 85, page_height - 90, page_width - 15, page_height - 20
-    )
+    TL = fitz.Rect(15, 20, 85, 90)
+    TR = fitz.Rect(page_width - 85, 20, page_width - 15, 90)
+    BL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
+    BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
 
     for page_index in range(length):
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
@@ -208,13 +205,11 @@ def create_exam_and_insert_QR(
                 str(qr_file[page_index + 1][corner_index])
             )
         if page_index % 2 == 0:
-            exam[page_index].insert_image(rTR, pixmap=qr_code[1], overlay=True)
-            exam[page_index].insert_image(rBR, pixmap=qr_code[4], overlay=True)
-            exam[page_index].insert_image(rBL, pixmap=qr_code[3], overlay=True)
+            exam[page_index].insert_image(TR, pixmap=qr_code[1], overlay=True)
         else:
-            exam[page_index].insert_image(rTL, pixmap=qr_code[2], overlay=True)
-            exam[page_index].insert_image(rBL, pixmap=qr_code[3], overlay=True)
-            exam[page_index].insert_image(rBR, pixmap=qr_code[4], overlay=True)
+            exam[page_index].insert_image(TL, pixmap=qr_code[2], overlay=True)
+        exam[page_index].insert_image(BL, pixmap=qr_code[3], overlay=True)
+        exam[page_index].insert_image(BR, pixmap=qr_code[4], overlay=True)
 
     return exam
 
