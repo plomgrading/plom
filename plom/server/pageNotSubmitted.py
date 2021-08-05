@@ -70,7 +70,7 @@ def build_test_page_substitute(
     page_width = pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
     text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    insertion_confirmed = pdf[0].insert_textbox(
+    excess = pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -79,9 +79,7 @@ def build_test_page_substitute(
         fontfile=None,
         align=1,
     )
-    assert (
-        insertion_confirmed > 0
-    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+    assert excess > 0, "Text didn't fit: paper label too long?"
 
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
@@ -118,7 +116,7 @@ def build_homework_question_substitute(
     page_width = pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
     text = "{}.{}".format(student_id, question_number)
-    insertion_confirmed = pdf[0].insert_textbox(
+    excess = pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -127,9 +125,7 @@ def build_homework_question_substitute(
         fontfile=None,
         align=1,
     )
-    assert (
-        insertion_confirmed > 0
-    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+    assert excess > 0, "Text didn't fit: paper label too long?"
 
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
