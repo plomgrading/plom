@@ -19,20 +19,28 @@ paperdir = Path(_paperdir)
 
 
 def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
-    """Creates QR codes in png files and a dictionary of their filenames.
+    """Creates QR codes as png files and a dictionary of their filenames.
 
     Arguments:
-        length (int): Length of the document or number of pages.
+        length (int): Length of the document, number of pages.
         papernum (int): the paper/test number.
-        page_versions {dict} -- (int:int) Dictionary representing the version of each page for this paper.
-        code {Str} -- 6 digit distinguished code for the document.
+        page_versions (dict): the version of each page for this paper.
+        code (str): 6 digits distinguishing this document from others.
         dur (pathlib.Path): a directory to save the QR codes.
 
     Returns:
-        dict -- dict(int: dict(int: Str)) a dictionary that has another embedded dictionary for each page.
-                The embedded dictionary has a string for QR code paths saved for each corner.
-    """
+        dict: a dict of dicts.  The outer keys are integer page numbers.
+            The inner keys index the corners and each value is a
+            `pathlib.Path` for a PNG file for that corner's QR code.
+            The corners are indexed counterclockwise by:
 
+            index | meaning
+            ------|--------
+            1     | top-right
+            2     | top-left
+            3     | bottom-left
+            4     | bottom-right
+    """
     # Command line parameters to imagemagick's mogrify
     # puts a frame around the image.
     mogParams = ' -mattecolor black -frame 1x1 -background "#FFFFFF" ' "-flatten"
@@ -89,10 +97,9 @@ def create_exam_and_insert_QR(
         papernum (int): the paper/test number.
         page_versions (dict): version number for each page of this paper.
         qr_file (dict): a dict of dicts.  The outer keys are integer
-            page numbers.  The inner keys index the corners with ints,
-            the meaning of which is hopefully documented elsewhere.  The
-            inner values are strings/pathlib.Path for images of the
-            QR codes for each corner.
+            page numbers.  The inner keys index the corners, giving a
+            path to an image of the appropriate QR code.
+            See :func:`create_QR_file_dictionary`.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
@@ -212,18 +219,18 @@ def create_exam_and_insert_QR(
     return exam
 
 
-def is_possible_to_encode_as(s, x):
-    """A function that checks if string s is encodable by format x.
+def is_possible_to_encode_as(s, encoding):
+    """Is it possible to encode this string in this particular encoding?
 
     Arguments:
-        s {Str} -- Text String given.
-        x {Str} -- Encoding type.
+        s (str): a string.
+        encoding (str): Encoding type.
 
     Returns:
-        bool -- True/False
+        bool
     """
     try:
-        _tmp = s.encode(x)
+        _tmp = s.encode(encoding)
         return True
     except UnicodeEncodeError:
         return False
@@ -371,25 +378,26 @@ def make_PDF(
     extra=None,
     no_qr=False,
 ):
-    """A function that makes the PDFs and saves the modified exam files.
+    """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
-    Overall it has 4 steps for each document:
-    1- Create and save Qr codes.
-    2- Create and save exams with the addition of the QR codes.
-    3- If extra is defined, add student id and student name.
-    4- Finally save the Documents.
+    Take pages from each source version (according to `page_versions`) and
+    add QR codes and "DNW" staple-corner indicators.  Optionally stamp the
+    student name/id from `extra` onto the cover page.  Save the new PDF
+    file into the `paperdir` (typically "papersToPrint").
 
     Arguments:
-        name {Str} -- Document Name.
-        code {Str} -- 6 digit distinguished code for the document.
-        length {int} -- Length of the document or number of pages.
-        versions {int} -- Number of version of this Document.
+        name (str): Document name, the shortname for the exam.
+        code (str): 6 digits distinguishing this document from others.
+        length (int): Length of the document, number of pages.
+        versions (int): Number of versions.
         papernum (int): the paper/test number.
-        page_versions {dict} -- (int:int) dictionary representing the version of each page for this paper.
-        no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes
+        page_versions (dict): the version of each page for this paper.
+            Note this is an input and must be predetermined before
+            calling.
 
     Keyword Arguments:
         extra (dict/None): Dictionary with student id and name or None.
+        no_qr (bool):  determine whether or not to paste in qr-codes.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
