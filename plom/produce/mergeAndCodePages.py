@@ -144,7 +144,7 @@ def create_exam_and_insert_QR(
         # test/page stamp in top-centre of page
         rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
         text = "{}.{}".format(str(test).zfill(4), str(page_index + 1).zfill(2))
-        insertion_confirmed = exam[page_index].insert_textbox(
+        excess = exam[page_index].insert_textbox(
             rect,
             text,
             fontsize=18,
@@ -153,8 +153,8 @@ def create_exam_and_insert_QR(
             fontfile=None,
             align=1,
         )
+        assert excess > 0, "Text didn't fit: is paper number label too long?"
         exam[page_index].draw_rect(rect, color=[0, 0, 0])
-        assert insertion_confirmed > 0
 
         if no_qr:
             # no more processing of this page if QR codes unwanted
@@ -181,7 +181,7 @@ def create_exam_and_insert_QR(
         mat = fitz.Matrix(45 if page_index % 2 == 0 else -45)
         pivot = rDNW.tr / 2 + rDNW.bl / 2
         morph = (pivot, mat)
-        insertion_confirmed = exam[page_index].insert_textbox(
+        excess = exam[page_index].insert_textbox(
             rDNW,
             name,
             fontsize=8,
@@ -190,10 +190,7 @@ def create_exam_and_insert_QR(
             align=1,
             morph=morph,
         )
-        # exam[page_index].draw_rect(rDNW, morph=morph)
-        assert (
-            insertion_confirmed > 0
-        ), "Text didn't fit: shortname too long?  or font issue/bug?"
+        assert excess > 0, "Text didn't fit: shortname too long? font issue?"
 
         # paste in the QR-codes
         # Grab the tpv QRcodes for current page and put them on the pdf
@@ -318,7 +315,7 @@ def insert_extra_info(extra, exam):
         raise ValueError("Don't know how to write name {} into PDF".format(txt))
 
     # We insert the student id text boxes
-    insertion_confirmed = exam[0].insert_textbox(
+    excess = exam[0].insert_textbox(
         student_id_rect_1,
         txt,
         fontsize=36,
@@ -327,13 +324,10 @@ def insert_extra_info(extra, exam):
         fontfile=None,
         align=1,
     )
-    # TODO: VALA suggests we do the insertion_confirmed check here as well
-    assert (
-        insertion_confirmed > 0
-    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+    assert excess > 0, "Text didn't fit: student ID too long?"
 
     # We insert the student name text boxes
-    insertion_confirmed = exam[0].insert_textbox(
+    excess = exam[0].insert_textbox(
         student_id_rect_2,
         sign_here,
         fontsize=48,
@@ -342,10 +336,7 @@ def insert_extra_info(extra, exam):
         fontfile=None,
         align=1,
     )
-    # TODO: VALA suggests we do the insertion_confirmed check here as well
-    assert (
-        insertion_confirmed > 0
-    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+    assert excess > 0, "Text didn't fit: student name too long?"
 
     return exam
 

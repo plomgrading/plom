@@ -168,7 +168,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 # TODO - there should be an assert or something here?
 
             digit_rectangle = fitz.Rect(228, 335, 550, 450)
-            insertion_confirmed = front_page.insert_textbox(
+            excess = front_page.insert_textbox(
                 digit_rectangle,
                 student_name,
                 fontsize=digit_font_size,
@@ -177,7 +177,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 fontfile=None,
                 align=0,
             )
-            assert insertion_confirmed > 0
+            assert excess > 0
 
         # Write some random answers on the pages
         for page_index, pdf_page in enumerate(pdf_document):
@@ -188,7 +188,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
             # TODO: "helv" vs "Helvetica"
             if page_index >= 1:
-                insertion_confirmed = pdf_page.insert_textbox(
+                excess = pdf_page.insert_textbox(
                     random_answer_rect,
                     random_answer_text,
                     fontsize=answer_font_size,
@@ -197,7 +197,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                     fontfile=None,
                     align=0,
                 )
-                assert insertion_confirmed > 0
+                assert excess > 0
 
         # delete last page from the zeroth test.
         if index == 0:
@@ -299,7 +299,7 @@ def make_colliding_pages(paper_dir_path, outfile):
             to_page=test_length - 1,
             start_at=colliding_page_index,
         )
-        insertion_confirmed = all_pdf_documents[colliding_page_index].insert_textbox(
+        excess = all_pdf_documents[colliding_page_index].insert_textbox(
             fitz.Rect(100, 100, 500, 500),
             "I was dropped on the floor and rescanned.",
             fontsize=colliding_page_font_size,
@@ -308,7 +308,7 @@ def make_colliding_pages(paper_dir_path, outfile):
             fontfile=None,
             align=0,
         )
-        assert insertion_confirmed > 0
+        assert excess > 0
 
     all_pdf_documents.saveIncr()
 
