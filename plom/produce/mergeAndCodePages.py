@@ -250,19 +250,14 @@ def insert_extra_info(extra, exam):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
+    YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
 
-    # Get page width and height
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
 
     student_id = extra["id"]
     student_name = extra["name"]
-    # a file for the student-details
-    YSHIFT = 0.4  # where on page is centre of box 0=top, 1=bottom
-
-    # Creating the student id \n name text file
     txt = "{}\n{}".format(student_id, student_name)
-
     sign_here = "Please sign here"
 
     # Getting the dimensions of the box
@@ -318,7 +313,7 @@ def insert_extra_info(extra, exam):
         # TODO: instead we could warn, use Helvetica, and get "?????" chars
         raise ValueError("Don't know how to write name {} into PDF".format(txt))
 
-    # We insert the student id text boxes
+    # We insert the student name and id text box
     excess = exam[0].insert_textbox(
         student_id_rect_1,
         txt,
@@ -328,9 +323,8 @@ def insert_extra_info(extra, exam):
         fontfile=None,
         align=1,
     )
-    assert excess > 0, "Text didn't fit: student ID too long?"
+    assert excess > 0, "Text didn't fit: student name too long?"
 
-    # We insert the student name text boxes
     excess = exam[0].insert_textbox(
         student_id_rect_2,
         sign_here,
@@ -340,7 +334,7 @@ def insert_extra_info(extra, exam):
         fontfile=None,
         align=1,
     )
-    assert excess > 0, "Text didn't fit: student name too long?"
+    assert excess > 0
 
     return exam
 
