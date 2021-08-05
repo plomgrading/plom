@@ -140,12 +140,6 @@ def create_exam_and_insert_QR(
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
 
-    # create a box for the test number near top-centre
-    rTC = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 40)
-
-    # put marks at top left/right so students don't write near
-    # staple or near where client will stamp marks
-
     # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
     rDNW_TL = fitz.Rect(15, 15, 90, 90)
     rDNW_TR = fitz.Rect(page_width - 90, 15, page_width - 15, 90)
@@ -163,9 +157,6 @@ def create_exam_and_insert_QR(
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
         exam[page_index].clean_contents()
         # test/page stamp in top-centre of page
-        # Rectangle size hacked by hand. TODO = do this more algorithmically
-        # VALA SAYS: TODO still tands given that the pages are all the same
-        # size. Will ask what it mean to do it algorithmically
         rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
         text = "{}.{}".format(str(test).zfill(4), str(page_index + 1).zfill(2))
         insertion_confirmed = exam[page_index].insert_textbox(
