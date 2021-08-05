@@ -42,10 +42,6 @@ def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
             3     | bottom-left
             4     | bottom-right
     """
-    # Command line parameters to imagemagick's mogrify
-    # puts a frame around the image.
-    mogParams = ' -mattecolor black -frame 1x1 -background "#FFFFFF" ' "-flatten"
-
     qr_file = {}
 
     for page_index in range(1, length + 1):
@@ -70,12 +66,6 @@ def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
             qr_file[page_index][corner_index] = filename
             if corner_index == 4:
                 qr_file[page_index][corner_index] = filename2
-
-            # use a terminal mogrify process to put a border around the QR code
-            cmd = shlex.split(
-                "mogrify {} {}".format(mogParams, qr_file[page_index][corner_index])
-            )
-            subprocess.run(cmd, check=True)
 
     return qr_file
 
@@ -211,12 +201,17 @@ def create_exam_and_insert_QR(
             qr_code[corner_index] = fitz.Pixmap(
                 str(qr_file[page_index + 1][corner_index])
             )
+        # Note: draw png first so it doesn't occlude the outline
         if page_index % 2 == 0:
             exam[page_index].insert_image(TR, pixmap=qr_code[1], overlay=True)
+            exam[page_index].draw_rect(TR, color=[0, 0, 0], width=0.5)
         else:
             exam[page_index].insert_image(TL, pixmap=qr_code[2], overlay=True)
+            exam[page_index].draw_rect(TL, color=[0, 0, 0], width=0.5)
         exam[page_index].insert_image(BL, pixmap=qr_code[3], overlay=True)
         exam[page_index].insert_image(BR, pixmap=qr_code[4], overlay=True)
+        exam[page_index].draw_rect(BL, color=[0, 0, 0], width=0.5)
+        exam[page_index].draw_rect(BR, color=[0, 0, 0], width=0.5)
 
     return exam
 
