@@ -803,7 +803,7 @@ macos11_client:
   image: macos-11-xcode-12
   tags:
   - macos
-  stage: test
+  stage: packaging
   needs: []
   script:
   - sw_vers
@@ -837,7 +837,7 @@ macos1015_client:
   image: macos-10.15-xcode-11
   tags:
   - macos
-  stage: test
+  stage: packaging
   needs: []
   script:
   - sw_vers
