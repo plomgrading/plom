@@ -6,7 +6,6 @@
 
 import shlex
 import subprocess
-import os
 import tempfile
 from pathlib import Path
 
@@ -351,31 +350,26 @@ def insert_extra_info(extra, exam):
     return exam
 
 
-def save_PDFs(extra, exam, test):
+def save_PDF(extra, exam, papernum):
     """Used for saving the exams in paperdir.
 
     Arguments:
         extra (dict/None): dictionary with student id and name.
         exam (fitz.Document): the pdf document.
-        test (int): Test number.
+        papernum (int): the paper/test number.
 
     """
     # save with ID-number is making named papers: issue #790
     if extra:
-        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
+        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
-        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / f"exam_{papernum:04}.pdf"
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.com/plom/plom/issues/284
-    exam.save(
-        save_name,
-        garbage=4,
-        deflate=True,
-        clean=True,
-    )
+    exam.save(save_name, garbage=4, deflate=True, clean=True)
 
 
 def make_PDF(
@@ -411,7 +405,6 @@ def make_PDF(
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
-
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create QR codes and other stamps for each test/page/version
@@ -419,7 +412,7 @@ def make_PDF(
             length, test, page_versions, code, Path(tmp_dir)
         )
 
-        # We then create the exam pdfs while adding the QR codes to it
+        # We then create the exam pdf while adding the QR codes to it
         exam = create_exam_and_insert_QR(
             name,
             code,
@@ -437,8 +430,7 @@ def make_PDF(
         if extra:
             exam = insert_extra_info(extra, exam)
 
-    # Finally save the resulting pdf.
-    save_PDFs(extra, exam, test)
+    save_PDF(extra, exam, test)
 
 
 def make_fakePDF(
@@ -446,13 +438,13 @@ def make_fakePDF(
     code,
     length,
     versions,
-    test,
+    papernum,
     page_versions,
     extra=None,
 ):
     """Twin to the real make_pdf command - makes empty files."""
     if extra:
-        save_name = paperdir / "exam_{}_{}.pdf".format(str(test).zfill(4), extra["id"])
+        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
-        save_name = paperdir / "exam_{}.pdf".format(str(test).zfill(4))
+        save_name = paperdir / f"exam_{papernum:04}.pdf"
     save_name.touch()
