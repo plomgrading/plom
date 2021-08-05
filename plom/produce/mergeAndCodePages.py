@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import segno
 import pyqrcode
 import fitz
 
@@ -57,12 +58,18 @@ def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
                 papernum, page_index, page_versions[page_index], corner_index, code
             )
             qr_code = pyqrcode.create(tpv, error="H")
+            filename = dur / f"qr_{papernum:04}_pg{page_index}_{corner_index}_pyqrcode.png"
+            qr_code.png(filename, scale=4)
+
+            # border=None is default
+            qr_code2 = segno.make(tpv, error="H")
+            filename2 = dur / f"qr_{papernum:04}_pg{page_index}_{corner_index}_segno.png"
+            qr_code2.save(filename2, border=None, scale=4)
 
             # save it in the associated file
-            qr_file[page_index][corner_index] = (
-                dur / f"page{page_index}_{corner_index}.png"
-            )
-            qr_code.png(qr_file[page_index][corner_index], scale=4)
+            qr_file[page_index][corner_index] = filename
+            if corner_index == 4:
+                qr_file[page_index][corner_index] = filename2
 
             # use a terminal mogrify process to put a border around the QR code
             cmd = shlex.split(
