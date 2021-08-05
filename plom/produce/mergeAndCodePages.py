@@ -13,7 +13,7 @@ import pyqrcode
 import fitz
 
 from plom.tpv_utils import encodeTPV
-from . import paperdir as _paperdir
+from plom.produce import paperdir as _paperdir
 
 paperdir = Path(_paperdir)
 
