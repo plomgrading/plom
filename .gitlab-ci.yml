@@ -1119,9 +1119,11 @@ macos_tests:
   - echo $USER
   # asdf list-all python
   - brew --version
-  # HOMEBREW_NO_AUTO_UPDATE=1 brew install zbar
-  - HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick
-  - HOMEBREW_NO_AUTO_UPDATE=1 brew install openssl
+  - brew update
+  - brew --version
+  - brew install zbar
+  - brew install imagemagick
+  - brew install openssl
   # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
   # pip install jpegtran-cffi
   - pip install .
