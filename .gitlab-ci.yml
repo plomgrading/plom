@@ -1097,6 +1097,38 @@ macos1013_client:
     expire_in: 16 days
 
 
+# this was slow and failed:
+#   asdf plugin-add imagemagick
+#   asdf install imagemagick 7.0.11-5
+# going back to brew
+# TODO: removed jsmin from brew: what is it used for?
+macos_tests:
+  image: macos-11-xcode-12
+  tags:
+  - macos
+  stage: test
+  needs: []
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - echo $USER
+  # asdf list-all python
+  - brew --version
+  # HOMEBREW_NO_AUTO_UPDATE=1 brew install zbar
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install openssl
+  # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
+  # pip install jpegtran-cffi
+  - pip install .
+  - pip -m plom.scripts.build --version
+  - pip -m plom.scripts.client --version
+
+
 .shared_windows_runners:
   tags:
   - shared-windows
