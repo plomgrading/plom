@@ -339,28 +339,6 @@ def insert_extra_info(extra, exam):
     return exam
 
 
-def save_PDF(extra, exam, papernum):
-    """Used for saving the exams in paperdir.
-
-    Arguments:
-        extra (dict/None): dictionary with student id and name.
-        exam (fitz.Document): the pdf document.
-        papernum (int): the paper/test number.
-
-    """
-    # save with ID-number is making named papers: issue #790
-    if extra:
-        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
-    else:
-        save_name = paperdir / f"exam_{papernum:04}.pdf"
-    # Add the deflate option to compress the embedded pngs
-    # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
-    # also do garbage collection to remove duplications within pdf
-    # and try to clean up as much as possible.
-    # `linear=True` causes https://gitlab.com/plom/plom/issues/284
-    exam.save(save_name, garbage=4, deflate=True, clean=True)
-
-
 def make_PDF(
     name,
     code,
@@ -414,13 +392,19 @@ def make_PDF(
             no_qr=no_qr,
         )
 
-        # If we are provided with the student number and student id,
-        # we would preferably want to insert them into the first page
-        # as a box.
-        if extra:
-            exam = insert_extra_info(extra, exam)
+    # If provided with student name and id, preprint on cover and change filename
+    if extra:
+        exam = insert_extra_info(extra, exam)
+        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
+    else:
+        save_name = paperdir / f"exam_{papernum:04}.pdf"
 
-    save_PDF(extra, exam, papernum)
+    # Add the deflate option to compress the embedded pngs
+    # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
+    # also do garbage collection to remove duplications within pdf
+    # and try to clean up as much as possible.
+    # `linear=True` causes https://gitlab.com/plom/plom/issues/284
+    exam.save(save_name, garbage=4, deflate=True, clean=True)
 
 
 def make_fakePDF(
