@@ -18,13 +18,13 @@ from plom.produce import paperdir as _paperdir
 paperdir = Path(_paperdir)
 
 
-def create_QR_file_dictionary(length, test, page_versions, code, dur):
-    """Creates a dictionary of the QR codes and save them.
+def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
+    """Creates QR codes in png files and a dictionary of their filenames.
 
     Arguments:
-        length {int} -- Length of the document or number of pages.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
-        page_versions {dict} -- (int:int) Dictionary representing the version of each page for this test.
+        length (int): Length of the document or number of pages.
+        papernum (int): the paper/test number.
+        page_versions {dict} -- (int:int) Dictionary representing the version of each page for this paper.
         code {Str} -- 6 digit distinguished code for the document.
         dur (pathlib.Path): a directory to save the QR codes.
 
@@ -46,7 +46,7 @@ def create_QR_file_dictionary(length, test, page_versions, code, dur):
         for corner_index in range(1, 5):
             # the tpv (test page version) is a code used for creating the qr code
             tpv = encodeTPV(
-                test, page_index, page_versions[page_index], corner_index, code
+                papernum, page_index, page_versions[page_index], corner_index, code
             )
             qr_code = pyqrcode.create(tpv, error="H")
 
@@ -70,7 +70,7 @@ def create_exam_and_insert_QR(
     code,
     length,
     versions,
-    test,
+    papernum,
     page_versions,
     qr_file,
     no_qr=False,
@@ -86,8 +86,8 @@ def create_exam_and_insert_QR(
         code (str): 6 digits distinguishing this document from others.
         length (int): length of the document, number of pages.
         versions (int): Number of version of this document.
-        test (int): the test number.
-        page_versions (dict): version number for each page of this test.
+        papernum (int): the paper/test number.
+        page_versions (dict): version number for each page of this paper.
         qr_file (dict): a dict of dicts.  The outer keys are integer
             page numbers.  The inner keys index the corners with ints,
             the meaning of which is hopefully documented elsewhere.  The
@@ -99,9 +99,8 @@ def create_exam_and_insert_QR(
             Note backward logic: False means yes to QR-codes.
 
     Returns:
-        fitz.Document -- PDF document type returned as the exam, similar to a dictionary with the ge numbers as the keys.
+        fitz.Document: PDF document.
     """
-
     # A (int : fitz.fitz.Document) dictionary that has the page document/path from each source based on page version
     version_paths_for_pages = {}
     for version_index in range(1, versions + 1):
@@ -109,7 +108,6 @@ def create_exam_and_insert_QR(
             "sourceVersions/version{}.pdf".format(version_index)
         )
 
-    # Create test pdf as "exam"
     exam = fitz.open()
     # Insert the relevant page-versions into this pdf.
     for page_index in range(1, length + 1):
@@ -141,9 +139,9 @@ def create_exam_and_insert_QR(
     for page_index in range(length):
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
         exam[page_index].clean_contents()
-        # test/page stamp in top-centre of page
+        # papernum.pagenum stamp in top-centre of page
         rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
-        text = "{}.{}".format(str(test).zfill(4), str(page_index + 1).zfill(2))
+        text = "{}.{}".format(f"{papernum:04}", str(page_index + 1).zfill(2))
         excess = exam[page_index].insert_textbox(
             rect,
             text,
@@ -368,7 +366,7 @@ def make_PDF(
     code,
     length,
     versions,
-    test,
+    papernum,
     page_versions,
     extra=None,
     no_qr=False,
@@ -386,8 +384,8 @@ def make_PDF(
         code {Str} -- 6 digit distinguished code for the document.
         length {int} -- Length of the document or number of pages.
         versions {int} -- Number of version of this Document.
-        test {int} -- Test number based on the combination we have around (length ^ versions - initial pages) tests.
-        page_versions {dict} -- (int:int) dictionary representing the version of each page for this test.
+        papernum (int): the paper/test number.
+        page_versions {dict} -- (int:int) dictionary representing the version of each page for this paper.
         no_qr {bool} -- Boolean to determine whether or not to paste in qr-codes
 
     Keyword Arguments:
@@ -400,7 +398,7 @@ def make_PDF(
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create QR codes and other stamps for each test/page/version
         qr_file = create_QR_file_dictionary(
-            length, test, page_versions, code, Path(tmp_dir)
+            length, papernum, page_versions, code, Path(tmp_dir)
         )
 
         # We then create the exam pdf while adding the QR codes to it
@@ -409,7 +407,7 @@ def make_PDF(
             code,
             length,
             versions,
-            test,
+            papernum,
             page_versions,
             qr_file,
             no_qr=no_qr,
@@ -421,7 +419,7 @@ def make_PDF(
         if extra:
             exam = insert_extra_info(extra, exam)
 
-    save_PDF(extra, exam, test)
+    save_PDF(extra, exam, papernum)
 
 
 def make_fakePDF(
