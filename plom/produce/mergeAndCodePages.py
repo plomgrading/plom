@@ -19,10 +19,7 @@ from . import paperdir as _paperdir
 paperdir = Path(_paperdir)
 
 
-# TODO: Complete the test mode functionality
-def create_QR_file_dictionary(
-    length, test, page_versions, code, dur, test_mode=False, test_folder=None
-):
+def create_QR_file_dictionary(length, test, page_versions, code, dur):
     """Creates a dictionary of the QR codes and save them.
 
     Arguments:
@@ -31,10 +28,6 @@ def create_QR_file_dictionary(
         page_versions {dict} -- (int:int) Dictionary representing the version of each page for this test.
         code {Str} -- 6 digit distinguished code for the document.
         dur (pathlib.Path): a directory to save the QR codes.
-
-    Keyword Arguments:
-        test_mode {bool} -- boolean elements used for testing, testing case with show the documents (default: {False}).
-        test_folder {Str} -- String for where to place the generated test files (default: {None}).
 
     Returns:
         dict -- dict(int: dict(int: Str)) a dictionary that has another embedded dictionary for each page.
@@ -73,7 +66,6 @@ def create_QR_file_dictionary(
     return qr_file
 
 
-# TODO: Complete the test mode functionality
 def create_exam_and_insert_QR(
     name,
     code,
@@ -82,8 +74,6 @@ def create_exam_and_insert_QR(
     test,
     page_versions,
     qr_file,
-    test_mode=False,
-    test_folder=None,
     no_qr=False,
 ):
     """Creates the exam objects and insert the QR codes.
@@ -106,10 +96,6 @@ def create_exam_and_insert_QR(
             QR codes for each corner.
 
     Keyword Arguments:
-        test_mode (bool): used for testing, not sure details
-            (default: False).
-        test_folder (test): used with `test_mode`, where to place the
-            generated test files. (default: None)
         no_qr (bool): whether to paste in QR-codes (default: False)
             Note backward logic: False means yes to QR-codes.
 
@@ -232,7 +218,6 @@ def create_exam_and_insert_QR(
     return exam
 
 
-# TODO: Complete the test mode functionality
 def is_possible_to_encode_as(s, x):
     """A function that checks if string s is encodable by format x.
 
@@ -250,17 +235,12 @@ def is_possible_to_encode_as(s, x):
         return False
 
 
-# TODO: Complete the test mode functionality
-def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
+def insert_extra_info(extra, exam):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
         extra (dict): dictionary with student id and name.
         exam (fitz.Document): PDF document.
-
-    Keyword Arguments:
-        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents. (default: {False})
-        test_folder {Str} -- String for where to place the generated test files. (default: {None})
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
@@ -371,8 +351,7 @@ def insert_extra_info(extra, exam, test_mode=False, test_folder=None):
     return exam
 
 
-# TODO: Complete the test mode functionality
-def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
+def save_PDFs(extra, exam, test):
     """Used for saving the exams in paperdir.
 
     Arguments:
@@ -380,9 +359,6 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
         exam (fitz.Document): the pdf document.
         test (int): Test number.
 
-    Keyword Arguments:
-        test_mode {bool} -- boolean elements used for testing, testing case with show the documents. (default: {False})
-        test_folder {Str} -- A String for where to place the generated test files. (default: {None})
     """
     # save with ID-number is making named papers: issue #790
     if extra:
@@ -402,7 +378,6 @@ def save_PDFs(extra, exam, test, test_mode=False, test_folder=None):
     )
 
 
-# TODO: Complete the test mode functionality
 def make_PDF(
     name,
     code,
@@ -412,8 +387,6 @@ def make_PDF(
     page_versions,
     extra=None,
     no_qr=False,
-    test_mode=False,
-    test_folder=None,
 ):
     """A function that makes the PDFs and saves the modified exam files.
 
@@ -434,8 +407,6 @@ def make_PDF(
 
     Keyword Arguments:
         extra (dict/None): Dictionary with student id and name or None.
-        test_mode {bool} -- Boolean elements used for testing, testing case with show the documents (default: {False})
-        test_folder {Str} -- String for where to place the generated test files (default: {None})
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
@@ -445,7 +416,7 @@ def make_PDF(
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create QR codes and other stamps for each test/page/version
         qr_file = create_QR_file_dictionary(
-            length, test, page_versions, code, Path(tmp_dir), test_mode, test_folder
+            length, test, page_versions, code, Path(tmp_dir)
         )
 
         # We then create the exam pdfs while adding the QR codes to it
@@ -457,8 +428,6 @@ def make_PDF(
             test,
             page_versions,
             qr_file,
-            test_mode,
-            test_folder,
             no_qr=no_qr,
         )
 
@@ -466,7 +435,7 @@ def make_PDF(
         # we would preferably want to insert them into the first page
         # as a box.
         if extra:
-            exam = insert_extra_info(extra, exam, test_mode, test_folder)
+            exam = insert_extra_info(extra, exam)
 
     # Finally save the resulting pdf.
     save_PDFs(extra, exam, test)
@@ -480,8 +449,6 @@ def make_fakePDF(
     test,
     page_versions,
     extra=None,
-    test_mode=False,
-    test_folder=None,
 ):
     """Twin to the real make_pdf command - makes empty files."""
     if extra:
