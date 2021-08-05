@@ -38,7 +38,7 @@ server_install_requires = [
     "passlib",
     "pymupdf>=1.18.8",
     "Pillow>=7.0.0",
-    "weasyprint",
+    "weasyprint<53",  # temp pin for Issue #1594
     "aiohttp~=3.7.2",
     "pypng",  # unlisted dep of pyqrcode
     "pyqrcode",
