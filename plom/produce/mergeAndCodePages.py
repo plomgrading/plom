@@ -307,7 +307,6 @@ def insert_extra_info(extra, exam):
     exam[0].draw_rect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
 
     # TODO: This could be put into one function
-    # Also VALA doesn't understand the TODO s
     if is_possible_to_encode_as(txt, "Latin-1"):
         fontname = "Helvetica"
     elif is_possible_to_encode_as(txt, "gb2312"):
@@ -316,7 +315,7 @@ def insert_extra_info(extra, exam):
         # embed a font?  (Adobe Acrobat users need to download something)
         fontname = "china-ss"
     else:
-        # TODO: or warn use Helvetica, get "?" chars
+        # TODO: instead we could warn, use Helvetica, and get "?????" chars
         raise ValueError("Don't know how to write name {} into PDF".format(txt))
 
     # We insert the student id text boxes
