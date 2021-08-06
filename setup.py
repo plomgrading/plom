@@ -40,13 +40,12 @@ server_install_requires = [
     "Pillow>=7.0.0",
     "weasyprint<53",  # temp pin for Issue #1594
     "aiohttp~=3.7.2",
-    "pypng",  # unlisted dep of pyqrcode
-    "pyqrcode",
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
     "opencv-python",
     "scikit-learn>=0.23.1",
+    "segno",
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",

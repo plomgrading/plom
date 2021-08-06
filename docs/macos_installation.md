@@ -25,7 +25,7 @@ $ brew install libjpeg libjpeg-turbo jpeg-turbo imagemagick zbar \
 Other stuff we install locally with `pip`:
 ```
 $ pip3 install passlib \
-               pypng defusedxml pyYAML urllib3 more-itertools seaborn \
+               defusedxml pyYAML urllib3 more-itertools seaborn \
                PyQt5 aiohttp peewee pandas requests-toolbelt toml\
                weasyprint pillow tqdm pytest tex
 ```

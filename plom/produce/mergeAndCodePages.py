@@ -9,7 +9,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import pyqrcode
+# import pyqrcode
+import segno
 import fitz
 
 from plom.tpv_utils import encodeTPV
@@ -41,10 +42,6 @@ def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
             3     | bottom-left
             4     | bottom-right
     """
-    # Command line parameters to imagemagick's mogrify
-    # puts a frame around the image.
-    mogParams = ' -mattecolor black -frame 1x1 -background "#FFFFFF" ' "-flatten"
-
     qr_file = {}
 
     for page_index in range(1, length + 1):
@@ -56,19 +53,15 @@ def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
             tpv = encodeTPV(
                 papernum, page_index, page_versions[page_index], corner_index, code
             )
-            qr_code = pyqrcode.create(tpv, error="H")
+            # qr_code = pyqrcode.create(tpv, error="H")
+            # filename = dur / f"qr_{papernum:04}_pg{page_index}_{corner_index}.png"
+            # qr_code.png(filename, scale=4)
 
-            # save it in the associated file
-            qr_file[page_index][corner_index] = (
-                dur / f"page{page_index}_{corner_index}.png"
-            )
-            qr_code.png(qr_file[page_index][corner_index], scale=4)
+            qr_code = segno.make(tpv, error="H")
+            filename = dur / f"qr_{papernum:04}_pg{page_index}_{corner_index}.png"
+            qr_code.save(filename, scale=4)
 
-            # use a terminal mogrify process to put a border around the QR code
-            cmd = shlex.split(
-                "mogrify {} {}".format(mogParams, qr_file[page_index][corner_index])
-            )
-            subprocess.run(cmd, check=True)
+            qr_file[page_index][corner_index] = filename
 
     return qr_file
 
@@ -204,12 +197,17 @@ def create_exam_and_insert_QR(
             qr_code[corner_index] = fitz.Pixmap(
                 str(qr_file[page_index + 1][corner_index])
             )
+        # Note: draw png first so it doesn't occlude the outline
         if page_index % 2 == 0:
             exam[page_index].insert_image(TR, pixmap=qr_code[1], overlay=True)
+            exam[page_index].draw_rect(TR, color=[0, 0, 0], width=0.5)
         else:
             exam[page_index].insert_image(TL, pixmap=qr_code[2], overlay=True)
+            exam[page_index].draw_rect(TL, color=[0, 0, 0], width=0.5)
         exam[page_index].insert_image(BL, pixmap=qr_code[3], overlay=True)
         exam[page_index].insert_image(BR, pixmap=qr_code[4], overlay=True)
+        exam[page_index].draw_rect(BL, color=[0, 0, 0], width=0.5)
+        exam[page_index].draw_rect(BR, color=[0, 0, 0], width=0.5)
 
     return exam
 
