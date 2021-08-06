@@ -1132,7 +1132,7 @@ macos_tests:
   - pip install .
   - python -m plom.scripts.build --version
   - python -m plom.scripts.client --version
-  - pytest -l --pyargs plom
+  - /Users/gitlab/.asdf/installs/python/3.9.1/bin/pytest -l --pyargs plom
 
 
 macos_tests1015:
@@ -1165,7 +1165,7 @@ macos_tests1015:
   - pip install .
   - python -m plom.scripts.build --version
   - python -m plom.scripts.client --version
-  - pytest -l --pyargs plom
+  - /Users/gitlab/.asdf/installs/python/3.8.0/bin/pytest -l --pyargs plom
 
 
 .shared_windows_runners:
