@@ -16,6 +16,7 @@ from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
+import time
 
 import toml
 
@@ -170,10 +171,13 @@ class PlomServer:
             self._server_proc = subprocess.Popen(
                 split(f"python3 -m plom.scripts.server launch {self.basedir}")
             )
-        assert self.process_is_running()
+        assert self.process_is_running(), "The server did not start successfully"
+        time.sleep(0.2)
+        assert self.process_is_running(), "The server did not start successfully"
         if not self.ping_server():
             # TODO: try to kill it?
             raise RuntimeError("The server did not successfully start")
+        assert self.process_is_running(), "The server did not start successfully"
 
     def process_is_running(self):
         """Forked/background process not yet dead.
@@ -236,7 +240,10 @@ class PlomServer:
     def ping_server(self):
         """Try to connect to the background server.
 
-        We sleep in a loop until we can ping the server.
+        Sleep in a loop until we can ping the server.  Then, download
+        the spec from the server and compare the `publicCode` to the
+        local spec file, which helps confirm we are talking to the
+        expected server.
 
         Args:
             TODO: kwargs number of retries etc?
@@ -261,6 +268,14 @@ class PlomServer:
             if count >= 10:
                 print("we tried 10 times but server is not up yet!")
                 return False
+        assert self.process_is_running()
+        specfile = SpecVerifier.load_verified(
+            fname=self.basedir / specdirname / "verifiedSpec.toml"
+        )
+        spec = m.get_spec()
+        if spec["publicCode"] != specfile["publicCode"]:
+            print("Server's publicCode doesn't match: wrong server? wrong address?")
+            return False
         m.stop()
         assert self.process_is_running()
         return True
