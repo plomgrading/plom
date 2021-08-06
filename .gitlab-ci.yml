@@ -1102,6 +1102,10 @@ macos1013_client:
 #   asdf install imagemagick 7.0.11-5
 # going back to brew
 # TODO: removed jsmin from brew: what is it used for?
+# TODO: once this works we may want to make another copy:
+#     macos_tests1015:
+#       image: macos-10.15-xcode-11
+# TODO: get latex working, mklatex command, some packages
 macos_tests:
   image: macos-11-xcode-12
   tags:
@@ -1117,7 +1121,6 @@ macos_tests:
   - python -m pip install --upgrade pip
   - pip --version
   - echo $USER
-  # asdf list-all python
   - brew --version
   - brew update
   - brew --version
@@ -1125,6 +1128,8 @@ macos_tests:
   - brew install zbar
   - brew install imagemagick
   - brew install openssl
+  # brew install mactex-no-gui
+  - brew install basictex
   # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
   # pip install cffi
   # pip install jpegtran-cffi
@@ -1133,39 +1138,6 @@ macos_tests:
   - python -m plom.scripts.build --version
   - python -m plom.scripts.client --version
   - /Users/gitlab/.asdf/installs/python/3.9.1/bin/pytest -l --pyargs plom
-
-
-macos_tests1015:
-  image: macos-10.15-xcode-11
-  tags:
-  - macos
-  stage: test
-  needs: []
-  script:
-  - sw_vers
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - echo $USER
-  # asdf list-all python
-  - brew --version
-  - brew update
-  - brew --version
-  # HOMEBREW_NO_AUTO_UPDATE=1 brew install zbar
-  - HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake
-  - HOMEBREW_NO_AUTO_UPDATE=1 brew install imagemagick
-  - HOMEBREW_NO_AUTO_UPDATE=1 brew install openssl
-  # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
-  # pip install cffi
-  # pip install jpegtran-cffi
-  - pip install pytest
-  - pip install .
-  - python -m plom.scripts.build --version
-  - python -m plom.scripts.client --version
-  - /Users/gitlab/.asdf/installs/python/3.8.0/bin/pytest -l --pyargs plom
 
 
 .shared_windows_runners:
