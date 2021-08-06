@@ -303,52 +303,107 @@ class MarkHandler:
                 log.warning("Returning with error 400 = {}".format(marked_task_status))
                 return web.Response(status=400)
 
-    # @routes.get("/MK/images/{task}")
-    @authenticate_by_token_required_fields(["user", "integrity_check"])
-    def MgetImages(self, data, request):
-        """Return underlying image data and annotations of a question/task.
-
-        Main API call for the client to get the image data (original and annotated).
-        Respond with status 200/409.
+    # @routes.get("/MK/annotations/{number}/{question}/{edition}")
+    # TODO: optionally have this integrity field?
+    @authenticate_by_token_required_fields(["integrity"])
+    def Mget_annotations(self, data, request):
+        """Get the annotations of a marked question as JSON.
 
         Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /MK/images/"task code"
-                which the task code is extracted from.
+            data (dict): A dictionary having the user/token, and `integrity`
+                which is a checksum that can be used to check that the
+                server hasn't changed state (for example added new scans to
+                this question.  Pass the empty string `""` to omit such
+                checks.
+            request (aiohttp.web_request.Request): A GET request with url
+                "/MK/annotations/{number}/{question}/{edition}".
+                `number` and `question` identify which question.
+                `edition` can be used to get a particular annotation from
+                the history of all annotations.  If `edition` is omitted,
+                return the latest annotations.
+                TODO: currently instead of omitting you must pass "_".
 
         Returns:
-            aiohttp.web_response.Response: A response which includes the multipart writer object
-                wrapping the task images.
-        """
+            aiohttp.json_response.Response: JSON of the annotations with
+                status 200, or a 404 if no such image, or 400/401 for
+                authentication problems.
 
-        task_code = request.match_info["task"]
-        results = self.server.MgetImages(
-            data["user"], task_code, data["integrity_check"]
-        )
-        # Format is one of:
-        # [False, error]
-        # [True, image_data]
-        # [True, image_data, annotated_fname, plom_filename]
+        Note: if you want the annotated image corresponding to these
+        annotations, extract the edition from the JSON, then call
+        "GET:/MK/annotations_image/" with that edition.
+
+        Ownership: note that you need not be the "owner" of this task.
+        Getting data back from this function does not imply permission
+        to submit to this task.
+        """
+        number = int(request.match_info["number"])
+        question = int(request.match_info["question"])
+        # TODO: how to make optional?  for now, must pass "_"
+        edition = request.match_info["edition"]
+        if edition == "_":
+            edition = None
+        if edition is not None:
+            edition = int(edition)
+        integrity = data.get("integrity")
+        if integrity == "":
+            integrity = None
+        results = self.server.DB.Mget_annotations(number, question, edition, integrity)
         if not results[0]:
-            if results[1] == "owner":
-                return web.Response(status=409)  # someone else has that task_image
-            elif results[1] == "integrity_fail":
+            if results[1] == "integrity_fail":
                 return web.Response(status=406)  # task changed
             elif results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
+        plomdata = results[1]
+        return web.json_response(plomdata, status=200)
 
-        with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-            image_metadata = results[1]
-            files = []
-            # append the annotated_fname, plom_filename if present
-            files.extend(results[2:])
+    # @routes.get("/MK/annotations_image/{number}/{question}/{edition}")
+    @authenticate_by_token_required_fields([])
+    def Mget_annotations_image(self, data, request):
+        """Get the image of an annotated question (a marked question).
 
-            multipart_writer.append_json(image_metadata)
-            for file_name in files:
-                multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): A GET request with url
+                "/MK/annotations_image/{number}/{question}/{edition}"
+                `number` and `question` identify which question we want.
+                `edition` can be used to get a particular annotation from
+                the history of all annotations.  If `edition` is omitted,
+                return the latest annotated image.
+
+        Returns:
+            aiohttp.web_response.Response: the binary image data with
+                status 200, or a 404 if no such image, or 400/401 for
+                authentication problems.
+
+        Note: if you want *both* the latest annotated image and the
+        latest annotations (in `.plom` format), do not simply omit the
+        edition in both calls: someone might upload a new annotation
+        between your calls!  Instead, call "GET:/MK/annotations/"
+        first (without edition), then extract the edition from the `.plom`
+        data.  Finally, call this with that edition.
+
+        Ownership: note that you need not be the "owner" of this task.
+        Getting data back from this function does not imply permission
+        to submit to this task.
+        """
+        number = int(request.match_info["number"])
+        question = int(request.match_info["question"])
+        # TODO: how to make optional?  for now, must pass "_"
+        edition = request.match_info["edition"]
+        if edition == "_":
+            edition = None
+        if edition is not None:
+            edition = int(edition)
+        results = self.server.DB.Mget_annotations(number, question, edition)
+        if not results[0]:
+            if results[1] == "no_such_task":
+                return web.Response(status=410)  # task deleted
+            else:
+                return web.Response(status=400)  # some other error
+        filename = results[2]
+        return web.FileResponse(filename, status=200)
 
     # @routes.get(...)
     @authenticate_by_token_required_fields(["user"])
@@ -656,11 +711,17 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
-        router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
+        router.add_get(
+            "/MK/annotations/{number}/{question}/{edition}", self.Mget_annotations
+        )
+        router.add_get(
+            "/MK/annotations_image/{number}/{question}/{edition}",
+            self.Mget_annotations_image,
+        )
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)

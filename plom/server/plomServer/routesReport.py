@@ -221,14 +221,6 @@ class ReportHandler:
         # Ex: [['mrk-t11-q1-v1', 'user0', '20:06:21-01:21:47'], ... ]
         return web.json_response(self.server.RgetOutToDo(), status=200)
 
-    # @routes.get("/REP/marked")
-    @authenticate_by_token_required_fields(["user", "q", "v"])
-    def RgetMarked(self, d, request):
-        # TODO: Requires documentation.
-        if not d["user"] == "manager":
-            return web.Response(status=401)
-        return web.json_response(self.server.RgetMarked(d["q"], d["v"]), status=200)
-
     # @routes.get("/REP/status/{test}")
     @authenticate_by_token_required_fields(["user"])
     def RgetStatus(self, data, request):
@@ -306,20 +298,6 @@ class ReportHandler:
             return web.Response(status=401)
         testNumber = request.match_info["test"]
         rmsg = self.server.RgetOriginalFiles(testNumber)
-
-        if len(rmsg) > 0:
-            return web.json_response(rmsg, status=200)
-        else:
-            return web.Response(status=404)
-
-    # @routes.get("/REP/annotatedFiles/{test}")
-    @authenticate_by_token_required_fields(["user"])
-    def RgetAnnotatedFiles(self, d, request):
-        # TODO: Requires documentation.
-        if not d["user"] == "manager":
-            return web.Response(status=401)
-        testNumber = request.match_info["test"]
-        rmsg = self.server.RgetAnnotatedFiles(testNumber)
 
         if len(rmsg) > 0:
             return web.json_response(rmsg, status=200)
@@ -445,39 +423,6 @@ class ReportHandler:
         # [Test number, User who did the totalling, Time of totalling, Total mark]
         return web.json_response(rmsg, status=200)
 
-    # @routes.get("/REP/annotatedImage")
-    @authenticate_by_token_required_fields(
-        ["user", "testNumber", "questionNumber", "version"]
-    )
-    def RgetAnnotatedImage(self, data, request):
-        """Responses with the annotated image of the requested question.
-
-        Responds with status 200/404.
-
-        Args:
-            data (dict): Dictionary including user data in addition to question number.
-            request (aiohttp.web_request.Request): Request of type GET /REP/annotatedImage.
-
-        Returns:
-            aiohttp.web_response.Response: A response including the path to the annotated image.
-        """
-
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-        annotated_page_response = self.server.RgetAnnotatedImage(
-            data["testNumber"], data["questionNumber"], data["version"]
-        )
-
-        retrieve_annotated_success = annotated_page_response[0]
-
-        if retrieve_annotated_success:
-            # TODO: Shouldn't this be annotated_page_response[1:] ?
-            annotated_image_paths = annotated_page_response[1]
-
-            return web.FileResponse(annotated_page_response[1], status=200)
-        else:
-            return web.Response(status=404)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -485,7 +430,6 @@ class ReportHandler:
             router (aiohttp.web_urldispatcher.UrlDispatcher): Router object which we will add the
                 response functions to.
         """
-
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
         router.add_get("/REP/completeHW", self.RgetCompleteHW)
@@ -494,7 +438,6 @@ class ReportHandler:
         router.add_get("/REP/progress", self.RgetProgress)
         router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
-        router.add_get("/REP/marked", self.RgetMarked)
         router.add_get("/REP/identified", self.RgetIdentified)
         router.add_get("/REP/completionStatus", self.RgetCompletionStatus)
         router.add_get("/REP/outToDo", self.RgetOutToDo)
@@ -502,10 +445,8 @@ class ReportHandler:
         router.add_get("/REP/spreadSheet", self.RgetSpreadsheet)
         router.add_get("/REP/originalFiles/{test}", self.RgetOriginalFiles)
         router.add_get("/REP/coverPageInfo/{test}", self.RgetCoverPageInfo)
-        router.add_get("/REP/annotatedFiles/{test}", self.RgetAnnotatedFiles)
         router.add_get("/REP/userList", self.RgetUserList)
         router.add_get("/REP/userDetails", self.RgetUserDetails)
         router.add_get("/REP/markReview", self.RgetMarkReview)
         router.add_get("/REP/idReview", self.RgetIDReview)
         router.add_get("/REP/totReview", self.RgetTotReview)
-        router.add_get("/REP/annotatedImage", self.RgetAnnotatedImage)

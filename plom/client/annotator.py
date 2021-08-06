@@ -1685,11 +1685,8 @@ class Annotator(QWidget):
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
-        # TODO: interleave the underlay filenames and their metadata
         plomData = {
-            "fileNames": [os.path.basename(x["filename"]) for x in self.src_img_data],
-            "orientations": [x["orientation"] for x in self.src_img_data],
-            "database_ids": [x["id"] for x in self.src_img_data],
+            "base_images": self.src_img_data,
             "saveName": os.path.basename(self.saveName),
             "markState": self.getMarkingState(),
             "maxMark": self.maxMark,

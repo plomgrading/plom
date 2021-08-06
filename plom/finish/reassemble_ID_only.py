@@ -1,21 +1,21 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
 import getpass
-import os
 from multiprocessing import Pool
+import os
+from pathlib import Path
+import shutil
+import tempfile
+
 from tqdm import tqdm
 
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.finish.locationSpecCheck import locationAndSpecCheck
-from .examReassembler import reassemble
-
-
-numberOfTests = 0
-numberOfQuestions = 0
+from plom.finish.examReassembler import reassemble
 
 
 def _parfcn(y):
@@ -29,31 +29,30 @@ def _parfcn(y):
     reassemble(*y)
 
 
-def reassemble_test_CMD(msgr, short_name, outDir, t, sid):
+def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
     """Reassembles a test with a filename that includes the directory and student id.
 
     Args:
         msgr (FinishMessenger): the messenger to the plom server.
+        tmpdir (pathlib.Path): where to store the temporary files.
+        outdir (pathlib.Path): where to put the reassembled test.
         short_name (str): the name of the test.
-        outDir (str): the directory the reassembled test will exist in.
-        t (int): test number.
+        t (int/str): test number.
         sid (str): student id.
 
     Returns:
         tuple (outname, short_name, sid, None, rnames): descriptions below.
-        outname (str): the full name of the file.
-        short_name (str): same as argument.
-        sid (str): sane as argument.
-        rnames (str): the real file name.
+            outname (str): the full name of the file.
+            short_name (str): same as argument.
+            sid (str): sane as argument.
+            None: placeholder for the coverpage which is not used here
+            id_pages: pages flagged as id_pages, empty
+            question_pagess: we pass all pages here
+            dnm_pages: pages flagged as do-not-mark, empty
     """
-    fnames = msgr.RgetOriginalFiles(t)
-    if len(fnames) == 0:
-        # TODO: what is supposed to happen here?
-        return
-    rnames = fnames
-    outname = os.path.join(outDir, "{}_{}.pdf".format(short_name, sid))
-    # reassemble(outname, short_name, sid, None, rnames)
-    return (outname, short_name, sid, None, rnames)
+    fnames = msgr.RgetOriginalFiles(t)  # uses deprecated filesystem access
+    outname = outdir / f"{short_name}_{sid}.pdf"
+    return (outname, short_name, sid, None, [], fnames, [])
 
 
 def main(server=None, pwd=None):
@@ -79,29 +78,30 @@ def main(server=None, pwd=None):
         )
         exit(1)
 
-    shortName = msgr.getInfoShortName()
-    spec = msgr.get_spec()
+    try:
+        shortName = msgr.getInfoShortName()
+        spec = msgr.get_spec()
+        if not locationAndSpecCheck(spec):
+            raise RuntimeError("Problems confirming location and specification.")
 
-    if not locationAndSpecCheck(spec):
-        print("Problems confirming location and specification. Exiting.")
+        outdir = Path("reassembled_ID_but_not_marked")
+        outdir.mkdir(exist_ok=True)
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        print(f"Downloading to temp directory {tmpdir}")
+
+        identifiedTests = msgr.RgetIdentified()
+        pagelists = []
+        for t in identifiedTests:
+            if identifiedTests[t][0] is not None:
+                dat = download_page_images(
+                    msgr, tmpdir, outdir, shortName, t, identifiedTests[t][0]
+                )
+                pagelists.append(dat)
+            else:
+                print(">>WARNING<< Test {} has no ID".format(t))
+    finally:
         msgr.closeUser()
         msgr.stop()
-        exit(1)
-
-    outDir = "reassembled_ID_but_not_marked"
-    os.makedirs(outDir, exist_ok=True)
-
-    identifiedTests = msgr.RgetIdentified()
-    pagelists = []
-    for t in identifiedTests:
-        if identifiedTests[t][0] is not None:
-            dat = reassemble_test_CMD(msgr, shortName, outDir, t, identifiedTests[t][0])
-            pagelists.append(dat)
-        else:
-            print(">>WARNING<< Test {} has no ID".format(t))
-
-    msgr.closeUser()
-    msgr.stop()
 
     N = len(pagelists)
     print("Reassembling {} papers...".format(N))
@@ -112,6 +112,7 @@ def main(server=None, pwd=None):
     print(
         "This still gets files by looking into server directory. In future this should be done over http."
     )
+    shutil.rmtree(tmpdir)
 
 
 if __name__ == "__main__":

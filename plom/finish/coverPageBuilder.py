@@ -29,7 +29,7 @@ table, th, td {
 )
 
 
-def makeCover(test_num, sname, sid, tab):
+def makeCover(test_num, sname, sid, tab, pdfname):
     """Create html page of name ID etc and table of marks.
 
     Args:
@@ -37,6 +37,7 @@ def makeCover(test_num, sname, sid, tab):
         sname (str): student name.
         sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.
+        pdfname (pathlib.Path): filename to save the pdf into
     """
     htmlText = """
 <html>
@@ -71,7 +72,4 @@ def makeCover(test_num, sname, sid, tab):
 </html>"""
     # Pipe the htmltext into weasyprint.
     cover = HTML(string=htmlText)
-    # Write out the coverpage to PDF call it cover_X.pdf where X=StudentID.
-    cover.write_pdf(
-        "coverPages/cover_{}.pdf".format(str(test_num).zfill(4)), stylesheets=[css]
-    )
+    cover.write_pdf(pdfname, stylesheets=[css])

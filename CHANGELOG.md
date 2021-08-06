@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `plom-server launch --mastertoken aabbccdd...` replaces the old way (without the keyword argument).
 
 ### Fixed
-
+* `plom-finish reassemble` not longer needs direct file access to the server (except when using the `--ided-only` option).
+* low-level API changes and improvements.
 
 
 ## [0.6.5] - 2021-07-19
