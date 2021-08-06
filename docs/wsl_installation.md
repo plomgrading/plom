@@ -27,8 +27,7 @@ sudo apt install \
         cmake make imagemagick dvipng g++ openssl \
         libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
-        python3-pyqrcode python3-png python3-dev \
-        python3-pip python3-setuptools python3-wheel \
+        python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pil \
         python3-tqdm python3-toml \

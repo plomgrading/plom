@@ -20,7 +20,7 @@ Tested on Fedora 34.  Some stuff from the package manager:
   # sudo dnf install \
         ImageMagick openssl zbar gcc gcc+c++ cmake \
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
-        python3-passlib python3-pypng python3-qt5 \
+        python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
         python3-urllib3 python3-more-itertools \
         python3-seaborn python3-aiohttp \
@@ -35,7 +35,7 @@ Tested on Fedora 34.  Some stuff from the package manager:
 At this point `pip install --user .` from inside the Plom source tree should pull
 in the remaining dependencies.  Alternatively, you can do something like:
 ```
-  # pip install --upgrade --user pyqrcode pyzbar jpegtran-cffi
+  # pip install --upgrade --user pyzbar jpegtran-cffi
 ```
 There are additional dependencies for the machine-learning-based ID Reader:
 ```
@@ -60,8 +60,7 @@ Some stuff from the package manager:
         cmake make imagemagick dvipng g++ openssl \
         libzbar0 libjpeg-turbo8-dev libturbojpeg0-dev python3-cffi \
         python3-passlib python3-pandas python3-pyqt5 python3-pytest \
-        python3-pyqrcode python3-png python3-dev \
-        python3-pip python3-setuptools python3-wheel \
+        python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pil \
         python3-tqdm libpango-1.0-0 libpangocairo-1.0-0
