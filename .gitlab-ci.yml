@@ -1129,8 +1129,9 @@ macos_tests:
   # pip install cffi
   # pip install jpegtran-cffi
   - pip install .
-  - pip -m plom.scripts.build --version
-  - pip -m plom.scripts.client --version
+  - python -m plom.scripts.build --version
+  - python -m plom.scripts.client --version
+  - pytest -l --pyargs plom
 
 
 macos_tests1015:
@@ -1160,8 +1161,9 @@ macos_tests1015:
   # pip install cffi
   # pip install jpegtran-cffi
   - pip install .
-  - pip -m plom.scripts.build --version
-  - pip -m plom.scripts.client --version
+  - python -m plom.scripts.build --version
+  - python -m plom.scripts.client --version
+  - pytest -l --pyargs plom
 
 
 .shared_windows_runners:
