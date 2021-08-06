@@ -187,7 +187,6 @@ class Server:
         RgetOriginalFiles,
         RgetMarkReview,
         RgetIDReview,
-        RgetAnnotatedImage,
         RgetUserList,
         RgetUserDetails,
     )

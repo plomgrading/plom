@@ -463,25 +463,6 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
     return filtered
 
 
-def RgetAnnotatedImage(self, test_number, question, version):
-    """Return the filename of the annotated image for the given test/question/version."""
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:  # sanity check
-        return [False]
-    qref = QGroup.get_or_none(
-        QGroup.test == tref,
-        QGroup.question == question,
-        QGroup.version == version,
-        QGroup.marked == True,
-    )
-    if qref is None:  # another sanity check.
-        return [False]
-    log.debug(
-        "Sending annotated image of tqv {}.{}.{}".format(test_number, question, version)
-    )
-    return [True, qref.annotations[-1].aimage.file_name]
-
-
 def RgetIDReview(self):
     """Return information about every identified paper.
     For each paper return a tuple of [test_number, who did the iding, the time, the student ID, and the student name]

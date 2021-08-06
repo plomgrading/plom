@@ -1398,7 +1398,7 @@ class Manager(QWidget):
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
-        img = managerMessenger.RgetAnnotatedImage(test, question, version)
+        img = managerMessenger.get_annotations_image(test, question)
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(img)
             rvw = ReviewViewWindow(self, [fh.name])

@@ -75,10 +75,6 @@ def RgetTotReview(self):
     return self.DB.RgetTotReview()
 
 
-def RgetAnnotatedImage(self, testNumber, questionNumber, version):
-    return self.DB.RgetAnnotatedImage(testNumber, questionNumber, version)
-
-
 def RgetUserList(self):
     return sorted(self.DB.getUserList())
 

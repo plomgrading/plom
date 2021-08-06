@@ -1375,41 +1375,6 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def RgetAnnotatedImage(self, testNumber, questionNumber, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/annotatedImage".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                    "questionNumber": questionNumber,
-                    "version": version,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-            img = BytesIO(response.content).getvalue()
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.{}.{}".format(
-                        testNumber, questionNumber, version
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return img
-
     def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
         try:

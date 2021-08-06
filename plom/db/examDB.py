@@ -174,7 +174,6 @@ class PlomDB:
         RgetOriginalFiles,
         RgetCoverPageInfo,
         RgetMarkReview,
-        RgetAnnotatedImage,
         RgetIDReview,
         RgetUserFullProgress,
     )
