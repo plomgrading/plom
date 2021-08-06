@@ -255,8 +255,11 @@ class PlomServer:
         m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
         count = 0
         while True:
-            assert self.process_is_running()
-            assert self._brief_wait(0.25), "Server died on us!"
+            if not self.process_is_running():
+                return False
+            if not self._brief_wait(0.25):
+                print("Server died while we waited for ping")
+                return False
             try:
                 r = m.start()
             except PlomBenignException:
@@ -268,7 +271,8 @@ class PlomServer:
             if count >= 10:
                 print("we tried 10 times but server is not up yet!")
                 return False
-        assert self.process_is_running()
+        if not self.process_is_running():
+            return False
         specfile = SpecVerifier.load_verified(
             fname=self.basedir / specdirname / "verifiedSpec.toml"
         )
@@ -277,8 +281,7 @@ class PlomServer:
             print("Server's publicCode doesn't match: wrong server? wrong address?")
             return False
         m.stop()
-        assert self.process_is_running()
-        return True
+        return self.process_is_running()
 
     def __del__(self):
         print(f'Deleting PlomServer object "{self}"')
