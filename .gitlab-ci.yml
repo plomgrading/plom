@@ -1128,6 +1128,7 @@ macos_tests:
   # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
   # pip install cffi
   # pip install jpegtran-cffi
+  - pip install pytest
   - pip install .
   - python -m plom.scripts.build --version
   - python -m plom.scripts.client --version
@@ -1160,6 +1161,7 @@ macos_tests1015:
   # brew install libjpeg libjpeg-turbo jpeg-turbo libffi
   # pip install cffi
   # pip install jpegtran-cffi
+  - pip install pytest
   - pip install .
   - python -m plom.scripts.build --version
   - python -m plom.scripts.client --version
