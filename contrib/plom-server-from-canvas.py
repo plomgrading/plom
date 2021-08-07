@@ -250,7 +250,7 @@ def get_submissions(
                 # TODO: try catch to a timeout/failed list?
                 r = requests.get(obj["url"])
                 with open(filename, "wb") as f:
-                    f.write(r.contents)
+                    f.write(r.content)
             else:
                 filename.touch()
 
