@@ -217,12 +217,9 @@ def get_submissions(
             # print(f"Skipping submission {sub_name} --- exists already")
             continue
 
-        try:
-            attachments = sub.attachments
-        except AttributeError:  # student didn't submit
-            # TODO: consider just making empty list?
+        attachments = getattr(sub, 'attachments', [])
+        if not attachments:
             unsubmitted += [sub]
-            continue
 
         if True:
             # If the student submitted multiple times, get _all_
