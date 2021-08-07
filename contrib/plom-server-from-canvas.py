@@ -203,8 +203,7 @@ def get_submissions(
     errors = []
     for sub in tqdm(subs):
         # Try to avoid overheating the canvas api (this is soooooo dumb lol)
-        time.sleep(random.random())
-        # time.sleep(random.uniform(0.5, 1.5))
+        time.sleep(random.uniform(0.5, 1.0))
         if name_by_info:
             canvas_id = sub.user_id
             stud_name, stud_sis_id = conversion[str(canvas_id)]
@@ -252,7 +251,7 @@ def get_submissions(
                 filename.touch()
                 continue
 
-            time.sleep(random.uniform(2.5, 6.5))
+            time.sleep(random.uniform(0.5, 1.5))
             # TODO: try catch to a timeout/failed list?
             r = requests.get(obj["url"])
             with open(filename, "wb") as f:
