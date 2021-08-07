@@ -297,20 +297,20 @@ def scan_submissions(server_dir="."):
     """
     Apply `plom-scan` to all the pdfs we've just pulled from canvas
     """
-    o_dir = os.getcwd()
-    os.chdir(server_dir)
+    server_dir = Path(server_dir)
 
     user_list = []
-    with open("userListRaw.csv", "r") as csvfile:
+    with open(server_dir / "userListRaw.csv", "r") as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             user_list += [row]
 
+    print("Temporarily exporting scanner password...")
     os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
 
-    os.chdir("upload")
-
-    print("Temporarily exporting scanner password...")
+    print("Temporarily changing working directory")
+    o_dir = os.getcwd()
+    os.chdir(server_dir / "upload")
 
     # TODO: Parallelize here
     print("Applying `plom-hwscan` to pdfs...")
