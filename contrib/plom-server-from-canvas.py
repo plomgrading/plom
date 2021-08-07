@@ -211,7 +211,7 @@ def get_submissions(
         else:
             sub_name = f"{sub.user_id}"
 
-        if (not replace_existing) and (os.path.exists(f"{sub_name}.pdf")):
+        if (not replace_existing) and (for_plom / f"{sub_name}.pdf").exists():
             print(f"Skipping submission {sub_name} --- exists already")
             continue
 
