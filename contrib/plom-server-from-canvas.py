@@ -195,8 +195,7 @@ def get_submissions(
     print("Moved into ./upload/submittedHWByQ")
 
     print("Fetching & preprocessing submissions...")
-    # TODO: why force to list?
-    subs = list(assignment.get_submissions())
+    subs = assignment.get_submissions()
 
     unsubmitted = []
     timeouts = []
