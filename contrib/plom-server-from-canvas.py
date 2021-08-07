@@ -17,14 +17,11 @@ your own risk, no warranty, etc, etc.
    my_key = "11224~AABBCCDDEEFF..."
    ```
 2. Run `python plom-server-from-canvas.py`
-   You will need the `aria2c` command-line downloader in addition
-   to the usual Plom dependencies.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
 TODO:
   * needs to log instead of just discarding so much output
-  * drop aria2c dep
   * support an existing configured server in basedir: or fork
 """
 
@@ -39,6 +36,7 @@ import time
 
 import fitz
 import PIL.Image
+import requests
 from tqdm import tqdm
 
 from plom import __version__
@@ -200,14 +198,12 @@ def get_submissions(
     # TODO: why force to list?
     subs = list(assignment.get_submissions())
 
-    # TODO: Parallelize requests
     unsubmitted = []
     timeouts = []
     errors = []
     for sub in tqdm(subs):
         # Try to avoid overheating the canvas api (this is soooooo dumb lol)
         time.sleep(random.random())
-        # TODO: is `aria2c` actually faster here lol??
         # time.sleep(random.uniform(0.5, 1.5))
         if name_by_info:
             canvas_id = sub.user_id
@@ -267,17 +263,12 @@ def get_submissions(
                     sub_url = obj["url"]
                     if not dry_run:
                         time.sleep(random.uniform(2.5, 6.5))
-                        subprocess.run(
-                            ["aria2c", sub_url, "-o", sub_sub_name, "-t", "240"],
-                            capture_output=True,
-                        )
+                        # TODO: try catch to a timeout/failed list?
+                        r = requests.get(sub_url)
+                        with open(sub_sub_name, "wb") as f:
+                            f.write(r.contents)
                     else:
                         Path(sub_sub_name).touch()
-
-                    # subprocess.run(
-                    #     ["curl", "-L", sub_url, "--output", sub_sub_name],
-                    #     capture_output=True,
-                    # )
 
                     if suffix is not None:
                         pdfname = f"{sub_sub_name}"[: -len(suffix)] + ".pdf"
