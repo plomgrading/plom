@@ -158,17 +158,13 @@ def initialize(course, assignment, server_dir="."):
     # Forest had popen(... ,stdout=subprocess.DEVNULL)
     print("Server *should* be running now")
 
-    try:
-        print("Building classlist...")
-        build_class = subprocess.run(
-            ["plom-build", "class", "classlist.csv"], capture_output=True
-        )
-        print("Building the database...")
-        build_class = subprocess.run(
-            ["plom-build", "make", "--no-pdf"], capture_output=True
-        )
-    finally:
-        os.chdir(o_dir)
+    # TODO: these had capture_output=True but this hides errors
+    print("Building classlist...")
+    build_class = subprocess.check_call(
+        ["plom-build", "class", server_dir / "classlist.csv"]
+    )
+    print("Building the database...")
+    build_class = subprocess.check_call(["plom-build", "make", "--no-pdf"])
 
     return plom_server
 
