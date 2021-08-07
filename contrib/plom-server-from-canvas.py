@@ -209,9 +209,9 @@ def get_submissions(
             canvas_id = sub.user_id
             stud_name, stud_sis_id = conversion[str(canvas_id)]
             last_name, first_name = [name.strip() for name in stud_name.split(",")]
-            sub_name = f"{last_name}_{first_name}.{stud_sis_id}._.pdf".replace(" ", "_")
+            sub_name = f"{last_name}_{first_name}.{stud_sis_id}._".replace(" ", "_")
         else:
-            sub_name = f"{sub.user_id}.pdf"
+            sub_name = f"{sub.user_id}"
 
         if (not replace_existing) and (os.path.exists(sub_name)):
             # print(f"Skipping submission {sub_name} --- exists already")
@@ -221,77 +221,69 @@ def get_submissions(
         if not attachments:
             unsubmitted += [sub]
 
-        sub_subs = []
+        # Loop over all the attachments, save to disc, do some stitching
+        # TODO: useful later to keep the student's original filename somewhere?
+        attachment_filenames = []
         for i, obj in enumerate(attachments):
             assert type(obj) == dict, "Perhaps attachments are not always dicts?"
             assert "content-type" in obj.keys()
             assert "url" in obj.keys()
             assert obj["upload_status"] == "success"  # TODO, or just "continue"
-            suffix = None
             if obj["content-type"] == "null":
+                # TODO: in what cases does this occur?
                 continue
             elif obj["content-type"] == "application/pdf":
-                sub_sub_name = f"{i:02}-{sub_name}"
+                suffix = "pdf"
             elif obj["content-type"] == "image/png":
                 suffix = ".png"
-                # TODO: this is kinda confusing: strip pdf and replace
-                sub_sub_name = f"{i:02}-{sub_name}"[:-4] + suffix
             elif obj["content-type"] == "image/jpg":
                 suffix = ".jpg"
-                sub_sub_name = f"{i:02}-{sub_name}"[:-4] + suffix
             elif obj["content-type"] == "image/jpeg":
                 suffix = ".jpeg"
-                sub_sub_name = f"{i:02}-{sub_name}"[:-4] + suffix
-            # TODO: zip?
             else:
                 print(f"unexpected content-type {obj['content-type']}: for now, appending to error list")
                 errors.append(sub)
+            filename = Path(f"{i:02}-{sub_name}.{suffix}")
 
-            sub_url = obj["url"]
             if not dry_run:
                 time.sleep(random.uniform(2.5, 6.5))
                 # TODO: try catch to a timeout/failed list?
-                r = requests.get(sub_url)
-                with open(sub_sub_name, "wb") as f:
+                r = requests.get(obj["url"])
+                with open(filename, "wb") as f:
                     f.write(r.contents)
             else:
-                Path(sub_sub_name).touch()
+                filename.touch()
 
-            if suffix is not None:
-                pdfname = f"{sub_sub_name}"[: -len(suffix)] + ".pdf"
+            if suffix != "pdf":
+                pdfname = filename.with_suffix(".pdf")
                 if not dry_run:
-                    img = PIL.Image.open(sub_sub_name)
+                    # TODO: fitz can do this too
+                    img = PIL.Image.open(filename)
                     img = img.convert("RGB")
                     img.save(pdfname)
-                    sub_sub_name = pdfname
                 else:
-                    Path(pdfname).touch()
+                    pdfname.touch()
+                filename = pdfname
 
-            sub_subs += [sub_sub_name]
+            attachment_filenames.append(filename)
 
-        if sub_subs and not dry_run:
-            # Stitch together
-            # TODO: instead of stitching, process each file from latest attempt
+        if attachment_filenames and not dry_run:
+            # TODO: stitching not ideal: prefer bundles from original files
+            # TODO: this is overkill in the common case of just one file!
             doc = fitz.Document()
-            for sub_sub in sub_subs:
+            for sub_sub in attachment_filenames:
                 print(sub_sub)
-                try:
-                    to_insert = fitz.open(sub_sub)
-                except RuntimeError:
-                    # TODO? How could they be unfound?  This will lead to crash if we skip all...
-                    print(f"Could not find {sub_sub}.")
-                    print(f"Current directory: {os.getcwd()}")
-                    print(f"Contents:", os.listdir())
+                to_insert = fitz.open(sub_sub)
                 try:
                     doc.insert_pdf(to_insert)
                 except RuntimeError:
                     print(f"Skipped {sub_sub} because of error")
                     errors.append(sub)
 
-            doc.save(sub_name)
+            doc.save(f"{sub_name}.pdf")
             # Clean up temporary files
-            for sub_sub in sub_subs:
-                (Path(".") / sub_sub).unlink()
+            for x in attachment_filenames:
+                x.unlink()
 
     for sub in unsubmitted:
         print(f"No submission from user_id {sub.user_id}")
