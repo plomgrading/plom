@@ -183,16 +183,16 @@ def get_submissions(
 
     """
     server_dir = Path(server_dir)
-    o_dir = os.getcwd()
 
     if name_by_info:
         print("Fetching conversion table...")
         conversion = get_conversion_table(server_dir=server_dir)
 
-    (server_dir / "upload" / "submittedHWByQ").mkdir(exist_ok=True, parents=True)
+    tmp_downloads = server_dir / "upload" / "tmp_downloads"
+    for_plom = server_dir / "upload" / "submittedHWByQ"
 
-    os.chdir(server_dir / "upload" / "submittedHWByQ")
-    print("Moved into ./upload/submittedHWByQ")
+    tmp_downloads.mkdir(exist_ok=True, parents=True)
+    for_plom.mkdir(exist_ok=True, parents=True)
 
     print("Fetching & preprocessing submissions...")
     subs = assignment.get_submissions()
@@ -243,10 +243,10 @@ def get_submissions(
                     f"unexpected content-type {obj['content-type']}: for now, appending to error list"
                 )
                 errors.append(sub)
-            filename = Path(f"{i:02}-{sub_name}.{suffix}")
+            filename = tmp_downloads / f"{i:02}-{sub_name}.{suffix}"
 
             if dry_run:
-                print(f"dry-run, but would download {filename}")
+                print(f"dry-run, but would download {filename.name}")
                 filename.touch()
                 continue
 
@@ -265,7 +265,7 @@ def get_submissions(
 
             attachment_filenames.append(filename)
 
-        final_name = Path(f"{sub_name}.pdf")
+        final_name = for_plom / f"{sub_name}.pdf"
         if len(attachment_filenames) == 0:
             # TODO: what is this case, can it happen?
             pass
@@ -291,8 +291,6 @@ def get_submissions(
         print(f"No submission from user_id {sub.user_id}")
     for sub in errors:
         print(f"Error processing from user_id {sub.user_id}")
-
-    os.chdir(o_dir)
 
 
 def scan_submissions(server_dir="."):
