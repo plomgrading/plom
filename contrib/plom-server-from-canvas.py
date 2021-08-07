@@ -272,10 +272,7 @@ def get_submissions(
                             capture_output=True,
                         )
                     else:
-                        subprocess.run(
-                            ["touch", sub_sub_name],
-                            capture_output=True,
-                        )
+                        Path(sub_sub_name).touch()
 
                     # subprocess.run(
                     #     ["curl", "-L", sub_url, "--output", sub_sub_name],
@@ -290,7 +287,7 @@ def get_submissions(
                             img.save(pdfname)
                             sub_sub_name = pdfname
                         else:
-                            subprocess.run(["touch", pdfname])
+                            Path(pdfname).touch()
 
                     sub_subs += [sub_sub_name]
 
