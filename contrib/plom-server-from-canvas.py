@@ -219,7 +219,7 @@ def get_submissions(
 
         attachments = getattr(sub, 'attachments', [])
         if not attachments:
-            unsubmitted += [sub]
+            unsubmitted.append(sub)
 
         # Loop over all the attachments, save to disc, do some stitching
         # TODO: useful later to keep the student's original filename somewhere?
@@ -267,20 +267,27 @@ def get_submissions(
 
             attachment_filenames.append(filename)
 
-        if attachment_filenames and not dry_run:
+        final_name = Path(f"{sub_name}.pdf")
+        if dry_run:
+            # TODO: still not sure what point of this is
+            final_name.touch()
+        elif len(attachment_filenames) == 0:
+            # TODO: what is this case, can it happen?
+            pass
+        elif len(attachment_filenames) == 1:
+            attachment_filenames[0].rename(final_name)
+        else:
             # TODO: stitching not ideal: prefer bundles from original files
-            # TODO: this is overkill in the common case of just one file!
             doc = fitz.Document()
-            for sub_sub in attachment_filenames:
-                print(sub_sub)
-                to_insert = fitz.open(sub_sub)
+            for f in attachment_filenames:
                 try:
-                    doc.insert_pdf(to_insert)
+                    doc.insert_pdf(fitz.open(f))
                 except RuntimeError:
-                    print(f"Skipped {sub_sub} because of error")
+                    print(f"We had problems with {sub} because of error on {f}")
                     errors.append(sub)
-
-            doc.save(f"{sub_name}.pdf")
+            # TODO: this could easily fail if we failed to the insertions above
+            # TODO: anyway, like I said above, stitching not ideal
+            doc.save(final_name)
             # Clean up temporary files
             for x in attachment_filenames:
                 x.unlink()
