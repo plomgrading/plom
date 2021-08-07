@@ -247,33 +247,28 @@ def get_submissions(
                 errors.append(sub)
             filename = Path(f"{i:02}-{sub_name}.{suffix}")
 
-            if not dry_run:
-                time.sleep(random.uniform(2.5, 6.5))
-                # TODO: try catch to a timeout/failed list?
-                r = requests.get(obj["url"])
-                with open(filename, "wb") as f:
-                    f.write(r.content)
-            else:
+            if dry_run:
+                print(f"dry-run, but would download {filename}")
                 filename.touch()
+                continue
+
+            time.sleep(random.uniform(2.5, 6.5))
+            # TODO: try catch to a timeout/failed list?
+            r = requests.get(obj["url"])
+            with open(filename, "wb") as f:
+                f.write(r.content)
 
             if suffix != "pdf":
-                pdfname = filename.with_suffix(".pdf")
-                if not dry_run:
-                    # TODO: fitz can do this too
-                    img = PIL.Image.open(filename)
-                    img = img.convert("RGB")
-                    img.save(pdfname)
-                else:
-                    pdfname.touch()
-                filename = pdfname
+                # TODO: fitz can do this too
+                img = PIL.Image.open(filename)
+                img = img.convert("RGB")
+                filename = filename.with_suffix(".pdf")
+                img.save(filename)
 
             attachment_filenames.append(filename)
 
         final_name = Path(f"{sub_name}.pdf")
-        if dry_run:
-            # TODO: still not sure what point of this is
-            final_name.touch()
-        elif len(attachment_filenames) == 0:
+        if len(attachment_filenames) == 0:
             # TODO: what is this case, can it happen?
             pass
         elif len(attachment_filenames) == 1:
