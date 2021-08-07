@@ -212,8 +212,8 @@ def get_submissions(
         else:
             sub_name = f"{sub.user_id}"
 
-        if (not replace_existing) and (os.path.exists(sub_name)):
-            # print(f"Skipping submission {sub_name} --- exists already")
+        if (not replace_existing) and (os.path.exists(f"{sub_name}.pdf")):
+            print(f"Skipping submission {sub_name} --- exists already")
             continue
 
         attachments = getattr(sub, "attachments", [])
