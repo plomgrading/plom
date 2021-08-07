@@ -283,9 +283,9 @@ def get_submissions(
             # TODO: this could easily fail if we failed to the insertions above
             # TODO: anyway, like I said above, stitching not ideal
             doc.save(final_name)
-            # Clean up temporary files
-            for x in attachment_filenames:
-                x.unlink()
+            # Clean up temporary files (TODO: for now we leave them)
+            # for x in attachment_filenames:
+            #    x.unlink()
 
     for sub in unsubmitted:
         print(f"No submission from user_id {sub.user_id}")
