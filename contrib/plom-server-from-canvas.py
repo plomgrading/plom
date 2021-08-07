@@ -203,6 +203,7 @@ def get_submissions(
     # TODO: Parallelize requests
     unsubmitted = []
     timeouts = []
+    errors = []
     for sub in tqdm(subs):
         # Try to avoid overheating the canvas api (this is soooooo dumb lol)
         time.sleep(random.random())
@@ -258,9 +259,8 @@ def get_submissions(
                         sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
                     # TODO: zip?
                     else:
-                        raise ValueError(
-                            f"unexpected content-type {obj['content-type']}: what to do?"
-                        )
+                        print(f"unexpected content-type {obj['content-type']}: for now, appending to error list")
+                        errors.append(sub)
 
                     version += 1
 
@@ -296,15 +296,22 @@ def get_submissions(
 
             if sub_subs and not dry_run:
                 # Stitch together
+                # TODO: instead of stitching, process each file from latest attempt
                 doc = fitz.Document()
                 for sub_sub in sub_subs:
+                    print(sub_sub)
                     try:
                         to_insert = fitz.open(sub_sub)
-                        doc.insert_pdf(to_insert)
                     except RuntimeError:
+                        # TODO? How could they be unfound?  This will lead to crash if we skip all...
                         print(f"Could not find {sub_sub}.")
                         print(f"Current directory: {os.getcwd()}")
                         print(f"Contents:", os.listdir())
+                    try:
+                        doc.insert_pdf(to_insert)
+                    except RuntimeError:
+                        print(f"Skipped {sub_sub} because of error")
+                        errors.append(sub)
 
                 doc.save(sub_name)
                 # Clean up temporary files
@@ -313,6 +320,8 @@ def get_submissions(
 
     for sub in unsubmitted:
         print(f"No submission from user_id {sub.user_id}")
+    for sub in errors:
+        print(f"Error processing from user_id {sub.user_id}")
 
     os.chdir(o_dir)
 
