@@ -314,19 +314,20 @@ def scan_submissions(server_dir="."):
 
     # TODO: Parallelize here
     print("Applying `plom-hwscan` to pdfs...")
-    pdfs = [f for f in os.listdir("submittedHWByQ") if ".pdf" == f[-4:]]
-    for pdf in tqdm(pdfs):
-        stud_id = pdf.split(".")[1]
-        assert len(stud_id) == 8
+    for pdf in tqdm(Path("submittedHWByQ").glob("*.pdf")):
+        # get 12345678 from blah_blah.blah_blah.12345678._.
+        sid = pdf.stem.split(".")[-2]
+        assert len(sid) == 8
+        # TODO: capture output and put it all in a log file?
         subprocess.run(
-            ["plom-hwscan", "process", "submittedHWByQ/" + pdf, stud_id, "-q", "1"],
-            capture_output=True,
+            ["plom-hwscan", "process", pdf, sid, "-q", "1"],
+            # capture_output=True,
         )
 
     # Clean up any missing submissions
     subprocess.run(
         ["plom-hwscan", "missing"],
-        capture_output=True,
+        # capture_output=True,
     )
 
     os.chdir(o_dir)
