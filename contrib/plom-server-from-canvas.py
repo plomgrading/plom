@@ -217,7 +217,7 @@ def get_submissions(
             # print(f"Skipping submission {sub_name} --- exists already")
             continue
 
-        attachments = getattr(sub, 'attachments', [])
+        attachments = getattr(sub, "attachments", [])
         if not attachments:
             unsubmitted.append(sub)
 
@@ -241,7 +241,9 @@ def get_submissions(
             elif obj["content-type"] == "image/jpeg":
                 suffix = ".jpeg"
             else:
-                print(f"unexpected content-type {obj['content-type']}: for now, appending to error list")
+                print(
+                    f"unexpected content-type {obj['content-type']}: for now, appending to error list"
+                )
                 errors.append(sub)
             filename = Path(f"{i:02}-{sub_name}.{suffix}")
 
