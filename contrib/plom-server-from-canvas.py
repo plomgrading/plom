@@ -221,11 +221,8 @@ def get_submissions(
         if not attachments:
             unsubmitted += [sub]
 
-        version = 0
         sub_subs = []
-        for obj in attachments:
-            # sub-submission name --- prepend with a version
-            # number to make stitching them together easier
+        for i, obj in enumerate(attachments):
             assert type(obj) == dict, "Perhaps attachments are not always dicts?"
             assert "content-type" in obj.keys()
             assert "url" in obj.keys()
@@ -234,22 +231,21 @@ def get_submissions(
             if obj["content-type"] == "null":
                 continue
             elif obj["content-type"] == "application/pdf":
-                sub_sub_name = f"{version:02}-{sub_name}"
+                sub_sub_name = f"{i:02}-{sub_name}"
             elif obj["content-type"] == "image/png":
                 suffix = ".png"
-                sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+                # TODO: this is kinda confusing: strip pdf and replace
+                sub_sub_name = f"{i:02}-{sub_name}"[:-4] + suffix
             elif obj["content-type"] == "image/jpg":
                 suffix = ".jpg"
-                sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+                sub_sub_name = f"{i:02}-{sub_name}"[:-4] + suffix
             elif obj["content-type"] == "image/jpeg":
                 suffix = ".jpeg"
-                sub_sub_name = f"{version:02}-{sub_name}"[:-4] + suffix
+                sub_sub_name = f"{i:02}-{sub_name}"[:-4] + suffix
             # TODO: zip?
             else:
                 print(f"unexpected content-type {obj['content-type']}: for now, appending to error list")
                 errors.append(sub)
-
-            version += 1
 
             sub_url = obj["url"]
             if not dry_run:
