@@ -343,6 +343,7 @@ def make_PDF(
     page_versions,
     extra=None,
     no_qr=False,
+    fakepdf=False,
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -360,14 +361,27 @@ def make_PDF(
         page_versions (dict): the version of each page for this paper.
             Note this is an input and must be predetermined before
             calling.
-
-    Keyword Arguments:
         extra (dict/None): Dictionary with student id and name or None.
-        no_qr (bool):  determine whether or not to paste in qr-codes.
+        no_qr (bool): determine whether or not to paste in qr-codes.
+        fakepdf (bool): when true, the build empty "pdf" files by just
+            touching fhe files.  This is could be used in testing or to
+            save time when we have no use for the actual files.  Why?
+            Maybe later confirmation steps check these files exist or
+            something like that...
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
+    if extra:
+        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
+    else:
+        save_name = paperdir / f"exam_{papernum:04}.pdf"
+
+    # make empty files instead of PDFs
+    if fakepdf:
+        save_name.touch()
+        return
+
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create QR codes and other stamps for each test/page/version
@@ -387,12 +401,9 @@ def make_PDF(
             no_qr=no_qr,
         )
 
-    # If provided with student name and id, preprint on cover and change filename
+    # If provided with student name and id, preprint on cover
     if extra:
         exam = insert_extra_info(extra, exam)
-        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
-    else:
-        save_name = paperdir / f"exam_{papernum:04}.pdf"
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save
@@ -400,20 +411,3 @@ def make_PDF(
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.com/plom/plom/issues/284
     exam.save(save_name, garbage=4, deflate=True, clean=True)
-
-
-def make_fakePDF(
-    name,
-    code,
-    length,
-    versions,
-    papernum,
-    page_versions,
-    extra=None,
-):
-    """Twin to the real make_pdf command - makes empty files."""
-    if extra:
-        save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
-    else:
-        save_name = paperdir / f"exam_{papernum:04}.pdf"
-    save_name.touch()

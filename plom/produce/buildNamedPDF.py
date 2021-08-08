@@ -1,16 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
+import csv
+from multiprocessing import Pool
 import os
 from pathlib import Path
-from multiprocessing import Pool
-from tqdm import tqdm
-import csv
 
-from .mergeAndCodePages import make_PDF, make_fakePDF
+from tqdm import tqdm
+
+from .mergeAndCodePages import make_PDF
 from . import paperdir
 
 
@@ -23,12 +24,7 @@ def _make_PDF(x):
     Arguments:
         x (tuple): this is expanded as the arguments to :func:`make_PDF`.
     """
-    fakepdf = x[-1]  # look at last arg - x[-1] = fakepdf
-    y = x[:-1]  # drop the last argument = fakepdf
-    if fakepdf:
-        make_fakePDF(*y)
-    else:
-        make_PDF(*y)
+    make_PDF(*x)
 
 
 def outputProductionCSV(spec, make_PDF_args):
@@ -123,7 +119,7 @@ def build_all_papers(
                 page_version,
                 student_info,
                 no_qr,
-                fakepdf,  # should be last
+                fakepdf,
             )
         )
 
