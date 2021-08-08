@@ -69,7 +69,7 @@ def outputProductionCSV(spec, make_PDF_args):
 
 
 def build_all_papers(
-    spec, global_page_version_map, classlist, fakepdf=False, no_qr=False
+    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False
 ):
     """Builds the papers using _make_PDF.
 
@@ -84,8 +84,12 @@ def build_all_papers(
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
+
+    Keyword arguments:
         fakepdf (bool): when true, the build empty pdfs (actually empty files)
             for use when students upload homework or similar (and only 1 version).
+        no_qr (bool): when True, don't stamp with QR codes.  Default: False
+            (which means *do* stamp with QR codes).
 
     Raises:
         ValueError: classlist is invalid in some way.

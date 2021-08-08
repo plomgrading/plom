@@ -81,6 +81,7 @@ def create_exam_and_insert_QR(
     papernum,
     page_versions,
     qr_file,
+    *,
     no_qr=False,
 ):
     """Creates the exam objects and insert the QR codes.
