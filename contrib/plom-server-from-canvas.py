@@ -164,7 +164,11 @@ def initialize(course, assignment, server_dir="."):
         ["plom-build", "class", server_dir / "classlist.csv"]
     )
     print("Building the database...")
-    build_class = subprocess.check_call(["plom-build", "make", "--no-pdf"])
+    try:
+        os.chdir(server_dir)
+        build_class = subprocess.check_call(["plom-build", "make", "--no-pdf"])
+    finally:
+        os.chdir(o_dir)
 
     return plom_server
 
