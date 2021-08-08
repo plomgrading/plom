@@ -9,7 +9,10 @@ __copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, 
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-paperdir = "papersToPrint"
+from pathlib import Path
+
+paperdir = Path("papersToPrint")
+
 from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed
 from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .buildClasslist import process_class_list

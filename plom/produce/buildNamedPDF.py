@@ -6,13 +6,11 @@
 
 import csv
 from multiprocessing import Pool
-import os
-from pathlib import Path
 
 from tqdm import tqdm
 
+from plom.produce import paperdir
 from .mergeAndCodePages import make_PDF
-from . import paperdir
 
 
 def _make_PDF(x):
@@ -159,21 +157,17 @@ def confirm_processed(spec, msgr, classlist):
                     spec["numberToName"]
                 )
             )
-    for paper_index in range(1, spec["numberToProduce"] + 1):
-        if paper_index <= spec["numberToName"]:
-            PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-                str(paper_index).zfill(4), classlist[paper_index - 1][0]
-            )
+    for papernum in range(1, spec["numberToProduce"] + 1):
+        if papernum <= spec["numberToName"]:
+            sid, sname = classlist[papernum - 1]
+            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
         else:
-            PDF_file_name = Path(paperdir) / "exam_{}.pdf".format(
-                str(paper_index).zfill(4)
-            )
+            pdf_file = paperdir / f"exam_{papernum:04}.pdf"
 
-        # We will raise and error if the pdf file was not found
-        if os.path.isfile(PDF_file_name):
-            msgr.notify_pdf_of_paper_produced(paper_index)
+        if pdf_file.is_file():
+            msgr.notify_pdf_of_paper_produced(papernum)
         else:
-            raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
+            raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
 
 
 def identify_prenamed(spec, msgr, classlist):
@@ -193,19 +187,13 @@ def identify_prenamed(spec, msgr, classlist):
             raise ValueError("You must provide a classlist to prename papers")
         if len(classlist) < spec["numberToName"]:
             raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(
-                    spec["numberToName"]
-                )
+                f"Classlist is too short for {spec['numberToName']} pre-named papers"
             )
-    for paper_index in range(1, spec["numberToProduce"] + 1):
-        if paper_index <= spec["numberToName"]:
-            sid, sname = classlist[paper_index - 1]
-            PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-                str(paper_index).zfill(4), sid
-            )
-            if os.path.isfile(PDF_file_name):
-                msgr.id_paper(paper_index, sid, sname)
+    for papernum in range(1, spec["numberToProduce"] + 1):
+        if papernum <= spec["numberToName"]:
+            sid, sname = classlist[papernum - 1]
+            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
+            if pdf_file.is_file():
+                msgr.id_paper(papernum, sid, sname)
             else:
-                raise RuntimeError(
-                    'Cannot find pdf for paper "{}"'.format(PDF_file_name)
-                )
+                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')

@@ -13,9 +13,7 @@ import pyqrcode
 import fitz
 
 from plom.tpv_utils import encodeTPV
-from plom.produce import paperdir as _paperdir
-
-paperdir = Path(_paperdir)
+from plom.produce import paperdir
 
 
 def create_QR_file_dictionary(length, papernum, page_versions, code, dur):

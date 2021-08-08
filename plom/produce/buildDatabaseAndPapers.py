@@ -2,9 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
-import os
 from getpass import getpass
-import random
 
 from plom import check_version_map
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
@@ -28,7 +26,7 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
     try:
         spec = msgr.get_spec()
         pvmap = msgr.getGlobalPageVersionMap()
-        os.makedirs(paperdir, exist_ok=True)
+        paperdir.mkdir(exist_ok=True)
 
         if spec["numberToName"] > 0:
             classlist = msgr.IDrequestClasslist()
