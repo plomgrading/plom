@@ -386,9 +386,13 @@ def make_PDF(
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
         # create QR codes and other stamps for each test/page/version
-        qr_file = create_QR_file_dictionary(
-            length, papernum, page_versions, code, Path(tmp_dir)
-        )
+        if no_qr:
+            # TODO: tmpdir thing is a unnecessary waste!
+            qr_file = {}
+        else:
+            qr_file = create_QR_file_dictionary(
+                length, papernum, page_versions, code, Path(tmp_dir)
+            )
 
         # We then create the exam pdf while adding the QR codes to it
         exam = create_exam_and_insert_QR(
