@@ -141,13 +141,14 @@ def initialize(course, assignment, server_dir="."):
         os.chdir(server_dir)
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
-        subprocess.run(["plom-build", "parse", "canvasSpec.toml"], capture_output=True)
+        # TODO: capture and log all this output with capture_output=True?
+        subprocess.check_call(["plom-build", "parse", "canvasSpec.toml"])
         print("Running `plom-server init`...")
-        subprocess.run(["plom-server", "init"], capture_output=True)
+        subprocess.check_call(["plom-server", "init"])
         print("Autogenerating users...")
-        subprocess.run(["plom-server", "users", "--auto", "1"], capture_output=True)
+        subprocess.check_call(["plom-server", "users", "--auto", "1"])
         print("Processing userlist...")
-        subprocess.run(["plom-server", "users", "userListRaw.csv"], capture_output=True)
+        subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
     finally:
         os.chdir(o_dir)
 
