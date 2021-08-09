@@ -220,11 +220,20 @@ def processHWScans(
     from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    if not isinstance(questions, list):
-        raise ValueError("You must pass a list of ints for `questions`")
-    for q in questions:
-        if not isinstance(q, int):
-            raise ValueError("You must pass a list of ints for `questions`")
+    def check_question_types(questions):
+        if not isinstance(questions, (tuple, list)):
+            return False
+        for q in questions:
+            if isinstance(q, (tuple, list)):
+                for qq in q:
+                    if not isinstance(qq, int):
+                        return False
+            elif not isinstance(q, int):
+                return False
+        return True
+
+    if not check_question_types(questions):
+        raise ValueError("`questions` expects list-of-ints or list-of-list-of-ints")
 
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
@@ -489,11 +498,17 @@ g.add_argument(
         Which question(s) are answered in file.
         You can pass a single integer, in which case it should match
         the filename `foo_bar.<sid>.N.pdf` as documented elsewhere.
-        You can also pass a list like `-q 1,2,3` in which case your
+        You can also pass a list like `-q [1,2,3]` in which case your
         filename must be of the form `foo_bar.<sid>._.pdf` (a single
         underscore).
         You can also pass the special string `-q all` which uploads
         this file to all questions.
+        If you need to specify questions per page, you can pass a list
+        of lists: each list gives the questions for each page.
+        For example, `-q [[1],[2],[2],[2],[3]]` would upload page 1 to
+        question 1, pages 2-4 to question 2 and page 5 to question 3.
+        A common case is `-q [[1],[2],[3]]` to upload one page per
+        question.
     """,
 )
 g = spP.add_mutually_exclusive_group(required=False)
@@ -592,6 +607,9 @@ def main():
             if questions == "all":
                 N = get_number_of_questions(args.server, args.password)
                 questions = list(range(1, N + 1))
+            elif "[" in questions:
+                # TODO: scary eval
+                questions = eval(questions)
             else:
                 questions = [int(x) for x in questions.split(",")]
             processHWScans(

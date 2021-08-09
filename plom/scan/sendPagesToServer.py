@@ -186,16 +186,16 @@ def extractJIDO(fileName):  # get just ID, Order
     return (sid, n)
 
 
-def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
+def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
     """Send the hw-page images of one bundle to the server.
 
     Args:
         msgr (Messenger): an open authenticated communication mechanism.
-        files (list of pathlib.Path): the page images to upload.
+        file_list (list): each entry is a pair `(filename, questions)`
+            where `filename` is a `pathlib.Path` and `questions` is a list
+            of question numbers to upload that file to.
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
-        question (list[int]): the question numbers (list of ints) that
-            these files are being uploaded to.
         skip_list (list of int): the bundle-orders of pages already in
             the system and so can be skipped.
 
@@ -207,8 +207,8 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name):
     """
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
-    for fname in file_list:
-        print("Upload hw page image {}".format(fname))
+    for fname, question in file_list:
+        print(f'Upload hw page image "{fname}" to question(s) "{question}"')
         shortName = os.path.split(fname)[1]
         sid, q, n = extractIDQO(shortName)
         bundle_order = n
@@ -400,11 +400,17 @@ def uploadHWPages(
     file_list = []
     # files are sitting in "bundles/submittedHWByQ/<bundle_name>"
     os.chdir(os.path.join("bundles", "submittedHWByQ", bundle_name))
-    # Look for pages in pageImages
+    # Look for pages in pageImages: note sorted prevents loss of ordering
     for ext in PlomImageExts:
         file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
-
-    HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, question, bundle_name)
+    assert isinstance(question, (list, tuple))
+    # TODO: better to key everything by the bundle_order n?
+    if isinstance(question[0], (list, tuple)):
+        file_list = zip(file_list, question)
+    else:
+        # duplicate the question list for each page
+        file_list = zip(file_list, [question] * len(file_list))
+    HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name)
 
     updates = msgr.triggerUpdateAfterHWUpload()
 
