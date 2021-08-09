@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 from collections import defaultdict
 from glob import glob
@@ -14,6 +14,11 @@ from pathlib import Path
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
+
+
+def extract_order(filename):
+    """From filename of form 'blah-n.png' extract 'n' and return as an int"""
+    return int(Path(filename).stem.split("-")[-1])
 
 
 def extractTPV(name):
@@ -51,24 +56,25 @@ def extractTPV(name):
     return (ts, ps, vs)
 
 
-def fileSuccessfulUpload(bundle, shortName, fname, qr=True):
+def move_files_post_upload(bundle, f, qr=True):
     """After successful upload move file within bundle.
 
     The image file is moved to 'uploads/sentpages' within the bundle.
     If the qr-flag is set then also move the corresponding .qr file
-    Note - tpages will have a qr file, while hwpages and lpages
-    do not.
+
+    args:
+        bundle (pathlib.Path): the "base" bundle directory.
+        fname (pathlib.Path): a filename, possibly with a path.
+        qr (bool): There should also be a file same as `fname` but
+            with a ".qr" appended.  Move it too.  Note that TPages
+            will have a qr file, while HWPages and LPages do not.
     """
-    shutil.move(fname, bundle / Path("uploads/sentPages") / shortName)
-    # tpages have a .qr while hwpages and lpages do not.
+    shutil.move(f, bundle / "uploads/sentPages" / f.name)
     if qr:
-        shutil.move(
-            Path(str(fname) + ".qr"),
-            bundle / Path("uploads/sentPages") / (str(shortName) + ".qr"),
-        )
+        shutil.move(Path(str(f) + ".qr"), bundle / "uploads/sentPages" / f"{f.name}.qr")
 
 
-def fileFailedUpload(reason, message, bundle, shortName, fname):
+def fileFailedUpload(reason, message, bundle, f):
     """Move image after failed upload.
 
     Upload can fail for 'good' and 'bad' reasons. The image is moved
@@ -84,18 +90,16 @@ def fileFailedUpload(reason, message, bundle, shortName, fname):
     """
     print("Failed upload = {}, {}".format(reason, message))
     if reason == "duplicate":
-        shutil.move(fname, bundle / Path("uploads/discardedPages") / shortName)
-        shutil.move(
-            Path(str(fname) + ".qr"),
-            bundle / Path("uploads/discardedPages") / (str(shortName) + ".qr"),
-        )
+        to = bundle / "uploads/discardedPages"
+        shutil.move(f, to / f.name)
+        shutil.move(Path(str(f) + ".qr"), to / f"{f.name}.qr")
     elif reason == "collision":
-        nname = bundle / Path("uploads/collidingPages") / shortName
-        shutil.move(fname, nname)
-        shutil.move(str(fname) + ".qr", str(nname) + ".qr")
-        # and write the name of the colliding file
-        with open(str(nname) + ".collide", "w+") as fh:
-            json.dump(message, fh)  # this is [collidingFile, test, page, version]
+        to = bundle / "uploads/collidingPages"
+        shutil.move(f, to / f.name)
+        shutil.move(Path(str(f) + ".qr"), to / f"{f.name}.qr")
+        # write stuff into a file: [collidingFile, test, page, version]
+        with open(to / f"{f.name}.collide", "w+") as fh:
+            json.dump(message, fh)
     else:  # now bad errors
         print("Image upload failed for *bad* reason - this should not happen.")
         print("Reason = {}".format(reason))
@@ -120,9 +124,8 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
     """
     TUP = defaultdict(list)
     for fname in files:
-        shortName = os.path.split(fname)[1]
-        # TODO: very fragile order extraction, check how Andrew does it...
-        bundle_order = int(Path(shortName).stem.split("-")[-1])
+        fname = Path(fname)
+        bundle_order = extract_order(fname)
         if bundle_order in skip_list:
             print(
                 "Image {} with bundle_order {} already uploaded. Skipping.".format(
@@ -131,8 +134,8 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
             )
             continue
 
-        ts, ps, vs = extractTPV(shortName)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, shortName))
+        ts, ps, vs = extractTPV(fname.name)
+        print("Upload {},{},{} = {} to server".format(ts, ps, vs, fname.name))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
         rmsg = msgr.uploadTestPage(
@@ -140,7 +143,6 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
             int(ts),
             int(ps),
             int(vs),
-            shortName,
             fname,
             md5,
             bundle_name,
@@ -148,12 +150,10 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
         )
         # rmsg = [True] or [False, reason, message]
         if rmsg[0]:  # was successful upload
-            fileSuccessfulUpload(Path("bundles") / bundle_name, shortName, fname)
+            move_files_post_upload(Path("bundles") / bundle_name, fname)
             TUP[ts].append(ps)
         else:  # was failed upload - reason, message in rmsg[1], rmsg[2]
-            fileFailedUpload(
-                rmsg[1], rmsg[2], Path("bundles") / bundle_name, shortName, fname
-            )
+            fileFailedUpload(rmsg[1], rmsg[2], Path("bundles") / bundle_name, fname)
     return TUP
 
 
@@ -192,7 +192,7 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
     Args:
         msgr (Messenger): an open authenticated communication mechanism.
         file_list (list): each entry is a pair `(filename, questions)`
-            where `filename` is a `pathlib.Path` and `questions` is a list
+            where `filename` is a `pathlib.Path` or str and `questions` is a list
             of question numbers to upload that file to.
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
@@ -208,9 +208,9 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
     for fname, question in file_list:
+        fname = Path(fname)
         print(f'Upload hw page image "{fname}" to question(s) "{question}"')
-        shortName = os.path.split(fname)[1]
-        sid, q, n = extractIDQO(shortName)
+        sid, q, n = extractIDQO(fname.name)
         bundle_order = n
         if bundle_order in skip_list:
             print(
@@ -234,16 +234,14 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
             )
         q = question
 
-        print("Upload HW {},{},{} = {} to server".format(sid, q, n, shortName))
+        print("Upload HW {},{},{} = {} to server".format(sid, q, n, fname.name))
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadHWPage(
-            sid, q, n, shortName, fname, md5, bundle_name, bundle_order
-        )
+        rmsg = msgr.uploadHWPage(sid, q, n, fname, md5, bundle_name, bundle_order)
         if not rmsg[0]:
             raise RuntimeError(
                 "Unsuccessful HW upload, with server returning:\n{}".format(rmsg[1:])
             )
-        fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
+        move_files_post_upload(Path("./"), fname, qr=False)
         # be careful of workingdir.
         SIDQ[sid].append(q)
     return SIDQ
@@ -270,9 +268,9 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
     # keep track of which SID uploaded.
     JSID = {}
     for fname in fileList:
-        print("Upload hw page image {}".format(fname))
-        shortName = os.path.split(fname)[1]
-        sid, n = extractJIDO(shortName)
+        fname = Path(fname)
+        print(f'Upload "Loose" page image {fname}')
+        sid, n = extractJIDO(fname.name)
         bundle_order = n
         if bundle_order in skip_list:
             print(
@@ -286,14 +284,12 @@ def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
             continue
 
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadLPage(
-            sid, n, shortName, fname, md5, bundle_name, bundle_order
-        )
+        rmsg = msgr.uploadLPage(sid, n, fname, md5, bundle_name, bundle_order)
         if not rmsg[0]:
             raise RuntimeError(
-                "Unsuccessful HW upload, with server returning:\n{}".format(rmsg[1:])
+                "Unsuccessful Loose upload, with server returning:\n{}".format(rmsg[1:])
             )
-        fileSuccessfulUpload(Path("./"), shortName, fname, qr=False)
+        move_files_post_upload(Path("./"), fname, qr=False)
         # be careful of workingdir.
         JSID[sid] = True
     return JSID
