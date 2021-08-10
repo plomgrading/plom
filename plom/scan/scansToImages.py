@@ -118,6 +118,10 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         do_not_extract (bool): always render, do no extract even if
             it seems possible to do so.
 
+    Returns:
+        list: an ordered list of the images of each page.  Each entry
+            is a `pathlib.Path`.
+
     For extracting the scanned data as is, we must be careful not to
     just grab any image off the page (for example, it must be the only
     image on the page, and it must not have any annotations on top of
@@ -127,6 +131,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     If the above fail, we fall back on calling Ghostscript as a
     subprocess (the `gs` binary).  TODO: NOT IMPLEMENTED YET.
     """
+    dest = Path(dest)
+
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = Path(file_name).stem.replace(" ", "_")
 
@@ -135,6 +141,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
 
+    files = []
     for p in doc:
         basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
 
@@ -192,15 +199,17 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                     )
 
                 if not converttopng:
-                    outname = os.path.join(dest, basename + "." + d["ext"])
+                    outname = dest / (basename + "." + d["ext"])
                     with open(outname, "wb") as f:
                         f.write(d["image"])
+                    files.append(outname)
                 else:
-                    outname = os.path.join(dest, basename + ".png")
+                    outname = dest / (basename + ".png")
                     with tempfile.NamedTemporaryFile() as g:
                         with open(g.name, "wb") as f:
                             f.write(d["image"])
                         subprocess.check_call(["convert", g.name, outname])
+                    files.append(outname)
                 continue
 
         aspect = p.mediabox_size[0] / p.mediabox_size[1]
@@ -251,7 +260,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
-        #     outname = os.path.join("scanPNGs", basename + ".jpg")
+        #     outname = dest / (basename + ".jpg")
         #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         #     quality = random.choice([4, 94, 94, 94, 94])
         #     img.save(outname, "JPEG", quality=quality, optimize=True)
@@ -260,12 +269,16 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         #     if r:
         #         print("re-orienting randomly {}".format(r))
         #         subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
+        #     files.append(outname)
         #     continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
-        outname = os.path.join(dest, basename + ".png")
+        outname = dest / (basename + ".png")
         pix.writeImage(outname)
+        files.append(outname)
+    assert len(files) == len(doc), "Expected one image per page"
+    return files
 
 
 def extractImageFromFitzPage(page, doc):
@@ -423,7 +436,7 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False
             pass.
 
     Returns:
-        None
+        list: filenames (`pathlib.Path`) in page order, one for each page.
     """
     # TODO: potential confusion local archive versus on server: in theory
     # annot get to local archive unless its uploaded, but what about unknowns, etc?
@@ -437,5 +450,12 @@ def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False
         return
     makeBundleDirectories(pdf_fname, bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
-    processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
+    files = processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
+    #           ,,,
+    #          (o o)
+    # -----ooO--(_)--Ooo------
+    # hacky myhacker was here!
+    # (instead we could rethink postProcessing)
+    files = [bundle_dir / "pageImages" / f.name for f in files]
+    return files
