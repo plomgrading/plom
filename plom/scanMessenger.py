@@ -136,14 +136,14 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def uploadTestPage(
-        self, code, test, page, version, fname, md5sum, bundle, bundle_order
+        self, code, test, page, version, f, md5sum, bundle, bundle_order
     ):
         self.SRmutex.acquire()
         try:
             param = {
                 "user": self.user,
                 "token": self.token,
-                "fileName": fname.name,
+                "fileName": f.name,
                 "test": test,
                 "page": page,
                 "version": version,
@@ -151,11 +151,11 @@ class ScanMessenger(BaseMessenger):
                 "bundle": bundle,
                 "bundle_order": bundle_order,
             }
-            mime_type = mimetypes.guess_type(fname)[0]
+            mime_type = mimetypes.guess_type(f.name)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (fname.name, open(fname, "rb"), mime_type),
+                    "originalImage": (f.name, open(f, "rb"), mime_type),
                 }
             )
             response = self.session.put(
@@ -178,13 +178,13 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadHWPage(self, sid, question, order, fname, md5sum, bundle, bundle_order):
+    def uploadHWPage(self, sid, question, order, f, md5sum, bundle, bundle_order):
         self.SRmutex.acquire()
         try:
             param = {
                 "user": self.user,
                 "token": self.token,
-                "fileName": fname.name,
+                "fileName": f.name,
                 "sid": sid,
                 "question": question,
                 "order": order,
@@ -192,11 +192,11 @@ class ScanMessenger(BaseMessenger):
                 "bundle": bundle,
                 "bundle_order": bundle_order,
             }
-            mime_type = mimetypes.guess_type(fname)[0]
+            mime_type = mimetypes.guess_type(f.name)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (fname.name, open(fname, "rb"), mime_type),
+                    "originalImage": (f.name, open(f, "rb"), mime_type),
                 }
             )
             response = self.session.put(
@@ -219,24 +219,24 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadLPage(self, sid, order, fname, md5sum, bundle, bundle_order):
+    def uploadLPage(self, sid, order, f, md5sum, bundle, bundle_order):
         self.SRmutex.acquire()
         try:
             param = {
                 "user": self.user,
                 "token": self.token,
-                "fileName": fname.name,
+                "fileName": f.name,
                 "sid": sid,
                 "order": order,
                 "md5sum": md5sum,
                 "bundle": bundle,
                 "bundle_order": bundle_order,
             }
-            mime_type = mimetypes.guess_type(fname)[0]
+            mime_type = mimetypes.guess_type(f.name)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (fname.name, open(fname, "rb"), mime_type),
+                    "originalImage": (f.name, open(f, "rb"), mime_type),
                 }
             )
             response = self.session.put(
@@ -259,23 +259,23 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadUnknownPage(self, fname, order, md5sum, bundle, bundle_order):
+    def uploadUnknownPage(self, f, order, md5sum, bundle, bundle_order):
         self.SRmutex.acquire()
         try:
             param = {
                 "user": self.user,
                 "token": self.token,
-                "fileName": fname.name,
+                "fileName": f.name,
                 "order": order,
                 "md5sum": md5sum,
                 "bundle": bundle,
                 "bundle_order": bundle_order,
             }
-            mime_type = mimetypes.guess_type(fname)[0]
+            mime_type = mimetypes.guess_type(f.name)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (fname.name, open(fname, "rb"), mime_type),
+                    "originalImage": (f.name, open(f, "rb"), mime_type),
                 }
             )
             response = self.session.put(
@@ -298,14 +298,14 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def uploadCollidingPage(
-        self, code, test, page, version, fname, md5sum, bundle, bundle_order
+        self, code, test, page, version, f, md5sum, bundle, bundle_order
     ):
         self.SRmutex.acquire()
         try:
             param = {
                 "user": self.user,
                 "token": self.token,
-                "fileName": fname.name,
+                "fileName": f.name,
                 "test": test,
                 "page": page,
                 "version": version,
@@ -313,11 +313,11 @@ class ScanMessenger(BaseMessenger):
                 "bundle": bundle,
                 "bundle_order": bundle_order,
             }
-            mime_type = mimetypes.guess_type(fname)[0]
+            mime_type = mimetypes.guess_type(f.name)[0]
             dat = MultipartEncoder(
                 fields={
                     "param": json.dumps(param),
-                    "originalImage": (fname.name, open(fname, "rb"), mime_type),
+                    "originalImage": (f.name, open(f, "rb"), mime_type),
                 }
             )
             response = self.session.put(
