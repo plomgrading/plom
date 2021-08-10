@@ -186,13 +186,13 @@ def extractJIDO(fileName):  # get just ID, Order
     return (sid, n)
 
 
-def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
+def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name, bundle_dir):
     """Send the hw-page images of one bundle to the server.
 
     Args:
         msgr (Messenger): an open authenticated communication mechanism.
         file_list (list): each entry is a pair `(filename, questions)`
-            where `filename` is a `pathlib.Path` or str and `questions` is a list
+            where `filename` is a `pathlib.Path` and `questions` is a list
             of question numbers to upload that file to.
         bundle_name (str): the name of the bundle we are sending.
         student_id (int): the id of the student whose hw is being uploaded
@@ -208,7 +208,6 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
     # keep track of which SID uploaded which Q.
     SIDQ = defaultdict(list)
     for fname, question in file_list:
-        fname = Path(fname)
         print(f'Upload hw page image "{fname}" to question(s) "{question}"')
         sid, q, n = extractIDQO(fname.name)
         bundle_order = n
@@ -241,7 +240,7 @@ def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name):
             raise RuntimeError(
                 "Unsuccessful HW upload, with server returning:\n{}".format(rmsg[1:])
             )
-        move_files_post_upload(Path("./"), fname, qr=False)
+        move_files_post_upload(bundle_dir, fname, qr=False)
         # be careful of workingdir.
         SIDQ[sid].append(q)
     return SIDQ
@@ -393,31 +392,25 @@ def uploadHWPages(
         )
         exit(10)
 
-    file_list = []
-    # files are sitting in "bundles/submittedHWByQ/<bundle_name>"
-    os.chdir(os.path.join("bundles", "submittedHWByQ", bundle_name))
-    # Look for pages in pageImages: note sorted prevents loss of ordering
-    for ext in PlomImageExts:
-        file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
-    assert isinstance(question, (list, tuple))
-    # TODO: better to key everything by the bundle_order n?
-    if isinstance(question[0], (list, tuple)):
-        file_list = zip(file_list, question)
-    else:
-        # duplicate the question list for each page
-        file_list = zip(file_list, [question] * len(file_list))
-    HWUP = sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name)
-
-    updates = msgr.triggerUpdateAfterHWUpload()
-
-    # go back to original dir
-    os.chdir("..")
-    os.chdir("..")
-    os.chdir("..")
-
-    # close down messenger
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
+        files = []
+        for ext in PlomImageExts:
+            files.extend((bundle_dir / "pageImages").glob(f"*.{ext}"))
+        files = sorted(files)  # careful about order viz questions list
+        # TODO: better to key everything by the bundle_order n?
+        if isinstance(question[0], (list, tuple)):
+            file_list = zip(files, question)
+        else:
+            # duplicate the question list for each page
+            file_list = zip(files, [question] * len(files))
+        HWUP = sendHWFiles(
+            msgr, file_list, skip_list, student_id, bundle_name, bundle_dir
+        )
+        updates = msgr.triggerUpdateAfterHWUpload()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     return [HWUP, updates]
 
