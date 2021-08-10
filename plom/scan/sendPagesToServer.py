@@ -64,8 +64,8 @@ def move_files_post_upload(bundle, f, qr=True):
 
     args:
         bundle (pathlib.Path): the "base" bundle directory.
-        fname (pathlib.Path): a filename, possibly with a path.
-        qr (bool): There should also be a file same as `fname` but
+        f (pathlib.Path): a filename, possibly with a path.
+        qr (bool): There should also be a file same as `f` but
             with a ".qr" appended.  Move it too.  Note that TPages
             will have a qr file, while HWPages and LPages do not.
     """
