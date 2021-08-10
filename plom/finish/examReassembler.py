@@ -68,8 +68,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
                 jpeg_file.seek(0)
                 pg.insert_image(rec, stream=jpeg_file.read())
             else:
-                # TODO: can remove str() once minimum pymupdf is 1.18.9
-                pg.insert_image(rec, filename=str(img_name))
+                pg.insert_image(rec, filename=img_name)
 
     if len(dnm_images) > 1:
         w, h = papersize_landscape
@@ -82,8 +81,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         offset = margin
         for f in dnm_images:
             rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
-            # TODO: can remove str() once minimum pymupdf is 1.18.9
-            pg.insert_image(rect, filename=str(f))
+            pg.insert_image(rect, filename=f)
             offset += W
         if len(dnm_images) > 1:
             text = 'These pages were flagged "Do No Mark" by the instructor.'

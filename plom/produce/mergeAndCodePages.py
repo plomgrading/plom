@@ -192,10 +192,7 @@ def create_exam_and_insert_QR(
         # we always have a corner section for staples and such
         qr_code = {}
         for corner_index in range(1, 5):
-            # TODO: can remove str() once minimum pymupdf is 1.18.9
-            qr_code[corner_index] = fitz.Pixmap(
-                str(qr_file[page_index + 1][corner_index])
-            )
+            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
         # Note: draw png first so it doesn't occlude the outline
         if page_index % 2 == 0:
             exam[page_index].insert_image(TR, pixmap=qr_code[1], overlay=True)
@@ -253,28 +250,15 @@ def insert_extra_info(extra, exam):
     sign_here = "Please sign here"
 
     # Getting the dimensions of the box
-    try:
-        student_id_width = (
-            max(
-                fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
-                fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
-                fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
-            )
-            * 1.1
-            * 0.5
+    student_id_width = (
+        max(
+            fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
+            fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
+            fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
         )
-    except AttributeError:
-        # workaround https://github.com/pymupdf/PyMuPDF/issues/1085
-        # TODO: drop this code when we dependent on PyMuPDF>=1.18.14
-        student_id_width = (
-            max(
-                fitz.getTextlength(student_id, fontsize=36, fontname="Helvetica"),
-                fitz.getTextlength(student_name, fontsize=36, fontname="Helvetica"),
-                fitz.getTextlength(sign_here, fontsize=48, fontname="Helvetica"),
-            )
-            * 1.1
-            * 0.5
-        )
+        * 1.1
+        * 0.5
+    )
     student_id_height = 36 * 1.3
 
     # We have 2 rectangles for the student name and student id
