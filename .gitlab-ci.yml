@@ -919,7 +919,7 @@ macos1013_client:
   - python -m pip install --upgrade pip
   - pip --version
   - pip install toml requests requests-toolbelt PyQt5
-  - pip install pyinstaller  # -v -v to learn hardcoded path
+  - pip install pyinstaller==4.3  # Issue #1587 codesign failure
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
   - md5 dist/PlomClient*
