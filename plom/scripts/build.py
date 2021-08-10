@@ -328,7 +328,9 @@ def main():
     elif args.command == "make":
         status = build_database(args.server, args.password)
         print(status)
-        build_papers(args.server, args.password, args.no_pdf, args.without_qr)
+        build_papers(
+            args.server, args.password, fakepdf=args.no_pdf, no_qr=args.without_qr
+        )
 
     elif args.command == "rubric":
         msgr = get_messenger(args.server, args.password)
