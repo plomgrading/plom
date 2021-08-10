@@ -330,7 +330,7 @@ def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
         SIDQ = defaultdict(list)
         for n, f, q in file_list:
             md5 = hashlib.md5(open(f, "rb").read()).hexdigest()
-            # TODO: n == bundle_order always?
+            # TODO: n == bundle_order always?  Issue #1603.
             rmsg = msgr.uploadHWPage(sid, q, n, f, md5, bundle_name, n)
             if not rmsg[0]:
                 raise RuntimeError(
