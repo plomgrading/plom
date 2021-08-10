@@ -186,66 +186,6 @@ def extractJIDO(fileName):  # get just ID, Order
     return (sid, n)
 
 
-def sendHWFiles(msgr, file_list, skip_list, student_id, bundle_name, bundle_dir):
-    """Send the hw-page images of one bundle to the server.
-
-    Args:
-        msgr (Messenger): an open authenticated communication mechanism.
-        file_list (list): each entry is a pair `(filename, questions)`
-            where `filename` is a `pathlib.Path` and `questions` is a list
-            of question numbers to upload that file to.
-        bundle_name (str): the name of the bundle we are sending.
-        student_id (int): the id of the student whose hw is being uploaded
-        skip_list (list of int): the bundle-orders of pages already in
-            the system and so can be skipped.
-
-    Returns:
-        defaultdict: TODO document this.
-
-    After each image is uploaded we move it to various places in the
-    bundle's "uploads" subdirectory.
-    """
-    # keep track of which SID uploaded which Q.
-    SIDQ = defaultdict(list)
-    for fname, question in file_list:
-        print(f'Upload hw page image "{fname}" to question(s) "{question}"')
-        sid, q, n = extractIDQO(fname.name)
-        bundle_order = n
-        if bundle_order in skip_list:
-            print(
-                "Image {} with bundle_order {} already uploaded. Skipping.".format(
-                    fname, bundle_order
-                )
-            )
-            continue
-
-        if sid != student_id:
-            raise ValueError(
-                "Image {} mismatch in student ID: {} vs {}".format(
-                    fname, sid, student_id
-                )
-            )
-        if not (q == "_" or [int(q)] == question):
-            raise ValueError(
-                "Image {} question supplied {} does not match that in filename {}".format(
-                    fname, q, question
-                )
-            )
-        q = question
-
-        print("Upload HW {},{},{} = {} to server".format(sid, q, n, fname.name))
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadHWPage(sid, q, n, fname, md5, bundle_name, bundle_order)
-        if not rmsg[0]:
-            raise RuntimeError(
-                "Unsuccessful HW upload, with server returning:\n{}".format(rmsg[1:])
-            )
-        move_files_post_upload(bundle_dir, fname, qr=False)
-        # be careful of workingdir.
-        SIDQ[sid].append(q)
-    return SIDQ
-
-
 def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
     """Send the hw-page images of one bundle to the server.
 
@@ -351,18 +291,19 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
     return [TUP, updates]
 
 
-def uploadHWPages(
-    bundle_name, skip_list, student_id, question, server=None, password=None
-):
-    """Upload the hw pages to the server.
+def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
+    """Upload "homework" pages to a particular student ID on the server.
 
-    hwpages uploaded to given student_id and question.
-    Skips pages-image with orders in the skip-list (ie the page number within the bundle.pdf)
+    args:
+        file_list (list)
+        bundle_name (str)
+        sid (str): student ID number.
+        server (str/None)
+        password (str/None)
 
-    Bundle must already be created.  We will upload the
-    files and then send a 'please trigger an update' message to the server.
+    Bundle must already be created.  We will upload the files and then
+    send a 'please trigger an update' message to the server.
     """
-
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -386,26 +327,25 @@ def uploadHWPages(
         raise
 
     try:
-        bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
-        files = []
-        for ext in PlomImageExts:
-            files.extend((bundle_dir / "pageImages").glob(f"*.{ext}"))
-        files = sorted(files)  # careful about order viz questions list
-        # TODO: better to key everything by the bundle_order n?
-        if isinstance(question[0], (list, tuple)):
-            file_list = zip(files, question)
-        else:
-            # duplicate the question list for each page
-            file_list = zip(files, [question] * len(files))
-        HWUP = sendHWFiles(
-            msgr, file_list, skip_list, student_id, bundle_name, bundle_dir
-        )
+        SIDQ = defaultdict(list)
+        for n, f, q in file_list:
+            md5 = hashlib.md5(open(f, "rb").read()).hexdigest()
+            # TODO: n == bundle_order always?
+            rmsg = msgr.uploadHWPage(sid, q, n, f, md5, bundle_name, n)
+            if not rmsg[0]:
+                raise RuntimeError(
+                    f"Unsuccessful HW upload, server returned:\n{rmsg[1:]}"
+                )
+            SIDQ[sid].append(q)
+            # TODO: this feels out of place?
+            bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
+            move_files_post_upload(bundle_dir, f, qr=False)
+
         updates = msgr.triggerUpdateAfterHWUpload()
     finally:
         msgr.closeUser()
         msgr.stop()
-
-    return [HWUP, updates]
+    return (SIDQ, updates)
 
 
 def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None):

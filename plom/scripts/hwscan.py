@@ -20,6 +20,8 @@ from plom import __version__
 from plom.scan import bundle_name_and_md5
 from plom.scan import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
+from plom.scan import scansToImages
+from plom.scan.scansToImages import process_scans
 
 
 def clearLogin(server, password):
@@ -93,7 +95,6 @@ def processLooseScans(
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
     """
-    from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
     pdf_fname = Path(pdf_fname)
@@ -154,7 +155,7 @@ def processLooseScans(
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
+    process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -217,7 +218,6 @@ def processHWScans(
         questions (list): list of integers of which questions this
             bundle covers.
     """
-    from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
     def check_question_types(questions):
@@ -304,7 +304,7 @@ def processHWScans(
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
+    files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -325,9 +325,18 @@ def processHWScans(
             )
         raise RuntimeError("Stopping, see above")
 
+    N = len(files)
+    # TODO: move up to preproc questions?  need to know N though...
+    if not isinstance(questions[0], (list, tuple)):
+        questions = [questions] * N
+    file_list = zip(range(1, N + 1), files, questions)
+
+    # TODO: filter skiplist for already uploaded files
+    assert len(skip_list) == 0
+
     # send the images to the server
-    sendPagesToServer.uploadHWPages(
-        bundle_name, skip_list, student_id, questions, server, password
+    sendPagesToServer.upload_HW_pages(
+        file_list, bundle_name, student_id, server, password
     )
     # now archive the PDF
     scansToImages.archiveHWBundle(pdf_fname)

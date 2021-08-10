@@ -409,8 +409,8 @@ def postProcessing(thedir, dest, skip_gamma=False):
         shutil.move(file, dest / file.name)
 
 
-def processScans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False):
-    """Process files into bitmap pageimages.
+def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False):
+    """Process a pdf file into bitmap images of each page.
 
     Process each page of a pdf file into bitmaps.
 
