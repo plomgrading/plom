@@ -867,6 +867,66 @@ macos1015_client:
     expire_in: 2 weeks
 
 
+macos1014_client:
+  image: macos-10.14-xcode-10
+  tags:
+  - macos
+  stage: packaging
+  needs: []
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  # from https://github.com/danhper/asdf-python/issues/38
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.8.11
+  - asdf shell python 3.8.11
+  - asdf which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install toml requests requests-toolbelt PyQt5
+  - pip install pyinstaller  # -v -v to learn hardcoded path
+  - /Users/gitlab/.asdf/installs/python/3.8.11/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
+macos1013_client:
+  image: macos-10.13-xcode-9
+  tags:
+  - macos
+  stage: packaging
+  needs: []
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  # from https://github.com/danhper/asdf-python/issues/38
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.8.11
+  - asdf which python
+  - asdf shell python 3.8.11
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install toml requests requests-toolbelt PyQt5
+  - pip install pyinstaller  # -v -v to learn hardcoded path
+  - /Users/gitlab/.asdf/installs/python/3.8.11/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
 .shared_windows_runners:
   tags:
   - shared-windows
