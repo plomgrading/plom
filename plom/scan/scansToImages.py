@@ -6,7 +6,6 @@
 # Copyright (C) 2020 Andreas Buttenschoen
 
 import hashlib
-import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -192,11 +191,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                         # TODO: we know its jpeg, could use PIL instead of `convert` below
                 else:
                     converttopng = True
-                    print(
-                        "  {} format not in allowlist: transcoding to PNG".format(
-                            d["ext"]
-                        )
-                    )
+                    print(f"  {d['ext']} format not in allowlist: transcoding to PNG")
 
                 if not converttopng:
                     outname = dest / (basename + "." + d["ext"])
@@ -324,6 +319,7 @@ def processFileToPng_w_ghostscript(fname, dest):
     """Convert each page of pdf into png using ghostscript"""
     # issue #126 - replace spaces in names with underscores for output names.
     safeScan = Path(fname).stem.replace(" ", "_")
+    dest = Path(dest)
     try:
         subprocess.run(
             [
@@ -332,7 +328,7 @@ def processFileToPng_w_ghostscript(fname, dest):
                 "-dNOPAUSE",
                 "-sDEVICE=png256",
                 "-o",
-                os.path.join(dest, safeScan + "-%d.png"),
+                dest / (safeScan + "-%d.png"),
                 "-r200",
                 fname,
             ],
@@ -371,8 +367,8 @@ def makeBundleDirectories(fname, bundle_dir):
         None
     """
     # TODO: consider refactor viz scripts/scan and scripts/hwscan which has similar
-    for dir in ["pageImages", "scanPNGs", "decodedPages", "unknownPages"]:
-        os.makedirs(bundle_dir / dir, exist_ok=True)
+    for x in ("pageImages", "scanPNGs", "decodedPages", "unknownPages"):
+        (bundle_dir / x).mkdir(exist_ok=True)
 
 
 def postProcessing(thedir, dest, skip_gamma=False):
