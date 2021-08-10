@@ -142,8 +142,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 )
             )
 
-        # TODO: bump pymupdf minimum version to 1.17.2 and do:
-        # with fitz.open(file_name) as pdf_document:
+        # TODO: could do `with fitz.open(file_name) as pdf_document:`
         pdf_document = fitz.open(file_name)
         front_page = pdf_document[0]
 
@@ -232,9 +231,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 color=blue,
             )
 
-    # need to use `str(out_file_path)` for pumypdf < 1.16.14
-    # https://github.com/pymupdf/PyMuPDF/issues/466
-    # Here we only need to save the generated pdf files with random test answers
     all_pdf_documents.save(out_file_path)
     print('Assembled in "{}"'.format(out_file_path))
 
