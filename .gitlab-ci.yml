@@ -880,7 +880,8 @@ macos1014_client:
   - asdf which python
   # from https://github.com/danhper/asdf-python/issues/38
   - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.8.11
-  - asdf shell python 3.8.11
+  # asdf shell invented later?
+  - asdf local python 3.8.11
   - asdf which python
   - python --version
   - pip --version
@@ -909,16 +910,17 @@ macos1013_client:
   - asdf current
   - asdf which python
   # from https://github.com/danhper/asdf-python/issues/38
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.8.11
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
   - asdf which python
-  - asdf shell python 3.8.11
+  # asdf shell invented later?
+  - asdf local python 3.9.6
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install toml requests requests-toolbelt PyQt5
   - pip install pyinstaller  # -v -v to learn hardcoded path
-  - /Users/gitlab/.asdf/installs/python/3.8.11/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
   - md5 dist/PlomClient*
   artifacts:
