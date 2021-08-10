@@ -370,18 +370,11 @@ def uploadHWPages(
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass.getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -390,7 +383,7 @@ def uploadHWPages(
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
     try:
         bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
