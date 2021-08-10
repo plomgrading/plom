@@ -327,17 +327,11 @@ def scan_submissions(server_dir="."):
         # get 12345678 from blah_blah.blah_blah.12345678._.
         sid = pdf.stem.split(".")[-2]
         assert len(sid) == 8
-        # TODO: capture output and put it all in a log file?
-        subprocess.run(
-            ["plom-hwscan", "process", pdf, sid, "-q", "1"],
-            # capture_output=True,
-        )
+        # TODO: capture output and put it all in a log file? (capture_output=True?)
+        subprocess.check_call(["plom-hwscan", "process", pdf, sid, "-q", "1"])
 
     # Clean up any missing submissions
-    subprocess.run(
-        ["plom-hwscan", "missing"],
-        # capture_output=True,
-    )
+    subprocess.check_call(["plom-hwscan", "missing"])
 
     os.chdir(o_dir)
 
