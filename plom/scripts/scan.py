@@ -64,6 +64,8 @@ from plom.scan import (
     bundle_has_nonuploaded_collisions,
     bundle_name_and_md5,
 )
+from plom.scan import scansToImages
+from plom.scan.scansToImages import process_scans
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -117,7 +119,6 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
     Make required directories for processing bundle,
     convert PDF to images and read QR codes from those.
     """
-    from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
     from plom.scan import readQRCodes
 
@@ -161,7 +162,7 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
+    process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
     # TODO: can collisions warning be written here too?
@@ -185,7 +186,7 @@ def uploadImages(
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
     """
-    from plom.scan import sendPagesToServer, scansToImages
+    from plom.scan import sendPagesToServer
 
     if bundle_name.lower().endswith(".pdf"):
         warn('Careful, the bundle name should not include ".pdf"')

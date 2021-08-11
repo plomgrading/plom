@@ -1,63 +1,47 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 import hashlib
-import os
 import shutil
 from pathlib import Path
 
 import getpass
 
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
+from plom.scan.sendPagesToServer import extract_order
 
 
-def doFiling(rmsg, bundle, shortName, fname):
+def doFiling(rmsg, bundle, f):
     if rmsg[0]:  # msg should be [True, "success", success message]
-        # print(rmsg[2])
-        print("{} uploaded as unknown page.".format(fname))
-        shutil.move(fname, bundle / Path("uploads/sentPages/unknowns") / shortName)
+        print("{} uploaded as unknown page.".format(f))
+        shutil.move(f, bundle / "uploads/sentPages/unknowns" / f.name)
         shutil.move(
-            Path(str(fname) + ".qr"),
-            bundle / Path("uploads/sentPages/unknowns") / (str(shortName) + ".qr"),
+            Path(str(f) + ".qr"),
+            bundle / "uploads/sentPages/unknowns" / f"{f.name}.qr",
         )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
-            shutil.move(fname, bundle / Path("uploads/discardedPages") / shortName)
+            shutil.move(f, bundle / "uploads/discardedPages" / f.name)
             shutil.move(
-                Path(str(fname) + ".qr"),
-                bundle / Path("uploads/discardedPages") / (str(shortName) + ".qr"),
+                Path(str(f) + ".qr"),
+                bundle / "uploads/discardedPages" / f"{f.name}.qr",
             )
         else:
             print(rmsg[2])
             print("This should not happen - todo = log error in sensible way")
 
 
-def extractOrder(fname):
-    """filename is of the form blah-n.png, extract the 'n' and return it as an integer"""
-    npng = fname.split("-")[-1]
-    n = npng.split(".")[0]
-    return int(n)
-
-
 def sendUnknownFiles(msgr, bundle_name, files):
     for fname in files:
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        shortName = os.path.split(fname)[1]
-        order = extractOrder(shortName)
+        order = extract_order(fname)
         bundle_order = order
-        rmsg = msgr.uploadUnknownPage(
-            shortName, fname, order, md5, bundle_name, bundle_order
-        )
-        doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
+        rmsg = msgr.uploadUnknownPage(fname, order, md5, bundle_name, bundle_order)
+        doFiling(rmsg, Path("bundles") / bundle_name, fname)
 
 
 def bundle_has_nonuploaded_unknowns(bundle_dir):
@@ -69,7 +53,6 @@ def bundle_has_nonuploaded_unknowns(bundle_dir):
     Return:
         bool
     """
-    files = []
     if any((bundle_dir / "unknownPages").iterdir()):
         return True
     return False

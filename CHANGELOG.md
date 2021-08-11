@@ -8,8 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* `plom-server launch foo` starts a plom server in the directory `foo`
+* `plom-server launch foo` starts a plom server in the directory `foo`.
 * new `PlomServer`, `PlomDemoServer`, and `PlomLiteDemoServer` objects for interactively running servers, or otherwise running a server in a background process.
+* `plom-hwscan` can now specify precise per-page mappings from the bundle to questions on the server.
 
 ### Changed
 * `plom-server launch --mastertoken aabbccdd...` replaces the old way (without the keyword argument).

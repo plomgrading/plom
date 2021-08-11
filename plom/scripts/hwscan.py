@@ -20,6 +20,8 @@ from plom import __version__
 from plom.scan import bundle_name_and_md5
 from plom.scan import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
+from plom.scan import scansToImages
+from plom.scan.scansToImages import process_scans
 
 
 def clearLogin(server, password):
@@ -93,7 +95,6 @@ def processLooseScans(
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
     """
-    from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
     pdf_fname = Path(pdf_fname)
@@ -154,7 +155,7 @@ def processLooseScans(
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
+    process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -217,14 +218,22 @@ def processHWScans(
         questions (list): list of integers of which questions this
             bundle covers.
     """
-    from plom.scan import scansToImages
     from plom.scan import sendPagesToServer
 
-    if not isinstance(questions, list):
-        raise ValueError("You must pass a list of ints for `questions`")
-    for q in questions:
-        if not isinstance(q, int):
-            raise ValueError("You must pass a list of ints for `questions`")
+    def check_question_types(questions):
+        if not isinstance(questions, (tuple, list)):
+            return False
+        for q in questions:
+            if isinstance(q, (tuple, list)):
+                for qq in q:
+                    if not isinstance(qq, int):
+                        return False
+            elif not isinstance(q, int):
+                return False
+        return True
+
+    if not check_question_types(questions):
+        raise ValueError("`questions` expects list-of-ints or list-of-list-of-ints")
 
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
@@ -295,7 +304,7 @@ def processHWScans(
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    scansToImages.processScans(pdf_fname, bundledir, not gamma, not extractbmp)
+    files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
     rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
@@ -316,9 +325,18 @@ def processHWScans(
             )
         raise RuntimeError("Stopping, see above")
 
+    N = len(files)
+    # TODO: move up to preproc questions?  need to know N though...
+    if not isinstance(questions[0], (list, tuple)):
+        questions = [questions] * N
+    file_list = zip(range(1, N + 1), files, questions)
+
+    # TODO: filter skiplist for already uploaded files
+    assert len(skip_list) == 0
+
     # send the images to the server
-    sendPagesToServer.uploadHWPages(
-        bundle_name, skip_list, student_id, questions, server, password
+    sendPagesToServer.upload_HW_pages(
+        file_list, bundle_name, student_id, server, password
     )
     # now archive the PDF
     scansToImages.archiveHWBundle(pdf_fname)
@@ -489,11 +507,17 @@ g.add_argument(
         Which question(s) are answered in file.
         You can pass a single integer, in which case it should match
         the filename `foo_bar.<sid>.N.pdf` as documented elsewhere.
-        You can also pass a list like `-q 1,2,3` in which case your
+        You can also pass a list like `-q [1,2,3]` in which case your
         filename must be of the form `foo_bar.<sid>._.pdf` (a single
         underscore).
         You can also pass the special string `-q all` which uploads
         this file to all questions.
+        If you need to specify questions per page, you can pass a list
+        of lists: each list gives the questions for each page.
+        For example, `-q [[1],[2],[2],[2],[3]]` would upload page 1 to
+        question 1, pages 2-4 to question 2 and page 5 to question 3.
+        A common case is `-q [[1],[2],[3]]` to upload one page per
+        question.
     """,
 )
 g = spP.add_mutually_exclusive_group(required=False)
@@ -592,6 +616,9 @@ def main():
             if questions == "all":
                 N = get_number_of_questions(args.server, args.password)
                 questions = list(range(1, N + 1))
+            elif "[" in questions:
+                # TODO: scary eval
+                questions = eval(questions)
             else:
                 questions = [int(x) for x in questions.split(",")]
             processHWScans(

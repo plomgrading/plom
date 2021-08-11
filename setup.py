@@ -36,7 +36,7 @@ server_install_requires = [
     "numpy",
     "pandas",
     "passlib",
-    "pymupdf>=1.18.8",
+    "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
     "weasyprint<53",  # temp pin for Issue #1594
     "aiohttp~=3.7.2",
