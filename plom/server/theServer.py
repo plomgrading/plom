@@ -211,29 +211,35 @@ def get_server_info(basedir):
     return serverInfo
 
 
-def launch(basedir=Path("."), master_token=None):
+def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=True):
     """Launches the Plom server.
 
     args:
         basedir (pathlib.Path/str): the directory containing the file
             space to be used by this server.
+        logfile (pathlib.Path/str/None): name-only then relative to basedir else
+            If omitted, use a default name with date and time included.
+        logconsole (bool): if True (default) then log to the stderr.
         master_token (str): a 32 hex-digit string used to encrypt tokens
             in the database.  Not needed on server unless you want to
             hot-restart the server without requiring users to log-off
             and log-in again.  If None, a new token is created.
     """
     basedir = Path(basedir)
-    # TODO: shortname in this?
-    logfile = basedir / datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
+    if not logfile:
+        logfile = basedir / datetime.now().strftime("plomserver-%Y%m%d_%H-%M-%S.log")
+    logfile = Path(logfile)
+    # if just filename, make log in basedir
+    if logfile.parent == Path("."):
+        logfile = basedir / logfile
     # 5 is to keep debug/info lined up
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
-        datefmt="%b%d %H:%M:%S",
-        handlers=[
-            logging.FileHandler(logfile),
-            logging.StreamHandler(),
-        ],
-    )
+    fmtstr = "%(asctime)s %(levelname)5s:%(name)s\t%(message)s"
+    logging.basicConfig(format=fmtstr, datefmt="%b%d %H:%M:%S %Z", filename=logfile)
+    if logconsole:
+        h = logging.StreamHandler()
+        h.setFormatter(logging.Formatter(fmtstr, datefmt="%b%d %H:%M:%S"))
+        logging.getLogger().addHandler(h)
+
     log = logging.getLogger("server")
     # We will reset this later after we read the config
     logging.getLogger().setLevel("Debug".upper())
