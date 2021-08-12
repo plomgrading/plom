@@ -60,7 +60,7 @@ class _PlomServerProcess(Process):
         self.basedir = basedir
 
     def run(self):
-        theServer.launch(self.basedir)
+        theServer.launch(self.basedir, logfile="server.log", logconsole=False)
 
 
 class PlomServer:
@@ -139,6 +139,8 @@ class PlomServer:
                 `"multiprocessing"`.  Omit or set to None to choose the
                 default (currently `"subprocess"`; subject to change).
 
+        TODO: add: quiet (bool): log to file but not console/stderr.  default True?
+
         Raises:
             PermissionError: cannot write to `dir`.
             OSError: e.g., address already in use, various others.
@@ -169,7 +171,9 @@ class PlomServer:
             self._server_proc.start()
         else:
             self._server_proc = subprocess.Popen(
-                split(f"python3 -m plom.scripts.server launch {self.basedir}")
+                split(
+                    f"python3 -m plom.scripts.server launch {self.basedir} --no-logconsole --logfile server.log"
+                )
             )
         assert self.process_is_running(), "The server did not start successfully"
         time.sleep(0.2)
@@ -226,6 +230,10 @@ class PlomServer:
             return None
         else:
             return None
+
+    @property
+    def logfile(self):
+        return self.basedir / "server.log"
 
     def _brief_wait(self, how_long=0.1):
         """Wait briefly on the subprocess, which should not have stopped.
