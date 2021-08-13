@@ -148,9 +148,8 @@ def main():
     print("Server seems to still be running: demo setup is complete")
 
     print('\n*** Now run "plom-client" ***\n')
-    print(f"  * Server currently running under PID {background_server.pid}\n")
-    # TODO: output account info directly, perhaps just "user*"?
-    print('  * See "userListRaw.csv" for account info\n')
+    print(f"  * Server running on port {args.port} with PID {background_server.pid}\n")
+    print(f"  * Account login info: {args.server_dir / 'userListRaw.csv'}\n")
     # print("  * Press Ctrl-C to stop this demo")
     # background_server.wait()
     input("Press enter when you want to stop the server...")
