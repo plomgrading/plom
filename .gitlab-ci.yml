@@ -13,7 +13,7 @@
 #
 # TODO list
 # ---------
-#   * bump Ubuntu 18.04 to 20.04 (and in Dockerfile)
+#   * bump Ubuntu 18.04 to 20.04
 
 image: docker:20.10.8
 
