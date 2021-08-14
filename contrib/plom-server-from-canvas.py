@@ -444,20 +444,21 @@ if __name__ == "__main__":
         print(f'Creating dir "{basedir}"')
         basedir.mkdir(exist_ok=True)
 
-    print(f'\n"{assignment}" has "{assignment.points_possible}" points possible')
-    try:
-        total = int(assignment.points_possible)
-    except (ValueError, TypeError):
-        print(f'"{assignment.points_possible}" cannot be converted to integer')
-        raise
+    pp = assignment.points_possible
+    print(f'\n"{assignment}" has "{pp}" points possible')
+    if pp == 0 or int(pp) != pp:
+        raise ValueError(
+            "Points possible must be non-zero int: Plom supports only integer marking"
+        )
     if args.marks is None:
-        print(f"Do you want to split this total of {total} over multiple questions?")
+        print(f"Do you want to split this total of {pp} over multiple questions?")
         args.marks = input('Enter a list for the marks per question, e.g., "5,10,3": ')
     args.marks = [int(x) for x in args.marks.split(",")]
     symsum = " + ".join(str(x) for x in args.marks)
-    if sum(args.marks) != total:
-        raise ValueError(f"Total marks do not match Canvas: {symsum} =/= {total}")
-    print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {total}")
+    if sum(args.marks) != pp:
+        raise ValueError(f"Total marks do not match Canvas: {symsum} =/= {pp}")
+    print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
+    del pp
 
     plom_server = initialize(course, assignment, args.marks, server_dir=basedir)
 
