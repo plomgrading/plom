@@ -13,6 +13,7 @@ from plom import specdir
 from plom.textools import buildLaTeX
 
 
+# TODO: letterpaper hardcoded
 question_not_submitted_text = r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
