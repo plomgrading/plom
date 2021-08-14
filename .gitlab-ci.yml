@@ -382,7 +382,6 @@ nodock_newdeps:
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
     - python3 -m pip install --upgrade pip setuptools wheel
     - pip --version
-    - pip install packaging
     # https://github.com/jbaiter/jpegtran-cffi/issues/27
     - pip install cffi
   script:

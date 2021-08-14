@@ -49,6 +49,7 @@ server_install_requires = [
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",
+    "packaging",
     'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
     "stdiomask>=0.0.6",
 ]
