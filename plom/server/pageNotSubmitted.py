@@ -12,70 +12,40 @@ import fitz
 from plom import specdir
 from plom.textools import buildLaTeX
 
-# See https://github.com/latex3/latex2e/issues/411 for why this
-# version-dependent hack is necessary
+
 question_not_submitted_text = r"""
-\documentclass[12pt,letterpaper]{article}
-\usepackage[]{fullpage}
-\usepackage{xcolor}
-\makeatletter
-\newcommand*\@iflatexlater{\@ifl@t@r\fmtversion}
-\@iflatexlater{2020/10/01}{% Check the LaTeX version
-  \usepackage{graphicx}
-  \usepackage{lmodern} % Get a font that can actually be scaled
-  \newcommand{\watermark}{
-    \fontseries{b}
-    \fontsize{58.5}{1}\selectfont
-    \color{red!30!white}
-    \put(70,-245){
-      \rotatebox{-45}{Page not submitted}
-    }
-  }
-  \AddToHook{shipout/background}{\watermark} % Not in older releases
-}{
-  \usepackage[printwatermark]{xwatermark}
-  \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
-}
-\makeatother
-\pagestyle{empty}
-\begin{document}
-\emph{This question was not submitted.}
-\vfill
-\emph{This question was not submitted.}
-\end{document}
-"""
+    \documentclass[12pt,letterpaper]{article}
+    \usepackage[]{fullpage}
+    \usepackage{tikz}
+    \pagestyle{empty}
+    \begin{document}
+    \emph{This question was not submitted.}
+    \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Question not submitted};
+    \end{tikzpicture}
+    \vfill
+    \emph{This question was not submitted.}
+    \end{document}
+    """
 
 page_not_submitted_text = r"""
-\documentclass[12pt,letterpaper]{article}
-\usepackage[]{fullpage}
-\usepackage{xcolor}
-\makeatletter   % if not in a package
-\newcommand*\@iflatexlater{\@ifl@t@r\fmtversion}
-\@iflatexlater{2020/10/01}{%
-  \usepackage{graphicx}
-  \usepackage{lmodern} % Get a font that can actually be scaled
-  \newcommand{\watermark}{
-    \fontseries{b}
-    \fontsize{58.5}{1}\selectfont
-    \color{red!30!white}
-    \put(.112\paperwidth,-.31\paperheight){
-      \rotatebox{-45}{Page not submitted}
-    }
-  }
-  \AddToHook{shipout/background}{\watermark}
-}{
-  \usepackage[printwatermark]{xwatermark}
-  \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
-}
-\makeatother   % if not in a package
-\pagestyle{empty}
-\begin{document}
-\emph{This page of the test was not submitted.}
-\vfill
-\emph{This page of the test was not submitted.}
-\end{document}
-
-"""
+    \documentclass[12pt,letterpaper]{article}
+    \usepackage[]{fullpage}
+    \usepackage{tikz}
+    \pagestyle{empty}
+    \begin{document}
+    \emph{This page of the test was not submitted.}
+    \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Page not submitted};
+    \end{tikzpicture}
+    \vfill
+    \emph{This page of the test was not submitted.}
+    \end{document}
+    """
 
 
 image_scale = 200 / 72
