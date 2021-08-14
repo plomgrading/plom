@@ -148,9 +148,14 @@ spI = sub.add_parser(
     "init",
     help="Initialise server",
     description="""
-      Initializes the current working directory in preparation for
-      starting a Plom server.  Creates sub-directories and config files.
+      Initialises a directory in preparation for starting a Plom server.
+      Creates sub-directories, config files, and various other things.
     """,
+)
+spI.add_argument(
+    "dir",
+    nargs="?",
+    help="The directory to use. If omitted, use the current directory.",
 )
 spI.add_argument(
     "--port",
@@ -234,7 +239,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(".", args.port)
+        initialise_server(args.dir, args.port)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
