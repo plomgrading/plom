@@ -42,8 +42,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # client dependency: keep in image for now after others so easy to discard
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install \
-        `apt-cache depends qt5-default  | awk '/Depends:/{print$2}'`
+    apt-get --no-install-recommends -y install qtbase5-dev
 
 COPY . /src
 WORKDIR /src
