@@ -366,10 +366,8 @@ appstreamValid:
 nodock_newdeps:
   stage: build
   needs: []
-  image: ubuntu:18.04
+  image: ubuntu:20.04
   allow_failure: true
-  # Need pip >= 19, which turns out to be nontrivial: cannot just call
-  # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -382,14 +380,13 @@ nodock_newdeps:
       libgl1-mesa-glx libsm6 libxrender1
       iproute2 psmisc file python3-magic
     # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - python3 -m pip install --upgrade pip
-    - python3 -m pip -V
     - python3 -m pip install --upgrade pip setuptools wheel
-    - python3 -m pip install packaging
+    - pip --version
+    - pip install packaging
     # https://github.com/jbaiter/jpegtran-cffi/issues/27
-    - python3 -m pip install cffi
+    - pip install cffi
   script:
-    - python3 -m pip install .
+    - pip install .
     # First, run the unit tests
     - pytest-3 -l --pyargs plom
     # Build tests
