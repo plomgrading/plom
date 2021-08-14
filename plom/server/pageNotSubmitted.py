@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Forest Kobayashi
 
 from pathlib import Path
+from textwrap import dedent
 
 import fitz
 
@@ -14,7 +15,8 @@ from plom.textools import buildLaTeX
 
 
 # TODO: letterpaper hardcoded
-question_not_submitted_text = r"""
+question_not_submitted_text = dedent(
+    r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
     \usepackage{tikz}
@@ -30,8 +32,10 @@ question_not_submitted_text = r"""
     \emph{This question was not submitted.}
     \end{document}
     """
+).strip()
 
-page_not_submitted_text = r"""
+page_not_submitted_text = dedent(
+    r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
     \usepackage{tikz}
@@ -47,6 +51,7 @@ page_not_submitted_text = r"""
     \emph{This page of the test was not submitted.}
     \end{document}
     """
+).strip()
 
 
 image_scale = 200 / 72
