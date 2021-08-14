@@ -363,11 +363,10 @@ appstreamValid:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-# TODO: use newer ubuntu too?
 nodock_newdeps:
   stage: build
   needs: []
-  image: ubuntu:20.04
+  image: ubuntu:21.04
   allow_failure: true
   before_script:
     - apt-get update
