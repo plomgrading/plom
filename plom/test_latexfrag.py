@@ -48,9 +48,9 @@ def test_frag_image_size():
     r, imgdata = processFragment(frag)
     assert r
     img = Image.open(BytesIO(imgdata))
-    # no more than 5% error in width/height
-    assert relativeErr(img.width, imgt.width) < 0.05
-    assert relativeErr(img.height, imgt.height) < 0.05
+    # no more than 10% error in width/height
+    assert relativeErr(img.width, imgt.width) < 0.1
+    assert relativeErr(img.height, imgt.height) < 0.1
 
     frag = r"$z = \frac{x + 3}{y}$ and lots and lots more, so its much longer."
     r, imgdata = processFragment(frag)
