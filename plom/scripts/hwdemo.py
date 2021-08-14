@@ -77,13 +77,14 @@ def main():
                 f'Directory "{args.server_dir/f}" must not exist for this demo'
             )
 
+    init_cmd = f"plom-server init {args.server_dir}"
+    if args.port:
+        init_cmd += f" --port {args.port}"
+    subprocess.check_call(split(init_cmd))
+
     prev = Path.cwd()
     try:
         os.chdir(args.server_dir)
-        if args.port:
-            subprocess.check_call(split(f"plom-server init --port {args.port}"))
-        else:
-            subprocess.check_call(split("plom-server init"))
         subprocess.check_call(split("plom-server users --demo"))
         subprocess.check_call(split("plom-build new --demo"))
     finally:
