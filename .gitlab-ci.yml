@@ -363,6 +363,99 @@ appstreamValid:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
+# TODO: pip stuff not working on fedora:35
+# TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+fedora_build:
+  stage: build
+  needs: []
+  image: fedora:34
+  allow_failure: true
+  before_script:
+    - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
+          turbojpeg-devel libjpeg-turbo-devel
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-cffi python3-passlib python3-qt5
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-aiohttp
+          python3-peewee python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs
+          python3-pytest
+          python3-PyMuPDF python3-scikit-learn
+          file python3-file-magic
+          iproute
+    - pip --version
+  script:
+    - pip install jpegtran-cffi
+    - pip install .
+    # First, run the unit tests
+    - pytest-3 -l --pyargs plom
+    # Build tests
+    - mkdir play
+    - pushd play
+    - plom-server init
+    - plom-server users --demo
+    - plom-build new
+    - plom-build parse
+    - python3 -m plom.produce.demotools
+    - ip addr
+    - plom-server launch &
+    - sleep 2
+    - sleep 2
+    - echo "Server should be in background"
+    - jobs -l
+    - echo "We should be able to connect to it"
+    - curl -k https://localhost:41984/Version
+    - plom-build class --demo -w 1234
+    - plom-build make -w 1234
+    - A=`ls papersToPrint/ | wc -l`  # How many files?
+    - bash -c "[[ $A == 20 ]]"       # should be 20
+    - python3 -m plom.produce.faketools -w 1234
+    # Scan and upload
+    # supposed to fail:
+    - if (plom-scan process); then false; else true; fi
+    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1
+    # TODO: I removed some -c lines here...
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3
+    - plom-scan status -w 4567
+    # not supposed to be done yet:
+    - if (plom-finish status -w 1234); then false; else true; fi
+    - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
+    - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
+    - plom-finish status -w 1234
+    - plom-finish csv -w 1234
+    - A=`cat marks.csv  | wc -l`      # How many lines?
+    - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
+    - file marks.csv
+    - file marks.csv | grep text
+    - plom-finish reassemble -w 1234
+    - A=`ls reassembled/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
+    - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
+    - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
+    - plom-finish webpage
+    - A=`ls codedReturn/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 20 ]]"       # 20-1 pdf + 1 html
+    - echo "Now take down the server"
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - jobs -l
+    - kill %1
+    - sleep 2
+    - echo "Should be no jobs and this should succeed"
+    - jobs -l
+    - popd
+
+
+# get latest pip deps, doesn't use docker, closer to user install
+# allowed to fail (some pip stuff might be new) but we want to know
 nodock_newdeps:
   stage: build
   needs: []
