@@ -619,11 +619,10 @@ binary_upload:
       - release_desc.md
 
 
-# Build Client Binaries on Ubuntu 18.04
-# TODO: consider doing these only once tests pass
+# Build Client Binaries
+# These are run once tests pass: to change re-add `needs: []`
 linuxbin_ubuntu1804:
   stage: packaging
-  needs: []
   image: ubuntu:18.04
   before_script:
     - apt-get update
@@ -653,7 +652,6 @@ linuxbin_ubuntu1804:
 
 linuxbin_ubuntu2004:
   stage: packaging
-  needs: []
   image: ubuntu:20.04
   before_script:
     - apt-get update
@@ -683,7 +681,6 @@ linuxbin_ubuntu2004:
 # TODO: consider doing only on the master branch and only when tests pass
 linuxbin_centos:
   stage: packaging
-  needs: []
   image: centos:7
   before_script:
     - yum install -y dnf
@@ -737,7 +734,6 @@ winpyinst:
   extends:
   - .shared_windows_runners
   stage: packaging
-  needs: []
   before_script:
   - choco install -y python3 --version 3.9
   - refreshenv
