@@ -18,7 +18,7 @@ Fedora
 Tested on Fedora 34.  Some stuff from the package manager:
 ```
   # sudo dnf install \
-        ImageMagick openssl zbar gcc gcc+c++ cmake \
+        ImageMagick openssl zbar gcc gcc-c++ cmake \
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
