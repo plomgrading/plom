@@ -2342,6 +2342,7 @@ class MarkerClient(QWidget):
             (png): a file containing the Latexed text.
 
         """
+        txt = txt.strip()
         if txt in self.commentCache:
             # have already latex'd this comment
             return self.commentCache[txt]
