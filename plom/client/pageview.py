@@ -77,7 +77,7 @@ class PageView(QGraphicsView):
         # then any other stuff needed by parent class
         super().resizeEvent(event)
 
-    def latexAFragment(self, txt):
+    def DEPRECATED_latexAFragment(self, txt):
         """
         Latexes a fragment of text.
 
@@ -87,6 +87,7 @@ class PageView(QGraphicsView):
         Returns:
             (png): a file containing the Latexed text.
 
+        TODO: is this ever called?  pageview has tex support?
         """
         cur = self.cursor()
         self.setCursor(QCursor(Qt.WaitCursor))
