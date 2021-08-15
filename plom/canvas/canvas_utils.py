@@ -210,7 +210,7 @@ def interactively_get_course(user):
 
 
 def interactively_get_assignment(user, course):
-    print(f"\nSelect an assignment to push for {course}.\n")
+    print(f"\nSelect an assignment for {course}.\n")
     print("  Available assignments:")
     print("  --------------------------------------------------------------------")
 
