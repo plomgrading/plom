@@ -2349,7 +2349,8 @@ class MarkerClient(QWidget):
         log.debug('requesting latex for "{}"'.format(txt))
         try:
             fragment = self.msgr.MlatexFragment(txt)
-        except PlomLatexException:
+        except PlomLatexException as e:
+            ErrorMessage(str(e)).exec_()
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(

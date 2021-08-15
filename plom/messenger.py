@@ -437,7 +437,7 @@ class Messenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
                 raise PlomLatexException(
-                    "There is an error in your latex fragment"
+                    f"Server reported an error processing your TeX fragment:\n\n{response.text}"
                 ) from None
             else:
                 raise PlomSeriousException(

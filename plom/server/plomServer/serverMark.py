@@ -120,17 +120,12 @@ def MlatexFragment(self, username, latex_fragment):
         latex_fragment (str): The latex string for the latex image requested.
 
     Returns:
-        list: A list with either False or True with the latex image's
-            file name.
+        tuple: `(True, filename)`, or `(False, error_message)`.
     """
-
     # TODO - only one frag file per user - is this okay?
+    # TODO: replace with bytes
     filename = os.path.join(self.tempDirectory.name, "{}_frag.png".format(username))
-
-    if texFragmentToPNG(latex_fragment, filename):
-        return [True, filename]
-    else:
-        return [False]
+    return texFragmentToPNG(latex_fragment, filename)
 
 
 def MclaimThisTask(self, username, task_code):
