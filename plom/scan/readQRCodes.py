@@ -3,7 +3,7 @@
 # Copyright (C) 2020 Colin B. Macdonald
 
 from collections import defaultdict
-import stdiomask
+from stdiomask import getpass
 import json
 import os
 import shutil
@@ -323,7 +323,7 @@ def processBitmaps(bundle, server=None, password=None):
     # get the password if not specified
     if password is None:
         try:
-            pwd = stdiomask.getpass("Please enter the 'scanner' password:")
+            pwd = getpass("Please enter the 'scanner' password: ")
         except Exception as error:
             print("ERROR", error)
             exit(1)

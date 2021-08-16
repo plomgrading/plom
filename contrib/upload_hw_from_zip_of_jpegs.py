@@ -29,7 +29,7 @@ from pathlib import Path
 import zipfile
 import hashlib
 import tempfile
-import stdiomask
+from stdiomask import getpass
 
 import pandas as pd
 
@@ -112,7 +112,7 @@ def get_and_start_scan_msgr(server=None, password=None):
     msgr.start()
 
     if password is None:
-        password = stdiomask.getpass("Please enter the 'scanner' password: ")
+        password = getpass("Please enter the 'scanner' password: ")
 
     msgr.requestAndSaveToken("scanner", password)
     return msgr

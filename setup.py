@@ -51,7 +51,7 @@ server_install_requires = [
     "requests",
     "requests-toolbelt",
     'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
-    "stdiomask==0.0.6",
+    "stdiomask>=0.0.6",
 ]
 # TODO: optional dependency to enable lossless jpeg rotations
 #   "cffi",

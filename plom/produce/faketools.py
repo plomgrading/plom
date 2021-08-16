@@ -17,7 +17,7 @@ from glob import glob
 import argparse
 import json
 import base64
-import stdiomask
+from stdiomask import getpass
 import sys
 
 if sys.version_info >= (3, 7):
@@ -346,7 +346,7 @@ def download_classlist(server=None, password=None):
     msgr.start()
 
     if not password:
-        password = stdiomask.getpass('Please enter the "manager" password: ')
+        password = getpass('Please enter the "manager" password: ')
 
     try:
         msgr.requestAndSaveToken("manager", password)

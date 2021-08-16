@@ -3,7 +3,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import os
-import stdiomask
+from stdiomask import getpass
 import random
 
 from plom import check_version_map
@@ -22,7 +22,7 @@ def build_papers(server=None, password=None, fakepdf=False, no_qr=False):
     msgr.start()
 
     if not password:
-        password = stdiomask.getpass('Please enter the "manager" password: ')
+        password = getpass('Please enter the "manager" password: ')
 
     msgr.requestAndSaveToken("manager", password)
     try:
@@ -78,7 +78,7 @@ def build_database(server=None, password=None, vermap={}):
     msgr.start()
 
     if not password:
-        password = stdiomask.getpass('Please enter the "manager" password: ')
+        password = getpass('Please enter the "manager" password: ')
 
     check_version_map(vermap)
 
