@@ -137,7 +137,7 @@ class MarkHandler:
             aiohttp.web_fileresponse.FileResponse: A response which includes the image for
                 the latex string.
         """
-        valid, value = self.server.MlatexFragment(data["user"], data["fragment"])
+        valid, value = self.server.MlatexFragment(data["fragment"])
         if valid:
             return web.Response(body=value, status=200)
         else:

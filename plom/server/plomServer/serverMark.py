@@ -112,15 +112,14 @@ def MgetNextTask(self, question_number, version_number):
         return [True, give]
 
 
-def MlatexFragment(self, username, latex_fragment):
-    """Respond with a path to the latex fragment image.
+def MlatexFragment(self, latex_fragment):
+    """Respond with image data for a rendered latex of a text fragment.
 
     Args:
-        username (str): Username string.
-        latex_fragment (str): The latex string for the latex image requested.
+        latex_fragment (str): The string to be rendered.
 
     Returns:
-        tuple: `(True, bytes)`, or `(False, error_message)`.
+        tuple: `(True, imgdata)`, or `(False, error_message)`.
     """
     return texFragmentToPNG(latex_fragment)
 
