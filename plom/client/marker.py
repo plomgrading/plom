@@ -2354,8 +2354,8 @@ class MarkerClient(QWidget):
             # Heuristics to highlight error: latex errors seem to start with "! "
             lines = fragment.split("\n")
             idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
-            n = idx[0]
-            if n > 0:
+            if any(idx):
+                n = idx[0]  # could be fancier if more than one match
                 info = "\n".join(lines[max(0, n - 5) : n + 5])
                 ErrorMessage(
                     """
