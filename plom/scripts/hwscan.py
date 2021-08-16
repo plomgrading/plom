@@ -192,13 +192,16 @@ def processHWScans(
     gamma=False,
     extractbmp=False,
 ):
-    """Process the given HW PDF into images, upload then archive the pdf.
+    """Process the given PDF bundle into images, upload, then archive the pdf.
 
-    TODO: relax filename!  Currently .YY. must be present but is ignored.
-
-    pdf_fname should be for form 'submittedHWByQ/blah.XXXX.YY.pdf'
-    where XXXX should be student_id and YY should be question_number.
-    Do basic sanity checks to confirm.
+    args:
+        server (str)
+        password (str)
+        pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
+            the current working directory.
+        student_id (str)
+        questions (list): list of integers of which questions this
+            bundle covers.
 
     Ask server to map student_id to a test-number; these should have been
     pre-populated on test-generation and if id not known there is an error.
@@ -212,11 +215,6 @@ def processHWScans(
     Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
-
-    args:
-        ...
-        questions (list): list of integers of which questions this
-            bundle covers.
     """
     from plom.scan import sendPagesToServer
 
@@ -237,30 +235,8 @@ def processHWScans(
 
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
-        print("Cannot find file {} - skipping".format(pdf_fname))
-        return
+        raise ValueError(f"Cannot find file {pdf_fname}")
 
-    assert os.path.split(pdf_fname)[0] in [
-        "submittedHWByQ",
-        "./submittedHWByQ",
-    ], 'At least for now, you must put your file into a directory named "submittedHWByQ"'
-    IDQ = IDQorIDorBad(pdf_fname.name)
-    if len(IDQ) != 3:  # should return [IDQ, sid, q]
-        raise ValueError("File name has wrong format - should be 'blah.sid.q.pdf'.")
-    _, sid, q = IDQ
-    if sid != student_id:
-        raise ValueError(
-            "Student ID supplied {} does not match that in filename {}. Stopping.".format(
-                student_id, sid
-            )
-        )
-    # either we're dealing with multiquestions or we have exactly one question
-    if not (q == "_" or [int(q)] == questions):
-        raise ValueError(
-            "Question supplied {} does not match that in filename {}. Stopping.".format(
-                questions, q
-            )
-        )
     if len(questions) == 1:
         qlabel = "question"
     else:
@@ -273,9 +249,9 @@ def processHWScans(
 
     test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
     if test_number is None:
-        raise ValueError("No test has student ID = {}.".format(student_id))
+        raise ValueError(f"No test has student ID {student_id}")
     else:
-        print("Student ID {} is test_number {}".format(student_id, test_number))
+        print(f"Student ID {student_id} is test_number {test_number}")
 
     bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
     # should be [False] [True, name] [True,md5sum], [True, both]
@@ -299,6 +275,7 @@ def processHWScans(
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
+    # TODO: add command-line option to override this name
     bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
     make_required_directories(bundledir)
