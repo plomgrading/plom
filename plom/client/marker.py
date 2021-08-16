@@ -2360,7 +2360,11 @@ class MarkerClient(QWidget):
             else:
                 info = None
             ErrorMessage(
-                "Server reported an error processing your TeX fragment",
+                """
+                <p>The server reported an error processing your TeX fragment.</p>
+                <p>Perhaps the error is visible in the following snippet,
+                otherwise see full logs under details:</p>
+                """,
                 details=fragment,
                 info=info,
             ).exec_()
