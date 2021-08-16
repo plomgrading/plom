@@ -92,7 +92,7 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(str, list, str, str)
+    downloadSuccess = pyqtSignal(str, list, list, str, str)
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -158,17 +158,38 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        num = int(task[1:5])
+        full_pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
+
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
+
+        # Populate the orientation keys from the full pagedata
+        for i, row in enumerate(src_img_data):
+            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+            # There could easily be more than one: what if orientation is contradictory?
+            row["orientation"] = ori[0]  # just take first one
+
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
+            # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self._msgr.MrequestOneImage(task, row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        self.downloadSuccess.emit(task, src_img_data, tags, integrity_check)
+            row["filename"] = tmp
+            for r in full_pagedata:
+                if r["md5"] == row["md5"]:
+                    r["local_filename"] = tmp
+
+        self.downloadSuccess.emit(
+            task, src_img_data, full_pagedata, tags, integrity_check
+        )
         self.quit()
 
 
@@ -941,6 +962,9 @@ class MarkerClient(QWidget):
         )
         self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
         self.maxMark = -1  # temp value
+        # TODO: a not-fully-thought-out datastore for immutable pagedata
+        # Note: specific to this question
+        self._full_pagedata = {}
         self.examModel = (
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
@@ -1249,13 +1273,24 @@ class MarkerClient(QWidget):
         if len(self.examModel.getOriginalFiles(task)) > 0:
             return True
 
-        # TODO: plom file is lovely json: why we pack it around as binary bytes?
+        assert task[0] == "q"
+        assert task[5] == "g"
+        num = int(task[1:5])
+        question = int(task[6:])
+        assert question == self.question
+
         try:
-            [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
-                task, self.examModel.getIntegrityCheck(task)
+            integrity = self.examModel.getIntegrityCheck(task)
+            plomdata = self.msgr.get_annotations(
+                num, self.question, edition=None, integrity=integrity
+            )
+            annotated_image = self.msgr.get_annotations_image(
+                num, self.question, edition=plomdata["annotation_edition"]
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
+            # TODO: the real problem here is that the full_pagedata is potentially out of date!
+            # TODO: we also need (and maybe already have) a mechanism to invalidate existing annotations
             ErrorMessage(
                 '<p>The task "{}" has changed in some way by the manager; it '
                 "may need to be remarked.</p>\n\n"
@@ -1271,44 +1306,41 @@ class MarkerClient(QWidget):
             self.throwSeriousError(e)
             return False
 
-        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        log.debug("create paperDir {} for already-graded download".format(paperDir))
+        # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
+        # column means different things).  Instead, extract from .plom file.
+        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        self._full_pagedata[num] = full_pagedata
 
-        # TODO: keep more image_id, md5, server_path_filename
-        src_img_data = [{"md5": x[1]} for x in page_metadata]
+        log.info("importing source image data (orientations etc) from .plom file")
+        # filenames likely stale
+        src_img_data = plomdata["base_images"]
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            src_img_data[i]["filename"] = tmp
-            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        # Parse PlomFile early for orientation data: but PageScene is going
-        # to parse it later.  TODO: seems like duplication of effort.
-        plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
-        ori = plomdata.get("orientations")
-        if not ori:
-            log.warning("plom file has no orientation data: substituting zeros")
-            # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
-            for d in src_img_data:
-                d["orientation"] = 0
-        else:
-            log.info("importing orientations from plom file")
-            for i, d in enumerate(src_img_data):
-                d["orientation"] = ori[i]
+            row["filename"] = tmp
+            for r in full_pagedata:
+                if r["md5"] == row["md5"]:
+                    r["local_filename"] = tmp
+
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
-        if anImage is None:
-            return True
-
+        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
+        log.debug("create paperDir {} for already-graded download".format(paperDir))
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
         pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
         with open(aname, "wb+") as fh:
-            fh.write(anImage)
-        with open(pname, "wb+") as fh:
-            fh.write(plomfile_data)
+            fh.write(annotated_image)
+        with open(pname, "w") as f:
+            json.dump(plomdata, f, indent="  ")
+            f.write("\n")
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
@@ -1408,16 +1440,39 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        num = int(task[1:5])
+        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        self._full_pagedata[num] = full_pagedata
+        # print("=" * 80)
+        # print(task)
+        # print("\n".join([str(x) for x in full_pagedata]))
+        # print("\n".join([str(x) for x in page_metadata]))
+        # print("=" * 80)
+
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
+
+        # Populate the orientation keys from the full pagedata
+        for i, row in enumerate(src_img_data):
+            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+            # There could easily be more than one: what if orientation is contradictory?
+            row["orientation"] = ori[0]  # just take first one
+
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
+            # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
+            row["filename"] = tmp
+            for r in full_pagedata:
+                if r["md5"] == row["md5"]:
+                    r["local_filename"] = tmp
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1468,7 +1523,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, tags, integrity_check
+        self, task, src_img_data, full_pagedata, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1477,13 +1532,15 @@ class MarkerClient(QWidget):
             task (str): the task name for the next test.
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
+            full_pagedata (list): temporary hacks to merge with above?
             tags (str): tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
             None
-
         """
+        num = int(task[1:5])
+        self._full_pagedata[num] = full_pagedata
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -1934,8 +1991,7 @@ class MarkerClient(QWidget):
         return data
 
     def PermuteAndGetSamePaper(self, task, imageList):
-        """
-        Allows user to reorganize pages of an exam.
+        """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
@@ -1944,12 +2000,11 @@ class MarkerClient(QWidget):
 
         Returns:
             initialData (as described by getDataForAnnotator)
-
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
-        img_src_data = []
+        src_img_data = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
         # TODO: something with tempfile instead
         # TODO: but why not keep using old name once they are static
@@ -1959,18 +2014,18 @@ class MarkerClient(QWidget):
                 self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
             )
             shutil.copyfile(imageList[i][1], tmp)
-            img_src_data.append(
+            src_img_data.append(
                 {
+                    "id": imageList[i][3],
                     "md5": imageList[i][0],
                     "filename": tmp,
                     "orientation": imageList[i][2],
                 }
             )
         task = "q" + task
-        self.examModel.setOriginalFilesAndData(task, img_src_data)
+        self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
-        # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):
@@ -2211,18 +2266,6 @@ class MarkerClient(QWidget):
                 fh.write(iab)
 
         return [pageData, viewFiles]
-
-    def downloadWholePaperMetadata(self, testNumber):
-        """Get metadata about all images used in a particular test paper.
-
-        Args:
-            testNumber (int): the test number.
-
-        Returns:
-            (tuple) containing pageData and viewFiles
-        """
-        pageData = self.msgr.MrequestWholePaperMetadata(testNumber, self.question)
-        return pageData
 
     def downloadOneImage(self, task, image_id, md5):
         """Download one image from server by its database id."""

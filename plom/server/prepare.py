@@ -92,9 +92,12 @@ def initialise_server(basedir, port):
     """Setup various files needed before a Plom server can be started.
 
     args:
-        basedir (pathlib.Path/str): the directory to prepare.
-        port (int): the port to use
+        basedir (pathlib.Path/str/None): the directory to prepare.  If
+            `None` use the current working directory.
+        port (int/None): the port to use, None for a default value.
     """
+    if not basedir:
+        basedir = Path(".")
     basedir = Path(basedir)
     print("Build required directories")
     build_server_directories(basedir)

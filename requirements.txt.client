@@ -10,7 +10,7 @@
 PyQt5==5.15.2
 PyQt5-sip==12.8.1
 appdirs==1.4.4
-importlib-resources==5.2.0
+importlib-resources==5.2.2
 requests==2.26.0
 requests-toolbelt==0.9.1
 toml==0.10.2

@@ -8,9 +8,11 @@ import uuid
 
 from peewee import fn
 
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import Bundle, IDGroup, Group, Image, QGroup, Test, User
+from plom.db.tables import APage, DNMPage, EXPage, HWPage, IDPage, LPage, TPage
+from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
+from plom.db.tables import OAPage, OldAnnotation
 
 
 log = logging.getLogger("DB")
@@ -92,15 +94,13 @@ def uploadTestPage(
     # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", "Cannot find test {}".format(t)]
+        return [False, "testError", f"Cannot find test {test_number}"]
     pref = TPage.get_or_none(test=tref, page_number=page_number, version=version)
     if pref is None:
         return [
             False,
             "pageError",
-            "Cannot find TPage,version {} for test {}".format(
-                [page_number, versions], test_number
-            ),
+            f"Cannot find TPage {page_number} ver{version} for test {test_number}",
         ]
     if pref.scanned:
         # have already loaded an image for this page - so this is actually a duplicate
@@ -122,7 +122,7 @@ def uploadTestPage(
         # we need the bundle-ref now.
         bref = Bundle.get_or_none(name=bundle_name)
         if bref is None:
-            return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+            return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
 
         try:
             image_ref = self.createNewImage(
@@ -169,7 +169,7 @@ def replaceMissingTestPage(
 
     bref = Bundle.get_or_none(name="replacements")
     if bref is None:
-        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+        return [False, "bundleError", f'Cannot find bundle "replacements"']
 
     # find max bundle_order within that bundle
     bundle_order = 0
@@ -236,7 +236,7 @@ def uploadHWPage(
     # we need the bundle.
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
-        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+        return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
 
     try:
         image_ref = self.createNewImage(
@@ -334,7 +334,7 @@ def uploadLPage(
     # we need the bundle.
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
-        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+        return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
 
     try:
         image_ref = self.createNewImage(
@@ -402,7 +402,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
 
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
-        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+        return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
 
     # find max bundle_order within that bundle
     bundle_order = 0
@@ -449,9 +449,8 @@ def uploadUnknownPage(
     # make sure we know the bundle
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
-        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+        return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
     with plomdb.atomic():
-
         try:
             iref = Image.create(
                 original_name=original_name,
@@ -497,15 +496,13 @@ def uploadCollidingPage(
     # simple sanity tests against test and tpages
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", "Cannot find test {}".format(t)]
+        return [False, "testError", f"Cannot find test {test_number}"]
     pref = TPage.get_or_none(test=tref, page_number=page_number, version=version)
     if pref is None:
         return [
             False,
             "pageError",
-            "Cannot find page,version {} for test {}".format(
-                [page_number, version], test_number
-            ),
+            f"Cannot find page {page_number} ver{version} for test {test_number}",
         ]
     if not pref.scanned:
         return [
@@ -525,7 +522,7 @@ def uploadCollidingPage(
     # make sure we know the bundle
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is None:
-        return [False, "bundleError", "Cannot find bundle {}".format(bundle_name)]
+        return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
     with plomdb.atomic():
         try:
             iref = Image.create(
@@ -687,7 +684,6 @@ def cleanQGroup(self, qref):
                     aimage=aref.aimage,
                     edition=ed,
                     plom_file=aref.plom_file,
-                    comment_file=aref.comment_file,
                     mark=aref.mark,
                     marking_time=aref.marking_time,
                     time=aref.time,
@@ -869,7 +865,7 @@ def removeAllScannedPages(self, test_number):
     # return the give test to the pre-upload state.
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
-        return [False, "testError", "Cannot find test {}".format(t)]
+        return [False, "testError", f"Cannot find test {test_number}"]
     # check if all owners of tasks in that test are logged out.
     owners = self.testOwnersLoggedIn(tref)
     if owners:

@@ -163,42 +163,6 @@ class Messenger(BaseMessenger):
 
         return idList
 
-    def IDrequestImage(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return imageList
-
     # ------------------------
 
     # TODO - API needs improve. Both of these throw a put/patch to same url = /ID/tasks/{tgv}
@@ -484,82 +448,6 @@ class Messenger(BaseMessenger):
 
         return image
 
-    def MrequestImages(self, code, integrity_check):
-        """Download images relevant to a question, both original and annotated.
-
-        Args:
-            code (str): the task code such as "q1234g9".
-
-        Returns:
-            3-tuple: `(image_metadata, annotated_image, plom_file)`
-                `image_metadata` has various stuff: DB ids, md5sums, etc
-                `annotated_image` and `plom_file` are the png file and
-                and data associated with a previous annotations, or None.
-
-        Raises:
-            PlomAuthenticationException
-            PlomTaskChangedError: you no longer own this task.
-            PlomTaskDeletedError
-            PlomSeriousException
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/MK/images/{}".format(self.server, code),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "integrity_check": integrity_check,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-
-            # response is either [metadata] or [metadata, annotated_image, plom_file]
-            imagesAnnotAndPlom = MultipartDecoder.from_response(response).parts
-            image_metadata = json.loads(imagesAnnotAndPlom[0].text)
-            if len(imagesAnnotAndPlom) == 1:
-                # all is fine - no annotated image or plom data
-                anImage = None
-                plDat = None
-            elif len(imagesAnnotAndPlom) == 3:
-                # all fine - last two parts are annotated image + plom-data
-                anImage = BytesIO(imagesAnnotAndPlom[1].content).getvalue()
-                plDat = BytesIO(imagesAnnotAndPlom[2].content).getvalue()
-            else:
-                raise PlomSeriousException(
-                    "Number of returns doesn't make sense: should be 1 or 3 but is {}".format(
-                        len(imagesAnnotAndPlom)
-                    )
-                )
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomTaskChangedError(
-                    "Ownership of task {} has changed.".format(code)
-                ) from None
-            elif response.status_code == 406:
-                raise PlomTaskChangedError(
-                    "Task {} has been changed by manager.".format(code)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "Task {} has been deleted by manager.".format(code)
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return image_metadata, anImage, plDat
-
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()
         try:
@@ -751,7 +639,7 @@ class Messenger(BaseMessenger):
     def MrequestWholePaperMetadata(self, code, questionNumber=0):
         """Get metadata about the images in this paper.
 
-        TODO: questionnumber?  why?
+        For now, questionNumber effects the "included" column...
 
         TODO: returns 404, so why not raise that instead?
         """

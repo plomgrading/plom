@@ -6,9 +6,9 @@ import logging
 
 from peewee import fn
 
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import UnknownPage, DiscardedPage, CollidingPage
+from plom.db.tables import EXPage, HWPage, Image, QGroup, LPage, Test, TPage
 
 
 log = logging.getLogger("DB")

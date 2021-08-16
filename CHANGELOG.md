@@ -8,14 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* `plom-server launch foo` starts a plom server in the directory `foo`
+* `plom-server launch foo` starts a plom server in the directory `foo`.
+* `plom-server` has new command line args to control logging.
 * new `PlomServer`, `PlomDemoServer`, and `PlomLiteDemoServer` objects for interactively running servers, or otherwise running a server in a background process.
+* `plom-hwscan` can now specify precise per-page mappings from the bundle to questions on the server.
 
 ### Changed
 * `plom-server launch --mastertoken aabbccdd...` replaces the old way (without the keyword argument).
+* QR creation now uses `segno` instead of `pyqrcode`.
 
 ### Fixed
-
+* `plom-finish reassemble` not longer needs direct file access to the server (except when using the `--ided-only` option).
+* low-level API changes and improvements.
 
 
 ## [0.6.5] - 2021-07-19

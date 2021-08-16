@@ -1187,7 +1187,7 @@ class Manager(QWidget):
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
-            imageList = managerMessenger.IDrequestImage(test)
+            imageList = managerMessenger.request_ID_images(test)
         except PlomException as err:
             ErrorMessage(err).exec_()
             return
@@ -1398,7 +1398,7 @@ class Manager(QWidget):
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
-        img = managerMessenger.RgetAnnotatedImage(test, question, version)
+        img = managerMessenger.get_annotations_image(test, question)
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(img)
             rvw = ReviewViewWindow(self, [fh.name])
@@ -1459,7 +1459,7 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        imageList = managerMessenger.IDrequestImage(test)
+        imageList = managerMessenger.request_ID_images(test)
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):

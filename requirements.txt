@@ -17,7 +17,7 @@ aiohttp==3.7.4.post0
 appdirs==1.4.4
 canvasapi==2.2.0
 file-magic==0.4.0
-importlib-resources==5.2.0
+importlib-resources==5.2.2
 imutils==0.5.4
 lapsolver==1.1.0
 numpy==1.19.5
@@ -27,16 +27,14 @@ pandas==1.1.5
 passlib==1.7.4
 peewee==3.14.4
 pycparser==2.20
-pymupdf==1.18.15
-# unlisted dep of pyqrcode
-pypng==0.0.20
-pyqrcode==1.2.1
+pymupdf==1.18.16
 pyzbar==0.1.8
 requests==2.26.0
 requests-toolbelt==0.9.1
 scikit-learn==0.24.2
+segno==1.3.3
 toml==0.10.2
-tqdm==4.61.2
+tqdm==4.62.0
 urllib3==1.26.6
 weasyprint==52.5
 setuptools==57.4.0

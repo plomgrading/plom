@@ -303,52 +303,107 @@ class MarkHandler:
                 log.warning("Returning with error 400 = {}".format(marked_task_status))
                 return web.Response(status=400)
 
-    # @routes.get("/MK/images/{task}")
-    @authenticate_by_token_required_fields(["user", "integrity_check"])
-    def MgetImages(self, data, request):
-        """Return underlying image data and annotations of a question/task.
-
-        Main API call for the client to get the image data (original and annotated).
-        Respond with status 200/409.
+    # @routes.get("/MK/annotations/{number}/{question}/{edition}")
+    # TODO: optionally have this integrity field?
+    @authenticate_by_token_required_fields(["integrity"])
+    def Mget_annotations(self, data, request):
+        """Get the annotations of a marked question as JSON.
 
         Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /MK/images/"task code"
-                which the task code is extracted from.
+            data (dict): A dictionary having the user/token, and `integrity`
+                which is a checksum that can be used to check that the
+                server hasn't changed state (for example added new scans to
+                this question.  Pass the empty string `""` to omit such
+                checks.
+            request (aiohttp.web_request.Request): A GET request with url
+                "/MK/annotations/{number}/{question}/{edition}".
+                `number` and `question` identify which question.
+                `edition` can be used to get a particular annotation from
+                the history of all annotations.  If `edition` is omitted,
+                return the latest annotations.
+                TODO: currently instead of omitting you must pass "_".
 
         Returns:
-            aiohttp.web_response.Response: A response which includes the multipart writer object
-                wrapping the task images.
-        """
+            aiohttp.json_response.Response: JSON of the annotations with
+                status 200, or a 404 if no such image, or 400/401 for
+                authentication problems.
 
-        task_code = request.match_info["task"]
-        results = self.server.MgetImages(
-            data["user"], task_code, data["integrity_check"]
-        )
-        # Format is one of:
-        # [False, error]
-        # [True, image_data]
-        # [True, image_data, annotated_fname, plom_filename]
+        Note: if you want the annotated image corresponding to these
+        annotations, extract the edition from the JSON, then call
+        "GET:/MK/annotations_image/" with that edition.
+
+        Ownership: note that you need not be the "owner" of this task.
+        Getting data back from this function does not imply permission
+        to submit to this task.
+        """
+        number = int(request.match_info["number"])
+        question = int(request.match_info["question"])
+        # TODO: how to make optional?  for now, must pass "_"
+        edition = request.match_info["edition"]
+        if edition == "_":
+            edition = None
+        if edition is not None:
+            edition = int(edition)
+        integrity = data.get("integrity")
+        if integrity == "":
+            integrity = None
+        results = self.server.DB.Mget_annotations(number, question, edition, integrity)
         if not results[0]:
-            if results[1] == "owner":
-                return web.Response(status=409)  # someone else has that task_image
-            elif results[1] == "integrity_fail":
+            if results[1] == "integrity_fail":
                 return web.Response(status=406)  # task changed
             elif results[1] == "no_such_task":
                 return web.Response(status=410)  # task deleted
             else:
                 return web.Response(status=400)  # some other error
+        plomdata = results[1]
+        return web.json_response(plomdata, status=200)
 
-        with MultipartWriter("imageAnImageAndPlom") as multipart_writer:
-            image_metadata = results[1]
-            files = []
-            # append the annotated_fname, plom_filename if present
-            files.extend(results[2:])
+    # @routes.get("/MK/annotations_image/{number}/{question}/{edition}")
+    @authenticate_by_token_required_fields([])
+    def Mget_annotations_image(self, data, request):
+        """Get the image of an annotated question (a marked question).
 
-            multipart_writer.append_json(image_metadata)
-            for file_name in files:
-                multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): A GET request with url
+                "/MK/annotations_image/{number}/{question}/{edition}"
+                `number` and `question` identify which question we want.
+                `edition` can be used to get a particular annotation from
+                the history of all annotations.  If `edition` is omitted,
+                return the latest annotated image.
+
+        Returns:
+            aiohttp.web_response.Response: the binary image data with
+                status 200, or a 404 if no such image, or 400/401 for
+                authentication problems.
+
+        Note: if you want *both* the latest annotated image and the
+        latest annotations (in `.plom` format), do not simply omit the
+        edition in both calls: someone might upload a new annotation
+        between your calls!  Instead, call "GET:/MK/annotations/"
+        first (without edition), then extract the edition from the `.plom`
+        data.  Finally, call this with that edition.
+
+        Ownership: note that you need not be the "owner" of this task.
+        Getting data back from this function does not imply permission
+        to submit to this task.
+        """
+        number = int(request.match_info["number"])
+        question = int(request.match_info["question"])
+        # TODO: how to make optional?  for now, must pass "_"
+        edition = request.match_info["edition"]
+        if edition == "_":
+            edition = None
+        if edition is not None:
+            edition = int(edition)
+        results = self.server.DB.Mget_annotations(number, question, edition)
+        if not results[0]:
+            if results[1] == "no_such_task":
+                return web.Response(status=410)  # task deleted
+            else:
+                return web.Response(status=400)  # some other error
+        filename = results[2]
+        return web.FileResponse(filename, status=200)
 
     # @routes.get(...)
     @authenticate_by_token_required_fields(["user"])
@@ -486,29 +541,105 @@ class MarkHandler:
             request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
 
         Returns:
-            aiohttp.web_response.Response: JSON data, a list of lists
-                where each list in the form documented below.
+            aiohttp.web_response.Response: JSON data, a list of dicts
+                where each dict has keys:
+                pagename, md5, included, order, id, orientation, server_path
+                as documented below.
 
-        Each row of the data looks like:
-           `[name, md5, true/false, pos_in_current_annotation, image_id]`
+        Dictionary contents per-row
+        ---------------------------
+
+        `pagename`: A string something like `"t2"`.  Reasonable to use
+            as a thumbnail label for the image or in other cases where
+            a very short string label is required.
+
+        `md5': A string of the md5sum of the image.
+
+        `id`: an integer like 19.  This is the key in the database to
+            the image of this page.  It is (I think) possible to have
+            two pages pointing to the same image, in which case the md5
+            and the id could be repeated.  TODO: determine if this only
+            happens b/c of bugs/upload issues or if its a reasonably
+            normal state.
+
+        `included`: boolean, did the server *originally* have this page
+            included in question number `question`?.  Note that clients
+            may pull other pages into their annotating; you can only
+            rely on this information for initializing a new annotating
+            session.  If you're e.g., editing an existing annotation,
+            you should rely on the info from that existing annotation
+            instead of this.
+
+        `order`: None or an integer specifying the relative ordering of
+            pages within a question.  As with `included`,
+            this information only reflects the initial (typically
+            scan-time) ordering of the images.  If its None, server has
+            no info about what order might be appropriate, for example
+            because this image is not thought to belong in `question`.
+
+        `orientation`: relative to the natural orientation of the image.
+            This is an integer for the degrees of rotation.  Probably
+            only multiples of 90 work and perhaps only [0, 90, 180, 270]
+            but could/should (TODO) be generalized for arbitrary
+            rotations.  This should be applied *after* any metadata
+            rotations from inside the file instead (such as jpeg exif
+            orientation).  As with `included` and `order`, this is only
+            the initial state.  Clients may rotate images and that
+            information belongs their annotation.
+
+        `server_path`: a string of a path and filename where the server
+            might have the file stored, such as
+            `"pages/originalPages/t0004p02v1.86784dd1.png"`.
+            This is guaranteed unique (such as by the random bit before
+            `.png`).  It is *not* guaranteed that the server actually
+            stores the file in this location, although the current
+            implementation does.
+
+        Example
+        -------
+        ```
+          [
+           {'pagename': 't2',
+            'md5': 'e4e131f476bfd364052f2e1d866533ea',
+            'included': False,
+            'order': None,
+            'id': 19',
+            'orientation': 0
+            'server_path': 'pages/originalPages/t0004p02v1.86784dd1.png',
+           }
+           {'pagename': 't3',
+            'md5': 'a896cb05f2616cb101df175a94c2ef95',
+            'included': True,
+            'order': 1,
+            'id': 20,
+            'orientation': 270
+            'server_path': 'pages/originalPages/t0004p03v2.ef7f9754.png',
+           }
+          ]
+        ```
         """
         test_number = request.match_info["number"]
-        # TODO: who cares about this?
+        # this is used to determine the true/false "included" info
         question_number = request.match_info["question"]
 
         # return [True, pageData, f1, f2, f3, ...] or [False]
         # 1. True/False for operation status.
-        # 2. A list of lists, documented elsewhere (TODO: I hope)
+        # 2. A list of lists, as doc'd above
         # 3. 3rd element onward: paths for each page of the paper in server.
         r = self.server.MgetWholePaper(test_number, question_number)
 
         if not r[0]:
             return web.Response(status=404)
 
-        pages_data = r[1]
-        # We just discard this, its legacy from previous API call
-        # TODO: fold into the pages_data; then we can sanity check it when it comes back!
         all_pages_paths = r[2:]
+        assert len(r[1]) == len(all_pages_paths)
+        rownames = ("pagename", "md5", "included", "order", "id", "server_path")
+        pages_data = []
+        for i, row in enumerate(r[1]):
+            pages_data.append({k: v for k, v in zip(rownames, row)})
+            pages_data[i]["server_path"] = all_pages_paths[i]
+            # For now, server has no orientation data but callers expect it
+            pages_data[i]["orientation"] = 0
         return web.json_response(pages_data, status=200)
 
     # @routes.get("/MK/allMax")
@@ -580,11 +711,17 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
-        router.add_get("/MK/images/{task}", self.MgetImages)
         router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
+        router.add_get(
+            "/MK/annotations/{number}/{question}/{edition}", self.Mget_annotations
+        )
+        router.add_get(
+            "/MK/annotations_image/{number}/{question}/{edition}",
+            self.Mget_annotations_image,
+        )
         router.add_patch("/MK/review", self.MreviewQuestion)
         router.add_patch("/MK/revert/{task}", self.MrevertTask)

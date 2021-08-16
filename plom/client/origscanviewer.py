@@ -150,6 +150,7 @@ class SinkList(QListWidget):
         )  # whether or not the item 'officially' belongs to the question
         self.item_files = {}
         self.item_orientation = {}
+        self.item_id = {}
         self.itemDoubleClicked.connect(self.viewImage)
         # self.setSelectionMode(QListView.SingleSelection)
 
@@ -160,10 +161,11 @@ class SinkList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addPotentialItem(self, p, pfile, belongs):
+    def addPotentialItem(self, p, pfile, belongs, db_id=None):
         name = str(p)
         self.item_files[name] = pfile
         self.item_orientation[name] = 0  # TODO
+        self.item_id[name] = db_id
         self.item_belongs[name] = belongs
 
     def removeSelectedItems(self):
@@ -572,7 +574,7 @@ class RearrangementViewer(QDialog):
             # add every page image to list A
             self.listA.addImageItem(row[0], row[5], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2])
+            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
             # if position in current annot is non-null then add to list of pages to move between lists.
             if row[2] and row[3]:
                 move_order[row[3]] = row[0]
@@ -597,7 +599,7 @@ class RearrangementViewer(QDialog):
             # add every page image to list A
             self.listA.addImageItem(row[0], row[5], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2])
+            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
         for kv in current:
             match = [row[0] for row in self.pageData if row[1] == kv["md5"]]
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
@@ -693,7 +695,10 @@ class RearrangementViewer(QDialog):
         Reorders and saves pages according to user's selections.
 
         Returns:
-
+            Doesn't return anything directly but sets `permute` instance
+            variable which contains a list of tuples:
+                `(iref, filename, angle, database_id)`
+            (where `iref` seems to be md5sum?  TODO).
         """
         if self.listB.count() == 0:
             msg = ErrorMessage("You must have at least one page in the bottom list.")
@@ -710,8 +715,9 @@ class RearrangementViewer(QDialog):
         self.permute = []
         for n in self.listB.getNameList():
             tmp = self.nameToIrefNFile[n]
-            self.permute.append((*tmp, self.listB.item_orientation[n]))
-            # return triples of [iref, file, angle]
+            self.permute.append(
+                (*tmp, self.listB.item_orientation[n], self.listB.item_id[n])
+            )
         self.accept()
 
     def singleSelect(self, currentList, allPages):

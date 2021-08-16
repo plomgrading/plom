@@ -417,46 +417,6 @@ class ManagerMessenger(BaseMessenger):
 
         return imageList
 
-    def IDrequestImage(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomBenignException(
-                    "That ID group of {} has not been scanned.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return imageList
-
     def getProgress(self, q, v):
         self.SRmutex.acquire()
         try:
@@ -1415,41 +1375,6 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def RgetAnnotatedImage(self, testNumber, questionNumber, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/annotatedImage".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                    "questionNumber": questionNumber,
-                    "version": version,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-            img = BytesIO(response.content).getvalue()
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.{}.{}".format(
-                        testNumber, questionNumber, version
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return img
-
     def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
         try:
@@ -1601,27 +1526,6 @@ class ManagerMessenger(BaseMessenger):
                 "https://{}/REP/outToDo".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
-    def RgetMarked(self, q, v):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/marked".format(self.server),
-                verify=False,
-                json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
         except requests.HTTPError as e:

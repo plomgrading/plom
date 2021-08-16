@@ -16,6 +16,7 @@ from pathlib import Path
 from shlex import split
 import shutil
 import subprocess
+import time
 
 import toml
 
@@ -33,6 +34,8 @@ from plom.plom_exceptions import PlomBenignException
 # Ideas from Forest Kobayashi's plom-form-canvas script: ensure the
 # server dies with the python script (e.g., if we kill the script.)
 # LINUX ONLY I think. See https://stackoverflow.com/a/19448096
+# See also https://gitlab.com/plom/plom/-/issues/804
+#
 # import signal
 # import ctypes
 #
@@ -57,7 +60,7 @@ class _PlomServerProcess(Process):
         self.basedir = basedir
 
     def run(self):
-        theServer.launch(self.basedir)
+        theServer.launch(self.basedir, logfile="server.log", logconsole=False)
 
 
 class PlomServer:
@@ -136,6 +139,8 @@ class PlomServer:
                 `"multiprocessing"`.  Omit or set to None to choose the
                 default (currently `"subprocess"`; subject to change).
 
+        TODO: add: quiet (bool): log to file but not console/stderr.  default True?
+
         Raises:
             PermissionError: cannot write to `dir`.
             OSError: e.g., address already in use, various others.
@@ -166,12 +171,17 @@ class PlomServer:
             self._server_proc.start()
         else:
             self._server_proc = subprocess.Popen(
-                split(f"python3 -m plom.scripts.server launch {self.basedir}")
+                split(
+                    f"python3 -m plom.scripts.server launch {self.basedir} --no-logconsole --logfile server.log"
+                )
             )
-        assert self.process_is_running()
+        assert self.process_is_running(), "The server did not start successfully"
+        time.sleep(0.2)
+        assert self.process_is_running(), "The server did not start successfully"
         if not self.ping_server():
             # TODO: try to kill it?
             raise RuntimeError("The server did not successfully start")
+        assert self.process_is_running(), "The server did not start successfully"
 
     def process_is_running(self):
         """Forked/background process not yet dead.
@@ -221,6 +231,10 @@ class PlomServer:
         else:
             return None
 
+    @property
+    def logfile(self):
+        return self.basedir / "server.log"
+
     def _brief_wait(self, how_long=0.1):
         """Wait briefly on the subprocess, which should not have stopped.
 
@@ -234,7 +248,10 @@ class PlomServer:
     def ping_server(self):
         """Try to connect to the background server.
 
-        We sleep in a loop until we can ping the server.
+        Sleep in a loop until we can ping the server.  Then, download
+        the spec from the server and compare the `publicCode` to the
+        local spec file, which helps confirm we are talking to the
+        expected server.
 
         Args:
             TODO: kwargs number of retries etc?
@@ -246,8 +263,11 @@ class PlomServer:
         m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
         count = 0
         while True:
-            assert self.process_is_running()
-            assert self._brief_wait(0.25), "Server died on us!"
+            if not self.process_is_running():
+                return False
+            if not self._brief_wait(0.25):
+                print("Server died while we waited for ping")
+                return False
             try:
                 r = m.start()
             except PlomBenignException:
@@ -259,9 +279,17 @@ class PlomServer:
             if count >= 10:
                 print("we tried 10 times but server is not up yet!")
                 return False
+        if not self.process_is_running():
+            return False
+        specfile = SpecVerifier.load_verified(
+            fname=self.basedir / specdirname / "verifiedSpec.toml"
+        )
+        spec = m.get_spec()
+        if spec["publicCode"] != specfile["publicCode"]:
+            print("Server's publicCode doesn't match: wrong server? wrong address?")
+            return False
         m.stop()
-        assert self.process_is_running()
-        return True
+        return self.process_is_running()
 
     def __del__(self):
         print(f'Deleting PlomServer object "{self}"')

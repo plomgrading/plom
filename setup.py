@@ -36,17 +36,16 @@ server_install_requires = [
     "numpy",
     "pandas",
     "passlib",
-    "pymupdf>=1.18.8",
+    "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
-    "weasyprint",
+    "weasyprint<53",  # temp pin for Issue #1594
     "aiohttp~=3.7.2",
-    "pypng",  # unlisted dep of pyqrcode
-    "pyqrcode",
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
     "opencv-python",
     "scikit-learn>=0.23.1",
+    "segno",
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",
@@ -66,7 +65,7 @@ server_install_requires = [
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
-#       tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark tex-charter
+#       tex-preview tex-dvipng texlive-scheme-basic tex-charter
 
 
 setup(

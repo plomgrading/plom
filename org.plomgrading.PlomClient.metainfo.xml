@@ -16,9 +16,9 @@
   <summary>Grading/marking client for the Plom online grading system</summary>
   <description>
     <p>
-      Plom is a system for giving tests on paper, but marking and
-      returning them online.  This is the graphical interface used
-      for grading marking tests.
+      Plom is a system for the online marking of handwritten work.  It prepares
+      QR-coded test papers, collates scanned work, and coordinates a team of
+      graders.  This is the graphical interface used for grading tests.
     </p>
   </description>
 
@@ -38,9 +38,22 @@
     <binary>plom-client</binary>
   </provides>
 
+  <!-- don't list "touch" unless test with it -->
+  <requires>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </requires>
+  <requires>
+    <display_length compare="ge">medium</display_length>
+  </requires>
+
+  <kudos>
+    <kudo>ModernToolkit</kudo>
+  </kudos>
+
   <url type="homepage">https://plomgrading.org</url>
   <update_contact>devs@plomgrading.org</update_contact>
-  <developer_name>Andrew Rechnitzer, Colin B. Macdonald and others</developer_name>
+  <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
     <release date="2021-07-19" version="0.6.5"/>

@@ -27,6 +27,7 @@ import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
+from plom.server import theServer
 from plom.server.prepare import initialise_server
 from plom.server import (
     build_canned_users,
@@ -125,17 +126,6 @@ def processUsers(userFile, demo, auto, numbered):
             fh.write(cl)
 
 
-def launchTheServer(basedir, master_token):
-    from plom.server import theServer
-
-    if basedir is None:
-        basedir = Path(".")
-    check_server_directories(basedir)
-    check_server_fully_configured(basedir)
-
-    theServer.launch(basedir, master_token=master_token)
-
-
 def check_non_negative(arg):
     if int(arg) < 0:
         raise ValueError
@@ -158,9 +148,14 @@ spI = sub.add_parser(
     "init",
     help="Initialise server",
     description="""
-      Initializes the current working directory in preparation for
-      starting a Plom server.  Creates sub-directories and config files.
+      Initialises a directory in preparation for starting a Plom server.
+      Creates sub-directories, config files, and various other things.
     """,
+)
+spI.add_argument(
+    "dir",
+    nargs="?",
+    help="The directory to use. If omitted, use the current directory.",
 )
 spI.add_argument(
     "--port",
@@ -197,6 +192,19 @@ spR.add_argument(
         (i.e., restart the server without requiring users to log-off and
         log-in again).""",
 )
+spR.add_argument(
+    "--logfile",
+    help="""A filename to save the logs.  If its a bare filename it will
+        be relative to DIR above, or you can specify a path relative to
+        the current working directory.""",
+)
+spR.add_argument(
+    "--no-logconsole",
+    action="store_false",
+    dest="logconsole",
+    help="""By default the server echos the logs to stderr.  This disables
+        that.  You can still see the logs in the logfile.""",
+)
 
 spU.add_argument(
     "userlist",
@@ -231,11 +239,21 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(".", args.port)
+        initialise_server(args.dir, args.port)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
-        launchTheServer(args.dir, args.mastertoken)
+        if args.dir is None:
+            args.dir = Path(".")
+        # TODO: probably these checks are unnecessary and done by the server
+        check_server_directories(args.dir)
+        check_server_fully_configured(args.dir)
+        theServer.launch(
+            args.dir,
+            master_token=args.mastertoken,
+            logfile=args.logfile,
+            logconsole=args.logconsole,
+        )
     else:
         parser.print_help()
 

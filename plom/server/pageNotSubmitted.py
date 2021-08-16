@@ -3,8 +3,10 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Forest Kobayashi
 
 from pathlib import Path
+from textwrap import dedent
 
 import fitz
 
@@ -12,33 +14,44 @@ from plom import specdir
 from plom.textools import buildLaTeX
 
 
-question_not_submitted_text = r"""
+# TODO: letterpaper hardcoded
+question_not_submitted_text = dedent(
+    r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
-    \usepackage{xcolor}
-    \usepackage[printwatermark]{xwatermark}
-    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Question not submitted}
+    \usepackage{tikz}
     \pagestyle{empty}
     \begin{document}
     \emph{This question was not submitted.}
     \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Question not submitted};
+    \end{tikzpicture}
+    \vfill
     \emph{This question was not submitted.}
     \end{document}
     """
+).strip()
 
-page_not_submitted_text = r"""
+page_not_submitted_text = dedent(
+    r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
-    \usepackage{xcolor}
-    \usepackage[printwatermark]{xwatermark}
-    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
+    \usepackage{tikz}
     \pagestyle{empty}
     \begin{document}
     \emph{This page of the test was not submitted.}
     \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Page not submitted};
+    \end{tikzpicture}
+    \vfill
     \emph{This page of the test was not submitted.}
     \end{document}
     """
+).strip()
 
 
 image_scale = 200 / 72
@@ -70,7 +83,7 @@ def build_test_page_substitute(
     page_width = pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
     text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
-    insertion_confirmed = pdf[0].insert_textbox(
+    excess = pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -79,9 +92,7 @@ def build_test_page_substitute(
         fontfile=None,
         align=1,
     )
-    assert (
-        insertion_confirmed > 0
-    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+    assert excess > 0, "Text didn't fit: paper label too long?"
 
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
@@ -118,7 +129,7 @@ def build_homework_question_substitute(
     page_width = pdf[0].bound().width
     rect = fitz.Rect(page_width // 2 - 50, 20, page_width // 2 + 50, 54)
     text = "{}.{}".format(student_id, question_number)
-    insertion_confirmed = pdf[0].insert_textbox(
+    excess = pdf[0].insert_textbox(
         rect,
         text,
         fontsize=18,
@@ -127,9 +138,7 @@ def build_homework_question_substitute(
         fontfile=None,
         align=1,
     )
-    assert (
-        insertion_confirmed > 0
-    ), "Text didn't fit: shortname too long?  or font issue/bug?"
+    assert excess > 0, "Text didn't fit: paper label too long?"
 
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 

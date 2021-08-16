@@ -6,7 +6,8 @@
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import *
+from plom.db.tables import plomdb
+from plom.db.tables import Group, IDGroup, QGroup, LPage, Test, TPage, User
 
 
 log = logging.getLogger("DB")
@@ -232,24 +233,6 @@ def RgetMarkHistogram(self, q, v):
     return histogram
 
 
-def RgetMarked(self, q, v):
-    """Return a list of all marked tasks with that q/v."""
-    marked_list = []
-    for qref in (
-        QuestionData.select()
-        .join(Group)
-        .where(
-            QuestionData.questionNumber == q,
-            QuestionData.version == v,
-            QuestionData.marked == True,
-            Group.scanned == True,  # this might be redundant.
-        )
-    ):
-        marked_list.append(qref.group.gid)
-    log.debug("Sending list of marked tasks for Q{}V{}".format(q, v))
-    return marked_list
-
-
 def RgetQuestionUserProgress(self, q, v):
     """For the given q/v return the number of questions marked by each user (who marked something in this q/v - so no zeros).
     Return a list of the form [ number_scanned, [user, nmarked], [user, nmarked], etc]
@@ -403,14 +386,18 @@ def RgetSpreadsheet(self):
 
 
 def RgetOriginalFiles(self, test_number):
-    """Return list of the filenames for the original (unannotated) page images for the given test."""
+    """Return list of the filenames for the original (unannotated) page images for the given test.
+
+    Lightly deprecated: but still used by reassembly of only-IDed (offline graded) papers.
+    """
     page_files = []
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
         return []
     # append tpages, hwpages and then lpages.
     for pref in tref.tpages.order_by(TPage.page_number):
-        page_files.append(pref.image.file_name)
+        if pref.scanned:
+            page_files.append(pref.image.file_name)
     for qref in tref.qgroups.order_by(QGroup.question):
         for pref in qref.group.hwpages:
             page_files.append(pref.image.file_name)
@@ -439,29 +426,6 @@ def RgetCoverPageInfo(self, test_number):
         coverpage.append([qref.question, qref.version, qref.annotations[-1].mark])
     log.debug("Sending coverpage info of test {}".format(test_number))
     return coverpage
-
-
-def RgetAnnotatedFiles(self, test_number):
-    """For the given test return a list of the image file names for the idgroup, dnmgroup and the (marked) questions."""
-    # todo - put in sanity / safety checks - making sure questions are marked.
-
-    image_list = []
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:
-        return []
-    # append ID-pages, then DNM-pages, then QuestionGroups
-    idref = IDGroup.get_or_none(test=tref)
-    for p in idref.idpages.order_by(IDPage.order):
-        image_list.append(p.image.file_name)
-    # append DNM pages
-    dnmref = DNMGroup.get_or_none(test=tref)
-    for p in dnmref.dnmpages.order_by(DNMPage.order):
-        image_list.append(p.image.file_name)
-    # append last annotation from each qgroup
-    for g in tref.qgroups.order_by(QGroup.question):
-        image_list.append(g.annotations[-1].aimage.file_name)
-    log.debug("Sending annotated images for test {}".format(test_number))
-    return image_list
 
 
 def RgetMarkReview(self, filterQ, filterV, filterU):
@@ -497,25 +461,6 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
         )
     )
     return filtered
-
-
-def RgetAnnotatedImage(self, test_number, question, version):
-    """Return the filename of the annotated image for the given test/question/version."""
-    tref = Test.get_or_none(test_number=test_number)
-    if tref is None:  # sanity check
-        return [False]
-    qref = QGroup.get_or_none(
-        QGroup.test == tref,
-        QGroup.question == question,
-        QGroup.version == version,
-        QGroup.marked == True,
-    )
-    if qref is None:  # another sanity check.
-        return [False]
-    log.debug(
-        "Sending annotated image of tqv {}.{}.{}".format(test_number, question, version)
-    )
-    return [True, qref.annotations[-1].aimage.file_name]
 
 
 def RgetIDReview(self):

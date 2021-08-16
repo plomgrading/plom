@@ -74,16 +74,15 @@ spAssemble = sub.add_parser(
         to return to students.  A special case deals with the online-return
         of papers that were marked offline (before scanning).
     """,
-    epilog="""
-        WARNING: This command must be run on the server, and in the
-        server's directory (where you ran `plom-server launch`).
-        This may change in the future.
-    """,
 )
 spAssemble.add_argument(
     "--ided_only",
     action="store_true",
-    help="Reassemble PDF files for ID'ed (but offline-graded) papers.",
+    help="""
+        Reassemble PDF files for ID'ed (but offline-graded) papers.
+        WARNING: This option still uses filesystem access and
+        must be run on the server.
+    """,
 )
 spCodedReturn = sub.add_parser(
     "webpage",
