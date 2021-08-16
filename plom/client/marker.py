@@ -2343,9 +2343,10 @@ class MarkerClient(QWidget):
 
         """
         txt = txt.strip()
-        if txt in self.commentCache:
-            # have already latex'd this comment
-            return self.commentCache[txt]
+        # If we already latex'd this text, return the cached image
+        r = self.commentCache.get(txt, None)
+        if r:
+            return r
         log.debug('requesting latex for "{}"'.format(txt))
         try:
             fragment = self.msgr.MlatexFragment(txt)
@@ -2356,7 +2357,6 @@ class MarkerClient(QWidget):
         fragFile = tempfile.NamedTemporaryFile(
             dir=self.workingDirectory, suffix=".png", delete=False
         ).name
-        # save it
         with open(fragFile, "wb+") as fh:
             fh.write(fragment)
         # add it to the cache
