@@ -2348,10 +2348,17 @@ class MarkerClient(QWidget):
         if r:
             return r
         log.debug('requesting latex for "{}"'.format(txt))
-        try:
-            fragment = self.msgr.MlatexFragment(txt)
-        except PlomLatexException as e:
-            ErrorMessage(str(e)).exec_()
+        r, fragment = self.msgr.MlatexFragment(txt)
+        if not r:
+            # Heuristics to highlight error: latex errors seem to start with "! "
+            lines = fragment.split("\n")
+            idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
+            n = idx[0]
+            if n > 0:
+                info = "\n".join(lines[max(0, n - 5) : n + 5])
+            else:
+                info=None
+            ErrorMessage("Server reported an error processing your TeX fragment", details=fragment, info=info).exec_()
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(

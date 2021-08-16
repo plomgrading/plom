@@ -432,21 +432,21 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
+            return (True, image)
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
-                raise PlomLatexException(
-                    f"Server reported an error processing your TeX fragment:\n\n{response.text}"
-                ) from None
+                return (False, response.text)
+                # raise PlomLatexException(
+                #     f"Server reported an error processing your TeX fragment:\n\n{response.text}"
+                # ) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
                 ) from None
         finally:
             self.SRmutex.release()
-
-        return image
 
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()
