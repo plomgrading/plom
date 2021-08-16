@@ -472,7 +472,7 @@ g.add_argument(
     "-l",
     "--loose",
     action="store_true",
-    help="Whether or not to upload file as loose pages.",
+    help="[DEPRECATED] Whether or not to upload file as loose pages.",
 )
 g.add_argument(
     "-q",
