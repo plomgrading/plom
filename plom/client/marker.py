@@ -2357,17 +2357,20 @@ class MarkerClient(QWidget):
             n = idx[0]
             if n > 0:
                 info = "\n".join(lines[max(0, n - 5) : n + 5])
+                ErrorMessage(
+                    """
+                    <p>The server reported an error processing your TeX fragment.</p>
+                    <p>Perhaps the error is visible in the following snippet,
+                    otherwise see full logs under details:</p>
+                    """,
+                    details=fragment,
+                    info=info,
+                ).exec_()
             else:
-                info = None
-            ErrorMessage(
-                """
-                <p>The server reported an error processing your TeX fragment.</p>
-                <p>Perhaps the error is visible in the following snippet,
-                otherwise see full logs under details:</p>
-                """,
-                details=fragment,
-                info=info,
-            ).exec_()
+                ErrorMessage(
+                    "<p>The server reported an error processing your TeX fragment.</p>",
+                    details=fragment,
+                ).exec_()
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
