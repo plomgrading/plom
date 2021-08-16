@@ -3,8 +3,10 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Forest Kobayashi
 
 from pathlib import Path
+from textwrap import dedent
 
 import fitz
 
@@ -12,33 +14,44 @@ from plom import specdir
 from plom.textools import buildLaTeX
 
 
-question_not_submitted_text = r"""
+# TODO: letterpaper hardcoded
+question_not_submitted_text = dedent(
+    r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
-    \usepackage{xcolor}
-    \usepackage[printwatermark]{xwatermark}
-    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Question not submitted}
+    \usepackage{tikz}
     \pagestyle{empty}
     \begin{document}
     \emph{This question was not submitted.}
     \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Question not submitted};
+    \end{tikzpicture}
+    \vfill
     \emph{This question was not submitted.}
     \end{document}
     """
+).strip()
 
-page_not_submitted_text = r"""
+page_not_submitted_text = dedent(
+    r"""
     \documentclass[12pt,letterpaper]{article}
     \usepackage[]{fullpage}
-    \usepackage{xcolor}
-    \usepackage[printwatermark]{xwatermark}
-    \newwatermark[allpages,color=red!30,angle=-45,scale=2]{Page not submitted}
+    \usepackage{tikz}
     \pagestyle{empty}
     \begin{document}
     \emph{This page of the test was not submitted.}
     \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Page not submitted};
+    \end{tikzpicture}
+    \vfill
     \emph{This page of the test was not submitted.}
     \end{document}
     """
+).strip()
 
 
 image_scale = 200 / 72

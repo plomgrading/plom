@@ -18,7 +18,7 @@ Fedora
 Tested on Fedora 34.  Some stuff from the package manager:
 ```
   # sudo dnf install \
-        ImageMagick openssl zbar gcc gcc+c++ cmake \
+        ImageMagick openssl zbar gcc gcc-c++ cmake \
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
@@ -29,8 +29,8 @@ Tested on Fedora 34.  Some stuff from the package manager:
         python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs \
         python3-pytest \
         python3-PyMuPDF python3-scikit-learn \
-        tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark tex-charter \
-        tex-exam tex-preprint
+        latexmk tex-dvipng texlive-scheme-basic \
+        tex-preview tex-charter tex-exam tex-preprint
 ```
 At this point `pip install --user .` from inside the Plom source tree should pull
 in the remaining dependencies.  Alternatively, you can do something like:
