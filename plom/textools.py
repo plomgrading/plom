@@ -19,11 +19,18 @@ else:
 import plom
 
 
-def texFragmentToPNG(fragment, outName, dpi=225):
+def texFragmentToPNG(fragment, *, dpi=225):
     """Process a fragment of latex and produce a png image.
 
+    Args:
+        fragment (str): a string of text to be rendered with LaTeX.
+        dpi (int): controls the resolution of the image by setting
+            the dots-per-inch.  Defaults: 225.
+
     Return:
-        tuple: `(True,)` or `(False, errmsg)`.
+        tuple: `(True, imgdata)` or `(False, error_msg)` where imgdata
+            is the raw contents of a PNG file, and error_msg is
+            (currently) a string, but this could change in the future.
     """
 
     head = dedent(
@@ -104,8 +111,8 @@ def texFragmentToPNG(fragment, outName, dpi=225):
             errstr += convertIt.stdout.decode()
             return (False, errstr)
 
-        shutil.copyfile(Path(tmpdir) / "frag.png", outName)
-    return (True, outName)
+        with open(Path(tmpdir) / "frag.png", "rb") as f:
+            return (True, f.read())
 
 
 def buildLaTeX(src, out):

@@ -41,11 +41,14 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
 
     fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for Plom."
 
-    r = texFragmentToPNG(fragment, ct)
-    if not r[0]:
+    valid, value = texFragmentToPNG(fragment)
+    if valid:
+        with open(ct, "wb") as f:
+            f.write(value)
+    else:
         print("=" * 80)
         print("\nThere was an error processing the testing TeX fragment:\n")
-        print(r[1])
+        print(value)
         raise PlomServerConfigurationError(
             "Error latex'ing fragment.  See messages above and/or check your latex distribution."
         )

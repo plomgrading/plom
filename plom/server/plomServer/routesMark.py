@@ -139,8 +139,7 @@ class MarkHandler:
         """
         valid, value = self.server.MlatexFragment(data["user"], data["fragment"])
         if valid:
-            latex_image_path = value
-            return web.FileResponse(latex_image_path, status=200)
+            return web.Response(body=value, status=200)
         else:
             return web.json_response(status=406, text=value)
 
