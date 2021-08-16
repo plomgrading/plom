@@ -77,25 +77,6 @@ class PageView(QGraphicsView):
         # then any other stuff needed by parent class
         super().resizeEvent(event)
 
-    def DEPRECATED_latexAFragment(self, txt):
-        """
-        Latexes a fragment of text.
-
-        Args:
-            txt (str): text to be formatted.
-
-        Returns:
-            (png): a file containing the Latexed text.
-
-        TODO: is this ever called?  pageview has tex support?
-        """
-        cur = self.cursor()
-        self.setCursor(QCursor(Qt.WaitCursor))
-        QApplication.processEvents()  # this triggers a cursor update
-        ret = self.parent.latexAFragment(txt)
-        self.setCursor(cur)
-        return ret
-
     def setZoomSelector(self, update=False):
         """
         Sets Zoom combo box to show current selection.
