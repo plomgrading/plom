@@ -54,7 +54,7 @@ class ErrorMessage(QMessageBox):
             else:
                 self.setInformativeText(f"<small>{info}</small>")
         self.setStandardButtons(QMessageBox.Ok)
-        self.setDefaultButton(QMessageBox.Ok);
+        self.setDefaultButton(QMessageBox.Ok)
 
 
 class SimpleMessage(QMessageBox):
