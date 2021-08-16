@@ -23,6 +23,7 @@ import queue
 import secrets
 import shutil
 import tempfile
+from textwrap import shorten
 import time
 import threading
 
@@ -2347,7 +2348,7 @@ class MarkerClient(QWidget):
         r = self.commentCache.get(txt, None)
         if r:
             return r
-        log.debug('requesting latex for "{}"'.format(txt))
+        log.debug("request image for latex: %s", shorten(txt, 80, placeholder="..."))
         r, fragment = self.msgr.MlatexFragment(txt)
         if not r:
             # Heuristics to highlight error: latex errors seem to start with "! "
