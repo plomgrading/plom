@@ -277,7 +277,7 @@ def processHWScans(
 
     # TODO: add command-line option to override this name
     bundle_name, md5 = bundle_name_and_md5(pdf_fname)
-    bundledir = Path("bundles") / "submittedHWByQ" / bundle_name
+    bundledir = Path("bundles") / bundle_name
     make_required_directories(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))

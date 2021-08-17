@@ -337,8 +337,8 @@ def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
                     f"Unsuccessful HW upload, server returned:\n{rmsg[1:]}"
                 )
             SIDQ[sid].append(q)
-            # TODO: this feels out of place?
-            bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
+            # TODO: this feels out of place?  AND IT WAS
+            bundle_dir = Path("bundles") / bundle_name
             move_files_post_upload(bundle_dir, f, qr=False)
 
         updates = msgr.triggerUpdateAfterHWUpload()
