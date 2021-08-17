@@ -53,7 +53,7 @@ server_install_requires = [
     "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
     "aiohttp>=3.7.2",
-    "weasyprint",
+    "weasyprint>=52.5",
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
