@@ -291,7 +291,7 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
     return [TUP, updates]
 
 
-def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
+def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, password=None):
     """Upload "homework" pages to a particular student ID on the server.
 
     args:
@@ -337,9 +337,8 @@ def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
                     f"Unsuccessful HW upload, server returned:\n{rmsg[1:]}"
                 )
             SIDQ[sid].append(q)
-            # TODO: this feels out of place?
-            bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
-            move_files_post_upload(bundle_dir, f, qr=False)
+            # TODO: this feels out a bit out of place?
+            move_files_post_upload(bundledir, f, qr=False)
 
         updates = msgr.triggerUpdateAfterHWUpload()
     finally:

@@ -19,10 +19,14 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 from pathlib import Path
+from random import randint
 from shlex import split
+import shutil
 import subprocess
 import tempfile
 from warnings import warn
+
+import fitz
 
 from plom import __version__
 from plom import Default_Port
@@ -116,24 +120,38 @@ def main():
         # this creates two batches of fake hw - prefixes = hwA and hwB
         subprocess.check_call(split(f"plom-fake-hwscribbles -w 1234 -s {server}"))
 
-        print("Processing some individually")
+        print("Processing some individually, with a mix of semiloose uploading")
         # TODO: this is fragile, should not hardcode these student numbers!
+        A = "semiloose.10433917._.pdf"
+        B = "semiloose_10493869.pdf"
+        C = "semiloose_number_11015491.pdf"
+        D = "semiloose_11_13_51_53.pdf"
+        shutil.move("submittedHWByQ/semiloose.10433917._.pdf", A)
+        shutil.move("submittedHWByQ/semiloose.10493869._.pdf", B)
+        shutil.move("submittedHWByQ/semiloose.11015491._.pdf", C)
+        shutil.move("submittedHWByQ/semiloose.11135153._.pdf", D)
         subprocess.check_call(
-            split(
-                f"plom-hwscan process submittedHWByQ/semiloose.11015491._.pdf 11015491 -q 1,2,3 -w 4567 -s {server}"
-            )
+            split(f"plom-hwscan process {A} 11015491 -q 1,2,3 -w 4567 -s {server}")
         )
         subprocess.check_call(
-            split(
-                f"plom-hwscan process submittedHWByQ/semiloose.11135153._.pdf 11135153 -q 1,2,3 -w 4567 -s {server}"
-            )
+            split(f"plom-hwscan process {B} 11135153 -q all -w 4567 -s {server}")
+        )
+        subprocess.check_call(
+            split(f"plom-hwscan process {C} 11135153 -q all -w 4567 -s {server}")
+        )
+        doc = fitz.open(D)
+        qstr = "[[1,2,3],"
+        qstr += ",".join(f"[{randint(1,3)}]" for q in range(2, len(doc) + 1))
+        qstr += "]"
+        print(f'Using a randomish page->question mapping of "{qstr}"')
+        subprocess.check_call(
+            split(f"plom-hwscan process {D} 11135153 -q {qstr} -w 4567 -s {server}")
         )
 
         print("Processing all hw by question submissions.")
         subprocess.check_call(split(f"plom-hwscan allbyq -w 4567 -y -s {server}"))
         print("Replacing all missing questions.")
         subprocess.check_call(split(f"plom-hwscan missing -w 4567 -y -s {server}"))
-        # print(">> TODO << process loose pages")
     finally:
         os.chdir(prev)
 
