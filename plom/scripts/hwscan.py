@@ -576,6 +576,7 @@ def main():
         whoDidWhat(args.server, args.password, args.directory)
     elif args.command == "process":
         if args.loose:
+            print('WARNING: "Loose pages" are deprecated: pass `-q all` instead')
             processLooseScans(
                 args.server,
                 args.password,
