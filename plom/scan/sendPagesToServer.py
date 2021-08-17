@@ -313,7 +313,7 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
 
     if not password:
         password = getpass("Please enter the 'scanner' password: ")
-        
+
     try:
         msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
