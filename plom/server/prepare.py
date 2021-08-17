@@ -39,11 +39,18 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
     pns = basedir / specdir / "pageNotSubmitted.pdf"
     qns = basedir / specdir / "questionNotSubmitted.pdf"
 
-    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for plom."
+    fragment = r"\( \mathbb{Z} / \mathbb{Q} \) The cat sat on the mat and verified \LaTeX\ worked okay for Plom."
 
-    if not texFragmentToPNG(fragment, ct):
+    valid, value = texFragmentToPNG(fragment)
+    if valid:
+        with open(ct, "wb") as f:
+            f.write(value)
+    else:
+        print("=" * 80)
+        print("\nThere was an error processing the testing TeX fragment:\n")
+        print(value)
         raise PlomServerConfigurationError(
-            "Error latex'ing fragment. Please check your latex distribution."
+            "Error latex'ing fragment.  See messages above and/or check your latex distribution."
         )
 
     # build template pageNotSubmitted.pdf just in case needed

@@ -27,12 +27,34 @@ from plom import isValidStudentNumber
 
 
 class ErrorMessage(QMessageBox):
-    """A simple error message pop-up"""
+    """A simple error message pop-up
 
-    def __init__(self, txt):
+    args:
+        txt (str): the main error message.
+
+    kw-args:
+        details (str/None): a potentially large amount of details.  Might be
+            hidden by default.  Should be copy-pastable.
+        info (str/None): some more details, like an error message or part
+            of an error message.  Will be presented smaller or otherwise
+            deemphasized.
+        info_preformatted (bool): True by default which means the info text
+            is assumed to be preformatted (whitespace, newlines etc will be
+            preserved.
+    """
+
+    def __init__(self, txt, details=None, info=None, info_preformatted=True):
         super().__init__()
         self.setText(txt)
+        if details:
+            self.setDetailedText(details)
+        if info:
+            if info_preformatted:
+                self.setInformativeText(f"<small><pre>{info}</pre></small>")
+            else:
+                self.setInformativeText(f"<small>{info}</small>")
         self.setStandardButtons(QMessageBox.Ok)
+        self.setDefaultButton(QMessageBox.Ok)
 
 
 class SimpleMessage(QMessageBox):

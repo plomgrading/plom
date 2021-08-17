@@ -23,6 +23,7 @@ import queue
 import secrets
 import shutil
 import tempfile
+from textwrap import shorten
 import time
 import threading
 
@@ -2342,19 +2343,39 @@ class MarkerClient(QWidget):
             (png): a file containing the Latexed text.
 
         """
-        if txt in self.commentCache:
-            # have already latex'd this comment
-            return self.commentCache[txt]
-        log.debug('requesting latex for "{}"'.format(txt))
-        try:
-            fragment = self.msgr.MlatexFragment(txt)
-        except PlomLatexException:
+        txt = txt.strip()
+        # If we already latex'd this text, return the cached image
+        r = self.commentCache.get(txt, None)
+        if r:
+            return r
+        log.debug("request image for latex: %s", shorten(txt, 80, placeholder="..."))
+        r, fragment = self.msgr.MlatexFragment(txt)
+        if not r:
+            # Heuristics to highlight error: latex errors seem to start with "! "
+            lines = fragment.split("\n")
+            idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
+            if any(idx):
+                n = idx[0]  # could be fancier if more than one match
+                info = "\n".join(lines[max(0, n - 5) : n + 5])
+                ErrorMessage(
+                    """
+                    <p>The server reported an error processing your TeX fragment.</p>
+                    <p>Perhaps the error is visible in the following snippet,
+                    otherwise see full logs under details:</p>
+                    """,
+                    details=fragment,
+                    info=info,
+                ).exec_()
+            else:
+                ErrorMessage(
+                    "<p>The server reported an error processing your TeX fragment.</p>",
+                    details=fragment,
+                ).exec_()
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
             dir=self.workingDirectory, suffix=".png", delete=False
         ).name
-        # save it
         with open(fragFile, "wb+") as fh:
             fh.write(fragment)
         # add it to the cache
