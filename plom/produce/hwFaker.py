@@ -219,7 +219,7 @@ def main():
 
     print("NumberNamed = {}".format(numberNamed))
 
-    num_all_q_one_bundle = 2
+    num_all_q_one_bundle = 4
     prefixes = ["hwA", "hwB"]  # we'll make two batches one bigger than other.
     for prefix in prefixes:
         if prefix == "hwA":
