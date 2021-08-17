@@ -71,6 +71,7 @@ def main():
     print(f'Using directory "{args.server_dir}" for the demo')
     if not args.server_dir.exists():
         print(f'Creating directory "{args.server_dir}"')
+        args.server_dir.mkdir(exist_ok=True)
 
     is_empty = not any(args.server_dir.iterdir())
     if not is_empty:
