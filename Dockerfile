@@ -8,7 +8,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
@@ -18,9 +18,7 @@ RUN apt-get -y update && \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
         libpango-1.0-0 libpangocairo-1.0-0 \
         libzbar0 \
-        libjpeg-dev \
-        libjpeg-turbo8-dev \
-        libturbojpeg0-dev \
+        libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev \
         file \
         python3 \
         python3-dev \
@@ -32,25 +30,23 @@ RUN apt-get -y update && \
 
 # file-magic: https://gitlab.com/plom/plom/-/issues/1570
 
-RUN pip3 install --no-cache-dir --upgrade pip setuptools
-# Note: `python3 -m pip` used below on old Ubuntu 18.04
-# Note: need newer setuptools to avoid cairocffi issue
+RUN pip install --no-cache-dir --upgrade pip setuptools
+# Note: newer setuptools to avoid some cairocffi issue
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
-RUN python3 -m pip install --no-cache-dir cffi==1.14.6 pycparser==2.20 && \
-    python3 -m pip install --no-cache-dir jpegtran-cffi==0.5.2
+RUN pip install --no-cache-dir cffi==1.14.6 pycparser==2.20 && \
+    pip install --no-cache-dir jpegtran-cffi==0.5.2
 COPY requirements.txt /src/
 WORKDIR /src
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # client dependency: keep in image for now after others so easy to discard
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install \
-        `apt-cache depends qt5-default  | awk '/Depends:/{print$2}'`
+    apt-get --no-install-recommends -y install qtbase5-dev
 
 COPY . /src
 WORKDIR /src
-RUN python3 -m pip install .
+RUN pip install .
 
 EXPOSE 41984
 
