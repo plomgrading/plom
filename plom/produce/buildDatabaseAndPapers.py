@@ -2,7 +2,9 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
-from getpass import getpass
+import os
+from stdiomask import getpass
+import random
 
 from plom import check_version_map
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed

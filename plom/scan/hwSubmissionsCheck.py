@@ -9,7 +9,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
 import glob
-import getpass
+from stdiomask import getpass
 import os
 
 from plom.rules import isValidStudentNumber
@@ -114,7 +114,7 @@ def whoSubmittedWhatOnServer(server, password):
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = getpass("Please enter the 'scanner' password: ")
         except Exception as error:
             print("ERROR", error)
     else:
@@ -168,7 +168,7 @@ def verifiedComplete(server=None, password=None):
     # get the password if not specified
     if password is None:
         try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
+            pwd = getpass("Please enter the 'scanner' password: ")
         except Exception as error:
             print("ERROR", error)
     else:

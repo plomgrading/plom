@@ -13,7 +13,7 @@ import os
 import random
 from pathlib import Path
 
-from getpass import getpass
+from stdiomask import getpass
 import fitz
 
 from plom import __version__

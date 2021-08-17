@@ -2,7 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-import getpass
+from stdiomask import getpass
 import hashlib
 import json
 import shutil
@@ -118,7 +118,7 @@ def upload_collisions(bundleDir, server=None, password=None):
     scanMessenger.start()
 
     if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password: ")
+        pwd = getpass("Please enter the 'scanner' password: ")
     else:
         pwd = password
 

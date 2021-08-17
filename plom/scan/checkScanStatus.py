@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Jed Yeo
 
-import getpass
+from stdiomask import getpass
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import ScanMessenger
@@ -20,7 +20,7 @@ def get_number_of_questions(server=None, pwd=None):
     msgr.start()
 
     if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
+        pwd = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", pwd)
@@ -49,7 +49,7 @@ def checkStatus(server=None, pwd=None):
     msgr.start()
 
     if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
+        pwd = getpass("Please enter the 'scanner' password: ")
 
     # get started
     try:
@@ -126,7 +126,7 @@ def checkMissingHWQ(server=None, pwd=None):
     msgr.start()
 
     if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
+        pwd = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", pwd)
@@ -156,7 +156,7 @@ def replaceMissingHWQ(server, pwd, student_id, question):
     msgr.start()
 
     if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
+        pwd = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", pwd)

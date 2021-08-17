@@ -17,7 +17,7 @@ from glob import glob
 import argparse
 import json
 import base64
-from getpass import getpass
+from stdiomask import getpass
 import sys
 
 if sys.version_info >= (3, 7):

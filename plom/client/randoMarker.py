@@ -15,7 +15,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import getpass
+from stdiomask import getpass
 import json
 import os
 from pathlib import Path
@@ -307,7 +307,7 @@ if __name__ == "__main__":
 
     # get the password if not specified
     if args.password is None:
-        pwd = getpass.getpass("Please enter the '{}' password:".format(user))
+        pwd = getpass(f"Please enter the '{user}' password:")
     else:
         pwd = args.password
 

@@ -6,7 +6,7 @@ import hashlib
 import shutil
 from pathlib import Path
 
-import getpass
+from stdiomask import getpass
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -90,7 +90,7 @@ def upload_unknowns(bundle_dir, server=None, password=None):
     scanMessenger.start()
 
     if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password: ")
+        pwd = getpass("Please enter the 'scanner' password: ")
     else:
         pwd = password
 
