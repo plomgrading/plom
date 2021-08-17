@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * `plom-server launch --mastertoken aabbccdd...` replaces the old way (without the keyword argument).
 * QR creation now uses `segno` instead of `pyqrcode`.
+* `plom-hwscan` is more flexible about filenames: you do not need to put PDF files in a special directory.
 
 ### Fixed
 * `plom-finish reassemble` not longer needs direct file access to the server (except when using the `--ided-only` option).
