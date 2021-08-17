@@ -151,7 +151,6 @@ def main():
         subprocess.check_call(split(f"plom-hwscan allbyq -w 4567 -y -s {server}"))
         print("Replacing all missing questions.")
         subprocess.check_call(split(f"plom-hwscan missing -w 4567 -y -s {server}"))
-        # print(">> TODO << process loose pages")
     finally:
         os.chdir(prev)
 
