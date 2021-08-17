@@ -431,8 +431,7 @@ spP = sub.add_parser(
     description="""
         Process a bundle of work (typically a PDF file) from one student.
         You must provide the student ID.  You must also indicate which
-        question is in this bundle or that this is a "loose" bundle
-        (including all questions or otherwise unstructured).
+        question(s) is/are in this bundle.
         Various flags control other aspects of how the bundle is
         processed.
     """,
@@ -442,8 +441,8 @@ spA = sub.add_parser(
     help="Process and upload all PDFs in 'submittedHWByQ' directory and upload to server",
     description="""
         Process and upload all PDFs in 'submittedHWByQ' directory.
-        Look at the `q` in `foo_bar.12345678.q.pdf` to determine which
-        question.  Upload to server.
+        Looks for student id and question number from the filename
+        `foo_bar.12345678.q.pdf`.  Upload each to server.
     """,
 )
 spM = sub.add_parser(
@@ -482,13 +481,10 @@ g.add_argument(
     action="store",
     help="""
         Which question(s) are answered in file.
-        You can pass a single integer, in which case it should match
-        the filename `foo_bar.<sid>.N.pdf` as documented elsewhere.
-        You can also pass a list like `-q [1,2,3]` in which case your
-        filename must be of the form `foo_bar.<sid>._.pdf` (a single
-        underscore).
+        You can pass a single integer, or a list like `-q [1,2,3]`
+        which updates each page to questions 1, 2 and 3.
         You can also pass the special string `-q all` which uploads
-        this file to all questions.
+        each page to all questions.
         If you need to specify questions per page, you can pass a list
         of lists: each list gives the questions for each page.
         For example, `-q [[1],[2],[2],[2],[3]]` would upload page 1 to
