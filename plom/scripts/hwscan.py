@@ -313,7 +313,7 @@ def processHWScans(
 
     # send the images to the server
     sendPagesToServer.upload_HW_pages(
-        file_list, bundle_name, student_id, server, password
+        file_list, bundle_name, bundledir, student_id, server, password
     )
     # now archive the PDF
     scansToImages.archiveHWBundle(pdf_fname)
