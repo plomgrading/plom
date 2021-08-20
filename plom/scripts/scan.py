@@ -66,6 +66,8 @@ from plom.scan import (
 )
 from plom.scan import scansToImages
 from plom.scan.scansToImages import process_scans
+from plom.scan import clear_login
+from plom.scan import check_and_print_scan_status
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -79,18 +81,6 @@ from plom.scan.scansToImages import process_scans
 
 # TODO: make some common util file to store all these names?
 archivedir = Path("archivedPDFs")
-
-
-def clearLogin(server, password):
-    from plom.scan import clearScannerLogin
-
-    clearScannerLogin.clearLogin(server, password)
-
-
-def scanStatus(server, password):
-    from plom.scan import checkScanStatus
-
-    checkScanStatus.checkStatus(server, password)
 
 
 def make_required_directories(bundle=None):
@@ -404,9 +394,9 @@ def main():
             args.server, args.password, args.bundleName, args.unknowns, args.collisions
         )
     elif args.command == "status":
-        scanStatus(args.server, args.password)
+        check_and_print_scan_status(args.server, args.password)
     elif args.command == "clear":
-        clearLogin(args.server, args.password)
+        clear_login(args.server, args.password)
     else:
         parser.print_help()
 

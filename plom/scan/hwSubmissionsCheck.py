@@ -140,7 +140,13 @@ def whoSubmittedWhatOnServer(server, password):
         print("{} missing {}".format(missingHWQ[t][1], missingHWQ[t][2:]))
 
 
-def whoSubmittedWhat(server=None, password=None, directory_check=False):
+def print_who_submitted_what(server=None, password=None, directory_check=False):
+    """Prints lists of HW and other submissions on server and/or local.
+
+    * Prints list of hw-submissions already uploaded to server
+    * Prints list of what hw-submissions are in the current submittedHWByQ directory
+    * Prints list of what loose-submissions are in the current submittedLoose directory
+    """
     if directory_check:
         whoSubmittedWhatOnDisc()
     else:

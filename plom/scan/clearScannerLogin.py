@@ -8,7 +8,7 @@ from stdiomask import getpass
 from plom.messenger import ScanMessenger
 
 
-def clearLogin(server=None, password=None):
+def clear_login(server=None, password=None):
     if server and ":" in server:
         s, p = server.split(":")
         scanMessenger = ScanMessenger(s, port=p)
