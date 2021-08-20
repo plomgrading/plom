@@ -65,44 +65,6 @@ def archiveTBundle(file_name):
     _archiveBundle(file_name, archivedir)
 
 
-def _md5sum_in_archive(filename):
-    """Check for a file in the list of archived PDF files.
-
-    Args:
-        filename (str): the basename (not path) of a file to search for
-            in the archive of PDF files that have been processed.
-
-    Returns:
-        None/str: None if not found, else the md5sum.
-
-    Note: Current unused?
-    """
-    try:
-        archive = toml.load(archivedir / "archive.toml")
-    except FileNotFoundError:
-        return ""
-    for md5, name in archive.items():
-        if filename == name:
-            # if not unique too bad you get 1st one
-            return md5
-
-
-def isInArchive(file_name):
-    """
-    Check given file by md5sum against archived bundles.
-
-    Returns:
-        None/str: None if not found, otherwise filename of archived file
-            with the same md5sum.
-    """
-    try:
-        archive = toml.load(archivedir / "archive.toml")
-    except FileNotFoundError:
-        return None
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    return archive.get(md5, None)
-
-
 def processFileToBitmaps(file_name, dest, do_not_extract=False):
     """Extract/convert each page of pdf into bitmap.
 
@@ -434,16 +396,6 @@ def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=Fals
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
     """
-    # TODO: potential confusion local archive versus on server: in theory
-    # annot get to local archive unless its uploaded, but what about unknowns, etc?
-
-    # check if fname is in local archive (by checking md5sum)
-    prevname = isInArchive(pdf_fname)
-    if prevname:
-        warn(
-            f"{pdf_fname} is in the PDF archive: same md5sum as previous {prevname}; will not process."
-        )
-        return
     makeBundleDirectories(pdf_fname, bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
     files = processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
