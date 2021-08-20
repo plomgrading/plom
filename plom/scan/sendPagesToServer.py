@@ -4,12 +4,13 @@
 
 from collections import defaultdict
 from glob import glob
-from stdiomask import getpass
 import hashlib
 import json
 import os
 import shutil
 from pathlib import Path
+
+from stdiomask import getpass
 
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
