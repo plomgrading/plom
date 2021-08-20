@@ -483,7 +483,7 @@ def does_bundle_exist_on_server(bundle_name, md5sum, server=None, password=None)
         md5sum (str): the md5sum of the bundle
 
     Returns:
-        list: `[False]` if it does not exist in any way.  Otherwise
+        list: `[False, None]` if it does not exist in any way.  Otherwise
             the pair `[True, reason]` where `reason` is "name", "md5sum",
             or "both".
     """
