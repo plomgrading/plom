@@ -89,13 +89,11 @@ def upload_unknowns(bundle_dir, server=None, password=None):
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
-    if password is None:
-        pwd = getpass("Please enter the 'scanner' password: ")
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
     try:
-        scanMessenger.requestAndSaveToken("scanner", pwd)
+        scanMessenger.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -104,7 +102,7 @@ def upload_unknowns(bundle_dir, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     try:
         if not bundle_dir.is_dir():
