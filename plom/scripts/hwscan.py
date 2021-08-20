@@ -26,6 +26,7 @@ from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
 from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 
 
 def processLooseScans(
@@ -78,8 +79,8 @@ def processLooseScans(
         )
     )
 
-    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
-    # should be [False] [True, name] [True,md5sum], [True, both]
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    bundle_exists = does_bundle_exist_on_server(bundle_name, md5, server, password)
     if bundle_exists[0]:
         if bundle_exists[1] == "name":
             print(
@@ -104,7 +105,6 @@ def processLooseScans(
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_bundle_dir(bundledir)
 
@@ -207,8 +207,9 @@ def processHWScans(
     else:
         print(f"Student ID {student_id} is test_number {test_number}")
 
-    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
-    # should be [False] [True, name] [True,md5sum], [True, both]
+    # TODO: add command-line option to override this name
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    bundle_exists = does_bundle_exist_on_server(bundle_name, md5, server, password)
     if bundle_exists[0]:
         if bundle_exists[1] == "name":
             raise ValueError(
@@ -229,8 +230,6 @@ def processHWScans(
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    # TODO: add command-line option to override this name
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / bundle_name
     make_bundle_dir(bundledir)
 

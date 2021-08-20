@@ -474,16 +474,18 @@ def bundle_name_and_md5(filename):
     return (bundle_name, md5)
 
 
-def doesBundleExist(bundle_file, server=None, password=None):
-    """Check if bundle exists and is so does its md5sum match a given file.
+def does_bundle_exist_on_server(bundle_name, md5sum, server=None, password=None):
+    """Check if bundle exists by name and/or md5sum.
 
     Args:
-        bundle_file (str, Path): needs to be the actual file not the
-            bundle name because we need to compute the md5sum.
+        bundle_name (str): not the file, just the bundle name (often but
+            not always the filename).
+        md5sum (str): the md5sum of the bundle
 
     Returns:
-        list: the pair `[True, bundle_name]` where `bundle_name` is a
-            `str` or `[False, reason]` where `reason` is a `str`.
+        list: `[False]` if it does not exist in any way.  Otherwise
+            the pair `[True, reason]` where `reason` is "name", "md5sum",
+            or "both".
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -507,12 +509,11 @@ def doesBundleExist(bundle_file, server=None, password=None):
         )
         raise
 
-    bundle_name, md5 = bundle_name_and_md5(bundle_file)
-    bundle_success = msgr.doesBundleExist(bundle_name, md5)
-
-    msgr.closeUser()
-    msgr.stop()
-
+    try:
+        bundle_success = msgr.doesBundleExist(bundle_name, md5sum)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return bundle_success
 
 

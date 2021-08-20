@@ -70,6 +70,7 @@ from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
 from plom.scan.bundle_utils import make_bundle_dir
 from plom.scan.bundle_utils import archivedir
+from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -100,11 +101,10 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
         return
     # TODO: replace above with letting exception rise from next:
     bundle_name, md5 = bundle_name_and_md5(pdf_fname)
-    # TODO: doesBundleExist(bundle_name, md5)
 
     print("Checking if bundle {} already exists on server".format(bundle_name))
-    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
-    # return [False, name], [True, name], [True,md5sum] or [True, both]
+    bundle_exists = does_bundle_exist_on_server(bundle_name, md5, server, password)
+    # return [False], [True, "name"], [True, "md5sum"] or [True, "both"]
     if bundle_exists[0]:
         if bundle_exists[1] == "name":
             print(
