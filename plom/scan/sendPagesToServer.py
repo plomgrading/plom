@@ -251,18 +251,11 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass("Please enter the 'scanner' password: ")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -271,7 +264,7 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear" or "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
@@ -365,18 +358,11 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass("Please enter the 'scanner' password: ")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -385,7 +371,7 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
     file_list = []
     # files are sitting in "bundles/submittedLoose/<bundle_name>"
@@ -427,18 +413,11 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass("Please enter the 'scanner' password: ")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -447,7 +426,7 @@ def checkTestHasThatSID(student_id, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     # get test_number from SID.
     # response is [true, test_number] or [false, reason]
@@ -514,15 +493,11 @@ def doesBundleExist(bundle_file, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        pwd = getpass("Please enter the 'scanner' password: ")
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -531,7 +506,7 @@ def doesBundleExist(bundle_file, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     bundle_name, md5 = bundle_name_and_md5(bundle_file)
     bundle_success = msgr.doesBundleExist(bundle_name, md5)
@@ -564,13 +539,11 @@ def createNewBundle(bundle_name, md5, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if password is None:
-        pwd = getpass("Please enter the 'scanner' password: ")
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -579,7 +552,7 @@ def createNewBundle(bundle_name, md5, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     try:
         bundle_success = msgr.createNewBundle(bundle_name, md5)

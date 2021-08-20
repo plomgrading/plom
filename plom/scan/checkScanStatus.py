@@ -32,7 +32,7 @@ def get_number_of_questions(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(-1)
+        raise
 
     spec = msgr.get_spec()
     msgr.closeUser()
@@ -51,7 +51,6 @@ def checkStatus(server=None, pwd=None):
     if not pwd:
         pwd = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException as e:
@@ -62,7 +61,7 @@ def checkStatus(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     spec = msgr.get_spec()
 
@@ -138,7 +137,7 @@ def checkMissingHWQ(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     missingHWQ = msgr.getMissingHW()
     msgr.closeUser()
@@ -168,7 +167,7 @@ def replaceMissingHWQ(server, pwd, student_id, question):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     rval = msgr.replaceMissingHWQuestion(
         student_id=student_id, test=None, question=question

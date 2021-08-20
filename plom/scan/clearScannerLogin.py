@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
 
 from stdiomask import getpass
+
 from plom.messenger import ScanMessenger
 
 
@@ -18,16 +16,11 @@ def clearLogin(server=None, password=None):
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass("Please enter the 'scanner' password: ")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    scanMessenger.clearAuthorisation("scanner", pwd)
-    print("Scanner login cleared.")
-    scanMessenger.stop()
+    try:
+        scanMessenger.clearAuthorisation("scanner", password)
+        print("Scanner login cleared.")
+    finally:
+        scanMessenger.stop()
