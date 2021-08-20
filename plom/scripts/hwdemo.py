@@ -59,7 +59,7 @@ def main():
     print("Plom version {}".format(__version__))
 
     if not args.server_dir:
-        args.server_dir = Path(tempfile.mkdtemp(prefix="Plom_Demo_", dir=Path.cwd()))
+        args.server_dir = Path(tempfile.mkdtemp(prefix="Plom_HWdemo_", dir=Path.cwd()))
     args.server_dir = Path(args.server_dir)
     print(f'Using directory "{args.server_dir}" for the demo')
     if not args.server_dir.exists():

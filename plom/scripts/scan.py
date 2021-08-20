@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom tools for scanning tests and pushing to servers.
 
@@ -68,6 +68,8 @@ from plom.scan import scansToImages
 from plom.scan.scansToImages import process_scans
 from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
+from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.bundle_utils import archivedir
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -77,26 +79,6 @@ from plom.scan import check_and_print_scan_status
 #        server = si["server"]
 #        if server and ":" in server:
 #            server, message_port = server.split(":")
-
-
-# TODO: make some common util file to store all these names?
-archivedir = Path("archivedPDFs")
-
-
-def make_required_directories(bundle=None):
-    os.makedirs(archivedir, exist_ok=True)
-    os.makedirs("bundles", exist_ok=True)
-    # TODO: split up a bit, above are global, below per bundle
-    if bundle:
-        directory_list = [
-            "uploads/sentPages",
-            "uploads/discardedPages",
-            "uploads/collidingPages",
-            "uploads/sentPages/unknowns",
-            "uploads/sentPages/collisions",
-        ]
-        for dir in directory_list:
-            os.makedirs(bundle / Path(dir), exist_ok=True)
 
 
 def processScans(server, password, pdf_fname, gamma, extractbmp):
@@ -146,7 +128,7 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
             raise RuntimeError("Should not be here: unexpected code path!")
 
     bundledir = Path("bundles") / bundle_name
-    make_required_directories(bundledir)
+    make_bundle_dir(bundledir)
 
     with open(bundledir / "source.toml", "w+") as f:
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
