@@ -123,11 +123,12 @@ def whoSubmittedWhatOnServer(server, password):
         )
         raise
 
-    missingHWQ = msgr.getMissingHW()  # passes back dict
-    completeHW = msgr.getCompleteHW()  # passes back list [test_number, sid]
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        missingHWQ = msgr.getMissingHW()  # passes back dict
+        completeHW = msgr.getCompleteHW()  # passes back list [test_number, sid]
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     print(">> Checking incomplete submissions on server <<")
     print("The following students have complete submissions (each question present)")
@@ -170,12 +171,13 @@ def verifiedComplete(server=None, password=None):
         )
         raise
 
-    # grab number of questions - so we can work out what is missing
-    spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        # grab number of questions - so we can work out what is missing
+        spec = msgr.get_spec()
+        numberOfQuestions = spec["numberOfQuestions"]
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     hwByQ = defaultdict(list)
     for fn in glob.glob("submittedHWByQ/*.pdf"):

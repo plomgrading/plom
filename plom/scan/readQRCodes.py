@@ -335,9 +335,11 @@ def processBitmaps(bundle, server=None, password=None):
         )
         raise
 
-    spec = scanMessenger.get_spec()
-    scanMessenger.closeUser()
-    scanMessenger.stop()
+    try:
+        spec = scanMessenger.get_spec()
+    finally:
+        scanMessenger.closeUser()
+        scanMessenger.stop()
 
     decode_QRs_in_image_files(bundle / "pageImages")
     checkQRsValid(bundle, spec, examsScannedNow)

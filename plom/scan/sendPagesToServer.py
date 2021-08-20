@@ -269,19 +269,18 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
 
-    files = []
-    # Look for pages in decodedPages
-    for ext in PlomImageExts:
-        files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
-    TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
-    # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
+    try:
+        files = []
+        # Look for pages in decodedPages
+        for ext in PlomImageExts:
+            files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
+        TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
+        # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
 
-    updates = msgr.triggerUpdateAfterTUpload()
-
-    # close down messenger
-    msgr.closeUser()
-    msgr.stop()
-
+        updates = msgr.triggerUpdateAfterTUpload()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return [TUP, updates]
 
 

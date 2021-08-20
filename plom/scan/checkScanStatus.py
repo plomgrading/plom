@@ -34,9 +34,11 @@ def get_number_of_questions(server=None, pwd=None):
         )
         raise
 
-    spec = msgr.get_spec()
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return spec["numberOfQuestions"]
 
 
@@ -63,13 +65,15 @@ def checkStatus(server=None, pwd=None):
         )
         raise
 
-    spec = msgr.get_spec()
-
-    ST = msgr.getScannedTests()  # returns pairs of [page,version] - only display pages
-    UT = msgr.getUnusedTests()
-    IT = msgr.getIncompleteTests()
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+        # returns pairs of [page,version] - only display pages
+        ST = msgr.getScannedTests()
+        UT = msgr.getUnusedTests()
+        IT = msgr.getIncompleteTests()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     print("Test papers unused: [{}]".format(format_int_list_with_runs(UT)))
 
@@ -139,10 +143,11 @@ def checkMissingHWQ(server=None, pwd=None):
         )
         raise
 
-    missingHWQ = msgr.getMissingHW()
-    msgr.closeUser()
-    msgr.stop()
-
+    try:
+        missingHWQ = msgr.getMissingHW()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return missingHWQ
 
 
@@ -169,12 +174,12 @@ def replaceMissingHWQ(server, pwd, student_id, question):
         )
         raise
 
-    rval = msgr.replaceMissingHWQuestion(
-        student_id=student_id, test=None, question=question
-    )  # can replace by SID or by test-number
-    msgr.triggerUpdateAfterHWUpload()
-
-    msgr.closeUser()
-    msgr.stop()
-
+    try:
+        rval = msgr.replaceMissingHWQuestion(
+            student_id=student_id, test=None, question=question
+        )  # can replace by SID or by test-number
+        msgr.triggerUpdateAfterHWUpload()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return rval
