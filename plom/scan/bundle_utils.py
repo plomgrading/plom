@@ -10,7 +10,7 @@ import toml
 
 archivedir = Path("archivedPDFs")
 # TODO: not yet used by callers
-bundledir = Path("bundles")
+_main_bundledir = Path("bundles")
 
 
 def make_base_directories():
@@ -22,9 +22,9 @@ def make_base_directories():
     archivedir.mkdir(exist_ok=True)
     (archivedir / Path("submittedHWByQ")).mkdir(exist_ok=True)
     (archivedir / Path("submittedLoose")).mkdir(exist_ok=True)
-    bundledir.mkdir(exist_ok=True)
+    _main_bundledir.mkdir(exist_ok=True)
     # deprecated
-    (bundledir / "submittedLoose").mkdir(exist_ok=True)
+    (_main_bundledir / "submittedLoose").mkdir(exist_ok=True)
 
 
 def make_bundle_dir(bundle):
@@ -85,7 +85,6 @@ def bundle_name_and_md5_from_file(filename):
     bundle_name = bundle_name_from_file(filename)
     md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
     return (bundle_name, md5)
-
 
 
 def _archiveBundle(file_name, this_archive_dir):
