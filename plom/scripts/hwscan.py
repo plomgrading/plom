@@ -81,6 +81,17 @@ spW.add_argument(
 
 spP.add_argument("hwPDF", action="store", help="PDF containing homework")
 spP.add_argument("studentid", action="store", help="Student ID")
+spP.add_argument(
+    "--bundle-name",
+    action="store",
+    metavar="NAME",
+    help="""
+        Override the default bundle name instead of generating it from
+        the PDF file name.
+        Note Plom uses both the bundle name and the "md5sum" of the
+        PDF file to detect possible duplicate uploads.
+    """,
+)
 g = spP.add_mutually_exclusive_group(required=True)
 g.add_argument(
     "-l",
@@ -218,6 +229,7 @@ def main():
                 questions,
                 gamma=args.gamma,
                 extractbmp=args.extractbmp,
+                bundle_name=args.bundle_name,
             )
     elif args.command == "allbyq":
         # TODO: gamma and extractbmp?

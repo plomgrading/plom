@@ -152,6 +152,7 @@ def processHWScans(
     gamma=False,
     extractbmp=False,
     basedir=Path("."),
+    bundle_name=None,
 ):
     """Process the given PDF bundle into images, upload, then archive the pdf.
 
@@ -168,6 +169,8 @@ def processHWScans(
         basedir (pathlib.Path): where on the file system do we perform
             the work.  By default, the current working directory is used.
             Subdirectories "archivePDFs" and "bundles" will be created.
+        bundle_name (str/None): Override the bundle name (which is by
+            default is generated from the PDF filename).
         gamma (bool):
         extractbmp (bool):
 
@@ -220,8 +223,9 @@ def processHWScans(
     else:
         print(f"Student ID {student_id} is test_number {test_number}")
 
-    # TODO: add command-line option to override this name
-    bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
+    _, md5 = bundle_name_and_md5_from_file(pdf_fname)
+    if not bundle_name:
+        bundle_name = _
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
     if exists:
         if reason == "name":
