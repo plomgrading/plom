@@ -5,7 +5,6 @@
 """Plom's frontend scanning routines."""
 
 from collections import defaultdict
-import glob
 import os
 from pathlib import Path
 
@@ -257,7 +256,7 @@ def processAllHWByQ(server, password, yes_flag):
     """
 
     submissions = defaultdict(list)
-    for file_name in sorted(glob.glob(os.path.join("submittedHWByQ", "*.pdf"))):
+    for file_name in sorted(Path("submittedHWByQ").glob("*.pdf")):
         IDQ = IDQorIDorBad(file_name)
         if len(IDQ) == 3:
             sid, q = IDQ[1:]
