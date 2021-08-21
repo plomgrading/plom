@@ -8,6 +8,8 @@ from collections import defaultdict
 import os
 from pathlib import Path
 
+import toml
+
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan import sendPagesToServer
 from plom.scan.scansToImages import process_scans
@@ -88,6 +90,9 @@ def processLooseScans(
 
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_bundle_dir(bundledir)
+
+    with open(bundledir / "source.toml", "w") as f:
+        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
     process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
@@ -216,6 +221,9 @@ def processHWScans(
             raise RuntimeError("Should not be here: unexpected code path!")
 
     bundledir = get_bundle_dir(bundle_name, basedir=basedir)
+
+    with open(bundledir / "source.toml", "w") as f:
+        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
