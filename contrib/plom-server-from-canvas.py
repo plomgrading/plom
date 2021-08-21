@@ -52,6 +52,7 @@ from plom.canvas import (
     interactively_get_assignment,
     interactively_get_course,
 )
+from plom.scan.frontend_hwscan import processHWScans
 
 
 def get_short_name(long_name):
@@ -315,6 +316,7 @@ def scan_submissions(num_questions, *, server_dir="."):
 
     print("Temporarily exporting scanner password...")
     os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
+    scanner_pwd = user_list[2][1]
 
     print("Temporarily changing working directory")
     o_dir = os.getcwd()
@@ -328,12 +330,12 @@ def scan_submissions(num_questions, *, server_dir="."):
         if len(fitz.open(pdf)) == num_questions:
             # If number of pages precisely matches number of questions then
             # do a 1-1 mapping...
-            qstr = ",".join(f"[{x}]" for x in range(1, num_questions + 1))
+            q = [[x] for x in range(1, num_questions + 1)]
         else:
             # ... otherwise push each page to all questionsa.
-            qstr = ",".join(f"{x}" for x in range(1, num_questions + 1))
+            q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
-        subprocess.check_call(["plom-hwscan", "process", pdf, sid, "-q", qstr])
+        processHWScans("localhost", scanner_pwd, pdf, sid, q)
 
     # Clean up any missing submissions
     subprocess.check_call(["plom-hwscan", "missing"])
