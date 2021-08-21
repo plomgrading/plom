@@ -139,7 +139,7 @@ g.add_argument(
     """,
 )
 
-spU.add_argument("bundleName", help="The name of the PDF file, without extension.")
+spU.add_argument("bundleName", help="Usually the name of the PDF file.")
 spU.add_argument(
     "-u",
     "--unknowns",

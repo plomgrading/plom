@@ -134,12 +134,12 @@ def main():
 
         opts = "--no-gamma-shift"
         for f in (
-            "fake_scribbled_exams1",
-            "fake_scribbled_exams2",
-            "fake_scribbled_exams3",
+            "fake_scribbled_exams1.pdf",
+            "fake_scribbled_exams2.pdf",
+            "fake_scribbled_exams3.pdf",
         ):
             subprocess.check_call(
-                split(f"plom-scan process -w 4567 -s {server} {opts} {f}.pdf")
+                split(f"plom-scan process -w 4567 -s {server} {opts} {f}")
             )
             subprocess.check_call(split(f"plom-scan upload -w 4567 -s {server} -u {f}"))
     finally:
