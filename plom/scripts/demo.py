@@ -150,7 +150,8 @@ def main():
     print("Server seems to still be running: demo setup is complete")
 
     print('\n*** Now run "plom-client" ***\n')
-    print(f"  * Server running on port {args.port} with PID {background_server.pid}\n")
+    port = args.port if args.port else Default_Port
+    print(f"  * Server running on port {port} with PID {background_server.pid}\n")
     print(f"  * Account login info: {args.server_dir / 'userListRaw.csv'}\n")
     # print("  * Press Ctrl-C to stop this demo")
     # background_server.wait()
