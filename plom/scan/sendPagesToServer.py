@@ -99,7 +99,7 @@ def fileFailedUpload(reason, message, bundle, f):
         shutil.move(f, to / f.name)
         shutil.move(Path(str(f) + ".qr"), to / f"{f.name}.qr")
         # write stuff into a file: [collidingFile, test, page, version]
-        with open(to / f"{f.name}.collide", "w+") as fh:
+        with open(to / f"{f.name}.collide", "w") as fh:
             json.dump(message, fh)
     else:  # now bad errors
         print("Image upload failed for *bad* reason - this should not happen.")

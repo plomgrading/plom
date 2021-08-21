@@ -65,7 +65,7 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
 
     bundledir = get_bundle_dir(bundle_name)
 
-    with open(bundledir / "source.toml", "w+") as f:
+    with open(bundledir / "source.toml", "w") as f:
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))

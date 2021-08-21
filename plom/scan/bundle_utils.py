@@ -113,8 +113,7 @@ def _archiveBundle(file_name, *, basedir=Path("."), subdir=Path(".")):
     except FileNotFoundError:
         arch = {}
     arch[md5] = str(file_name)
-    # now save it
-    with open(basedir / archivedir / "archive.toml", "w+") as fh:
+    with open(basedir / archivedir / "archive.toml", "w") as fh:
         toml.dump(arch, fh)
 
 
