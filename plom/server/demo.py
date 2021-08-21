@@ -125,9 +125,7 @@ class PlomDemoServer(PlomServer):
             )
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 subprocess.check_call(
-                    split(
-                        f"python3 -m plom.scripts.scan process --no-gamma-shift {f}"
-                    ),
+                    split(f"python3 -m plom.scripts.scan process --no-gamma-shift {f}"),
                     env=env,
                 )
             subprocess.check_call(
