@@ -19,7 +19,7 @@ from PIL import Image
 
 from plom import PlomImageExts
 from plom import ScenePixelHeight
-from plom.scan import normalizeJPEGOrientation
+from plom.scan.rotate import normalizeJPEGOrientation
 from plom.scan.bundle_utils import make_bundle_dir
 
 
