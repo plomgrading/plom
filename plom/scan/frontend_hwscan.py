@@ -11,7 +11,8 @@ from pathlib import Path
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan import sendPagesToServer
 from plom.scan.scansToImages import process_scans
-from plom.scan.bundle_utils import make_bundle_dir, bundle_name_and_md5_from_file
+from plom.scan.bundle_utils import get_bundle_dir, make_bundle_dir
+from plom.scan.bundle_utils import bundle_name_and_md5_from_file
 from plom.scan.bundle_utils import archiveLBundle, archiveHWBundle
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import checkScanStatus
@@ -123,8 +124,10 @@ def processHWScans(
     pdf_fname,
     student_id,
     questions,
+    *,
     gamma=False,
     extractbmp=False,
+    basedir=Path("."),
 ):
     """Process the given PDF bundle into images, upload, then archive the pdf.
 
@@ -136,6 +139,13 @@ def processHWScans(
         student_id (str)
         questions (list): list of integers of which questions this
             bundle covers.
+
+    kwargs:
+        basedir (pathlib.Path): where on the file system do we perform
+            the work.  By default, the current working directory is used.
+            Subdirectories "archivePDFs" and "bundles" will be created.
+        gamma (bool):
+        extractbmp (bool):
 
     Ask server to map student_id to a test-number; these should have been
     pre-populated on test-generation and if id not known there is an error.
@@ -205,8 +215,7 @@ def processHWScans(
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundledir = Path("bundles") / bundle_name
-    make_bundle_dir(bundledir)
+    bundledir = get_bundle_dir(bundle_name, basedir=basedir)
 
     print("Processing PDF {} to images".format(pdf_fname))
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
@@ -237,14 +246,14 @@ def processHWScans(
     file_list = zip(range(1, N + 1), files, questions)
 
     # TODO: filter skiplist for already uploaded files
-    assert len(skip_list) == 0
+    assert len(skip_list) == 0, "TODO: we don't really support skiplist for HW pages"
 
     # send the images to the server
     sendPagesToServer.upload_HW_pages(
         file_list, bundle_name, bundledir, student_id, server, password
     )
     # now archive the PDF
-    archiveHWBundle(pdf_fname)
+    archiveHWBundle(pdf_fname, basedir=basedir)
 
 
 def processAllHWByQ(server, password, yes_flag):
@@ -288,7 +297,7 @@ def processAllHWByQ(server, password, yes_flag):
             processHWScans(server, password, file_name, sid, [int(question)])
 
 
-def processMissing(server, password, yes_flag):
+def processMissing(server, password, *, yes_flag):
     """Replace missing questions with 'not submitted' pages
 
     Student may not upload pages for questions they don't answer. This function

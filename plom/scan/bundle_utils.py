@@ -9,48 +9,59 @@ import shutil
 import toml
 
 archivedir = Path("archivedPDFs")
-# TODO: not yet used by callers
-_main_bundledir = Path("bundles")
 
 
 def make_base_directories():
     """Make various directories that bundle uploading will need.
 
-    args:
-        bundle (None/pathlib.Path)
+    TODO: not needed?  bundle and archive codes make their own
     """
     archivedir.mkdir(exist_ok=True)
-    (archivedir / Path("submittedHWByQ")).mkdir(exist_ok=True)
-    (archivedir / Path("submittedLoose")).mkdir(exist_ok=True)
-    _main_bundledir.mkdir(exist_ok=True)
+    Path("bundles").mkdir(exist_ok=True)
     # deprecated
-    (_main_bundledir / "submittedLoose").mkdir(exist_ok=True)
+    (Path("bundles") / "submittedLoose").mkdir(exist_ok=True)
 
 
-def make_bundle_dir(bundle):
-    """Make various directories that processing/uploading will need.
-
-    # TODO: I wonder if bundle should be the bundle_name not the
-    # TODO: path and we'll stick a "bundledir" infront?
+def make_bundle_dir(bundledir):
+    """Make various subdirectories that processing/uploading will need.
 
     args:
-        bundle (pathlib.Path): the path to the bundle, either relative
+        bundledir (pathlib.Path): the path to the bundle, either relative
             to the CWD or a full path.
     """
-    make_base_directories()
-    if bundle:
-        for d in (
-            "pageImages",
-            "scanPNGs",
-            "decodedPages",
-            "unknownPages",
-            "uploads/sentPages",
-            "uploads/discardedPages",
-            "uploads/collidingPages",
-            "uploads/sentPages/unknowns",
-            "uploads/sentPages/collisions",
-        ):
-            (bundle / Path(d)).mkdir(parents=True, exist_ok=True)
+    for d in (
+        "pageImages",
+        "scanPNGs",
+        "decodedPages",
+        "unknownPages",
+        "uploads/sentPages",
+        "uploads/discardedPages",
+        "uploads/collidingPages",
+        "uploads/sentPages/unknowns",
+        "uploads/sentPages/collisions",
+    ):
+        (bundledir / d).mkdir(parents=True, exist_ok=True)
+
+
+def get_bundle_dir(bundle_name, *, basedir=Path(".")):
+    """Make a filesystem for processing/uploading a bundle.
+
+    args:
+        bundle_name (str): the name of the bundle (not a path).
+
+    kwargs:
+        basedir (pathlib.Path): default's to the current working
+            directory.
+
+    The bundle directory `bundle_dir` will be basedir / bundles / bundle_name.
+
+    returns:
+        pathlib.Path: `bundle_dir`, the bundle directory, something
+            like `<basedir>/bundles/<bundle_name>`.
+    """
+    bundle_dir = basedir / "bundles" / bundle_name
+    make_bundle_dir(bundle_dir)
+    return bundle_dir
 
 
 def bundle_name_from_file(filename):
@@ -87,38 +98,39 @@ def bundle_name_and_md5_from_file(filename):
     return (bundle_name, md5)
 
 
-def _archiveBundle(file_name, this_archive_dir):
+def _archiveBundle(file_name, *, basedir=Path("."), subdir=Path(".")):
     """Archive the bundle pdf.
 
-    The bundle.pdf is moved into the appropriate archive directory
-    as given by this_archive_dir. The archive.toml file is updated
-    with the name and md5sum of that bundle.pdf.
+    The bundle.pdf is moved into the archive directory, or a subdir
+    The archive.toml file is updated with the file name and md5sum.
     """
     md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    shutil.move(file_name, this_archive_dir / Path(file_name).name)
+    (basedir / archivedir).mkdir(exist_ok=True)
+    (basedir / archivedir / subdir).mkdir(exist_ok=True)
+    shutil.move(file_name, basedir / archivedir / subdir / Path(file_name).name)
     try:
-        arch = toml.load(archivedir / "archive.toml")
+        arch = toml.load(basedir / archivedir / "archive.toml")
     except FileNotFoundError:
         arch = {}
     arch[md5] = str(file_name)
     # now save it
-    with open(archivedir / "archive.toml", "w+") as fh:
+    with open(basedir / archivedir / "archive.toml", "w+") as fh:
         toml.dump(arch, fh)
 
 
-def archiveHWBundle(file_name):
+def archiveHWBundle(file_name, *, basedir=Path(".")):
     """Archive a hw-pages bundle pdf"""
-    print("Archiving homework bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir / "submittedHWByQ")
+    print(f"Archiving homework bundle {file_name}")
+    _archiveBundle(file_name, basedir=basedir, subdir=Path("submittedHWByQ"))
 
 
 def archiveLBundle(file_name):
     """Archive a loose-pages bundle pdf"""
-    print("Archiving loose-page bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir / "submittedLoose")
+    print(f"Archiving loose-page bundle {file_name}")
+    _archiveBundle(file_name, subdir=Path("submittedLoose"))
 
 
 def archiveTBundle(file_name):
     """Archive a test-pages bundle pdf"""
-    print("Archiving test-page bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir)
+    print(f"Archiving test-page bundle {file_name}")
+    _archiveBundle(file_name)

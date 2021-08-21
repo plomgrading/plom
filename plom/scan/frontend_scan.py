@@ -18,7 +18,8 @@ from plom.scan import (
     bundle_has_nonuploaded_collisions,
 )
 from plom.scan.scansToImages import process_scans
-from plom.scan.bundle_utils import make_bundle_dir, bundle_name_and_md5_from_file
+from plom.scan.bundle_utils import get_bundle_dir
+from plom.scan.bundle_utils import bundle_name_and_md5_from_file
 from plom.scan.bundle_utils import archivedir, archiveTBundle
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import sendPagesToServer
@@ -62,8 +63,7 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundledir = Path("bundles") / bundle_name
-    make_bundle_dir(bundledir)
+    bundledir = get_bundle_dir(bundle_name)
 
     with open(bundledir / "source.toml", "w+") as f:
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)

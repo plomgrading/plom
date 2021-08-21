@@ -216,15 +216,14 @@ def main():
                 args.hwPDF,
                 args.studentid,
                 questions,
-                args.gamma,
-                args.extractbmp,
+                gamma=args.gamma,
+                extractbmp=args.extractbmp,
             )
-            # argparse makes args.question a list.
     elif args.command == "allbyq":
         # TODO: gamma and extractbmp?
         processAllHWByQ(args.server, args.password, args.yes)
     elif args.command == "missing":
-        processMissing(args.server, args.password, args.yes)
+        processMissing(args.server, args.password, yes_flag=args.yes)
     elif args.command == "status":
         check_and_print_scan_status(args.server, args.password)
     elif args.command == "clear":

@@ -52,7 +52,7 @@ from plom.canvas import (
     interactively_get_assignment,
     interactively_get_course,
 )
-from plom.scan.frontend_hwscan import processHWScans
+from plom.scan.frontend_hwscan import processHWScans, processMissing
 
 
 def get_short_name(long_name):
@@ -318,12 +318,10 @@ def scan_submissions(num_questions, *, server_dir="."):
     os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
     scanner_pwd = user_list[2][1]
 
-    print("Temporarily changing working directory")
-    o_dir = os.getcwd()
-    os.chdir(server_dir / "upload")
+    upload_dir = server_dir / "upload"
 
     print("Applying `plom-hwscan` to pdfs...")
-    for pdf in tqdm(Path("submittedHWByQ").glob("*.pdf")):
+    for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
         # get 12345678 from blah_blah.blah_blah.12345678._.
         sid = pdf.stem.split(".")[-2]
         assert len(sid) == 8
@@ -335,12 +333,10 @@ def scan_submissions(num_questions, *, server_dir="."):
             # ... otherwise push each page to all questionsa.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
-        processHWScans("localhost", scanner_pwd, pdf, sid, q)
+        processHWScans("localhost", scanner_pwd, pdf, sid, q, basedir=upload_dir)
 
     # Clean up any missing submissions
-    subprocess.check_call(["plom-hwscan", "missing"])
-
-    os.chdir(o_dir)
+    processMissing("localhost", scanner_pwd, yes_flag=True)
 
 
 parser = argparse.ArgumentParser(
