@@ -9,20 +9,28 @@ from warnings import warn
 
 import toml
 
-from plom.scan import (
+from plom.scan.sendUnknownsToServer import (
     upload_unknowns,
     print_unknowns_warning,
     bundle_has_nonuploaded_unknowns,
+)
+from plom.scan.sendCollisionsToServer import (
     upload_collisions,
     print_collision_warning,
     bundle_has_nonuploaded_collisions,
 )
+from plom.scan.sendPagesToServer import (
+    does_bundle_exist_on_server,
+    createNewBundle,
+    uploadTPages,
+)
+from plom.scan.bundle_utils import (
+    get_bundle_dir,
+    bundle_name_and_md5_from_file,
+    archivedir,
+    archiveTBundle,
+)
 from plom.scan.scansToImages import process_scans
-from plom.scan.bundle_utils import get_bundle_dir
-from plom.scan.bundle_utils import bundle_name_and_md5_from_file
-from plom.scan.bundle_utils import archivedir, archiveTBundle
-from plom.scan.sendPagesToServer import does_bundle_exist_on_server
-from plom.scan import sendPagesToServer
 from plom.scan import readQRCodes
 
 
@@ -102,7 +110,7 @@ def uploadImages(
 
     # TODO: check first to avoid misleading msg?
     print('Creating bundle "{}" on server'.format(bundle_name))
-    rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
+    rval = createNewBundle(bundle_name, md5, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
         skip_list = rval[1]
@@ -122,9 +130,7 @@ def uploadImages(
         return
 
     print("Upload images to server")
-    [TPN, updates] = sendPagesToServer.uploadTPages(
-        bundledir, skip_list, server, password
-    )
+    [TPN, updates] = uploadTPages(bundledir, skip_list, server, password)
     print(
         "Tests were uploaded to the following studentIDs: {}".format(
             ", ".join(TPN.keys())

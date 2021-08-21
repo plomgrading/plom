@@ -10,13 +10,22 @@ from pathlib import Path
 
 import toml
 
+from plom.scan.sendPagesToServer import (
+    does_bundle_exist_on_server,
+    createNewBundle,
+    uploadLPages,
+    upload_HW_pages,
+    checkTestHasThatSID,
+)
+from plom.scan.bundle_utils import (
+    get_bundle_dir,
+    make_bundle_dir,
+    bundle_name_and_md5_from_file,
+    archiveLBundle,
+    archiveHWBundle,
+)
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
-from plom.scan import sendPagesToServer
 from plom.scan.scansToImages import process_scans
-from plom.scan.bundle_utils import get_bundle_dir, make_bundle_dir
-from plom.scan.bundle_utils import bundle_name_and_md5_from_file
-from plom.scan.bundle_utils import archiveLBundle, archiveHWBundle
-from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import checkScanStatus
 
 
@@ -98,7 +107,7 @@ def processLooseScans(
     process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
-    rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
+    rval = createNewBundle(bundle_name, md5, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
         skip_list = rval[1]
@@ -118,7 +127,7 @@ def processLooseScans(
         return
 
     # send the images to the server
-    sendPagesToServer.uploadLPages(bundle_name, skip_list, student_id, server, password)
+    uploadLPages(bundle_name, skip_list, student_id, server, password)
     # now archive the PDF
     archiveLBundle(pdf_fname)
 
@@ -195,7 +204,7 @@ def processHWScans(
         )
     )
 
-    test_number = sendPagesToServer.checkTestHasThatSID(student_id, server, password)
+    test_number = checkTestHasThatSID(student_id, server, password)
     if test_number is None:
         raise ValueError(f"No test has student ID {student_id}")
     else:
@@ -229,7 +238,7 @@ def processHWScans(
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print("Creating bundle for {} on server".format(pdf_fname))
-    rval = sendPagesToServer.createNewBundle(bundle_name, md5, server, password)
+    rval = createNewBundle(bundle_name, md5, server, password)
     # should be [True, skip_list] or [False, reason]
     if rval[0]:
         skip_list = rval[1]
@@ -257,9 +266,7 @@ def processHWScans(
     assert len(skip_list) == 0, "TODO: we don't really support skiplist for HW pages"
 
     # send the images to the server
-    sendPagesToServer.upload_HW_pages(
-        file_list, bundle_name, bundledir, student_id, server, password
-    )
+    upload_HW_pages(file_list, bundle_name, bundledir, student_id, server, password)
     # now archive the PDF
     archiveHWBundle(pdf_fname, basedir=basedir)
 

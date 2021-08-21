@@ -52,7 +52,7 @@ from plom.canvas import (
     interactively_get_assignment,
     interactively_get_course,
 )
-from plom.scan.frontend_hwscan import processHWScans, processMissing
+import plom.scan
 
 
 def get_short_name(long_name):
@@ -314,10 +314,7 @@ def scan_submissions(num_questions, *, server_dir="."):
         for row in reader:
             user_list += [row]
 
-    print("Temporarily exporting scanner password...")
-    os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
-    scanner_pwd = user_list[2][1]
-
+    scan_pwd = user_list[2][1]
     upload_dir = server_dir / "upload"
 
     print("Applying `plom-hwscan` to pdfs...")
@@ -333,10 +330,10 @@ def scan_submissions(num_questions, *, server_dir="."):
             # ... otherwise push each page to all questionsa.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
-        processHWScans("localhost", scanner_pwd, pdf, sid, q, basedir=upload_dir)
+        plom.scan.processHWScans("localhost", scan_pwd, pdf, sid, q, basedir=upload_dir)
 
     # Clean up any missing submissions
-    processMissing("localhost", scanner_pwd, yes_flag=True)
+    plom.scan.processMissing("localhost", scan_pwd, yes_flag=True)
 
 
 parser = argparse.ArgumentParser(

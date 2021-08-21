@@ -19,8 +19,8 @@ from plom.scan import get_number_of_questions
 from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
-from plom.scan.frontend_hwscan import processHWScans, processLooseScans, processMissing
-from plom.scan.frontend_hwscan import processAllHWByQ
+from plom.scan import processHWScans, processLooseScans, processMissing
+from plom.scan import processAllHWByQ
 
 
 parser = argparse.ArgumentParser(
