@@ -9,10 +9,10 @@ import os
 from pathlib import Path
 
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
-from plom.scan import scansToImages
 from plom.scan import sendPagesToServer
 from plom.scan.scansToImages import process_scans
 from plom.scan.bundle_utils import make_bundle_dir, bundle_name_and_md5_from_file
+from plom.scan.bundle_utils import archiveLBundle, archiveHWBundle
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import checkScanStatus
 
@@ -114,7 +114,7 @@ def processLooseScans(
     # send the images to the server
     sendPagesToServer.uploadLPages(bundle_name, skip_list, student_id, server, password)
     # now archive the PDF
-    scansToImages.archiveLBundle(pdf_fname)
+    archiveLBundle(pdf_fname)
 
 
 def processHWScans(
@@ -244,7 +244,7 @@ def processHWScans(
         file_list, bundle_name, bundledir, student_id, server, password
     )
     # now archive the PDF
-    scansToImages.archiveHWBundle(pdf_fname)
+    archiveHWBundle(pdf_fname)
 
 
 def processAllHWByQ(server, password, yes_flag):

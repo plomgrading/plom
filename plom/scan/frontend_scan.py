@@ -17,10 +17,9 @@ from plom.scan import (
     print_collision_warning,
     bundle_has_nonuploaded_collisions,
 )
-from plom.scan import scansToImages
 from plom.scan.scansToImages import process_scans
 from plom.scan.bundle_utils import make_bundle_dir, bundle_name_and_md5_from_file
-from plom.scan.bundle_utils import archivedir
+from plom.scan.bundle_utils import archivedir, archiveTBundle
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import sendPagesToServer
 from plom.scan import readQRCodes
@@ -140,7 +139,7 @@ def uploadImages(
                 pdf_fname, str(archivedir)
             )
         )
-        scansToImages.archiveTBundle(pdf_fname)
+        archiveTBundle(pdf_fname)
     elif (archivedir / pdf_fname).exists():
         print(
             'Original PDF "{}" is already archived in "{}".'.format(

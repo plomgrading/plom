@@ -4,7 +4,9 @@
 
 import hashlib
 from pathlib import Path
+import shutil
 
+import toml
 
 archivedir = Path("archivedPDFs")
 # TODO: not yet used by callers
@@ -83,3 +85,41 @@ def bundle_name_and_md5_from_file(filename):
     bundle_name = bundle_name_from_file(filename)
     md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
     return (bundle_name, md5)
+
+
+
+def _archiveBundle(file_name, this_archive_dir):
+    """Archive the bundle pdf.
+
+    The bundle.pdf is moved into the appropriate archive directory
+    as given by this_archive_dir. The archive.toml file is updated
+    with the name and md5sum of that bundle.pdf.
+    """
+    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    shutil.move(file_name, this_archive_dir / Path(file_name).name)
+    try:
+        arch = toml.load(archivedir / "archive.toml")
+    except FileNotFoundError:
+        arch = {}
+    arch[md5] = str(file_name)
+    # now save it
+    with open(archivedir / "archive.toml", "w+") as fh:
+        toml.dump(arch, fh)
+
+
+def archiveHWBundle(file_name):
+    """Archive a hw-pages bundle pdf"""
+    print("Archiving homework bundle {}".format(file_name))
+    _archiveBundle(file_name, archivedir / "submittedHWByQ")
+
+
+def archiveLBundle(file_name):
+    """Archive a loose-pages bundle pdf"""
+    print("Archiving loose-page bundle {}".format(file_name))
+    _archiveBundle(file_name, archivedir / "submittedLoose")
+
+
+def archiveTBundle(file_name):
+    """Archive a test-pages bundle pdf"""
+    print("Archiving test-page bundle {}".format(file_name))
+    _archiveBundle(file_name, archivedir)
