@@ -15,6 +15,7 @@ from plom.scan import sendPagesToServer
 from plom.scan.scansToImages import process_scans
 from plom.scan.bundle_utils import make_bundle_dir
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
+from plom.scan import checkScanStatus
 
 
 def processLooseScans(
@@ -299,8 +300,6 @@ def processMissing(server, password, yes_flag):
 
     For each remaining test we replace each missing question with a 'question not submitted' page. The user will be prompted in each case unless the 'yes_flag' is set.
     """
-    from plom.scan import checkScanStatus
-
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
     # returns list for each test [scanned-tpages-present boolean, sid, missing-question-numbers]
     reallyMissing = {}  # new list of those without tpages present
