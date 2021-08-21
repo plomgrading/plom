@@ -16,11 +16,10 @@ from plom.scan import (
     upload_collisions,
     print_collision_warning,
     bundle_has_nonuploaded_collisions,
-    bundle_name_and_md5,
 )
 from plom.scan import scansToImages
 from plom.scan.scansToImages import process_scans
-from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.bundle_utils import make_bundle_dir, bundle_name_and_md5_from_file
 from plom.scan.bundle_utils import archivedir
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import sendPagesToServer
@@ -42,7 +41,7 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
         print("Cannot find file {} - skipping".format(pdf_fname))
         return
     # TODO: replace above with letting exception rise from next:
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
 
     print(f'Checking if bundle "{bundle_name}" already exists on server')
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)

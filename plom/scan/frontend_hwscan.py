@@ -8,12 +8,11 @@ from collections import defaultdict
 import os
 from pathlib import Path
 
-from plom.scan import bundle_name_and_md5
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan import scansToImages
 from plom.scan import sendPagesToServer
 from plom.scan.scansToImages import process_scans
-from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.bundle_utils import make_bundle_dir, bundle_name_and_md5_from_file
 from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 from plom.scan import checkScanStatus
 
@@ -66,7 +65,7 @@ def processLooseScans(
         )
     )
 
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
     if exists:
         if reason == "name":
@@ -188,7 +187,7 @@ def processHWScans(
         print(f"Student ID {student_id} is test_number {test_number}")
 
     # TODO: add command-line option to override this name
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
     if exists:
         if reason == "name":

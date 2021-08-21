@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
+import hashlib
 from pathlib import Path
 
 
@@ -48,3 +49,37 @@ def make_bundle_dir(bundle):
             "uploads/sentPages/collisions",
         ):
             (bundle / Path(d)).mkdir(parents=True, exist_ok=True)
+
+
+def bundle_name_from_file(filename):
+    """Return the bundle name for a file.
+
+    Args:
+        filename (str, Path): name of file, typically a PDF file.
+
+    Returns
+        str: Currently bundle name is the stem of the file name with
+            some input sanitizing such as spaces replaced with underscores.
+    """
+    filename = Path(filename)
+    return filename.stem.replace(" ", "_")
+
+
+def bundle_name_and_md5_from_file(filename):
+    """Return the bundle name and md5sum checksum for a file.
+
+    Args:
+        filename (str/Path): name of file.
+
+    Returns
+        tuple: (str, str) for bundle_name and md5sum.
+
+    Exceptions:
+        FileNotFoundError: file does not exist.
+    """
+    filename = Path(filename)
+    if not filename.is_file():
+        raise FileNotFoundError("not found or not a file/symlink")
+    bundle_name = bundle_name_from_file(filename)
+    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
+    return (bundle_name, md5)

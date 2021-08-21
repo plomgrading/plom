@@ -25,7 +25,6 @@ from .sendCollisionsToServer import (
     print_collision_warning,
     bundle_has_nonuploaded_collisions,
 )
-from .sendPagesToServer import bundle_name_from_filename, bundle_name_and_md5
 from .checkScanStatus import get_number_of_questions
 from .checkScanStatus import check_and_print_scan_status
 from .hwSubmissionsCheck import print_who_submitted_what

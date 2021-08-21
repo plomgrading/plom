@@ -440,40 +440,6 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         return None
 
 
-def bundle_name_from_filename(filename):
-    """Return the bundle name for a file.
-
-    Args:
-        filename (str, Path): name of file, typically a PDF file.
-
-    Returns
-        str: Currently bundle name is the stem of the file name with
-            some input sanitizing such as spaces replaced with underscores.
-    """
-    filename = Path(filename)
-    return filename.stem.replace(" ", "_")
-
-
-def bundle_name_and_md5(filename):
-    """Return the bundle name and md5sum checksum for a file.
-
-    Args:
-        filename (str, Path): name of file.
-
-    Returns
-        tuple: (str, str) for bundle_name and md5sum.
-
-    Exceptions:
-        FileNotFoundError: file does not exist.
-    """
-    filename = Path(filename)
-    if not filename.is_file():
-        raise FileNotFoundError("not found or not a file/symlink")
-    bundle_name = bundle_name_from_filename(filename)
-    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
-    return (bundle_name, md5)
-
-
 def does_bundle_exist_on_server(bundle_name, md5sum, server=None, password=None):
     """Check if bundle exists by name and/or md5sum.
 
