@@ -138,6 +138,28 @@ class ScanMessenger(BaseMessenger):
     def uploadTestPage(
         self, code, test, page, version, f, md5sum, bundle, bundle_order
     ):
+        """Update a test page which has known page, known paper number, usually QR-coded.
+
+        Typically the page is QR coded, and thus we know precisely what
+        paper number, what question and what page.  We may not know the
+        student depending on whether it was prenamed or not.
+
+        args:
+            code (str): a string such as "t0020p06v1".
+            test (int): paper number.
+            page (int): page number.
+            version (int): which version.  Server knows this so probably used
+                for sanity checks.
+            f (pathlib.Path): file to upload.  Filename is uploaded too.
+            md5sum (str): hash of file's content.
+            bundle (str): the name of a group of images scanned together
+                such as a single PDF file.
+            bundle_order): this image's place within the bundle (e.g.,
+                PDF page number).
+
+        Returns:
+            tuple/list: `(bool, reason, message)`, the bool indicates success.
+        """
         self.SRmutex.acquire()
         try:
             param = {
@@ -179,6 +201,38 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def uploadHWPage(self, sid, question, order, f, md5sum, bundle, bundle_order):
+        """Upload a homework page: self-scanned, known student, and known(-ish) questions.
+
+        This is intended for "homework pages", often self-scanned or
+        otherwise less organized than QR-coded pages.  (The page need
+        not be strictly speaking homework.)  If you know precisely which
+        page this is (e.g., from a QR code), you probably want to upload
+        a TestPage instead,
+
+        Typically the page is without QR codes.  The uploader knows what
+        student it belongs to and what question(s).  The order within the
+        question is somewhat known too, at least within its upload bundle.
+
+        args:
+            sid (str): which student to attach this image to.
+            question (list): a list of questions (ints) to attach to.
+            order (int): something like "page number" except that HWPages
+                do not map directly onto page numbers.  It is used to order these page
+                images in the marker UI for example: pages with smaller order
+                are displayed first.  It need not start at 1.  It need not
+                increase by ones.  Most likely you can just pass the
+                `bundle_order` parameter below here too.
+            f (pathlib.Path): the file to be uploaded.
+            md5sum (str): hash of file's content.
+            bundle (str): the name of a group of images scanned together
+                such as a single PDF file.
+            bundle_order): this image's place within the bundle (e.g.,
+                PDF page number).
+
+        return:
+            list/tuple: a bool indicating success/failure and an error
+               message.
+        """
         self.SRmutex.acquire()
         try:
             param = {
