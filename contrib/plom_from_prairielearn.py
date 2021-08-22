@@ -21,6 +21,7 @@ Instructions:
   * Any files that cannot be processed are in `someone_elses_problem`.
       - (in theory anyway, its still a bit fragile).
   * Use Plom-Client and connect to `localhost:41984`.
+  * Pushing grades back to PrairieLearn: some spreadsheet wrangling TBD.
 """
 
 import csv
@@ -28,20 +29,23 @@ import os
 from pathlib import Path
 import subprocess
 import shutil
-import time
 
-import pandas
-import plom
 # confusingly, there are two: https://gitlab.com/plom/plom/-/issues/1570
 import magic
+import pandas
+
+import plom
+import plom.server
+import plom.scan
 
 
 ########################################################################
 # STUFF YOU'LL NEED TO CHANGE
-manual_grading_csv = 'COURSE_NAME_foo_submissions_for_manual_grading.csv'
-qid = 'upload_cat'
+manual_grading_csv = "COURSE_NAME_foo_submissions_for_manual_grading.csv"
+# PL's Question ID:
+qid = "upload_cat"
 # zip_file = 'COURSE_NAME_foo_files_for_manual_grading.zip'
-dir_from_zip = 'Homework3'
+dir_from_zip = "Homework3"
 # Plom does only integer grades
 how_many_marks = 5
 ########################################################################
@@ -63,84 +67,100 @@ with open("fake_classlist.csv", "w") as csvfile:
             uin_to_sid[r.uin] = n
             f.writerow([n, r.uin])
 
-# terrible, don't do this, fix PlomDemo object instead!
-# subprocess.run(['killall', 'plom-server'])
-
-# TODO: just erase everything for now
-subprocess.check_call(['rm', '-rf', 'userListRaw.csv', 'markedQuestions', 'pages', 'pleaseCheck', 'serverConfiguration', 'specAndDatabase', 'userRubricPaneData', 'submittedHWByQ'])
-
+# Plom has a "longName" and "shortName"
 # TODO: Forest had a function for this
-shortname = qid.replace('_', '')
+shortname = qid.replace("_", "")
 
-# TODO: Plom's versions are more like PL's alternatives
+# Folder to store the server files
+serverdir = Path(f"plom_pl_server-{shortname}")
+serverdir.mkdir(exist_ok=True)
+# Could wipe the dir before we start
+# shutil.rmtree(serverdir)
+# serverdir.mkdir(exist_ok=True)
+
+# Prepare the directory ("plom-server init <some_dir>" on command line)
+plom.server.PlomServer.initialise_server(basedir=serverdir)
+
+# Plom's "versions" are more like PL's "alternatives".
 # Plom does not yet natively support variants (but that is planned)
 # numberOfPages and idPages can be ignored: we're not making these files
-spec = plom.SpecVerifier({
-    'name': shortname,
-    'longName': qid,
-    'numberOfVersions': 1,
-    'numberOfPages': 2,
-    'numberToProduce': -1,
-    'numberToName': -1,
-    'numberOfQuestions': 1,
-    'idPages': {'pages': [1]},
-    'doNotMark': {'pages': []},
-    'question': {
-        '1': {'pages': [2], 'mark': how_many_marks, 'select': 'fix'},
+spec = plom.SpecVerifier(
+    {
+        "name": shortname,
+        "longName": qid,
+        "numberOfVersions": 1,
+        "numberOfPages": 2,
+        "numberToProduce": -1,
+        "numberToName": -1,
+        "numberOfQuestions": 1,
+        "idPages": {"pages": [1]},
+        "doNotMark": {"pages": []},
+        "question": {
+            "1": {"pages": [2], "mark": how_many_marks, "select": "fix"},
+        },
     }
-})
+)
 spec.checkCodes()
 spec.verifySpec()
+spec.saveVerifiedSpec(basedir=serverdir)
 
-subprocess.check_call(['plom-server', 'init'])
-spec.saveVerifiedSpec()
-subprocess.check_call(['plom-server', 'users', '--auto', '10'])
-subprocess.check_call(['plom-server', 'users', 'userListRaw.csv'])
-
-# TODO: use new demo object
-print('*'*80)
-serverproc = subprocess.Popen(['plom-server', 'launch'])
-time.sleep(0.1)
+cwd = Path.cwd()
 try:
-    serverproc.wait(2.0)
-except subprocess.TimeoutExpired:
-    pass
-else:
-    r = serverproc.returncode
-    print("Server has prematurely stopped with return code {}".format(r))
-    raise RuntimeError("Server didn't start.  Is one already running?  See errors above.")
+    os.chdir(serverdir)
+    subprocess.check_call(["plom-server", "users", "--auto", "10"])
+    subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
+finally:
+    os.chdir(cwd)
+
+# Start Plom Server in background, control returns in a few seconds
+server = plom.server.PlomServer(basedir=serverdir)
 
 pwds = {}
-with open("userListRaw.csv", "r") as csvfile:
+with open(serverdir / "userListRaw.csv", "r") as csvfile:
     for row in csv.reader(csvfile):
         pwds[row[0]] = row[1]
 os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
 os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
 
-subprocess.check_call(['plom-build', 'class', 'fake_classlist.csv'])
-subprocess.check_call(['plom-build', 'make', '--no-pdf'])
+subprocess.check_call(["plom-build", "class", "fake_classlist.csv"])
+try:
+    os.chdir(serverdir)
+    subprocess.check_call(["plom-build", "make", "--no-pdf"])
+finally:
+    os.chdir(cwd)
 
-sub = Path('submittedHWByQ')
-sub.mkdir(exist_ok=True)
-
-SEP = Path('someone_elses_problem')
+# Any non-PDF files go here, at least its not /dev/null
+SEP = Path("someone_elses_problem")
 SEP.mkdir(exist_ok=True)
 
-for f in Path(dir_from_zip).glob('*.pdf'):
-    uin = f.name.split('_')[1]
+for f in Path(dir_from_zip).glob("*.pdf"):
+    uin = f.name.split("_")[1]
     sid = uin_to_sid[uin]
-    print(f, uin, sid)
-    # plom is VERY particular about the filenames
-    newfile = sub / f"{uin}.{sid}.1.pdf"
-    shutil.copyfile(f, newfile)
+    print(f"Process file {f} with uin={uin}, sid={sid}")
     mime = magic.detect_from_filename(f).mime_type
     if mime != "application/pdf":
-        print('It appears "{}" is not a pdf!  its mimetype is "{}"'.format(f, mime))
-        shutil.copyfile(f, SEP / f.name)
+        print(f'It appears "{f}" is not a pdf!  its mimetype is "{mime}"')
+        f.rename(SEP / f.name)
         continue
+    questions = [1]  # Many more options here
+    plom.scan.processHWScans(
+        "localhost", pwds["scanner"], f, sid, questions, basedir=serverdir
+    )
     # TODO: do some logging here
-    subprocess.check_call(['plom-hwscan', 'process', '-q', '1', newfile, f"{sid}"])
     # TODO: be more robust, try catch and move the baddies to SEP
 
-print("\n\nHere are your accounts in plain-text! :-X")
-subprocess.check_call(['cat', 'userListRaw.csv'])
+assert server.process_is_running(), "has the server died?"
+assert server.ping_server(), "cannot ping server, something gone wrong?"
+
+print("Server seems to still be running: demo setup is complete\n")
+
+print(f"Here are your accounts: (see also {serverdir/'userListRaw.csv'})")
+with open(serverdir / "userListRaw.csv", "r") as csvfile:
+    print(csvfile.read())
+
+print('\n*** Now run "plom-client" ***\n')
+url = f"{server.server_info['server']}:{server.server_info['port']}"
+print(f"  * Server running on {url} with PID {server.pid}\n")
+input("Press enter when you want to stop the server...")
+server.stop()
+print("Server stopped, goodbye!")
