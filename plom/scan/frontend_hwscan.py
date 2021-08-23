@@ -2,7 +2,16 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-"""Plom's frontend scanning routines."""
+"""Plom's frontend scanning routines for self-scanned work.
+
+These routines are used for "Homework Pages", self-scanned work typically
+without QR-codes that are associated with a particular known student but
+are unstructured or understructured in the their relationship to the exam
+template.
+
+If you instead are dealing with QR-coded pages where you may not yet know
+which pages belong to which student, see :py:module:`frontend_scan`.
+"""
 
 from collections import defaultdict
 import os

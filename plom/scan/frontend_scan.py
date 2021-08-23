@@ -2,7 +2,19 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-"""Plom tools for scanning tests and pushing to servers."""
+"""Plom tools for scanning tests and pushing to servers.
+
+There are two main approaches to uploading: Test Pages and Homework Pages.
+This module deals with Test Pages: these are usually bundles of pages
+(pdf files) that typically have QR-codes but may not (yet) be associated
+with a particular student.  In theory these mostly map onto expected blank
+pages that the server is aware of (from exam creation time).
+
+In constrast, Homework pages are associated with a paricular student, for
+example, each student has uploaded a self-scanned bundle (pdf file) of
+their work.  But the precise relationship between this work and questions
+in the exam is less clear.  For these, see :py:module:`frontend_hwscan`.
+"""
 
 from pathlib import Path
 from warnings import warn
