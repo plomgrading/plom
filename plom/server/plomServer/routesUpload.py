@@ -149,7 +149,7 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)
 
     async def uploadHWPage(self, request):
-        """A homework page is self-scanned, known student, and known questions.
+        """A homework page is self-scanned, known student, and known(-ish) questions.
 
         Typically the page is without QR codes.  The uploader knows what
         student it belongs to and what question(s).  The order within the
