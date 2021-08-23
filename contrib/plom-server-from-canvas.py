@@ -20,6 +20,11 @@ your own risk, no warranty, etc, etc.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
+Notes:
+  * If number of pages precisely matches number of questions then
+    we do a 1-1 mapping onto questions.  Otherwise we push each
+    page to all questions.  This could be made more configurable.
+
 TODO:
   * needs to log instead of just discarding so much output
   * support an existing configured server in basedir: or fork
