@@ -2,13 +2,15 @@
 # Copyright (C) 2019 Omer Angel
 # Copyright (C) 2019, 2021 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2021 Peter Lee
 
 """Misc utilities"""
-import os
-import sys
-import math
-import string
+
 from contextlib import contextmanager
+import math
+import os
+import string
+import sys
 
 
 def format_int_list_with_runs(L, use_unicode=None):
@@ -131,12 +133,14 @@ def next_in_longest_subsequence(items):
 
 @contextmanager
 def working_directory(path):
-    """
-    Temporarily change the current working directory.
+    """Temporarily change the current working directory.
+
     Usage:
+    ```
     with working_directory(path):
         do_things()   # working in the given path
     do_other_things() # back to original path
+    ```
     """
     current_directory = os.getcwd()
     os.chdir(path)
