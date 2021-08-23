@@ -13,6 +13,7 @@ from pathlib import Path
 from stdiomask import getpass
 
 from plom.messenger import ScanMessenger
+from plom.misc_utils import working_directory
 from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
 
@@ -373,20 +374,18 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
 
     file_list = []
     # files are sitting in "bundles/submittedLoose/<bundle_name>"
-    os.chdir(os.path.join("bundles", "submittedLoose", bundle_name))
-    # Look for pages in pageImages
-    for ext in PlomImageExts:
-        file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
+    with working_directory(os.path.join("bundles", "submittedLoose", bundle_name)):
+        # Look for pages in pageImages
+        for ext in PlomImageExts:
+            file_list.extend(
+                sorted(glob(os.path.join("pageImages", "*.{}".format(ext))))
+            )
 
-    LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
+        LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
 
-    updates = msgr.triggerUpdateAfterLUpload()
+        updates = msgr.triggerUpdateAfterLUpload()
 
-    # go back to original dir
-    os.chdir("..")
-    os.chdir("..")
-    os.chdir("..")
-
+        # go back to original dir
     # close down messenger
     msgr.closeUser()
     msgr.stop()
