@@ -42,7 +42,14 @@ def get_number_of_questions(server=None, pwd=None):
     return spec["numberOfQuestions"]
 
 
-def checkStatus(server=None, pwd=None):
+def check_and_print_scan_status(server=None, pwd=None):
+    """Prints summary of test/hw uploads.
+
+    More precisely. Prints lists
+    * which tests have been used (ie at least one uploaded page)
+    * which tests completely scanned (both tpages and hwpage)
+    * incomplete tests (missing one tpage or one hw-question)
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)

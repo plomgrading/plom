@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Plom tools for scanning homework and pushing to servers."""
 
@@ -22,56 +22,10 @@ from plom.scan import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan import scansToImages
 from plom.scan.scansToImages import process_scans
-
-
-def clearLogin(server, password):
-    from plom.scan import clearScannerLogin
-
-    clearScannerLogin.clearLogin(server, password)
-
-
-def scanStatus(server, password):
-    """Prints summary of test/hw uploads.
-
-    More precisely. Prints lists
-    * which tests have been used (ie at least one uploaded page)
-    * which tests completely scanned (both tpages and hwpage)
-    * incomplete tests (missing one tpage or one hw-question)
-    """
-
-    from plom.scan import checkScanStatus
-
-    checkScanStatus.checkStatus(server, password)
-
-
-def whoDidWhat(server, password, directory_check):
-    """Prints lists of hw/loose submissions on server / local
-
-    * Prints list of hw-submissions already uploaded to server
-    * Prints list of what hw-submissions are in the current submittedHWByQ directory
-    * Prints list of what loose-submissions are in the current submittedLoose directory
-    """
-    from plom.scan.hwSubmissionsCheck import whoSubmittedWhat
-
-    whoSubmittedWhat(server, password, directory_check)
-
-
-def make_required_directories(bundle=None):
-    os.makedirs("archivedPDFs", exist_ok=True)
-    os.makedirs("archivedPDFs" / Path("submittedHWByQ"), exist_ok=True)
-    os.makedirs("archivedPDFs" / Path("submittedLoose"), exist_ok=True)
-    os.makedirs("bundles", exist_ok=True)
-    # TODO: split up a bit, above are global, below per bundle
-    if bundle:
-        directory_list = [
-            "uploads/sentPages",
-            "uploads/discardedPages",
-            "uploads/collidingPages",
-            "uploads/sentPages/unknowns",
-            "uploads/sentPages/collisions",
-        ]
-        for dir in directory_list:
-            os.makedirs(bundle / Path(dir), exist_ok=True)
+from plom.scan import clear_login
+from plom.scan import print_who_submitted_what
+from plom.scan import check_and_print_scan_status
+from plom.scan.bundle_utils import make_bundle_dir
 
 
 def processLooseScans(
@@ -152,7 +106,7 @@ def processLooseScans(
 
     bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
-    make_required_directories(bundledir)
+    make_bundle_dir(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
     process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
@@ -278,7 +232,7 @@ def processHWScans(
     # TODO: add command-line option to override this name
     bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / bundle_name
-    make_required_directories(bundledir)
+    make_bundle_dir(bundledir)
 
     print("Processing PDF {} to images".format(pdf_fname))
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
@@ -573,7 +527,7 @@ def main():
             pass
 
     if args.command == "submitted":
-        whoDidWhat(args.server, args.password, args.directory)
+        print_who_submitted_what(args.server, args.password, args.directory)
     elif args.command == "process":
         if args.loose:
             print('WARNING: "Loose pages" are deprecated: pass `-q all` instead')
@@ -611,9 +565,9 @@ def main():
     elif args.command == "missing":
         processMissing(args.server, args.password, args.yes)
     elif args.command == "status":
-        scanStatus(args.server, args.password)
+        check_and_print_scan_status(args.server, args.password)
     elif args.command == "clear":
-        clearLogin(args.server, args.password)
+        clear_login(args.server, args.password)
     else:
         parser.print_help()
 

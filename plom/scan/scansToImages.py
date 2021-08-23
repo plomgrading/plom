@@ -22,10 +22,8 @@ from PIL import Image
 from plom import PlomImageExts
 from plom import ScenePixelHeight
 from plom.scan import normalizeJPEGOrientation
-
-
-# TODO: make some common util file to store all these names?
-archivedir = Path("archivedPDFs")
+from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.bundle_utils import archivedir
 
 
 def _archiveBundle(file_name, this_archive_dir):
@@ -316,23 +314,6 @@ def gamma_adjust(fn):
     )
 
 
-def makeBundleDirectories(fname, bundle_dir):
-    """Each bundle needs its own subdirectories: make pageImages, scanPNGs, etc.
-
-    Args:
-        fname (str, Path): the name of a pdf-file, zip-file or whatever
-            from which we create the bundle name.
-        bundle_dir (Path): A directory to contain the various
-            extracted files, QR codes, uploaded stuff etc.
-
-    Returns:
-        None
-    """
-    # TODO: consider refactor viz scripts/scan and scripts/hwscan which has similar
-    for x in ("pageImages", "scanPNGs", "decodedPages", "unknownPages"):
-        (bundle_dir / x).mkdir(exist_ok=True)
-
-
 def postProcessing(thedir, dest, skip_gamma=False):
     """Do post processing on a directory of scanned bitmaps.
 
@@ -396,7 +377,7 @@ def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=Fals
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
     """
-    makeBundleDirectories(pdf_fname, bundle_dir)
+    make_bundle_dir(bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
     files = processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
