@@ -4,7 +4,8 @@
 
 """Plom's frontend scanning routines for self-scanned work.
 
-These routines are used for "Homework Pages", self-scanned work typically
+There are two main approaches to uploading: Test Pages and Homework Pages.
+This module deals with "Homework Pages", self-scanned work typically
 without QR-codes that are associated with a particular known student but
 are unstructured or understructured in the their relationship to the exam
 template.
