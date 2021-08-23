@@ -37,7 +37,7 @@ def _find_runs(S):
     prev = -math.inf
     for x in S:
         if x - prev == 1:
-            run.append(x)
+            run.append(x)  # noqa
         else:
             run = [x]
             L.append(run)
