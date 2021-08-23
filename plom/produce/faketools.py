@@ -376,6 +376,17 @@ def main():
     parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     args = parser.parse_args()
 
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
+        except KeyError:
+            pass
+
     out_file_path = "fake_scribbled_exams.pdf"
     classlist = download_classlist(args.server, args.password)
 
