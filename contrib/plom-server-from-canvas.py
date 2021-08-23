@@ -158,13 +158,12 @@ def initialize(course, assignment, marks, *, server_dir="."):
         os.chdir(o_dir)
 
     print("Temporarily exporting manager password...")
-    user_list = []
+    pwds = {}
     with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            user_list += [row]
-    os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1]
-    del user_list
+        for row in csv.reader(csvfile):
+            pwds[row[0]] = row[1]
+    os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
+    del pwds
 
     print("Launching plom server.")
     plom_server = PlomServer(basedir=server_dir)
@@ -313,13 +312,13 @@ def scan_submissions(num_questions, *, server_dir="."):
     """
     server_dir = Path(server_dir)
 
-    user_list = []
+    pwds = {}
     with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            user_list += [row]
+        for row in csv.reader(csvfile):
+            pwds[row[0]] = row[1]
+    scan_pwd = pwds["scanner"]
+    del pwds
 
-    scan_pwd = user_list[2][1]
     upload_dir = server_dir / "upload"
 
     print("Applying `plom-hwscan` to pdfs...")
