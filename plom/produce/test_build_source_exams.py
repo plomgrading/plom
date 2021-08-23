@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 from .demotools import buildDemoSourceFiles
+from ..misc_utils import working_directory
 
 
 def test_latex_demofiles(tmpdir):
@@ -14,11 +15,9 @@ def test_latex_demofiles(tmpdir):
     Arguments:
         tmpdir (dir): The directory that we are building the files in.
     """
-    cdir = os.getcwd()
-    os.chdir(tmpdir)
-    assert buildDemoSourceFiles()
-    assert set(os.listdir("sourceVersions")) == set(("version1.pdf", "version2.pdf"))
-    os.chdir(cdir)
+    with working_directory(tmpdir):
+        assert buildDemoSourceFiles()
+        assert set(os.listdir("sourceVersions")) == set(("version1.pdf", "version2.pdf"))
 
 
 def test_latex_demofiles_dir(tmpdir):

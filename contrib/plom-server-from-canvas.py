@@ -169,11 +169,8 @@ def initialize(course, assignment, marks, *, server_dir="."):
         ["plom-build", "class", server_dir / "classlist.csv"]
     )
     print("Building the database...")
-    try:
-        os.chdir(server_dir)
+    with working_directory(server_dir):
         build_class = subprocess.check_call(["plom-build", "make", "--no-pdf"])
-    finally:
-        os.chdir(o_dir)
 
     return plom_server
 
@@ -314,28 +311,25 @@ def scan_submissions(num_questions, *, server_dir="."):
     os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
 
     print("Temporarily changing working directory")
-    o_dir = os.getcwd()
-    os.chdir(server_dir / "upload")
+    with working_directory(server_dir / "upload"):
 
-    print("Applying `plom-hwscan` to pdfs...")
-    for pdf in tqdm(Path("submittedHWByQ").glob("*.pdf")):
-        # get 12345678 from blah_blah.blah_blah.12345678._.
-        sid = pdf.stem.split(".")[-2]
-        assert len(sid) == 8
-        if len(fitz.open(pdf)) == num_questions:
-            # If number of pages precisely matches number of questions then
-            # do a 1-1 mapping...
-            qstr = ",".join(f"[{x}]" for x in range(1, num_questions + 1))
-        else:
-            # ... otherwise push each page to all questionsa.
-            qstr = ",".join(f"{x}" for x in range(1, num_questions + 1))
-        # TODO: capture output and put it all in a log file?  (capture_output=True?)
-        subprocess.check_call(["plom-hwscan", "process", pdf, sid, "-q", qstr])
+        print("Applying `plom-hwscan` to pdfs...")
+        for pdf in tqdm(Path("submittedHWByQ").glob("*.pdf")):
+            # get 12345678 from blah_blah.blah_blah.12345678._.
+            sid = pdf.stem.split(".")[-2]
+            assert len(sid) == 8
+            if len(fitz.open(pdf)) == num_questions:
+                # If number of pages precisely matches number of questions then
+                # do a 1-1 mapping...
+                qstr = ",".join(f"[{x}]" for x in range(1, num_questions + 1))
+            else:
+                # ... otherwise push each page to all questionsa.
+                qstr = ",".join(f"{x}" for x in range(1, num_questions + 1))
+            # TODO: capture output and put it all in a log file?  (capture_output=True?)
+            subprocess.check_call(["plom-hwscan", "process", pdf, sid, "-q", qstr])
 
-    # Clean up any missing submissions
-    subprocess.check_call(["plom-hwscan", "missing"])
-
-    os.chdir(o_dir)
+        # Clean up any missing submissions
+        subprocess.check_call(["plom-hwscan", "missing"])
 
 
 parser = argparse.ArgumentParser(
