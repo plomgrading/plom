@@ -808,7 +808,6 @@ macos11_client:
   tags:
   - macos
   stage: packaging
-  needs: []
   script:
   - sw_vers
   - echo $SHELL
@@ -841,7 +840,6 @@ macos1015_client:
   tags:
   - macos
   stage: packaging
-  needs: []
   script:
   - sw_vers
   - echo $SHELL
@@ -874,7 +872,6 @@ macos1014_client:
   tags:
   - macos
   stage: packaging
-  needs: []
   script:
   - sw_vers
   - echo $SHELL
@@ -903,7 +900,6 @@ macos1013_client:
   tags:
   - macos
   stage: packaging
-  needs: []
   script:
   - sw_vers
   - echo $SHELL
