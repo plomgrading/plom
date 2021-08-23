@@ -200,11 +200,11 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
         # delete last page from the zeroth test.
         if index == 0:
-            pdf_document.deletePage(-1)
+            pdf_document.delete_page(-1)
             print("Deleting last page of test {}".format(file_name))
 
         # We then add the pdfs into the document collection
-        all_pdf_documents.insertPDF(pdf_document)
+        all_pdf_documents.insert_pdf(pdf_document)
 
         # For a comprehensive test, we will add some extrapages with the probability of 0.2 percent
         if random.random() < extra_page_probability:
@@ -224,7 +224,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                     test_number, student_number
                 )
             )
-            all_pdf_documents.insertPage(
+            all_pdf_documents.insert_page(
                 -1,
                 text="EXTRA PAGE - t{} Q1 - {}".format(test_number, student_number),
                 fontsize=extra_page_font_size,
@@ -253,7 +253,7 @@ def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
     for _ in range(number_of_garbage_pages):
         garbage_page_index = random.randint(-1, len(all_pdf_documents))
         print("Insert garbage page at garbage_page_index={}".format(garbage_page_index))
-        all_pdf_documents.insertPage(
+        all_pdf_documents.insert_page(
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
     all_pdf_documents.saveIncr()
@@ -286,7 +286,7 @@ def make_colliding_pages(paper_dir_path, outfile):
                 colliding_page_index
             )
         )
-        all_pdf_documents.insertPDF(
+        all_pdf_documents.insert_pdf(
             pdf_document,
             from_page=test_length - 1,
             to_page=test_length - 1,
@@ -318,9 +318,9 @@ def splitFakeFile(out_file_path):
     doc2 = fitz.open()
     doc3 = fitz.open()
 
-    doc1.insertPDF(originalPDF, from_page=0, to_page=length)
-    doc2.insertPDF(originalPDF, from_page=length + 1, to_page=2 * length)
-    doc3.insertPDF(originalPDF, from_page=2 * length + 1)
+    doc1.insert_pdf(originalPDF, from_page=0, to_page=length)
+    doc2.insert_pdf(originalPDF, from_page=length + 1, to_page=2 * length)
+    doc3.insert_pdf(originalPDF, from_page=2 * length + 1)
 
     doc1.save(newPDFName + "1.pdf")
     doc2.save(newPDFName + "2.pdf")
