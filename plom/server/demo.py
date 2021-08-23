@@ -128,7 +128,9 @@ class PlomDemoServer(PlomServer):
                     split(f"python3 -m plom.scan process --no-gamma-shift {f}"),
                     env=env,
                 )
-            subprocess.check_call(split(f"python3 -m plom.scan upload -u {f}"), env=env)
+                subprocess.check_call(
+                    split(f"python3 -m plom.scan upload -u {f}"), env=env
+                )
         finally:
             os.chdir(cwd)
 
