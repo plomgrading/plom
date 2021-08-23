@@ -95,7 +95,7 @@ setup(
             "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build:main",
             "plom-server=plom.scripts.server:main",
-            "plom-scan=plom.scripts.scan:main",
+            "plom-scan=plom.scan.__main__:main",
             "plom-manager=plom.scripts.manager:main",
             "plom-finish=plom.scripts.finish:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
