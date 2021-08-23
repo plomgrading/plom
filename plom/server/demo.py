@@ -13,6 +13,7 @@ from warnings import warn
 
 from plom import Default_Port
 from plom.server import PlomServer
+import plom.scan
 
 
 class PlomDemoServer(PlomServer):
@@ -123,14 +124,11 @@ class PlomDemoServer(PlomServer):
                 ),
                 env=env,
             )
+            s = f"localhost:{self.port}"
+            pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
-                subprocess.check_call(
-                    split(f"python3 -m plom.scan process --no-gamma-shift {f}"),
-                    env=env,
-                )
-                subprocess.check_call(
-                    split(f"python3 -m plom.scan upload -u {f}"), env=env
-                )
+                plom.scan.processScans(s, pwd, f, gamma=False)
+                plom.scan.uploadImages(s, pwd, f, do_unknowns=True)
         finally:
             os.chdir(cwd)
 
