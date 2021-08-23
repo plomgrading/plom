@@ -5,7 +5,6 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
-import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,53 +13,14 @@ import math
 import tempfile
 from warnings import warn
 
-import toml
 from tqdm import tqdm
 import fitz
 from PIL import Image
 
 from plom import PlomImageExts
 from plom import ScenePixelHeight
-from plom.scan import normalizeJPEGOrientation
+from plom.scan.rotate import normalizeJPEGOrientation
 from plom.scan.bundle_utils import make_bundle_dir
-from plom.scan.bundle_utils import archivedir
-
-
-def _archiveBundle(file_name, this_archive_dir):
-    """Archive the bundle pdf.
-
-    The bundle.pdf is moved into the appropriate archive directory
-    as given by this_archive_dir. The archive.toml file is updated
-    with the name and md5sum of that bundle.pdf.
-    """
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    shutil.move(file_name, this_archive_dir / Path(file_name).name)
-    try:
-        arch = toml.load(archivedir / "archive.toml")
-    except FileNotFoundError:
-        arch = {}
-    arch[md5] = str(file_name)
-    # now save it
-    with open(archivedir / "archive.toml", "w+") as fh:
-        toml.dump(arch, fh)
-
-
-def archiveHWBundle(file_name):
-    """Archive a hw-pages bundle pdf"""
-    print("Archiving homework bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir / "submittedHWByQ")
-
-
-def archiveLBundle(file_name):
-    """Archive a loose-pages bundle pdf"""
-    print("Archiving loose-page bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir / "submittedLoose")
-
-
-def archiveTBundle(file_name):
-    """Archive a test-pages bundle pdf"""
-    print("Archiving test-page bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir)
 
 
 def processFileToBitmaps(file_name, dest, do_not_extract=False):

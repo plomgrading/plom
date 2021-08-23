@@ -22,7 +22,7 @@ from plom.tpv_utils import (
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan import QRextract
-from plom.scan import rotateBitmap
+from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
 
 

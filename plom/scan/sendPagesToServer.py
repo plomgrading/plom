@@ -99,7 +99,7 @@ def fileFailedUpload(reason, message, bundle, f):
         shutil.move(f, to / f.name)
         shutil.move(Path(str(f) + ".qr"), to / f"{f.name}.qr")
         # write stuff into a file: [collidingFile, test, page, version]
-        with open(to / f"{f.name}.collide", "w+") as fh:
+        with open(to / f"{f.name}.collide", "w") as fh:
             json.dump(message, fh)
     else:  # now bad errors
         print("Image upload failed for *bad* reason - this should not happen.")
@@ -437,40 +437,6 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         return test_success[1]  # return the number
     else:  # couldn't find it
         return None
-
-
-def bundle_name_from_filename(filename):
-    """Return the bundle name for a file.
-
-    Args:
-        filename (str, Path): name of file, typically a PDF file.
-
-    Returns
-        str: Currently bundle name is the stem of the file name with
-            some input sanitizing such as spaces replaced with underscores.
-    """
-    filename = Path(filename)
-    return filename.stem.replace(" ", "_")
-
-
-def bundle_name_and_md5(filename):
-    """Return the bundle name and md5sum checksum for a file.
-
-    Args:
-        filename (str, Path): name of file.
-
-    Returns
-        tuple: (str, str) for bundle_name and md5sum.
-
-    Exceptions:
-        FileNotFoundError: file does not exist.
-    """
-    filename = Path(filename)
-    if not filename.is_file():
-        raise FileNotFoundError("not found or not a file/symlink")
-    bundle_name = bundle_name_from_filename(filename)
-    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
-    return (bundle_name, md5)
 
 
 def does_bundle_exist_on_server(bundle_name, md5sum, server=None, password=None):

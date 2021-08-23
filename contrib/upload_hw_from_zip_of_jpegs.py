@@ -34,7 +34,7 @@ from stdiomask import getpass
 import pandas as pd
 
 from plom.messenger import ScanMessenger
-from plom.scan import bundle_name_and_md5
+from plom.scan.bundle_utils import bundle_name_and_md5_from_file
 
 
 where_csv = Path("../../")
@@ -153,16 +153,15 @@ if __name__ == "__main__":
             # shovel up the mac droppings
             stuff = [x for x in stuff if not "__macosx" in x.filename.lower()]
             print("\n  ".join([str(x) for x in stuff]))
-            bundle_name, md5 = bundle_name_and_md5(f)
-            print(bundle_name, md5)
+            bundle_name, md5 = bundle_name_and_md5_from_file(f)
             bundle_success = msgr.createNewBundle(bundle_name, md5)
             if not bundle_success[0]:
                 print(bundle_success)
                 raise RuntimeError("bundle making failed?")
             input("Press <enter> to continue or <ctrl>-c to stop ")
+            # TODO: could refactor to use plom.scan.sendPagesToServer.upload_HW_pages
             for n, x in enumerate(stuff):
                 print("-" * 80)
-                print(x)
                 if (
                     x.filename.lower().endswith(".jpg")
                     or x.filename.lower().endswith(".jpeg")
@@ -188,23 +187,13 @@ if __name__ == "__main__":
                     # TODO: use it in memory instead, as in the md5 calc above
                     # TODO: check for QRs?  we always use HW pages currently
                     z.extract(x)
-                    shortName = Path(x.filename).stem
-                    bundle_order = n
-                    args = (
-                        sid,
-                        q,
-                        n,
-                        shortName,
-                        x.filename,
-                        md5,
-                        bundle_name,
-                        bundle_order,
-                    )
-                    print(args)
+                    args = (sid, q, n, x, md5, bundle_name, n)
+                    print(f"debug: args for upload: {args}")
                     rmsg = msgr.uploadHWPage(*args)
                     if not rmsg[0]:
-                        print(rmsg)
-                        raise ValueError("stopping")
+                        raise RuntimeError(
+                            f"Unsuccessful HW upload, server returned:\n{rmsg[1:]}"
+                        )
                     os.chdir(cwd)
             updates = msgr.triggerUpdateAfterHWUpload()
             print(updates)
