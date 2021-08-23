@@ -60,11 +60,19 @@ from plom.scan import processScans, uploadImages
 def frontend(args):
     if args.command == "process":
         processScans(
-            args.server, args.password, args.scanPDF, args.gamma, args.extractbmp
+            args.server,
+            args.password,
+            args.scanPDF,
+            gamma=args.gamma,
+            extractbmp=args.extractbmp,
         )
     elif args.command == "upload":
         uploadImages(
-            args.server, args.password, args.bundleName, args.unknowns, args.collisions
+            args.server,
+            args.password,
+            args.bundleName,
+            do_unknowns=args.unknowns,
+            do_collisions=args.collisions,
         )
     elif args.command == "status":
         check_and_print_scan_status(args.server, args.password)
