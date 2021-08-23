@@ -289,7 +289,6 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
 
 
 def moveScansIntoPlace(examsScannedNow):
-    # os.chdir("pageImages")
     # For each test we have just scanned
     for fname in examsScannedNow:
         t = examsScannedNow[fname][0]
