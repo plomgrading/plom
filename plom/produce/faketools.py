@@ -31,7 +31,7 @@ from . import paperdir as _paperdir
 import plom.produce
 from plom import __version__
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
 
 
 # load the digit images
