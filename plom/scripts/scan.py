@@ -70,6 +70,7 @@ from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
 from plom.scan.bundle_utils import make_bundle_dir
 from plom.scan.bundle_utils import archivedir
+from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 
 
 # TODO: this bit of code from messenger could be useful here
@@ -100,29 +101,23 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
         return
     # TODO: replace above with letting exception rise from next:
     bundle_name, md5 = bundle_name_and_md5(pdf_fname)
-    # TODO: doesBundleExist(bundle_name, md5)
 
-    print("Checking if bundle {} already exists on server".format(bundle_name))
-    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
-    # return [False, name], [True, name], [True,md5sum] or [True, both]
-    if bundle_exists[0]:
-        if bundle_exists[1] == "name":
+    print(f'Checking if bundle "{bundle_name}" already exists on server')
+    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
+    if exists:
+        if reason == "name":
             print(
-                "The bundle name {} has been used previously for a different bundle. Stopping".format(
-                    pdf_fname
-                )
+                f'The bundle "{bundle_name}" has been used previously for a different bundle. Stopping'
             )
             return
-        elif bundle_exists[1] == "md5sum":
+        elif reason == "md5sum":
             print(
                 "A bundle with matching md5sum is already in system with a different name. Stopping"
             )
             return
-        elif bundle_exists[1] == "both":
+        elif reason == "both":
             print(
-                "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    bundle_name
-                )
+                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
             )
         else:
             raise RuntimeError("Should not be here: unexpected code path!")

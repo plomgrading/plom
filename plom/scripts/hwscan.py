@@ -26,6 +26,7 @@ from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
 from plom.scan.bundle_utils import make_bundle_dir
+from plom.scan.sendPagesToServer import does_bundle_exist_on_server
 
 
 def processLooseScans(
@@ -78,33 +79,26 @@ def processLooseScans(
         )
     )
 
-    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
-    # should be [False] [True, name] [True,md5sum], [True, both]
-    if bundle_exists[0]:
-        if bundle_exists[1] == "name":
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
+    if exists:
+        if reason == "name":
             print(
-                "The bundle name {} has been used previously for a different bundle. Stopping".format(
-                    pdf_fname
-                )
+                f'The bundle "{bundle_name}" has been used previously for a different bundle'
             )
             return
-        elif bundle_exists[1] == "md5sum":
+        elif reason == "md5sum":
             print(
-                "A bundle with matching md5sum is already in system with a different name. Stopping".format(
-                    pdf_fname
-                )
+                "A bundle with matching md5sum is already in system with a different name"
             )
             return
-        elif bundle_exists[1] == "both":
+        elif reason == "both":
             print(
-                "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    pdf_fname
-                )
+                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
             )
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_bundle_dir(bundledir)
 
@@ -207,30 +201,25 @@ def processHWScans(
     else:
         print(f"Student ID {student_id} is test_number {test_number}")
 
-    bundle_exists = sendPagesToServer.doesBundleExist(pdf_fname, server, password)
-    # should be [False] [True, name] [True,md5sum], [True, both]
-    if bundle_exists[0]:
-        if bundle_exists[1] == "name":
+    # TODO: add command-line option to override this name
+    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
+    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
+    if exists:
+        if reason == "name":
             raise ValueError(
-                "The bundle name {} has been used previously for a different bundle.".format(
-                    pdf_fname
-                )
+                f'The bundle "{bundle_name}" has been used previously for a different bundle'
             )
-        elif bundle_exists[1] == "md5sum":
+        elif reason == "md5sum":
             raise ValueError(
-                "A bundle with matching md5sum is already in system with a different name."
+                "A bundle with matching md5sum is already in system with a different name"
             )
-        elif bundle_exists[1] == "both":
+        elif reason == "both":
             print(
-                "Warning - bundle {} has been declared previously - you are likely trying again as a result of a crash. Continuing".format(
-                    pdf_fname
-                )
+                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
             )
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
-    # TODO: add command-line option to override this name
-    bundle_name, md5 = bundle_name_and_md5(pdf_fname)
     bundledir = Path("bundles") / bundle_name
     make_bundle_dir(bundledir)
 

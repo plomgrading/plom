@@ -18,7 +18,7 @@ class UploadHandler:
         """Returns whether given bundle/md5sum known to database
 
         Checks both bundle's name and md5sum
-        * neither = no matching bundle, return [False]
+        * neither = no matching bundle, return [False, None]
         * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
         * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
         * both match = return [True, 'both'] - user could be retrying

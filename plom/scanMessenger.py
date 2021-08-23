@@ -38,7 +38,7 @@ class ScanMessenger(BaseMessenger):
         """Ask server if given bundle exists.
 
         Checks bundle's md5sum and name:
-        * neither = no matching bundle, return [False]
+        * neither = no matching bundle, return [False, None]
         * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
         * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
         * both match = return [True, 'both'] - user could be retrying
