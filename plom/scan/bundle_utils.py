@@ -107,12 +107,13 @@ def _archiveBundle(file_name, *, basedir=Path("."), subdir=Path(".")):
     md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
     (basedir / archivedir).mkdir(exist_ok=True)
     (basedir / archivedir / subdir).mkdir(exist_ok=True)
-    shutil.move(file_name, basedir / archivedir / subdir / Path(file_name).name)
+    move_to = subdir / Path(file_name).name
+    shutil.move(file_name, basedir / archivedir / move_to)
     try:
         arch = toml.load(basedir / archivedir / "archive.toml")
     except FileNotFoundError:
         arch = {}
-    arch[md5] = str(file_name)
+    arch[md5] = str(move_to)
     with open(basedir / archivedir / "archive.toml", "w") as fh:
         toml.dump(arch, fh)
 
@@ -120,7 +121,7 @@ def _archiveBundle(file_name, *, basedir=Path("."), subdir=Path(".")):
 def archiveHWBundle(file_name, *, basedir=Path(".")):
     """Archive a hw-pages bundle pdf"""
     print(f"Archiving homework bundle {file_name}")
-    _archiveBundle(file_name, basedir=basedir, subdir=Path("submittedHWByQ"))
+    _archiveBundle(file_name, basedir=basedir, subdir=Path("HW"))
 
 
 def archiveLBundle(file_name):
