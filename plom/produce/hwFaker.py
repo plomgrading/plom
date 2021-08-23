@@ -13,14 +13,14 @@ import os
 import random
 from pathlib import Path
 
-from stdiomask import getpass
 import fitz
+from stdiomask import getpass
 
 from plom import __version__
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
+from plom.plom_exceptions import PlomExistingLoginException
 
-from .faketools import possible_answers as possibleAns
+from plom.produce.faketools import possible_answers as possibleAns
 
 
 def makeHWLoose(numberOfQuestions, paperNumber, studentID, studentName, prefix):
@@ -166,20 +166,14 @@ def download_classlist_and_spec(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
-        exit(10)
+        raise
+
     try:
         classlist = msgr.IDrequestClasslist()
-    except PlomBenignException as e:
-        print("Failed to download classlist: {}".format(e))
-        exit(4)
-    try:
         spec = msgr.get_spec()
-    except PlomBenignException as e:
-        print("Failed to get specification: {}".format(e))
-        exit(4)
-
-    msgr.closeUser()
-    msgr.stop()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return classlist, spec
 
 
