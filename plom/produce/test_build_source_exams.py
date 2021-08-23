@@ -17,7 +17,9 @@ def test_latex_demofiles(tmpdir):
     """
     with working_directory(tmpdir):
         assert buildDemoSourceFiles()
-        assert set(os.listdir("sourceVersions")) == set(("version1.pdf", "version2.pdf"))
+        assert set(os.listdir("sourceVersions")) == set(
+            ("version1.pdf", "version2.pdf")
+        )
 
 
 def test_latex_demofiles_dir(tmpdir):

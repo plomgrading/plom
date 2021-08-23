@@ -393,7 +393,9 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
     with working_directory(os.path.join("bundles", "submittedLoose", bundle_name)):
         # Look for pages in pageImages
         for ext in PlomImageExts:
-            file_list.extend(sorted(glob(os.path.join("pageImages", "*.{}".format(ext)))))
+            file_list.extend(
+                sorted(glob(os.path.join("pageImages", "*.{}".format(ext))))
+            )
 
         LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
 

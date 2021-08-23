@@ -176,7 +176,7 @@ def initialize(course, assignment, marks, *, server_dir="."):
 
 
 def get_submissions(
-        assignment, server_dir=".", name_by_info=True, dry_run=False, replace_existing=False
+    assignment, server_dir=".", name_by_info=True, dry_run=False, replace_existing=False
 ):
     """
     get the submission pdfs out of Canvas
