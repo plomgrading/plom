@@ -154,7 +154,6 @@ if __name__ == "__main__":
             stuff = [x for x in stuff if not "__macosx" in x.filename.lower()]
             print("\n  ".join([str(x) for x in stuff]))
             bundle_name, md5 = bundle_name_and_md5_from_file(f)
-            print(bundle_name, md5)
             bundle_success = msgr.createNewBundle(bundle_name, md5)
             if not bundle_success[0]:
                 print(bundle_success)
@@ -163,7 +162,6 @@ if __name__ == "__main__":
             # TODO: could refactor to use plom.scan.sendPagesToServer.upload_HW_pages
             for n, x in enumerate(stuff):
                 print("-" * 80)
-                print(x)
                 if (
                     x.filename.lower().endswith(".jpg")
                     or x.filename.lower().endswith(".jpeg")
@@ -190,7 +188,7 @@ if __name__ == "__main__":
                     # TODO: check for QRs?  we always use HW pages currently
                     z.extract(x)
                     args = (sid, q, n, x, md5, bundle_name, n)
-                    print(args)
+                    print(f"debug: args for upload: {args}")
                     rmsg = msgr.uploadHWPage(*args)
                     if not rmsg[0]:
                         raise RuntimeError(
