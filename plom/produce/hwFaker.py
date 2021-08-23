@@ -13,7 +13,7 @@ import os
 import random
 from pathlib import Path
 
-from getpass import getpass
+from stdiomask import getpass
 import fitz
 
 from plom import __version__
@@ -219,7 +219,7 @@ def main():
 
     print("NumberNamed = {}".format(numberNamed))
 
-    num_all_q_one_bundle = 2
+    num_all_q_one_bundle = 4
     prefixes = ["hwA", "hwB"]  # we'll make two batches one bigger than other.
     for prefix in prefixes:
         if prefix == "hwA":
@@ -230,6 +230,7 @@ def main():
                 makeFakeHW(numberOfQuestions, k, sid[k][0], sid[k][1], prefix, 1)
 
         # give a few loose pages to the first two students in both batches
+        # TODO: "Loose pages" are deprecated in the Plom database
         for k in range(5):
             makeHWLoose(numberOfQuestions, k, sid[k][0], sid[k][1], prefix)
 

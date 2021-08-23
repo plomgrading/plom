@@ -3,7 +3,8 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
-import getpass
+from stdiomask import getpass
+import os
 from multiprocessing import Pool
 import os
 from pathlib import Path
@@ -64,7 +65,7 @@ def main(server=None, pwd=None):
     msgr.start()
 
     if not pwd:
-        pwd = getpass.getpass("Please enter the 'manager' password: ")
+        pwd = getpass("Please enter the 'manager' password: ")
 
     try:
         msgr.requestAndSaveToken("manager", pwd)

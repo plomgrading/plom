@@ -1,20 +1,17 @@
-# -*- coding: utf-8 -*-
-
-"""Check which students have submitted what in the submittedHWByQ and submittedHWExtra directories"""
-
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer and Colin B. Macdonald"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
 
 from collections import defaultdict
 import glob
-import getpass
 import os
+
+from stdiomask import getpass
 
 from plom.rules import isValidStudentNumber
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 
 
 def IDQorIDorBad(fullfname):
@@ -111,18 +108,11 @@ def whoSubmittedWhatOnServer(server, password):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -131,13 +121,14 @@ def whoSubmittedWhatOnServer(server, password):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
-    missingHWQ = msgr.getMissingHW()  # passes back dict
-    completeHW = msgr.getCompleteHW()  # passes back list [test_number, sid]
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        missingHWQ = msgr.getMissingHW()  # passes back dict
+        completeHW = msgr.getCompleteHW()  # passes back list [test_number, sid]
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     print(">> Checking incomplete submissions on server <<")
     print("The following students have complete submissions (each question present)")
@@ -149,7 +140,13 @@ def whoSubmittedWhatOnServer(server, password):
         print("{} missing {}".format(missingHWQ[t][1], missingHWQ[t][2:]))
 
 
-def whoSubmittedWhat(server=None, password=None, directory_check=False):
+def print_who_submitted_what(server=None, password=None, directory_check=False):
+    """Prints lists of HW and other submissions on server and/or local.
+
+    * Prints list of hw-submissions already uploaded to server
+    * Prints list of what hw-submissions are in the current submittedHWByQ directory
+    * Prints list of what loose-submissions are in the current submittedLoose directory
+    """
     if directory_check:
         whoSubmittedWhatOnDisc()
     else:
@@ -165,18 +162,11 @@ def verifiedComplete(server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -185,14 +175,15 @@ def verifiedComplete(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
-    # grab number of questions - so we can work out what is missing
-    spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        # grab number of questions - so we can work out what is missing
+        spec = msgr.get_spec()
+        numberOfQuestions = spec["numberOfQuestions"]
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     hwByQ = defaultdict(list)
     for fn in glob.glob("submittedHWByQ/*.pdf"):

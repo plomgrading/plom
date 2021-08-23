@@ -44,7 +44,7 @@ def doesBundleExist(self, bundle_name, md5):
     """
     Checks if bundle with name=bundle_name or md5sum=md5 exists.
     4 possibilities
-    * neither = no matching bundle, return [False]
+    * neither = no matching bundle, return [False, None]
     * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
     * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
     * both match = return [True, 'both'] - user could be retrying after
@@ -67,7 +67,7 @@ def doesBundleExist(self, bundle_name, md5):
     # name not known, so just check md5sum
     if Bundle.get_or_none(md5sum=md5) is not None:
         return [True, "md5sum"]
-    return [False, "no such bundle"]
+    return [False, None]
 
 
 def createNewBundle(self, bundle_name, md5):

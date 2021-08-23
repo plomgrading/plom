@@ -4,12 +4,12 @@
 
 """Tools for working with TeX"""
 
-import os
-import subprocess
-import tempfile
-import shutil
 from pathlib import Path
+import shutil
+import subprocess
 import sys
+import tempfile
+from textwrap import dedent
 
 if sys.version_info >= (3, 7):
     import importlib.resources as resources
@@ -19,50 +19,76 @@ else:
 import plom
 
 
-def texFragmentToPNG(fragment, outName, dpi=225):
-    """Process a fragment of latex and produce a png image."""
+def texFragmentToPNG(fragment, *, dpi=225):
+    """Process a fragment of latex and produce a png image.
 
-    head = r"""
-    \documentclass[12pt]{article}
-    \usepackage[letterpaper, textwidth=5in]{geometry}
-    \usepackage{amsmath, amsfonts}
-    \usepackage{xcolor}
-    \usepackage[active, tightpage]{preview}
-    \begin{document}
-    \begin{preview}
-    \color{red}
+    Args:
+        fragment (str): a string of text to be rendered with LaTeX.
+        dpi (int): controls the resolution of the image by setting
+            the dots-per-inch.  Defaults: 225.
+
+    Return:
+        tuple: `(True, imgdata)` or `(False, error_msg)` where imgdata
+            is the raw contents of a PNG file, and error_msg is
+            (currently) a string, but this could change in the future.
     """
 
-    foot = r"""
-    \end{preview}
-    \end{document}
-    """
+    head = dedent(
+        r"""
+        \documentclass[12pt]{article}
+        \usepackage[letterpaper, textwidth=5in]{geometry}
+        \usepackage{amsmath, amsfonts}
+        \usepackage{xcolor}
+        \usepackage[active, tightpage]{preview}
+        \begin{document}
+        \begin{preview}
+        \color{red}
+        %
+        """
+    ).lstrip()
+
+    foot = dedent(
+        r"""
+        %
+        \end{preview}
+        \end{document}
+        """
+    ).lstrip()
+
+    tex = head + fragment + "\n" + foot
 
     # make a temp dir to build latex in
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(os.path.join(tmpdir, "frag.tex"), "w") as fh:
-            fh.write(head)
-            fh.write(fragment)
-            fh.write(foot)
+        with open(Path(tmpdir) / "frag.tex", "w") as fh:
+            fh.write(tex)
 
         latexIt = subprocess.run(
             [
                 "latexmk",
-                "-quiet",
                 "-interaction=nonstopmode",
                 "-no-shell-escape",
+                "-pdf-",
+                "-ps-",
+                "-dvi",
                 "frag.tex",
             ],
             cwd=tmpdir,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
         )
         if latexIt.returncode != 0:
-            return False
+            errstr = "Code to compile\n"
+            errstr += "---------------\n\n"
+            errstr += tex
+            errstr += "\n\nOutput from latexmk\n"
+            errstr += "-------------------\n\n"
+            errstr += latexIt.stdout.decode()
+            return (False, errstr)
 
         convertIt = subprocess.run(
             [
                 "dvipng",
+                "--picky",
                 "-q",
                 "-D",
                 str(dpi),
@@ -73,14 +99,23 @@ def texFragmentToPNG(fragment, outName, dpi=225):
                 "frag.png",
             ],
             cwd=tmpdir,
-            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
         )
         if convertIt.returncode != 0:
-            # sys.exit(convertIt.returncode)
-            return False
+            errstr = "Code to compile\n"
+            errstr += "---------------\n\n"
+            errstr += tex
+            errstr += "\n\nOutput from latexmk\n"
+            errstr += "-------------------\n\n"
+            errstr += latexIt.stdout.decode()
+            errstr += "\n\nOutput from dvipng\n"
+            errstr += "-------------------\n\n"
+            errstr += convertIt.stdout.decode()
+            return (False, errstr)
 
-        shutil.copyfile(os.path.join(tmpdir, "frag.png"), outName)
-    return True
+        with open(Path(tmpdir) / "frag.png", "rb") as f:
+            return (True, f.read())
 
 
 def buildLaTeX(src, out):

@@ -137,14 +137,11 @@ class MarkHandler:
             aiohttp.web_fileresponse.FileResponse: A response which includes the image for
                 the latex string.
         """
-        latex_response = self.server.MlatexFragment(data["user"], data["fragment"])
-        latex_valid = latex_response[0]
-
-        if latex_valid:
-            latex_image_path = latex_response[1]
-            return web.FileResponse(latex_image_path, status=200)
+        valid, value = self.server.MlatexFragment(data["fragment"])
+        if valid:
+            return web.Response(body=value, status=200)
         else:
-            return web.Response(status=406)  # a latex error
+            return web.json_response(status=406, text=value)
 
     # @routes.patch("/MK/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])

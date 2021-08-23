@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 import sys
-from getpass import getpass
+from stdiomask import getpass
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import (

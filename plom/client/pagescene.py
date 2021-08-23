@@ -1344,9 +1344,8 @@ class PageScene(QGraphicsScene):
 
         Returns:
             (png): a file containing the Latexed text.
-
         """
-        return self.parent.latexAFragment(txt.strip())
+        return self.parent.latexAFragment(txt)
 
     def event(self, event):
         """

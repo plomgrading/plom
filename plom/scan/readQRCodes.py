@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from collections import defaultdict
-import getpass
 import json
 import os
 import shutil
 from multiprocessing import Pool
 from pathlib import Path
 
+from stdiomask import getpass
 from tqdm import tqdm
 
 from plom.tpv_utils import (
@@ -22,7 +22,7 @@ from plom.tpv_utils import (
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan import QRextract
-from plom.scan import rotateBitmap
+from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
 
 
@@ -320,19 +320,11 @@ def processBitmaps(bundle, server=None, password=None):
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        scanMessenger.requestAndSaveToken("scanner", pwd)
+        scanMessenger.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -341,11 +333,13 @@ def processBitmaps(bundle, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
-    spec = scanMessenger.get_spec()
-    scanMessenger.closeUser()
-    scanMessenger.stop()
+    try:
+        spec = scanMessenger.get_spec()
+    finally:
+        scanMessenger.closeUser()
+        scanMessenger.stop()
 
     decode_QRs_in_image_files(bundle / "pageImages")
     checkQRsValid(bundle, spec, examsScannedNow)

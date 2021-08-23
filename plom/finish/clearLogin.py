@@ -2,7 +2,7 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2021 Colin B. Macdonald
 
-from getpass import getpass
+from stdiomask import getpass
 
 from plom.messenger import Messenger
 

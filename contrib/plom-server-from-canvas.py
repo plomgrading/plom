@@ -20,6 +20,11 @@ your own risk, no warranty, etc, etc.
 3. Follow prompts.
 4. Go the directory you created and run `plom-server launch`.
 
+Notes:
+  * If number of pages precisely matches number of questions then
+    we do a 1-1 mapping onto questions.  Otherwise we push each
+    page to all questions.  This could be made more configurable.
+
 TODO:
   * needs to log instead of just discarding so much output
   * support an existing configured server in basedir: or fork
@@ -53,6 +58,7 @@ from plom.canvas import (
     interactively_get_assignment,
     interactively_get_course,
 )
+import plom.scan
 
 
 def get_short_name(long_name):
@@ -149,13 +155,12 @@ def initialize(course, assignment, marks, *, server_dir="."):
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
 
     print("Temporarily exporting manager password...")
-    user_list = []
+    pwds = {}
     with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            user_list += [row]
-    os.environ["PLOM_MANAGER_PASSWORD"] = user_list[1][1]
-    del user_list
+        for row in csv.reader(csvfile):
+            pwds[row[0]] = row[1]
+    os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
+    del pwds
 
     print("Launching plom server.")
     plom_server = PlomServer(basedir=server_dir)
@@ -301,35 +306,32 @@ def scan_submissions(num_questions, *, server_dir="."):
     """
     server_dir = Path(server_dir)
 
-    user_list = []
+    pwds = {}
     with open(server_dir / "userListRaw.csv", "r") as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            user_list += [row]
+        for row in csv.reader(csvfile):
+            pwds[row[0]] = row[1]
+    scan_pwd = pwds["scanner"]
+    del pwds
 
-    print("Temporarily exporting scanner password...")
-    os.environ["PLOM_SCAN_PASSWORD"] = user_list[2][1]
+    upload_dir = server_dir / "upload"
 
-    print("Temporarily changing working directory")
-    with working_directory(server_dir / "upload"):
+    print("Applying `plom-hwscan` to pdfs...")
+    for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
+        # get 12345678 from blah_blah.blah_blah.12345678._.
+        sid = pdf.stem.split(".")[-2]
+        assert len(sid) == 8
+        if len(fitz.open(pdf)) == num_questions:
+            # If number of pages precisely matches number of questions then
+            # do a 1-1 mapping...
+            q = [[x] for x in range(1, num_questions + 1)]
+        else:
+            # ... otherwise push each page to all questionsa.
+            q = [x for x in range(1, num_questions + 1)]
+        # TODO: capture output and put it all in a log file?  (capture_output=True?)
+        plom.scan.processHWScans("localhost", scan_pwd, pdf, sid, q, basedir=upload_dir)
 
-        print("Applying `plom-hwscan` to pdfs...")
-        for pdf in tqdm(Path("submittedHWByQ").glob("*.pdf")):
-            # get 12345678 from blah_blah.blah_blah.12345678._.
-            sid = pdf.stem.split(".")[-2]
-            assert len(sid) == 8
-            if len(fitz.open(pdf)) == num_questions:
-                # If number of pages precisely matches number of questions then
-                # do a 1-1 mapping...
-                qstr = ",".join(f"[{x}]" for x in range(1, num_questions + 1))
-            else:
-                # ... otherwise push each page to all questionsa.
-                qstr = ",".join(f"{x}" for x in range(1, num_questions + 1))
-            # TODO: capture output and put it all in a log file?  (capture_output=True?)
-            subprocess.check_call(["plom-hwscan", "process", pdf, sid, "-q", qstr])
-
-        # Clean up any missing submissions
-        subprocess.check_call(["plom-hwscan", "missing"])
+    # Clean up any missing submissions
+    plom.scan.processMissing("localhost", scan_pwd, yes_flag=True)
 
 
 parser = argparse.ArgumentParser(

@@ -90,7 +90,7 @@ class PlomDemoServer(PlomServer):
             ...
         """
         if not tmpdir:
-            tmpdir = Path(tempfile.mkdtemp(prefix="plomdemo_", dir=os.getcwd()))
+            tmpdir = Path(tempfile.mkdtemp(prefix="plomdemo_", dir=Path.cwd()))
         tmpdir = Path(tmpdir)
         if any(tmpdir.iterdir()):
             warn("Demo's target directory not empty: likely trouble ahead!")

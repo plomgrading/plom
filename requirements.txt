@@ -33,7 +33,8 @@ requests==2.26.0
 requests-toolbelt==0.9.1
 scikit-learn==0.24.2
 segno==1.3.3
+stdiomask==0.0.6
 toml==0.10.2
-tqdm==4.62.0
+tqdm==4.62.1
 urllib3==1.26.6
 weasyprint==52.5

@@ -4,12 +4,13 @@
 
 from collections import defaultdict
 from glob import glob
-import getpass
 import hashlib
 import json
 import os
 import shutil
 from pathlib import Path
+
+from stdiomask import getpass
 
 from plom.messenger import ScanMessenger
 from plom.misc_utils import working_directory
@@ -99,7 +100,7 @@ def fileFailedUpload(reason, message, bundle, f):
         shutil.move(f, to / f.name)
         shutil.move(Path(str(f) + ".qr"), to / f"{f.name}.qr")
         # write stuff into a file: [collidingFile, test, page, version]
-        with open(to / f"{f.name}.collide", "w+") as fh:
+        with open(to / f"{f.name}.collide", "w") as fh:
             json.dump(message, fh)
     else:  # now bad errors
         print("Image upload failed for *bad* reason - this should not happen.")
@@ -251,18 +252,11 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -271,28 +265,27 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear" or "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
     if not bundleDir.is_dir():
         raise ValueError("should've been a directory!")
 
-    files = []
-    # Look for pages in decodedPages
-    for ext in PlomImageExts:
-        files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
-    TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
-    # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
+    try:
+        files = []
+        # Look for pages in decodedPages
+        for ext in PlomImageExts:
+            files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
+        TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
+        # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
 
-    updates = msgr.triggerUpdateAfterTUpload()
-
-    # close down messenger
-    msgr.closeUser()
-    msgr.stop()
-
+        updates = msgr.triggerUpdateAfterTUpload()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return [TUP, updates]
 
 
-def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
+def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, password=None):
     """Upload "homework" pages to a particular student ID on the server.
 
     args:
@@ -313,7 +306,7 @@ def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
     msgr.start()
 
     if not password:
-        password = getpass.getpass("Please enter the 'scanner' password: ")
+        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", password)
@@ -331,16 +324,14 @@ def upload_HW_pages(file_list, bundle_name, sid, server=None, password=None):
         SIDQ = defaultdict(list)
         for n, f, q in file_list:
             md5 = hashlib.md5(open(f, "rb").read()).hexdigest()
-            # TODO: n == bundle_order always?  Issue #1603.
             rmsg = msgr.uploadHWPage(sid, q, n, f, md5, bundle_name, n)
             if not rmsg[0]:
                 raise RuntimeError(
                     f"Unsuccessful HW upload, server returned:\n{rmsg[1:]}"
                 )
             SIDQ[sid].append(q)
-            # TODO: this feels out of place?
-            bundle_dir = Path("bundles") / "submittedHWByQ" / bundle_name
-            move_files_post_upload(bundle_dir, f, qr=False)
+            # TODO: this feels out a bit out of place?
+            move_files_post_upload(bundledir, f, qr=False)
 
         updates = msgr.triggerUpdateAfterHWUpload()
     finally:
@@ -366,18 +357,11 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -386,7 +370,7 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-hwscan clear"'
         )
-        exit(10)
+        raise
 
     file_list = []
     # files are sitting in "bundles/submittedLoose/<bundle_name>"
@@ -426,18 +410,11 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -446,7 +423,7 @@ def checkTestHasThatSID(student_id, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     # get test_number from SID.
     # response is [true, test_number] or [false, reason]
@@ -461,50 +438,18 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         return None
 
 
-def bundle_name_from_filename(filename):
-    """Return the bundle name for a file.
+def does_bundle_exist_on_server(bundle_name, md5sum, server=None, password=None):
+    """Check if bundle exists by name and/or md5sum.
 
     Args:
-        filename (str, Path): name of file, typically a PDF file.
-
-    Returns
-        str: Currently bundle name is the stem of the file name with
-            some input sanitizing such as spaces replaced with underscores.
-    """
-    filename = Path(filename)
-    return filename.stem.replace(" ", "_")
-
-
-def bundle_name_and_md5(filename):
-    """Return the bundle name and md5sum checksum for a file.
-
-    Args:
-        filename (str, Path): name of file.
-
-    Returns
-        tuple: (str, str) for bundle_name and md5sum.
-
-    Exceptions:
-        FileNotFoundError: file does not exist.
-    """
-    filename = Path(filename)
-    if not filename.is_file():
-        raise FileNotFoundError("not found or not a file/symlink")
-    bundle_name = bundle_name_from_filename(filename)
-    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
-    return (bundle_name, md5)
-
-
-def doesBundleExist(bundle_file, server=None, password=None):
-    """Check if bundle exists and is so does its md5sum match a given file.
-
-    Args:
-        bundle_file (str, Path): needs to be the actual file not the
-            bundle name because we need to compute the md5sum.
+        bundle_name (str): not the file, just the bundle name (often but
+            not always the filename).
+        md5sum (str): the md5sum of the bundle
 
     Returns:
-        list: the pair `[True, bundle_name]` where `bundle_name` is a
-            `str` or `[False, reason]` where `reason` is a `str`.
+        list: `[False, None]` if it does not exist in any way.  Otherwise
+            the pair `[True, reason]` where `reason` is "name", "md5sum",
+            or "both".
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -513,15 +458,11 @@ def doesBundleExist(bundle_file, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
-    # get started
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -530,14 +471,13 @@ def doesBundleExist(bundle_file, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
-    bundle_name, md5 = bundle_name_and_md5(bundle_file)
-    bundle_success = msgr.doesBundleExist(bundle_name, md5)
-
-    msgr.closeUser()
-    msgr.stop()
-
+    try:
+        bundle_success = msgr.doesBundleExist(bundle_name, md5sum)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return bundle_success
 
 
@@ -563,13 +503,11 @@ def createNewBundle(bundle_name, md5, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password: ")
-    else:
-        pwd = password
+    if not password:
+        password = getpass("Please enter the 'scanner' password: ")
 
     try:
-        msgr.requestAndSaveToken("scanner", pwd)
+        msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -578,7 +516,7 @@ def createNewBundle(bundle_name, md5, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     try:
         bundle_success = msgr.createNewBundle(bundle_name, md5)

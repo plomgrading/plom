@@ -5,7 +5,6 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
-import hashlib
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,93 +13,14 @@ import math
 import tempfile
 from warnings import warn
 
-import toml
 from tqdm import tqdm
 import fitz
 from PIL import Image
 
 from plom import PlomImageExts
 from plom import ScenePixelHeight
-from plom.scan import normalizeJPEGOrientation
-
-
-# TODO: make some common util file to store all these names?
-archivedir = Path("archivedPDFs")
-
-
-def _archiveBundle(file_name, this_archive_dir):
-    """Archive the bundle pdf.
-
-    The bundle.pdf is moved into the appropriate archive directory
-    as given by this_archive_dir. The archive.toml file is updated
-    with the name and md5sum of that bundle.pdf.
-    """
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    shutil.move(file_name, this_archive_dir / Path(file_name).name)
-    try:
-        arch = toml.load(archivedir / "archive.toml")
-    except FileNotFoundError:
-        arch = {}
-    arch[md5] = str(file_name)
-    # now save it
-    with open(archivedir / "archive.toml", "w+") as fh:
-        toml.dump(arch, fh)
-
-
-def archiveHWBundle(file_name):
-    """Archive a hw-pages bundle pdf"""
-    print("Archiving homework bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir / "submittedHWByQ")
-
-
-def archiveLBundle(file_name):
-    """Archive a loose-pages bundle pdf"""
-    print("Archiving loose-page bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir / "submittedLoose")
-
-
-def archiveTBundle(file_name):
-    """Archive a test-pages bundle pdf"""
-    print("Archiving test-page bundle {}".format(file_name))
-    _archiveBundle(file_name, archivedir)
-
-
-def _md5sum_in_archive(filename):
-    """Check for a file in the list of archived PDF files.
-
-    Args:
-        filename (str): the basename (not path) of a file to search for
-            in the archive of PDF files that have been processed.
-
-    Returns:
-        None/str: None if not found, else the md5sum.
-
-    Note: Current unused?
-    """
-    try:
-        archive = toml.load(archivedir / "archive.toml")
-    except FileNotFoundError:
-        return ""
-    for md5, name in archive.items():
-        if filename == name:
-            # if not unique too bad you get 1st one
-            return md5
-
-
-def isInArchive(file_name):
-    """
-    Check given file by md5sum against archived bundles.
-
-    Returns:
-        None/str: None if not found, otherwise filename of archived file
-            with the same md5sum.
-    """
-    try:
-        archive = toml.load(archivedir / "archive.toml")
-    except FileNotFoundError:
-        return None
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
-    return archive.get(md5, None)
+from plom.scan.rotate import normalizeJPEGOrientation
+from plom.scan.bundle_utils import make_bundle_dir
 
 
 def processFileToBitmaps(file_name, dest, do_not_extract=False):
@@ -354,23 +274,6 @@ def gamma_adjust(fn):
     )
 
 
-def makeBundleDirectories(fname, bundle_dir):
-    """Each bundle needs its own subdirectories: make pageImages, scanPNGs, etc.
-
-    Args:
-        fname (str, Path): the name of a pdf-file, zip-file or whatever
-            from which we create the bundle name.
-        bundle_dir (Path): A directory to contain the various
-            extracted files, QR codes, uploaded stuff etc.
-
-    Returns:
-        None
-    """
-    # TODO: consider refactor viz scripts/scan and scripts/hwscan which has similar
-    for x in ("pageImages", "scanPNGs", "decodedPages", "unknownPages"):
-        (bundle_dir / x).mkdir(exist_ok=True)
-
-
 def postProcessing(thedir, dest, skip_gamma=False):
     """Do post processing on a directory of scanned bitmaps.
 
@@ -434,17 +337,7 @@ def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=Fals
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
     """
-    # TODO: potential confusion local archive versus on server: in theory
-    # annot get to local archive unless its uploaded, but what about unknowns, etc?
-
-    # check if fname is in local archive (by checking md5sum)
-    prevname = isInArchive(pdf_fname)
-    if prevname:
-        warn(
-            f"{pdf_fname} is in the PDF archive: same md5sum as previous {prevname}; will not process."
-        )
-        return
-    makeBundleDirectories(pdf_fname, bundle_dir)
+    make_bundle_dir(bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
     files = processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
