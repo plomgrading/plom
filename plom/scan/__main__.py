@@ -80,7 +80,9 @@ def parse_the_user_args():
         epilog="\n".join(__doc__.split("\n")[1:]),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     sub = parser.add_subparsers(dest="command")
 
     spP = sub.add_parser(
