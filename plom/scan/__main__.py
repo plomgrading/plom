@@ -57,18 +57,7 @@ from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages
 
 
-def main(args):
-    if not hasattr(args, "server") or not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
-    if not hasattr(args, "password") or not args.password:
-        try:
-            args.password = os.environ["PLOM_SCAN_PASSWORD"]
-        except KeyError:
-            pass
-
+def frontend(args):
     if args.command == "process":
         processScans(
             args.server, args.password, args.scanPDF, args.gamma, args.extractbmp
@@ -186,13 +175,26 @@ def parse_the_user_args():
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
         x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_SCAN_PASSWORD"]
+        except KeyError:
+            pass
+
+    return args
 
 
-def doit():
+def main():
     args = parse_the_user_args()
-    main(args)
+    frontend(args)
 
 
 if __name__ == "__main__":
-    doit()
+    main()

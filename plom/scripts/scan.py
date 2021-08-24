@@ -16,4 +16,4 @@ if __name__ == "__main__":
         "Please use `plom-scan` or `python3 -m plom.scan` directly",
         category=DeprecationWarning,
     )
-    plom.scan.__main__.doit()
+    plom.scan.__main__.main()
