@@ -57,110 +57,7 @@ from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages
 
 
-parser = argparse.ArgumentParser(
-    description=__doc__.split("\n")[0],
-    epilog="\n".join(__doc__.split("\n")[1:]),
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-sub = parser.add_subparsers(dest="command")
-
-spP = sub.add_parser(
-    "process",
-    help="Process scanned PDF to images and read QRs",
-    description="Process one scanned PDF into page images, read QR codes and check info with server (e.g., versions match).",
-)
-spU = sub.add_parser(
-    "upload",
-    help="Upload page images to scanner",
-    description="Upload page images to scanner.",
-)
-spS = sub.add_parser(
-    "status",
-    help="Get scanning status report from server",
-    description="Get scanning status report from server.",
-)
-spC = sub.add_parser(
-    "clear",
-    help='Clear "scanner" login',
-    description='Clear "scanner" login after a crash or other expected event.',
-)
-# TODO: maybe in the future?
-# spA = sub.add_parser(
-#     "all",
-#     help="Process, read and upload page images to scanner (WIP!)",
-#     description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
-# )
-# spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
-spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
-g = spP.add_mutually_exclusive_group(required=False)
-g.add_argument(
-    "--gamma-shift",
-    action="store_true",
-    dest="gamma",
-    help="""
-        Apply white balancing to the scan, if the image format is
-        lossless (PNG).
-        By default, this gamma shift is NOT applied; this is because it
-        may worsen some poor-quality scans with large shadow regions.
-    """,
-)
-g.add_argument(
-    "--no-gamma-shift",
-    action="store_false",
-    dest="gamma",
-    help="Do not apply white balancing.",
-)
-g = spP.add_mutually_exclusive_group(required=False)
-g.add_argument(
-    "--extract-bitmaps",
-    action="store_true",
-    dest="extractbmp",
-    help="""
-        If a PDF page seems to contain exactly one bitmap image and
-        nothing else, then extract that losslessly instead of rendering
-        the page as a new PNG file.  This will typically give nicer
-        images for the common scan case where pages are simply JPEG
-        images.  But some care must be taken that the image is not
-        annotated in any way and that no other markings appear on the
-        page.
-        As the algorithm to decide this is NOT YET IDEAL, this is
-        currently OFF BY DEFAULT, but we anticipate it being the default
-        in a future version.
-    """,
-)
-g.add_argument(
-    "--no-extract-bitmaps",
-    action="store_false",
-    dest="extractbmp",
-    help="""
-        Don't try to extract bitmaps; just render each page.  This is
-        safer but not always ideal for image quality.
-    """,
-)
-
-spU.add_argument("bundleName", help="Usually the name of the PDF file.")
-spU.add_argument(
-    "-u",
-    "--unknowns",
-    action="store_true",
-    help='Upload "unknowns", pages from which the QR-codes could not be read.',
-)
-spU.add_argument(
-    "-c",
-    "--collisions",
-    action="store_true",
-    help='Upload "collisions", pages which appear to already be on the server. '
-    + "You should not need this option except under exceptional circumstances.",
-)
-for x in (spU, spS, spC, spP):
-    x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
-
-
-def main():
-    args = parser.parse_args()
-
+def main(args):
     if not hasattr(args, "server") or not args.server:
         try:
             args.server = os.environ["PLOM_SERVER"]
@@ -188,5 +85,114 @@ def main():
         parser.print_help()
 
 
+def parse_the_user_args():
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    sub = parser.add_subparsers(dest="command")
+
+    spP = sub.add_parser(
+        "process",
+        help="Process scanned PDF to images and read QRs",
+        description="Process one scanned PDF into page images, read QR codes and check info with server (e.g., versions match).",
+    )
+    spU = sub.add_parser(
+        "upload",
+        help="Upload page images to scanner",
+        description="Upload page images to scanner.",
+    )
+    spS = sub.add_parser(
+        "status",
+        help="Get scanning status report from server",
+        description="Get scanning status report from server.",
+    )
+    spC = sub.add_parser(
+        "clear",
+        help='Clear "scanner" login',
+        description='Clear "scanner" login after a crash or other expected event.',
+    )
+    # TODO: maybe in the future?
+    # spA = sub.add_parser(
+    #     "all",
+    #     help="Process, read and upload page images to scanner (WIP!)",
+    #     description="Process, read and upload page images to scanner. CAUTION: Work in Progress!",
+    # )
+    # spA.add_argument("scanPDF", nargs="+", help="The PDF(s) containing scanned pages.")
+    spP.add_argument("scanPDF", help="The PDF file of scanned pages.")
+    g = spP.add_mutually_exclusive_group(required=False)
+    g.add_argument(
+        "--gamma-shift",
+        action="store_true",
+        dest="gamma",
+        help="""
+            Apply white balancing to the scan, if the image format is
+            lossless (PNG).
+            By default, this gamma shift is NOT applied; this is because it
+            may worsen some poor-quality scans with large shadow regions.
+        """,
+    )
+    g.add_argument(
+        "--no-gamma-shift",
+        action="store_false",
+        dest="gamma",
+        help="Do not apply white balancing.",
+    )
+    g = spP.add_mutually_exclusive_group(required=False)
+    g.add_argument(
+        "--extract-bitmaps",
+        action="store_true",
+        dest="extractbmp",
+        help="""
+            If a PDF page seems to contain exactly one bitmap image and
+            nothing else, then extract that losslessly instead of rendering
+            the page as a new PNG file.  This will typically give nicer
+            images for the common scan case where pages are simply JPEG
+            images.  But some care must be taken that the image is not
+            annotated in any way and that no other markings appear on the
+            page.
+            As the algorithm to decide this is NOT YET IDEAL, this is
+            currently OFF BY DEFAULT, but we anticipate it being the default
+            in a future version.
+        """,
+    )
+    g.add_argument(
+        "--no-extract-bitmaps",
+        action="store_false",
+        dest="extractbmp",
+        help="""
+            Don't try to extract bitmaps; just render each page.  This is
+            safer but not always ideal for image quality.
+        """,
+    )
+
+    spU.add_argument("bundleName", help="Usually the name of the PDF file.")
+    spU.add_argument(
+        "-u",
+        "--unknowns",
+        action="store_true",
+        help='Upload "unknowns", pages from which the QR-codes could not be read.',
+    )
+    spU.add_argument(
+        "-c",
+        "--collisions",
+        action="store_true",
+        help='Upload "collisions", pages which appear to already be on the server. '
+        + "You should not need this option except under exceptional circumstances.",
+    )
+    for x in (spU, spS, spC, spP):
+        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+        x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
+
+    return parser.parse_args()
+
+
+def doit():
+    args = parse_the_user_args()
+    main(args)
+
+
 if __name__ == "__main__":
-    main()
+    doit()

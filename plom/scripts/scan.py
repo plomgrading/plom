@@ -11,13 +11,9 @@ import plom.scan
 import plom.scan.__main__
 
 
-def main():
+if __name__ == "__main__":
     warn(
         "Please use `plom-scan` or `python3 -m plom.scan` directly",
         category=DeprecationWarning,
     )
-    plom.scan.__main__.main()
-
-
-if __name__ == "__main__":
-    main()
+    plom.scan.__main__.doit()
