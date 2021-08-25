@@ -15,7 +15,6 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-from stdiomask import getpass
 import json
 import os
 from pathlib import Path
@@ -24,6 +23,7 @@ import sys
 import tempfile
 import time
 
+from stdiomask import getpass
 from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QPainterPath, QPen
 from PyQt5.QtWidgets import QApplication, QWidget
@@ -33,7 +33,21 @@ from plom.client.pageview import PageView
 from plom.client.pagescene import PageScene
 from plom import AnnFontSizePts
 
-from plom.client.tools import *
+from plom.client.tools import (
+    CommandTick,
+    CommandCross,
+    CommandQMark,
+    CommandBox,
+    CommandEllipse,
+    CommandArrow,
+    CommandLine,
+    CommandArrowDouble,
+    CommandPen,
+    CommandHighlight,
+    CommandPenArrow,
+    CommandGroupDeltaText,
+    CommandText,
+)
 
 from plom.messenger import Messenger
 
@@ -171,7 +185,6 @@ class SceneParent(QWidget):
         )
 
     def doneAnnotating(self):
-        plomFile = self.saveName[:-3] + "plom"
         self.scene.save()
         # Pickle the scene as a plom-file
         self.pickleIt()
@@ -198,7 +211,7 @@ def annotatePaper(question, maxMark, task, src_img_data, aname, tags):
     return annot.doneAnnotating()
 
 
-def startMarking(question, version):
+def do_random_marking_backend(question, version, *, messenger):
     maxMark = messenger.MgetMaxMark(question, version)
 
     while True:
@@ -244,7 +257,7 @@ def startMarking(question, version):
             )
 
 
-def buildRubrics(question):
+def build_random_rubrics(question, *, messenger):
     for (d, t) in positiveComments:
         com = {
             "delta": d,
@@ -275,6 +288,55 @@ def buildRubrics(question):
             negativeRubrics[question] = [com]
 
 
+def do_rando_marking(server, password, user):
+    """Randomly annotate the papers, assigning RANDOM grades: only for testing please."""
+    global Qapp
+
+    if server and ":" in server:
+        s, p = server.split(":")
+        messenger = Messenger(s, port=p)
+    else:
+        messenger = Messenger(server)
+    messenger.start()
+
+    # If user not specified then default to scanner
+    if not user:
+        user = "scanner"
+
+    if not password:
+        password = getpass(f"Please enter the '{user}' password: ")
+
+    try:
+        messenger.requestAndSaveToken(user, password)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            "This script has automatically force-logout'd that user."
+        )
+        messenger.clearAuthorisation(user, password)
+        exit(1)
+
+    try:
+        spec = messenger.get_spec()
+
+        # Headless QT: https://stackoverflow.com/a/35355906
+        L = sys.argv
+        L.extend(["-platform", "offscreen"])
+        Qapp = QApplication(L)
+
+        for q in range(1, spec["numberOfQuestions"] + 1):
+            build_random_rubrics(q, messenger=messenger)
+            for v in range(1, spec["numberOfVersions"] + 1):
+                print("Annotating question {} version {}".format(q, v))
+                do_random_marking_backend(q, v, messenger=messenger)
+    finally:
+        messenger.closeUser()
+        messenger.stop()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Perform marking tasks randomly, generally for testing."
@@ -289,56 +351,5 @@ if __name__ == "__main__":
         action="store",
         help="Which server to contact.",
     )
-    global messenger
-    global Qapp
     args = parser.parse_args()
-    if args.server and ":" in args.server:
-        s, p = args.server.split(":")
-        messenger = Messenger(s, port=p)
-    else:
-        messenger = Messenger(args.server)
-    messenger.start()
-
-    # If user not specified then default to scanner
-    if args.user is None:
-        user = "scanner"
-    else:
-        user = args.user
-
-    # get the password if not specified
-    if args.password is None:
-        pwd = getpass(f"Please enter the '{user}' password:")
-    else:
-        pwd = args.password
-
-    # get started
-    try:
-        messenger.requestAndSaveToken(user, pwd)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            "This script has automatically force-logout'd that user."
-        )
-        messenger.clearAuthorisation(user, pwd)
-        exit(1)
-
-    spec = messenger.get_spec()
-
-    # Headless QT: https://stackoverflow.com/a/35355906
-    L = sys.argv
-    L.extend(["-platform", "offscreen"])
-    Qapp = QApplication(L)
-
-    for q in range(1, spec["numberOfQuestions"] + 1):
-        buildRubrics(q)
-        for v in range(1, spec["numberOfVersions"] + 1):
-            print("Annotating question {} version {}".format(q, v))
-            startMarking(q, v)
-
-    messenger.closeUser()
-    messenger.stop()
-
-    exit(0)
+    do_rando_marking(args.server, args.password, args.user)
