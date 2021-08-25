@@ -299,9 +299,6 @@ def do_rando_marking(server, password, user):
         messenger = Messenger(server)
     messenger.start()
 
-    if not password:
-        password = getpass(f"Please enter the '{user}' password: ")
-
     try:
         messenger.requestAndSaveToken(user, password)
     except PlomExistingLoginException:
@@ -364,5 +361,8 @@ if __name__ == "__main__":
             args.password = os.environ["PLOM_SCAN_PASSWORD"]
         except KeyError:
             pass
+
+    if not args.password:
+        args.password = getpass(f"Please enter the '{args.user}' password: ")
 
     sys.exit(do_rando_marking(args.server, args.password, args.user))
