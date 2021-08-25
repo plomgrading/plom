@@ -37,14 +37,7 @@ class Test:
         assert self.demo.process_is_running()
 
     def test_random_IDing(self):
-        subprocess.check_call(
-            split(
-                f"python3 -m plom.client.randoIDer "
-                f"-s localhost:{self.demo.port} "
-                f"-u {self.env['PLOM_USER']} -w {self.env['PLOM_PASSWORD']}"
-            ),
-            env=self.env,
-        )
+        subprocess.check_call(split(f"python3 -m plom.client.randoIDer"), env=self.env)
 
     def test_get_rubrics_default_extension_is_toml(self, tmpdir):
         f = Path(tmpdir) / "foo"
@@ -78,12 +71,7 @@ class Test:
 
     def test_random_grading(self):
         subprocess.check_call(
-            split(
-                f"python3 -m plom.client.randoMarker "
-                f"-s localhost:{self.demo.port} "
-                f"-u {self.env['PLOM_USER']} -w {self.env['PLOM_PASSWORD']}"
-            ),
-            env=self.env,
+            split(f"python3 -m plom.client.randoMarker"), env=self.env
         )
 
     def test_scan_finish_after(self):

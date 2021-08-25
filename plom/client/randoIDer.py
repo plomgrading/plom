@@ -10,7 +10,9 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+import os
 import random
+import sys
 
 from stdiomask import getpass
 
@@ -56,10 +58,6 @@ def do_rando_identifying(server, password, user):
         messenger = Messenger(server)
     messenger.start()
 
-    # If user not specified then default to scanner
-    if not user:
-        user = "scanner"
-
     if not password:
         password = getpass(f"Please enter the '{user}' password: ")
 
@@ -74,13 +72,14 @@ def do_rando_identifying(server, password, user):
             "This script has automatically force-logout'd that user."
         )
         messenger.clearAuthorisation(user, password)
-        exit(1)
+        return 1
 
     try:
         do_rando_identifying_backend(messenger)
     finally:
         messenger.closeUser()
         messenger.stop()
+    return 0
 
 
 if __name__ == "__main__":
@@ -88,8 +87,8 @@ if __name__ == "__main__":
         description="Perform identifier tasks randomly, generally for testing."
     )
 
-    parser.add_argument("-w", "--password", type=str)
-    parser.add_argument("-u", "--user", type=str)
+    parser.add_argument("-w", "--password")
+    parser.add_argument("-u", "--user", help='Override default of "scanner"')
     parser.add_argument(
         "-s",
         "--server",
@@ -98,4 +97,20 @@ if __name__ == "__main__":
         help="Which server to contact.",
     )
     args = parser.parse_args()
-    do_rando_identifying(args.server, args.password, args.user)
+
+    if not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+
+    if not args.user:
+        args.user = "scanner"
+
+    if args.user == "scanner" and not args.password:
+        try:
+            args.password = os.environ["PLOM_SCAN_PASSWORD"]
+        except KeyError:
+            pass
+
+    sys.exit(do_rando_identifying(args.server, args.password, args.user))
