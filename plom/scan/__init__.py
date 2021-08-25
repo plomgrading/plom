@@ -22,3 +22,6 @@ from .clearScannerLogin import clear_login
 from .frontend_scan import processScans, uploadImages
 from .frontend_hwscan import processHWScans, processLooseScans, processMissing
 from .frontend_hwscan import processAllHWByQ
+
+# what you get from "from plom.scan import *"
+__all__ = ["processScans", "uploadImages", "processHWScans", "processMissing"]
