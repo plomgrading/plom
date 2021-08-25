@@ -288,8 +288,17 @@ def build_random_rubrics(question, *, messenger):
             negativeRubrics[question] = [com]
 
 
-def do_rando_marking(server, password, user):
-    """Randomly annotate the papers, assigning RANDOM grades: only for testing please."""
+def do_rando_marking(server, user, password):
+    """Randomly annotate the papers assigning RANDOM grades: only for testing please.
+
+    args:
+        server (str)
+        user (str)
+        password (str)
+
+    returns:
+        int: 0 on success, non-zero on error/unexpected.
+    """
     global Qapp
 
     if server and ":" in server:
@@ -365,4 +374,4 @@ if __name__ == "__main__":
     if not args.password:
         args.password = getpass(f"Please enter the '{args.user}' password: ")
 
-    sys.exit(do_rando_marking(args.server, args.password, args.user))
+    sys.exit(do_rando_marking(args.server, args.user, args.password))

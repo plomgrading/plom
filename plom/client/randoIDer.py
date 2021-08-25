@@ -49,8 +49,17 @@ def do_rando_identifying_backend(messenger):
                 print("SID/SN {}/{} already used".format(sid, sname))
 
 
-def do_rando_identifying(server, password, user):
-    """Randomly associate papers with students: only for testing please."""
+def do_rando_identifying(server, user, password):
+    """Randomly associate papers with students: only for testing please.
+
+    args:
+        server (str)
+        user (str)
+        password (str)
+
+    returns:
+        int: 0 on success, non-zero on error/unexpected.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         messenger = Messenger(s, port=p)
@@ -113,4 +122,4 @@ if __name__ == "__main__":
     if not args.password:
         args.password = getpass(f"Please enter the '{args.user}' password: ")
 
-    sys.exit(do_rando_identifying(args.server, args.password, args.user))
+    sys.exit(do_rando_identifying(args.server, args.user, args.password))
