@@ -103,6 +103,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
             stdout=subprocess.PIPE,
         )
 
+        # See https://trac.sagemath.org/ticket/6022
         # See https://www.ghostscript.com/doc/9.54.0/Use.htm
         convertIt2 = subprocess.run(
             [
