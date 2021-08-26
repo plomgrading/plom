@@ -11,11 +11,9 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-from datetime import datetime
 import signal
 import os
 import sys
-import traceback as tblib
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
@@ -23,33 +21,7 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from plom.manager.manager import Manager
 from plom import Default_Port
 from plom import __version__
-from plom.client.useful_classes import ErrorMessage
-
-
-# Pop up a dialog for unhandled exceptions and then exit
-sys._excepthook = sys.excepthook
-
-
-def _exception_hook(exctype, value, traceback):
-    lines = tblib.format_exception(exctype, value, traceback)
-    if len(lines) >= 10:
-        abbrev = "".join(["\N{Vertical Ellipsis}\n", *lines[-8:]])
-    else:
-        abbrev = "".join(lines)
-    lines.insert(0, f"Timestamp: {datetime.now()}\n\n")
-    ErrorMessage(
-        """<p><b>Something unexpected has happened!</b>
-        A partial error message is shown below.</p>
-        <p>(You could consider filing an issue; if you do, please copy-paste
-        the entire text under &ldquo;Show Details&rdquo;.)</p>""",
-        info=abbrev,
-        details="".join(lines),
-    ).exec_()
-    sys._excepthook(exctype, value, traceback)
-    sys.exit(1)
-
-
-sys.excepthook = _exception_hook
+from plom.scripts.client import exceptionally_exceptional_exception_inserter
 
 
 # in order to have a graceful exit on control-c
@@ -100,6 +72,7 @@ def main():
     app.setStyle(QStyleFactory.create("Fusion"))
 
     signal.signal(signal.SIGINT, sigint_handler)
+    exceptionally_exceptional_exception_inserter()
 
     # create a small timer here, so that we can
     # kill the app with ctrl-c.
