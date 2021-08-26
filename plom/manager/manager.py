@@ -55,7 +55,7 @@ class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
     def __init__(self, name=None, extant=[]):
-        super(UserDialog, self).__init__()
+        super().__init__()
         self.name = name
         self.initUI()
         if name is not None:
@@ -144,7 +144,7 @@ class UserDialog(QDialog):
 
 class QVHistogram(QDialog):
     def __init__(self, q, v, hist):
-        super(QVHistogram, self).__init__()
+        super().__init__()
         self.question = q
         self.version = v
         self.setWindowTitle("Histograms")
@@ -214,7 +214,7 @@ class QVHistogram(QDialog):
 
 class TestStatus(QDialog):
     def __init__(self, nq, status):
-        super(TestStatus, self).__init__()
+        super().__init__()
         self.status = status
         self.setWindowTitle("Status of test {}".format(self.status["number"]))
 
@@ -266,7 +266,7 @@ class TestStatus(QDialog):
 
 class ProgressBox(QGroupBox):
     def __init__(self, parent, qu, v, stats):
-        super(ProgressBox, self).__init__()
+        super().__init__()
         self.parent = parent
         self.question = qu
         self.version = v
@@ -332,7 +332,7 @@ class ProgressBox(QGroupBox):
 class Manager(QWidget):
     def __init__(self, parent):
         self.APIVersion = Plom_API_Version
-        super(Manager, self).__init__()
+        super().__init__()
         self.parent = parent
         global managerMessenger
         managerMessenger = None
