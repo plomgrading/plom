@@ -126,6 +126,7 @@ class TextItem(QGraphicsTextItem):
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
         if text.casefold().startswith("tex:"):
+            # TODO: Issue #1624: this is causing two API rendering calls
             # self.textToPng()
             # instead, hide latency of API call: meanwhile source text displayed
             # Issue #1391: unfortunately causes a race, at least in randomarker
