@@ -206,7 +206,7 @@ class TextItem(QGraphicsTextItem):
         c = self.defaultTextColor().getRgb()
 
         assert len(c) == 4
-        if c != (255, 0, 0, 0):
+        if c != (255, 0, 0, 255):
             # Careful: red is default, using this would cause a cache miss
             # TODO: maybe its nicer to pass the colour to latexAFragment?
             texIt = (
