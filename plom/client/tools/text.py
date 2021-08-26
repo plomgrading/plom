@@ -216,7 +216,9 @@ class TextItem(QGraphicsTextItem):
                 + "\\color{annot}\n"
                 + texIt
             )
-        fragfilename = self.parent.latexAFragment(texIt, quiet=False)
+        fragfilename = self.parent.latexAFragment(
+            texIt, quiet=False, cache_invalid_tryagain=True
+        )
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")

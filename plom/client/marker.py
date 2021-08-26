@@ -2330,7 +2330,9 @@ class MarkerClient(QWidget):
                 pd.setValue(c)
         pd.close()
 
-    def latexAFragment(self, txt, *, quiet=False):
+    def latexAFragment(
+        self, txt, *, quiet=False, cache_invalid=True, cache_invalid_tryagain=False
+    ):
         """
         Run LaTeX on a fragment of text and return the file name of a png.
 
@@ -2341,6 +2343,15 @@ class MarkerClient(QWidget):
 
         Keyword Args:
             quiet (bool): if True, don't popup dialogs on errors.
+                Caution: this can result in a lot of API calls because
+                users can keep requesting the same (bad) TeX from the
+                server, e.g., by having bad TeX in a rubric.
+            cache_invalid (bool): whether to cache invalid TeX.  Useful
+                to prevent repeated calls to render bad TeX but might
+                prevent users from seeing (again) an error dialog that
+            try_again_if_cache_invalid (bool): if True then when we get
+                a cache hit of `None` (corresponding to bad TeX) then we
+                try to to render again.
 
         Returns:
             (pathlib.Path/str/None): a path and filename to a `.png` of
@@ -2350,10 +2361,22 @@ class MarkerClient(QWidget):
         """
         txt = txt.strip()
         # If we already latex'd this text, return the cached image
-        r = self.commentCache.get(txt, None)
+        try:
+            r = self.commentCache[txt]
+        except KeyError:
+            # logic is convoluted: this is cache-miss...
+            r = None
+        else:
+            # ..and this is cache-hit of None
+            if r is None and not cache_invalid_tryagain:
+                log.debug(
+                    "tex: cache hit None, tryagain NOT set: %s",
+                    shorten(txt, 60, placeholder="..."),
+                )
+                return None
         if r:
             return r
-        log.debug("request image for latex: %s", shorten(txt, 80, placeholder="..."))
+        log.debug("tex: request image for: %s", shorten(txt, 80, placeholder="..."))
         r, fragment = self.msgr.MlatexFragment(txt)
         if not r:
             if not quiet:
@@ -2377,6 +2400,8 @@ class MarkerClient(QWidget):
                         "<p>The server reported an error processing your TeX fragment.</p>",
                         details=fragment,
                     ).exec_()
+            if cache_invalid:
+                self.commentCache[txt] = None
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
