@@ -68,7 +68,7 @@ def texFragmentToPNG(fragment, *, dpi=225):
                 "-interaction=nonstopmode",
                 "-no-shell-escape",
                 "-pdf-",
-                "-ps",
+                "-ps-",
                 "-dvi",
                 "frag.tex",
             ],
@@ -103,23 +103,29 @@ def texFragmentToPNG(fragment, *, dpi=225):
             stdout=subprocess.PIPE,
         )
 
-        # See https://trac.sagemath.org/ticket/6022
-        # See https://www.ghostscript.com/doc/9.54.0/Use.htm
-        convertIt2 = subprocess.run(
-            [
-                "gs",
-                "-dSAFER",  # Give gs permission to modify filesystem
-                "-dBATCH",
-                "-dNOPAUSE",  # Skip prompting of user
-                "-sDEVICE=pngalpha",
-                f"-r{dpi}",
-                "-sOutputFile=frag.png",
-                "frag.ps",
-            ],
-            cwd=tmpdir,
-            stderr=subprocess.STDOUT,
-            stdout=subprocess.PIPE,
-        )
+        # dvipng will fail with e.g., pstricks: workaround is ps then use gs/convert.
+        # To enable all this, we need a MWE, a unit test (that takes this code path).
+        # Do we re-call latexmk with `-ps` and `-dvi-` or just do both above?
+        #   - https://gitlab.com/plom/plom/-/issues/1523
+        #   - https://trac.sagemath.org/ticket/6022
+        #   - https://www.ghostscript.com/doc/9.54.0/Use.htm
+        if False:
+            convertIt2 = subprocess.run(
+                [
+                    "gs",
+                    "-dSAFER",  # Give gs permission to modify filesystem
+                    "-dBATCH",
+                    "-dNOPAUSE",  # Skip prompting of user
+                    "-sDEVICE=pngalpha",
+                    f"-r{dpi}",
+                    "-sOutputFile=frag.png",
+                    "frag.ps",
+                ],
+                cwd=tmpdir,
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+            )
+
         if convertIt.returncode != 0:
             errstr = "Code to compile\n"
             errstr += "---------------\n\n"
