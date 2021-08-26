@@ -50,7 +50,9 @@ class ErrorMessage(QMessageBox):
             self.setDetailedText(details)
         if info:
             if info_preformatted:
-                self.setInformativeText(f"<small><pre>{info}</pre></small>")
+                self.setInformativeText(
+                    f'<small><pre style="white-space: pre-wrap;">\n{info}\n</pre></small>'
+                )
             else:
                 self.setInformativeText(f"<small>{info}</small>")
         self.setStandardButtons(QMessageBox.Ok)
