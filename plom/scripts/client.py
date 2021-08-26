@@ -52,10 +52,14 @@ def exceptionally_exceptional_exception_inserter():
 
     sys.excepthook = exception_hook
 
-# in order to have a graceful exit on control-c
-# https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
+
 def sigint_handler(*args):
-    """Handler for the SIGINT signal."""
+    """Handler for the SIGINT signal.
+
+    This is in order to have a somewhat graceful exit on control-c [1]
+
+    [1] https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
+    """
     sys.stderr.write("\r")
     if (
         QMessageBox.question(

@@ -16,30 +16,13 @@ import os
 import sys
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QStyleFactory
 
 from plom.manager.manager import Manager
 from plom import Default_Port
 from plom import __version__
 from plom.scripts.client import exceptionally_exceptional_exception_inserter
-
-
-# in order to have a graceful exit on control-c
-# https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
-def sigint_handler(*args):
-    """Handler for the SIGINT signal."""
-    sys.stderr.write("\r")
-    if (
-        QMessageBox.question(
-            None,
-            "",
-            "Are you sure you want to force-quit?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        == QMessageBox.Yes
-    ):
-        QApplication.quit()
+from plom.scripts.client import sigint_handler
 
 
 def main():
