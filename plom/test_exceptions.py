@@ -1,7 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Colin B. Macdonald
+
 from pytest import raises
 
 import plom.plom_exceptions
-from plom.plom_exceptions import *
+from plom.plom_exceptions import *  # noqa
 
 
 def test_plom_exc_string():
