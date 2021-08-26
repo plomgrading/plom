@@ -216,7 +216,7 @@ class TextItem(QGraphicsTextItem):
                 + "\\color{annot}\n"
                 + texIt
             )
-        fragfilename = self.parent.latexAFragment(texIt)
+        fragfilename = self.parent.latexAFragment(texIt, quiet=False)
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")
@@ -309,7 +309,7 @@ class GhostText(QGraphicsTextItem):
                     "\\color{gray}\n" + txt[4:].strip()
                 )  # make color gray for ghost rendering (when delta not legal)
 
-            fragfilename = self.scene().latexAFragment(texIt)
+            fragfilename = self.scene().latexAFragment(texIt, quiet=True)
             if fragfilename:
                 self._tex_src_cache = txt
                 self.setPlainText("")

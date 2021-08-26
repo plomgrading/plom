@@ -1335,17 +1335,9 @@ class PageScene(QGraphicsScene):
         # After the drop event make sure pageview has the focus.
         self.views()[0].setFocus(Qt.TabFocusReason)
 
-    def latexAFragment(self, txt):
-        """
-        Latex a fragment of text.
-
-        Args:
-            txt (str): text to be latexed.
-
-        Returns:
-            (png): a file containing the Latexed text.
-        """
-        return self.parent.latexAFragment(txt)
+    def latexAFragment(self, *args, **kwargs):
+        """Latex a fragment of text."""
+        return self.parent.latexAFragment(*args, **kwargs)
 
     def event(self, event):
         """

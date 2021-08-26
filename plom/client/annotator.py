@@ -1656,18 +1656,9 @@ class Annotator(QWidget):
             return []
         return self.scene.get_nonrubric_text_from_page()
 
-    def latexAFragment(self, txt):
-        """
-        Handles Latex text.
-
-        Args:
-            txt: the text to be Latexed
-
-        Returns:
-            None: modifies self.parentMarkerUI
-
-        """
-        return self.parentMarkerUI.latexAFragment(txt)
+    def latexAFragment(self, *args, **kwargs):
+        """Latex a fragment of text."""
+        return self.parentMarkerUI.latexAFragment(*args, **kwargs)
 
     def pickleIt(self):
         """
