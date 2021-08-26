@@ -44,7 +44,17 @@ from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomAPIException,
+    PlomExistingLoginException,
+    PlomAuthenticationException,
+    PlomOwnersLoggedInException,
+    PlomTakenException,
+    PlomNoMoreException,
+)
+from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
 from plom.server.aliceBob import simple_password
 
