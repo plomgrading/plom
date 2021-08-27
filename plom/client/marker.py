@@ -1886,10 +1886,9 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
         (
-            gr,
+            grade,
             markingTime,
             paperDir,
             aname,
@@ -1898,32 +1897,27 @@ class MarkerClient(QWidget):
             integrity_check,
             src_img_data,
         ) = stuff
-
-        if not (0 <= gr and gr <= self.maxMark):
-            msg = ErrorMessage(
-                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
-                    gr
-                )
+        if not (0 <= grade and grade <= self.maxMark):
+            raise RuntimeError(
+                f"Mark {grade} outside allowed range [0, {self.maxMark}]. Please file a bug!"
             )
-            msg.exec_()
-            # TODO: what do do here?  revert?
-            return
+        # TODO: sort this out whether task is "q00..." or "00..."?!
+        task = "q" + task
 
-        stat = self.examModel.getStatusByTask("q" + task)
+        stat = self.examModel.getStatusByTask(task)
 
         # Copy the mark, annotated filename and the markingtime into the table
-        # TODO: sort this out whether task is "q00..." or "00..."?!
         self.examModel.markPaperByTask(
-            "q" + task, gr, aname, plomFileName, markingTime, paperDir
+            task, grade, aname, plomFileName, markingTime, paperDir
         )
         # update the markingTime to be the total marking time
-        totmtime = self.examModel.getMTimeByTask("q" + task)
-        tags = self.examModel.getTagsByTask("q" + task)
+        totmtime = self.examModel.getMTimeByTask(task)
+        tags = self.examModel.getTagsByTask(task)
         # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
-            "q" + task,  # current task
-            gr,  # grade
+            task,
+            grade,
             (
                 aname,
                 plomFileName,
