@@ -473,17 +473,17 @@ class MarkerExamModel(QStandardItemModel):
             pass
         else:
             ErrorMessage(
-                "Task {} has been modified by server - you will need to annotate it again.".format(
-                    paper.prefix
-                )
+                f"Task {paper.prefix} has been modified by server - you will need to annotate it again."
             ).exec_()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
+        # hide -1 which upstream tooling uses "not yet marked"
         try:
             markstr = str(paper.mark) if int(paper.mark) >= 0 else ""
         except ValueError:
             markstr = ""
+        # TODO: these *must* be strings but I don't understand why
         self.appendRow(
             [
                 QStandardItem(paper.prefix),
@@ -760,9 +760,9 @@ class MarkerExamModel(QStandardItemModel):
         # and the total marking time (in case it was annotated earlier)
         mt = int(self.data(self.index(r, 3)))
         # total elapsed time.
-        self.setData(self.index(r, 3), mtime + mt)
+        self.setData(self.index(r, 3), str(mtime + mt))
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), mrk)
+        self.setData(self.index(r, 2), str(mrk))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
