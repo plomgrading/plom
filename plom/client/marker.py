@@ -815,7 +815,7 @@ class ProxyModel(QSortFilterProxyModel):
         # try to compare as integers
         try:
             return int(left.data()) < int(right.data())
-        except ValueError:
+        except (ValueError, TypeError):
             pass
         # else compare as strings
         return str(left.data()) < str(right.data())
