@@ -3,14 +3,12 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
-from stdiomask import getpass
-import os
 from multiprocessing import Pool
-import os
 from pathlib import Path
 import shutil
 import tempfile
 
+from stdiomask import getpass
 from tqdm import tqdm
 
 from plom.messenger import FinishMessenger
@@ -87,7 +85,7 @@ def main(server=None, pwd=None):
 
         outdir = Path("reassembled_ID_but_not_marked")
         outdir.mkdir(exist_ok=True)
-        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=Path.cwd()))
         print(f"Downloading to temp directory {tmpdir}")
 
         identifiedTests = msgr.RgetIdentified()
