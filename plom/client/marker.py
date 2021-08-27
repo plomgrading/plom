@@ -1897,6 +1897,8 @@ class MarkerClient(QWidget):
             integrity_check,
             src_img_data,
         ) = stuff
+        if not isinstance(grade, (int, float)):
+            raise RuntimeError(f"Mark {grade} type {type(grade)} is not a number")
         if not (0 <= grade and grade <= self.maxMark):
             raise RuntimeError(
                 f"Mark {grade} outside allowed range [0, {self.maxMark}]. Please file a bug!"
