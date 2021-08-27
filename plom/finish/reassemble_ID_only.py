@@ -75,7 +75,7 @@ def main(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(1)
+        raise
 
     try:
         shortName = msgr.getInfoShortName()
