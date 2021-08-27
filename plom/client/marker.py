@@ -437,7 +437,7 @@ class MarkerExamModel(QStandardItemModel):
             parent (QStandardItemModel): MarkerExamModel's Parent.
 
         """
-        QStandardItemModel.__init__(self, parent)
+        super().__init__(parent)
         self.setHorizontalHeaderLabels(
             [
                 "Task",
@@ -795,7 +795,7 @@ class ProxyModel(QSortFilterProxyModel):
         Args:
             parent (QObject): self's parent.
         """
-        QSortFilterProxyModel.__init__(self, parent)
+        super().__init__(parent)
         self.setFilterKeyColumn(4)
         self.filterString = ""
         self.invert = False
