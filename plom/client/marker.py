@@ -805,21 +805,20 @@ class ProxyModel(QSortFilterProxyModel):
         Sees if left data is less than right data.
 
         Args:
-            left (QModelIndex): the left map.
+            left (QModelIndex):
             right (QModelIndex):
 
         Returns:
-            True if left data is less than right data.
-
+            bool: if both can be converted to int, compare as ints.
+                Otherwise, convert to strings and compare.
         """
-        # Check to see if data is integer, and compare that
+        # try to compare as integers
         try:
-            lv = int(left.data())
-            rv = int(right.data())
-            return lv < rv
+            return int(left.data()) < int(right.data())
         except ValueError:
-            # else let qt handle it.
-            return left.data() < right.data()
+            pass
+        # else compare as strings
+        return str(left.data()) < str(right.data())
 
     def setFilterString(self, flt):
         """
