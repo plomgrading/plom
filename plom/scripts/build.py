@@ -13,7 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import json
 import os
-from pandas import json_normalize
+from pandas import json_normalize, read_csv
 from pathlib import Path
 import sys
 from textwrap import dedent, wrap
@@ -244,8 +244,7 @@ group.add_argument(
     type=str,
     metavar="FILE",
     help="""Dump the current rubrics from SERVER into FILE,
-        which can be a .toml, .json, or .csv
-        (TODO: .csv not yet implemented).
+        which can be a .toml, .json, or .csv file.
         Defaults to FILE.toml if no extension specified..""",
 )
 group.add_argument(
@@ -253,8 +252,7 @@ group.add_argument(
     nargs="?",
     help="""
         Upload a pre-build list of rubrics from this file.
-        This can be a .json, .toml or .csv file
-        (TODO: .csv not yet implemented).""",
+        This can be a .json, .toml or .csv file.""",
 )
 group.add_argument(
     "--demo",
@@ -345,15 +343,17 @@ def main():
                 filename = Path(args.dump)
                 if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
                     filename = filename.with_suffix(filename.suffix + ".toml")
+                suffix = filename.suffix
+
                 print(f'Saving server\'s current rubrics to "{filename}"')
                 rubrics = msgr.MgetRubrics()
 
                 with open(filename, "w") as f:
-                    if filename.suffix == ".json":
+                    if suffix == ".json":
                         json.dump(rubrics, f, indent="  ")
-                    elif filename.suffix == ".toml":
+                    elif suffix == ".toml":
                         toml.dump({"rubric": rubrics}, f)
-                    elif filename.suffix == ".csv":
+                    elif suffix == ".csv":
                         df = json_normalize(rubrics)
                         df.to_csv(f, index=False, sep=',', encoding="utf-8")
                     else:
@@ -364,16 +364,22 @@ def main():
                 filename = Path(args.rubric_file)
                 if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
                     filename = filename.with_suffix(filename.suffix + ".toml")
-                if filename.suffix == ".json":
-                    with open(filename, "r") as f:
+                suffix = filename.suffix
+
+                with open(filename, "r") as f:
+                    if suffix == ".json":
                         rubrics = json.load(f)
-                elif filename.suffix == ".toml":
-                    with open(filename, "r") as f:
+                    elif suffix == ".toml":
                         rubrics = toml.load(f)["rubric"]
-                else:
-                    raise NotImplementedError(
-                        f'Don\'t know how to import from "{filename}"'
-                    )
+                    elif suffix == ".csv":
+                        df = read_csv(f)
+                        df.fillna('', inplace=True)
+                        rubrics = json.loads(df.to_json(orient='records'))
+                    else:
+                        raise NotImplementedError(
+                            f'Don\'t know how to import from "{filename}"'
+                        )
+
                 print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
                 upload_rubrics(msgr, rubrics)
 
