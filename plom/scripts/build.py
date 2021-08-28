@@ -13,6 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import json
 import os
+from pandas import json_normalize
 from pathlib import Path
 import sys
 from textwrap import dedent, wrap
@@ -346,16 +347,19 @@ def main():
                     filename = filename.with_suffix(filename.suffix + ".toml")
                 print(f'Saving server\'s current rubrics to "{filename}"')
                 rubrics = msgr.MgetRubrics()
-                if filename.suffix == ".json":
-                    with open(filename, "w") as f:
+
+                with open(filename, "w") as f:
+                    if filename.suffix == ".json":
                         json.dump(rubrics, f, indent="  ")
-                elif filename.suffix == ".toml":
-                    with open(filename, "w") as f:
+                    elif filename.suffix == ".toml":
                         toml.dump({"rubric": rubrics}, f)
-                else:
-                    raise NotImplementedError(
-                        f'Don\'t know how to export to "{filename}"'
-                    )
+                    elif filename.suffix == ".csv":
+                        df = json_normalize(rubrics)
+                        df.to_csv(f, index=False, sep=',', encoding="utf-8")
+                    else:
+                        raise NotImplementedError(
+                            f'Don\'t know how to export to "{filename}"'
+                        )
             else:
                 filename = Path(args.rubric_file)
                 if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
