@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * new `PlomServer`, `PlomDemoServer`, and `PlomLiteDemoServer` objects for interactively running servers, or otherwise running a server in a background process.
 * `plom-hwscan` can now specify precise per-page mappings from the bundle to questions on the server.
 * LaTeX errors are now displayed to markers.
+* `plom-build rubrics` now supports csv in addition to json and toml.
 
 ### Changed
 * `plom-server launch --mastertoken aabbccdd...` replaces the old way (without the keyword argument).
