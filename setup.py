@@ -27,7 +27,13 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
 
 # TODO: CI requires requirements.txt.tempminima synced with mins here:
 
-client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5", "pandas>=1.0.0"]
+client_install_requires = [
+    "toml>=0.10.0",
+    "requests",
+    "requests-toolbelt",
+    "PyQt5",
+    "pandas>=1.0.0",
+]
 
 server_install_requires = [
     "appdirs>=1.4.3",
