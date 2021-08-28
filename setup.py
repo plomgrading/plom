@@ -34,7 +34,7 @@ server_install_requires = [
     "toml>=0.10.0",
     "tqdm",
     "numpy",
-    "pandas",
+    "pandas>=1.1.5",
     "passlib",
     "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
