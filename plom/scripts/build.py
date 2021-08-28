@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Nicholas J H Lai
 
 """Plom tools for building tests."""
 
@@ -355,7 +356,7 @@ def main():
                         toml.dump({"rubric": rubrics}, f)
                     elif suffix == ".csv":
                         df = json_normalize(rubrics)
-                        df.to_csv(f, index=False, sep=',', encoding="utf-8")
+                        df.to_csv(f, index=False, sep=",", encoding="utf-8")
                     else:
                         raise NotImplementedError(
                             f'Don\'t know how to export to "{filename}"'
@@ -373,8 +374,8 @@ def main():
                         rubrics = toml.load(f)["rubric"]
                     elif suffix == ".csv":
                         df = read_csv(f)
-                        df.fillna('', inplace=True)
-                        rubrics = json.loads(df.to_json(orient='records'))
+                        df.fillna("", inplace=True)
+                        rubrics = json.loads(df.to_json(orient="records"))
                     else:
                         raise NotImplementedError(
                             f'Don\'t know how to import from "{filename}"'
