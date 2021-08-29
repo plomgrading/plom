@@ -237,9 +237,8 @@ class MarkHandler:
             ],
         ):
             raise web.HTTPBadRequest(reason="invalid fields in metadata")
-        # Validate username and token.
         if not self.server.validate(task_metadata["user"], task_metadata["token"]):
-            return web.Response(status=401)
+            raise web.HTTPUnauthorized()
 
         rubrics = task_metadata["rubrics"]  # list of rubric IDs
         task = request.match_info["task"]
