@@ -21,6 +21,7 @@ from plom.server import specdir, confdir
 
 
 server_dirs = (
+    Path("."),
     specdir,
     confdir,
     Path("pages"),
@@ -39,7 +40,7 @@ def build_server_directories(basedir=Path(".")):
     log = logging.getLogger("server")
     for d in server_dirs:
         log.debug("Making directory {}".format(d))
-        (basedir / d).mkdir(parents=True, exist_ok=True)
+        (basedir / d).mkdir(exist_ok=True)
 
 
 def check_server_directories(basedir=Path(".")):
