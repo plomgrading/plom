@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Nicholas J H Lai
 
 """Misc utilities for the Plom Server"""
 
@@ -20,6 +21,7 @@ from plom.server import specdir, confdir
 
 
 server_dirs = (
+    Path("."),
     specdir,
     confdir,
     Path("pages"),
