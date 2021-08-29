@@ -205,8 +205,8 @@ class MarkHandler:
                 include 3 parts including [metadata, image, plom-file].
 
         Returns:
-            aiohttp.web_response.Response: Responses with a list including the number of
-                graded tasks and the overall number of tasks.
+            aiohttp.web_response.Response: Responses with a list including
+                the number of graded tasks and the overall number of tasks.
         """
 
         log_request("MreturnMarkedTask", request)
@@ -289,7 +289,7 @@ class MarkHandler:
                 raise web.HTTPBadRequest(reason=str(info))
 
         # info is tuple of Num Done tasks, Num Totalled tasks
-        return web.json_response([*info], status=200)
+        return web.json_response(info, status=200)
 
     # @routes.get("/annotations/{number}/{question}/{edition}")
     # TODO: optionally have this integrity field?
