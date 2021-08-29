@@ -158,12 +158,12 @@ def MreturnMarkedTask(
     question_number,
     version_number,
     mark,
-    image,
+    annotated_image,
     plomdat,
     rubrics,
     time_spent_marking,
     tags,
-    md5_code,
+    annotated_image_md5,
     integrity_check,
     image_md5s,
 ):
@@ -175,13 +175,13 @@ def MreturnMarkedTask(
         question_number (int): Marked queston number.
         version_number (int): Marked question version number.
         mark (int): Question mark.
-        image (bytearray): Marked image of question.
+        annotated_image (bytearray): Marked image of question.
         plomdat (bytearray): Plom data file used for saving marking information in
-            editable format.
+            editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
-        md5_code (str): MD5 hash key for this task.
+        annotated_image_md5 (str): MD5 hash of the annotated image.
         integrity_check (str): the integrity_check string for this task
         image_md5s (list[str]): list of image md5sums used.
 
@@ -193,35 +193,24 @@ def MreturnMarkedTask(
     """
 
     # TODO: score + file sanity checks were done at client. Do we need to redo here?
-    # image, plomdat are bytearrays, comments = list
+
     annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
     plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
 
     # do sanity checks on incoming annotation image file
-    # Check the annotated_filename is valid png - just check header presently
-    # notice that 'imghdr.what(name, h=blah)' ignores the name, instead checks stream blah.
-    if imghdr.what(annotated_filename, h=image) != "png":
-        log.error(
-            "Uploaded annotation file is not a PNG. Instead is = {}".format(
-                imghdr.what(annotated_filename, h=image)
-            )
-        )
-        return [False, "Malformed image file. Try again."]
+    # Check the annotated_image is valid png - just check header presently
+    imgtype = imghdr.what(annotated_filename, h=annotated_image)
+    if imgtype != "png":
+        errstr = f'Malformed annotated image file: expected png got "imgtype"'
+        log.error(errstr)
+        return [False, errstr]
 
     # Also check the md5sum matches
-    md5n = hashlib.md5(image).hexdigest()
-    if md5_code != md5n:
-        log.error(
-            "Mismatched between client ({}) and server ({}) md5sums of annotated image.".format(
-                md5_code, md5n
-            )
-        )
-        return [
-            False,
-            "Malformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
-                md5n, md5_code
-            ),
-        ]
+    md5 = hashlib.md5(annotated_image).hexdigest()
+    if md5 != annotated_image_md5:
+        errstr = f"Checksum mismatch: annotated image data has {md5} but client said {annotated_image_md5}"
+        log.error(errstr)
+        return [False, errstr]
 
     # now update the database
     database_task_response = self.DB.MtakeTaskFromClient(
@@ -233,7 +222,7 @@ def MreturnMarkedTask(
         rubrics,
         time_spent_marking,
         tags,
-        md5n,
+        annotated_image_md5,
         integrity_check,
         image_md5s,
     )
@@ -252,7 +241,7 @@ def MreturnMarkedTask(
 
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
-        file_header.write(image)
+        file_header.write(annotated_image)
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
 

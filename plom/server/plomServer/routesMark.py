@@ -249,18 +249,16 @@ class MarkHandler:
         # TODO: is it safe to abort during a multi-part thing?
 
         # Dealing with the image.
-        task_image_object = await reader.next()
-
-        if task_image_object is None:  # weird error
+        part = await reader.next()
+        if part is None:
             return web.Response(status=406)  # should have sent 3 parts
-        task_image = await task_image_object.read()
+        annotated_image = await part.read()
 
         # Dealing with the plom_file.
-        plom_file_object = await reader.next()
-
-        if plom_file_object is None:  # weird error
+        part = await reader.next()
+        if part is None:
             return web.Response(status=406)  # should have sent 3 parts
-        plomdat = await plom_file_object.read()
+        plomfile = await part.read()
 
         marked_task_status = self.server.MreturnMarkedTask(
             task_metadata["user"],
@@ -268,8 +266,8 @@ class MarkHandler:
             int(task_metadata["pg"]),
             int(task_metadata["ver"]),
             int(task_metadata["score"]),
-            task_image,
-            plomdat,
+            annotated_image,
+            plomfile,
             rubrics,
             int(task_metadata["mtime"]),
             task_metadata["tags"],
