@@ -552,9 +552,11 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
-                raise PlomConflict(
-                    "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
-                ) from None
+                if response.text == "integrity_fail":
+                    raise PlomConflict(
+                        "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                    ) from None
+                raise PlomSeriousException(response.text) from None
             elif response.status_code == 409:
                 raise PlomTaskChangedError("Task ownership has changed.") from None
             elif response.status_code == 410:
