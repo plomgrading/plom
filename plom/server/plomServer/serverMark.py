@@ -213,7 +213,10 @@ def MreturnMarkedTask(
 
     # Sanity check the plomfile
     # TODO: ok to read plomdat twice?  Maybe save the json later
-    plom_data = json.load(BytesIO(plomdat))
+    try:
+        plom_data = json.load(BytesIO(plomdat))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        return [False, f"Invalid JSON in plom file data: {str(e)}"]
     if plom_data.get("currentMark") != mark:
         return [False, f"Mark mismatch: {mark} does not match plomfile content"]
     for x, y in zip(image_md5s, plom_data["base_images"]):
