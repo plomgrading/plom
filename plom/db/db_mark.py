@@ -418,10 +418,17 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
     plom_data["user"] = aref.user.name
     plom_data["annotation_edition"] = aref.edition
     plom_data["annotation_reference"] = aref.id
-    # Some annoying duplication in DB and plomfile: at least assert they match!
-    for x, y in zip(metadata, plom_data["base_images"]):
-        assert x[0] == y["id"]
-        assert x[1] == y["md5"]
+    # Report any duplication in DB and plomfile (and keep DB version!)
+    if plom_data["currentMark"] != aref.mark:
+        log.warning("Plom file has wrong score, replacing")
+        plom_data["currentMark"] = aref.mark
+    for i, (id_, md5, _) in enumerate(metadata):
+        if id_ != plom_data["base_images"][i]["id"]:
+            log.warning("Plom file has wrong base image id, replacing")
+            plom_data["base_images"][i]["id"] = id_
+        if md5 != plom_data["base_images"][i]["md5"]:
+            log.warning("Plom file has wrong base image md5, replacing")
+            plom_data["base_images"][i]["md5"] = md5
     return (True, plom_data, img_file)
 
 
