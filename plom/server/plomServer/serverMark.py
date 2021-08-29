@@ -249,8 +249,10 @@ def MreturnMarkedTask(
     # return ack with current counts.
     return [
         True,
-        self.DB.McountMarked(question_number, version_number),
-        self.DB.McountAll(question_number, version_number),
+        (
+            self.DB.McountMarked(question_number, version_number),
+            self.DB.McountAll(question_number, version_number),
+        ),
     ]
 
 
