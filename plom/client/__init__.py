@@ -13,8 +13,8 @@ from plom import __version__
 from .marker import MarkerClient
 from .identifier import IDClient
 from .chooser import Chooser
-from .randoMarker import do_rando_marking
-from .randoIDer import do_rando_identifying
+from .random_marking_utils import do_rando_marking
+from .random_identifying_utils import do_rando_identifying
 
 # what you get from "from plom.client import *"
 __all__ = ["MarkerClient", "IDClient", "Chooser"]
