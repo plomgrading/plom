@@ -6,6 +6,8 @@
 from datetime import datetime
 import hashlib
 import imghdr
+from io import BytesIO
+import json
 import os
 import logging
 
@@ -191,9 +193,6 @@ def MreturnMarkedTask(
             [False, Error message of either mismatching codes or database owning the task.]
             [True, number of graded tasks, total number of tasks.]
     """
-
-    # TODO: score + file sanity checks were done at client. Do we need to redo here?
-
     annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
     plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
 
@@ -211,6 +210,19 @@ def MreturnMarkedTask(
         errstr = f"Checksum mismatch: annotated image data has {md5} but client said {annotated_image_md5}"
         log.error(errstr)
         return [False, errstr]
+
+    # Sanity check the plomfile
+    # TODO: ok to read plomdat twice?  Maybe save the json later
+    plom_data = json.load(BytesIO(plomdat))
+    if plom_data.get("currentMark") != mark:
+        return [False, f"Mark mismatch: {mark} does not match plomfile content"]
+    for x, y in zip(image_md5s, plom_data["base_images"]):
+        if x != y["md5"]:
+            errstr = (
+                "data mismatch: base image md5s do not match plomfile: "
+                + f'{image_md5s} versus {plom_data["base_images"]}'
+            )
+            return [False, errstr]
 
     # now update the database
     database_task_response = self.DB.MtakeTaskFromClient(
