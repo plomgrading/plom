@@ -214,11 +214,10 @@ class MarkHandler:
         reader = MultipartReader.from_response(request)
 
         # Dealing with the metadata.
-        task_metadata_object = await reader.next()
-
-        if task_metadata_object is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        task_metadata = await task_metadata_object.json()
+        part = await reader.next()
+        if not part:
+            raise web.HTTPBadRequest(reason="should have sent 3 parts")
+        task_metadata = await part.json()
 
         # Validate that the dictionary has these fields.
         if not validate_required_fields(
@@ -237,7 +236,7 @@ class MarkHandler:
                 "image_md5s",
             ],
         ):
-            return web.Response(status=400)
+            raise web.HTTPBadRequest(reason="invalid fields in metadata")
         # Validate username and token.
         if not self.server.validate(task_metadata["user"], task_metadata["token"]):
             return web.Response(status=401)
@@ -250,14 +249,14 @@ class MarkHandler:
 
         # Dealing with the image.
         part = await reader.next()
-        if part is None:
-            return web.Response(status=406)  # should have sent 3 parts
+        if not part:
+            raise web.HTTPBadRequest(reason="should have sent 3 parts")
         annotated_image = await part.read()
 
         # Dealing with the plom_file.
         part = await reader.next()
-        if part is None:
-            return web.Response(status=406)  # should have sent 3 parts
+        if not part:
+            raise web.HTTPBadRequest(reason="should have sent 3 parts")
         plomfile = await part.read()
 
         status, info = self.server.MreturnMarkedTask(
