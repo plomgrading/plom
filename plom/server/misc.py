@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Nicholas J H Lai
 
 """Misc utilities for the Plom Server"""
 
@@ -38,7 +39,7 @@ def build_server_directories(basedir=Path(".")):
     log = logging.getLogger("server")
     for d in server_dirs:
         log.debug("Making directory {}".format(d))
-        (basedir / d).mkdir(exist_ok=True)
+        (basedir / d).mkdir(parents=True, exist_ok=True)
 
 
 def check_server_directories(basedir=Path(".")):
