@@ -163,7 +163,12 @@ def processHWScans(
             the current working directory.
         student_id (str)
         questions (list): list of integers of which questions this
-            bundle covers.
+            bundle covers.  It can also be a list-of-lists specifying
+            which questions each page maps onto, e.g., `[[1],[1,2],[2]]`
+            maps page 1 onto question 1, page 2 onto questions 1 and 2,
+            and page 3 onto question 2.  It can also be the special
+            string "all" which maps all pages to all questions.  Any
+            other strings are parsed to find lists.
 
     kwargs:
         basedir (pathlib.Path): where on the file system do we perform
@@ -174,6 +179,9 @@ def processHWScans(
         gamma (bool):
         extractbmp (bool):
 
+    returns:
+        None
+
     Ask server to map student_id to a test-number; these should have been
     pre-populated on test-generation and if id not known there is an error.
 
@@ -183,7 +191,9 @@ def processHWScans(
 
     Process PDF into images.
 
-    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
+    Ask server to create the bundle, which tells us the `skip_list`
+    which is a list of bundle-orders (i.e., page number within the PDF)
+    that have already been uploaded. In typical use this will be empty.
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
     """
