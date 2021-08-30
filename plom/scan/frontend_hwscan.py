@@ -14,10 +14,12 @@ If you instead are dealing with QR-coded pages where you may not yet know
 which pages belong to which student, see :py:module:`frontend_scan`.
 """
 
+import ast
 from collections import defaultdict
 import os
 from pathlib import Path
 
+import fitz
 import toml
 
 from plom.scan.sendPagesToServer import (
@@ -34,6 +36,7 @@ from plom.scan.bundle_utils import (
     archiveLBundle,
     archiveHWBundle,
 )
+from plom.scan.checkScanStatus import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan.scansToImages import process_scans
 from plom.scan import checkScanStatus
@@ -142,6 +145,59 @@ def processLooseScans(
     archiveLBundle(pdf_fname)
 
 
+def _parse_questions(s):
+    if isinstance(s, str):
+        if s.casefold() == "all":
+            return "all"
+        s = ast.literal_eval(s)
+    return s
+
+
+def canonicalize_question_list(s, pages, numquestions):
+    s = _parse_questions(s)
+    if s == "all":
+        s = range(1, numquestions + 1)
+        s = list(s)  # TODO: should be unnecessary?
+
+    if isinstance(s, str):
+        raise ValueError('question cannot be a string, unles its "all"')
+
+    if isinstance(s, int):
+        s = [s]
+
+    # TypeError if not iterable
+    iter(s)
+    # if not isinstance(s, (tuple, list, dict)):
+    #    # TODO: dict
+    #    raise ValueError("questions should be list-of-ints or list-of-list-of-ints")
+
+    for elem in s:
+        # each element of the list must be a iterable or a int
+        if isinstance(elem, (list, tuple)):
+            for qnum in elem:
+                if not isinstance(qnum, int):
+                    raise ValueError(f"non-integer question value {qnum}")
+                if qnum < 1 or qnum > numquestions:
+                    raise ValueError(
+                        f"question value {qnum} out of range [1, {numquestions}]"
+                    )
+        elif not isinstance(elem, int):
+            qnum = elem
+            raise ValueError(f"non-integer question value {qnum}")
+            if qnum < 1 or qum > numquestions:
+                raise ValueError(
+                    f"question value {qnum} out of range [1, {numquestions}]"
+                )
+
+    if isinstance(s[0], (list, tuple)):
+        if len(s) != pages:
+            raise ValueError(f"list too short: need one list per {pages} pages")
+    else:
+        s = [s] * pages
+
+    return s
+
+
 def processHWScans(
     server,
     password,
@@ -162,13 +218,18 @@ def processHWScans(
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
         student_id (str)
-        questions (list): list of integers of which questions this
-            bundle covers.  It can also be a list-of-lists specifying
-            which questions each page maps onto, e.g., `[[1],[1,2],[2]]`
-            maps page 1 onto question 1, page 2 onto questions 1 and 2,
-            and page 3 onto question 2.  It can also be the special
-            string "all" which maps all pages to all questions.  Any
-            other strings are parsed to find lists.
+        questions (list): to which questions should we upload the pages
+            of this bundle?
+              * a scalar number: all pages map to this question.
+              * a list of integers: all pages map to those questions.
+              * the string "all" maps each pages to all questions.
+              * a list-of-lists specifying which questions each page
+                maps onto, e.g., `[[1],[1,2],[2]]` maps page 1 onto
+                question 1, page 2 onto questions 1 and 2, and page 3
+                onto question 2.
+            Any string input will parsed to find the above options.
+            Tuples or other iterables should be in place of lists.
+            TODO: Currently `dict` are not supported, subject to change.
 
     kwargs:
         basedir (pathlib.Path): where on the file system do we perform
@@ -197,22 +258,6 @@ def processHWScans(
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
     """
-
-    def check_question_types(questions):
-        if not isinstance(questions, (tuple, list)):
-            return False
-        for q in questions:
-            if isinstance(q, (tuple, list)):
-                for qq in q:
-                    if not isinstance(qq, int):
-                        return False
-            elif not isinstance(q, int):
-                return False
-        return True
-
-    if not check_question_types(questions):
-        raise ValueError("`questions` expects list-of-ints or list-of-list-of-ints")
-
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
         raise ValueError(f"Cannot find file {pdf_fname}")
@@ -226,6 +271,10 @@ def processHWScans(
             pdf_fname.name, qlabel, questions, student_id
         )
     )
+
+    N = get_number_of_questions(server, password)
+    num_pages = len(fitz.open(pdf_fname))
+    questions = canonicalize_question_list(questions, pages=num_pages, numquestions=N)
 
     test_number = checkTestHasThatSID(student_id, server, password)
     if test_number is None:
@@ -280,11 +329,8 @@ def processHWScans(
             )
         raise RuntimeError("Stopping, see above")
 
-    N = len(files)
-    # TODO: move up to preproc questions?  need to know N though...
-    if not isinstance(questions[0], (list, tuple)):
-        questions = [questions] * N
-    file_list = zip(range(1, N + 1), files, questions)
+    assert len(files) == num_pages, "Inconsistent page counts, something bad happening!"
+    file_list = zip(range(1, num_pages + 1), files, questions)
 
     # TODO: filter skiplist for already uploaded files
     assert len(skip_list) == 0, "TODO: we don't really support skiplist for HW pages"
