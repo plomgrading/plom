@@ -154,6 +154,16 @@ def _parse_questions(s):
 
 
 def canonicalize_question_list(s, pages, numquestions):
+    """Make a canonical page-to-questions mapping from various shorthand inputs.
+
+    args:
+        s (str/list/tuple): the input, can be a special string "all"
+            or a string which we will parse.  Or an integer.  Or a list
+            of ints, or a list of list of ints.
+        pages (int): how many pages, used for checking input.
+        numquestins (int): how many questions total, used for checking
+            input.
+    """
     s = _parse_questions(s)
     if s == "all":
         s = range(1, numquestions + 1)
@@ -167,34 +177,27 @@ def canonicalize_question_list(s, pages, numquestions):
 
     # TypeError if not iterable
     iter(s)
-    # if not isinstance(s, (tuple, list, dict)):
-    #    # TODO: dict
-    #    raise ValueError("questions should be list-of-ints or list-of-list-of-ints")
 
-    for elem in s:
-        # each element of the list must be a iterable or a int
-        if isinstance(elem, (list, tuple)):
-            for qnum in elem:
-                if not isinstance(qnum, int):
-                    raise ValueError(f"non-integer question value {qnum}")
-                if qnum < 1 or qnum > numquestions:
-                    raise ValueError(
-                        f"question value {qnum} out of range [1, {numquestions}]"
-                    )
-        elif not isinstance(elem, int):
-            qnum = elem
-            raise ValueError(f"non-integer question value {qnum}")
-            if qnum < 1 or qum > numquestions:
-                raise ValueError(
-                    f"question value {qnum} out of range [1, {numquestions}]"
-                )
-
-    if isinstance(s[0], (list, tuple)):
-        if len(s) != pages:
-            raise ValueError(f"list too short: need one list per {pages} pages")
-    else:
+    # are the contents themselves iterable?
+    try:
+        iter(s[0])
+    except TypeError:
+        # if not, repeat the list for each page
         s = [s] * pages
 
+    if len(s) != pages:
+        raise ValueError(f"list too short: need one list for each of {pages} pages")
+
+    # cast to lists
+    s = [list(qlist) for qlist in s]
+
+    # finally we should have a canonical list-of-lists-of-ints
+    for qlist in s:
+        for qnum in qlist:
+            if not isinstance(qnum, int):
+                raise ValueError(f"non-integer question value {qnum}")
+            if qnum < 1 or qnum > numquestions:
+                raise ValueError(f"question value {qnum} outside [1, {numquestions}]")
     return s
 
 

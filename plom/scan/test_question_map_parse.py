@@ -50,6 +50,10 @@ def test_canonical_error_not_enough_questions():
     raises(ValueError, lambda: canonicalize([[1, 2, 7]], pages=1, numquestions=2))
 
 
+def test_canonical_error_mix_iter_noniter():
+    raises(ValueError, lambda: canonicalize([[1], 2, [2]], pages=1, numquestions=2))
+
+
 # TODO: we might replace these with dicts
 
 
@@ -68,3 +72,18 @@ def test_canonical_expansions():
 
 def test_canonical_passthru():
     assert canonicalize([[1, 2], [2, 3]], pages=2, numquestions=3) == [[1, 2], [2, 3]]
+
+
+def test_canonical_ranges():
+    assert canonicalize([range(1, 3), range(2, 4)], pages=2, numquestions=3) == [
+        [1, 2],
+        [2, 3],
+    ]
+
+
+def test_canonical_tuples():
+    assert canonicalize(((1,), (1, 2), [2, 3]), pages=3, numquestions=3) == [
+        [1],
+        [1, 2],
+        [2, 3],
+    ]
