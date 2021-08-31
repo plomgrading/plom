@@ -288,7 +288,9 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
     """Upload "homework" pages to a particular student ID on the server.
 
     args:
-        file_list (list)
+        file_list (list): each row is `[n, f, q]` where `n` is the page
+            number in the bundle, `f` is the filename, and `q` is a list
+            of questions to which this upload should be attached.
         bundle_name (str)
         sid (str): student ID number.
         server (str/None)
