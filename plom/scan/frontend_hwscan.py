@@ -175,6 +175,9 @@ def canonicalize_question_list(s, pages, numquestions):
     if isinstance(s, int):
         s = [s]
 
+    if isinstance(s, dict):
+        raise NotImplementedError("a dict seems very sensible but is not implemented")
+
     # TypeError if not iterable
     iter(s)
 
