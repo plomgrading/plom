@@ -167,10 +167,9 @@ def canonicalize_question_list(s, pages, numquestions):
     s = _parse_questions(s)
     if s == "all":
         s = range(1, numquestions + 1)
-        s = list(s)  # TODO: should be unnecessary?
 
     if isinstance(s, str):
-        raise ValueError('question cannot be a string, unles its "all"')
+        raise ValueError('question cannot be a string, unless its "all"')
 
     if isinstance(s, int):
         s = [s]
