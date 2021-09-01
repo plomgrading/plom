@@ -17,7 +17,6 @@ from glob import glob
 import argparse
 import json
 import base64
-from stdiomask import getpass
 import sys
 
 if sys.version_info >= (3, 7):
@@ -26,9 +25,10 @@ else:
     import importlib_resources as resources
 
 import fitz
+from stdiomask import getpass
 
-from . import paperdir as _paperdir
 import plom.produce
+from plom.produce import paperdir as _paperdir
 from plom import __version__
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -200,11 +200,11 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
         # delete last page from the zeroth test.
         if index == 0:
-            pdf_document.deletePage(-1)
+            pdf_document.delete_page(-1)
             print("Deleting last page of test {}".format(file_name))
 
         # We then add the pdfs into the document collection
-        all_pdf_documents.insertPDF(pdf_document)
+        all_pdf_documents.insert_pdf(pdf_document)
 
         # For a comprehensive test, we will add some extrapages with the probability of 0.2 percent
         if random.random() < extra_page_probability:
@@ -224,7 +224,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                     test_number, student_number
                 )
             )
-            all_pdf_documents.insertPage(
+            all_pdf_documents.insert_page(
                 -1,
                 text="EXTRA PAGE - t{} Q1 - {}".format(test_number, student_number),
                 fontsize=extra_page_font_size,
@@ -235,28 +235,25 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     print('Assembled in "{}"'.format(out_file_path))
 
 
-def make_garbage_page(out_file_path, number_of_grarbage_pages=1):
-    """Randomly generates garbage pages.
+def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
+    """Randomly generates and inserts garbage pages into a PDF document.
 
-    Purely used for testing.
+    Used for testing.
 
     Arguments:
-        out_file_path {Str} -- String path for a pdf file to which we will add a random garbage page
+        out_file_path (pathlib.Path/str): a pdf file we add pages to.
 
     Keyword Arguments:
-        number_of_grarbage_pages {int} -- Number of added garbage pages for this document (default: {1})
+        number_of_garbage_pages (int): how many junk pages to add (default: 2)
     """
-
-    # Customizable data
     green = [0, 0.75, 0]
-    garbage_page_font_size = 18
 
     all_pdf_documents = fitz.open(out_file_path)
     print("Doc has {} pages".format(len(all_pdf_documents)))
-    for index in range(number_of_grarbage_pages):
+    for _ in range(number_of_garbage_pages):
         garbage_page_index = random.randint(-1, len(all_pdf_documents))
         print("Insert garbage page at garbage_page_index={}".format(garbage_page_index))
-        all_pdf_documents.insertPage(
+        all_pdf_documents.insert_page(
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
     all_pdf_documents.saveIncr()
@@ -289,7 +286,7 @@ def make_colliding_pages(paper_dir_path, outfile):
                 colliding_page_index
             )
         )
-        all_pdf_documents.insertPDF(
+        all_pdf_documents.insert_pdf(
             pdf_document,
             from_page=test_length - 1,
             to_page=test_length - 1,
@@ -321,9 +318,9 @@ def splitFakeFile(out_file_path):
     doc2 = fitz.open()
     doc3 = fitz.open()
 
-    doc1.insertPDF(originalPDF, from_page=0, to_page=length)
-    doc2.insertPDF(originalPDF, from_page=length + 1, to_page=2 * length)
-    doc3.insertPDF(originalPDF, from_page=2 * length + 1)
+    doc1.insert_pdf(originalPDF, from_page=0, to_page=length)
+    doc2.insert_pdf(originalPDF, from_page=length + 1, to_page=2 * length)
+    doc3.insert_pdf(originalPDF, from_page=2 * length + 1)
 
     doc1.save(newPDFName + "1.pdf")
     doc2.save(newPDFName + "2.pdf")
@@ -354,12 +351,9 @@ def download_classlist(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
-        exit(10)
+        raise
     try:
         classlist = msgr.IDrequestClasslist()
-    except PlomBenignException as e:
-        print("Failed to download classlist: {}".format(e))
-        exit(4)
     finally:
         msgr.closeUser()
         msgr.stop()
@@ -382,11 +376,22 @@ def main():
     parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
     args = parser.parse_args()
 
+    if not hasattr(args, "server") or not args.server:
+        try:
+            args.server = os.environ["PLOM_SERVER"]
+        except KeyError:
+            pass
+    if not hasattr(args, "password") or not args.password:
+        try:
+            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
+        except KeyError:
+            pass
+
     out_file_path = "fake_scribbled_exams.pdf"
     classlist = download_classlist(args.server, args.password)
 
     fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
-    make_garbage_page(out_file_path, number_of_grarbage_pages=2)
+    make_garbage_pages(out_file_path)
     make_colliding_pages(_paperdir, out_file_path)
     splitFakeFile(out_file_path)
 

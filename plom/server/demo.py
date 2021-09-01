@@ -14,6 +14,7 @@ from warnings import warn
 from plom import Default_Port
 from plom.misc_utils import working_directory
 from plom.server import PlomServer
+import plom.scan
 
 
 class PlomDemoServer(PlomServer):
@@ -52,18 +53,10 @@ class PlomDemoServer(PlomServer):
     TODO: maybe better to give direct (non-subprocess-based) methods.
     TODO: make the demo less random so that we get predictable output from plom-finish.
 
-    Currently its a little more verbose (https://gitlab.com/plom/plom/-/issues/1545)
-    but we can also simulate some nonsense student work (TODO: make into doctest)
-    ```
-    subprocess.check_call(
-        split(
-            f"python3 -m plom.client.randoMarker "
-            f"-s localhost:{demo.port} "
-            f"-u {env['PLOM_USER']} -w {env['PLOM_PASSWORD']}"
-        ),
-        env=env,
-    )
-    ```
+    We can also simulate some nonsense student work:
+    >>> subprocess.check_call("plom-fake-scribbles", env=env)   # doctest: +SKIP
+
+    At that point, we can connect a Plom Client and do some marking.
 
     Finally we stop the server:
     >>> demo.stop()
@@ -115,21 +108,13 @@ class PlomDemoServer(PlomServer):
                 split("python3 -m plom.scripts.build class --demo"), env=env
             )
             subprocess.check_call(split("python3 -m plom.scripts.build make"), env=env)
-            # TODO: does not respect env vars (Issue #1545)
-            subprocess.check_call(
-                split(
-                    f"python3 -m plom.produce.faketools -s localhost:{self.port} -w 1234"
-                ),
-                env=env,
-            )
+            subprocess.check_call(split("python3 -m plom.produce.faketools"), env=env)
+
+            s = f"localhost:{self.port}"
+            pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
-                subprocess.check_call(
-                    split(f"python3 -m plom.scan process --no-gamma-shift {f}"),
-                    env=env,
-                )
-                subprocess.check_call(
-                    split(f"python3 -m plom.scan upload -u {f}"), env=env
-                )
+                plom.scan.processScans(s, pwd, f, gamma=False)
+                plom.scan.uploadImages(s, pwd, f, do_unknowns=True)
 
     def stop(self, erase_dir=True):
         """Take down the Plom server.

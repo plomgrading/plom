@@ -46,8 +46,20 @@ from plom.scan.scansToImages import process_scans
 from plom.scan import readQRCodes
 
 
-def processScans(server, password, pdf_fname, gamma, extractbmp):
+def processScans(server, password, pdf_fname, *, gamma=False, extractbmp=False):
     """Process PDF file into images and read QRcodes
+
+    args:
+        server (str)
+        password (str)
+        pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
+            the current working directory.
+
+    kwargs:
+        bundle_name (str/None): Override the bundle name (which is by
+            default is generated from the PDF filename).
+        gamma (bool):
+        extractbmp (bool):
 
     Convert file into a bundle-name
     Check with server if bundle/md5 already on server
@@ -99,9 +111,19 @@ def processScans(server, password, pdf_fname, gamma, extractbmp):
 
 
 def uploadImages(
-    server, password, bundle_name, unknowns_flag=False, collisions_flag=False
+    server, password, bundle_name, *, do_unknowns=False, do_collisions=False
 ):
     """Upload processed images from bundle.
+
+    args:
+        server (str)
+        password (str)
+        bundle_name (str): usually the PDF filename but in general
+            whatever string was used to define a bundle.
+
+    kwargs:
+        do_unknowns (bool):
+        do_collisions (bool):
 
     Try to create a bundle on server.
     - abort if name xor md5sum of bundle known.
@@ -167,7 +189,7 @@ def uploadImages(
     # Note: no need to "finalize" a bundle, its ok to send unknown/collisions
     # after the above call to sendPagesToServer.
 
-    if unknowns_flag:
+    if do_unknowns:
         if bundle_has_nonuploaded_unknowns(bundledir):
             print_unknowns_warning(bundledir)
             print("Unknowns upload flag present: uploading...")
@@ -181,7 +203,7 @@ def uploadImages(
             print_unknowns_warning(bundledir)
             print('If you want to upload these unknowns, rerun with "--unknowns".')
 
-    if collisions_flag:
+    if do_collisions:
         if bundle_has_nonuploaded_collisions(bundledir):
             print_collision_warning(bundledir)
             print("Collisions upload flag present.")
