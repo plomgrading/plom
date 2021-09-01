@@ -68,14 +68,14 @@ def bundle_name_from_file(filename):
     """Return the bundle name for a file.
 
     Args:
-        filename (str, Path): name of file, typically a PDF file.
+        filename (str/pathlib.Path): name of file, typically a PDF file.
 
     Returns
-        str: Currently bundle name is the stem of the file name with
+        str: Currently bundle name is the file name (including extension) with
             some input sanitizing such as spaces replaced with underscores.
     """
     filename = Path(filename)
-    return filename.stem.replace(" ", "_")
+    return filename.name.replace(" ", "_")
 
 
 def bundle_name_and_md5_from_file(filename):

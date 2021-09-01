@@ -113,9 +113,6 @@ def uploadImages(
     As part of the upload 'unknown' pages and 'collisions' may be detected.
     These will not be uploaded unless the appropriate flags are set.
     """
-    if bundle_name.lower().endswith(".pdf"):
-        warn('Careful, the bundle name should not include ".pdf"')
-
     bundledir = Path("bundles") / bundle_name
     info = toml.load(bundledir / "source.toml")
     md5 = info["md5"]
