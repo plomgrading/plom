@@ -913,6 +913,7 @@ macos1013_client:
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
+  - pip install PyQt5==5.15.2  # Issue #1434
   - pip install pyinstaller==4.3  # Issue #1587 codesign failure
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
