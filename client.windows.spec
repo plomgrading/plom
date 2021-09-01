@@ -13,7 +13,6 @@ a = Analysis(['plom/scripts/client.py'],
              pathex=['./'],
              binaries=[],
              datas=[
-                 (HOMEPATH + '\\PyQt5\\Qt\\bin\*', 'PyQt5\\Qt\\bin'),
                  ('plom/client/*.svg', 'plom/client'),
                  ('plom/client/*.png', 'plom/client'),
                  ('plom/client/icons/*.svg', 'plom/client/icons'),
