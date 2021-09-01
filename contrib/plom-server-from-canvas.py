@@ -46,6 +46,7 @@ import requests
 from tqdm import tqdm
 
 from plom import __version__
+from plom.misc_utils import working_directory
 from plom.server import PlomServer
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
@@ -141,9 +142,7 @@ def initialize(course, assignment, marks, *, server_dir="."):
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, server_dir=server_dir)
 
-    o_dir = os.getcwd()
-    try:
-        os.chdir(server_dir)
+    with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
         # TODO: capture and log all this output with capture_output=True?
@@ -154,8 +153,6 @@ def initialize(course, assignment, marks, *, server_dir="."):
         subprocess.check_call(["plom-server", "users", "--auto", "1"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
-    finally:
-        os.chdir(o_dir)
 
     print("Temporarily exporting manager password...")
     pwds = {}
@@ -177,11 +174,8 @@ def initialize(course, assignment, marks, *, server_dir="."):
         ["plom-build", "class", server_dir / "classlist.csv"]
     )
     print("Building the database...")
-    try:
-        os.chdir(server_dir)
+    with working_directory(server_dir):
         build_class = subprocess.check_call(["plom-build", "make", "--no-pdf"])
-    finally:
-        os.chdir(o_dir)
 
     return plom_server
 
@@ -408,7 +402,6 @@ parser.add_argument(
         you'll need quotes around the list, as in `--marks "5, 10, 4"`.
     """,
 )
-
 
 if __name__ == "__main__":
     args = parser.parse_args()

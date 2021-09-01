@@ -12,6 +12,7 @@ import time
 from warnings import warn
 
 from plom import Default_Port
+from plom.misc_utils import working_directory
 from plom.server import PlomServer
 import plom.scan
 
@@ -102,9 +103,7 @@ class PlomDemoServer(PlomServer):
     def fill_the_tank(self):
         """make fake data and push it into the plom server."""
         env = {**os.environ, **self.get_env_vars()}
-        cwd = os.getcwd()
-        try:
-            os.chdir(self.basedir)
+        with working_directory(self.basedir):
             subprocess.check_call(
                 split("python3 -m plom.scripts.build class --demo"), env=env
             )
@@ -116,8 +115,6 @@ class PlomDemoServer(PlomServer):
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 plom.scan.processScans(s, pwd, f, gamma=False)
                 plom.scan.uploadImages(s, pwd, f, do_unknowns=True)
-        finally:
-            os.chdir(cwd)
 
     def stop(self, erase_dir=True):
         """Take down the Plom server.

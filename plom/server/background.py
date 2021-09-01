@@ -22,6 +22,7 @@ import toml
 
 from plom import Default_Port
 from plom import SpecVerifier
+from plom.misc_utils import working_directory
 from plom.produce.demotools import buildDemoSourceFiles
 from plom.server import theServer
 from plom.server import specdir as specdirname
@@ -94,12 +95,8 @@ class PlomServer:
 
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
-        cwd = os.getcwd()
-        try:
-            os.chdir(basedir)
+        with working_directory(basedir):
             processUsers(None, True, False, False)
-        finally:
-            os.chdir(cwd)
 
     @classmethod
     def add_demo_spec(cls, basedir, num_to_produce=10):

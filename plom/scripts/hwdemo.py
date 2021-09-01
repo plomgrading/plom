@@ -30,6 +30,7 @@ import fitz
 
 from plom import __version__
 from plom import Default_Port
+from plom.misc_utils import working_directory
 from plom.server import PlomServer
 
 
@@ -87,13 +88,9 @@ def main():
         init_cmd += f" --port {args.port}"
     subprocess.check_call(split(init_cmd))
 
-    prev = Path.cwd()
-    try:
-        os.chdir(args.server_dir)
+    with working_directory(args.server_dir):
         subprocess.check_call(split("plom-server users --demo"))
         subprocess.check_call(split("plom-build new --demo"))
-    finally:
-        os.chdir(prev)
 
     background_server = PlomServer(basedir=args.server_dir)
 
@@ -107,16 +104,11 @@ def main():
         server = "localhost"
     subprocess.check_call(split(f"plom-build class --demo -w 1234 -s {server}"))
     subprocess.check_call(split(f"plom-build rubric --demo -w 1234 -s {server}"))
-    prev = Path.cwd()
-    try:
-        os.chdir(args.server_dir)
+    with working_directory(args.server_dir):
         subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
-    finally:
-        os.chdir(prev)
 
     print("Uploading fake scanned data to the server")
-    try:
-        os.chdir(args.server_dir)
+    with working_directory(args.server_dir):
         # this creates two batches of fake hw - prefixes = hwA and hwB
         subprocess.check_call(split(f"plom-fake-hwscribbles -w 1234 -s {server}"))
 
@@ -152,8 +144,6 @@ def main():
         subprocess.check_call(split(f"plom-hwscan allbyq -w 4567 -y -s {server}"))
         print("Replacing all missing questions.")
         subprocess.check_call(split(f"plom-hwscan missing -w 4567 -y -s {server}"))
-    finally:
-        os.chdir(prev)
 
     assert background_server.process_is_running(), "has the server died?"
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"

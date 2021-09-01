@@ -34,6 +34,7 @@ from stdiomask import getpass
 import pandas as pd
 
 from plom.messenger import ScanMessenger
+from plom.misc_utils import working_directory
 from plom.scan.bundle_utils import bundle_name_and_md5_from_file
 
 
@@ -180,10 +181,9 @@ if __name__ == "__main__":
                 with z.open(x, "r") as thefile:
                     md5 = hashlib.md5(thefile.read()).hexdigest()
                     input("keep going?")
-                cwd = os.getcwd()
-                with tempfile.TemporaryDirectory() as d:
+                d = tempfile.TemporaryDirectory()
+                with working_directory(d):
                     print(d)
-                    os.chdir(d)
                     # TODO: use it in memory instead, as in the md5 calc above
                     # TODO: check for QRs?  we always use HW pages currently
                     z.extract(x)
@@ -194,7 +194,6 @@ if __name__ == "__main__":
                         raise RuntimeError(
                             f"Unsuccessful HW upload, server returned:\n{rmsg[1:]}"
                         )
-                    os.chdir(cwd)
             updates = msgr.triggerUpdateAfterHWUpload()
             print(updates)
         shutil.move(f, done / f)

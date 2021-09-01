@@ -4,27 +4,22 @@
 import os
 from pytest import raises
 
+from plom.misc_utils import working_directory
 from plom.server import build_server_directories, check_server_directories
 from plom.server import theServer
 
 
 def test_make_server_dirs(tmpdir):
-    cdir = os.getcwd()
-    os.chdir(tmpdir)
-    build_server_directories()
-    check_server_directories()
-    os.chdir(cdir)
+    with working_directory(tmpdir):
+        build_server_directories()
+        check_server_directories()
 
 
 def test_check_missing_exception(tmpdir):
-    cdir = os.getcwd()
-    os.chdir(tmpdir)
-    raises(FileNotFoundError, check_server_directories)
-    os.chdir(cdir)
+    with working_directory(tmpdir):
+        raises(FileNotFoundError, check_server_directories)
 
 
 def test_server_launch_wo_dirs(tmpdir):
-    cdir = os.getcwd()
-    os.chdir(tmpdir)
-    raises(FileNotFoundError, theServer.launch)
-    os.chdir(cdir)
+    with working_directory(tmpdir):
+        raises(FileNotFoundError, theServer.launch)
