@@ -2308,20 +2308,20 @@ class MarkerClient(QWidget):
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
-                self.latexAFragment(txt)
+                self.latexAFragment(txt, quiet=True)
                 c += 1
                 pd.setValue(c)
                 # and latex the previews (legal and illegal versions)
                 txtp = (
                     "\\color{blue}" + txt
                 )  # make color blue for ghost rendering (legal)
-                self.latexAFragment(txtp)
+                self.latexAFragment(txtp, quiet=True)
                 c += 1
                 pd.setValue(c)
                 txtp = (
                     "\\color{gray}" + txt
                 )  # make color gray for ghost rendering (illegal)
-                self.latexAFragment(txtp)
+                self.latexAFragment(txtp, quiet=True)
                 c += 1
                 pd.setValue(c)
             else:
@@ -2330,7 +2330,9 @@ class MarkerClient(QWidget):
                 pd.setValue(c)
         pd.close()
 
-    def latexAFragment(self, txt):
+    def latexAFragment(
+        self, txt, *, quiet=False, cache_invalid=True, cache_invalid_tryagain=False
+    ):
         """
         Run LaTeX on a fragment of text and return the file name of a png.
 
@@ -2339,38 +2341,67 @@ class MarkerClient(QWidget):
         Args:
             txt (str): the text to be Latexed.
 
-        Returns:
-            (png): a file containing the Latexed text.
+        Keyword Args:
+            quiet (bool): if True, don't popup dialogs on errors.
+                Caution: this can result in a lot of API calls because
+                users can keep requesting the same (bad) TeX from the
+                server, e.g., by having bad TeX in a rubric.
+            cache_invalid (bool): whether to cache invalid TeX.  Useful
+                to prevent repeated calls to render bad TeX but might
+                prevent users from seeing (again) an error dialog that
+            try_again_if_cache_invalid (bool): if True then when we get
+                a cache hit of `None` (corresponding to bad TeX) then we
+                try to to render again.
 
+        Returns:
+            (pathlib.Path/str/None): a path and filename to a `.png` of
+                the rendered TeX.  Or None if there was an error: callers
+                will need to decide how to handle that, typically by
+                displaying the raw code instead.
         """
         txt = txt.strip()
         # If we already latex'd this text, return the cached image
-        r = self.commentCache.get(txt, None)
+        try:
+            r = self.commentCache[txt]
+        except KeyError:
+            # logic is convoluted: this is cache-miss...
+            r = None
+        else:
+            # ..and this is cache-hit of None
+            if r is None and not cache_invalid_tryagain:
+                log.debug(
+                    "tex: cache hit None, tryagain NOT set: %s",
+                    shorten(txt, 60, placeholder="..."),
+                )
+                return None
         if r:
             return r
-        log.debug("request image for latex: %s", shorten(txt, 80, placeholder="..."))
+        log.debug("tex: request image for: %s", shorten(txt, 80, placeholder="..."))
         r, fragment = self.msgr.MlatexFragment(txt)
         if not r:
-            # Heuristics to highlight error: latex errors seem to start with "! "
-            lines = fragment.split("\n")
-            idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
-            if any(idx):
-                n = idx[0]  # could be fancier if more than one match
-                info = "\n".join(lines[max(0, n - 5) : n + 5])
-                ErrorMessage(
-                    """
-                    <p>The server reported an error processing your TeX fragment.</p>
-                    <p>Perhaps the error is visible in the following snippet,
-                    otherwise see full logs under details:</p>
-                    """,
-                    details=fragment,
-                    info=info,
-                ).exec_()
-            else:
-                ErrorMessage(
-                    "<p>The server reported an error processing your TeX fragment.</p>",
-                    details=fragment,
-                ).exec_()
+            if not quiet:
+                # Heuristics to highlight error: latex errors seem to start with "! "
+                lines = fragment.split("\n")
+                idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
+                if any(idx):
+                    n = idx[0]  # could be fancier if more than one match
+                    info = "\n".join(lines[max(0, n - 5) : n + 5])
+                    ErrorMessage(
+                        """
+                        <p>The server reported an error processing your TeX fragment.</p>
+                        <p>Perhaps the error is visible in the following snippet,
+                        otherwise see full logs under details:</p>
+                        """,
+                        details=fragment,
+                        info=info,
+                    ).exec_()
+                else:
+                    ErrorMessage(
+                        "<p>The server reported an error processing your TeX fragment.</p>",
+                        details=fragment,
+                    ).exec_()
+            if cache_invalid:
+                self.commentCache[txt] = None
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(

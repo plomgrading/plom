@@ -126,6 +126,7 @@ class TextItem(QGraphicsTextItem):
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
         if text.casefold().startswith("tex:"):
+            # TODO: Issue #1624: this is causing two API rendering calls
             # self.textToPng()
             # instead, hide latency of API call: meanwhile source text displayed
             # Issue #1391: unfortunately causes a race, at least in randomarker
@@ -206,7 +207,7 @@ class TextItem(QGraphicsTextItem):
         c = self.defaultTextColor().getRgb()
 
         assert len(c) == 4
-        if c != (255, 0, 0, 0):
+        if c != (255, 0, 0, 255):
             # Careful: red is default, using this would cause a cache miss
             # TODO: maybe its nicer to pass the colour to latexAFragment?
             texIt = (
@@ -216,7 +217,9 @@ class TextItem(QGraphicsTextItem):
                 + "\\color{annot}\n"
                 + texIt
             )
-        fragfilename = self.parent.latexAFragment(texIt)
+        fragfilename = self.parent.latexAFragment(
+            texIt, quiet=False, cache_invalid_tryagain=True
+        )
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")
@@ -309,7 +312,7 @@ class GhostText(QGraphicsTextItem):
                     "\\color{gray}\n" + txt[4:].strip()
                 )  # make color gray for ghost rendering (when delta not legal)
 
-            fragfilename = self.scene().latexAFragment(texIt)
+            fragfilename = self.scene().latexAFragment(texIt, quiet=True)
             if fragfilename:
                 self._tex_src_cache = txt
                 self.setPlainText("")
