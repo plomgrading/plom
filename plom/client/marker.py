@@ -437,7 +437,7 @@ class MarkerExamModel(QStandardItemModel):
             parent (QStandardItemModel): MarkerExamModel's Parent.
 
         """
-        QStandardItemModel.__init__(self, parent)
+        super().__init__(parent)
         self.setHorizontalHeaderLabels(
             [
                 "Task",
@@ -473,17 +473,17 @@ class MarkerExamModel(QStandardItemModel):
             pass
         else:
             ErrorMessage(
-                "Task {} has been modified by server - you will need to annotate it again.".format(
-                    paper.prefix
-                )
+                f"Task {paper.prefix} has been modified by server - you will need to annotate it again."
             ).exec_()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
+        # hide -1 which upstream tooling uses "not yet marked"
         try:
             markstr = str(paper.mark) if int(paper.mark) >= 0 else ""
         except ValueError:
             markstr = ""
+        # TODO: these *must* be strings but I don't understand why
         self.appendRow(
             [
                 QStandardItem(paper.prefix),
@@ -760,9 +760,9 @@ class MarkerExamModel(QStandardItemModel):
         # and the total marking time (in case it was annotated earlier)
         mt = int(self.data(self.index(r, 3)))
         # total elapsed time.
-        self.setData(self.index(r, 3), mtime + mt)
+        self.setData(self.index(r, 3), str(mtime + mt))
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), mrk)
+        self.setData(self.index(r, 2), str(mrk))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
@@ -795,7 +795,7 @@ class ProxyModel(QSortFilterProxyModel):
         Args:
             parent (QObject): self's parent.
         """
-        QSortFilterProxyModel.__init__(self, parent)
+        super().__init__(parent)
         self.setFilterKeyColumn(4)
         self.filterString = ""
         self.invert = False
@@ -805,21 +805,20 @@ class ProxyModel(QSortFilterProxyModel):
         Sees if left data is less than right data.
 
         Args:
-            left (QModelIndex): the left map.
+            left (QModelIndex):
             right (QModelIndex):
 
         Returns:
-            True if left data is less than right data.
-
+            bool: if both can be converted to int, compare as ints.
+                Otherwise, convert to strings and compare.
         """
-        # Check to see if data is integer, and compare that
+        # try to compare as integers
         try:
-            lv = int(left.data())
-            rv = int(right.data())
-            return lv < rv
-        except ValueError:
-            # else let qt handle it.
-            return left.data() < right.data()
+            return int(left.data()) < int(right.data())
+        except (ValueError, TypeError):
+            pass
+        # else compare as strings
+        return str(left.data()) < str(right.data())
 
     def setFilterString(self, flt):
         """
@@ -1887,10 +1886,9 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
         (
-            gr,
+            grade,
             markingTime,
             paperDir,
             aname,
@@ -1899,32 +1897,29 @@ class MarkerClient(QWidget):
             integrity_check,
             src_img_data,
         ) = stuff
-
-        if not (0 <= gr and gr <= self.maxMark):
-            msg = ErrorMessage(
-                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
-                    gr
-                )
+        if not isinstance(grade, (int, float)):
+            raise RuntimeError(f"Mark {grade} type {type(grade)} is not a number")
+        if not (0 <= grade and grade <= self.maxMark):
+            raise RuntimeError(
+                f"Mark {grade} outside allowed range [0, {self.maxMark}]. Please file a bug!"
             )
-            msg.exec_()
-            # TODO: what do do here?  revert?
-            return
+        # TODO: sort this out whether task is "q00..." or "00..."?!
+        task = "q" + task
 
-        stat = self.examModel.getStatusByTask("q" + task)
+        stat = self.examModel.getStatusByTask(task)
 
         # Copy the mark, annotated filename and the markingtime into the table
-        # TODO: sort this out whether task is "q00..." or "00..."?!
         self.examModel.markPaperByTask(
-            "q" + task, gr, aname, plomFileName, markingTime, paperDir
+            task, grade, aname, plomFileName, markingTime, paperDir
         )
         # update the markingTime to be the total marking time
-        totmtime = self.examModel.getMTimeByTask("q" + task)
-        tags = self.examModel.getTagsByTask("q" + task)
+        totmtime = self.examModel.getMTimeByTask(task)
+        tags = self.examModel.getTagsByTask(task)
         # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
-            "q" + task,  # current task
-            gr,  # grade
+            task,
+            grade,
             (
                 aname,
                 plomFileName,
