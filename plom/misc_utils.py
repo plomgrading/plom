@@ -2,12 +2,15 @@
 # Copyright (C) 2019 Omer Angel
 # Copyright (C) 2019, 2021 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2021 Peter Lee
 
 """Misc utilities"""
 
-import sys
+from contextlib import contextmanager
 import math
+import os
 import string
+import sys
 
 
 def format_int_list_with_runs(L, use_unicode=None):
@@ -34,7 +37,7 @@ def _find_runs(S):
     prev = -math.inf
     for x in S:
         if x - prev == 1:
-            run.append(x)
+            run.append(x)  # noqa
         else:
             run = [x]
             L.append(run)
@@ -126,3 +129,22 @@ def next_in_longest_subsequence(items):
         return sequences[idx][n]
 
     return None
+
+
+@contextmanager
+def working_directory(path):
+    """Temporarily change the current working directory.
+
+    Usage:
+    ```
+    with working_directory(path):
+        do_things()   # working in the given path
+    do_other_things() # back to original path
+    ```
+    """
+    current_directory = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(current_directory)

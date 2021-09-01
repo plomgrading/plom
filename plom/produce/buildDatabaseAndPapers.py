@@ -2,15 +2,13 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
-import os
 from stdiomask import getpass
-import random
 
 from plom import check_version_map
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
 from plom.produce import paperdir
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
+from plom.plom_exceptions import PlomBenignException
 
 
 def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):

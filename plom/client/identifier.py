@@ -1,22 +1,20 @@
-# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
 Identifier Tool
 """
 
-__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-# SPDX-License-Identifier: AGPL-3.0-or-later
 
 from collections import defaultdict
 import csv
-import json
-import os
-import sys
-import tempfile
 import logging
+import os
+import tempfile
 
 from PyQt5.QtCore import (
     Qt,
@@ -32,21 +30,23 @@ from PyQt5.QtWidgets import (
     QCompleter,
     QDialog,
     QWidget,
-    QMainWindow,
-    QInputDialog,
     QMessageBox,
 )
+
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomTakenException,
+)
+from plom import isValidStudentNumber
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
 
 from .examviewwindow import ExamViewWindow
 from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
 
-from plom.plom_exceptions import *
-from plom import Plom_API_Version
-from plom import isValidStudentNumber
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
 
 log = logging.getLogger("identr")
 

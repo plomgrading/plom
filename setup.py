@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -34,7 +35,7 @@ server_install_requires = [
     "toml>=0.10.0",
     "tqdm",
     "numpy",
-    "pandas",
+    "pandas>=1.0.0",
     "passlib",
     "pymupdf>=1.18.15",
     "Pillow>=7.0.0",

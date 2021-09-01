@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Peter Lee
 
 from datetime import datetime
 import json
@@ -32,6 +33,7 @@ from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
+from ..misc_utils import working_directory
 
 
 class Server:
@@ -257,9 +259,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         log.info("Classlist is present.")
     else:
         log.info("Cannot find the classlist: we expect it later...")
-    cwd = os.getcwd()
-    try:
-        os.chdir(basedir)
+    with working_directory(basedir):
         peon = Server(examDB, master_token)
         userIniter = UserInitHandler(peon)
         uploader = UploadHandler(peon)
@@ -277,8 +277,6 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         marker.setUpRoutes(app.router)
         rubricker.setUpRoutes(app.router)
         reporter.setUpRoutes(app.router)
-    finally:
-        os.chdir(cwd)
 
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
@@ -287,11 +285,17 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         basedir / confdir / "plom-selfsigned.crt", basedir / confdir / "plom.key"
     )
     log.info("Start the server!")
-    try:
-        os.chdir(basedir)
+    with working_directory(basedir):
         web.run_app(app, ssl_context=sslContext, port=server_info["port"])
-    except KeyboardInterrupt:
-        # Above seems to have its own Ctrl-C handler so this never happens?
-        log.info("Closing down via keyboard interrupt")
-    finally:
-        os.chdir(cwd)
+        # The KeyboardInterrupt is not explicitly caught, so code like below may be preferred
+        #   if the code crashes.
+
+    # cwd = os.getcwd()
+    # try:
+    #     os.chdir(basedir)
+    #     web.run_app(app, ssl_context=sslContext, port=server_info["port"])
+    # except KeyboardInterrupt:
+    #     # Above seems to have its own Ctrl-C handler so this never happens?
+    #     log.info("Closing down via keyboard interrupt")
+    # finally:
+    #     os.chdir(cwd)

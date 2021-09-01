@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2021 Forest Kobayashi
 
 """Tools for working with TeX"""
 
@@ -102,6 +103,30 @@ def texFragmentToPNG(fragment, *, dpi=225):
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
         )
+
+        # dvipng will fail with e.g., pstricks: workaround is ps then use gs/convert.
+        # To enable all this, we need a MWE, a unit test (that takes this code path).
+        # Do we re-call latexmk with `-ps` and `-dvi-` or just do both above?
+        #   - https://gitlab.com/plom/plom/-/issues/1523
+        #   - https://trac.sagemath.org/ticket/6022
+        #   - https://www.ghostscript.com/doc/9.54.0/Use.htm
+        if False:
+            convertIt2 = subprocess.run(
+                [
+                    "gs",
+                    "-dSAFER",  # Give gs permission to modify filesystem
+                    "-dBATCH",
+                    "-dNOPAUSE",  # Skip prompting of user
+                    "-sDEVICE=pngalpha",
+                    f"-r{dpi}",
+                    "-sOutputFile=frag.png",
+                    "frag.ps",
+                ],
+                cwd=tmpdir,
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+            )
+
         if convertIt.returncode != 0:
             errstr = "Code to compile\n"
             errstr += "---------------\n\n"
