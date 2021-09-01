@@ -564,9 +564,7 @@ class Messenger(BaseMessenger):
                     "No such task - it has been deleted from server."
                 ) from None
             elif response.status_code == 400:
-                raise PlomSeriousException(
-                    "Image file is corrupted. This should not happen"
-                ) from None
+                raise PlomSeriousException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
