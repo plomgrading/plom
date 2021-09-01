@@ -28,9 +28,7 @@ class Test:
 
     def test_scan_finish(self):
         # TODO: we should assert something about values or text output here?
-        subprocess.check_call(
-            split("python3 -m plom.scripts.scan status"), env=self.env
-        )
+        subprocess.check_call(split("python3 -m plom.scan status"), env=self.env)
         r = subprocess.call(
             split("python3 -m plom.scripts.finish status"), env=self.env
         )
@@ -89,9 +87,7 @@ class Test:
         )
 
     def test_scan_finish_after(self):
-        subprocess.check_call(
-            split("python3 -m plom.scripts.scan status"), env=self.env
-        )
+        subprocess.check_call(split("python3 -m plom.scan status"), env=self.env)
         subprocess.check_call(
             split("python3 -m plom.scripts.finish status"), env=self.env
         )
