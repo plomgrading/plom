@@ -586,13 +586,15 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            edition = "_"  # TODO: use two URLs?
+            url = f"https://{self.server}/annotations/{num}/{question}"
+        else:
+            url = f"https://{self.server}/annotations/{num}/{question}/{edition}"
         if integrity is None:
             integrity = ""
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                f"https://{self.server}/MK/annotations/{num}/{question}/{edition}",
+                url,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -642,11 +644,13 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            edition = "_"  # TODO: use two URLs?
+            url = f"https://{self.server}/annotations_image/{num}/{question}"
+        else:
+            url = f"https://{self.server}/annotations_image/{num}/{question}/{edition}"
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                f"https://{self.server}/MK/annotations_image/{num}/{question}/{edition}",
+                url,
                 json={
                     "user": self.user,
                     "token": self.token,
