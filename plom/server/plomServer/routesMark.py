@@ -205,8 +205,8 @@ class MarkHandler:
                 include 3 parts including [metadata, image, plom-file].
 
         Returns:
-            aiohttp.web_response.Response: Responses with a list including the number of
-                graded tasks and the overall number of tasks.
+            aiohttp.web_response.Response: Responses with a list including
+                the number of graded tasks and the overall number of tasks.
         """
 
         log_request("MreturnMarkedTask", request)
@@ -214,11 +214,10 @@ class MarkHandler:
         reader = MultipartReader.from_response(request)
 
         # Dealing with the metadata.
-        task_metadata_object = await reader.next()
-
-        if task_metadata_object is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        task_metadata = await task_metadata_object.json()
+        part = await reader.next()
+        if not part:
+            raise web.HTTPBadRequest(reason="should have sent 3 parts")
+        task_metadata = await part.json()
 
         # Validate that the dictionary has these fields.
         if not validate_required_fields(
@@ -237,39 +236,36 @@ class MarkHandler:
                 "image_md5s",
             ],
         ):
-            return web.Response(status=400)
-        # Validate username and token.
+            raise web.HTTPBadRequest(reason="invalid fields in metadata")
         if not self.server.validate(task_metadata["user"], task_metadata["token"]):
-            return web.Response(status=401)
+            raise web.HTTPUnauthorized()
 
         rubrics = task_metadata["rubrics"]  # list of rubric IDs
-        task_code = request.match_info["task"]
+        task = request.match_info["task"]
 
         # Note: if user isn't validated, we don't parse their binary junk
         # TODO: is it safe to abort during a multi-part thing?
 
         # Dealing with the image.
-        task_image_object = await reader.next()
-
-        if task_image_object is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        task_image = await task_image_object.read()
+        part = await reader.next()
+        if not part:
+            raise web.HTTPBadRequest(reason="should have sent 3 parts")
+        annotated_image = await part.read()
 
         # Dealing with the plom_file.
-        plom_file_object = await reader.next()
+        part = await reader.next()
+        if not part:
+            raise web.HTTPBadRequest(reason="should have sent 3 parts")
+        plomfile = await part.read()
 
-        if plom_file_object is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        plomdat = await plom_file_object.read()
-
-        marked_task_status = self.server.MreturnMarkedTask(
+        status, info = self.server.MreturnMarkedTask(
             task_metadata["user"],
-            task_code,
+            task,
             int(task_metadata["pg"]),
             int(task_metadata["ver"]),
             int(task_metadata["score"]),
-            task_image,
-            plomdat,
+            annotated_image,
+            plomfile,
             rubrics,
             int(task_metadata["mtime"]),
             task_metadata["tags"],
@@ -277,28 +273,21 @@ class MarkHandler:
             task_metadata["integrity_check"],
             task_metadata["image_md5s"],
         )
-        # marked_task_status = either [True, Num Done tasks, Num Totalled tasks] or [False] if error.
-
-        if marked_task_status[0]:
-            num_done_tasks = marked_task_status[1]
-            total_num_tasks = marked_task_status[2]
-            return web.json_response([num_done_tasks, total_num_tasks], status=200)
-        else:
-            if marked_task_status[1] == "no_such_task":
-                log.warning("Returning with error 410 = {}".format(marked_task_status))
-                return web.Response(status=410)
-            elif marked_task_status[1] == "not_owner":
-                log.warning("Returning with error 409 = {}".format(marked_task_status))
-                return web.Response(status=409)
-            elif marked_task_status[1] == "integrity_fail":
-                log.warning("Returning with error 406 = {}".format(marked_task_status))
-                return web.Response(status=406)
-            elif marked_task_status[1] == "invalid_rubric":
-                log.warning("Returning with error 406 = {}".format(marked_task_status))
-                return web.Response(status=406)
+        if not status:
+            log.warning(f"PUT:tasks/{task} giving back error: {info}")
+            if info == "no_such_task":
+                raise web.HTTPGone(reason=info)
+            elif info == "not_owner":
+                raise web.HTTPConflict(reason=info)
+            elif info == "integrity_fail":
+                raise web.HTTPNotAcceptable(reason=info)
+            elif info == "invalid_rubric":
+                raise web.HTTPNotAcceptable(reason=info)
             else:
-                log.warning("Returning with error 400 = {}".format(marked_task_status))
-                return web.Response(status=400)
+                raise web.HTTPBadRequest(reason=str(info))
+
+        # info is tuple of Num Done tasks, Num Totalled tasks
+        return web.json_response(info, status=200)
 
     # @routes.get("/annotations/{number}/{question}/{edition}")
     # TODO: optionally have this integrity field?

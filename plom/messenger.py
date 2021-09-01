@@ -488,8 +488,8 @@ class Messenger(BaseMessenger):
         score,
         mtime,
         tags,
-        aname,
-        pname,
+        annotated_img,
+        plomfile,
         rubrics,
         integrity_check,
         image_md5_list,
@@ -518,7 +518,7 @@ class Messenger(BaseMessenger):
             "mtime": str(mtime),
             "tags": tags,
             "rubrics": rubrics,
-            "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
+            "md5sum": hashlib.md5(open(annotated_img, "rb").read()).hexdigest(),
             "integrity_check": integrity_check,
             "image_md5s": image_md5_list,
         }
@@ -526,8 +526,8 @@ class Messenger(BaseMessenger):
         dat = MultipartEncoder(
             fields={
                 "param": json.dumps(param),
-                "annotated": (aname, open(aname, "rb"), "image/png"),  # image
-                "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
+                "annotated": (annotated_img, open(annotated_img, "rb"), "image/png"),
+                "plom": (plomfile, open(plomfile, "rb"), "text/plain"),
             }
         )
         self.SRmutex.acquire()
@@ -552,9 +552,11 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
-                raise PlomConflict(
-                    "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
-                ) from None
+                if response.text == "integrity_fail":
+                    raise PlomConflict(
+                        "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                    ) from None
+                raise PlomSeriousException(response.text) from None
             elif response.status_code == 409:
                 raise PlomTaskChangedError("Task ownership has changed.") from None
             elif response.status_code == 410:
