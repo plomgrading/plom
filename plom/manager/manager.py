@@ -433,7 +433,7 @@ class Manager(QWidget):
             managerMessenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec_()
-            managerMessenger = None
+            managerMessenger = None  # reset to avoid Issue #1622
             return
 
         try:
@@ -444,7 +444,7 @@ class Manager(QWidget):
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
-            managerMessenger = None
+            managerMessenger = None  # reset to avoid Issue #1622
             return
         except PlomExistingLoginException:
             if (
@@ -460,18 +460,18 @@ class Manager(QWidget):
                 == QMessageBox.Yes
             ):
                 managerMessenger.clearAuthorisation("manager", pwd)
-            managerMessenger = None
+            managerMessenger = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
-            managerMessenger = None
+            managerMessenger = None  # reset to avoid Issue #1622
             return
         except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
             ).exec_()
-            managerMessenger = None
+            managerMessenger = None  # reset to avoid Issue #1622
             return
 
         self.ui.scanningAllTab.setEnabled(True)
