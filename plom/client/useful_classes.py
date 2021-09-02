@@ -40,7 +40,7 @@ class ErrorMessage(QMessageBox):
             deemphasized.
         info_preformatted (bool): True by default which means the info text
             is assumed to be preformatted (whitespace, newlines etc will be
-            preserved.
+            preserved).  Long lines will be wrapped.
     """
 
     def __init__(self, txt, details=None, info=None, info_preformatted=True):
