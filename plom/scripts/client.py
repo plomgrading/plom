@@ -11,7 +11,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import datetime
+from datetime import datetime
 import signal
 import os
 import sys
@@ -23,32 +23,43 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from plom import __version__
 from plom import Default_Port
 from plom.client.chooser import Chooser
+from plom.client.useful_classes import ErrorMessage
 
 
-# Pop up a dialog for unhandled exceptions and then exit
-sys._excepthook = sys.excepthook
+def add_popup_to_toplevel_exception_handler():
+    """Muck around with sys's excepthook to popup dialogs on exception and force exit."""
+    # keep reference to the original hook
+    sys._excepthook = sys.excepthook
+
+    def exception_hook(exctype, value, traceback):
+        lines = tblib.format_exception(exctype, value, traceback)
+        if len(lines) >= 10:
+            abbrev = "".join(["\N{Vertical Ellipsis}\n", *lines[-8:]])
+        else:
+            abbrev = "".join(lines)
+        lines.insert(0, f"Timestamp: {datetime.now()}\n\n")
+        ErrorMessage(
+            """<p><b>Something unexpected has happened!</b>
+            A partial error message is shown below.</p>
+            <p>(You could consider filing an issue; if you do, please copy-paste
+            the entire text under &ldquo;Show Details&rdquo;.)</p>""",
+            info=abbrev,
+            details="".join(lines),
+        ).exec_()
+        # call the original hook after our dialog closes
+        sys._excepthook(exctype, value, traceback)
+        sys.exit(1)
+
+    sys.excepthook = exception_hook
 
 
-def _exception_hook(exctype, value, traceback):
-    s = "".join(tblib.format_exception(exctype, value, traceback))
-    mb = QMessageBox()
-    mb.setText(
-        "!! Something unexpected has happened at {}\n\n"
-        "Please file a bug and copy-paste the following:\n\n"
-        "{}".format(datetime.datetime.now().strftime("%y:%m:%d-%H:%M:%S"), s)
-    )
-    mb.setStandardButtons(QMessageBox.Ok)
-    mb.exec_()
-    sys._excepthook(exctype, value, traceback)
-    sys.exit(1)
-
-
-sys.excepthook = _exception_hook
-
-# in order to have a graceful exit on control-c
-# https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
 def sigint_handler(*args):
-    """Handler for the SIGINT signal."""
+    """Handler for the SIGINT signal.
+
+    This is in order to have a somewhat graceful exit on control-c [1]
+
+    [1] https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
+    """
     sys.stderr.write("\r")
     if (
         QMessageBox.question(
@@ -128,6 +139,7 @@ def main():
     app.setStyle(QStyleFactory.create("Fusion"))
 
     signal.signal(signal.SIGINT, sigint_handler)
+    add_popup_to_toplevel_exception_handler()
 
     # create a small timer here, so that we can
     # kill the app with ctrl-c.

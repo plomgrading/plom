@@ -44,7 +44,17 @@ from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomAPIException,
+    PlomExistingLoginException,
+    PlomAuthenticationException,
+    PlomOwnersLoggedInException,
+    PlomTakenException,
+    PlomNoMoreException,
+)
+from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
 from plom.server.aliceBob import simple_password
 
@@ -55,7 +65,7 @@ class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
     def __init__(self, name=None, extant=[]):
-        super(UserDialog, self).__init__()
+        super().__init__()
         self.name = name
         self.initUI()
         if name is not None:
@@ -144,7 +154,7 @@ class UserDialog(QDialog):
 
 class QVHistogram(QDialog):
     def __init__(self, q, v, hist):
-        super(QVHistogram, self).__init__()
+        super().__init__()
         self.question = q
         self.version = v
         self.setWindowTitle("Histograms")
@@ -214,7 +224,7 @@ class QVHistogram(QDialog):
 
 class TestStatus(QDialog):
     def __init__(self, nq, status):
-        super(TestStatus, self).__init__()
+        super().__init__()
         self.status = status
         self.setWindowTitle("Status of test {}".format(self.status["number"]))
 
@@ -266,7 +276,7 @@ class TestStatus(QDialog):
 
 class ProgressBox(QGroupBox):
     def __init__(self, parent, qu, v, stats):
-        super(ProgressBox, self).__init__()
+        super().__init__()
         self.parent = parent
         self.question = qu
         self.version = v
@@ -332,7 +342,7 @@ class ProgressBox(QGroupBox):
 class Manager(QWidget):
     def __init__(self, parent):
         self.APIVersion = Plom_API_Version
-        super(Manager, self).__init__()
+        super().__init__()
         self.parent = parent
         global managerMessenger
         managerMessenger = None
@@ -422,7 +432,8 @@ class Manager(QWidget):
             managerMessenger = ManagerMessenger(server, mport)
             managerMessenger.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec_()
+            managerMessenger = None  # reset to avoid Issue #1622
             return
 
         try:
@@ -433,8 +444,9 @@ class Manager(QWidget):
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
+            managerMessenger = None  # reset to avoid Issue #1622
             return
-        except PlomExistingLoginException as e:
+        except PlomExistingLoginException:
             if (
                 SimpleMessage(
                     "You appear to be already logged in!\n\n"
@@ -448,15 +460,18 @@ class Manager(QWidget):
                 == QMessageBox.Yes
             ):
                 managerMessenger.clearAuthorisation("manager", pwd)
+            managerMessenger = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            managerMessenger = None  # reset to avoid Issue #1622
             return
         except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
             ).exec_()
+            managerMessenger = None  # reset to avoid Issue #1622
             return
 
         self.ui.scanningAllTab.setEnabled(True)
