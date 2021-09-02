@@ -432,7 +432,7 @@ class Manager(QWidget):
             managerMessenger = ManagerMessenger(server, mport)
             managerMessenger.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec_()
             managerMessenger = None
             return
 
