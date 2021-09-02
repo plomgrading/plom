@@ -26,7 +26,7 @@ from plom.client.chooser import Chooser
 from plom.client.useful_classes import ErrorMessage
 
 
-def exceptionally_exceptional_exception_inserter():
+def add_popup_to_toplevel_exception_handler():
     """Muck around with sys's excepthook to popup dialogs on exception and force exit."""
     # keep reference to the original hook
     sys._excepthook = sys.excepthook
@@ -139,7 +139,7 @@ def main():
     app.setStyle(QStyleFactory.create("Fusion"))
 
     signal.signal(signal.SIGINT, sigint_handler)
-    exceptionally_exceptional_exception_inserter()
+    add_popup_to_toplevel_exception_handler()
 
     # create a small timer here, so that we can
     # kill the app with ctrl-c.

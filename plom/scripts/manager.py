@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory
 from plom.manager.manager import Manager
 from plom import Default_Port
 from plom import __version__
-from plom.scripts.client import exceptionally_exceptional_exception_inserter
+from plom.scripts.client import add_popup_to_toplevel_exception_handler
 from plom.scripts.client import sigint_handler
 
 
@@ -55,7 +55,7 @@ def main():
     app.setStyle(QStyleFactory.create("Fusion"))
 
     signal.signal(signal.SIGINT, sigint_handler)
-    exceptionally_exceptional_exception_inserter()
+    add_popup_to_toplevel_exception_handler()
 
     # create a small timer here, so that we can
     # kill the app with ctrl-c.
