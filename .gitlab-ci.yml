@@ -799,6 +799,131 @@ linuxbin_centos:
     - md5sum
 
 
+# Notes on macOS client builds
+# - build python from src for https://github.com/danhper/asdf-python/issues/38
+# - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
+# - to get hardcoded path: verbose `pip install -v -v pyinstaller`
+macos11_client:
+  image: macos-11-xcode-12
+  tags:
+  - macos
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - asdf which python
+  - asdf uninstall python 3.9.1
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf shell python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
+macos1015_client:
+  image: macos-10.15-xcode-11
+  tags:
+  - macos
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - asdf which python
+  - asdf uninstall python 3.8.0
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf shell python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
+macos1014_client:
+  image: macos-10.14-xcode-10
+  tags:
+  - macos
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf local python 3.9.6
+  - asdf which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
+macos1013_client:
+  image: macos-10.13-xcode-9
+  tags:
+  - macos
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf local python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install PyQt5==5.15.2  # Issue #1434
+  - pip install pyinstaller==4.3  # Issue #1587 codesign failure
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - md5 dist/PlomClient*
+  artifacts:
+    paths:
+    - dist/PlomClient*
+    expire_in: 2 weeks
+
+
 .shared_windows_runners:
   tags:
   - shared-windows
