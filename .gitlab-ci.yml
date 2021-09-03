@@ -130,13 +130,13 @@ tag_matches_ver:
   rules:
    - if: $CI_COMMIT_TAG
   script:
-    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
     - echo "Now comparing to CI_COMMIT_TAG '$CI_COMMIT_TAG'"
     - echo $VER
     - echo $CI_COMMIT_TAG
     # note reversed logic and extra "v"
-    - python -c "exit(not 'v$VER' == '$CI_COMMIT_TAG')"
+    - python3 -c "exit(not 'v$VER' == '$CI_COMMIT_TAG')"
 
 
 black:
@@ -756,7 +756,7 @@ linuxbin_ubuntu2004:
   script:
     - pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
     - mv dist/PlomClient*.bin $NAME
@@ -785,7 +785,7 @@ linuxbin_centos:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-centos7.bin
     - mv dist/PlomClient*.bin $NAME
