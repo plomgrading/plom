@@ -837,7 +837,7 @@ macos11_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export NAME=PlomClient-$VER-linux-macos11.bin
+  - export NAME=PlomClient-$VER-macos11.bin
   - mv dist/PlomClient*.bin $NAME
   - chmod a+x $NAME
   - md5 $NAME > md5sum
@@ -874,7 +874,7 @@ macos1013_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export NAME=PlomClient-$VER-linux-macos.bin
+  - export NAME=PlomClient-$VER-macos.bin
   - mv dist/PlomClient*.bin $NAME
   - chmod a+x $NAME
   - md5 $NAME > md5sum
