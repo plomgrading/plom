@@ -183,10 +183,11 @@ class IDHandler:
         with MultipartWriter("images") as writer:
             image_paths = r[1:]
             for file_name in image_paths:
-                if os.path.isfile(file_name):
+                try:
                     writer.append(open(file_name, "rb"))
-                else:
-                    return web.Response(status=404)
+                except OSError as e:  # file not found, permission, etc
+                    # TODO: these are unexpected, I think it should be 500 (?)
+                    raise web.HTTPNotFound(reason=f"Problem reading image: {e}")
             return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/donotmark_images/{test}")
