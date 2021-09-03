@@ -135,20 +135,20 @@ def IDgetImages(self, user_name, test_number):
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "NoTest"]
+        return (False, "NoTest")
     # grab the IDData
     iref = tref.idgroups[0]
     # check corresponding group is scanned
     if iref.group.scanned is False:
-        return [False, "NoScan"]
+        return (False, "NoScan")
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
-        return [False, "NotOwner"]
-    rval = []
+        return (False, "NotOwner")
+    file_list = []
     for p in iref.idpages.order_by(IDPage.order):
-        rval.append(p.image.file_name)
+        file_list.append(p.image.file_name)
     log.debug("Sending IDpages of test {} to user {}".format(test_number, user_name))
-    return (True, rval)
+    return (True, file_list)
 
 
 def ID_get_donotmark_images(self, test_number):
