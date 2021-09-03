@@ -151,7 +151,17 @@ class IDHandler:
             request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: a multipart object with the images.
+            aiohttp.web_response.Response: If successful, then status 200
+                is returned with a multipart object of the images.  This
+                list might be empty.  None-successful return values include
+                    HTTPBadRequest: authentication problem.
+                    HTTPNotFound (404): no such paper.
+                    HTTPConflict (409): not the owner, or not manager.
+                    HTTPGone (410): the paper is not scanned *and* was not ID'd.
+                        Note: if the paper is not fully scanned---specifically
+                        if the ID pages are not scanned but nonetheless the
+                        paper is marked, then you won't get 410, but rather 200
+                        with an empty list.
         """
         test_number = request.match_info["test"]
 
@@ -163,11 +173,12 @@ class IDHandler:
             # can fail for 3 reasons - "not owner", "no such scan", "no such test"
             fail_message = r[1]
             if fail_message == "NotOwner":
-                return web.Response(status=409)  # someone else has that image
+                raise web.HTTPConflict(reason="Not owner, someone else has that image")
             elif fail_message == "NoScan":
-                return web.Response(status=410)
+                # TODO: is this the right message?
+                raise web.HTTPGone(reason="Paper has no scans and is not ID'd/marked")
             else:  # fail_message == "NoTest":
-                return web.Response(status=404)
+                raise web.HTTPNotFound(reason="No such paper")
 
         with MultipartWriter("images") as writer:
             image_paths = r[1:]
