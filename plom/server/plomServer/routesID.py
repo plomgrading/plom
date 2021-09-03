@@ -175,7 +175,9 @@ class IDHandler:
                 raise web.HTTPConflict(reason="Not owner, someone else has that image")
             elif output == "NoScan":
                 # TODO: is this the right message?
-                raise web.HTTPGone(reason="Paper has no scans and is not ID'd/marked")
+                raise web.HTTPGone(
+                    reason="Paper has not been ID'd and the ID-pages have not been scanned"
+                )
             else:  # output == "NoTest":
                 raise web.HTTPNotFound(reason="No such paper")
 

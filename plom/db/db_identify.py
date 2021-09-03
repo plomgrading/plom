@@ -138,8 +138,15 @@ def IDgetImages(self, user_name, test_number):
         return (False, "NoTest")
     # grab the IDData
     iref = tref.idgroups[0]
-    # check corresponding group is scanned
-    if iref.group.scanned is False:
+    # Now check corresponding group has been scanned.
+    # Note that if the group is unscanned, and the test has not
+    # been identified then we have a problem.
+    # However, if the test has been identified, but ID group unscanned,
+    # then this is okay (fixes #1629).
+    # This is precisely what will happen when using plom for homework, there
+    # are no id-pages (so idgroup is unscanned), but the system automagically
+    # identifies the test.
+    if iref.group.scanned is False and tref.identified is False:
         return (False, "NoScan")
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
