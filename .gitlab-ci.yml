@@ -711,6 +711,7 @@ binary_upload:
   artifacts:
     paths:
       - release_desc.md
+    expire_in: 30 days
 
 
 # Build Client Binaries
@@ -742,6 +743,7 @@ linuxbin_ubuntu1804:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
 linuxbin_ubuntu2004:
@@ -770,6 +772,7 @@ linuxbin_ubuntu2004:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
 # TODO: consider doing only on the master branch and only when tests pass
@@ -799,6 +802,7 @@ linuxbin_centos:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
 # Notes on macOS client builds
@@ -843,7 +847,7 @@ macos11_client:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 2 weeks
+    expire_in: 30 days
 
 
 macos1013_client:
@@ -878,9 +882,9 @@ macos1013_client:
   - cat md5sum
   artifacts:
     paths:
-    - PlomClient*
+    - PlomClient*.bin
     - md5sum
-    expire_in: 2 weeks
+    expire_in: 30 days
 
 
 .shared_windows_runners:
@@ -935,3 +939,4 @@ winpyinst:
     paths:
     - PlomClient*.exe
     - md5sum.txt
+    expire_in: 30 days
