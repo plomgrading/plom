@@ -144,11 +144,11 @@ def IDgetImages(self, user_name, test_number):
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
         return [False, "NotOwner"]
-    rval = [True]
+    rval = []
     for p in iref.idpages.order_by(IDPage.order):
         rval.append(p.image.file_name)
     log.debug("Sending IDpages of test {} to user {}".format(test_number, user_name))
-    return rval
+    return (True, rval)
 
 
 def ID_get_donotmark_images(self, test_number):

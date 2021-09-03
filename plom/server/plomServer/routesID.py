@@ -165,24 +165,19 @@ class IDHandler:
         """
         test_number = request.match_info["test"]
 
-        r = self.server.IDgetImages(data["user"], test_number)
-        # is either user allowed access - returns [true, fname0, fname1,...]
-        # or fails - return [false, message]
+        status, output = self.server.IDgetImages(data["user"], test_number)
 
-        if not r[0]:
-            # can fail for 3 reasons - "not owner", "no such scan", "no such test"
-            fail_message = r[1]
-            if fail_message == "NotOwner":
+        if not status:
+            if output == "NotOwner":
                 raise web.HTTPConflict(reason="Not owner, someone else has that image")
-            elif fail_message == "NoScan":
+            elif output == "NoScan":
                 # TODO: is this the right message?
                 raise web.HTTPGone(reason="Paper has no scans and is not ID'd/marked")
-            else:  # fail_message == "NoTest":
+            else:  # output == "NoTest":
                 raise web.HTTPNotFound(reason="No such paper")
 
         with MultipartWriter("images") as writer:
-            image_paths = r[1:]
-            for file_name in image_paths:
+            for file_name in output:
                 try:
                     writer.append(open(file_name, "rb"))
                 except OSError as e:  # file not found, permission, etc
