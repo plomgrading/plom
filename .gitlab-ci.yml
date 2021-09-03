@@ -690,6 +690,8 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "$URL2"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME4 "$URL4"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
     - echo "" >> release_desc.md
@@ -829,10 +831,18 @@ macos11_client:
   - pip install pyinstaller
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
-  - md5 dist/PlomClient*
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export NAME=PlomClient-$VER-linux-macos11.bin
+  - mv dist/PlomClient*.bin $NAME
+  - chmod a+x $NAME
+  - md5 $NAME > md5sum
+  - ls $NAME
+  - cat md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
+    - PlomClient*.bin
+    - md5sum
     expire_in: 2 weeks
 
 
@@ -858,10 +868,18 @@ macos1013_client:
   - pip install pyinstaller==4.3  # Issue #1587 codesign failure
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
-  - md5 dist/PlomClient*
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export NAME=PlomClient-$VER-linux-macos.bin
+  - mv dist/PlomClient*.bin $NAME
+  - chmod a+x $NAME
+  - md5 $NAME > md5sum
+  - ls $NAME
+  - cat md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
+    - PlomClient*
+    - md5sum
     expire_in: 2 weeks
 
 
