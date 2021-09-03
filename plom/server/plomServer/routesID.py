@@ -157,11 +157,14 @@ class IDHandler:
                     HTTPBadRequest: authentication problem.
                     HTTPNotFound (404): no such paper.
                     HTTPConflict (409): not the owner, or not manager.
-                    HTTPGone (410): the paper is not scanned *and* was not ID'd.
+                    HTTPGone (410): the paper is not scanned *and* has not been ID'd.
                         Note: if the paper is not fully scanned---specifically
                         if the ID pages are not scanned but nonetheless the
-                        paper is marked, then you won't get 410, but rather 200
-                        with an empty list.
+                        paper is identified, then you won't get 410, but rather 200
+                        with an empty list. This is required to handle the case of HW
+                        uploads in which we know the student associated with the paper
+                        but there are no ID-pages (and so the associated ID group is
+                        unscanned).
         """
         test_number = request.match_info["test"]
 
