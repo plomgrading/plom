@@ -162,15 +162,23 @@ def ID_get_donotmark_images(self, test_number):
     """Return the DoNotMark page images of a paper."""
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "NoTest"]
+        return (False, "NoTest")
     iref = tref.dnmgroups[0]
-    if iref.group.scanned is False:
-        return [False, "NoScan"]
-    rval = [True]
+    # Now check corresponding group has been scanned.
+    # Note that if the group is unscanned, and the test has not
+    # been identified then we have a problem.
+    # However, if the test has been identified, but DNM group unscanned,
+    # then this is okay (fixes #1629).
+    # This is precisely what will happen when using plom for homework, there
+    # are no dnm-pages (so dnmgroup is unscanned), but the system automagically
+    # identifies the test.
+    if iref.group.scanned is False and tref.identified is False:
+        return (False, "NoScan")
+    file_list = []
     for p in iref.dnmpages.order_by(DNMPage.order):
-        rval.append(p.image.file_name)
+        file_list.append(p.image.file_name)
     log.debug(f"Sending DNMpages of test {test_number}")
-    return rval
+    return (True, file_list)
 
 
 def IDgetImageByNumber(self, image_number):
