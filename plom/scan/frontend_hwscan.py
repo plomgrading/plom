@@ -14,10 +14,12 @@ If you instead are dealing with QR-coded pages where you may not yet know
 which pages belong to which student, see :py:module:`frontend_scan`.
 """
 
+import ast
 from collections import defaultdict
 import os
 from pathlib import Path
 
+import fitz
 import toml
 
 from plom.scan.sendPagesToServer import (
@@ -34,6 +36,7 @@ from plom.scan.bundle_utils import (
     archiveLBundle,
     archiveHWBundle,
 )
+from plom.scan.checkScanStatus import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan.scansToImages import process_scans
 from plom.scan import checkScanStatus
@@ -142,6 +145,64 @@ def processLooseScans(
     archiveLBundle(pdf_fname)
 
 
+def _parse_questions(s):
+    if isinstance(s, str):
+        if s.casefold() == "all":
+            return "all"
+        s = ast.literal_eval(s)
+    return s
+
+
+def canonicalize_question_list(s, pages, numquestions):
+    """Make a canonical page-to-questions mapping from various shorthand inputs.
+
+    args:
+        s (str/list/tuple): the input, can be a special string "all"
+            or a string which we will parse.  Or an integer.  Or a list
+            of ints, or a list of list of ints.
+        pages (int): how many pages, used for checking input.
+        numquestins (int): how many questions total, used for checking
+            input.
+    """
+    s = _parse_questions(s)
+    if s == "all":
+        s = range(1, numquestions + 1)
+
+    if isinstance(s, str):
+        raise ValueError('question cannot be a string, unless its "all"')
+
+    if isinstance(s, int):
+        s = [s]
+
+    if isinstance(s, dict):
+        raise NotImplementedError("a dict seems very sensible but is not implemented")
+
+    # TypeError if not iterable
+    iter(s)
+
+    # are the contents themselves iterable?
+    try:
+        iter(s[0])
+    except TypeError:
+        # if not, repeat the list for each page
+        s = [s] * pages
+
+    if len(s) != pages:
+        raise ValueError(f"list too short: need one list for each of {pages} pages")
+
+    # cast to lists
+    s = [list(qlist) for qlist in s]
+
+    # finally we should have a canonical list-of-lists-of-ints
+    for qlist in s:
+        for qnum in qlist:
+            if not isinstance(qnum, int):
+                raise ValueError(f"non-integer question value {qnum}")
+            if qnum < 1 or qnum > numquestions:
+                raise ValueError(f"question value {qnum} outside [1, {numquestions}]")
+    return s
+
+
 def processHWScans(
     server,
     password,
@@ -162,8 +223,18 @@ def processHWScans(
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
         student_id (str)
-        questions (list): list of integers of which questions this
-            bundle covers.
+        questions (list): to which questions should we upload the pages
+            of this bundle?
+              * a scalar number: all pages map to this question.
+              * a list of integers: all pages map to those questions.
+              * the string "all" maps each pages to all questions.
+              * a list-of-lists specifying which questions each page
+                maps onto, e.g., `[[1],[1,2],[2]]` maps page 1 onto
+                question 1, page 2 onto questions 1 and 2, and page 3
+                onto question 2.
+            Any string input will parsed to find the above options.
+            Tuples or other iterables should be in place of lists.
+            TODO: Currently `dict` are not supported, subject to change.
 
     kwargs:
         basedir (pathlib.Path): where on the file system do we perform
@@ -174,6 +245,9 @@ def processHWScans(
         gamma (bool):
         extractbmp (bool):
 
+    returns:
+        None
+
     Ask server to map student_id to a test-number; these should have been
     pre-populated on test-generation and if id not known there is an error.
 
@@ -183,26 +257,12 @@ def processHWScans(
 
     Process PDF into images.
 
-    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
+    Ask server to create the bundle, which tells us the `skip_list`
+    which is a list of bundle-orders (i.e., page number within the PDF)
+    that have already been uploaded. In typical use this will be empty.
 
     Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
     """
-
-    def check_question_types(questions):
-        if not isinstance(questions, (tuple, list)):
-            return False
-        for q in questions:
-            if isinstance(q, (tuple, list)):
-                for qq in q:
-                    if not isinstance(qq, int):
-                        return False
-            elif not isinstance(q, int):
-                return False
-        return True
-
-    if not check_question_types(questions):
-        raise ValueError("`questions` expects list-of-ints or list-of-list-of-ints")
-
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
         raise ValueError(f"Cannot find file {pdf_fname}")
@@ -216,6 +276,10 @@ def processHWScans(
             pdf_fname.name, qlabel, questions, student_id
         )
     )
+
+    N = get_number_of_questions(server, password)
+    num_pages = len(fitz.open(pdf_fname))
+    questions = canonicalize_question_list(questions, pages=num_pages, numquestions=N)
 
     test_number = checkTestHasThatSID(student_id, server, password)
     if test_number is None:
@@ -270,11 +334,8 @@ def processHWScans(
             )
         raise RuntimeError("Stopping, see above")
 
-    N = len(files)
-    # TODO: move up to preproc questions?  need to know N though...
-    if not isinstance(questions[0], (list, tuple)):
-        questions = [questions] * N
-    file_list = zip(range(1, N + 1), files, questions)
+    assert len(files) == num_pages, "Inconsistent page counts, something bad happening!"
+    file_list = zip(range(1, num_pages + 1), files, questions)
 
     # TODO: filter skiplist for already uploaded files
     assert len(skip_list) == 0, "TODO: we don't really support skiplist for HW pages"

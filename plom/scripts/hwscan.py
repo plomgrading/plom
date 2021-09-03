@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 
 from plom import __version__
-from plom.scan import get_number_of_questions
 from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
@@ -213,14 +212,6 @@ def main():
             )
         else:
             questions = args.question[0]  # args passes '[q]' rather than just 'q'
-            if questions == "all":
-                N = get_number_of_questions(args.server, args.password)
-                questions = list(range(1, N + 1))
-            elif "[" in questions:
-                # TODO: scary eval
-                questions = eval(questions)
-            else:
-                questions = [int(x) for x in questions.split(",")]
             processHWScans(
                 args.server,
                 args.password,
