@@ -690,6 +690,8 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "$URL2"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME4 "$URL4"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
     - echo "" >> release_desc.md
@@ -709,6 +711,7 @@ binary_upload:
   artifacts:
     paths:
       - release_desc.md
+    expire_in: 30 days
 
 
 # Build Client Binaries
@@ -740,6 +743,7 @@ linuxbin_ubuntu1804:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
 linuxbin_ubuntu2004:
@@ -768,6 +772,7 @@ linuxbin_ubuntu2004:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
 # TODO: consider doing only on the master branch and only when tests pass
@@ -797,12 +802,14 @@ linuxbin_centos:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
 # Notes on macOS client builds
 # - build python from src for https://github.com/danhper/asdf-python/issues/38
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
+# - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
 macos11_client:
   image: macos-11-xcode-12
   tags:
@@ -828,71 +835,19 @@ macos11_client:
   - pip install pyinstaller
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
-  - md5 dist/PlomClient*
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export NAME=PlomClient-$VER-macos11.bin
+  - mv dist/PlomClient*.bin $NAME
+  - chmod a+x $NAME
+  - md5 $NAME > md5sum
+  - ls $NAME
+  - cat md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
-
-
-macos1015_client:
-  image: macos-10.15-xcode-11
-  tags:
-  - macos
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - which python
-  - python --version
-  - pip --version
-  - asdf current
-  - asdf which python
-  - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
-  - asdf which python
-  - asdf shell python 3.9.6
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - md5 dist/PlomClient*
-  artifacts:
-    paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
-
-
-macos1014_client:
-  image: macos-10.14-xcode-10
-  tags:
-  - macos
-  stage: packaging
-  script:
-  - sw_vers
-  - echo $SHELL
-  - asdf current
-  - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
-  - asdf local python 3.9.6
-  - asdf which python
-  - python --version
-  - pip --version
-  - python -m pip install --upgrade pip
-  - pip --version
-  - pip install -r requirements.txt.client
-  - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
-  - ls dist/
-  - md5 dist/PlomClient*
-  artifacts:
-    paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
+    - PlomClient*.bin
+    - md5sum
+    expire_in: 30 days
 
 
 macos1013_client:
@@ -917,11 +872,19 @@ macos1013_client:
   - pip install pyinstaller==4.3  # Issue #1587 codesign failure
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
   - ls dist/
-  - md5 dist/PlomClient*
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export NAME=PlomClient-$VER-macos.bin
+  - mv dist/PlomClient*.bin $NAME
+  - chmod a+x $NAME
+  - md5 $NAME > md5sum
+  - ls $NAME
+  - cat md5sum
   artifacts:
     paths:
-    - dist/PlomClient*
-    expire_in: 2 weeks
+    - PlomClient*.bin
+    - md5sum
+    expire_in: 30 days
 
 
 .shared_windows_runners:
@@ -976,3 +939,4 @@ winpyinst:
     paths:
     - PlomClient*.exe
     - md5sum.txt
+    expire_in: 30 days
