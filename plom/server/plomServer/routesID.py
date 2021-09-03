@@ -151,9 +151,10 @@ class IDHandler:
             request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_response.Response: If successful, then status 200
-                is returned with a multipart object of the images.  This
-                list might be empty.  None-successful return values include
+            aiohttp.web_response.Response: If successful, then either
+            status 200 is returned with a (positive length) multipart
+            object of the images, or status 204 is returned when no
+            images. None-successful return values include
                     HTTPBadRequest: authentication problem.
                     HTTPNotFound (404): no such paper.
                     HTTPConflict (409): not the owner, or not manager.
@@ -181,7 +182,12 @@ class IDHandler:
             else:  # output == "NoTest":
                 raise web.HTTPNotFound(reason="No such paper")
 
+        # if there are no such files return a success but with code 204 = no content.
+        if len(output) == 0:
+            return web.Response(status=204)
+
         with MultipartWriter("images") as writer:
+            print("Len output = ", len(output))
             for file_name in output:
                 try:
                     writer.append(open(file_name, "rb"))

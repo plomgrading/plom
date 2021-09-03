@@ -504,10 +504,14 @@ class BaseMessenger:
             )
             response.raise_for_status()
             imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
+            # check for code 200 or 204 response
+            if response.status_code == 200:
+                for img in MultipartDecoder.from_response(response).parts:
+                    imageList.append(
+                        BytesIO(img.content).getvalue()
+                    )  # pass back image as bytes
+            else:  # is 204 response, so leave imageList blank.
+                pass
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
