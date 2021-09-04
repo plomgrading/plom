@@ -222,8 +222,6 @@ class IDHandler:
         test_number = request.match_info["test"]
 
         status, output = self.server.ID_get_donotmark_images(test_number)
-        # is either user allowed access - returns (true, [fname0, fname1,...])
-        # or fails - return (false, message)
 
         if not status:
             if output == "NoScanAndNotIDd":
