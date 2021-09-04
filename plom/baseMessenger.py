@@ -503,15 +503,14 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
-            imageList = []
             # check for code 200 or 204 response
             if response.status_code == 200:
-                for img in MultipartDecoder.from_response(response).parts:
-                    imageList.append(
-                        BytesIO(img.content).getvalue()
-                    )  # pass back image as bytes
-            else:  # is 204 response, so leave imageList blank.
-                pass
+                return [
+                    BytesIO(img.content).getvalue()
+                    for img in MultipartDecoder.from_response(response).parts
+                ]
+            else:  # must be 204 empty-list
+                return []
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -535,8 +534,6 @@ class BaseMessenger:
                 ) from None
         finally:
             self.SRmutex.release()
-
-        return imageList
 
     def request_donotmark_images(self, papernum):
         """Get the various Do Not Mark images for a paper."""
