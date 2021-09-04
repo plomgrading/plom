@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-from plom.finish.locationSpecCheck import locationAndSpecCheck
 from plom.finish.examReassembler import reassemble
 
 
@@ -79,9 +78,6 @@ def main(server=None, pwd=None):
 
     try:
         shortName = msgr.getInfoShortName()
-        spec = msgr.get_spec()
-        if not locationAndSpecCheck(spec):
-            raise RuntimeError("Problems confirming location and specification.")
 
         outdir = Path("reassembled_ID_but_not_marked")
         outdir.mkdir(exist_ok=True)
