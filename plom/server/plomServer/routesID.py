@@ -154,7 +154,7 @@ class IDHandler:
             aiohttp.web_response.Response: If successful, then either
             status 200 is returned with a (positive length) multipart
             object of the images, or status 204 is returned when no
-            images. None-successful return values include
+            images. Unsuccessful return values include:
                     HTTPBadRequest: authentication problem.
                     HTTPNotFound (404): no such paper.
                     HTTPConflict (409): not the owner, or not manager.
@@ -208,7 +208,7 @@ class IDHandler:
             aiohttp.web_response.Response: If successful, then either
             status 200 is returned with a (positive length) multipart
             object of the images, or status 204 is returned when no
-            images. None-successful return values include
+            images. Unsuccessful return values include:
                     HTTPBadRequest: authentication problem.
                     HTTPNotFound (404): no such paper.
                     HTTPGone (410): the paper is not scanned *and* has not been ID'd.
