@@ -129,7 +129,17 @@ def IDgetDoneTasks(self, user_name):
 
 
 def IDgetImages(self, user_name, test_number):
-    """Return ID page images of a paper."""
+    """Return ID page images of a paper.
+
+    args:
+        user_name (str)
+        test_number (int)
+
+    Returns:
+        2-tuple: `(True, file_list)` where `file_list` is a possibly-empty
+            list of file names.  Otherwise, `(False, "NoTest")` or
+            `(False, "NoScanAndNotIDd")` or `(False, "NotOwner")`.
+    """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
@@ -147,7 +157,7 @@ def IDgetImages(self, user_name, test_number):
     # are no id-pages (so idgroup is unscanned), but the system automagically
     # identifies the test.
     if iref.group.scanned is False and tref.identified is False:
-        return (False, "NoScan")
+        return (False, "NoScanAndNotIDd")
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
         return (False, "NotOwner")
@@ -159,7 +169,16 @@ def IDgetImages(self, user_name, test_number):
 
 
 def ID_get_donotmark_images(self, test_number):
-    """Return the DoNotMark page images of a paper."""
+    """Return the DoNotMark page images of a paper.
+
+    args:
+        test_number (int)
+
+    Returns:
+        2-tuple: `(True, file_list)` where `file_list` is a possibly-empty
+            list of file names.  Otherwise, `(False, "NoTest")` or
+            `(False, "NoScanAndNotIDd")`.
+    """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
         return (False, "NoTest")
@@ -173,7 +192,7 @@ def ID_get_donotmark_images(self, test_number):
     # are no dnm-pages (so dnmgroup is unscanned), but the system automagically
     # identifies the test.
     if iref.group.scanned is False and tref.identified is False:
-        return (False, "NoScan")
+        return (False, "NoScanAndNotIDd")
     file_list = []
     for p in iref.dnmpages.order_by(DNMPage.order):
         file_list.append(p.image.file_name)

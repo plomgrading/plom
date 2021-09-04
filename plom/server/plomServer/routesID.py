@@ -173,7 +173,7 @@ class IDHandler:
         if not status:
             if output == "NotOwner":
                 raise web.HTTPConflict(reason="Not owner, someone else has that image")
-            elif output == "NoScan":
+            elif output == "NoScanAndNotIDd":
                 raise web.HTTPGone(
                     reason="Paper has not been ID'd and the ID-pages have not been scanned"
                 )
@@ -226,7 +226,7 @@ class IDHandler:
         # or fails - return (false, message)
 
         if not status:
-            if output == "NoScan":
+            if output == "NoScanAndNotIDd":
                 return web.Response(status=410)
             else:  # fail_message == "NoTest":
                 return web.Response(status=404)
