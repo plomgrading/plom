@@ -144,38 +144,53 @@ class IDHandler:
     def IDgetImages(self, data, request):
         """Return the ID page images for a specified paper number.
 
-        Responds with status 200/404/409/410.
+        Responds with status 200/204/404/409/410.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
             request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: a multipart object with the images.
+            aiohttp.web_response.Response: If successful, then either
+            status 200 is returned with a (positive length) multipart
+            object of the images, or status 204 is returned when no
+            images. Unsuccessful return values include:
+                    HTTPBadRequest: authentication problem.
+                    HTTPNotFound (404): no such paper.
+                    HTTPConflict (409): not the owner, or not manager.
+                    HTTPGone (410): the paper is not scanned *and* has not been ID'd.
+                        Note: if the paper is not fully scanned---specifically
+                        if the ID pages are not scanned but nonetheless the
+                        paper is identified, then you won't get 410, but rather 204.
+                        This is required to handle the case of HW uploads in which
+                        we know the student associated with the paper but there are
+                        no ID-pages (and so the associated ID group is unscanned).
         """
         test_number = request.match_info["test"]
 
-        r = self.server.IDgetImages(data["user"], test_number)
-        # is either user allowed access - returns [true, fname0, fname1,...]
-        # or fails - return [false, message]
+        status, output = self.server.IDgetImages(data["user"], test_number)
 
-        if not r[0]:
-            # can fail for 3 reasons - "not owner", "no such scan", "no such test"
-            fail_message = r[1]
-            if fail_message == "NotOwner":
-                return web.Response(status=409)  # someone else has that image
-            elif fail_message == "NoScan":
-                return web.Response(status=410)
-            else:  # fail_message == "NoTest":
-                return web.Response(status=404)
+        if not status:
+            if output == "NotOwner":
+                raise web.HTTPConflict(reason="Not owner, someone else has that image")
+            elif output == "NoScanAndNotIDd":
+                raise web.HTTPGone(
+                    reason="Paper has not been ID'd and the ID-pages have not been scanned"
+                )
+            else:  # output == "NoTest":
+                raise web.HTTPNotFound(reason="No such paper")
+
+        # if there are no such files return a success but with code 204 = no content.
+        if len(output) == 0:
+            return web.Response(status=204)
 
         with MultipartWriter("images") as writer:
-            image_paths = r[1:]
-            for file_name in image_paths:
-                if os.path.isfile(file_name):
+            for file_name in output:
+                try:
                     writer.append(open(file_name, "rb"))
-                else:
-                    return web.Response(status=404)
+                except OSError as e:  # file not found, permission, etc
+                    # TODO: these are unexpected, I think it should be 500 (?)
+                    raise web.HTTPNotFound(reason=f"Problem reading image: {e}")
             return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/donotmark_images/{test}")
@@ -183,35 +198,48 @@ class IDHandler:
     def ID_get_donotmark_images(self, data, request):
         """Return the Do Not Mark page images for a specified paper number.
 
-        Responds with status 200/404/409/410.
+        Responds with status 200/204/404/410.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
             request (aiohttp.web_request.Request):
 
         Returns:
-            aiohttp.web_fileresponse.FileResponse: a multipart object with the images.
+            aiohttp.web_response.Response: If successful, then either
+            status 200 is returned with a (positive length) multipart
+            object of the images, or status 204 is returned when no
+            images. Unsuccessful return values include:
+                    HTTPBadRequest: authentication problem.
+                    HTTPNotFound (404): no such paper.
+                    HTTPGone (410): the paper is not scanned *and* has not been ID'd.
+                        Note: if the paper is not fully scanned---specifically
+                        if the DNM pages are not scanned but nonetheless the
+                        paper is identified, then you won't get 410, but rather 204.
+                        This is required to handle the case of HW uploads in which
+                        we know the student associated with the paper but there are
+                        no DNM-pages (and so the associated DNM group is unscanned).
         """
         test_number = request.match_info["test"]
 
-        r = self.server.ID_get_donotmark_images(test_number)
-        # is either user allowed access - returns [true, fname0, fname1,...]
-        # or fails - return [false, message]
+        status, output = self.server.ID_get_donotmark_images(test_number)
 
-        if not r[0]:
-            fail_message = r[1]
-            if fail_message == "NoScan":
+        if not status:
+            if output == "NoScanAndNotIDd":
                 return web.Response(status=410)
             else:  # fail_message == "NoTest":
                 return web.Response(status=404)
 
+        # if there are no such files return a success but with code 204 = no content.
+        if len(output) == 0:
+            return web.Response(status=204)
+
         with MultipartWriter("images") as writer:
-            image_paths = r[1:]
-            for file_name in image_paths:
-                if os.path.isfile(file_name):
+            for file_name in output:
+                try:
                     writer.append(open(file_name, "rb"))
-                else:
-                    return web.Response(status=404)
+                except OSError as e:  # file not found, permission, etc
+                    # TODO: these are unexpected, I think it should be 500 (?)
+                    raise web.HTTPNotFound(reason=f"Problem reading image: {e}")
             return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/tasks/available")
