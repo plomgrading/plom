@@ -3,19 +3,18 @@
 # Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-from stdiomask import getpass
 from multiprocessing import Pool
 import os
 from pathlib import Path
 import shutil
 import tempfile
 
+from stdiomask import getpass
 from tqdm import tqdm
 
 from plom import get_question_label
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-from plom.finish.locationSpecCheck import locationAndSpecCheck
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
@@ -123,14 +122,12 @@ def main(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorisation run `plom-finish clear`."
         )
-        exit(1)
+        raise
 
     try:
         shortName = msgr.getInfoShortName()
         spec = msgr.get_spec()
         num_questions = spec["numberOfQuestions"]
-        if not locationAndSpecCheck(spec):
-            raise RuntimeError("Problems confirming location and specification.")
 
         outdir = Path("reassembled")
         outdir.mkdir(exist_ok=True)
