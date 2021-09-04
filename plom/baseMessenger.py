@@ -503,14 +503,12 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
-            # check for code 200 or 204 response
-            if response.status_code == 200:
-                return [
-                    BytesIO(img.content).getvalue()
-                    for img in MultipartDecoder.from_response(response).parts
-                ]
-            else:  # must be 204 empty-list
-                return []
+            if response.status_code == 204:
+                return []  # 204 is empty list
+            return [
+                BytesIO(img.content).getvalue()
+                for img in MultipartDecoder.from_response(response).parts
+            ]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -545,14 +543,12 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
-            # check for code 200 or 204 response
-            if response.status_code == 200:
-                return [
-                    BytesIO(img.content).getvalue()
-                    for img in MultipartDecoder.from_response(response).parts
-                ]
-            else:  # must be 204 empty-list
-                return []
+            if response.status_code == 204:
+                return []  # 204 is empty list
+            return [
+                BytesIO(img.content).getvalue()
+                for img in MultipartDecoder.from_response(response).parts
+            ]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
