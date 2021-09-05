@@ -50,10 +50,11 @@ class IDHandler:
             class 'aiohttp.web_fileresponse.FileResponse: A file response that includes the classlist.
         """
         try:
-            with open(specdir / "classlist.csv") as csvfile:
-                reader = csv.reader(csvfile)
-                next(reader)  # skip header row
-                classlist = list(reader)
+            with open(specdir / "classlist.csv") as f:
+                reader = csv.DictReader(f)
+                classlist = []
+                for row in reader:
+                    classlist.append((row["id"], row["studentName"]))
         except FileNotFoundError:
             raise web.HTTPNotFound(reason="classlist not found")
         return web.json_response(classlist)
