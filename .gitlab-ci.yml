@@ -251,6 +251,22 @@ hwdemoserver:
     - plom-hwscan missing -w 4567 -y
     - plom-hwscan submitted -w 4567
     - plom-hwscan submitted -d
+    - export PLOM_USER=user0
+    - export PLOM_PASSWORD=0123
+    - export PLOM_MANAGER_PASSWORD=1234
+    - python3 -m plom.client.randoMarker
+    - plom-finish status
+    - plom-finish csv
+    - A=`cat marks.csv  | wc -l`     # How many lines?
+    - echo $A
+    - bash -c "[[ $A -le 11 ]]"      # 10 named papers
+    - bash -c "[[ $A -ge 9 ]]"       # TODO: why 8 papers?
+    - file marks.csv
+    - file marks.csv | grep text
+    - plom-finish reassemble
+    - B=`ls reassembled/ | wc -l`    # How many files?
+    - echo $B
+    - bash -c "[[ $B == 8 ]]         # TODO: why 8?  is it always 8?
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
