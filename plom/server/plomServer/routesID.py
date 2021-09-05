@@ -39,22 +39,21 @@ class IDHandler:
     def IDgetClasslist(self):
         """Returns the classlist to the client.
 
+        The classlist is an ordered list of dicts where each row has
+        at least the primary key `"id"` and `"studentName"`.  It may
+        contain other rows.
+
         Used, for example, to fill in the student details for the searchbar autofill.
 
         Responds with status success or HTTPNotFound.
 
-        The classlist is a ordered list of (student ID, student name)
-        pairs.
-
         Returns:
-            class 'aiohttp.web_fileresponse.FileResponse: A file response that includes the classlist.
+            class 'aiohttp.json_response: list of dicts as above.
         """
         try:
             with open(specdir / "classlist.csv") as f:
                 reader = csv.DictReader(f)
-                classlist = []
-                for row in reader:
-                    classlist.append((row["id"], row["studentName"]))
+                classlist = list(reader)
         except FileNotFoundError:
             raise web.HTTPNotFound(reason="classlist not found")
         return web.json_response(classlist)
@@ -72,7 +71,8 @@ class IDHandler:
         is anticipated this restriction will be removed in favour of
         an agnostic key.  There can be other keys which should be
         homogeneous between rows (TODO: not well-specified what happens
-        if not).
+        if not).  These other fields will be given back if you get the
+        classlist later.
 
         Side effects on the server test spec file:
           * If numberToName and/or numberToProduce are -1, values are

@@ -315,6 +315,9 @@ class BaseMessenger:
             # response.encoding = 'utf-8'
             # classlist = StringIO(response.text)
             classlist = response.json()
+            # post-process to list of 2-tuples
+            classlist = [(x["id"], x["studentName"]) for x in classlist]
+            return classlist
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -326,8 +329,6 @@ class BaseMessenger:
                 ) from None
         finally:
             self.SRmutex.release()
-
-        return classlist
 
     def McreateRubric(self, new_rubric):
         """Ask server to make a new rubric and get key back.
