@@ -261,15 +261,15 @@ hwdemoserver:
     - plom-finish csv
     - A=`cat marks.csv  | wc -l`     # How many lines?
     - echo $A
-    - bash -c "[[ $A -le 11 ]]"      # 10 named papers
-    - bash -c "[[ $A -ge 5 ]]"       # TODO: so why not 10? Issue #1641
+    - A="$((A-1))"
+    - bash -c "[[ $A -le 10 ]]"      # 10 named papers
+    - bash -c "[[ $A == 6 ]]"        # TODO: hwFaker still has "loose" legacy
     - file marks.csv
     - file marks.csv | grep text
     - plom-finish reassemble
     - B=`ls reassembled/ | wc -l`    # How many files?
     - echo $B
-    # TODO: should be $A - 1?
-    # bash -c "[[ $B == 8 ]]"
+    - bash -c "[[ $B == $A ]]"
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
