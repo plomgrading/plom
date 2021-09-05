@@ -66,12 +66,17 @@ class IDHandler:
 
         Only "manager" can perform this action.
 
-        The classlist should be provided as a ordered list of (str, str)
-        pairs where each pair is (student ID, student name).
+        The classlist should be provided as list of dicts.  Each row
+        must contain `"id"` and `"studentNumber"` keys (case matters).
+        Current `id` must be a UBC-style student number, although it
+        is anticipated this restriction will be removed in favour of
+        an agnostic key.  There can be other keys which should be
+        homogeneous between rows (TODO: not well-specified what happens
+        if not).
 
         Side effects on the server test spec file:
           * If numberToName and/or numberToProduce are -1, values are
-            set based on this classlist (spec is permanently altered)/
+            set based on this classlist (spec is permanently altered).
           * If numberToName < 0 but numberToProduce is too small for the
             result, respond with HTTPNotAcceptable.
 
@@ -79,17 +84,23 @@ class IDHandler:
             aiohttp.web_response.Response: Success or failure.  Can be:
                 200: success
                 400: authentication problem.
-                HTTPBadRequest: not manager, or malformed request.
+                HTTPBadRequest (400): not manager, or malformed request
+                    such as missing required fields.
                 HTTPConflict: we already have a classlist.
                     TODO: would be nice to be able to "try again".
                 HTTPNotAcceptable: classlist too short (see above).
         """
         if not data["user"] == "manager":
             raise web.HTTPBadRequest(reason="Not manager")
-        if os.path.isfile(specdir / "classlist.csv"):
+        if (specdir / "classlist.csv").exists():
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
-        # TODO should we make copy until sure it passes verification?
+        # verify classlist: all rows must have non-empty ID
+        for row in classlist:
+            if not "id" in row:
+                raise web.HTTPBadRequest(reason="Every row must have an id")
+            if not row["id"]:
+                raise web.HTTPBadRequest(reason="Every row must non-empty id")
         spec = self.server.testSpec
         if spec.numberToName < 0 or spec.numberToProduce < 0:
             if spec.number_to_name < 0:
@@ -101,10 +112,19 @@ class IDHandler:
             except ValueError as e:
                 raise web.HTTPNotAcceptable(reason=str(e))
             spec.saveVerifiedSpec()
-        with open(specdir / "classlist.csv", "w") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["id", "studentName"])
-            writer.writerows(classlist)
+        # these keys first...
+        fieldnames = ["id", "studentName"]
+        # then all the others in any order
+        fieldnames.extend(set(classlist[0].keys()) - set(fieldnames))
+        log.info(f"Classlist upload w/ fieldnames {fieldnames}")
+        missing = ""
+        with open(specdir / "classlist.csv", "w") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, restval=missing)
+            writer.writeheader()
+            try:
+                writer.writerows(classlist)
+            except ValueError as e:
+                raise web.HTTPBadReqest(f'Extra field in row "{row}". Error: "{e}"')
         return web.Response()
 
     # @routes.get("/ID/predictions")

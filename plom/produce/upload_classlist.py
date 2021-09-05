@@ -49,10 +49,8 @@ def upload_classlist(classlist, msgr):
                 (student ID, student name).
         msgr (ManagerMessenger): an already-connected messenger object for
                 talking to the server.
-
-
     """
-
+    classlist = [{"id": x[0], "studentName": x[1]} for x in classlist]
     try:
         msgr.upload_classlist(classlist)
     except PlomRangeException as e:
@@ -61,11 +59,10 @@ def upload_classlist(classlist, msgr):
             "  {}\n"
             "Perhaps classlist is too large for specTest.numberToProduce?".format(e)
         )
-        # TODO: I think the caller should be doing all this exit() stuff
-        sys.exit(4)
+        raise
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")
-        sys.exit(3)
+        raise
     finally:
         msgr.closeUser()
         msgr.stop()
