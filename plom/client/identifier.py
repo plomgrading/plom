@@ -304,6 +304,7 @@ class IDClient(QWidget):
                 log.warning(
                     'Just FYI: multiple students with name "%s"', censorName(sname)
                 )
+            name_list.append(sname)
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
