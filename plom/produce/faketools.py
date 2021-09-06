@@ -75,7 +75,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
     Arguments:
         paper_dir_path (str/pathlib.Path): Directory containing the blank exams.
-        classlist (list): ordered list of (sid, sname) pairs.
+        classlist (list): list of dicts with keys `id` and `studentName`.
+            See also Issue #1646: maybe will use `student_number` someday.
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
     Keyword Arguments:
@@ -113,29 +114,21 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     # need to avoid any student numbers already used to name papers - look at file names
     for index, file_name in enumerate(named_papers_paths):
         used_id_list.append(os.path.split(file_name)[1].split(".")[0].split("_")[-1])
-    # now load in the student names and numbers -only those not used to prename
-    clean_id_dict = {}  # not used
-    for sid, sname in classlist:
-        if sid not in used_id_list:
-            clean_id_dict[sid] = sname
-
-    # now grab a random selection of IDs from the dict.
-    # we need len(papers_paths) - len(named_papers_paths) of them
-    id_sample = random.sample(
-        list(clean_id_dict.keys()), len(papers_paths) - len(named_papers_paths)
-    )
+    # get those students not used in the the prename
+    available_classlist = [x for x in classlist if x["id"] not in used_id_list]
+    random.shuffle(available_classlist)
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
 
-    clean_count = 0
     for index, file_name in enumerate(papers_paths):
         if file_name in named_papers_paths:
             print("{} - prenamed paper - scribbled".format(os.path.basename(file_name)))
         else:
-            student_number = id_sample[clean_count]
-            student_name = clean_id_dict[student_number]
-            clean_count += 1
+            x = available_classlist.pop()
+            # TODO: Issue #1646: check for "student_number" fallback to id
+            student_number = x["id"]
+            student_name = x["studentName"]
             print(
                 "{} - scribbled using {} {}".format(
                     os.path.basename(file_name), student_number, student_name
@@ -206,27 +199,24 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
         # We then add the pdfs into the document collection
         all_pdf_documents.insert_pdf(pdf_document)
 
-        # For a comprehensive test, we will add some extrapages with the probability of 0.2 percent
+        # For a comprehensive test, we will add some extrapages with low probability
         if random.random() < extra_page_probability:
             # folder_name/exam_XXXX.pdf or folder_name/exam_XXXX_YYYYYYY.pdf,
             # file_pdf_name drops the folder name and the .pdf parts
             file_pdf_name = os.path.splitext(os.path.basename(file_name))[0]
 
-            # Then we get the test number and student_number from file_pdf_name
+            # Then we get the test number and sid from the file name
             test_number = file_pdf_name.split("_")[1]
-            if (
-                file_name in named_papers_paths
-            ):  # file_pdf_name is exam_XXXX_YYYYYYY.pdf
+            if file_name in named_papers_paths:
+                # file_pdf_name is exam_XXXX_YYYYYYY.pdf
                 student_number = file_pdf_name.split("_")[2]
 
             print(
-                "  making an extra page for test {} and sid {}".format(
-                    test_number, student_number
-                )
+                f"  making an extra page for test {test_number} and id {student_number}"
             )
             all_pdf_documents.insert_page(
                 -1,
-                text="EXTRA PAGE - t{} Q1 - {}".format(test_number, student_number),
+                text=f"EXTRA PAGE - t{test_number} Q1 - {student_number}",
                 fontsize=extra_page_font_size,
                 color=blue,
             )

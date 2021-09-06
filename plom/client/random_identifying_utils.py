@@ -19,7 +19,7 @@ from plom.messenger import Messenger
 
 
 def do_rando_identifying_backend(messenger):
-    idList = messenger.IDrequestClasslist()
+    classlist = messenger.IDrequestClasslist()
 
     while True:
         task = messenger.IDaskNextTask()
@@ -35,12 +35,12 @@ def do_rando_identifying_backend(messenger):
 
         while True:
             try:
-                sid, sname = random.choice(idList)
-                sname += " [randomly chosen]"
-                messenger.IDreturnIDdTask(task, sid, sname)
+                person = random.choice(classlist)
+                name = person["studentName"] + " [randomly chosen]"
+                messenger.IDreturnIDdTask(task, person["id"], name)
                 break
             except PlomConflict:
-                print("SID/SN {}/{} already used".format(sid, sname))
+                print(f"Already used: {person}")
 
 
 def do_rando_identifying(server, user, password):
