@@ -725,11 +725,11 @@ class IDClient(QWidget):
                     )
                 ).exec_()
                 return
-            snid = "{}: {}".format(sid, sname)
+            snid = f"{sid}: {sname}"
             # update our lists
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname
-            self.student_id_to_snid[sid] = sid
+            self.student_id_to_snid[sid] = snid
             # finally update the line-edit.  TODO: remove? used to be for identifyStudent call below but not needed anymore?
             self.ui.idEdit.setText(snid)
 
