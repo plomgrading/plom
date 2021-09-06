@@ -210,8 +210,9 @@ class IDHandler:
                 try:
                     writer.append(open(file_name, "rb"))
                 except OSError as e:  # file not found, permission, etc
-                    # TODO: these are unexpected, I think it should be 500 (?)
-                    raise web.HTTPNotFound(reason=f"Problem reading image: {e}")
+                    raise web.HTTPInternalServerError(
+                        reason=f"Problem reading image: {e}"
+                    )
             return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/donotmark_images/{test}")
@@ -259,8 +260,9 @@ class IDHandler:
                 try:
                     writer.append(open(file_name, "rb"))
                 except OSError as e:  # file not found, permission, etc
-                    # TODO: these are unexpected, I think it should be 500 (?)
-                    raise web.HTTPNotFound(reason=f"Problem reading image: {e}")
+                    raise web.HTTPInternalServerError(
+                        reason=f"Problem reading image: {e}"
+                    )
             return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/tasks/available")
