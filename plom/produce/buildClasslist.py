@@ -322,7 +322,7 @@ def process_classlist(student_csv_file_name, demo=False):
             data (default: `False`).
 
     Return:
-        dict: keys are student IDs (str), values are student names (str).
+        list: A list of dicts, each with `"id"` and `"studentName"`.
     """
     if demo:
         print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
@@ -339,5 +339,4 @@ def process_classlist(student_csv_file_name, demo=False):
     if not student_csv_file_name.exists():
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
     df = process_classlist_backend(student_csv_file_name)
-    # order is important, leave it as a list
-    return list(zip(df.id, df.studentName))
+    return df.to_dict("records")
