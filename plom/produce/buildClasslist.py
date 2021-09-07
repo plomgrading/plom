@@ -300,7 +300,21 @@ def process_classlist_backend(student_csv_file_name):
     return student_info_df
 
 
-def process_classlist(student_csv_file_name, demo=False):
+def get_demo_classlist():
+    """Get the demo classlist."""
+    # Direct approach: but maybe I like exercising code-paths with below...
+    # with resources.open_binary(plom, "demoClassList.csv") as f:
+    #     df = clean_non_canvas_csv(f)
+    # classlist = df.to_dict("records")
+
+    b = resources.read_binary(plom, "demoClassList.csv")
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
+        with open(f.name, "wb") as fh:
+            fh.write(b)
+        return process_classlist_file(f.name)
+
+
+def process_classlist_file(student_csv_file_name):
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
@@ -324,17 +338,6 @@ def process_classlist(student_csv_file_name, demo=False):
     Return:
         list: A list of dicts, each with `"id"` and `"studentName"`.
     """
-    if demo:
-        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = resources.read_binary(plom, "demoClassList.csv")
-        # this is dumb, make it work right out of the string/bytes
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
-            with open(f.name, "wb") as fh:
-                fh.write(cl)
-            return process_classlist(f.name)
-        # from io import StringIO, BytesIO
-        # student_csv_file_name = BytesIO(cl)
-
     student_csv_file_name = Path(student_csv_file_name)
     if not student_csv_file_name.exists():
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')

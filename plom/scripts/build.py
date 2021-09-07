@@ -29,7 +29,8 @@ import toml
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
-from plom.produce import process_classlist, get_messenger, upload_classlist
+from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
+from plom.produce import get_messenger
 from plom.produce import build_database, build_papers
 from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
@@ -318,12 +319,11 @@ def main():
         # copy the template spec into place
         parseAndVerifySpecification(fname)
     elif args.command == "class":
-        classlist = process_classlist(args.classlist, args.demo)
-        msgr = get_messenger(args.server, args.password)
-        upload_classlist(classlist, msgr=msgr)
-        print(f"Imported classlist of length {len(classlist)}.")
-        print(f"First student: {classlist[0]}.")
-        print(f"Last student: {classlist[-1]}.")
+        if args.demo:
+            classlist = get_demo_classlist()
+        else:
+            classlist = process_classlist_file(args.classlist)
+        upload_classlist(classlist, args.server, args.password)
 
     elif args.command == "make":
         status = build_database(args.server, args.password)

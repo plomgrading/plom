@@ -11,6 +11,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
+from .buildClasslist import get_demo_classlist
 
 
 def get_messenger(server=None, password=None):
@@ -41,7 +42,7 @@ def get_messenger(server=None, password=None):
     return msgr
 
 
-def upload_classlist(classlist, msgr):
+def upload_classlist(classlist, server, password):
     """Uploads a classlist file to the server.
 
     Arguments:
@@ -50,8 +51,12 @@ def upload_classlist(classlist, msgr):
         msgr (ManagerMessenger): an already-connected messenger object for
             talking to the server.
     """
+    msgr = get_messenger(server, password)
     try:
         msgr.upload_classlist(classlist)
+        print(f"Uploaded classlist of length {len(classlist)}.")
+        print(f"  First student:  {classlist[0]}.")
+        print(f"  Last student: {classlist[-1]}.")
     except PlomRangeException as e:
         print(
             "Error: classlist lead to the following specification error:\n"
@@ -65,3 +70,11 @@ def upload_classlist(classlist, msgr):
     finally:
         msgr.closeUser()
         msgr.stop()
+
+
+def upload_demo_classlist(server=None, password=None):
+    """Uploads the demo classlist file to the server."""
+
+    print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
+    classlist = get_demo_classlist()
+    upload_classlist(classlist, server, password)
