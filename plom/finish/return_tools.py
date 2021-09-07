@@ -12,7 +12,7 @@ Most of the Canvas-related functions are overly UBC-specific or fragile.
 __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles, and others"
 __license__ = "AGPL-3.0-or-later"
 
-import os
+from pathlib import Path
 
 import pandas
 
@@ -28,12 +28,12 @@ def import_canvas_csv(canvas_fromfile):
         canvas_fromfile (str/pathlib.Path): name of the csv file from Canvas.
 
     Returns:
-        pandas.DataFrame : dataframe of the student information from the Canvas csv file.
+        pandas.DataFrame: dataframe of student information.
     """
     df = pandas.read_csv(canvas_fromfile, dtype="object")
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
-    # Note: Canvas idoicy whereby "SIS User ID" is same as "Student Number"
+    # Note: Canvas idiocy whereby "SIS User ID" is same as "Student Number"
     cols = ["Student", "ID", "SIS User ID", "SIS Login ID", "Section", "Student Number"]
     assert all(
         [c in df.columns for c in cols]
@@ -231,7 +231,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=9):
         ValueError: if the canvas return code is present but not correct.
 
     Returns:
-        dict : student number (str) -> hashed code.
+        dict: student number (str) -> hashed code.
     """
     print("*** Generating Return Codes Spreadsheet ***")
     df = import_canvas_csv(csvin)
@@ -307,35 +307,24 @@ def canvas_csv_check_pdf(sns):
     """Checks that each returned paper has a corresponding student number in the canvas files.
 
     Args:
-        sns (): student number (str) -> hashed code.
+        sns (dict): student number (str) -> hashed code.  NOTE: will be
+            modified via sideeffect.
     """
     print(
         "Checking that each codedReturn paper has a corresponding student in the canvas sheet..."
     )
-    for file in os.scandir("codedReturn"):
-        if file.name.endswith(".pdf"):
-            # TODO: this looks rather fragile!
-            parts = file.name.partition("_")[2].partition(".")[0]
-            sn, meh, code = parts.partition("_")
-            if sns.get(sn) == code:
-                print(
-                    "  Good: paper {2} has entry in spreadsheet {0}, {1}".format(
-                        sn, code, file.name
-                    )
-                )
-                sns.pop(sn)
-            else:
-                print(
-                    "  ***************************************************************"
-                )
-                print(
-                    "  Bad: we found a pdf file that has no student in the spreadsheet"
-                )
-                print("    Filename: {0}".format(file.name))
-                print(
-                    "  ***************************************************************"
-                )
-                # sys.exit()
+    for file in Path("codedReturn").glob("*.pdf"):
+        # TODO: this looks rather fragile!
+        parts = file.name.partition("_")[2].partition(".")[0]
+        sn, meh, code = parts.partition("_")
+        if sns.get(sn) == code:
+            print(f"  Good: paper {file.name} has entry in spreadsheet {sn}, {code}")
+            sns.pop(sn)
+        else:
+            print("  ***************************************************************")
+            print("  Bad: we found a pdf file that has no student in the spreadsheet")
+            print("    Filename: {0}".format(file.name))
+            print("  ***************************************************************")
 
     # anyone that has a pdf file has been popped from the dict, report the remainders
     if len(sns) == 0:
