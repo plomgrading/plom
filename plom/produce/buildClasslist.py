@@ -47,10 +47,10 @@ def clean_non_canvas_csv(csv_file_name):
     You may want to check first with `check_is_non_canvas_csv`.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName.
+        pandas.DataFrame: data with columns `id` and `studentName`.
     """
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
@@ -112,17 +112,17 @@ def clean_non_canvas_csv(csv_file_name):
 
 
 def check_is_non_canvas_csv(csv_file_name):
-    """Read the csv file and check to see if the id and student name exist.
+    """Read the csv file and check if id and appropriate student name exist.
 
     1. Check if id is present.
     2. Check if studentName is preset.
     3. If not, check for given name and surname in the document.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        bool -- True/False
+        bool
     """
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
@@ -185,10 +185,10 @@ def clean_canvas_csv(csv_file_name):
     using `check_is_canvas_csv`.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName.
+        pandas.DataFrame: data with columns `id` and `studentName`
     """
     student_info_df = import_canvas_csv(csv_file_name)
     student_info_df = student_info_df[["Student Number", "Student"]]
@@ -197,13 +197,14 @@ def clean_canvas_csv(csv_file_name):
 
 
 def check_is_canvas_csv(csv_file_name):
-    """Checks to see if a function is a canvas style csv file.
+    """Detect if a csv file is likely a Canvas-exported classlist.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): csv file to be checked.
 
     Returns:
-        boolean -- True/False
+        bool: True if we think the input was from Canvas, based on
+            presense of certain header names.  Otherwise False.
     """
     with open(csv_file_name) as csvfile:
         csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
@@ -212,17 +213,17 @@ def check_is_canvas_csv(csv_file_name):
 
 
 def check_latin_names(student_info_df):
-    """Pass the pandas object and check studentNames encode to Latin-1.
+    """Check if a dataframe has "studentName"s that encode to Latin-1.
 
     Prints out a warning message for any that are not encodable.
 
     Arguments:
-        student_info_df {pandas.core.frame.DataFrame} -- Dataframe object returned with columns id and studentName.
+        student_info_df (pandas.DataFrame): with at least columns `id`
+            and `studentName`.
 
     Returns:
-        bool -- True/False
+        bool: False if one or more names contain non-Latin characters.
     """
-
     # TODO - make this less eurocentric in the future.
     encoding_problems = []
     for index, row in student_info_df.iterrows():
@@ -254,12 +255,11 @@ def process_classlist_backend(student_csv_file_name):
        loosened in the future.
 
     Arguments:
-        student_csv_file_name (str): Name of the class info csv file.
+        student_csv_file_name (pathlib.Path/str): class info csv file.
 
     Return:
-        pandas dataframe: the processed classlist data.
+        pandas.DataFrame: the processed classlist data.
     """
-
     with open(student_csv_file_name) as csvfile:
         csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
         csv_fields = csv_reader.fieldnames
@@ -315,7 +315,7 @@ def process_classlist(student_csv_file_name, demo=False):
     Alternatively, give a .csv exported from Canvas (experimental!)
 
     Arguments:
-        student_csv_file_name (str): Name of the class info csv file.
+        student_csv_file_name (pathlib.Path/str): class info csv file.
 
     Keyword Arguments:
         demo (bool): if `True`, the filename is ignored and we use demo
