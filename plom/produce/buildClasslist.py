@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2021 Colin B. Macdonald
@@ -306,7 +304,7 @@ def process_classlist_backend(student_csv_file_name):
     return student_info_df
 
 
-def process_class_list(student_csv_file_name, demo=False):
+def process_classlist(student_csv_file_name, demo=False):
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
@@ -337,7 +335,7 @@ def process_class_list(student_csv_file_name, demo=False):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
             with open(f.name, "wb") as fh:
                 fh.write(cl)
-            return process_class_list(f.name)
+            return process_classlist(f.name)
         # from io import StringIO, BytesIO
         # student_csv_file_name = BytesIO(cl)
 
