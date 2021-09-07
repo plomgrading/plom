@@ -5,10 +5,9 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
-import os
+from pathlib import Path
 import sys
 import tempfile
-import sys
 
 if sys.version_info >= (3, 7):
     import importlib.resources as resources
@@ -251,8 +250,7 @@ def process_classlist_backend(student_csv_file_name):
     1. Check if the file is a csv exported from Canvas.  If so extract
        relevant headers and clean-up the file.
     2. Otherwise check for suitable ID and name columns.
-    3. Otherwise exit(1).  TODO: library calls shouldn't do this!
-    4. Check for latin character encodability, a restriction to be
+    3. Check for latin character encodability, a restriction to be
        loosened in the future.
 
     Arguments:
@@ -284,10 +282,8 @@ def process_classlist_backend(student_csv_file_name):
         print(
             "We have successfully extracted and renamed columns from the non Canvas data."
         )
-    # Otherwise we have an error
     else:
-        print("Problems with the classlist you supplied. See output above.")
-        sys.exit(1)
+        raise ValueError("Problems with the supplied classlist. See output above.")
 
     # Check characters in names are latin-1 compatible
     if not check_latin_names(student_info_df):
@@ -339,13 +335,9 @@ def process_classlist(student_csv_file_name, demo=False):
         # from io import StringIO, BytesIO
         # student_csv_file_name = BytesIO(cl)
 
-    if not student_csv_file_name:
-        print("Please provide a classlist file: see help")
-        sys.exit(1)
-
-    if not os.path.isfile(student_csv_file_name):
-        print('Cannot find file "{}"'.format(student_csv_file_name))
-        sys.exit(1)
+    student_csv_file_name = Path(student_csv_file_name)
+    if not student_csv_file_name.exists():
+        raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
     df = process_classlist_backend(student_csv_file_name)
     # order is important, leave it as a list
     return list(zip(df.id, df.studentName))
