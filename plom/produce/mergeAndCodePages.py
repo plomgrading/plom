@@ -225,7 +225,7 @@ def is_possible_to_encode_as(s, encoding):
         return False
 
 
-def insert_extra_info(extra, exam, ycoor=40):
+def insert_extra_info(extra, exam, ycoor=None):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
@@ -240,8 +240,10 @@ def insert_extra_info(extra, exam, ycoor=40):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
-
-    YSHIFT = ycoor / 100.0 # where on page is centre of box 0=top, 1=bottom
+    if ycoor:
+        YSHIFT = ycoor / 100.0 # where on page is centre of box 0=top, 1=bottom
+    else:
+        YSHIFT = 0.4
 
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
