@@ -5,13 +5,13 @@
 from stdiomask import getpass
 
 from plom import check_version_map
-from plom.produce import build_all_papers, confirm_processed, identify_prenamed
+from plom.produce import build_all_papers, confirm_processed, identify_prenamed, build_specific_paper
 from plom.produce import paperdir
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomBenignException
 
 
-def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
+def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False, number=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -28,23 +28,34 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
         pvmap = msgr.getGlobalPageVersionMap()
         paperdir.mkdir(exist_ok=True)
 
-        if spec["numberToName"] > 0:
+        if number:
             classlist = msgr.IDrequestClasslist()
             print(
-                'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                    spec["numberToName"],
-                    spec["numberToProduce"] - spec["numberToName"],
+                'Building pre-named paper number {} in "{}"...'.format(
+                    number,
                     paperdir,
                 )
             )
+            build_specific_paper(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, numberToMake=number)
         else:
-            classlist = None
-            print(
-                'Building {} blank papers in "{}"...'.format(
-                    spec["numberToProduce"], paperdir
+
+            if spec["numberToName"] > 0:
+                classlist = msgr.IDrequestClasslist()
+                print(
+                    'Building {} pre-named papers and {} blank papers in "{}"...'.format(
+                        spec["numberToName"],
+                        spec["numberToProduce"] - spec["numberToName"],
+                        paperdir,
+                    )
                 )
-            )
-        build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
+            else:
+                classlist = None
+                print(
+                    'Building {} blank papers in "{}"...'.format(
+                        spec["numberToProduce"], paperdir
+                    )
+                )
+            build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist)

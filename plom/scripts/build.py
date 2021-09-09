@@ -227,6 +227,7 @@ spB.add_argument(
 )
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
+spB.add_argument("-n", "--number", type=int, help="for building a specific paper number")
 
 sp = sub.add_parser(
     "rubric",
@@ -329,7 +330,7 @@ def main():
         status = build_database(args.server, args.password)
         print(status)
         build_papers(
-            args.server, args.password, fakepdf=args.no_pdf, no_qr=args.without_qr
+            args.server, args.password, fakepdf=args.no_pdf, no_qr=args.without_qr, number=args.number
         )
 
     elif args.command == "rubric":

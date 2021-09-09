@@ -13,7 +13,7 @@ from pathlib import Path
 
 paperdir = Path("papersToPrint")
 
-from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed
+from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed, build_specific_paper
 from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .buildClasslist import process_class_list
 from .upload_classlist import upload_classlist

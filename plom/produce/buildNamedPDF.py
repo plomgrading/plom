@@ -65,6 +65,37 @@ def outputProductionCSV(spec, make_PDF_args):
                 row.append(paper[5][p])
             csv_writer.writerow(row)
 
+def build_specific_paper(
+    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False, numberToMake
+):
+    if numberToMake > 0:
+        if not classlist:
+            raise ValueError("You must provide a classlist to prename papers")
+        if len(classlist) < numberToMake:
+            raise ValueError(
+                "Classlist is too short for paper number {} to exist".format(
+                    numberToMake
+                )
+            )
+    paper_index = numberToMake
+    page_version = global_page_version_map[paper_index]
+    student_info = {
+        "id": classlist[paper_index - 1][0],
+        "name": classlist[paper_index - 1][1],
+    }
+    make_PDF_args = (
+            spec["name"],
+            spec["publicCode"],
+            spec["numberOfPages"],
+            spec["numberOfVersions"],
+            paper_index,
+            page_version,
+            student_info,
+            no_qr,
+            fakepdf,
+        )
+
+    make_PDF(make_PDF_args)
 
 def build_all_papers(
     spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False
