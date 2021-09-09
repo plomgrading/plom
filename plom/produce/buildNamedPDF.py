@@ -65,40 +65,8 @@ def outputProductionCSV(spec, make_PDF_args):
                 row.append(paper[5][p])
             csv_writer.writerow(row)
 
-def build_specific_paper(
-    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False, numberToMake
-):
-    if numberToMake > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist to prename papers")
-        if len(classlist) < numberToMake:
-            raise ValueError(
-                "Classlist is too short for paper number {} to exist".format(
-                    numberToMake
-                )
-            )
-    paper_index = numberToMake
-    page_version = global_page_version_map[paper_index]
-    student_info = {
-        "id": classlist[paper_index - 1][0],
-        "name": classlist[paper_index - 1][1],
-    }
-    make_PDF_args = (
-            spec["name"],
-            spec["publicCode"],
-            spec["numberOfPages"],
-            spec["numberOfVersions"],
-            paper_index,
-            page_version,
-            student_info,
-            no_qr,
-            fakepdf,
-        )
-
-    make_PDF(make_PDF_args)
-
 def build_all_papers(
-    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False
+    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False, ycoor=None
 ):
     """Builds the papers using _make_PDF.
 
@@ -153,6 +121,7 @@ def build_all_papers(
                 student_info,
                 no_qr,
                 fakepdf,
+                ycoor,
             )
         )
 
@@ -166,6 +135,60 @@ def build_all_papers(
     print("Writing produced_papers.csv.")
     outputProductionCSV(spec, make_PDF_args)
 
+def build_specific_paper(
+    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False, numberToMake, ycoor=None
+):
+    """Identical to build_papers() above, but only builds a specified named paper.
+
+    Arguments:
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        global_page_version_map (dict): dict of dicts mapping first by
+            paper number (int) then by page number (int) to version (int).
+        classlist (list, None): ordered list of (sid, sname) pairs.
+        numberToMake (int): specified paper number to be built.
+
+    Keyword arguments:
+        fakepdf (bool): when true, the build empty pdfs (actually empty files)
+            for use when students upload homework or similar (and only 1 version).
+        no_qr (bool): when True, don't stamp with QR codes.  Default: False
+            (which means *do* stamp with QR codes).
+
+    Raises:
+        ValueError: classlist is invalid in some way.
+    """
+
+    if numberToMake > 0:
+        if not classlist:
+            raise ValueError("You must provide a classlist to prename papers")
+        if len(classlist) < numberToMake:
+            raise ValueError(
+                "Classlist is too short for paper number {} to exist".format(
+                    numberToMake
+                )
+            )
+    paper_index = numberToMake
+    page_version = global_page_version_map[paper_index]
+    if paper_index <= spec["numberToName"]:
+        student_info = {
+            "id": classlist[paper_index - 1][0],
+            "name": classlist[paper_index - 1][1],
+        }
+    else:
+        student_info = None
+    make_PDF_args = (
+            spec["name"],
+            spec["publicCode"],
+            spec["numberOfPages"],
+            spec["numberOfVersions"],
+            paper_index,
+            page_version,
+            student_info,
+            no_qr,
+            fakepdf,
+            ycoor,
+        )
+
+    make_PDF(make_PDF_args)
 
 def confirm_processed(spec, msgr, classlist):
     """Checks that each PDF file was created and notify server.

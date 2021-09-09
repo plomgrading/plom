@@ -11,7 +11,7 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomBenignException
 
 
-def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False, number=None):
+def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False, number=None, ycoor=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -36,7 +36,7 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False, numb
                     paperdir,
                 )
             )
-            build_specific_paper(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, numberToMake=number)
+            build_specific_paper(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, numberToMake=number, ycoor=ycoor)
         else:
 
             if spec["numberToName"] > 0:
@@ -55,7 +55,7 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False, numb
                         spec["numberToProduce"], paperdir
                     )
                 )
-            build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
+            build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, ycoor=ycoor)
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist)
