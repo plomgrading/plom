@@ -398,4 +398,7 @@ def make_PDF(
     # also do garbage collection to remove duplications within pdf
     # and try to clean up as much as possible.
     # `linear=True` causes https://gitlab.com/plom/plom/issues/284
+
+    # Also worth noting that this will automatically overwrite any files
+    # in the same directory that have the same name.
     exam.save(save_name, garbage=4, deflate=True, clean=True)
