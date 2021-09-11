@@ -107,8 +107,7 @@ class PlomDemoServer(PlomServer):
         status = plom.produce.build_database(s, pwd)
         print("Database built with output:")
         print(status)
-        with working_directory(self.basedir):
-            plom.produce.build_papers(s, pwd)
+        plom.produce.build_papers(s, pwd, basedir=self.basedir)
         plom.produce.make_scribbles(s, pwd, basedir=self.basedir)
         with working_directory(self.basedir):
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:

@@ -2,16 +2,36 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
+from pathlib import Path
+
 from stdiomask import getpass
 
 from plom import check_version_map
+from plom.misc_utils import working_directory
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
-from plom.produce import paperdir
+from plom.produce import paperdir as paperdir_name
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingDatabase
 
 
-def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
+def build_papers(
+    server=None, password=None, *, basedir=Path("."), fakepdf=False, no_qr=False
+):
+    """Build all the blank papers using version information from server and source PDFs
+
+    Args:
+        server (str): server name and optionally port.
+        password (str): the manager password.
+
+    Keyword Args:
+        basedir (pathlib.Path/str): Look for the source version PDF files
+            in `basedir/sourceVersions`.  Produce the printable PDF files
+            in `basedir/papersToPrint`.
+        fakepdf (bool): when true, the build empty pdfs (actually empty files)
+            for use when students upload homework or similar (and only 1 version).
+        no_qr (bool): when True, don't stamp with QR codes.  Default: False
+            (which means *do* stamp with QR codes).
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -23,11 +43,14 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
         password = getpass('Please enter the "manager" password: ')
 
     msgr.requestAndSaveToken("manager", password)
+
+    basedir = Path(basedir)
+    paperdir = basedir / paperdir_name
+    paperdir.mkdir(exist_ok=True)
+
     try:
         spec = msgr.get_spec()
         pvmap = msgr.getGlobalPageVersionMap()
-        paperdir.mkdir(exist_ok=True)
-
         if spec["numberToName"] > 0:
             classlist = msgr.IDrequestClasslist()
             # TODO: Issue #1646 mostly student number (w fallback)
@@ -47,12 +70,12 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
                     spec["numberToProduce"], paperdir
                 )
             )
-        build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
-
-        print("Checking papers produced and updating databases")
-        confirm_processed(spec, msgr, classlist)
-        print("Identifying any pre-named papers into the database")
-        identify_prenamed(spec, msgr, classlist)
+        with working_directory(basedir):
+            build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
+            print("Checking papers produced and updating databases")
+            confirm_processed(spec, msgr, classlist)
+            print("Identifying any pre-named papers into the database")
+            identify_prenamed(spec, msgr, classlist)
     finally:
         msgr.closeUser()
         msgr.stop()
