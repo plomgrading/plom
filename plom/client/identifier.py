@@ -276,14 +276,14 @@ class IDClient(QWidget):
     def getClassList(self):
         """Get the classlist from the server.
 
+        Here and throughout 'snid' means "student_id_and_name" as one string.
+
         Returns nothing but modifies the state of self, adding three
         dicts to the class data:
 
         `snid_to_student_id`
         `snid_to_student_name`
         `student_id_to_snid`
-
-        Here and throughout 'snid' means "student_id_and_name" as one string.
         """
         classlist = messenger.IDrequestClasslist()
         self.snid_to_student_id = dict()
