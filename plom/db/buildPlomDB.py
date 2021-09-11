@@ -89,10 +89,11 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
         ValueError: if database already populated.
         KeyError: invalid question selection scheme in spec.
     """
-    buildSpecialRubrics(spec, db)
-
     if db.areAnyPapersProduced():
         raise ValueError("Database already populated")
+
+    # TODO: prehaps this should be called separately...
+    buildSpecialRubrics(spec, db)
 
     if not version_map:
         # TODO: move reproducible random seed support to the make fcn?
