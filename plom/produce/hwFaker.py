@@ -116,14 +116,43 @@ def download_classlist_and_spec(server=None, password=None):
     return classlist, spec
 
 
-def main():
-    """Main function used for running.
+def make_hw_scribbles(server, password):
+    """Fake homework submissions by scribbling on the pages of a blank test.
 
-    1. Generates the files.
-    2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
+    After the files have been generated, this script can be used to scribble
+    on them to simulate random student work.  Note this tool does not upload
+    those files, it just makes some PDF files for you to play with or for
+    testing purposes.
+
+    Args:
+        server (str): the name and port of the server.
+        password (str): the "manager" password.
+
+    1. Read in the existing papers.
+    2. Create the fake data filled pdfs
     3. Generates second batch for first half of papers.
     4. Generates some "semiloose" bundles with all questions.
     """
+    classlist, spec = download_classlist_and_spec(server, password)
+    numberNamed = spec["numberToName"]
+    numberOfQuestions = spec["numberOfQuestions"]
+
+    os.makedirs("submittedHWByQ", exist_ok=True)
+
+    print("NumberNamed = {}".format(numberNamed))
+
+    num_all_q_one_bundle = 4
+    # "hwA" and "hwB" are two batches, one bigger than other
+    for k in range(numberNamed - num_all_q_one_bundle):
+        makeFakeHW(numberOfQuestions, k, classlist[k], "hwA")
+    for k in range(numberNamed // 2):
+        makeFakeHW(numberOfQuestions, k, classlist[k], "hwB", maxpages=1)
+    # a few more for "all questions in one" bundling
+    for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
+        makeFakeHW2(numberOfQuestions, k, classlist[k], "semiloose")
+
+
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
@@ -143,25 +172,7 @@ def main():
         except KeyError:
             pass
 
-    classlist, spec = download_classlist_and_spec(args.server, args.password)
-
-    # get number named
-    numberNamed = spec["numberToName"]
-    numberOfQuestions = spec["numberOfQuestions"]
-
-    os.makedirs("submittedHWByQ", exist_ok=True)
-
-    print("NumberNamed = {}".format(numberNamed))
-
-    num_all_q_one_bundle = 4
-    # "hwA" and "hwB" are two batches, one bigger than other
-    for k in range(numberNamed - num_all_q_one_bundle):
-        makeFakeHW(numberOfQuestions, k, classlist[k], "hwA")
-    for k in range(numberNamed // 2):
-        makeFakeHW(numberOfQuestions, k, classlist[k], "hwB", maxpages=1)
-    # a few more for "all questions in one" bundling
-    for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
-        makeFakeHW2(numberOfQuestions, k, classlist[k], "semiloose")
+    make_hw_scribbles(args.server, args.password)
 
 
 if __name__ == "__main__":

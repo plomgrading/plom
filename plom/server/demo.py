@@ -111,10 +111,9 @@ class PlomDemoServer(PlomServer):
         status = plom.produce.build_database(s, pwd)
         print("Database built with output:")
         print(status)
-        env = {**os.environ, **self.get_env_vars()}
         with working_directory(self.basedir):
             plom.produce.build_papers(s, pwd)
-            subprocess.check_call(split("python3 -m plom.produce.faketools"), env=env)
+            plom.produce.make_scribbles(s, pwd)
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 plom.scan.processScans(s, scan_pwd, f, gamma=False)
                 plom.scan.uploadImages(s, scan_pwd, f, do_unknowns=True)
