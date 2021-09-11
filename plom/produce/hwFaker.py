@@ -92,9 +92,6 @@ def download_classlist_and_spec(server=None, password=None):
         msgr = ManagerMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
-
     try:
         msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
@@ -175,6 +172,9 @@ def main():
             args.password = os.environ["PLOM_MANAGER_PASSWORD"]
         except KeyError:
             pass
+
+    if not args.password:
+        args.password = getpass('Please enter the "manager" password: ')
 
     make_hw_scribbles(args.server, args.password)
 
