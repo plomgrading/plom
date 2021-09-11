@@ -47,6 +47,15 @@ class PlomRangeException(PlomBenignException):
     pass
 
 
+class PlomExistingDatabase(PlomBenignException):
+    """The database has already been populated."""
+
+    def __init__(self, msg=None):
+        if not msg:
+            msg = "Database already populated"
+        super().__init__(msg)
+
+
 class PlomAuthenticationException(PlomBenignException):
     """You are not authenticated, with precisely that as the default message."""
 
