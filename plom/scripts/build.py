@@ -208,6 +208,15 @@ group.add_argument(
     help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 
+spDB = sub.add_parser(
+    "make-db",
+    help="Populate the database",
+    description="""
+        TODO TODO TODO Blah blah blah.""",
+)
+spDB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spDB.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
 spB = sub.add_parser(
     "make",
     help="Make the PDFs",
@@ -328,6 +337,10 @@ def main():
         print("Imported classlist of length {}.".format(len(cl)))
         print("First student = {}.".format(cl[0]))
         print("Last student = {}.".format(cl[-1]))
+
+    elif args.command == "make-db":
+        status = build_database(args.server, args.password)
+        print(status)
 
     elif args.command == "make":
         try:
