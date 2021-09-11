@@ -67,10 +67,10 @@ def build_papers(
             )
         with working_directory(basedir):
             build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
-            print("Checking papers produced and updating databases")
-            confirm_processed(spec, msgr, classlist)
-            print("Identifying any pre-named papers into the database")
-            identify_prenamed(spec, msgr, classlist)
+        print("Checking papers produced and updating databases")
+        confirm_processed(spec, msgr, classlist, paperdir=paperdir)
+        print("Identifying any pre-named papers into the database")
+        identify_prenamed(spec, msgr, classlist, paperdir=paperdir)
     finally:
         msgr.closeUser()
         msgr.stop()
