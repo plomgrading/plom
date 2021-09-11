@@ -107,9 +107,13 @@ class PlomDemoServer(PlomServer):
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
         plom.produce.upload_demo_classlist(s, pwd)
+        # plom-build make: build_database and build_papers
+        status = plom.produce.build_database(s, pwd)
+        print("Database built with output:")
+        print(status)
         env = {**os.environ, **self.get_env_vars()}
         with working_directory(self.basedir):
-            subprocess.check_call(split("python3 -m plom.scripts.build make"), env=env)
+            plom.produce.build_papers(s, pwd)
             subprocess.check_call(split("python3 -m plom.produce.faketools"), env=env)
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 plom.scan.processScans(s, scan_pwd, f, gamma=False)
