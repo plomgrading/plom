@@ -30,6 +30,7 @@ from stdiomask import getpass
 import plom.produce
 from plom.produce import paperdir as _paperdir
 from plom import __version__
+from plom.misc_utils import working_directory
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
@@ -348,7 +349,7 @@ def download_classlist(server=None, password=None):
     return classlist
 
 
-def make_scribbles(server, password):
+def make_scribbles(server, password, basedir=Path(".")):
     """Fake test writing by scribbling on the pages of a blank test.
 
     After the files have been generated, this script can be used to scribble
@@ -359,19 +360,25 @@ def make_scribbles(server, password):
     Args:
         server (str): the name and port of the server.
         password (str): the "manager" password.
+        basedir (str/pathlib.Path): the blank tests (for scribbling) will
+            be taken from `basedir/papersToPrint`.  The pdf files with
+            scribbles will be created in `basedir`.
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
     3. Do somethings to make the data unpleasant.  Randomly remove pages?
        Documentation could be improved here...
     """
+    # TODO: probably not difficult to adjust everything to avoid CWD stuff here
+    # out_file_path = Path(basedir) / "fake_scribbled_exams.pdf"
     out_file_path = "fake_scribbled_exams.pdf"
     classlist = download_classlist(server, password)
 
-    fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
-    make_garbage_pages(out_file_path)
-    make_colliding_pages(_paperdir, out_file_path)
-    splitFakeFile(out_file_path)
+    with working_directory(Path(basedir)):
+        fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
+        make_garbage_pages(out_file_path)
+        make_colliding_pages(_paperdir, out_file_path)
+        splitFakeFile(out_file_path)
 
 
 def main():

@@ -23,25 +23,25 @@ from plom.plom_exceptions import PlomExistingLoginException
 from plom.produce.faketools import possible_answers as possibleAns
 
 
-def makeFakeHW(numQuestions, paperNum, who, prefix, maxpages=3):
+def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
     # TODO: Issue #1646 here we want student number with id fallback?
     student_num = who["id"]
     name = who["studentName"]
     did = random.randint(numQuestions - 1, numQuestions)  # some subset of questions
     doneQ = sorted(random.sample(list(range(1, 1 + numQuestions)), did))
     for q in doneQ:
-        fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, student_num, q)
+        fname = where / "{}.{}.{}.pdf".format(prefix, student_num, q)
         doc = fitz.open()
         scribble_doc(doc, student_num, name, maxpages, q)
         doc.save(fname)
 
 
-def makeFakeHW2(numQuestions, paperNum, who, prefix, maxpages=4):
+def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
     # TODO: Issue #1646 here we want student number with id fallback?
     student_num = who["id"]
     name = who["studentName"]
     doneQ = list(range(1, 1 + numQuestions))
-    fname = Path("submittedHWByQ") / "{}.{}.{}.pdf".format(prefix, student_num, "_")
+    fname = where / "{}.{}.{}.pdf".format(prefix, student_num, "_")
     doc = fitz.open()
     for q in doneQ:
         scribble_doc(doc, student_num, name, maxpages, q)
@@ -116,7 +116,7 @@ def download_classlist_and_spec(server=None, password=None):
     return classlist, spec
 
 
-def make_hw_scribbles(server, password):
+def make_hw_scribbles(server, password, basedir=Path(".")):
     """Fake homework submissions by scribbling on the pages of a blank test.
 
     After the files have been generated, this script can be used to scribble
@@ -127,6 +127,9 @@ def make_hw_scribbles(server, password):
     Args:
         server (str): the name and port of the server.
         password (str): the "manager" password.
+        basedir (str/pathlib.Path): the blank tests (for scribbling) will
+            be taken from `basedir/papersToPrint`.  The pdf files with
+            scribbles will be created in `basedir/submittedHWByQ`.
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
@@ -137,19 +140,20 @@ def make_hw_scribbles(server, password):
     numberNamed = spec["numberToName"]
     numberOfQuestions = spec["numberOfQuestions"]
 
-    os.makedirs("submittedHWByQ", exist_ok=True)
+    d = Path(basedir) / "submittedHWByQ"
+    d.mkdir(exist_ok=True)
 
     print("NumberNamed = {}".format(numberNamed))
 
     num_all_q_one_bundle = 4
     # "hwA" and "hwB" are two batches, one bigger than other
     for k in range(numberNamed - num_all_q_one_bundle):
-        makeFakeHW(numberOfQuestions, k, classlist[k], "hwA")
+        makeFakeHW(numberOfQuestions, k, classlist[k], d, "hwA")
     for k in range(numberNamed // 2):
-        makeFakeHW(numberOfQuestions, k, classlist[k], "hwB", maxpages=1)
+        makeFakeHW(numberOfQuestions, k, classlist[k], d, "hwB", maxpages=1)
     # a few more for "all questions in one" bundling
     for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
-        makeFakeHW2(numberOfQuestions, k, classlist[k], "semiloose")
+        makeFakeHW2(numberOfQuestions, k, classlist[k], d, "semiloose")
 
 
 def main():

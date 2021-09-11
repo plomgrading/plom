@@ -113,7 +113,8 @@ class PlomDemoServer(PlomServer):
         print(status)
         with working_directory(self.basedir):
             plom.produce.build_papers(s, pwd)
-            plom.produce.make_scribbles(s, pwd)
+        plom.produce.make_scribbles(s, pwd, basedir=self.basedir)
+        with working_directory(self.basedir):
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 plom.scan.processScans(s, scan_pwd, f, gamma=False)
                 plom.scan.uploadImages(s, scan_pwd, f, do_unknowns=True)
