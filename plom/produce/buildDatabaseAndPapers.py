@@ -4,8 +4,6 @@
 
 from pathlib import Path
 
-from stdiomask import getpass
-
 from plom import check_version_map
 from plom.misc_utils import working_directory
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
@@ -38,9 +36,6 @@ def build_papers(
     else:
         msgr = ManagerMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
 
     msgr.requestAndSaveToken("manager", password)
 
@@ -100,9 +95,6 @@ def build_database(server=None, password=None, vermap={}):
     else:
         msgr = ManagerMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
 
     check_version_map(vermap)
 
