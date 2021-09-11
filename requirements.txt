@@ -10,8 +10,8 @@
 # without any warranty.
 
 # Not really server deps
-PyQt5==5.15.6
-PyQt5-sip==12.9.0
+PyQt5
+PyQt5-sip
 
 aiohttp==3.8.1
 appdirs==1.4.4
