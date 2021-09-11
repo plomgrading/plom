@@ -204,7 +204,7 @@ def check_is_canvas_csv(csv_file_name):
 
     Returns:
         bool: True if we think the input was from Canvas, based on
-            presense of certain header names.  Otherwise False.
+            presence of certain header names.  Otherwise False.
     """
     with open(csv_file_name) as csvfile:
         csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
