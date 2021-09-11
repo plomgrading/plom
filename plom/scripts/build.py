@@ -29,6 +29,7 @@ import toml
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
+from plom.plom_exceptions import PlomExistingDatabase
 from plom.produce import process_class_list, get_messenger, upload_classlist
 from plom.produce import build_database, build_papers
 from plom.produce import possible_surname_fields, possible_given_name_fields
@@ -329,8 +330,11 @@ def main():
         print("Last student = {}.".format(cl[-1]))
 
     elif args.command == "make":
-        status = build_database(args.server, args.password)
-        print(status)
+        try:
+            status = build_database(args.server, args.password)
+            print(status)
+        except PlomExistingDatabase:
+            print("Since we already have a database, move on to making papers")
         build_papers(
             args.server, args.password, fakepdf=args.no_pdf, no_qr=args.without_qr, number=args.number
             , ycoor=args.namebox_ycoor
