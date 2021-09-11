@@ -79,7 +79,8 @@ def frontend(args):
     elif args.command == "clear":
         clear_login(args.server, args.password)
     else:
-        parser.print_help()
+        # parser.print_help()
+        raise RuntimeError("Unexpected choice: report this as a bug!?")
 
 
 def parse_the_user_args():
