@@ -829,10 +829,13 @@ linuxbin_centos:
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 # - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
+# - must have $I_CAN_HAZ_THE_APPLES defined in Settings->CI/CD->Variables (#1651)
 macos11_client:
   image: macos-11-xcode-12
   tags:
   - macos
+  rules:
+   - if: $I_CAN_HAZ_THE_APPLES
   stage: packaging
   script:
   - sw_vers
@@ -873,6 +876,8 @@ macos1013_client:
   image: macos-10.13-xcode-9
   tags:
   - macos
+  rules:
+   - if: $I_CAN_HAZ_THE_APPLES
   stage: packaging
   script:
   - sw_vers
