@@ -8,7 +8,7 @@ from plom import check_version_map
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed, build_specific_paper
 from plom.produce import paperdir
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomBenignException
+from plom.plom_exceptions import PlomExistingDatabase
 
 
 def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False, number=None, ycoor=None):
@@ -94,9 +94,10 @@ def build_database(server=None, password=None, vermap={}):
     msgr.requestAndSaveToken("manager", password)
     try:
         status = msgr.TriggerPopulateDB(vermap)
-    except PlomBenignException:
-        # TODO this should be a more specific exception
-        raise RuntimeError("Server already has a populated database") from None
+    except PlomExistingDatabase:
+        msgr.closeUser()
+        msgr.stop()
+        raise
 
     # grab map and sanity check
     qvmap = msgr.getGlobalQuestionVersionMap()
