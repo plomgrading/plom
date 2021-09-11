@@ -16,6 +16,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomNoMoreException,
     PlomRangeException,
+    PlomExistingDatabase,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -45,7 +46,7 @@ class ManagerMessenger(BaseMessenger):
         TODO: would be more symmetric to use PUT:/admin/pageVersionMap
 
         Raises:
-            PlomBenignException: already has a populated database.
+            PlomExistingDatabase: already has a populated database.
             PlomAuthenticationException: cannot login.
             PlomSeriousException: unexpected errors.
         """
@@ -65,7 +66,7 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 409:
-                raise PlomBenignException(e) from None
+                raise PlomExistingDatabase() from None
             else:
                 raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
