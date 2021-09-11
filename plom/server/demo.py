@@ -3,12 +3,8 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-import os
 from pathlib import Path
-from shlex import split
-import subprocess
 import tempfile
-import time
 from warnings import warn
 
 from plom import Default_Port
