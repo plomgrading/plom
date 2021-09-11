@@ -80,11 +80,11 @@ def build_database(server=None, password=None, vermap={}):
     """Build the database from a pre-set version map.
 
     args:
+        server (str): server name and optionally port.
+        password (str): the manager password.
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
             :func:`plom.finish.make_random_version_map`.
-        server (str):
-        password (str):
 
     return:
         str: long multiline string of all the version DB entries.
