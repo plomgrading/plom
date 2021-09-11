@@ -52,6 +52,11 @@ def upload_classlist(classlist, server, password):
             talking to the server.
     """
     msgr = get_messenger(server, password)
+    _raw_upload_classlist(classlist, msgr)
+
+
+def _raw_upload_classlist(classlist, msgr):
+    # TODO: does this distinct only exist for the mock test?  Maybe not worth it!
     try:
         msgr.upload_classlist(classlist)
         print(f"Uploaded classlist of length {len(classlist)}.")
