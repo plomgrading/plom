@@ -292,8 +292,9 @@ class BaseMessenger:
         """Ask server for the classlist.
 
         Returns:
-            list: ordered list of (student id, student name) pairs.
-                Both are strings.
+            list: list of dict, each with at least the keys
+                `id` and `studentName` and possibly others.
+                Corresponding values are both strings.
 
         Raises:
             PlomAuthenticationException: login troubles.
@@ -315,6 +316,7 @@ class BaseMessenger:
             # response.encoding = 'utf-8'
             # classlist = StringIO(response.text)
             classlist = response.json()
+            return classlist
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -326,8 +328,6 @@ class BaseMessenger:
                 ) from None
         finally:
             self.SRmutex.release()
-
-        return classlist
 
     def McreateRubric(self, new_rubric):
         """Ask server to make a new rubric and get key back.
@@ -503,11 +503,12 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
+            if response.status_code == 204:
+                return []  # 204 is empty list
+            return [
+                BytesIO(img.content).getvalue()
+                for img in MultipartDecoder.from_response(response).parts
+            ]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -532,8 +533,6 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-        return imageList
-
     def request_donotmark_images(self, papernum):
         """Get the various Do Not Mark images for a paper."""
         self.SRmutex.acquire()
@@ -544,6 +543,8 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
+            if response.status_code == 204:
+                return []  # 204 is empty list
             return [
                 BytesIO(img.content).getvalue()
                 for img in MultipartDecoder.from_response(response).parts

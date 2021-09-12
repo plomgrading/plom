@@ -243,14 +243,33 @@ hwdemoserver:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
-    - plom-hwscan status -w 4567
-    - python3 -m plom.produce.hwFaker -w 1234
-    - plom-hwscan allbyq -w 4567 -y
-    - plom-hwscan missing -w 4567 -y
-    - plom-hwscan submitted -w 4567
+    - export PLOM_USER=user0
+    - export PLOM_PASSWORD=0123
+    - export PLOM_MANAGER_PASSWORD=1234
+    - export PLOM_SCAN_PASSWORD=4567
+    - plom-build class --demo
+    - plom-build make
+    - plom-hwscan status
+    - python3 -m plom.produce.hwFaker
+    # TODO: the actual hwdemo script does more with qstr, semiloose
+    - plom-hwscan allbyq -y
+    - plom-hwscan missing -y
+    - plom-hwscan submitted
     - plom-hwscan submitted -d
+    - python3 -m plom.client.randoMarker
+    - plom-finish status
+    - plom-finish csv
+    - A=`cat marks.csv  | wc -l`     # How many lines?
+    - echo $A
+    - A="$((A-1))"
+    - bash -c "[[ $A -le 10 ]]"      # 10 named papers
+    - bash -c "[[ $A == 6 ]]"        # hwFaker makes 4 "semiloose"
+    - file marks.csv
+    - file marks.csv | grep text
+    - plom-finish reassemble
+    - B=`ls reassembled/ | wc -l`    # How many files?
+    - echo $B
+    - bash -c "[[ $B == $A ]]"
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
@@ -666,7 +685,7 @@ binary_upload:
       #### md5sum of compiled clients and other artifacts
 
       *TODO* indent four spaces
-      *TODO* paste in pypi and macos
+      *TODO* paste in pypi
       EOF
     - md5sum PlomClient* >> "release_desc.md"
     - export VER=${CI_COMMIT_TAG:1}

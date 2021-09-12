@@ -198,8 +198,10 @@ class ManagerMessenger(BaseMessenger):
         """Give the server a classlist.
 
         Args:
-            classdict (list): list of (str, str) pairs of the form
-                (student ID, student name).
+            classdict (list): list of dict.  Each dict is one student.
+                It MUST have keys `"id"` and `"studentNumber"` (case
+                matters).  There may be other keys included as well.
+                Keys should probably be homogeneous between rows (TODO?).
 
         Exceptions:
             PlomConflict: server already has one.

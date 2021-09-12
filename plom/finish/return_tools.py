@@ -25,7 +25,7 @@ def import_canvas_csv(canvas_fromfile):
     """Imports a student information from canvas.
 
     Args:
-        canvas_fromfile (str): name of the csv file from Canvas.
+        canvas_fromfile (str/pathlib.Path): name of the csv file from Canvas.
 
     Returns:
         pandas.DataFrame : dataframe of the student information from the Canvas csv file.

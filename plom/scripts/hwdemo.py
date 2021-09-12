@@ -123,13 +123,13 @@ def main():
         shutil.move("submittedHWByQ/semiloose.11015491._.pdf", C)
         shutil.move("submittedHWByQ/semiloose.11135153._.pdf", D)
         subprocess.check_call(
-            split(f"plom-hwscan process {A} 11015491 -q 1,2,3 -w 4567 -s {server}")
+            split(f"plom-hwscan process {A} 10433917 -q 1,2,3 -w 4567 -s {server}")
         )
         subprocess.check_call(
-            split(f"plom-hwscan process {B} 11135153 -q all -w 4567 -s {server}")
+            split(f"plom-hwscan process {B} 10493869 -q all -w 4567 -s {server}")
         )
         subprocess.check_call(
-            split(f"plom-hwscan process {C} 11135153 -q all -w 4567 -s {server}")
+            split(f"plom-hwscan process {C} 11015491 -q all -w 4567 -s {server}")
         )
         doc = fitz.open(D)
         qstr = "[[1,2,3],"

@@ -276,26 +276,25 @@ class IDClient(QWidget):
     def getClassList(self):
         """Get the classlist from the server.
 
-        Returns nothing but modifies the state of self, adding two
+        Here and throughout 'snid' means "student_id_and_name" as one string.
+
+        Returns nothing but modifies the state of self, adding three
         dicts to the class data:
 
-        `student_id_to_name_map`
-            Maps unique ID (str) to name (str).
-
-        `student_name_to_idlist`
-            Names are not unique so we map each name to a list of IDs.
+        `snid_to_student_id`
+        `snid_to_student_name`
+        `student_id_to_snid`
         """
-        # a list of pairs [sid, sname]
-        self.student_id_and_name_list = messenger.IDrequestClasslist()
-        # use 'snid' to mean "student_id_and_name" as one string.
+        classlist = messenger.IDrequestClasslist()
         self.snid_to_student_id = dict()
         self.snid_to_student_name = dict()
-        # also need id to snid for predictionlist wrangling.
         self.student_id_to_snid = dict()
-
         name_list = []
-        for sid, sname in self.student_id_and_name_list:
-            snid = "{}: {}".format(sid, sname)
+        for person in classlist:
+            # TODO: Issue #1646 here we want student number with id fallback?
+            sid = person["id"]
+            sname = person["studentName"]
+            snid = f"{sid}: {sname}"
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname
             self.student_id_to_snid[sid] = snid
@@ -304,6 +303,7 @@ class IDClient(QWidget):
                 log.warning(
                     'Just FYI: multiple students with name "%s"', censorName(sname)
                 )
+            name_list.append(sname)
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
@@ -724,11 +724,11 @@ class IDClient(QWidget):
                     )
                 ).exec_()
                 return
-            snid = "{}: {}".format(sid, sname)
+            snid = f"{sid}: {sname}"
             # update our lists
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname
-            self.student_id_to_snid[sid] = sid
+            self.student_id_to_snid[sid] = snid
             # finally update the line-edit.  TODO: remove? used to be for identifyStudent call below but not needed anymore?
             self.ui.idEdit.setText(snid)
 

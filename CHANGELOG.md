@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+
+
+## [0.7.0] - 2021-09-04
+
+### Added
 * `plom-server launch foo` starts a plom server in the directory `foo`.
 * `plom-server` has new command line args to control logging.
 * New `PlomServer`, `PlomDemoServer`, and `PlomLiteDemoServer` objects for interactively running servers, or otherwise running a server in a background process.
@@ -498,7 +508,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.6.5...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.0...master
+[0.7.0]: https://gitlab.com/plom/plom/compare/v0.6.5...v0.7.0
 [0.6.5]: https://gitlab.com/plom/plom/compare/v0.6.4...v0.6.5
 [0.6.4]: https://gitlab.com/plom/plom/compare/v0.6.3...v0.6.4
 [0.6.3]: https://gitlab.com/plom/plom/compare/v0.6.2...v0.6.3

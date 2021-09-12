@@ -63,7 +63,7 @@ def IDgetImages(self, username, test_number):
         test_number (str): Test number.
 
     Returns:
-        list: True/False plus a list of the image paths or a short error code.
+        2-tuple: True/False plus a list of the image paths or a short error code.
     """
     return self.DB.IDgetImages(username, test_number)
 
@@ -75,7 +75,7 @@ def ID_get_donotmark_images(self, paper_number):
         test_number (str): Test number.
 
     Returns:
-        list: True/False plus a list of the image paths or a short error code.
+        2-tuple: True/False plus a list of the image paths or a short error code.
     """
     return self.DB.ID_get_donotmark_images(paper_number)
 

@@ -129,41 +129,75 @@ def IDgetDoneTasks(self, user_name):
 
 
 def IDgetImages(self, user_name, test_number):
-    """Return ID page images of a paper."""
+    """Return ID page images of a paper.
+
+    args:
+        user_name (str)
+        test_number (int)
+
+    Returns:
+        2-tuple: `(True, file_list)` where `file_list` is a possibly-empty
+            list of file names.  Otherwise, `(False, "NoTest")` or
+            `(False, "NoScanAndNotIDd")` or `(False, "NotOwner")`.
+    """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "NoTest"]
+        return (False, "NoTest")
     # grab the IDData
     iref = tref.idgroups[0]
-    # check corresponding group is scanned
-    if iref.group.scanned is False:
-        return [False, "NoScan"]
+    # Now check corresponding group has been scanned.
+    # Note that if the group is unscanned, and the test has not
+    # been identified then we have a problem.
+    # However, if the test has been identified, but ID group unscanned,
+    # then this is okay (fixes #1629).
+    # This is precisely what will happen when using plom for homework, there
+    # are no id-pages (so idgroup is unscanned), but the system automagically
+    # identifies the test.
+    if iref.group.scanned is False and tref.identified is False:
+        return (False, "NoScanAndNotIDd")
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
-        return [False, "NotOwner"]
-    rval = [True]
+        return (False, "NotOwner")
+    file_list = []
     for p in iref.idpages.order_by(IDPage.order):
-        rval.append(p.image.file_name)
+        file_list.append(p.image.file_name)
     log.debug("Sending IDpages of test {} to user {}".format(test_number, user_name))
-    return rval
+    return (True, file_list)
 
 
 def ID_get_donotmark_images(self, test_number):
-    """Return the DoNotMark page images of a paper."""
+    """Return the DoNotMark page images of a paper.
+
+    args:
+        test_number (int)
+
+    Returns:
+        2-tuple: `(True, file_list)` where `file_list` is a possibly-empty
+            list of file names.  Otherwise, `(False, "NoTest")` or
+            `(False, "NoScanAndNotIDd")`.
+    """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "NoTest"]
+        return (False, "NoTest")
     iref = tref.dnmgroups[0]
-    if iref.group.scanned is False:
-        return [False, "NoScan"]
-    rval = [True]
+    # Now check corresponding group has been scanned.
+    # Note that if the group is unscanned, and the test has not
+    # been identified then we have a problem.
+    # However, if the test has been identified, but DNM group unscanned,
+    # then this is okay (fixes #1629).
+    # This is precisely what will happen when using plom for homework, there
+    # are no dnm-pages (so dnmgroup is unscanned), but the system automagically
+    # identifies the test.
+    if iref.group.scanned is False and tref.identified is False:
+        return (False, "NoScanAndNotIDd")
+    file_list = []
     for p in iref.dnmpages.order_by(DNMPage.order):
-        rval.append(p.image.file_name)
+        file_list.append(p.image.file_name)
     log.debug(f"Sending DNMpages of test {test_number}")
-    return rval
+    return (True, file_list)
 
 
 def IDgetImageByNumber(self, image_number):
