@@ -292,8 +292,9 @@ class BaseMessenger:
         """Ask server for the classlist.
 
         Returns:
-            list: ordered list of (student id, student name) pairs.
-                Both are strings.
+            list: list of dict, each with at least the keys
+                `id` and `studentName` and possibly others.
+                Corresponding values are both strings.
 
         Raises:
             PlomAuthenticationException: login troubles.
@@ -315,8 +316,6 @@ class BaseMessenger:
             # response.encoding = 'utf-8'
             # classlist = StringIO(response.text)
             classlist = response.json()
-            # post-process to list of 2-tuples
-            classlist = [(x["id"], x["studentName"]) for x in classlist]
             return classlist
         except requests.HTTPError as e:
             if response.status_code == 401:

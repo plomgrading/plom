@@ -29,7 +29,10 @@ def build_papers(server=None, password=None, *, fakepdf=False, no_qr=False):
         paperdir.mkdir(exist_ok=True)
 
         if spec["numberToName"] > 0:
-            classlist = msgr.IDrequestClasslist()
+            raw_classlist = msgr.IDrequestClasslist()
+            # TODO: Issue #1646 mostly student number (w fallback)
+            # TODO: but careful about identify_prenamed below which may need id
+            classlist = [(x["id"], x["studentName"]) for x in classlist_raw]
             print(
                 'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                     spec["numberToName"],

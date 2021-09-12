@@ -45,12 +45,11 @@ def upload_classlist(classlist, msgr):
     """Uploads a classlist file to the server.
 
     Arguments:
-        classdict (list): list of (str, str) pairs of the form
-                (student ID, student name).
+        classdict (list): list of dict, each has at least keys `"id"` and
+            `"studentName"`, optionally other fields too.
         msgr (ManagerMessenger): an already-connected messenger object for
-                talking to the server.
+            talking to the server.
     """
-    classlist = [{"id": x[0], "studentName": x[1]} for x in classlist]
     try:
         msgr.upload_classlist(classlist)
     except PlomRangeException as e:

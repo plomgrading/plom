@@ -11,8 +11,8 @@ from plom.produce import upload_classlist
 
 
 def test_produce_upload_classlist():
-    classlist = [(10050380, "Fink, Iris")]
-    expected_call_cl = [{"id": 10050380, "studentName": "Fink, Iris"}]
+    classlist = [{"id": 10050380, "studentName": "Fink, Iris"}]
+    expected_call_cl = classlist
 
     msgr = ManagerMessenger()
     msgr.upload_classlist = MagicMock(return_value=None)
