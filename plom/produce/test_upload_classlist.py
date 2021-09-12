@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomConflict
 
-from plom.produce import upload_classlist
+from plom.produce.upload_classlist import _raw_upload_classlist
 
 
 def test_produce_upload_classlist():
@@ -19,7 +19,7 @@ def test_produce_upload_classlist():
     msgr.closeUser = MagicMock(return_value=None)
     msgr.stop = MagicMock(return_value=None)
 
-    upload_classlist(classlist=classlist, msgr=msgr)
+    _raw_upload_classlist(classlist=classlist, msgr=msgr)
 
     msgr.upload_classlist.assert_called_with(expected_call_cl)
     msgr.closeUser.assert_called()

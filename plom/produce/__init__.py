@@ -15,7 +15,8 @@ paperdir = Path("papersToPrint")
 
 from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed
 from .buildClasslist import possible_surname_fields, possible_given_name_fields
-from .buildClasslist import process_classlist
-from .upload_classlist import upload_classlist
 from .upload_classlist import get_messenger
 from .buildDatabaseAndPapers import build_database, build_papers
+
+from .buildClasslist import process_classlist_file, get_demo_classlist
+from .upload_classlist import upload_classlist, upload_demo_classlist
