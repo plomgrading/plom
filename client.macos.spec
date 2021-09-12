@@ -39,6 +39,7 @@ exe = EXE(pyz,
           strip=False,
           onefile=True,
           upx=True,
+          target_arch='universal2',
           runtime_tmpdir=None,
           console=False )
 
