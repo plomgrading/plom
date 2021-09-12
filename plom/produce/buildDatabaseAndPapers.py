@@ -47,10 +47,10 @@ def build_papers(
         spec = msgr.get_spec()
         pvmap = msgr.getGlobalPageVersionMap()
         if spec["numberToName"] > 0:
-            raw_classlist = msgr.IDrequestClasslist()
+            _classlist = msgr.IDrequestClasslist()
             # TODO: Issue #1646 mostly student number (w fallback)
             # TODO: but careful about identify_prenamed below which may need id
-            classlist = [(x["id"], x["studentName"]) for x in classlist_raw]
+            classlist = [(x["id"], x["studentName"]) for x in _classlist]
             print(
                 'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                     spec["numberToName"],
