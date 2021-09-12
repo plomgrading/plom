@@ -299,7 +299,7 @@ def main():
         except KeyError:
             pass
 
-    if not args.password:
+    if hasattr(args, "password") and not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "new":

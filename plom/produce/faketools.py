@@ -398,8 +398,8 @@ def main():
         except KeyError:
             pass
 
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
+    if not args.password:
+        args.password = getpass('Please enter the "manager" password: ')
 
     make_scribbles(args.server, args.password)
 
