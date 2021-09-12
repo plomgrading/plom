@@ -11,6 +11,8 @@ __license__ = "AGPL-3.0-or-later"
 
 from pathlib import Path
 
+from plom import __version__
+
 paperdir = Path("papersToPrint")
 
 from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed
@@ -20,3 +22,16 @@ from .buildDatabaseAndPapers import build_database, build_papers
 
 from .buildClasslist import process_classlist_file, get_demo_classlist
 from .upload_classlist import upload_classlist, upload_demo_classlist
+
+from .faketools import make_scribbles
+from .hwFaker import make_hw_scribbles
+
+# what you get from "from plom.produce import *"
+__all__ = [
+    "get_demo_classlist",
+    "process_classlist_file",
+    "upload_classlist",
+    "upload_demo_classlist",
+    "make_scribbles",
+    "make_hw_scribbles",
+]

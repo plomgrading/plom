@@ -3,18 +3,15 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-import os
 from pathlib import Path
-from shlex import split
-import subprocess
 import tempfile
-import time
 from warnings import warn
 
 from plom import Default_Port
 from plom.misc_utils import working_directory
 from plom.server import PlomServer
 import plom.scan
+import plom.produce
 
 
 class PlomDemoServer(PlomServer):
@@ -102,19 +99,20 @@ class PlomDemoServer(PlomServer):
 
     def fill_the_tank(self):
         """make fake data and push it into the plom server."""
-        env = {**os.environ, **self.get_env_vars()}
+        s = f"localhost:{self.port}"
+        scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
+        pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
+        plom.produce.upload_demo_classlist(s, pwd)
+        # plom-build make: build_database and build_papers
+        status = plom.produce.build_database(s, pwd)
+        print("Database built with output:")
+        print(status)
+        plom.produce.build_papers(s, pwd, basedir=self.basedir)
+        plom.produce.make_scribbles(s, pwd, basedir=self.basedir)
         with working_directory(self.basedir):
-            subprocess.check_call(
-                split("python3 -m plom.scripts.build class --demo"), env=env
-            )
-            subprocess.check_call(split("python3 -m plom.scripts.build make"), env=env)
-            subprocess.check_call(split("python3 -m plom.produce.faketools"), env=env)
-
-            s = f"localhost:{self.port}"
-            pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
-                plom.scan.processScans(s, pwd, f, gamma=False)
-                plom.scan.uploadImages(s, pwd, f, do_unknowns=True)
+                plom.scan.processScans(s, scan_pwd, f, gamma=False)
+                plom.scan.uploadImages(s, scan_pwd, f, do_unknowns=True)
 
     def stop(self, erase_dir=True):
         """Take down the Plom server.

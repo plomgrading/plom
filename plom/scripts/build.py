@@ -24,6 +24,7 @@ if sys.version_info >= (3, 7):
 else:
     import importlib_resources as resources
 
+from stdiomask import getpass
 import toml
 
 from plom import __version__
@@ -284,6 +285,9 @@ def main():
             args.password = os.environ["PLOM_MANAGER_PASSWORD"]
         except KeyError:
             pass
+
+    if not args.password:
+        args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "new":
         if args.demo:

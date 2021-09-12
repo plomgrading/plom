@@ -6,10 +6,11 @@
 
 import csv
 from multiprocessing import Pool
+from pathlib import Path
 
 from tqdm import tqdm
 
-from plom.produce import paperdir
+from plom.produce import paperdir as paperdir_name
 from .mergeAndCodePages import make_PDF
 
 
@@ -136,7 +137,7 @@ def build_all_papers(
     outputProductionCSV(spec, make_PDF_args)
 
 
-def confirm_processed(spec, msgr, classlist):
+def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
     """Checks that each PDF file was created and notify server.
 
     Arguments:
@@ -144,10 +145,14 @@ def confirm_processed(spec, msgr, classlist):
         msgr (Messenger): an open active connection to the server.
         classlist (list, None): ordered list of (sid, sname) pairs.
 
+    Keyword Arguments:
+        paperdir (pathlib.Path): where to find the papers to print.
+
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
         ValueError: classlist is invalid in some way.
     """
+    paperdir = Path(paperdir)
     if spec["numberToName"] > 0:
         if not classlist:
             raise ValueError("You must provide a classlist for pre-named papers")
@@ -170,7 +175,7 @@ def confirm_processed(spec, msgr, classlist):
             raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
 
 
-def identify_prenamed(spec, msgr, classlist):
+def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
     """Identify papers that pre-printed names on the server.
 
     Arguments:
@@ -178,10 +183,14 @@ def identify_prenamed(spec, msgr, classlist):
         msgr (Messenger): an open active connection to the server.
         classlist (list, None): ordered list of (sid, sname) pairs.
 
+    Keyword Arguments:
+        paperdir (pathlib.Path): where to find the papers to print.
+
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
         ValueError: classlist is invalid in some way.
     """
+    paperdir = Path(paperdir)
     if spec["numberToName"] > 0:
         if not classlist:
             raise ValueError("You must provide a classlist to prename papers")

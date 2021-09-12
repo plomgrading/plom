@@ -2,9 +2,6 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-import sys
-from stdiomask import getpass
-
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import (
     PlomExistingLoginException,
@@ -23,9 +20,6 @@ def get_messenger(server=None, password=None):
 
     msgr.start()
 
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
-
     try:
         msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
@@ -37,7 +31,7 @@ def get_messenger(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
-        sys.exit(10)
+        raise
 
     return msgr
 
