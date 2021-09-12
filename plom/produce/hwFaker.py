@@ -122,7 +122,8 @@ def main():
     1. Generates the files.
     2. Creates the fake data filled pdfs using fill_in_fake_data_on_exams.
     3. Generates second batch for first half of papers.
-    4. Generates some "semiloose" bundles with all questions.
+    4. Generates some "semiloose" bundles; those that have all questions
+       or more than one question in a single bundle.
     """
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
