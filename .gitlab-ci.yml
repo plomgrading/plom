@@ -830,7 +830,7 @@ linuxbin_centos:
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 # - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
 # - must have $I_CAN_HAZ_THE_APPLES defined in Settings->CI/CD->Variables (#1651)
-# - try --target-arch universal2
+# - TODO: try --target-arch universal2
 macos11_client:
   image: macos-11-xcode-12
   tags:
@@ -868,12 +868,12 @@ macos11_client:
   - ls $NAME
   - cat md5sum
   - mv dist/PlomClient-$VER.app .
-  - ls -sR PlomClient-$VER.app
+  - ls -sklR PlomClient-$VER.app
   artifacts:
     paths:
     - PlomClient*.bin
     - md5sum
-    - PlomClient-$VER.app
+    - PlomClient*.app
     expire_in: 30 days
 
 
@@ -911,12 +911,12 @@ macos1013_client:
   - ls $NAME
   - cat md5sum
   - mv dist/PlomClient-$VER.app .
-  - ls -sR PlomClient-$VER.app
+  - ls -sklR PlomClient-$VER.app
   artifacts:
     paths:
     - PlomClient*.bin
     - md5sum
-    - PlomClient-$VER.app
+    - PlomClient*.app
     expire_in: 30 days
 
 
