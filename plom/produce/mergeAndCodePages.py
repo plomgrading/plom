@@ -231,7 +231,9 @@ def insert_extra_info(extra, exam, ycoor=None):
     Arguments:
         extra (dict): dictionary with student id and name.
         exam (fitz.Document): PDF document.
-        ycoor (int): specifies the y-coordinate where the id and name will be placed
+        ycoor (int): specifies the y-coordinate where the id and name will be placed, as a percentage from the top
+                     of the page to the bottom from 0 to 100. If None, defaults to 40%.
+
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
@@ -241,9 +243,9 @@ def insert_extra_info(extra, exam, ycoor=None):
             info added into the first page.
     """
     if ycoor:
-        YSHIFT = ycoor / 100.0 # where on page is centre of box 0=top, 1=bottom
+        YSHIFT = ycoor / 100.00
     else:
-        YSHIFT = 0.4
+        YSHIFT = 0.40
 
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height

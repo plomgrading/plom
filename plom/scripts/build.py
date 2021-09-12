@@ -240,8 +240,9 @@ spB.add_argument(
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 spB.add_argument("-n", "--number", type=int, help="used for building a specific paper number")
-spB.add_argument("-m", "--namebox-ycoor", type=int, help="specify y-coordinate of the ID that will be printed on "
-                                                         "named papers from 0~100")
+spB.add_argument("-m", "--namebox-ycoor", type=int, help="specify location of the ID that will be printed on "
+                                                         "named papers from 0 for the top and 100"
+                                                         "for the bottom of the page.")
 
 sp = sub.add_parser(
     "rubric",

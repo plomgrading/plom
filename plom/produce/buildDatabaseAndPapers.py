@@ -56,7 +56,7 @@ def build_papers(
             # TODO: but careful about identify_prenamed below which may need id
             classlist = [(x["id"], x["studentName"]) for x in _classlist]
             print(
-                'Building pre-named paper number {} in "{}"...'.format(
+                'Building paper number {} in "{}"...'.format(
                     number,
                     paperdir,
                 )
