@@ -29,6 +29,8 @@ a = Analysis(['plom/scripts/client.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# See https://gitlab.com/plom/plom/-/issues/1655
+# target_arch='universal2',
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
@@ -39,7 +41,6 @@ exe = EXE(pyz,
           strip=False,
           onefile=True,
           upx=True,
-          target_arch='universal2',
           runtime_tmpdir=None,
           console=False )
 
