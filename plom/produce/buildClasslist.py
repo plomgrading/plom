@@ -339,4 +339,5 @@ def process_classlist(student_csv_file_name, demo=False):
     if not student_csv_file_name.exists():
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
     df = process_classlist_backend(student_csv_file_name)
+    # "records" makes it output a list-of-dicts, one per row
     return df.to_dict("records")
