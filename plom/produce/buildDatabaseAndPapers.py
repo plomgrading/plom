@@ -51,10 +51,10 @@ def build_papers(
         pvmap = msgr.getGlobalPageVersionMap()
 
         if number:
-            raw_classlist = msgr.IDrequestClasslist()
+            _classlist = msgr.IDrequestClasslist()
             # TODO: Issue #1646 mostly student number (w fallback)
             # TODO: but careful about identify_prenamed below which may need id
-            classlist = [(x["id"], x["studentName"]) for x in classlist_raw]
+            classlist = [(x["id"], x["studentName"]) for x in _classlist]
             print(
                 'Building pre-named paper number {} in "{}"...'.format(
                     number,
@@ -66,10 +66,10 @@ def build_papers(
         else:
 
             if spec["numberToName"] > 0:
-                raw_classlist = msgr.IDrequestClasslist()
+                _classlist = msgr.IDrequestClasslist()
                 # TODO: Issue #1646 mostly student number (w fallback)
                 # TODO: but careful about identify_prenamed below which may need id
-                classlist = [(x["id"], x["studentName"]) for x in classlist_raw]
+                classlist = [(x["id"], x["studentName"]) for x in _classlist]
                 print(
                     'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                         spec["numberToName"],
