@@ -266,19 +266,20 @@ def insert_extra_info(extra, exam, ycoor=None):
         * 0.5
     )
     student_id_height = 36 * 1.3
+    student_id_height2 = 48 * 1.3
 
     # We have 2 rectangles for the student name and student id
     student_id_rect_1 = fitz.Rect(
         page_width // 2 - student_id_width,
-        page_height * YSHIFT - student_id_height,
+        ((page_height - (student_id_height + student_id_height2)) * YSHIFT),
         page_width // 2 + student_id_width,
-        page_height * YSHIFT + student_id_height,
+        ((page_height - (student_id_height + student_id_height2)) * YSHIFT) + (student_id_height * 2),
     )
     student_id_rect_2 = fitz.Rect(
         student_id_rect_1.x0,
         student_id_rect_1.y1,
         student_id_rect_1.x1,
-        student_id_rect_1.y1 + 48 * 1.3,
+        student_id_rect_1.y1 + student_id_height2,
     )
     exam[0].draw_rect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
     exam[0].draw_rect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
