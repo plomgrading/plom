@@ -242,7 +242,7 @@ def insert_extra_info(extra, exam, ycoor=None):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
-    if ycoor:
+    if ycoor is not None:
         YSHIFT = ycoor / 100.00
     else:
         YSHIFT = 0.40
