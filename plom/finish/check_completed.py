@@ -75,7 +75,7 @@ def main(server=None, password=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(-1)
+        raise
 
     spec = msgr.get_spec()
     max_papers = spec["numberToProduce"]

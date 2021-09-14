@@ -97,7 +97,7 @@ def main(server=None, password=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(10)
+        raise
 
     try:
         spec = msgr.get_spec()
