@@ -43,105 +43,109 @@ import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
 
 
-parser = argparse.ArgumentParser(
-    description=__doc__.split("\n")[0],
-    epilog="\n".join(__doc__.split("\n")[1:]),
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+def get_parser():
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
 
-sub = parser.add_subparsers(dest="command")
+    sub = parser.add_subparsers(dest="command")
 
-spCheck = sub.add_parser(
-    "status",
-    help="How's progress?",
-    description="List progress and which tests that have been completed.",
-)
-spCSV = sub.add_parser(
-    "csv",
-    help="CSV file with marks/progress info",
-    description='Create a spreadsheet of grades named "{}".'.format(CSVFilename),
-    epilog="""
-        If grading is not yet complete, the spreadsheet contains partial info
-        and any warnings so far.
-    """,
-)
-spAssemble = sub.add_parser(
-    "reassemble",
-    help="Create PDFs to return to students",
-    description="""
-        After papers have been ID'd and marked, this command builds PDFs
-        to return to students.  A special case deals with the online-return
-        of papers that were marked offline (before scanning).
-    """,
-)
-spAssemble.add_argument(
-    "--ided_only",
-    action="store_true",
-    help="""
-        Reassemble PDF files for ID'ed (but offline-graded) papers.
-        WARNING: This option still uses filesystem access and
-        must be run on the server.
-    """,
-)
-spCodedReturn = sub.add_parser(
-    "webpage",
-    help="Create HTML page for digital return",
-    description="Prepare HTML page for return using out-of-band per-student secret codes.",
-    epilog=dedent(
+    spCheck = sub.add_parser(
+        "status",
+        help="How's progress?",
+        description="List progress and which tests that have been completed.",
+    )
+    spCSV = sub.add_parser(
+        "csv",
+        help="CSV file with marks/progress info",
+        description='Create a spreadsheet of grades named "{}".'.format(CSVFilename),
+        epilog="""
+            If grading is not yet complete, the spreadsheet contains partial info
+            and any warnings so far.
+        """,
+    )
+    spAssemble = sub.add_parser(
+        "reassemble",
+        help="Create PDFs to return to students",
+        description="""
+            After papers have been ID'd and marked, this command builds PDFs
+            to return to students.  A special case deals with the online-return
+            of papers that were marked offline (before scanning).
+        """,
+    )
+    spAssemble.add_argument(
+        "--ided_only",
+        action="store_true",
+        help="""
+            Reassemble PDF files for ID'ed (but offline-graded) papers.
+            WARNING: This option still uses filesystem access and
+            must be run on the server.
+        """,
+    )
+    spCodedReturn = sub.add_parser(
+        "webpage",
+        help="Create HTML page for digital return",
+        description="Prepare HTML page for return using out-of-band per-student secret codes.",
+        epilog=dedent(
+            """
+            The webpage will be in `codedReturn` and the secret codes in
+            `return_codes.csv`.
+
+            There may be scripts in `share/plom/contrib` to assist with
+            distributing the secret codes.
+
+            This command must have access to the results of `reassemble`.
         """
-        The webpage will be in `codedReturn` and the secret codes in
-        `return_codes.csv`.
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    spCodedReturn.add_argument(
+        "--hex",
+        action="store_true",
+        help="""
+            Use a string of hexadecimal instead of decimal digits for the
+            secret codes.
+            More secure but may cause problems if you use certain Canvas
+            workarounds to distribute the codes.
+        """,
+    )
+    spCodedReturn.add_argument(
+        "--digits",
+        type=int,
+        default=9,
+        metavar="N",
+        action="store",
+        help="Length of the secret code.  Defaults to 9.",
+    )
+    spCodedReturn.add_argument(
+        "--salt",
+        type=str,
+        help="""
+            Instead of random codes, use a hash of the student ID, salted
+            with the string SALT.  The codes will then be reproducible by
+            anyone who knows this string (and the student IDs).
+            As its susceptible to offline attacks, a longer string is
+            recommended: you can put quotes around a phrase e.g.,
+            `--salt "Many a slip twixt the cup and the lip"`.
+        """,
+    )
+    spClear = sub.add_parser(
+        "clear",
+        help='Clear "manager" login',
+        description='Clear "manager" login after a crash or other expected event.',
+    )
+    for x in (spCheck, spCSV, spAssemble, spClear):
+        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+        x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
-        There may be scripts in `share/plom/contrib` to assist with
-        distributing the secret codes.
-
-        This command must have access to the results of `reassemble`.
-    """
-    ),
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-spCodedReturn.add_argument(
-    "--hex",
-    action="store_true",
-    help="""
-        Use a string of hexadecimal instead of decimal digits for the
-        secret codes.
-        More secure but may cause problems if you use certain Canvas
-        workarounds to distribute the codes.
-    """,
-)
-spCodedReturn.add_argument(
-    "--digits",
-    type=int,
-    default=9,
-    metavar="N",
-    action="store",
-    help="Length of the secret code.  Defaults to 9.",
-)
-spCodedReturn.add_argument(
-    "--salt",
-    type=str,
-    help="""
-        Instead of random codes, use a hash of the student ID, salted
-        with the string SALT.  The codes will then be reproducible by
-        anyone who knows this string (and the student IDs).
-        As its susceptible to offline attacks, a longer string is
-        recommended: you can put quotes around a phrase e.g.,
-        `--salt "Many a slip twixt the cup and the lip"`.
-    """,
-)
-spClear = sub.add_parser(
-    "clear",
-    help='Clear "manager" login',
-    description='Clear "manager" login after a crash or other expected event.',
-)
-for x in (spCheck, spCSV, spAssemble, spClear):
-    x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    x.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    return parser
 
 
 def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if not hasattr(args, "server") or not args.server:
