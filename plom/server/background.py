@@ -169,7 +169,7 @@ class PlomServer:
         else:
             self._server_proc = subprocess.Popen(
                 split(
-                    f"python3 -m plom.scripts.server launch {self.basedir} --no-logconsole --logfile server.log"
+                    f"python3 -m plom.server launch {self.basedir} --no-logconsole --logfile server.log"
                 )
             )
         assert self.process_is_running(), "The server did not start successfully"
