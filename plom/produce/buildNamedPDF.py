@@ -226,7 +226,10 @@ def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
 
         if not pdf_file.is_file():
             raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
-        msgr.notify_pdf_of_paper_produced(papernum)
+        try:
+            msgr.notify_pdf_of_paper_produced(papernum)
+        except PlomConflict as e:
+            print(e)
 
 
 def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
