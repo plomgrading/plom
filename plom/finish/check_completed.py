@@ -77,14 +77,15 @@ def main(server=None, password=None):
         )
         raise
 
-    spec = msgr.get_spec()
-    max_papers = spec["numberToProduce"]
-    numberOfQuestions = spec["numberOfQuestions"]
-    completions = msgr.RgetCompletionStatus()
-    outToDo = msgr.RgetOutToDo()
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+        max_papers = spec["numberToProduce"]
+        numberOfQuestions = spec["numberOfQuestions"]
+        completions = msgr.RgetCompletionStatus()
+        outToDo = msgr.RgetOutToDo()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     print_everything(completions, max_papers, numberOfQuestions)
 
