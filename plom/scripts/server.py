@@ -132,110 +132,111 @@ def check_non_negative(arg):
     return int(arg)
 
 
-#################
+def get_parser():
+    parser = argparse.ArgumentParser(
+        epilog="Use '%(prog)s <subcommand> -h' for detailed help.\n\n"
+        + server_instructions,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    sub = parser.add_subparsers(
+        dest="command", description="Perform various server-related tasks."
+    )
 
-parser = argparse.ArgumentParser(
-    epilog="Use '%(prog)s <subcommand> -h' for detailed help.\n\n"
-    + server_instructions,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-sub = parser.add_subparsers(
-    dest="command", description="Perform various server-related tasks."
-)
+    spI = sub.add_parser(
+        "init",
+        help="Initialise server",
+        description="""
+          Initialises a directory in preparation for starting a Plom server.
+          Creates sub-directories, config files, and various other things.
+        """,
+    )
+    spI.add_argument(
+        "dir",
+        nargs="?",
+        help="The directory to use. If omitted, use the current directory.",
+    )
+    spI.add_argument(
+        "--port",
+        type=int,
+        help=f"Use alternative port (defaults to {Default_Port} if omitted)",
+    )
 
-spI = sub.add_parser(
-    "init",
-    help="Initialise server",
-    description="""
-      Initialises a directory in preparation for starting a Plom server.
-      Creates sub-directories, config files, and various other things.
-    """,
-)
-spI.add_argument(
-    "dir",
-    nargs="?",
-    help="The directory to use. If omitted, use the current directory.",
-)
-spI.add_argument(
-    "--port",
-    type=int,
-    help=f"Use alternative port (defaults to {Default_Port} if omitted)",
-)
+    spU = sub.add_parser(
+        "users",
+        help="Create user accounts",
+        description="""
+          Manipulate users accounts.  With no arguments, produce a template
+          file for you to edit, with passwords displayed in plain text.
+          Given a filename, parses a plain-text user list, performs some
+          simple sanity checks and then hashes the passwords a file for the
+          server.
+        """,
+    )
+    spR = sub.add_parser(
+        "launch", help="Start the server", description="Start the Plom server."
+    )
+    spR.add_argument(
+        "dir",
+        nargs="?",
+        help="""The directory containing the filespace to be used by this server.
+            If omitted the current directory will be used.""",
+    )
+    spR.add_argument(
+        "--mastertoken",
+        metavar="HEX",
+        help="""A 32 hex-digit string used to encrypt tokens in the database.
+            If you do not supply one then the server will create one.
+            If you record the token somewhere you can hot-restart the server
+            (i.e., restart the server without requiring users to log-off and
+            log-in again).""",
+    )
+    spR.add_argument(
+        "--logfile",
+        help="""A filename to save the logs.  If its a bare filename it will
+            be relative to DIR above, or you can specify a path relative to
+            the current working directory.""",
+    )
+    spR.add_argument(
+        "--no-logconsole",
+        action="store_false",
+        dest="logconsole",
+        help="""By default the server echos the logs to stderr.  This disables
+            that.  You can still see the logs in the logfile.""",
+    )
 
-spU = sub.add_parser(
-    "users",
-    help="Create user accounts",
-    description="""
-      Manipulate users accounts.  With no arguments, produce a template
-      file for you to edit, with passwords displayed in plain text.
-      Given a filename, parses a plain-text user list, performs some
-      simple sanity checks and then hashes the passwords a file for the
-      server.
-    """,
-)
-spR = sub.add_parser(
-    "launch", help="Start the server", description="Start the Plom server."
-)
-spR.add_argument(
-    "dir",
-    nargs="?",
-    help="""The directory containing the filespace to be used by this server.
-        If omitted the current directory will be used.""",
-)
-spR.add_argument(
-    "--mastertoken",
-    metavar="HEX",
-    help="""A 32 hex-digit string used to encrypt tokens in the database.
-        If you do not supply one then the server will create one.
-        If you record the token somewhere you can hot-restart the server
-        (i.e., restart the server without requiring users to log-off and
-        log-in again).""",
-)
-spR.add_argument(
-    "--logfile",
-    help="""A filename to save the logs.  If its a bare filename it will
-        be relative to DIR above, or you can specify a path relative to
-        the current working directory.""",
-)
-spR.add_argument(
-    "--no-logconsole",
-    action="store_false",
-    dest="logconsole",
-    help="""By default the server echos the logs to stderr.  This disables
-        that.  You can still see the logs in the logfile.""",
-)
+    spU.add_argument(
+        "userlist",
+        nargs="?",
+        help="Process the given userlist file OR if none given then produce a template.",
+    )
 
-spU.add_argument(
-    "userlist",
-    nargs="?",
-    help="Process the given userlist file OR if none given then produce a template.",
-)
+    grp = spU.add_mutually_exclusive_group()
+    grp.add_argument(
+        "--demo",
+        action="store_true",
+        help="""
+            Use fixed prepopulated demo userlist and passwords.
+            **DO NOT USE THIS ON REAL SERVER**
+        """,
+    )
+    grp.add_argument(
+        "--auto",
+        type=check_non_negative,
+        metavar="N",
+        help="Auto-generate a random user list of N users with real-ish usernames.",
+    )
 
-grp = spU.add_mutually_exclusive_group()
-grp.add_argument(
-    "--demo",
-    action="store_true",
-    help="""
-        Use fixed prepopulated demo userlist and passwords.
-        **DO NOT USE THIS ON REAL SERVER**
-    """,
-)
-grp.add_argument(
-    "--auto",
-    type=check_non_negative,
-    metavar="N",
-    help="Auto-generate a random user list of N users with real-ish usernames.",
-)
-
-spU.add_argument(
-    "--numbered",
-    action="store_true",
-    help='Use numbered usernames, e.g. "user17", for the autogeneration.',
-)
+    spU.add_argument(
+        "--numbered",
+        action="store_true",
+        help='Use numbered usernames, e.g. "user17", for the autogeneration.',
+    )
+    return parser
 
 
 def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if args.command == "init":
