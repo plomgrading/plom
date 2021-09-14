@@ -10,6 +10,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
+from plom.plom_exceptions import PlomConflict
 from plom.produce import paperdir as paperdir_name
 from .mergeAndCodePages import make_PDF
 
@@ -223,10 +224,9 @@ def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
         else:
             pdf_file = paperdir / f"exam_{papernum:04}.pdf"
 
-        if pdf_file.is_file():
-            msgr.notify_pdf_of_paper_produced(papernum)
-        else:
+        if not pdf_file.is_file():
             raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
+        msgr.notify_pdf_of_paper_produced(papernum)
 
 
 def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
@@ -256,7 +256,6 @@ def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
             pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
-            if pdf_file.is_file():
-                msgr.id_paper(papernum, sid, sname)
-            else:
+            if not pdf_file.is_file():
                 raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
+            msgr.id_paper(papernum, sid, sname)
