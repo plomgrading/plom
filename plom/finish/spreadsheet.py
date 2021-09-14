@@ -4,7 +4,6 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
-from stdiomask import getpass
 
 from plom import get_question_label
 from plom.messenger import FinishMessenger
@@ -87,9 +86,6 @@ def main(server=None, password=None):
     else:
         msgr = FinishMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass("Please enter the 'manager' password:")
 
     try:
         msgr.requestAndSaveToken("manager", password)

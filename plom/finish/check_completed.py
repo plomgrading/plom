@@ -4,8 +4,6 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-from stdiomask import getpass
-
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -66,9 +64,6 @@ def main(server=None, password=None):
     else:
         msgr = FinishMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass("Please enter the 'manager' password:")
 
     try:
         msgr.requestAndSaveToken("manager", password)

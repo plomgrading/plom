@@ -31,6 +31,8 @@ import argparse
 import os
 from textwrap import dedent
 
+from stdiomask import getpass
+
 from plom import __version__
 
 # TODO: be more decisive about how this should be
@@ -160,6 +162,9 @@ def main():
             args.password = os.environ["PLOM_MANAGER_PASSWORD"]
         except KeyError:
             pass
+
+    if hasattr(args, "password") and not args.password:
+        args.password = getpass('Please enter the "manager" password: ')
 
     # Note: many of these commands use exit() directly
     if args.command == "status":
