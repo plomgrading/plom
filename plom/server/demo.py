@@ -95,10 +95,10 @@ class PlomDemoServer(PlomServer):
         kwargs.pop("basedir", True)
         super().__init__(basedir=tmpdir, **kwargs)
         if scans:
-            self.fill_the_tank()
+            self.fill_with_fake_scribbled_tests()
 
-    def fill_the_tank(self):
-        """make fake data and push it into the plom server."""
+    def fill_with_fake_scribbled_tests(self):
+        """Simulate the writing of a test by random scribbling and push to the server."""
         s = f"localhost:{self.port}"
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
