@@ -246,9 +246,9 @@ spB.add_argument(
     "-m",
     "--namebox-ycoor",
     type=int,
-    help="specify location of the ID that will be printed on "
-    "named papers from 0 for the top and 100"
-    "for the bottom of the page.",
+    help="""
+        Specify vertical location of the ID that will be printed on named
+        papers, a percentage from 0 (top) to 100 (bottom) of the page.""",
 )
 
 sp = sub.add_parser(

@@ -37,7 +37,7 @@ def build_papers(
         no_qr (bool): when True, don't stamp with QR codes.  Default: False
             (which means *do* stamp with QR codes).
         number (int/None): prepare a particular paper.
-        ycoor: TODO
+        ycoor (float): tweak the y-coordinate of the stamped renamed papers.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -55,53 +55,36 @@ def build_papers(
     try:
         spec = msgr.get_spec()
         pvmap = msgr.getGlobalPageVersionMap()
-
-        if number:
+        if spec["numberToName"] > 0:
             _classlist = msgr.IDrequestClasslist()
             # TODO: Issue #1646 mostly student number (w fallback)
             # TODO: but careful about identify_prenamed below which may need id
             classlist = [(x["id"], x["studentName"]) for x in _classlist]
+            # TODO: tweak these messages for the `number` case!
             print(
-                'Building paper number {} in "{}"...'.format(
-                    number,
+                'Building {} pre-named papers and {} blank papers in "{}"...'.format(
+                    spec["numberToName"],
+                    spec["numberToProduce"] - spec["numberToName"],
                     paperdir,
                 )
             )
-            with working_directory(basedir):
-                build_all_papers(
-                    spec,
-                    pvmap,
-                    classlist,
-                    fakepdf=fakepdf,
-                    no_qr=no_qr,
-                    numberToMake=number,
-                    ycoor=ycoor,
-                )
         else:
-
-            if spec["numberToName"] > 0:
-                _classlist = msgr.IDrequestClasslist()
-                # TODO: Issue #1646 mostly student number (w fallback)
-                # TODO: but careful about identify_prenamed below which may need id
-                classlist = [(x["id"], x["studentName"]) for x in _classlist]
-                print(
-                    'Building {} pre-named papers and {} blank papers in "{}"...'.format(
-                        spec["numberToName"],
-                        spec["numberToProduce"] - spec["numberToName"],
-                        paperdir,
-                    )
+            classlist = None
+            print(
+                'Building {} blank papers in "{}"...'.format(
+                    spec["numberToProduce"], paperdir
                 )
-            else:
-                classlist = None
-                print(
-                    'Building {} blank papers in "{}"...'.format(
-                        spec["numberToProduce"], paperdir
-                    )
-                )
-            with working_directory(basedir):
-                build_all_papers(
-                    spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, ycoor=ycoor
-                )
+            )
+        with working_directory(basedir):
+            build_all_papers(
+                spec,
+                pvmap,
+                classlist,
+                fakepdf=fakepdf,
+                no_qr=no_qr,
+                numberToMake=number,
+                ycoor=ycoor,
+            )
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist, paperdir=paperdir)
