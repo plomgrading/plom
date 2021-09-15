@@ -2,8 +2,6 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2019-2021 Colin B. Macdonald
 
-from stdiomask import getpass
-
 from plom.messenger import Messenger
 
 
@@ -20,9 +18,6 @@ def clear_manager_login(server=None, password=None):
     else:
         msgr = Messenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
 
     msgr.clearAuthorisation("manager", password)
     print("Manager login cleared.")

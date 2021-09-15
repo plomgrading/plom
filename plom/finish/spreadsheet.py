@@ -4,7 +4,6 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
-from stdiomask import getpass
 
 from plom import get_question_label
 from plom.messenger import FinishMessenger
@@ -88,9 +87,6 @@ def main(server=None, password=None):
         msgr = FinishMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass("Please enter the 'manager' password:")
-
     try:
         msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
@@ -101,7 +97,7 @@ def main(server=None, password=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(10)
+        raise
 
     try:
         spec = msgr.get_spec()
