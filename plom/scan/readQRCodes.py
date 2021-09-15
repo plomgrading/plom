@@ -262,7 +262,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             flag = False
         if not flag:
             print(">> Mismatch between page scanned and spec - this should NOT happen")
-            print(">> Produced t{} p{} v{}".format(t, p, tfv[1]))
+            print(f">> Produced t{t} p{p} v{v}")
             print(
                 ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
                     spec["numberToProduce"],
@@ -278,7 +278,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             )  # pref = "bname/pageImages", suf = blah-n.png
             dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
 
-            print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
+            print(f"[F] {fname}: moving to unknownPages")
             # move the blah.<ext> and blah.<ext>.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
