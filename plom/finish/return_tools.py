@@ -316,7 +316,7 @@ def canvas_csv_check_pdf(sns):
     for file in Path("codedReturn").glob("*.pdf"):
         # TODO: this looks rather fragile!
         parts = file.name.partition("_")[2].partition(".")[0]
-        sn, meh, code = parts.partition("_")
+        sn, _, code = parts.partition("_")
         if sns.get(sn) == code:
             print(f"  Good: paper {file.name} has entry in spreadsheet {sn}, {code}")
             sns.pop(sn)
