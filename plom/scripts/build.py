@@ -244,11 +244,14 @@ spB.add_argument(
 )
 spB.add_argument(
     "-m",
-    "--namebox-ycoor",
+    "--namebox-ypos",
+    metavar="Y",
     type=int,
     help="""
-        Specify vertical location of the ID that will be printed on named
-        papers, a percentage from 0 (top) to 100 (bottom) of the page.""",
+        Specify vertical location of the name/ID that will be printed on
+        named papers, a percentage from 0 (top) to 100 (bottom) of the
+        page.
+        Defaults to 40.""",
 )
 
 sp = sub.add_parser(
@@ -366,7 +369,7 @@ def main():
             fakepdf=args.no_pdf,
             no_qr=args.without_qr,
             number=args.number,
-            ycoor=args.namebox_ycoor,
+            ycoor=args.namebox_ypos,
         )
 
     elif args.command == "rubric":
