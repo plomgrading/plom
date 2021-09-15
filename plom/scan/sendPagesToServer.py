@@ -10,8 +10,6 @@ import os
 import shutil
 from pathlib import Path
 
-from stdiomask import getpass
-
 from plom.messenger import ScanMessenger
 from plom.misc_utils import working_directory
 from plom.plom_exceptions import PlomExistingLoginException
@@ -252,9 +250,6 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
-
     try:
         msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
@@ -307,9 +302,6 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
-
     try:
         msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
@@ -358,9 +350,6 @@ def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None)
     else:
         msgr = ScanMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", password)
@@ -412,9 +401,6 @@ def checkTestHasThatSID(student_id, server=None, password=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
-
     try:
         msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
@@ -460,9 +446,6 @@ def does_bundle_exist_on_server(bundle_name, md5sum, server=None, password=None)
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
-
     try:
         msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
@@ -504,9 +487,6 @@ def createNewBundle(bundle_name, md5, server=None, password=None):
     else:
         msgr = ScanMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", password)

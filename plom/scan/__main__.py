@@ -51,6 +51,8 @@ import argparse
 import os
 from pathlib import Path
 
+from stdiomask import getpass
+
 from plom.scan import __version__
 from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
@@ -198,6 +200,9 @@ def parse_the_user_args():
             args.password = os.environ["PLOM_SCAN_PASSWORD"]
         except KeyError:
             pass
+
+    if hasattr(args, "password") and not args.password:
+        args.password = getpass('Please enter the "scanner" password: ')
 
     return args
 

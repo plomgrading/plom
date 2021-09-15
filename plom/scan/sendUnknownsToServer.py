@@ -6,8 +6,6 @@ import hashlib
 import shutil
 from pathlib import Path
 
-from stdiomask import getpass
-
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
@@ -88,9 +86,6 @@ def upload_unknowns(bundle_dir, server=None, password=None):
     else:
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
-
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         scanMessenger.requestAndSaveToken("scanner", password)
