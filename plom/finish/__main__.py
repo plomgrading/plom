@@ -141,8 +141,9 @@ def get_parser():
         help='Clear "manager" login',
         description='Clear "manager" login after a crash or other expected event.',
     )
-    for x in (spCheck, spCSV, spAssemble, spClear):
+    for x in (spCheck, spCSV, spAssemble, spClear, spCodedReturn):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    for x in (spCheck, spCSV, spAssemble, spClear):
         x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
     return parser
@@ -177,7 +178,7 @@ def main():
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main(args.hex, args.digits, args.salt)
+        plom.finish.coded_return.main(args.hex, args.digits, args.salt, args.server)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
