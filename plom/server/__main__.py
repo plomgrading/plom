@@ -66,7 +66,6 @@ def processUsers(userFile, demo, auto, numbered):
     return:
         None
     """
-    confdir.mkdir(exist_ok=True)
     userlist = confdir / "userList.json"
     # if we have been passed a userFile then process it and return
     if userFile:

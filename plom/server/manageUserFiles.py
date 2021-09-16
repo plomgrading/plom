@@ -15,6 +15,7 @@ else:
     import importlib_resources as resources
 
 import plom
+from plom.server import confdir
 
 from .aliceBob import simple_password, make_random_user_list, make_numbered_user_list
 
@@ -219,5 +220,7 @@ def save_user_list(username_password_dict, basedir=Path(".")):
 
     username_hash_dict = make_password_hashes(username_password_dict)
 
-    with open(basedir / "serverConfiguration/userList.json", "w") as fh:
+    where = basedir / confdir
+    where.mkdir(exist_ok=True)
+    with open(where / "userList.json", "w") as fh:
         fh.write(json.dumps(username_hash_dict, indent=2))
