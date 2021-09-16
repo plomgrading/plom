@@ -76,16 +76,13 @@ def processUsers(userFile, demo, auto, numbered):
         return
 
     rawfile = Path("userListRaw.csv")
-    # otherwise we have to make one for the user - check if one already there.
+    # otherwise we have to make one for the user
     if rawfile.exists():
-        raise FileExistsError(
-            "File {} already exists.  Remove and try again.".format(rawfile)
-        )
+        raise FileExistsError(f"File {rawfile} already exists: remove and try again.")
 
     if demo:
         print(
-            "Creating a demo user list at {}. "
-            "** DO NOT USE ON REAL SERVER **".format(rawfile)
+            f"Creating a demo user list at {rawfile}. ** DO NOT USE ON REAL SERVER **"
         )
         write_template_csv_user_list(rawfile)
         parse_and_save_user_list(rawfile)
@@ -129,7 +126,9 @@ def get_parser():
         + server_instructions,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     sub = parser.add_subparsers(
         dest="command", description="Perform various server-related tasks."
     )
