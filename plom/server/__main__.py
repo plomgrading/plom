@@ -248,8 +248,6 @@ def main():
     else:
         parser.print_help()
 
-    exit(0)
-
 
 if __name__ == "__main__":
     main()
