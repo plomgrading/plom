@@ -836,7 +836,6 @@ macos11_client:
   - macos
   rules:
    - if: $I_CAN_HAZ_THE_APPLES
-  needs: []
   stage: packaging
   script:
   - sw_vers
@@ -887,7 +886,6 @@ macos1013_client:
   - macos
   rules:
    - if: $I_CAN_HAZ_THE_APPLES
-  needs: []
   stage: packaging
   script:
   - sw_vers
