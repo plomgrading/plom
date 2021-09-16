@@ -830,6 +830,7 @@ linuxbin_centos:
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 # - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
 # - must have $I_CAN_HAZ_THE_APPLES defined in Settings->CI/CD->Variables (#1651)
+# - TODO: remove .bin files once we're sure .app bundle works for most people
 macos11_client:
   image: macos-11-xcode-12
   tags:
