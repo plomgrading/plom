@@ -28,6 +28,7 @@ from plom.server import theServer
 from plom.server import specdir as specdirname
 from plom.server import confdir
 from plom.server.prepare import initialise_server
+from plom.server.manageUserFiles import get_template_user_list, save_user_list
 from plom.messenger import Messenger
 from plom.plom_exceptions import PlomBenignException
 
@@ -85,18 +86,19 @@ class PlomServer:
     def add_demo_users(cls, basedir):
         """Add users to a Plom server, roughly equivalent to `plom-server users` on cmdline.
 
+        Note: this does NOT write a rawUserList.csv file.  You can get those
+        with :py:obj:`plom.server.get_template_user_list` or from
+        :py:method:`PlomDemoServer.get_env_vars`.
+
         TODO: add features or other class methods to do other user settings.
 
         Args:
             basedir (Path-like/str): the base directory for the server.
         """
-        # TODO: move these codes elsewhere?  Out of scripts?
-        from plom.server.__main__ import processUsers
-
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
-        with working_directory(basedir):
-            processUsers(None, True, False, False)
+        users = get_template_user_list()
+        save_user_list(users, basedir=basedir)
 
     @classmethod
     def add_demo_spec(cls, basedir, num_to_produce=10):

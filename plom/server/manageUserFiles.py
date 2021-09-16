@@ -7,6 +7,14 @@
 import csv
 import json
 from pathlib import Path
+import sys
+
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
+import plom
 
 from .aliceBob import simple_password, make_random_user_list, make_numbered_user_list
 
@@ -18,7 +26,6 @@ from passlib.context import CryptContext
 
 # These parameters are used for processing and creating the user login info
 plomctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
-user_hash_login_json_path = Path("serverConfiguration/userList.json")
 list_of_required_users = ["manager", "scanner", "reviewer"]
 minimum_number_of_required_users = 4
 
@@ -122,7 +129,7 @@ def check_usernames_requirements(username_password_dict):
     return True
 
 
-def get_raw_user_dict(user_file_path):
+def get_raw_user_dict_from_csv(user_file_path):
     """Gets the user/password dictionary from a csv file.
 
     Arguments:
@@ -135,17 +142,32 @@ def get_raw_user_dict(user_file_path):
     Raises:
         ValueError: malformed csv file.
     """
-    username_password_dict = {}
-
     with open(user_file_path, "r") as f:
-        reader = csv.reader(f, skipinitialspace=True)
-        csv_headers = next(reader, None)
-        if csv_headers != ["user", "password"]:
-            raise ValueError('csv file must have two columns "user" and "password".')
-        for row in reader:
-            username_password_dict[row[0]] = row[1]
+        return _get_raw_user_dict(f)
 
+
+def _get_raw_user_dict(f):
+    username_password_dict = {}
+    reader = csv.reader(f, skipinitialspace=True)
+    csv_headers = next(reader, None)
+    if csv_headers != ["user", "password"]:
+        raise ValueError('csv file must have two columns "user" and "password".')
+    for row in reader:
+        username_password_dict[row[0]] = row[1]
     return username_password_dict
+
+
+def get_template_user_list():
+    """Gets the user/password dictionary for some fixed demo values."""
+    with resources.open_text(plom, "templateUserList.csv") as f:
+        return _get_raw_user_dict(f)
+
+
+def write_template_csv_user_list(filename):
+    """Save a csv file of fixed demo usernames and nonhashed passwords."""
+    b = resources.read_binary(plom, "templateUserList.csv")
+    with open(filename, "wb") as f:
+        f.write(b)
 
 
 def parse_and_save_user_list(user_file_path):
@@ -166,10 +188,10 @@ def parse_and_save_user_list(user_file_path):
     Raises:
         ValueError
     """
-    save_user_list(get_raw_user_dict(user_file_path))
+    save_user_list(get_raw_user_dict_from_csv(user_file_path))
 
 
-def save_user_list(username_password_dict):
+def save_user_list(username_password_dict, basedir=Path(".")):
     """Saves userlist and their hashed passwords.
 
     Do some checking of users/password rules.  Then get the hashed password
@@ -177,6 +199,9 @@ def save_user_list(username_password_dict):
 
     Arguments:
         username_password_dict (dict): keys are names and values passwords.
+        basedir (pathlib.Path): the usernames and hashed passwords are
+            written to `basedir/serverConfiguration/userList.json` where
+            basedir defaults to "." if omitted.
 
     Returns:
         None: has side effect of saving user hash dictionary.
@@ -184,6 +209,7 @@ def save_user_list(username_password_dict):
     Raises:
         ValueError
     """
+    basedir = Path(basedir)
     if not check_usernames_requirements(username_password_dict):
         raise ValueError(
             "Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user."
@@ -193,5 +219,5 @@ def save_user_list(username_password_dict):
 
     username_hash_dict = make_password_hashes(username_password_dict)
 
-    with open(user_hash_login_json_path, "w") as fh:
+    with open(basedir / "serverConfiguration/userList.json", "w") as fh:
         fh.write(json.dumps(username_hash_dict, indent=2))

@@ -16,14 +16,7 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import csv
 from pathlib import Path
-import sys
 
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
-
-import plom
 from plom import __version__
 from plom import Default_Port
 from plom.server import specdir, confdir
@@ -34,7 +27,10 @@ from plom.server import (
     check_server_directories,
     check_server_fully_configured,
 )
-from plom.server.managerUserFiles import parse_and_save_user_list
+from plom.server.manageUserFiles import (
+    parse_and_save_user_list,
+    write_template_csv_user_list,
+)
 
 
 server_instructions = f"""Overview of running the Plom server:
@@ -92,9 +88,7 @@ def processUsers(userFile, demo, auto, numbered):
             "Creating a demo user list at {}. "
             "** DO NOT USE ON REAL SERVER **".format(rawfile)
         )
-        cl = resources.read_binary(plom, "templateUserList.csv")
-        with open(rawfile, "wb") as fh:
-            fh.write(cl)
+        write_template_csv_user_list(rawfile)
         parse_and_save_user_list(rawfile)
         return
 
@@ -121,9 +115,7 @@ def processUsers(userFile, demo, auto, numbered):
                 rawfile
             )
         )
-        cl = resources.read_binary(plom, "templateUserList.csv")
-        with open(rawfile, "wb") as fh:
-            fh.write(cl)
+        write_template_csv_user_list(rawfile)
 
 
 def check_non_negative(arg):
