@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Classlists can contain additional columns.
+* Classlist-related API updates.
+* Ongoing improvements to scripting Plom via import and module improvements.
 
 ### Fixed
-
+* Misc fixes.
 
 
 ## [0.7.0] - 2021-09-04
