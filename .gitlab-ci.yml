@@ -830,7 +830,6 @@ linuxbin_centos:
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
 # - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
 # - must have $I_CAN_HAZ_THE_APPLES defined in Settings->CI/CD->Variables (#1651)
-# - TODO: remove .bin files once we're sure .app bundle works for most people
 macos11_client:
   image: macos-11-xcode-12
   tags:
@@ -860,22 +859,18 @@ macos11_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export NAME=PlomClient-$VER-macos11.bin
   - export ZIPNAME=PlomClient-$VER-macos11.zip
-  - mv dist/PlomClient*.bin $NAME
-  - chmod a+x $NAME
   - pushd dist
+  - ls
   - ls -sklR PlomClient-$VER.app
   - zip -r $ZIPNAME PlomClient-$VER.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
-  - md5 PlomClient* > md5sum
-  - ls $NAME
+  - md5 $ZIPNAME > md5sum
   - ls $ZIPNAME
   - cat md5sum
   artifacts:
     paths:
-    - PlomClient*.bin
     - PlomClient*.zip
     - md5sum
     expire_in: 30 days
@@ -907,22 +902,18 @@ macos1013_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export NAME=PlomClient-$VER-macos.bin
   - export ZIPNAME=PlomClient-$VER-macos.zip
-  - mv dist/PlomClient*.bin $NAME
-  - chmod a+x $NAME
   - pushd dist
+  - ls
   - ls -sklR PlomClient-$VER.app
   - zip -r $ZIPNAME PlomClient-$VER.app
   - popd
   - mv dist/$ZIPNAME $ZIPNAME
-  - md5 PlomClient* > md5sum
-  - ls $NAME
+  - md5 $ZIPNAME > md5sum
   - ls $ZIPNAME
   - cat md5sum
   artifacts:
     paths:
-    - PlomClient*.bin
     - PlomClient*.zip
     - md5sum
     expire_in: 30 days
