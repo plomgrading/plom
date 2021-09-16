@@ -33,8 +33,8 @@ from plom.server import (
     build_canned_users,
     check_server_directories,
     check_server_fully_configured,
-    parse_user_list,
 )
+from plom.server.managerUserFiles import parse_and_save_user_list
 
 
 server_instructions = f"""Overview of running the Plom server:
@@ -77,7 +77,7 @@ def processUsers(userFile, demo, auto, numbered):
         print("Processing user file '{}' to {}".format(userFile, userlist))
         if userlist.exists():
             print("WARNING - overwriting existing {} file.".format(userlist))
-        parse_user_list(userFile)
+        parse_and_save_user_list(userFile)
         return
 
     rawfile = Path("userListRaw.csv")
@@ -95,7 +95,7 @@ def processUsers(userFile, demo, auto, numbered):
         cl = resources.read_binary(plom, "templateUserList.csv")
         with open(rawfile, "wb") as fh:
             fh.write(cl)
-        parse_user_list(rawfile)
+        parse_and_save_user_list(rawfile)
         return
 
     if auto is not None:
