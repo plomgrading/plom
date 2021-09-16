@@ -6,6 +6,7 @@
 
 import csv
 import json
+from pathlib import Path
 
 from .aliceBob import simple_password, make_random_user_list, make_numbered_user_list
 
@@ -17,7 +18,7 @@ from passlib.context import CryptContext
 
 # These parameters are used for processing and creating the user login info
 plomctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
-user_hash_login_json_path = "serverConfiguration/userList.json"
+user_hash_login_json_path = Path("serverConfiguration/userList.json")
 list_of_required_users = ["manager", "scanner", "reviewer"]
 list_of_expected_header = ["user", "password"]
 minimum_number_of_required_users = 4
