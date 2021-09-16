@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2021 Peter Lee
 
 """Plom tools for building tests."""
 
