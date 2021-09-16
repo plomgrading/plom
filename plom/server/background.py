@@ -91,7 +91,7 @@ class PlomServer:
             basedir (Path-like/str): the base directory for the server.
         """
         # TODO: move these codes elsewhere?  Out of scripts?
-        from plom.scripts.server import processUsers
+        from plom.server.__main__ import processUsers
 
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
