@@ -861,18 +861,23 @@ macos11_client:
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
   - export NAME=PlomClient-$VER-macos11.bin
+  - export ZIPNAME=PlomClient-$VER-macos11.zip
   - mv dist/PlomClient*.bin $NAME
   - chmod a+x $NAME
-  - md5 $NAME > md5sum
-  - ls $NAME
-  - cat md5sum
-  - mv dist/PlomClient-$VER.app .
+  - pushd dist
   - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 PlomClient* > md5sum
+  - ls $NAME
+  - ls $ZIPNAME
+  - cat md5sum
   artifacts:
     paths:
     - PlomClient*.bin
+    - PlomClient*.zip
     - md5sum
-    - PlomClient*.app
     expire_in: 30 days
 
 
@@ -904,18 +909,23 @@ macos1013_client:
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
   - export NAME=PlomClient-$VER-macos.bin
+  - export ZIPNAME=PlomClient-$VER-macos.zip
   - mv dist/PlomClient*.bin $NAME
   - chmod a+x $NAME
-  - md5 $NAME > md5sum
-  - ls $NAME
-  - cat md5sum
-  - mv dist/PlomClient-$VER.app .
+  - pushd dist
   - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 PlomClient* > md5sum
+  - ls $NAME
+  - ls $ZIPNAME
+  - cat md5sum
   artifacts:
     paths:
     - PlomClient*.bin
+    - PlomClient*.zip
     - md5sum
-    - PlomClient*.app
     expire_in: 30 days
 
 
