@@ -95,7 +95,7 @@ setup(
             "plom-hwdemo=plom.scripts.hwdemo:main",
             "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build:main",
-            "plom-server=plom.scripts.server:main",
+            "plom-server=plom.server.__main__:main",
             "plom-scan=plom.scan.__main__:main",
             "plom-manager=plom.scripts.manager:main",
             "plom-finish=plom.finish.__main__:main",
