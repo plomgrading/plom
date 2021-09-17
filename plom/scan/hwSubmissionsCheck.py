@@ -7,8 +7,6 @@ from collections import defaultdict
 import glob
 import os
 
-from stdiomask import getpass
-
 from plom.rules import isValidStudentNumber
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -108,9 +106,6 @@ def whoSubmittedWhatOnServer(server, password):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
-
     try:
         msgr.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
@@ -161,9 +156,6 @@ def verifiedComplete(server=None, password=None):
     else:
         msgr = ScanMessenger(server)
     msgr.start()
-
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", password)

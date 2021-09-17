@@ -8,8 +8,6 @@ from pathlib import Path
 import shutil
 from textwrap import dedent
 
-from stdiomask import getpass
-
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
@@ -117,9 +115,6 @@ def upload_collisions(bundleDir, server=None, password=None):
     else:
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
-
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         scanMessenger.requestAndSaveToken("scanner", password)

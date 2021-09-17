@@ -9,7 +9,6 @@ import shutil
 from multiprocessing import Pool
 from pathlib import Path
 
-from stdiomask import getpass
 from tqdm import tqdm
 
 from plom.tpv_utils import (
@@ -318,9 +317,6 @@ def processBitmaps(bundle, server=None, password=None):
     else:
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
-
-    if not password:
-        password = getpass("Please enter the 'scanner' password: ")
 
     try:
         scanMessenger.requestAndSaveToken("scanner", password)
