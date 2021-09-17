@@ -190,8 +190,11 @@ def parse_the_user_args():
 
     args = parser.parse_args()
 
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+    if hasattr(args, "server"):
+        args.server = args.server or os.environ.get("PLOM_SERVER")
+
+    if hasattr(args, "password"):
+        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
     if hasattr(args, "password") and not args.password:
         args.password = getpass('Please enter the "scanner" password: ')

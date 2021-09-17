@@ -153,11 +153,13 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
+    if hasattr(args, "server"):
+        args.server = args.server or os.environ.get("PLOM_SERVER")
 
-    if hasattr(args, "password") and not args.password:
-        args.password = getpass('Please enter the "manager" password: ')
+    if hasattr(args, "password"):
+        args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
+        if not args.password:
+            args.password = getpass('Please enter the "manager" password: ')
 
     # Note: many of these commands use exit() directly
     if args.command == "status":
