@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Randomly scribble on papers to mark them for testing purposes.
 
