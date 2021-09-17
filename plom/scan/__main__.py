@@ -190,7 +190,6 @@ def parse_the_user_args():
 
     args = parser.parse_args()
 
-
     args.server = args.server or os.environ.get("PLOM_SERVER")
     args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
