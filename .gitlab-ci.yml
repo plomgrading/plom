@@ -697,7 +697,7 @@ binary_upload:
     - export FILENAME1="PlomClient-$VER-linux-ubuntu1804.bin"
     - export FILENAME2="PlomClient-$VER-linux-centos7.bin"
     - export FILENAME3="PlomClient-$VER.exe"
-    - export FILENAME4="PlomClient-$VER-macos.bin"
+    - export FILENAME4="PlomClient-$VER-macos.zip"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
     - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME3"
@@ -859,15 +859,19 @@ macos11_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export NAME=PlomClient-$VER-macos11.bin
-  - mv dist/PlomClient*.bin $NAME
-  - chmod a+x $NAME
-  - md5 $NAME > md5sum
-  - ls $NAME
+  - export ZIPNAME=PlomClient-$VER-macos11.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
   - cat md5sum
   artifacts:
     paths:
-    - PlomClient*.bin
+    - PlomClient*.zip
     - md5sum
     expire_in: 30 days
 
@@ -898,15 +902,19 @@ macos1013_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export NAME=PlomClient-$VER-macos.bin
-  - mv dist/PlomClient*.bin $NAME
-  - chmod a+x $NAME
-  - md5 $NAME > md5sum
-  - ls $NAME
+  - export ZIPNAME=PlomClient-$VER-macos.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
   - cat md5sum
   artifacts:
     paths:
-    - PlomClient*.bin
+    - PlomClient*.zip
     - md5sum
     expire_in: 30 days
 
