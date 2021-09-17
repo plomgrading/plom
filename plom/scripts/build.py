@@ -239,10 +239,17 @@ spB.add_argument(
 )
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
-spB.add_argument("-n", "--number", type=int, help="used for building a specific paper number")
-spB.add_argument("-m", "--namebox-ycoor", type=int, help="specify location of the ID that will be printed on "
-                                                         "named papers from 0 for the top and 100"
-                                                         "for the bottom of the page.")
+spB.add_argument(
+    "-n", "--number", type=int, help="used for building a specific paper number"
+)
+spB.add_argument(
+    "-m",
+    "--namebox-ycoor",
+    type=int,
+    help="specify location of the ID that will be printed on "
+    "named papers from 0 for the top and 100"
+    "for the bottom of the page.",
+)
 
 sp = sub.add_parser(
     "rubric",
@@ -354,8 +361,12 @@ def main():
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
         build_papers(
-            args.server, args.password, fakepdf=args.no_pdf, no_qr=args.without_qr, number=args.number
-            , ycoor=args.namebox_ycoor
+            args.server,
+            args.password,
+            fakepdf=args.no_pdf,
+            no_qr=args.without_qr,
+            number=args.number,
+            ycoor=args.namebox_ycoor,
         )
 
     elif args.command == "rubric":

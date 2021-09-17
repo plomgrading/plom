@@ -273,7 +273,8 @@ def insert_extra_info(extra, exam, ycoor=None):
         page_width // 2 - student_id_width,
         ((page_height - (student_id_height + student_id_height2)) * YSHIFT),
         page_width // 2 + student_id_width,
-        ((page_height - (student_id_height + student_id_height2)) * YSHIFT) + (student_id_height * 2),
+        ((page_height - (student_id_height + student_id_height2)) * YSHIFT)
+        + (student_id_height * 2),
     )
     student_id_rect_2 = fitz.Rect(
         student_id_rect_1.x0,

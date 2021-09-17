@@ -67,8 +67,16 @@ def outputProductionCSV(spec, make_PDF_args):
                 row.append(paper[5][p])
             csv_writer.writerow(row)
 
+
 def build_all_papers(
-    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False, numberToMake = None, ycoor=None
+    spec,
+    global_page_version_map,
+    classlist,
+    *,
+    fakepdf=False,
+    no_qr=False,
+    numberToMake=None,
+    ycoor=None,
 ):
     """Builds the papers using _make_PDF.
 
@@ -144,6 +152,7 @@ def build_all_papers(
     # output CSV with all this info in it
     print("Writing produced_papers.csv.")
     outputProductionCSV(spec, make_PDF_args)
+
 
 def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
     """Checks that each PDF file was created and notify server.

@@ -13,7 +13,14 @@ from plom.plom_exceptions import PlomExistingDatabase
 
 
 def build_papers(
-        server=None, password=None, *, basedir=Path("."), fakepdf=False, no_qr=False, number=None, ycoor=None
+    server=None,
+    password=None,
+    *,
+    basedir=Path("."),
+    fakepdf=False,
+    no_qr=False,
+    number=None,
+    ycoor=None,
 ):
     """Build all the blank papers using version information from server and source PDFs
 
@@ -61,7 +68,15 @@ def build_papers(
                 )
             )
             with working_directory(basedir):
-                build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, numberToMake=number, ycoor=ycoor)
+                build_all_papers(
+                    spec,
+                    pvmap,
+                    classlist,
+                    fakepdf=fakepdf,
+                    no_qr=no_qr,
+                    numberToMake=number,
+                    ycoor=ycoor,
+                )
         else:
 
             if spec["numberToName"] > 0:
@@ -84,7 +99,9 @@ def build_papers(
                     )
                 )
             with working_directory(basedir):
-                build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, ycoor=ycoor)
+                build_all_papers(
+                    spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, ycoor=ycoor
+                )
 
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist, paperdir=paperdir)
