@@ -15,7 +15,7 @@ from plom import __version__
 
 paperdir = Path("papersToPrint")
 
-from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed, build_specific_paper
+from .buildNamedPDF import build_all_papers, confirm_processed, identify_prenamed
 from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .upload_classlist import get_messenger
 from .buildDatabaseAndPapers import build_database, build_papers

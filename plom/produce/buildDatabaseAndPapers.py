@@ -7,7 +7,6 @@ from pathlib import Path
 from plom import check_version_map
 from plom.misc_utils import working_directory
 from plom.produce import build_all_papers, confirm_processed, identify_prenamed
-from plom.produce import build_specific_paper
 from plom.produce import paperdir as paperdir_name
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingDatabase
@@ -62,7 +61,7 @@ def build_papers(
                 )
             )
             with working_directory(basedir):
-                build_specific_paper(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, numberToMake=number, ycoor=ycoor)
+                build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr, numberToMake=number, ycoor=ycoor)
         else:
 
             if spec["numberToName"] > 0:
