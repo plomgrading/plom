@@ -14,7 +14,6 @@ __license__ = "AGPL-3.0-or-later"
 
 
 from collections import defaultdict
-import io
 import json
 import logging
 from math import ceil
@@ -55,7 +54,6 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomLatexException,
     PlomNoMoreException,
 )
 from plom.messenger import Messenger
@@ -990,7 +988,6 @@ class MarkerClient(QWidget):
         self.canViewAll = None
         self.msgr = None
 
-
     def setup(self, messenger, question, version, lastTime):
         """Performs setup procedure for markerClient.
 
@@ -1190,7 +1187,8 @@ class MarkerClient(QWidget):
 
         Notes:
             Overrides QWidget.resizeEvent()
-            a resize can be triggered before "getToWork" is called.
+            a resize can be triggered before "setup" is called.
+            TODO: which is more evidence that "init" should consume "setup"
 
         Args:
             event (QEvent): the event to be resized.
