@@ -64,6 +64,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
 
     if not doc.is_pdf:
         raise TypeError("This does not appear to be a PDF file")
+    if doc.is_repaired:
+        warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
 
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
