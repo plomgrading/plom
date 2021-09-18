@@ -190,16 +190,11 @@ def parse_the_user_args():
 
     args = parser.parse_args()
 
-    if not hasattr(args, "server") or not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
-    if not hasattr(args, "password") or not args.password:
-        try:
-            args.password = os.environ["PLOM_SCAN_PASSWORD"]
-        except KeyError:
-            pass
+    if hasattr(args, "server"):
+        args.server = args.server or os.environ.get("PLOM_SERVER")
+
+    if hasattr(args, "password"):
+        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
     if hasattr(args, "password") and not args.password:
         args.password = getpass('Please enter the "scanner" password: ')

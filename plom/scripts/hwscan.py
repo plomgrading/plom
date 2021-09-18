@@ -186,16 +186,8 @@ for x in (spW, spP, spA, spS, spC, spM):
 def main():
     args = parser.parse_args()
 
-    if not hasattr(args, "server") or not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
-    if not hasattr(args, "password") or not args.password:
-        try:
-            args.password = os.environ["PLOM_SCAN_PASSWORD"]
-        except KeyError:
-            pass
+    args.server = args.server or os.environ.get("PLOM_SERVER")
+    args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
     if args.command == "submitted":
         print_who_submitted_what(args.server, args.password, args.directory)
