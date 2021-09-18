@@ -49,8 +49,10 @@ def test_pdf_extract_img_ridiculous_ratios(tmpdir):
     d = fitz.open()
     d.new_page(width=1, height=200)
     d.save(f)
-    raises(ValueError, lambda: processFileToBitmaps(f, tmp_path))
+    with raises(ValueError, match="thin"):
+        processFileToBitmaps(f, tmp_path)
     d = fitz.open()
     d.new_page(width=100, height=2)
     d.save(f)
-    raises(ValueError, lambda: processFileToBitmaps(f, tmp_path))
+    with raises(ValueError, match="wide"):
+        processFileToBitmaps(f, tmp_path)
