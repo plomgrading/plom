@@ -182,10 +182,18 @@ class IDClient(QWidget):
 
     def __init__(self):
         super().__init__()
+        # instance vars that get initialized later
+        self.msgr = None
 
-    def getToWork(self, mess):
-        global messenger
-        messenger = mess
+    def setup(self, messenger):
+        """Performs setup procedure for the IDClient.
+
+        Args:
+            messenger (Messenger): handles communication with server.
+
+        TODO: move all this into init?
+        """
+        self.msgr = messenger
         # Save the local temp directory for image files and the class list.
         self.workingDirectory = directoryPath
         # List of papers we have to ID.
@@ -194,7 +202,7 @@ class IDClient(QWidget):
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
         # Paste username into the GUI (TODO: but why?)
-        self.ui.userLabel.setText(mess.whoami())
+        self.ui.userLabel.setText(self.msgr.whoami())
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -285,7 +293,7 @@ class IDClient(QWidget):
         `snid_to_student_name`
         `student_id_to_snid`
         """
-        classlist = messenger.IDrequestClasslist()
+        classlist = self.msgr.IDrequestClasslist()
         self.snid_to_student_id = dict()
         self.snid_to_student_name = dict()
         self.student_id_to_snid = dict()
@@ -310,7 +318,7 @@ class IDClient(QWidget):
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        csvfile = messenger.IDrequestPredictions()
+        csvfile = self.msgr.IDrequestPredictions()
 
         # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
@@ -365,7 +373,7 @@ class IDClient(QWidget):
         """
         self.DNF()
         try:
-            messenger.closeUser()
+            self.msgr.closeUser()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
@@ -384,13 +392,13 @@ class IDClient(QWidget):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
                 try:
-                    messenger.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                    self.msgr.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
                 except PlomSeriousException as err:
                     self.throwSeriousError(err)
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        idList = messenger.IDrequestDoneTasks()
+        idList = self.msgr.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
                 Paper(x[0], fnames=[], stat="identified", id=x[1], name=x[2]),
@@ -413,7 +421,7 @@ class IDClient(QWidget):
             return
         # else try to grab it from server
         try:
-            imageList = messenger.ID_request_images(test)
+            imageList = self.msgr.ID_request_images(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
@@ -475,7 +483,7 @@ class IDClient(QWidget):
     def updateProgress(self):
         # update progressbars
         try:
-            v, m = messenger.IDprogressCount()
+            v, m = self.msgr.IDprogressCount()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
         if m == 0:
@@ -502,7 +510,7 @@ class IDClient(QWidget):
                 attempts += 1
             # ask server for ID of next task
             try:
-                test = messenger.IDaskNextTask()
+                test = self.msgr.IDaskNextTask()
                 if not test:  # no tasks left
                     ErrorMessage("No more tasks left on server.").exec_()
                     return False
@@ -511,7 +519,7 @@ class IDClient(QWidget):
                 return False
 
             try:
-                imageList = messenger.IDclaimThisTask(test)
+                imageList = self.msgr.IDclaimThisTask(test)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -605,7 +613,7 @@ class IDClient(QWidget):
         # Return paper to server with the code, ID, name.
         try:
             # TODO - do we need this return value
-            msg = messenger.IDreturnIDdTask(code, sid, sname)
+            msg = self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
             self.throwBenign(err)
             # If an error, revert the student and clear things.
@@ -748,7 +756,7 @@ class IDClient(QWidget):
             return
         testNumber = self.exM.data(index[0])
         try:
-            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
+            pageNames, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             self.throwBenign(err)
 

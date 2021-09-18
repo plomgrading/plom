@@ -262,7 +262,7 @@ class Chooser(QDialog):
             idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
-            idwin.getToWork(messenger)
+            idwin.setup(messenger)
             self.parent.identifier = idwin
 
     def runMarker(self):
