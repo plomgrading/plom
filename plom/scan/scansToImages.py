@@ -41,6 +41,11 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         list: an ordered list of the images of each page.  Each entry
             is a `pathlib.Path`.
 
+    Raises:
+        RuntimeError: not a PDF and not something PyMuPDF can open.
+        TypeError: not a PDF, but it can be opened by PuMuPDF.
+        ValueError: unrealistically tall skinny or very wide pages.
+
     For extracting the scanned data as is, we must be careful not to
     just grab any image off the page (for example, it must be the only
     image on the page, and it must not have any annotations on top of
@@ -56,6 +61,9 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     safeScan = Path(file_name).stem.replace(" ", "_")
 
     doc = fitz.open(file_name)
+
+    if not doc.is_pdf:
+        raise TypeError("This does not appear to be a PDF file")
 
     # 0:9 -> 10 pages -> 2 digits
     zpad = math.floor(math.log10(len(doc))) + 1
