@@ -18,6 +18,7 @@ from plom.plom_exceptions import (
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomOwnersLoggedInException,
+    PlomServerNotReady,
     PlomRangeException,
     PlomTakenException,
 )
@@ -64,6 +65,8 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
                 raise PlomExistingDatabase() from None
+            if response.status_code == 404:
+                raise PlomServerNotReady(response.text) from None
             raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
             self.SRmutex.release()
@@ -179,6 +182,8 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 409:
                 raise PlomConflict(e) from None
+            if response.status_code == 404:
+                raise PlomServerNotReady(response.text) from None
             if response.status_code == 406:
                 raise PlomRangeException(e) from None
             if response.status_code == 401:

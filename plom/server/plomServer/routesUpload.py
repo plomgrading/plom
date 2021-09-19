@@ -756,10 +756,11 @@ class UploadHandler:
         else:
             vmap = undo_json_packing_of_version_map(data["version_map"])
 
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec; cannot populate DB")
         try:
-            r, summary = buildExamDatabaseFromSpec(
-                self.server.testSpec, self.server.DB, vmap
-            )
+            r, summary = buildExamDatabaseFromSpec(spec, self.server.DB, vmap)
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"

@@ -102,6 +102,8 @@ class IDHandler:
             if not row["id"]:
                 raise web.HTTPBadRequest(reason="Every row must non-empty id")
         spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec; cannot accept classlist")
         if spec.numberToName < 0 or spec.numberToProduce < 0:
             if spec.number_to_name < 0:
                 spec.set_number_papers_to_name(len(classlist))
