@@ -25,6 +25,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomServerNotReady,
 )
 
 log = logging.getLogger("messenger")
@@ -271,7 +272,7 @@ class BaseMessenger:
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
-                raise PlomSeriousException("Server could not find the spec") from None
+                raise PlomServerNotReady(response.text) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

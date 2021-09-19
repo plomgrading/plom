@@ -105,6 +105,11 @@ class PlomNoSolutionException(PlomBenignException):
     pass
 
 
+class PlomServerNotReady(PlomBenignException):
+    """For example if it has no spec"""
+    pass
+
+
 class PlomInconsistentRubricsException(PlomSeriousException):
     pass
 

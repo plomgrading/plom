@@ -29,6 +29,7 @@ from plom import Plom_API_Version
 from plom import Default_Port
 from plom import get_question_label
 from plom.plom_exceptions import (
+    PlomException,
     PlomSeriousException,
     PlomBenignException,
     PlomAPIException,
@@ -426,7 +427,7 @@ class Chooser(QDialog):
 
         try:
             spec = self.messenger.get_spec()
-        except PlomSeriousException as e:
+        except PlomException as e:
             ErrorMessage("Could not connect to server", info=str(e)).exec_()
             self.messenger = None
             return

@@ -153,9 +153,15 @@ class UserInitHandler:
     # @routes.get("/info/spec")
     @no_authentication_only_log_request
     async def info_spec(self, request):
+        """Return the public part of the server specification.
+
+        Response:
+            200: the public part of the spec.
+            404: spec not found (server does not have one yet).
+        """
         spec = self.server.info_spec()
         if not spec:
-            return web.Response(status=404)
+            raise web.HTTPNotFound(reason="Server does not yet have a spec")
         return web.json_response(spec, status=200)
 
     # @routes.put("/info/spec")
