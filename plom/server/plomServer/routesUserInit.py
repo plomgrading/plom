@@ -200,7 +200,6 @@ class UserInitHandler:
             raise web.HTTPNotFound(reason="Server does not yet have a spec")
         return web.Response(text=name, status=200)
 
-
     def setUpRoutes(self, router):
         router.add_get("/Version", self.version)
         router.add_delete("/users/{user}", self.closeUser)

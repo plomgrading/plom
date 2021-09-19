@@ -107,6 +107,7 @@ class PlomNoSolutionException(PlomBenignException):
 
 class PlomServerNotReady(PlomBenignException):
     """For example if it has no spec"""
+
     pass
 
 
