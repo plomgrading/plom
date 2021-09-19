@@ -782,8 +782,6 @@ class UploadHandler:
         Note: likely deprecated: not used by Plom itself and not
             recommended for anyone else.
         """
-        # TODO - we weren't using 'spec'
-        # spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
         ver = self.server.DB.getPageVersions(paper_idx)
         if ver:
@@ -805,6 +803,8 @@ class UploadHandler:
             which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getPageVersions(paper_idx)
@@ -842,6 +842,8 @@ class UploadHandler:
                 exist.
         """
         spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getQuestionVersions(paper_idx)
