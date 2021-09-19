@@ -195,11 +195,11 @@ class UserInitHandler:
     # @routes.get("/info/shortName")
     @no_authentication_only_log_request
     async def InfoShortName(self, request):
-        rmsg = self.server.InfoShortName()
-        if rmsg[0]:
-            return web.Response(text=rmsg[1], status=200)
-        else:  # this should not happen
-            return web.Response(status=404)
+        name = self.server.InfoShortName()
+        if not name:
+            raise web.HTTPNotFound(reason="Server does not yet have a spec")
+        return web.Response(text=name, status=200)
+
 
     def setUpRoutes(self, router):
         router.add_get("/Version", self.version)

@@ -42,9 +42,8 @@ def validate(self, user, token):
 
 def InfoShortName(self):
     if self.testSpec is None:
-        return [False]
-    else:
-        return [True, self.testSpec["name"]]
+        return None
+    return self.testSpec["name"]
 
 
 def info_spec(self):
