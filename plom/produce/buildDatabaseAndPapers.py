@@ -7,7 +7,8 @@ from pathlib import Path
 
 from plom import check_version_map
 from plom.misc_utils import working_directory
-from plom.produce import build_all_papers, confirm_processed, identify_prenamed
+from plom.produce.buildNamedPDF import build_papers_backend
+from plom.produce.buildNamedPDF import confirm_processed, identify_prenamed
 from plom.produce import paperdir as paperdir_name
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingDatabase
@@ -23,7 +24,7 @@ def build_papers(
     indexToMake=None,
     ycoord=None,
 ):
-    """Build all the blank papers using version information from server and source PDFs
+    """Build the blank papers using version information from server and source PDFs.
 
     Args:
         server (str): server name and optionally port.
@@ -82,7 +83,7 @@ def build_papers(
             else:
                 print(f"Building only specific paper {indexToMake} (blank)")
         with working_directory(basedir):
-            build_all_papers(
+            build_papers_backend(
                 spec,
                 pvmap,
                 classlist,

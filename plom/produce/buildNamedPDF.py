@@ -69,7 +69,7 @@ def outputProductionCSV(spec, make_PDF_args):
             csv_writer.writerow(row)
 
 
-def build_all_papers(
+def build_papers_backend(
     spec,
     global_page_version_map,
     classlist,
