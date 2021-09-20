@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Plom server management GUI tool."""
 
@@ -40,16 +41,8 @@ def main():
     )
     args = parser.parse_args()
 
-    if not hasattr(args, "server") or not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
-    if not hasattr(args, "password") or not args.password:
-        try:
-            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
-        except KeyError:
-            pass
+    args.server = args.server or os.environ.get("PLOM_SERVER")
+    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))

@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Randomly scribble on papers to mark them for testing purposes.
 
@@ -39,20 +40,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
+    args.server = args.server or os.environ.get("PLOM_SERVER")
 
     if not args.user:
         args.user = "scanner"
 
-    if args.user == "scanner" and not args.password:
-        try:
-            args.password = os.environ["PLOM_SCAN_PASSWORD"]
-        except KeyError:
-            pass
+    if args.user == "scanner":
+        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
 
     if not args.password:
         args.password = getpass(f"Please enter the '{args.user}' password: ")

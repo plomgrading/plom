@@ -29,9 +29,7 @@ class Test:
     def test_scan_finish(self):
         # TODO: we should assert something about values or text output here?
         subprocess.check_call(split("python3 -m plom.scan status"), env=self.env)
-        r = subprocess.call(
-            split("python3 -m plom.scripts.finish status"), env=self.env
-        )
+        r = subprocess.call(split("python3 -m plom.finish status"), env=self.env)
         # TODO: fix up this, seems erratic, perhaps even non-deterministic?
         assert r >= 0  # numScanned - numberComplete
         assert self.demo.process_is_running()
@@ -76,7 +74,5 @@ class Test:
 
     def test_scan_finish_after(self):
         subprocess.check_call(split("python3 -m plom.scan status"), env=self.env)
-        subprocess.check_call(
-            split("python3 -m plom.scripts.finish status"), env=self.env
-        )
+        subprocess.check_call(split("python3 -m plom.finish status"), env=self.env)
         assert self.demo.process_is_running()

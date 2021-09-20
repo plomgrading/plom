@@ -29,15 +29,23 @@ a = Analysis(['plom/scripts/client.py'],
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# See https://gitlab.com/plom/plom/-/issues/1655
+# target_arch='universal2',
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='PlomClient-{}-macos.bin'.format(__version__),
+          name=f'PlomClient-{__version__}-macos.bin',
           debug=False,
           strip=False,
           onefile=True,
           upx=True,
           runtime_tmpdir=None,
-          console=True )
+          console=False )
+
+app = BUNDLE(exe,
+             name=f'PlomClient-{__version__}.app',
+             icon=None,
+             bundle_identifier='org.plomgrading.PlomClient',
+             version=__version__)

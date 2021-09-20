@@ -8,7 +8,6 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from stdiomask import getpass
 from tqdm import tqdm
 
 from plom.messenger import FinishMessenger
@@ -60,9 +59,6 @@ def main(server=None, pwd=None):
     else:
         msgr = FinishMessenger(server)
     msgr.start()
-
-    if not pwd:
-        pwd = getpass("Please enter the 'manager' password: ")
 
     try:
         msgr.requestAndSaveToken("manager", pwd)

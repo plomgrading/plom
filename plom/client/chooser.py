@@ -262,7 +262,7 @@ class Chooser(QDialog):
             idwin = identifier.IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
-            idwin.getToWork(messenger)
+            idwin.setup(messenger)
             self.parent.identifier = idwin
 
     def runMarker(self):
@@ -372,12 +372,9 @@ class Chooser(QDialog):
 
         try:
             spec = messenger.get_spec()
-        except PlomSeriousException:
-            try:
-                spec = messenger.getInfoGeneral()
-            except PlomSeriousException:
-                ErrorMessage("Could not connect to server.").exec_()
-                return
+        except PlomSeriousException as e:
+            ErrorMessage("Could not connect to server", info=str(e)).exec_()
+            return
 
         self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
         question = self.getQuestion()

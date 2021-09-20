@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for scanning tests and pushing to servers.
 
@@ -50,6 +51,8 @@ __license__ = "AGPL-3.0-or-later"
 import argparse
 import os
 from pathlib import Path
+
+from stdiomask import getpass
 
 from plom.scan import __version__
 from plom.scan import clear_login
@@ -188,16 +191,14 @@ def parse_the_user_args():
 
     args = parser.parse_args()
 
-    if not hasattr(args, "server") or not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
-    if not hasattr(args, "password") or not args.password:
-        try:
-            args.password = os.environ["PLOM_SCAN_PASSWORD"]
-        except KeyError:
-            pass
+    if hasattr(args, "server"):
+        args.server = args.server or os.environ.get("PLOM_SERVER")
+
+    if hasattr(args, "password"):
+        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+
+    if hasattr(args, "password") and not args.password:
+        args.password = getpass('Please enter the "scanner" password: ')
 
     return args
 

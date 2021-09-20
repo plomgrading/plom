@@ -76,7 +76,7 @@ def check_server_fully_configured(basedir):
         )
     if not (basedir / specdir / "verifiedSpec.toml").exists():
         raise FileNotFoundError(
-            "Cannot find the test specification. Have you run 'plom-build'?"
+            'Cannot find test specification. Try "plom-build new" and "plom-build parse"?'
         )
 
 

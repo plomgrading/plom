@@ -3,8 +3,6 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Jed Yeo
 
-from stdiomask import getpass
-
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -18,9 +16,6 @@ def get_number_of_questions(server=None, pwd=None):
     else:
         msgr = ScanMessenger(server)
     msgr.start()
-
-    if not pwd:
-        pwd = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", pwd)
@@ -56,9 +51,6 @@ def check_and_print_scan_status(server=None, pwd=None):
     else:
         msgr = ScanMessenger(server)
     msgr.start()
-
-    if not pwd:
-        pwd = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", pwd)
@@ -135,9 +127,6 @@ def checkMissingHWQ(server=None, pwd=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not pwd:
-        pwd = getpass("Please enter the 'scanner' password: ")
-
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException as e:
@@ -165,9 +154,6 @@ def replaceMissingHWQ(server, pwd, student_id, question):
     else:
         msgr = ScanMessenger(server)
     msgr.start()
-
-    if not pwd:
-        pwd = getpass("Please enter the 'scanner' password: ")
 
     try:
         msgr.requestAndSaveToken("scanner", pwd)
