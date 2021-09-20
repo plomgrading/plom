@@ -224,14 +224,14 @@ def is_possible_to_encode_as(s, encoding):
         return False
 
 
-def insert_extra_info(extra, exam, ycoor=None):
+def insert_extra_info(extra, exam, ycoord=None):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
         extra (dict): dictionary with student id and name.
         exam (fitz.Document): PDF document.
-        ycoor (int): specifies the y-coordinate where the id and name will be placed, as a percentage from the top
-                     of the page to the bottom from 0 to 100. If None, defaults to 40%.
+        ycoor (int): specifies the y-coordinate where the id and name will be placed, as a float from 0 to 100, where
+            0 is the top and 100 is the bottom of the page. If None, defaults to 40.
 
 
     Raises:
@@ -241,8 +241,8 @@ def insert_extra_info(extra, exam, ycoor=None):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
-    if ycoor is not None:
-        YSHIFT = ycoor / 100.00
+    if ycoord is not None:
+        YSHIFT = ycoord / 100.00
     else:
         YSHIFT = 0.40
 
@@ -332,7 +332,7 @@ def make_PDF(
     extra=None,
     no_qr=False,
     fakepdf=False,
-    ycoor=None,
+    ycoord=None,
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
@@ -396,7 +396,7 @@ def make_PDF(
 
     # If provided with student name and id, preprint on cover
     if extra:
-        exam = insert_extra_info(extra, exam, ycoor)
+        exam = insert_extra_info(extra, exam, ycoord)
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save

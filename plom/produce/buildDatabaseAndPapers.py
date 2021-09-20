@@ -20,8 +20,8 @@ def build_papers(
     basedir=Path("."),
     fakepdf=False,
     no_qr=False,
-    number=None,
-    ycoor=None,
+    index=None,
+    ycoord=None,
 ):
     """Build all the blank papers using version information from server and source PDFs
 
@@ -83,8 +83,8 @@ def build_papers(
                 classlist,
                 fakepdf=fakepdf,
                 no_qr=no_qr,
-                numberToMake=number,
-                ycoor=ycoor,
+                indexToMake=index,
+                ycoord=ycoord,
             )
 
         print("Checking papers produced and updating databases")

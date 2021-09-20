@@ -76,8 +76,8 @@ def build_all_papers(
     *,
     fakepdf=False,
     no_qr=False,
-    numberToMake=None,
-    ycoor=None,
+    indexToMake=None,
+    ycoord=None,
 ):
     """Builds the papers using _make_PDF.
 
@@ -116,10 +116,10 @@ def build_all_papers(
                 )
             )
     make_PDF_args = []
-    if numberToMake is None:
+    if indexToMake is None:
         papersToMake = range(1, spec["numberToProduce"] + 1)
     else:
-        papersToMake = [numberToMake]
+        papersToMake = [indexToMake]
     for paper_index in papersToMake:
         page_version = global_page_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
@@ -140,7 +140,7 @@ def build_all_papers(
                 student_info,
                 no_qr,
                 fakepdf,
-                ycoor,
+                ycoord,
             )
         )
 
