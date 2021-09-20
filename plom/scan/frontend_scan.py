@@ -139,25 +139,24 @@ def uploadImages(
     info = toml.load(bundledir / "source.toml")
     md5 = info["md5"]
 
-    # TODO: check first to avoid misleading msg?
-    print('Creating bundle "{}" on server'.format(bundle_name))
-    rval = createNewBundle(bundle_name, md5, server, password)
-    # should be [True, skip_list] or [False, reason]
-    if rval[0]:
-        skip_list = rval[1]
+    print(f'Trying to create bundle "{bundle_name}" on server')
+    exists, extra = createNewBundle(bundle_name, md5, server, password)
+    # should be (True, skip_list) or (False, reason)
+    if exists:
+        skip_list = extra
         if len(skip_list) > 0:
             print("Some images from that bundle were uploaded previously:")
             print("Pages {}".format(skip_list))
             print("Skipping those images.")
     else:
         print("There was a problem with this bundle.")
-        if rval[1] == "name":
+        if extra == "name":
             print("A different bundle with the same name was uploaded previously.")
+        elif extra == "md5sum":
+            print("Differently-named bundle with same md5sum previously uploaded.")
         else:
-            print(
-                "A bundle with matching md5sum but different name was uploaded previously."
-            )
-        print("Stopping.")
+            raise RuntimeError("Should not be here: unexpected code path! File issue")
+        print("Aborting this bundle upload early!")
         return
 
     print("Upload images to server")

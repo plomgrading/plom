@@ -108,7 +108,7 @@ def processLooseScans(
                 f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
             )
         else:
-            raise RuntimeError("Should not be here: unexpected code path!")
+            raise RuntimeError("Should not be here: unexpected code path! File issue")
 
     bundledir = Path("bundles") / "submittedLoose" / bundle_name
     make_bundle_dir(bundledir)
@@ -305,7 +305,7 @@ def processHWScans(
                 f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
             )
         else:
-            raise RuntimeError("Should not be here: unexpected code path!")
+            raise RuntimeError("Should not be here: unexpected code path! File issue")
 
     bundledir = get_bundle_dir(bundle_name, basedir=basedir)
 
@@ -315,24 +315,20 @@ def processHWScans(
     print("Processing PDF {} to images".format(pdf_fname))
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
-    print("Creating bundle for {} on server".format(pdf_fname))
-    rval = createNewBundle(bundle_name, md5, server, password)
-    # should be [True, skip_list] or [False, reason]
-    if rval[0]:
-        skip_list = rval[1]
+    print(f'Trying to create bundle "{pdf_fname}" on server')
+    exists, extra = createNewBundle(bundle_name, md5, server, password)
+    if exists:
+        skip_list = extra
         if len(skip_list) > 0:
             print("Some images from that bundle were uploaded previously:")
             print("Pages {}".format(skip_list))
             print("Skipping those images.")
+    elif extra == "name":
+        raise ValueError("Different bundle with same name was previously uploaded.")
+    elif extra == "md5sum":
+        raise ValueError("Bundle with same md5sum different name previously uploaded.")
     else:
-        print("There was a problem with this bundle.")
-        if rval[1] == "name":
-            print("A different bundle with the same name was uploaded previously.")
-        else:
-            print(
-                "A bundle with matching md5sum but different name was uploaded previously."
-            )
-        raise RuntimeError("Stopping, see above")
+        raise RuntimeError("Should not be here: unexpected code path! File issue")
 
     assert len(files) == num_pages, "Inconsistent page counts, something bad happening!"
     file_list = zip(range(1, num_pages + 1), files, questions)

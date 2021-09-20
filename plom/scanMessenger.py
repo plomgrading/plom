@@ -58,6 +58,7 @@ class ScanMessenger(BaseMessenger):
                 verify=False,
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -67,8 +68,6 @@ class ScanMessenger(BaseMessenger):
                 ) from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def createNewBundle(self, bundle_name, md5sum):
         """Ask server to create bundle with given name/md5sum.
