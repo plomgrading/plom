@@ -41,55 +41,65 @@ def createReplacementBundle(self):
 
 
 def doesBundleExist(self, bundle_name, md5):
+    """Checks if bundle with certain name and md5sum exists.
+
+    Args:
+        bundle_name (str)
+        md5 (str)
+
+    Returns:
+        2-tuple: there are 4 possibilities:
+            * neither match: no matching bundle, return `(False, None)`
+            * name but not md5: return `(True, "name")` - user is trying
+              to upload different bundles with same name.
+            * md5 but not name: return `(True, "md5sum")` - user is trying
+              to upload same bundle with different name.
+            * both match: return `(True, "both")` - user could be retrying
+              after network failure (for example) or uploading unknown or
+              colliding pages.  That is, they previously uploaded some
+              from the bundle but now are uploading more (Issue #1008).
     """
-    Checks if bundle with name=bundle_name or md5sum=md5 exists.
-    4 possibilities
-    * neither = no matching bundle, return [False, None]
-    * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
-    * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
-    * both match = return [True, 'both'] - user could be retrying after
-      network failure (for example) or uploading unknown or colliding
-      pages.
-    """
-    # check if that bundle-name is on file, and if the md5sum is known.
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is not None:
         if bref.md5sum == md5:
-            # name and md5sum match one in system
-            # probably a crash occurred, so also return all the bundle_orders known in this bundle
-            skip_list = []
-            for iref in bref.images:
-                skip_list.append(iref.bundle_order)
-            return [True, "both", skip_list]
-
+            return (True, "both")
         else:
-            return [True, "name"]
+            return (True, "name")
     # name not known, so just check md5sum
     if Bundle.get_or_none(md5sum=md5) is not None:
-        return [True, "md5sum"]
-    return [False, None]
+        return (True, "md5sum")
+    return (False, None)
 
 
 def createNewBundle(self, bundle_name, md5):
+    """Checks to see if bundle exists.
+
+    Args:
+        bundle_name (str)
+        md5 (str)
+
+    Returns:
+        2-tuple: If bundle exists that matches by name *xor* by md5sum
+            then return `(False, "name")` or `(False, "md5sum")`.
+            If bundle matches both 'name' *and* 'md5sum' then return
+            `(True, skip_list)` where `skip_list` is a list of the
+            page-orders from that bundle that are already in the
+            system.  The scan scripts will then skip those uploads.
+            If no such bundle return `(True, [])`: we have created
+            the bundle and return an empty skip-list.
     """
-    Checks to see if bundle exists using 'doesBundleExist'.
-    If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldn't happen if scanner working correctly.
-    If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
-    If no such bundle return [True, []] - create the bundle and return an empty skip-list.
-    """
-    # use the doesBundleExist command logic to sanity check
-    bundle_check = self.doesBundleExist(bundle_name, md5)
-    if bundle_check[0] is False:
+    exists, reason = self.doesBundleExist(bundle_name, md5)
+    if not exists:
         Bundle.create(name=bundle_name, md5sum=md5)
-        return [True, []]
-    elif bundle_check[1] == "both":  # return [True, skip-list]
+        return (True, [])
+    elif reason == "both":
         bref = Bundle.get_or_none(name=bundle_name, md5sum=md5)
         skip_list = []
         for iref in bref.images:
             skip_list.append(iref.bundle_order)
-        return [True, skip_list]
+        return (True, skip_list)
     else:
-        return [False, bundle_check[1]]
+        return (False, reason)
 
 
 ########## Test creation stuff ##############
