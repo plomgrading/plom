@@ -40,7 +40,8 @@ def build_papers(
             (which means *do* stamp with QR codes).
         indexToMake (int/None): prepare a particular paper, or None to make
             all papers.
-        ycoord (float): tweak the y-coordinate of the stamped renamed papers.
+        ycoord (float/None): tweak the y-coordinate of the stamped name/id
+            box for prenamed papers.  None for a default value.
     """
     if server and ":" in server:
         s, p = server.split(":")
