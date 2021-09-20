@@ -241,10 +241,9 @@ def insert_extra_info(extra, exam, ycoord=None):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
-    if ycoord is not None:
-        YSHIFT = ycoord / 100.00
-    else:
-        YSHIFT = 0.40
+    if ycoord is None:
+        ycoord = 40.0
+    YSHIFT = ycoord / 100.0
 
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
