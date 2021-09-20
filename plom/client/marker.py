@@ -14,7 +14,6 @@ __license__ = "AGPL-3.0-or-later"
 
 
 from collections import defaultdict
-import io
 import json
 import logging
 from math import ceil
@@ -55,7 +54,6 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomLatexException,
     PlomNoMoreException,
 )
 from plom.messenger import Messenger
@@ -988,18 +986,17 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.canViewAll = None
+        self.msgr = None
 
-    def setup(self, markerMessenger, question, version, lastTime):
-        """
-        Performs setup procedure for markerClient.
+    def setup(self, messenger, question, version, lastTime):
+        """Performs setup procedure for markerClient.
 
-        TODO: Change the __init__ params to include the
-            params below and move this method into init
+        TODO: move all this into init?
 
         TODO: verify all lastTime Params, there are almost certainly some missing
 
         Args:
-            markerMessenger (Messenger): messenger client for communicating with server
+            messenger (Messenger): handle communication with server.
             question (int): question number.
             version (int): version number
             lastTime (dict): a dictionary containing
@@ -1023,7 +1020,7 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        self.msgr = markerMessenger
+        self.msgr = messenger
         # BackgroundDownloaders come and go but share a single cloned Messenger
         # Note: BackgroundUploader is persistent and makes its own clone.
         self._bgdownloader_msgr = Messenger.clone(self.msgr)
@@ -1190,7 +1187,8 @@ class MarkerClient(QWidget):
 
         Notes:
             Overrides QWidget.resizeEvent()
-            a resize can be triggered before "getToWork" is called.
+            a resize can be triggered before "setup" is called.
+            TODO: which is more evidence that "init" should consume "setup"
 
         Args:
             event (QEvent): the event to be resized.
