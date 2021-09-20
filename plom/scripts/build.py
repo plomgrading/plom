@@ -365,7 +365,7 @@ def main():
             args.password,
             fakepdf=args.no_pdf,
             no_qr=args.without_qr,
-            index=args.number,
+            indexToMake=args.number,
             ycoord=args.namebox_ypos,
         )
 
