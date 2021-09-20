@@ -62,7 +62,6 @@ def build_papers(
             # TODO: Issue #1646 mostly student number (w fallback)
             # TODO: but careful about identify_prenamed below which may need id
             classlist = [(x["id"], x["studentName"]) for x in _classlist]
-            # TODO: tweak these messages for the `number` case!
             print(
                 'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                     spec["numberToName"],
@@ -77,6 +76,11 @@ def build_papers(
                     spec["numberToProduce"], paperdir
                 )
             )
+        if indexToMake:
+            if indexToMake <= spec["numberToName"]:
+                print(f"Building only specific paper {indexToMake} (prenamed)")
+            else:
+                print(f"Building only specific paper {indexToMake} (blank)")
         with working_directory(basedir):
             build_all_papers(
                 spec,
