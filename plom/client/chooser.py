@@ -372,12 +372,9 @@ class Chooser(QDialog):
 
         try:
             spec = messenger.get_spec()
-        except PlomSeriousException:
-            try:
-                spec = messenger.getInfoGeneral()
-            except PlomSeriousException:
-                ErrorMessage("Could not connect to server.").exec_()
-                return
+        except PlomSeriousException as e:
+            ErrorMessage("Could not connect to server", info=str(e)).exec_()
+            return
 
         self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
         question = self.getQuestion()

@@ -242,6 +242,7 @@ class BaseMessenger:
                 verify=False,
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException("Server could not find the spec") from None
@@ -249,44 +250,6 @@ class BaseMessenger:
                 raise PlomSeriousException("Some other sort of error {}".format(e))
         finally:
             self.SRmutex.release()
-
-        return response.json()
-
-    def getInfoGeneral(self):
-        """Get some info from pre-0.5.0 server which don't expose the spec.
-
-        Probably we can deprecate or remove this.  Old clients trying to
-        talk to newer servers will just get a 404.
-
-        Returns:
-            dict: some of the fields of the server's spec file.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/info/general".format(self.server),
-                verify=False,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException("Server could not find the spec") from None
-            raise PlomSeriousException(
-                "Some other sort of error {}".format(e)
-            ) from None
-        finally:
-            self.SRmutex.release()
-
-        pv = response.json()
-        fields = (
-            "name",
-            "numberToProduce",
-            "numberOfPages",
-            "numberOfQuestions",
-            "numberOfVersions",
-            "publicCode",
-        )
-        return dict(zip(fields, pv))
 
     def IDrequestClasslist(self):
         """Ask server for the classlist.
