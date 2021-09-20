@@ -20,7 +20,7 @@ def build_papers(
     basedir=Path("."),
     fakepdf=False,
     no_qr=False,
-    index=None,
+    indexToMake=None,
     ycoord=None,
 ):
     """Build all the blank papers using version information from server and source PDFs
@@ -37,8 +37,9 @@ def build_papers(
             for use when students upload homework or similar (and only 1 version).
         no_qr (bool): when True, don't stamp with QR codes.  Default: False
             (which means *do* stamp with QR codes).
-        number (int/None): prepare a particular paper.
-        ycoor (float): tweak the y-coordinate of the stamped renamed papers.
+        indexToMake (int/None): prepare a particular paper, or None to make
+            all papers.
+        ycoord (float): tweak the y-coordinate of the stamped renamed papers.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -83,7 +84,7 @@ def build_papers(
                 classlist,
                 fakepdf=fakepdf,
                 no_qr=no_qr,
-                indexToMake=index,
+                indexToMake=indexToMake,
                 ycoord=ycoord,
             )
 

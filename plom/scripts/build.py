@@ -216,7 +216,8 @@ spDB = sub.add_parser(
     "make-db",
     help="Populate the database",
     description="""
-        TODO TODO TODO Blah blah blah.""",
+        See "make" below, but here only the database is populated and
+        no papers will be built.  You can then call "make" later.""",
 )
 spDB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spDB.add_argument("-w", "--password", type=str, help='for the "manager" user')

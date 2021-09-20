@@ -98,9 +98,11 @@ def build_all_papers(
             for use when students upload homework or similar (and only 1 version).
         no_qr (bool): when True, don't stamp with QR codes.  Default: False
             (which means *do* stamp with QR codes).
-        numberToMake (int): specified paper number to be built. If this parameter is
-            specified, only this paper will be built and the others will be ignored.
-        ycoor (int): percentage from top to bottom of page to place ID/Signature box.
+        indexToMake (int/None): specified paper number to be built.  If
+            None then build all papers.  If this parameter is specified,
+            only this paper will be built and the others will be ignored.
+        ycoord (float): percentage from top to bottom of page to place
+            ID/Signature box.
 
     Raises:
         ValueError: classlist is invalid in some way.

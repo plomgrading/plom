@@ -230,9 +230,9 @@ def insert_extra_info(extra, exam, ycoord=None):
     Arguments:
         extra (dict): dictionary with student id and name.
         exam (fitz.Document): PDF document.
-        ycoor (int): specifies the y-coordinate where the id and name will be placed, as a float from 0 to 100, where
-            0 is the top and 100 is the bottom of the page. If None, defaults to 40.
-
+        ycoord (float): specifies the y-coordinate where the id and name
+            will be placed, as a float from 0 to 100, where 0 is the top
+            and 100 is the bottom of the page. If None, defaults to 40.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
