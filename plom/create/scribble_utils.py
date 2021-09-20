@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for scribbling fake answers on PDF files."""
 
@@ -22,7 +23,9 @@ else:
 import fitz
 
 import plom.create
+import plom.create.fonts
 from plom.create import paperdir as _paperdir
+from plom import __version__
 from plom.misc_utils import working_directory
 from plom.create import start_messenger
 
@@ -75,7 +78,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     student_number_length = 8
     extra_page_probability = 0.2
     digit_font_size = 24
-    answer_font_size = 13
+    answer_font_size = 18  # font size should depend on font?
     extra_page_font_size = 18
 
     # load the digit images
@@ -112,6 +115,10 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
+
+    # Get path to custom handwriting font
+    with resources.path(plom.produce.fonts, "ejx_handwriting.ttf") as p:
+        fontpath = str(p)
 
     for index, file_name in enumerate(papers_paths):
         if file_name in named_papers_paths:
@@ -178,8 +185,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                     random_answer_text,
                     fontsize=answer_font_size,
                     color=blue,
-                    fontname="helv",
-                    fontfile=None,
+                    fontname="ejx",
+                    fontfile=fontpath,
                     align=0,
                 )
                 assert excess > 0
