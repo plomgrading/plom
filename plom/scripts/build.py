@@ -4,6 +4,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for building tests."""
@@ -31,6 +32,7 @@ import toml
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
+from plom.plom_exceptions import PlomExistingDatabase
 from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.produce import get_messenger
 from plom.produce import build_database, build_papers
@@ -210,6 +212,16 @@ group.add_argument(
     help="Use auto-generated classlist. **DO NOT USE ON REAL SERVER**",
 )
 
+spDB = sub.add_parser(
+    "make-db",
+    help="Populate the database",
+    description="""
+        See "make" below, but here only the database is populated and
+        no papers will be built.  You can then call "make" later.""",
+)
+spDB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+spDB.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
 spB = sub.add_parser(
     "make",
     help="Make the PDFs",
@@ -230,6 +242,20 @@ spB.add_argument(
 )
 spB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
 spB.add_argument("-w", "--password", type=str, help='for the "manager" user')
+spB.add_argument(
+    "-n", "--number", type=int, help="used for building a specific paper number"
+)
+spB.add_argument(
+    "-m",
+    "--namebox-ypos",
+    metavar="Y",
+    type=float,
+    help="""
+        Specify vertical location of the name/ID that will be printed on
+        named papers, a float from 0 (top) to 100 (bottom) of the
+        page.
+        Defaults to 40.0.""",
+)
 
 sp = sub.add_parser(
     "rubric",
@@ -324,11 +350,23 @@ def main():
             classlist = process_classlist_file(args.classlist)
         upload_classlist(classlist, args.server, args.password)
 
-    elif args.command == "make":
+    elif args.command == "make-db":
         status = build_database(args.server, args.password)
         print(status)
+
+    elif args.command == "make":
+        try:
+            status = build_database(args.server, args.password)
+            print(status)
+        except PlomExistingDatabase:
+            print("Since we already have a database, move on to making papers")
         build_papers(
-            args.server, args.password, fakepdf=args.no_pdf, no_qr=args.without_qr
+            args.server,
+            args.password,
+            fakepdf=args.no_pdf,
+            no_qr=args.without_qr,
+            indexToMake=args.number,
+            ycoord=args.namebox_ypos,
         )
 
     elif args.command == "rubric":

@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Peter Lee
 
 import csv
 from multiprocessing import Pool
@@ -10,6 +11,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
+from plom.plom_exceptions import PlomConflict
 from plom.produce import paperdir as paperdir_name
 from .mergeAndCodePages import make_PDF
 
@@ -67,8 +69,15 @@ def outputProductionCSV(spec, make_PDF_args):
             csv_writer.writerow(row)
 
 
-def build_all_papers(
-    spec, global_page_version_map, classlist, *, fakepdf=False, no_qr=False
+def build_papers_backend(
+    spec,
+    global_page_version_map,
+    classlist,
+    *,
+    fakepdf=False,
+    no_qr=False,
+    indexToMake=None,
+    ycoord=None,
 ):
     """Builds the papers using _make_PDF.
 
@@ -89,10 +98,16 @@ def build_all_papers(
             for use when students upload homework or similar (and only 1 version).
         no_qr (bool): when True, don't stamp with QR codes.  Default: False
             (which means *do* stamp with QR codes).
+        indexToMake (int/None): specified paper number to be built.  If
+            None then build all papers.  If this parameter is specified,
+            only this paper will be built and the others will be ignored.
+        ycoord (float): percentage from top to bottom of page to place
+            ID/Signature box.
 
     Raises:
         ValueError: classlist is invalid in some way.
     """
+
     if spec["numberToName"] > 0:
         if not classlist:
             raise ValueError("You must provide a classlist to prename papers")
@@ -103,7 +118,11 @@ def build_all_papers(
                 )
             )
     make_PDF_args = []
-    for paper_index in range(1, spec["numberToProduce"] + 1):
+    if indexToMake is None:
+        papersToMake = range(1, spec["numberToProduce"] + 1)
+    else:
+        papersToMake = [indexToMake]
+    for paper_index in papersToMake:
         page_version = global_page_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
             student_info = {
@@ -123,6 +142,7 @@ def build_all_papers(
                 student_info,
                 no_qr,
                 fakepdf,
+                ycoord,
             )
         )
 
@@ -169,10 +189,12 @@ def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
         else:
             pdf_file = paperdir / f"exam_{papernum:04}.pdf"
 
-        if pdf_file.is_file():
-            msgr.notify_pdf_of_paper_produced(papernum)
-        else:
+        if not pdf_file.is_file():
             raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
+        try:
+            msgr.notify_pdf_of_paper_produced(papernum)
+        except PlomConflict as e:
+            print(e)
 
 
 def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
@@ -202,7 +224,6 @@ def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
             pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
-            if pdf_file.is_file():
-                msgr.id_paper(papernum, sid, sname)
-            else:
+            if not pdf_file.is_file():
                 raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
+            msgr.id_paper(papernum, sid, sname)

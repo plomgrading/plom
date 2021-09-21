@@ -1,21 +1,30 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
 
 from pathlib import Path
 
 from plom import check_version_map
 from plom.misc_utils import working_directory
-from plom.produce import build_all_papers, confirm_processed, identify_prenamed
+from plom.produce.buildNamedPDF import build_papers_backend
+from plom.produce.buildNamedPDF import confirm_processed, identify_prenamed
 from plom.produce import paperdir as paperdir_name
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingDatabase
 
 
 def build_papers(
-    server=None, password=None, *, basedir=Path("."), fakepdf=False, no_qr=False
+    server=None,
+    password=None,
+    *,
+    basedir=Path("."),
+    fakepdf=False,
+    no_qr=False,
+    indexToMake=None,
+    ycoord=None,
 ):
-    """Build all the blank papers using version information from server and source PDFs
+    """Build the blank papers using version information from server and source PDFs.
 
     Args:
         server (str): server name and optionally port.
@@ -29,6 +38,9 @@ def build_papers(
             for use when students upload homework or similar (and only 1 version).
         no_qr (bool): when True, don't stamp with QR codes.  Default: False
             (which means *do* stamp with QR codes).
+        indexToMake (int/None): prepare a particular paper, or None to make
+            all papers.
+        ycoord (float): tweak the y-coordinate of the stamped renamed papers.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -65,8 +77,22 @@ def build_papers(
                     spec["numberToProduce"], paperdir
                 )
             )
+        if indexToMake:
+            if indexToMake <= spec["numberToName"]:
+                print(f"Building only specific paper {indexToMake} (prenamed)")
+            else:
+                print(f"Building only specific paper {indexToMake} (blank)")
         with working_directory(basedir):
-            build_all_papers(spec, pvmap, classlist, fakepdf=fakepdf, no_qr=no_qr)
+            build_papers_backend(
+                spec,
+                pvmap,
+                classlist,
+                fakepdf=fakepdf,
+                no_qr=no_qr,
+                indexToMake=indexToMake,
+                ycoord=ycoord,
+            )
+
         print("Checking papers produced and updating databases")
         confirm_processed(spec, msgr, classlist, paperdir=paperdir)
         print("Identifying any pre-named papers into the database")

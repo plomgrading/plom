@@ -101,7 +101,7 @@ class ManagerMessenger(BaseMessenger):
                     "Paper number {} is outside valid range".format(test_num)
                 ) from None
             elif response.status_code == 409:
-                raise PlomSeriousException(
+                raise PlomConflict(
                     "Paper number {} has already been produced".format(test_num)
                 ) from None
             else:
