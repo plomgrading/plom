@@ -25,7 +25,6 @@ import fitz
 import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
-from plom import __version__
 from plom.misc_utils import working_directory
 from plom.create import start_messenger
 
@@ -91,6 +90,15 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     paper_dir_path = Path(paper_dir_path)
     out_file_path = Path(outfile)
 
+    # Get path to custom handwriting font
+    with resources.path(plom.create.fonts, "") as p:
+        font_directory_path = str(p) + "/"
+
+    # In principle you can put other fonts in plom.create.fonts
+    font_dict = {
+        "ejx": "ejx_handwriting.ttf",
+    }
+
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
         named_papers_paths = glob(
@@ -115,10 +123,6 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
-
-    # Get path to custom handwriting font
-    with resources.path(plom.produce.fonts, "ejx_handwriting.ttf") as p:
-        fontpath = str(p)
 
     for index, file_name in enumerate(papers_paths):
         if file_name in named_papers_paths:
@@ -178,15 +182,16 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             )
             random_answer_text = random.choice(possible_answers)
 
-            # TODO: "helv" vs "Helvetica"
+            random_font_name = random.choice(list(font_dict))
+
             if page_index >= 1:
                 excess = pdf_page.insert_textbox(
                     random_answer_rect,
                     random_answer_text,
                     fontsize=answer_font_size,
                     color=blue,
-                    fontname="ejx",
-                    fontfile=fontpath,
+                    fontname=random_font_name,
+                    fontfile=font_directory_path + font_dict[random_font_name],
                     align=0,
                 )
                 assert excess > 0
