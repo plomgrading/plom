@@ -125,6 +125,7 @@ class Chooser(QDialog):
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         self.ui.markButton.clicked.connect(self.runMarker)
         self.ui.identifyButton.clicked.connect(self.runIDer)
+        self.ui.manageButton.clicked.connect(self.open_manager)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
@@ -251,6 +252,7 @@ class Chooser(QDialog):
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             markerwin.setup(self.messenger, question, v, self.lastTime)
+            # store ref in Qapp to avoid garbase collection
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -260,6 +262,7 @@ class Chooser(QDialog):
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
             idwin.setup(self.messenger)
+            # store ref in Qapp to avoid garbase collection
             self.parent.identifier = idwin
 
     def runMarker(self):
@@ -270,9 +273,19 @@ class Chooser(QDialog):
         self.runIt = "IDer"
         self.validate()
 
-    def runTotaler(self):
-        self.runIt = "Totaler"
-        self.validate()
+    def open_manager(self):
+        from plom.manager import Manager
+
+        self.setEnabled(False)
+        self.hide()
+        window = Manager(self.parent)
+        window.show()
+
+        server = self.ui.serverLE.text()
+        mport = self.ui.mportSB.value()
+        window.setServer(f"{server}:{mport}")
+        # store ref in Qapp to avoid garbase collection
+        self.parent.manager_window = window
 
     def saveDetails(self):
         self.lastTime["user"] = self.ui.userLE.text().strip()
