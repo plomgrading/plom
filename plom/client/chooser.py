@@ -43,8 +43,6 @@ from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
-# to store login + options for next run of client.
-lastTime = {}
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -56,7 +54,7 @@ def readLastTime():
     """Read the login + server options that were used on
     the last run of the client.
     """
-    global lastTime
+    lastTime = {}
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
@@ -72,9 +70,10 @@ def readLastTime():
         # too early to log: log.info("Loading config file %s", cfgfile)
         with open(cfgfile) as f:
             lastTime.update(toml.load(f))
+    return lastTime
 
 
-def writeLastTime():
+def writeLastTime(lastTime):
     """Write the options to the config file."""
     log.info("Saving config file %s", cfgfile)
     try:
@@ -97,10 +96,10 @@ class Chooser(QDialog):
         self.parent = Qapp
         self.messenger = None
 
-        readLastTime()
+        self.lastTime = readLastTime()
 
         kwargs = {}
-        if lastTime.get("LogToFile"):
+        if self.lastTime.get("LogToFile"):
             logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
             try:
                 logdir.mkdir(parents=True, exist_ok=True)
@@ -114,7 +113,7 @@ class Chooser(QDialog):
             **kwargs,
         )
         # Default to INFO log level
-        logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper())
+        logging.getLogger().setLevel(self.lastTime.get("LogLevel", "Info").upper())
 
         s = "Plom Client {} (communicates with api {})".format(
             __version__, self.APIVersion
@@ -137,15 +136,13 @@ class Chooser(QDialog):
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
-        self.setLastTime()
 
-    def setLastTime(self):
         # set login etc from last time client ran.
-        self.ui.userLE.setText(lastTime["user"])
-        self.setServer(lastTime["server"])
-        self.ui.pgSB.setValue(int(lastTime["question"]))
-        self.ui.vSB.setValue(int(lastTime["v"]))
-        self.ui.fontSB.setValue(int(lastTime["fontSize"]))
+        self.ui.userLE.setText(self.lastTime["user"])
+        self.setServer(self.lastTime["server"])
+        self.ui.pgSB.setValue(int(self.lastTime["question"]))
+        self.ui.vSB.setValue(int(self.lastTime["v"]))
+        self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
@@ -159,17 +156,17 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(lastTime, logdir, cfgfile, tempfile.gettempdir())
+        d = ClientSettingsDialog(self.lastTime, logdir, cfgfile, tempfile.gettempdir())
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
-        lastTime["FOREGROUND"] = stuff[0]
-        lastTime["LogLevel"] = stuff[1]
-        lastTime["LogToFile"] = stuff[2]
-        lastTime["CommentsWarnings"] = stuff[3]
-        lastTime["MarkWarnings"] = stuff[4]
-        lastTime["SidebarOnRight"] = stuff[5]
-        logging.getLogger().setLevel(lastTime["LogLevel"].upper())
+        self.lastTime["FOREGROUND"] = stuff[0]
+        self.lastTime["LogLevel"] = stuff[1]
+        self.lastTime["LogToFile"] = stuff[2]
+        self.lastTime["CommentsWarnings"] = stuff[3]
+        self.lastTime["MarkWarnings"] = stuff[4]
+        self.lastTime["SidebarOnRight"] = stuff[5]
+        logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def validate(self):
         # Check username is a reasonable string
@@ -254,7 +251,7 @@ class Chooser(QDialog):
             markerwin = MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.setup(self.messenger, question, v, lastTime)
+            markerwin.setup(self.messenger, question, v, self.lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -279,14 +276,14 @@ class Chooser(QDialog):
         self.validate()
 
     def saveDetails(self):
-        lastTime["user"] = self.ui.userLE.text().strip()
-        lastTime["server"] = "{}:{}".format(
+        self.lastTime["user"] = self.ui.userLE.text().strip()
+        self.lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text().strip(), self.ui.mportSB.value()
         )
-        lastTime["question"] = self.getQuestion()
-        lastTime["v"] = self.getv()
-        lastTime["fontSize"] = self.ui.fontSB.value()
-        writeLastTime()
+        self.lastTime["question"] = self.getQuestion()
+        self.lastTime["v"] = self.getv()
+        self.lastTime["fontSize"] = self.ui.fontSB.value()
+        writeLastTime(self.lastTime)
 
     def closeWindow(self):
         self.saveDetails()
@@ -437,8 +434,5 @@ class Chooser(QDialog):
         self.setEnabled(True)
         if not stuff:
             return
-        # note that stuff is list of options - used to contain more... may contain more in future
-        # update sidebar for lasttime file
-        sidebarRight = stuff[0]
-        global lastTime
-        lastTime["SidebarOnRight"] = sidebarRight
+        # note `stuff` is list of options - used to contain more... may contain more in future
+        self.lastTime["SidebarOnRight"] = stuff[0]
