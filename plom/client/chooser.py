@@ -41,9 +41,6 @@ from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 
 
-# set up variables to store paths for marker and id clients
-global tempDirectory, directoryPath
-
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
 cfgdir = Path(appdirs.user_config_dir("plom", "PlomGrading.org"))
@@ -240,6 +237,8 @@ class Chooser(QDialog):
             ).exec_()
             self.messenger = None
             return
+
+        # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
         # Now run the appropriate client sub-application
         if self.runIt == "Marker":

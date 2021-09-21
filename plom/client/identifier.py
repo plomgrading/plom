@@ -15,6 +15,7 @@ from collections import defaultdict
 import csv
 import logging
 import os
+from pathlib import Path
 import tempfile
 
 from PyQt5.QtCore import (
@@ -50,10 +51,6 @@ from .origscanviewer import WholeTestView
 
 
 log = logging.getLogger("identr")
-
-# set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
-directoryPath = tempDirectory.name
 
 
 class Paper:
@@ -181,9 +178,21 @@ class ExamModel(QAbstractTableModel):
 class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self):
+    def __init__(self, tmpdir=None):
+        """Initialize the Identifier Client.
+
+        Args:
+            tmpdir (pathlib.Path/str/None): a temporary directory for
+                storing image files and other data.  In principle can
+                be shared with Marker although this may not be implemented.
+                If `None`, we will make our own.
+        """
         super().__init__()
         # instance vars that get initialized later
+        # Save the local temp directory for image files and the class list.
+        if not tmpdir:
+            tmpdir = tempfile.mkdtemp(prefix="plom_")
+        self.workingDirectory = Path(tmpdir)
         self.msgr = None
 
     def setup(self, messenger):
@@ -195,8 +204,6 @@ class IDClient(QWidget):
         TODO: move all this into init?
         """
         self.msgr = messenger
-        # Save the local temp directory for image files and the class list.
-        self.workingDirectory = directoryPath
         # List of papers we have to ID.
         self.paperList = []
         # Fire up the interface.
