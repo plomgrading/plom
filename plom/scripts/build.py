@@ -254,7 +254,7 @@ spB.add_argument(
         Specify vertical location of the name/ID that will be printed on
         named papers, a float from 0 (top) to 100 (bottom) of the
         page.
-        Defaults to 40.0.""",
+        Defaults to 42.5 (for historical reasons!)""",
 )
 
 sp = sub.add_parser(

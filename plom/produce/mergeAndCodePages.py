@@ -224,15 +224,16 @@ def is_possible_to_encode_as(s, encoding):
         return False
 
 
-def insert_extra_info(extra, exam, ycoord=None):
+def insert_extra_info(extra, exam, y=None):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
         extra (dict): dictionary with student id and name.
         exam (fitz.Document): PDF document.
-        ycoord (float): specifies the y-coordinate where the id and name
+        y (float): specifies the y-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 is the top
-            and 100 is the bottom of the page. If None, defaults to 40.
+            and 100 is the bottom of the page.  If None, defaults to 42.5
+            for historical reasons.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable.
@@ -241,9 +242,8 @@ def insert_extra_info(extra, exam, ycoord=None):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
-    if ycoord is None:
-        ycoord = 40.0
-    YSHIFT = ycoord / 100.0
+    if y is None:
+        y = 42.5
 
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
@@ -253,35 +253,31 @@ def insert_extra_info(extra, exam, ycoord=None):
     txt = "{}\n{}".format(student_id, student_name)
     sign_here = "Please sign here"
 
-    # Getting the dimensions of the box
-    student_id_width = (
+    box_width = (
         max(
             fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
             fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
             fitz.get_text_length(sign_here, fontsize=48, fontname="Helvetica"),
         )
-        * 1.1
-        * 0.5
+        * 1.11  # magic: just til it covers IDbox2
     )
-    student_id_height = 36 * 1.3
-    student_id_height2 = 48 * 1.3
+    box1_height = 2 * 36 * 1.5  # two lines of 36 pt and baseline
+    box2_height = 48 * 1.6
 
-    # We have 2 rectangles for the student name and student id
-    student_id_rect_1 = fitz.Rect(
-        page_width // 2 - student_id_width,
-        ((page_height - (student_id_height + student_id_height2)) * YSHIFT),
-        page_width // 2 + student_id_width,
-        ((page_height - (student_id_height + student_id_height2)) * YSHIFT)
-        + (student_id_height * 2),
+    name_id_rect = fitz.Rect(
+        page_width / 2 - box_width / 2,
+        (page_height - box1_height - box2_height) * y / 100.0,
+        page_width / 2 + box_width / 2,
+        (page_height - box1_height - box2_height) * y / 100.0 + box1_height,
     )
-    student_id_rect_2 = fitz.Rect(
-        student_id_rect_1.x0,
-        student_id_rect_1.y1,
-        student_id_rect_1.x1,
-        student_id_rect_1.y1 + student_id_height2,
+    signature_rect = fitz.Rect(
+        name_id_rect.x0,
+        name_id_rect.y1,
+        name_id_rect.x1,
+        name_id_rect.y1 + box2_height,
     )
-    exam[0].draw_rect(student_id_rect_1, color=[0, 0, 0], fill=[1, 1, 1], width=2)
-    exam[0].draw_rect(student_id_rect_2, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(name_id_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
+    exam[0].draw_rect(signature_rect, color=[0, 0, 0], fill=[1, 1, 1], width=2)
 
     # TODO: This could be put into one function
     if is_possible_to_encode_as(txt, "Latin-1"):
@@ -297,7 +293,7 @@ def insert_extra_info(extra, exam, ycoord=None):
 
     # We insert the student name and id text box
     excess = exam[0].insert_textbox(
-        student_id_rect_1,
+        name_id_rect,
         txt,
         fontsize=36,
         color=[0, 0, 0],
@@ -308,7 +304,7 @@ def insert_extra_info(extra, exam, ycoord=None):
     assert excess > 0, "Text didn't fit: student name too long?"
 
     excess = exam[0].insert_textbox(
-        student_id_rect_2,
+        signature_rect,
         sign_here,
         fontsize=48,
         color=[0.9, 0.9, 0.9],
@@ -356,6 +352,7 @@ def make_PDF(
             save time when we have no use for the actual files.  Why?
             Maybe later confirmation steps check these files exist or
             something like that...
+        ycoord (float): vertical positioning of the prename box.
 
     Raises:
         ValueError: Raise error if the student name and number is not encodable
