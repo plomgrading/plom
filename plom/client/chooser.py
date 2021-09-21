@@ -41,9 +41,6 @@ from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 
 
-# TODO: for now, a global (to this module), later maybe in the QApp?
-messenger = None
-
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
 # to store login + options for next run of client.
@@ -98,6 +95,7 @@ class Chooser(QDialog):
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.parent = Qapp
+        self.messenger = None
 
         readLastTime()
 
@@ -197,28 +195,31 @@ class Chooser(QDialog):
         # save those settings
         self.saveDetails()
 
+        if not self.messenger:
+            self.messenger = Messenger(server, mport)
         try:
-            # TODO: re-use existing messenger?
-            messenger = Messenger(server, mport)
-            messenger.start()
+            self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            self.messenger = None
             return
 
         try:
-            messenger.requestAndSaveToken(user, pwd)
+            self.messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
             ErrorMessage(
                 "Could not authenticate due to API mismatch."
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
+            self.messenger = None
             return
         except PlomAuthenticationException as e:
             # not PlomAuthenticationException(blah) has args [PlomAuthenticationException, "you are not authenticated, blah] - we only want the blah.
             ErrorMessage("Could not authenticate: {}".format(e.args[-1])).exec_()
+            self.messenger = None
             return
-        except PlomExistingLoginException as e:
+        except PlomExistingLoginException:
             if (
                 SimpleMessage(
                     "You appear to be already logged in!\n\n"
@@ -231,7 +232,8 @@ class Chooser(QDialog):
                 ).exec_()
                 == QMessageBox.Yes
             ):
-                messenger.clearAuthorisation(user, pwd)
+                self.messenger.clearAuthorisation(user, pwd)
+            self.messenger = None
             return
 
         except PlomSeriousException as e:
@@ -239,6 +241,7 @@ class Chooser(QDialog):
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
             ).exec_()
+            self.messenger = None
             return
 
         # Now run the appropriate client sub-application
@@ -251,7 +254,7 @@ class Chooser(QDialog):
             markerwin = MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.setup(messenger, question, v, lastTime)
+            markerwin.setup(self.messenger, question, v, lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
@@ -260,7 +263,7 @@ class Chooser(QDialog):
             idwin = IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
-            idwin.setup(messenger)
+            idwin.setup(self.messenger)
             self.parent.identifier = idwin
 
     def runMarker(self):
@@ -287,8 +290,8 @@ class Chooser(QDialog):
 
     def closeWindow(self):
         self.saveDetails()
-        if messenger:
-            messenger.stop()
+        if self.messenger:
+            self.messenger.stop()
         self.close()
 
     def setFont(self, n):
@@ -338,11 +341,9 @@ class Chooser(QDialog):
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
         self.ui.infoLabel.setText("")
-        # TODO: just `del messenger`?
-        global messenger
-        if messenger:
-            messenger.stop()
-        messenger = None
+        if self.messenger:
+            self.messenger.stop()
+        self.messenger = None
 
     def getInfo(self):
         self.partial_parse_address()
@@ -360,18 +361,21 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
+        if not self.messenger:
+            self.messenger = Messenger(server, mport)
         try:
-            messenger = Messenger(server, mport)
-            r = messenger.start()
+            ver = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            self.messenger = None
             return
-        self.ui.infoLabel.setText(r)
+        self.ui.infoLabel.setText(ver)
 
         try:
-            spec = messenger.get_spec()
+            spec = self.messenger.get_spec()
         except PlomSeriousException as e:
             ErrorMessage("Could not connect to server", info=str(e)).exec_()
+            self.messenger = None
             return
 
         self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
