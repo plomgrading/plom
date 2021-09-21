@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Client binaries for macOS are now distributed as standard .app bundles (still unsigned unfortunately).
+* `plom-build make` can now tweak the vertical position of the pre-printed name/ids.
+* `plom-build make` can build single papers.
 
 ### Changed
 * Classlists can contain additional columns.
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ongoing improvements to scripting Plom via import and module improvements.
 
 ### Fixed
+* Papers can be re-printed (without repopulating the database).
 * Misc fixes.
 
 
