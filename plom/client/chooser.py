@@ -125,7 +125,9 @@ class Chooser(QDialog):
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
         self.ui.markButton.clicked.connect(self.runMarker)
         self.ui.identifyButton.clicked.connect(self.runIDer)
-        self.ui.manageButton.clicked.connect(self.open_manager)
+        # Hide button used for directly opening manager
+        # self.ui.manageButton.clicked.connect(self.open_manager)
+        self.ui.manageButton.setVisible(False)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
