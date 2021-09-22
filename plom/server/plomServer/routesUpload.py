@@ -863,7 +863,7 @@ class UploadHandler:
         if len(data["version_map"]) == 0:
             vmap = None
         else:
-            vmap = undo_json_packing_of_version_map(vmap)
+            vmap = undo_json_packing_of_version_map(data["version_map"])
 
         try:
             r, summary = buildExamDatabaseFromSpec(
