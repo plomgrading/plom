@@ -174,12 +174,8 @@ class Chooser(QDialog):
         self.ui.userLE.setText(user)
         if (not user.isalnum()) or (not user):
             return
-        # check password at least 4 char long
         # Don't strip whitespace from passwords
         pwd = self.ui.passwordLE.text()
-        if len(pwd) < 4:
-            log.warning("Password too short")
-            return
 
         self.partial_parse_address()
         server = self.ui.serverLE.text()
@@ -193,7 +189,18 @@ class Chooser(QDialog):
         self.saveDetails()
 
         if user == "manager":
-            ErrorMessage("Cannot mark papers or ID as manager").exec_()
+            _ = """
+            <p>You are not allowed to mark or ID papers while logged-in
+              as &ldquo;manager&rdquo;.</p>
+            <p>Would you instead like to run the Server Management tool?</p>
+            """
+            if SimpleMessage(_).exec_() == QMessageBox.Yes:
+                raise NotImplementedError("lazy devs")
+            else:
+                return
+
+        if len(pwd) < 4:
+            log.warning("Password too short")
             return
 
         if not self.messenger:
