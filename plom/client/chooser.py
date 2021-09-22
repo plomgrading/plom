@@ -190,6 +190,10 @@ class Chooser(QDialog):
         # save those settings
         self.saveDetails()
 
+        if user == "manager":
+            ErrorMessage("Cannot mark papers or ID as manager").exec_()
+            return
+
         if not self.messenger:
             self.messenger = Messenger(server, mport)
         try:
