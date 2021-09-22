@@ -101,7 +101,6 @@ class PlomDB:
         createQGroup,
         getPageVersions,
         getQuestionVersions,
-        produceTest,
         id_paper,
         createNoAnswerRubric,
     )

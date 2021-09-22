@@ -39,7 +39,6 @@ class Image(BaseModel):
 class Test(BaseModel):
     test_number = pw.IntegerField(primary_key=True, unique=True)
     # some state pw.Bools
-    produced = pw.BooleanField(default=False)
     used = pw.BooleanField(default=False)
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)

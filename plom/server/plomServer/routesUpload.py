@@ -940,50 +940,6 @@ class UploadHandler:
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
-    # @route.put("/admin/pdf_produced/{t}")
-    @authenticate_by_token_required_fields(["user"])
-    def notify_pdf_of_paper_produced(self, data, request):
-        """Inform server that a PDF for this paper has been produced.
-
-        This is to be called one-at-a-time for each paper.  If this is a
-        bottleneck we could consider adding a "bulk" version.
-
-        Note that the file itself is not uploaded to the server: we're
-        just merely creating a record that such a file exists somewhere.
-
-        TODO: pass in md5sum too and if its unchanged no need to
-        complain about conflict, just quietly return 200.
-        TODO: implement force as mentioned below.
-
-        Inputs:
-            t (int?, str?): part of URL that specifies the paper number.
-            user (str): who's calling?  A field of the request.
-            force (bool): force production even if paper already exists.
-            md5sum (str): md5sum of the file that was produced.
-
-        Returns:
-            aiohttp.web.Response: with status code as below.
-
-        Status codes:
-            200 OK: the info was recorded.
-            400 Bad Request: only "manager" is allowed to do this.
-            401 Unauthorized: invalid credientials.
-            404 Not Found: paper number is outside valid range.
-            409 Conflict: this paper has already been produced, so its
-                unusual to be making it again. Maybe try `force=True`.
-        """
-        if not data["user"] == "manager":
-            return web.Response(status=400)
-        # force_flag = request.match_info["force"]
-        paper_idx = request.match_info["papernum"]
-        try:
-            self.server.DB.produceTest(paper_idx)
-        except IndexError:
-            return web.Response(status=404)
-        except ValueError:
-            return web.Response(status=409)
-        return web.Response(status=200)
-
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
         router.add_put("/admin/bundle", self.createNewBundle)
@@ -1023,6 +979,3 @@ class UploadHandler:
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
-        router.add_put(
-            "/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced
-        )

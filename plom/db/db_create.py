@@ -104,7 +104,7 @@ def createNewBundle(self, bundle_name, md5):
 
 ########## Test creation stuff ##############
 def areAnyPapersProduced(self):
-    """True if any papers have been produced."""
+    """True if any papers have been created in the DB."""
     return len(Test.select()) > 0
 
 
@@ -302,32 +302,6 @@ def getQuestionVersions(self, t):
     if tref is None:
         return {}
     return {q.question: q.version for q in tref.qgroups}
-
-
-def produceTest(self, t):
-    """Someone has told us they produced (made PDF) for this paper.
-
-    Args:
-        t (int): a paper number.
-
-    Exceptions:
-        IndexError: no such paper exists.
-        ValueError: you already told us you made it.
-    """
-    tref = Test.get_or_none(test_number=t)
-    if tref is None:
-        log.error('Cannot set paper {} to "produced" - it does not exist'.format(t))
-        raise IndexError("Paper number does not exist: out of range?")
-    else:
-        # TODO - work out how to make this more efficient? Multiple updates in one op?
-        with plomdb.atomic():
-            if tref.produced:
-                # TODO be less harsh if we have the same md5sum
-                log.error('Paper {} was already "produced"!'.format(t))
-                raise ValueError("Paper was already produced")
-            tref.produced = True
-            tref.save()
-        log.info('Paper {} is set to "produced"'.format(t))
 
 
 def id_paper(self, paper_num, user_name, sid, sname):
