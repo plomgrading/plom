@@ -157,59 +157,10 @@ def build_papers_backend(
     outputProductionCSV(spec, make_PDF_args)
 
 
-def confirm_processed(
-    spec, classlist, *, paperdir=Path(paperdir_name), indexToConfirm=None
+def check_pdf_and_id_if_needed(
+    spec, msgr, classlist, *, paperdir=Path(paperdir_name), indexToCheck=None
 ):
-    """Checks that each PDF file was created on disk.
-
-    Arguments:
-        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        classlist (list, None): ordered list of (sid, sname) pairs.
-
-    Keyword Arguments:
-        paperdir (pathlib.Path): where to find the papers to print.
-        indexToMake (int,None): index of single paper to make or if None,
-            then make all
-
-    Raises:
-        RuntimeError: raised if any of the expected PDF files not found.
-        ValueError: classlist is invalid in some way.
-    """
-    paperdir = Path(paperdir)
-    ## TODO - should this logic go in the function calling this rather than here?
-    ## THEN we can get rid of this function and just call the latter?
-    if spec["numberToName"] > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist for pre-named papers")
-        if len(classlist) < spec["numberToName"]:
-            raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(
-                    spec["numberToName"]
-                )
-            )
-    ## THINK ABOUT MOVING THE ABOVE LOGIC TO BUILDPAPERS.
-    ## THINK ABOUT MOVING 'does the pdf actually exist' to IDPRENAME.
-
-    # if indexToConfirm set, then we only check that one
-    if indexToConfirm:
-        range_to_check = [indexToConfirm]
-    else:  # check production of all papers
-        range_to_check = range(1, spec["numberToProduce"] + 1)
-    for papernum in range_to_check:
-        if papernum <= spec["numberToName"]:
-            sid, sname = classlist[papernum - 1]
-            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
-        else:
-            pdf_file = paperdir / f"exam_{papernum:04}.pdf"
-
-        if not pdf_file.is_file():
-            raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
-
-
-def identify_prenamed(
-    spec, msgr, classlist, *, paperdir=Path(paperdir_name), indexToID=None
-):
-    """Identify papers that pre-printed names on the server.
+    """Check pdf(s) are present on disk and id papers that are prenamed.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
@@ -225,20 +176,24 @@ def identify_prenamed(
         ValueError: classlist is invalid in some way.
     """
     paperdir = Path(paperdir)
-    if spec["numberToName"] > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist to prename papers")
-        if len(classlist) < spec["numberToName"]:
-            raise ValueError(
-                f"Classlist is too short for {spec['numberToName']} pre-named papers"
-            )
+
     # if indexToID set, then we only check that one
-    if indexToConfirm:
-        range_to_check = [indexToConfirm]
+    if indexToCheck:
+        range_to_check = [indexToCheck]
     else:  # check production of all papers
         range_to_check = range(1, spec["numberToProduce"] + 1)
-    # now tell DB about the paper we have pre-ID'd.
+    # now check that paper(s) are actuall on disk
     for papernum in range_to_check:
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
-            msgr.id_paper(papernum, sid, sname)
+            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
+            # if file is not there - error, else tell DB it is ID'd
+            if not pdf_file.is_file():
+                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
+            else:
+                msgr.id_paper(papernum, sid, sname)
+        else:
+            pdf_file = paperdir / f"exam_{papernum:04}.pdf"
+            # if file is not there - error.
+            if not pdf_file.is_file():
+                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
