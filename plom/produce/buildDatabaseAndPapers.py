@@ -79,6 +79,10 @@ def build_papers(
                 )
             )
         if indexToMake:
+            if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
+                raise ValueError(
+                    f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
+                )
             if indexToMake <= spec["numberToName"]:
                 print(f"Building only specific paper {indexToMake} (prenamed)")
             else:
@@ -95,9 +99,13 @@ def build_papers(
             )
 
         print("Checking papers produced and updating databases")
-        confirm_processed(spec, msgr, classlist, paperdir=paperdir)
+        confirm_processed(
+            spec, classlist, paperdir=paperdir, indexToConfirm=indexToMake
+        )
         print("Identifying any pre-named papers into the database")
-        identify_prenamed(spec, msgr, classlist, paperdir=paperdir)
+        identify_prenamed(
+            spec, msgr, classlist, paperdir=paperdir, indexToID=indexToMake
+        )
     finally:
         msgr.closeUser()
         msgr.stop()

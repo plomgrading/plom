@@ -157,22 +157,27 @@ def build_papers_backend(
     outputProductionCSV(spec, make_PDF_args)
 
 
-def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
-    """Checks that each PDF file was created and notify server.
+def confirm_processed(
+    spec, classlist, *, paperdir=Path(paperdir_name), indexToConfirm=None
+):
+    """Checks that each PDF file was created on disk.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        msgr (Messenger): an open active connection to the server.
         classlist (list, None): ordered list of (sid, sname) pairs.
 
     Keyword Arguments:
         paperdir (pathlib.Path): where to find the papers to print.
+        indexToMake (int,None): index of single paper to make or if None,
+            then make all
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
         ValueError: classlist is invalid in some way.
     """
     paperdir = Path(paperdir)
+    ## TODO - should this logic go in the function calling this rather than here?
+    ## THEN we can get rid of this function and just call the latter?
     if spec["numberToName"] > 0:
         if not classlist:
             raise ValueError("You must provide a classlist for pre-named papers")
@@ -182,7 +187,15 @@ def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
                     spec["numberToName"]
                 )
             )
-    for papernum in range(1, spec["numberToProduce"] + 1):
+    ## THINK ABOUT MOVING THE ABOVE LOGIC TO BUILDPAPERS.
+    ## THINK ABOUT MOVING 'does the pdf actually exist' to IDPRENAME.
+
+    # if indexToConfirm set, then we only check that one
+    if indexToConfirm:
+        range_to_check = [indexToConfirm]
+    else:  # check production of all papers
+        range_to_check = range(1, spec["numberToProduce"] + 1)
+    for papernum in range_to_check:
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
             pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
@@ -193,7 +206,9 @@ def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
             raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
 
 
-def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
+def identify_prenamed(
+    spec, msgr, classlist, *, paperdir=Path(paperdir_name), indexToID=None
+):
     """Identify papers that pre-printed names on the server.
 
     Arguments:
@@ -203,6 +218,7 @@ def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
 
     Keyword Arguments:
         paperdir (pathlib.Path): where to find the papers to print.
+        indexToID (int,None): the index of single paper to ID or (if none), then ID all.
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
@@ -216,10 +232,13 @@ def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
             raise ValueError(
                 f"Classlist is too short for {spec['numberToName']} pre-named papers"
             )
-    for papernum in range(1, spec["numberToProduce"] + 1):
+    # if indexToID set, then we only check that one
+    if indexToConfirm:
+        range_to_check = [indexToConfirm]
+    else:  # check production of all papers
+        range_to_check = range(1, spec["numberToProduce"] + 1)
+    # now tell DB about the paper we have pre-ID'd.
+    for papernum in range_to_check:
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
-            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
-            if not pdf_file.is_file():
-                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
             msgr.id_paper(papernum, sid, sname)
