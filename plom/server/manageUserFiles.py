@@ -17,7 +17,11 @@ else:
 import plom
 from plom.server import confdir
 
-from plom.aliceBob import simple_password, make_random_user_list, make_numbered_user_list
+from plom.aliceBob import (
+    simple_password,
+    make_random_user_list,
+    make_numbered_user_list,
+)
 
 
 # TODO - instead of running a cryptocontext here - move stuff into authenticate.py?
