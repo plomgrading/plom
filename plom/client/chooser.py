@@ -195,7 +195,7 @@ class Chooser(QDialog):
             <p>Would you instead like to run the Server Management tool?</p>
             """
             if SimpleMessage(_).exec_() == QMessageBox.Yes:
-                raise NotImplementedError("lazy devs")
+                self.open_manager()
             else:
                 return
 
