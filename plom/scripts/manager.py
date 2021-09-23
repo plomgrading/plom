@@ -58,13 +58,8 @@ def main():
     # got this solution from
     # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-    window = Manager(app)
+    window = Manager(app, server=args.server, password=args.password)
     window.show()
-
-    window.ui.userLE.setText("manager")
-    window.ui.passwordLE.setText(args.password)
-    if args.server:
-        window.setServer(args.server)
 
     sys.exit(app.exec_())
 

@@ -340,11 +340,27 @@ class ProgressBox(QGroupBox):
 
 
 class Manager(QWidget):
-    def __init__(self, parent):
+    def __init__(
+        self, parent, *, server=None, user=None, password=None, manager_msgr=None
+    ):
+        """Start a new Plom Manager window.
+
+        Args:
+            parent: A QApplication (I think).
+
+        Keyword Args:
+            manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
+                Note that the plain 'ol Messenger will not work.  By default
+                or if `None` is passed, we'll make the user login or use
+                other kwargs.
+            server (str/None):
+            user (str/None):
+            password (str/None):
+        """
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.parent = parent
-        self.msgr = None
+        self.msgr = manager_msgr
         print(
             "Plom Manager Client {} (communicates with api {})".format(
                 __version__, self.APIVersion
@@ -352,12 +368,24 @@ class Manager(QWidget):
         )
         self.ui = Ui_Manager()
         self.ui.setupUi(self)
+        if user:
+            self.ui.userLE.setText(user)
+        if password:
+            self.ui.passwordLE.setText(password)
+        if server:
+            self.setServer(server)
+
         self.ui.passwordLE.setFocus(True)
         self.connectButtons()
         self.ui.scanningAllTab.setEnabled(False)
         self.ui.progressAllTab.setEnabled(False)
         self.ui.reviewAllTab.setEnabled(False)
         self.ui.userAllTab.setEnabled(False)
+        if self.msgr:
+            self.initial_login()
+        else:
+            if password:
+                self.login()
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -469,7 +497,9 @@ class Manager(QWidget):
             ).exec_()
             self.msgr = None  # reset to avoid Issue #1622
             return
+        self.initial_login()
 
+    def initial_login(self):
         self.ui.scanningAllTab.setEnabled(True)
         self.ui.progressAllTab.setEnabled(True)
         self.ui.reviewAllTab.setEnabled(True)
