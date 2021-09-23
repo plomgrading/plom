@@ -174,6 +174,9 @@ class Chooser(QDialog):
             return
         # Don't strip whitespace from passwords
         pwd = self.ui.passwordLE.text()
+        if len(pwd) < 4:
+            log.warning("Password too short")
+            return
 
         self.partial_parse_address()
         server = self.ui.serverLE.text()
@@ -185,21 +188,6 @@ class Chooser(QDialog):
 
         # save those settings
         self.saveDetails()
-
-        if user == "manager":
-            _ = """
-            <p>You are not allowed to mark or ID papers while logged-in
-              as &ldquo;manager&rdquo;.</p>
-            <p>Would you instead like to run the Server Management tool?</p>
-            """
-            if SimpleMessage(_).exec_() == QMessageBox.No:
-                return
-            self.open_manager()
-            return
-
-        if len(pwd) < 4:
-            log.warning("Password too short")
-            return
 
         if not self.messenger:
             self.messenger = Messenger(server, mport)
@@ -253,7 +241,27 @@ class Chooser(QDialog):
         # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
         # Now run the appropriate client sub-application
-        if runIt == "Marker":
+        if user == "manager":
+            _ = """
+            <p>You are not allowed to mark or ID papers while logged-in
+              as &ldquo;manager&rdquo;.</p>
+            <p>Would you instead like to run the Server Management tool?</p>
+            """
+            if SimpleMessage(_).exec_() == QMessageBox.No:
+                return
+            from plom.manager import Manager
+
+            self.setEnabled(False)
+            self.hide()
+            window = Manager(self.parent, msgr=self.messenger)
+            window.show()
+
+            server = self.ui.serverLE.text()
+            mport = self.ui.mportSB.value()
+            window.setServer(f"{server}:{mport}")
+            # store ref in Qapp to avoid garbase collection
+            self.parent.manager_window = window
+        elif runIt == "Marker":
             # Run the marker client.
             question = self.getQuestion()
             v = self.getv()
@@ -275,6 +283,8 @@ class Chooser(QDialog):
             idwin.setup(self.messenger)
             # store ref in Qapp to avoid garbase collection
             self.parent.identifier = idwin
+        else:
+            raise RuntimeError("Invalid subapplication value")
 
     def runMarker(self):
         self.validate("Marker")
