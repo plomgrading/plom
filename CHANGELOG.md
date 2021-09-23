@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client binaries for macOS are now distributed as standard .app bundles (still unsigned unfortunately).
 * `plom-build make` can now tweak the vertical position of the pre-printed name/ids.
 * `plom-build make` can build single papers.
+* The server manager UI is now accessible from PlomClient: just login with the manager account.
 
 ### Changed
 * Classlists can contain additional columns.
