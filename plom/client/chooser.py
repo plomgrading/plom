@@ -116,8 +116,6 @@ class Chooser(QDialog):
             __version__, self.APIVersion
         )
         log.info(s)
-        # runit = either marker or identifier clients.
-        self.runIt = None
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
@@ -168,7 +166,7 @@ class Chooser(QDialog):
         self.lastTime["SidebarOnRight"] = stuff[5]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def validate(self):
+    def validate(self, runIt):
         # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
@@ -255,7 +253,7 @@ class Chooser(QDialog):
         # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
         # Now run the appropriate client sub-application
-        if self.runIt == "Marker":
+        if runIt == "Marker":
             # Run the marker client.
             question = self.getQuestion()
             v = self.getv()
@@ -267,7 +265,7 @@ class Chooser(QDialog):
             markerwin.setup(self.messenger, question, v, self.lastTime)
             # store ref in Qapp to avoid garbase collection
             self.parent.marker = markerwin
-        elif self.runIt == "IDer":
+        elif runIt == "IDer":
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
@@ -279,12 +277,10 @@ class Chooser(QDialog):
             self.parent.identifier = idwin
 
     def runMarker(self):
-        self.runIt = "Marker"
-        self.validate()
+        self.validate("Marker")
 
     def runIDer(self):
-        self.runIt = "IDer"
-        self.validate()
+        self.validate("IDer")
 
     def open_manager(self):
         from plom.manager import Manager
