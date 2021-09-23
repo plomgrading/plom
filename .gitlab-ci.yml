@@ -836,7 +836,6 @@ linuxbin_centos:
 # - build python from src for https://github.com/danhper/asdf-python/issues/38
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-# - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
 # - must have $I_CAN_HAZ_THE_APPLES defined in Settings->CI/CD->Variables (#1651)
 macos11_client:
   image: macos-11-xcode-12
@@ -890,6 +889,7 @@ macos1015_client:
   - shared-macos-amd64
   rules:
   - if: $I_CAN_HAZ_THE_APPLES
+  when: manual
   stage: packaging
   script:
   - sw_vers
@@ -933,6 +933,7 @@ macos1014_client:
   - shared-macos-amd64
   rules:
   - if: $I_CAN_HAZ_THE_APPLES
+  when: manual
   stage: packaging
   script:
   - sw_vers
@@ -974,7 +975,8 @@ macos1013_client:
   tags:
   - shared-macos-amd64
   rules:
-   - if: $I_CAN_HAZ_THE_APPLES
+  - if: $I_CAN_HAZ_THE_APPLES
+  when: manual
   stage: packaging
   script:
   - sw_vers
