@@ -15,6 +15,8 @@ from plom import __version__
 
 paperdir = Path("papersToPrint")
 
+from plom.finish import clear_manager_login
+
 from .buildClasslist import possible_surname_fields, possible_given_name_fields
 from .upload_classlist import get_messenger
 from .buildDatabaseAndPapers import build_database, build_papers
@@ -30,6 +32,7 @@ from .hwFaker import make_hw_scribbles
 
 # what you get from "from plom.produce import *"
 __all__ = [
+    "clear_manager_login",
     "get_demo_classlist",
     "process_classlist_file",
     "upload_classlist",

@@ -31,9 +31,7 @@ from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
 from plom.produce import upload_rubrics_from_file, download_rubrics_to_file
 from plom.produce import upload_demo_rubrics
-
-# TODO: relocate https://gitlab.com/plom/plom/-/issues/891
-from plom.finish import clear_manager_login
+from plom.produce import clear_manager_login
 
 
 def checkTomlExtension(fname):
