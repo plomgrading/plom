@@ -36,20 +36,13 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
 )
 from plom.messenger import Messenger
-
+from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
-from . import marker
-from . import identifier
 
-
-# TODO: for now, a global (to this module), later maybe in the QApp?
-messenger = None
 
 # set up variables to store paths for marker and id clients
 global tempDirectory, directoryPath
-# to store login + options for next run of client.
-lastTime = {}
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -61,7 +54,7 @@ def readLastTime():
     """Read the login + server options that were used on
     the last run of the client.
     """
-    global lastTime
+    lastTime = {}
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
@@ -77,9 +70,10 @@ def readLastTime():
         # too early to log: log.info("Loading config file %s", cfgfile)
         with open(cfgfile) as f:
             lastTime.update(toml.load(f))
+    return lastTime
 
 
-def writeLastTime():
+def writeLastTime(lastTime):
     """Write the options to the config file."""
     log.info("Saving config file %s", cfgfile)
     try:
@@ -100,11 +94,12 @@ class Chooser(QDialog):
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.parent = Qapp
+        self.messenger = None
 
-        readLastTime()
+        self.lastTime = readLastTime()
 
         kwargs = {}
-        if lastTime.get("LogToFile"):
+        if self.lastTime.get("LogToFile"):
             logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
             try:
                 logdir.mkdir(parents=True, exist_ok=True)
@@ -118,7 +113,7 @@ class Chooser(QDialog):
             **kwargs,
         )
         # Default to INFO log level
-        logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper())
+        logging.getLogger().setLevel(self.lastTime.get("LogLevel", "Info").upper())
 
         s = "Plom Client {} (communicates with api {})".format(
             __version__, self.APIVersion
@@ -141,15 +136,13 @@ class Chooser(QDialog):
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
-        self.setLastTime()
 
-    def setLastTime(self):
         # set login etc from last time client ran.
-        self.ui.userLE.setText(lastTime["user"])
-        self.setServer(lastTime["server"])
-        self.ui.pgSB.setValue(int(lastTime["question"]))
-        self.ui.vSB.setValue(int(lastTime["v"]))
-        self.ui.fontSB.setValue(int(lastTime["fontSize"]))
+        self.ui.userLE.setText(self.lastTime["user"])
+        self.setServer(self.lastTime["server"])
+        self.ui.pgSB.setValue(int(self.lastTime["question"]))
+        self.ui.vSB.setValue(int(self.lastTime["v"]))
+        self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
@@ -163,17 +156,17 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(lastTime, logdir, cfgfile, tempfile.gettempdir())
+        d = ClientSettingsDialog(self.lastTime, logdir, cfgfile, tempfile.gettempdir())
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
-        lastTime["FOREGROUND"] = stuff[0]
-        lastTime["LogLevel"] = stuff[1]
-        lastTime["LogToFile"] = stuff[2]
-        lastTime["CommentsWarnings"] = stuff[3]
-        lastTime["MarkWarnings"] = stuff[4]
-        lastTime["SidebarOnRight"] = stuff[5]
-        logging.getLogger().setLevel(lastTime["LogLevel"].upper())
+        self.lastTime["FOREGROUND"] = stuff[0]
+        self.lastTime["LogLevel"] = stuff[1]
+        self.lastTime["LogToFile"] = stuff[2]
+        self.lastTime["CommentsWarnings"] = stuff[3]
+        self.lastTime["MarkWarnings"] = stuff[4]
+        self.lastTime["SidebarOnRight"] = stuff[5]
+        logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def validate(self):
         # Check username is a reasonable string
@@ -199,28 +192,31 @@ class Chooser(QDialog):
         # save those settings
         self.saveDetails()
 
+        if not self.messenger:
+            self.messenger = Messenger(server, mport)
         try:
-            # TODO: re-use existing messenger?
-            messenger = Messenger(server, mport)
-            messenger.start()
+            self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            self.messenger = None
             return
 
         try:
-            messenger.requestAndSaveToken(user, pwd)
+            self.messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
             ErrorMessage(
                 "Could not authenticate due to API mismatch."
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
+            self.messenger = None
             return
         except PlomAuthenticationException as e:
             # not PlomAuthenticationException(blah) has args [PlomAuthenticationException, "you are not authenticated, blah] - we only want the blah.
             ErrorMessage("Could not authenticate: {}".format(e.args[-1])).exec_()
+            self.messenger = None
             return
-        except PlomExistingLoginException as e:
+        except PlomExistingLoginException:
             if (
                 SimpleMessage(
                     "You appear to be already logged in!\n\n"
@@ -233,7 +229,8 @@ class Chooser(QDialog):
                 ).exec_()
                 == QMessageBox.Yes
             ):
-                messenger.clearAuthorisation(user, pwd)
+                self.messenger.clearAuthorisation(user, pwd)
+            self.messenger = None
             return
 
         except PlomSeriousException as e:
@@ -241,6 +238,7 @@ class Chooser(QDialog):
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
             ).exec_()
+            self.messenger = None
             return
 
         # Now run the appropriate client sub-application
@@ -250,19 +248,19 @@ class Chooser(QDialog):
             v = self.getv()
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(self.parent)
+            markerwin = MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.setup(messenger, question, v, lastTime)
+            markerwin.setup(self.messenger, question, v, self.lastTime)
             self.parent.marker = markerwin
         elif self.runIt == "IDer":
             # Run the ID client.
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient()
+            idwin = IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
-            idwin.setup(messenger)
+            idwin.setup(self.messenger)
             self.parent.identifier = idwin
 
     def runMarker(self):
@@ -278,19 +276,19 @@ class Chooser(QDialog):
         self.validate()
 
     def saveDetails(self):
-        lastTime["user"] = self.ui.userLE.text().strip()
-        lastTime["server"] = "{}:{}".format(
+        self.lastTime["user"] = self.ui.userLE.text().strip()
+        self.lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text().strip(), self.ui.mportSB.value()
         )
-        lastTime["question"] = self.getQuestion()
-        lastTime["v"] = self.getv()
-        lastTime["fontSize"] = self.ui.fontSB.value()
-        writeLastTime()
+        self.lastTime["question"] = self.getQuestion()
+        self.lastTime["v"] = self.getv()
+        self.lastTime["fontSize"] = self.ui.fontSB.value()
+        writeLastTime(self.lastTime)
 
     def closeWindow(self):
         self.saveDetails()
-        if messenger:
-            messenger.stop()
+        if self.messenger:
+            self.messenger.stop()
         self.close()
 
     def setFont(self, n):
@@ -340,11 +338,9 @@ class Chooser(QDialog):
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
         self.ui.infoLabel.setText("")
-        # TODO: just `del messenger`?
-        global messenger
-        if messenger:
-            messenger.stop()
-        messenger = None
+        if self.messenger:
+            self.messenger.stop()
+        self.messenger = None
 
     def getInfo(self):
         self.partial_parse_address()
@@ -362,18 +358,21 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
+        if not self.messenger:
+            self.messenger = Messenger(server, mport)
         try:
-            messenger = Messenger(server, mport)
-            r = messenger.start()
+            ver = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            self.messenger = None
             return
-        self.ui.infoLabel.setText(r)
+        self.ui.infoLabel.setText(ver)
 
         try:
-            spec = messenger.get_spec()
+            spec = self.messenger.get_spec()
         except PlomSeriousException as e:
             ErrorMessage("Could not connect to server", info=str(e)).exec_()
+            self.messenger = None
             return
 
         self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
@@ -435,8 +434,5 @@ class Chooser(QDialog):
         self.setEnabled(True)
         if not stuff:
             return
-        # note that stuff is list of options - used to contain more... may contain more in future
-        # update sidebar for lasttime file
-        sidebarRight = stuff[0]
-        global lastTime
-        lastTime["SidebarOnRight"] = sidebarRight
+        # note `stuff` is list of options - used to contain more... may contain more in future
+        self.lastTime["SidebarOnRight"] = stuff[0]

@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 
 from plom import __version__
 from plom import Default_Port
-from plom.client.chooser import Chooser
+from plom.client import Chooser
 from plom.client.useful_classes import ErrorMessage
 
 
