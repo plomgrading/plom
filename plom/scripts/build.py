@@ -242,7 +242,7 @@ group.add_argument(
 group.add_argument(
     "--demo",
     action="store_true",
-    help="Use auto-generated rubric list.",
+    help="Upload an auto-generated rubric list for demos.",
 )
 
 spClear = sub.add_parser(
