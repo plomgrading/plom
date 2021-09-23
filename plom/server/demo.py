@@ -94,6 +94,9 @@ class PlomDemoServer(PlomServer):
         self.__class__.add_demo_spec(tmpdir, num_to_produce=self._numpapers)
         kwargs.pop("basedir", True)
         super().__init__(basedir=tmpdir, **kwargs)
+        server_loc = f'{self.server_info["server"]}{self.port}'
+        pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
+        plom.produce.upload_demo_rubrics((server_loc, pwd))
         if scans:
             self.fill_with_fake_scribbled_tests()
 
