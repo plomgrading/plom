@@ -192,10 +192,10 @@ class Chooser(QDialog):
               as &ldquo;manager&rdquo;.</p>
             <p>Would you instead like to run the Server Management tool?</p>
             """
-            if SimpleMessage(_).exec_() == QMessageBox.Yes:
-                self.open_manager()
-            else:
+            if SimpleMessage(_).exec_() == QMessageBox.No:
                 return
+            self.open_manager()
+            return
 
         if len(pwd) < 4:
             log.warning("Password too short")
