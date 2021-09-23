@@ -18,6 +18,7 @@ import json
 import logging
 from math import ceil
 import os
+from pathlib import Path
 import queue
 import secrets
 import shutil
@@ -70,10 +71,6 @@ if platform.system() == "Darwin":
 
 log = logging.getLogger("marker")
 
-# set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
-directoryPath = tempDirectory.name
-
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
 # and https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
@@ -95,7 +92,7 @@ class BackgroundDownloader(QThread):
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
-    def __init__(self, question, version, msgr_clone):
+    def __init__(self, question, version, msgr_clone, workdir):
         """
         Initializes a new downloader.
 
@@ -106,6 +103,7 @@ class BackgroundDownloader(QThread):
                 Note Messenger is not multithreaded and blocks using
                 mutexes, so you may want to pass a clone of your
                 Messenger, rather than the one you are using yourself!
+            workdir (pathlib.Path): filespace for downloading.
 
         Notes:
             question/version may be able to be type int as well.
@@ -113,7 +111,7 @@ class BackgroundDownloader(QThread):
         super().__init__()
         self.question = question
         self.version = version
-        self.workingDirectory = directoryPath
+        self.workingDirectory = workdir
         self._msgr = msgr_clone
 
     def run(self):
@@ -943,21 +941,25 @@ class MarkerClient(QWidget):
 
     my_shutdown_signal = pyqtSignal(int, list)
 
-    def __init__(self, Qapp):
+    def __init__(self, Qapp, tmpdir=None):
         """
         Initialize a new MarkerClient
 
         Args:
             Qapp(QApplication): Main client application
+            tmpdir (pathlib.Path/str/None): a temporary directory for
+                storing image files and other data.  In principle can
+                be shared with Identifier although this may not be
+                implemented.  If `None`, we will make our own.
         """
         super().__init__()
         self.Qapp = Qapp
 
-        # instance vars we can initialize now
-        self.workingDirectory = (
-            directoryPath
-            # local temp directory for image files and the class list.
-        )
+        # Save the local temp directory for image files and the class list.
+        if not tmpdir:
+            tmpdir = tempfile.mkdtemp(prefix="plom_")
+        self.workingDirectory = Path(tmpdir)
+
         self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
@@ -1507,7 +1509,7 @@ class MarkerClient(QWidget):
             self.backgroundDownloader.wait()
         # New downloader but reuse the existing Messenger clone
         self.backgroundDownloader = BackgroundDownloader(
-            self.question, self.version, self._bgdownloader_msgr
+            self.question, self.version, self._bgdownloader_msgr, self.workingDirectory
         )
         self.backgroundDownloader.downloadSuccess.connect(
             self._requestNextInBackgroundFinished
