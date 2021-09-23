@@ -14,14 +14,11 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import json
 import os
 from pathlib import Path
 from textwrap import dedent, wrap
 
-from pandas import json_normalize, read_csv
 from stdiomask import getpass
-import toml
 
 from plom import __version__
 from plom import SpecVerifier
@@ -32,7 +29,8 @@ from plom.produce import get_messenger
 from plom.produce import build_database, build_papers
 from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
-from plom.produce.push_pull_rubrics import upload_rubrics, upload_demo_rubrics
+from plom.produce import upload_rubrics_from_file, download_rubrics_to_file
+from plom.produce import upload_demo_rubrics
 
 # TODO: relocate https://gitlab.com/plom/plom/-/issues/891
 from plom.finish import clear_manager_login
@@ -333,54 +331,12 @@ def main():
         msgr = get_messenger(args.server, args.password)
         try:
             if args.demo:
-                print("Uploading demo rubrics...")
                 N = upload_demo_rubrics(msgr)
                 print(f"Uploaded {N} demo rubrics")
-
             elif args.dump:
-                filename = Path(args.dump)
-                if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
-                    filename = filename.with_suffix(filename.suffix + ".toml")
-                suffix = filename.suffix
-
-                print(f'Saving server\'s current rubrics to "{filename}"')
-                rubrics = msgr.MgetRubrics()
-
-                with open(filename, "w") as f:
-                    if suffix == ".json":
-                        json.dump(rubrics, f, indent="  ")
-                    elif suffix == ".toml":
-                        toml.dump({"rubric": rubrics}, f)
-                    elif suffix == ".csv":
-                        df = json_normalize(rubrics)
-                        df.to_csv(f, index=False, sep=",", encoding="utf-8")
-                    else:
-                        raise NotImplementedError(
-                            f'Don\'t know how to export to "{filename}"'
-                        )
+                download_rubrics_to_file(msgr, Path(args.dump))
             else:
-                filename = Path(args.rubric_file)
-                if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
-                    filename = filename.with_suffix(filename.suffix + ".toml")
-                suffix = filename.suffix
-
-                with open(filename, "r") as f:
-                    if suffix == ".json":
-                        rubrics = json.load(f)
-                    elif suffix == ".toml":
-                        rubrics = toml.load(f)["rubric"]
-                    elif suffix == ".csv":
-                        df = read_csv(f)
-                        df.fillna("", inplace=True)
-                        rubrics = json.loads(df.to_json(orient="records"))
-                    else:
-                        raise NotImplementedError(
-                            f'Don\'t know how to import from "{filename}"'
-                        )
-
-                print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
-                upload_rubrics(msgr, rubrics)
-
+                upload_rubrics_from_file(msgr, Path(args.rubric_file))
         finally:
             msgr.closeUser()
             msgr.stop()

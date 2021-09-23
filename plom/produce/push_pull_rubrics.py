@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Colin B. Macdonald
 
+"""Tools for upload/downloading rubrics from Plom servers."""
+
+import json
 import sys
 
 if sys.version_info >= (3, 7):
@@ -8,9 +11,86 @@ if sys.version_info >= (3, 7):
 else:
     import importlib_resources as resources
 
+import pandas
 import toml
 
 from plom.produce import get_messenger
+
+
+def download_rubrics(msgr):
+    """Download a list of rubrics from a server.
+
+    Args:
+        msgr (Messenger): a connected Messenger.
+
+    Returns:
+        list: list of dicts, possibly an empty list if server has no rubrics.
+    """
+    return msgr.MgetRubrics()
+
+
+def download_rubrics_to_file(msgr, filename, *, verbose=True):
+    """Download the rubrics from a server and save tem to a file.
+
+    Args:
+        msgr (Messenger): a connected Messenger.
+        filename (pathlib.Path): A filename to save to.  The extension is
+            used to determine what format, supporting:
+                `.json`, `.toml`, and `.csv`.
+            If no extension is included, default to `.toml`.
+
+    Returns:
+        None: but saves a file as a side effect.
+    """
+    if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+        filename = filename.with_suffix(filename.suffix + ".toml")
+    suffix = filename.suffix
+
+    if verbose:
+        print(f'Saving server\'s current rubrics to "{filename}"')
+    rubrics = download_rubrics(msgr)
+
+    with open(filename, "w") as f:
+        if suffix == ".json":
+            json.dump(rubrics, f, indent="  ")
+        elif suffix == ".toml":
+            toml.dump({"rubric": rubrics}, f)
+        elif suffix == ".csv":
+            df = pandas.json_normalize(rubrics)
+            df.to_csv(f, index=False, sep=",", encoding="utf-8")
+        else:
+            raise NotImplementedError(f'Don\'t know how to export to "{filename}"')
+
+
+def upload_rubrics_from_file(msgr, filename, *, verbose=True):
+    """Load rubrics from a file and upload them to a server.
+
+    Args:
+        msgr (Messenger): a connected Messenger.
+        filename (pathlib.Path): A filename to load from.  Types  `.json`,
+            `.toml`, and `.csv` are suppported.  If no suffix is included
+            we'll try to append `.toml`.
+    """
+    if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
+        filename = filename.with_suffix(filename.suffix + ".toml")
+    suffix = filename.suffix
+
+    with open(filename, "r") as f:
+        if suffix == ".json":
+            rubrics = json.load(f)
+        elif suffix == ".toml":
+            rubrics = toml.load(f)["rubric"]
+        elif suffix == ".csv":
+            df = pandas.read_csv(f)
+            df.fillna("", inplace=True)
+            # TODO: flycheck is whining about this to_json
+            rubrics = json.loads(df.to_json(orient="records"))
+        else:
+            raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
+
+    if verbose:
+        print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
+    upload_rubrics(msgr, rubrics)
 
 
 def upload_rubrics(msgr, rubrics):
