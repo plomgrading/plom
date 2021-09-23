@@ -250,10 +250,17 @@ class Chooser(QDialog):
             if SimpleMessage(_).exec_() == QMessageBox.No:
                 return
             from plom.manager import Manager
+            from plom.messenger import ManagerMessenger
 
             self.setEnabled(False)
             self.hide()
-            window = Manager(self.parent, msgr=self.messenger)
+            self.messenger.closeUser()
+            self.messenger.stop()
+            # TODO no error handling here!
+            m = ManagerMessenger(server, mport)
+            m.start()
+            m.requestAndSaveToken(user, pwd)
+            window = Manager(self.parent, manager_msgr=m)
             window.show()
 
             server = self.ui.serverLE.text()
