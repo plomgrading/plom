@@ -40,6 +40,9 @@ from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 
+from plom.manager import Manager
+from plom.messenger import ManagerMessenger
+
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -121,10 +124,10 @@ class Chooser(QDialog):
         self.ui.setupUi(self)
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
-        self.ui.markButton.clicked.connect(self.runMarker)
-        self.ui.identifyButton.clicked.connect(self.runIDer)
+        self.ui.markButton.clicked.connect(self.run_marker)
+        self.ui.identifyButton.clicked.connect(self.run_identifier)
         # Hide button used for directly opening manager
-        # self.ui.manageButton.clicked.connect(self.open_manager)
+        # self.ui.manageButton.clicked.connect(self.run_manager)
         self.ui.manageButton.setVisible(False)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontSB.valueChanged.connect(self.setFont)
@@ -166,7 +169,7 @@ class Chooser(QDialog):
         self.lastTime["SidebarOnRight"] = stuff[5]
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def validate(self, runIt):
+    def validate(self, which_subapp):
         # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
@@ -189,8 +192,22 @@ class Chooser(QDialog):
         # save those settings
         self.saveDetails()
 
+        if user == "manager":
+            _ = """
+                <p>You are not allowed to mark or ID papers while logged-in
+                  as &ldquo;manager&rdquo;.</p>
+                <p>Would you instead like to run the Server Management tool?</p>
+            """
+            if SimpleMessage(_).exec_() == QMessageBox.No:
+                return
+            which_subapp = "Manager"
+            self.messenger = None
+
         if not self.messenger:
-            self.messenger = Messenger(server, mport)
+            if which_subapp == "Manager":
+                self.messenger = ManagerMessenger(server, mport)
+            else:
+                self.messenger = Messenger(server, mport)
         try:
             self.messenger.start()
         except PlomBenignException as e:
@@ -240,36 +257,20 @@ class Chooser(QDialog):
 
         # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
-        # Now run the appropriate client sub-application
-        if user == "manager":
-            _ = """
-            <p>You are not allowed to mark or ID papers while logged-in
-              as &ldquo;manager&rdquo;.</p>
-            <p>Would you instead like to run the Server Management tool?</p>
-            """
-            if SimpleMessage(_).exec_() == QMessageBox.No:
-                return
-            from plom.manager import Manager
-            from plom.messenger import ManagerMessenger
-
+        if which_subapp == "Manager":
             self.setEnabled(False)
             self.hide()
-            self.messenger.closeUser()
-            self.messenger.stop()
-            # TODO no error handling here!
-            m = ManagerMessenger(server, mport)
-            m.start()
-            m.requestAndSaveToken(user, pwd)
-            window = Manager(self.parent, manager_msgr=m)
+            window = Manager(
+                self.parent,
+                manager_msgr=self.messenger,
+                server=server,
+                user=user,
+                password=pwd,
+            )
             window.show()
-
-            server = self.ui.serverLE.text()
-            mport = self.ui.mportSB.value()
-            window.setServer(f"{server}:{mport}")
             # store ref in Qapp to avoid garbase collection
-            self.parent.manager_window = window
-        elif runIt == "Marker":
-            # Run the marker client.
+            self.parent._manager_window = window
+        elif which_subapp == "Marker":
             question = self.getQuestion()
             v = self.getv()
             self.setEnabled(False)
@@ -280,8 +281,7 @@ class Chooser(QDialog):
             markerwin.setup(self.messenger, question, v, self.lastTime)
             # store ref in Qapp to avoid garbase collection
             self.parent.marker = markerwin
-        elif runIt == "IDer":
-            # Run the ID client.
+        elif which_subapp == "Identifier":
             self.setEnabled(False)
             self.hide()
             idwin = IDClient()
@@ -293,25 +293,14 @@ class Chooser(QDialog):
         else:
             raise RuntimeError("Invalid subapplication value")
 
-    def runMarker(self):
+    def run_marker(self):
         self.validate("Marker")
 
-    def runIDer(self):
-        self.validate("IDer")
+    def run_identifier(self):
+        self.validate("Identifier")
 
-    def open_manager(self):
-        from plom.manager import Manager
-
-        self.setEnabled(False)
-        self.hide()
-        window = Manager(self.parent)
-        window.show()
-
-        server = self.ui.serverLE.text()
-        mport = self.ui.mportSB.value()
-        window.setServer(f"{server}:{mport}")
-        # store ref in Qapp to avoid garbase collection
-        self.parent.manager_window = window
+    def run_manager(self):
+        self.validate("Manager")
 
     def saveDetails(self):
         self.lastTime["user"] = self.ui.userLE.text().strip()
