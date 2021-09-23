@@ -38,24 +38,23 @@ def checkTomlExtension(fname):
     """Append a .toml extension if not present.
 
     Args:
-        fname (str): a filename.
+        fname (pathlib.Path/str): a filename.
 
     Returns:
-        str: filename with a .toml extension
+        pathlib.Path: filename with a `.toml` extension.
 
     Raises:
         ValueError: filename has incorrect extension (neither blank
            nor `.toml`)
     """
-    ext = os.path.splitext(fname)[1]
-    if ext == ".toml":
+    fname = Path(fname)
+    if fname.suffix.casefold() == ".toml":
         return fname
-    elif len(ext) == 0:
-        return fname + ".toml"
-    else:
-        raise ValueError(
-            'Your specification file name should either have no extension or end in ".toml".'
-        )
+    if fname.suffix == "":
+        return fname.with_suffix(".toml")
+    raise ValueError(
+        'Your specification file name should either have no extension or end in ".toml".'
+    )
 
 
 def parseAndVerifySpecification(fname):
@@ -296,7 +295,6 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parseAndVerifySpecification(fname)
     elif args.command == "parse":
-        # check the file extension
         fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         parseAndVerifySpecification(fname)
