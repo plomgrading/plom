@@ -701,11 +701,11 @@ binary_upload:
     - export LINKNAME1="Compiled client for GNU/Linux (compiled on Ubuntu 18.04)"
     - export LINKNAME2="Compiled client for GNU/Linux (compiled on CentOS 7)"
     - export LINKNAME3="Compiled client for Windows"
-    - export LINKNAME4="Compiled client for macOS (for macOS ≥ 10.13.6)"
+    - export LINKNAME4="Compiled client for macOS (for macOS 11)"
     - export FILENAME1="PlomClient-$VER-linux-ubuntu1804.bin"
     - export FILENAME2="PlomClient-$VER-linux-centos7.bin"
     - export FILENAME3="PlomClient-$VER.exe"
-    - export FILENAME4="PlomClient-$VER-macos.zip"
+    - export FILENAME4="PlomClient-$VER-macos11.zip"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
     - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME3"
@@ -836,7 +836,6 @@ linuxbin_centos:
 # - build python from src for https://github.com/danhper/asdf-python/issues/38
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
-# - other images: macos-10.15-xcode-11, macos-10.14-xcode-10
 # - must have $I_CAN_HAZ_THE_APPLES defined in Settings->CI/CD->Variables (#1651)
 macos11_client:
   image: macos-11-xcode-12
@@ -884,12 +883,94 @@ macos11_client:
     expire_in: 30 days
 
 
+macos1015_client:
+  image: macos-10.15-xcode-11
+  tags:
+  - shared-macos-amd64
+  when: manual
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - asdf which python
+  - asdf uninstall python 3.8.0
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf shell python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - export ZIPNAME=PlomClient-$VER-macos10_15.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
+macos1014_client:
+  image: macos-10.14-xcode-10
+  tags:
+  - shared-macos-amd64
+  when: manual
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf local python 3.9.6
+  - asdf which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos10_14.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
 macos1013_client:
   image: macos-10.13-xcode-9
   tags:
   - shared-macos-amd64
-  rules:
-   - if: $I_CAN_HAZ_THE_APPLES
+  when: manual
   stage: packaging
   script:
   - sw_vers
