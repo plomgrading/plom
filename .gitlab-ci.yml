@@ -841,7 +841,7 @@ linuxbin_centos:
 macos11_client:
   image: macos-11-xcode-12
   tags:
-  - macos
+  - shared-macos-amd64
   rules:
    - if: $I_CAN_HAZ_THE_APPLES
   stage: packaging
@@ -887,7 +887,7 @@ macos11_client:
 macos1013_client:
   image: macos-10.13-xcode-9
   tags:
-  - macos
+  - shared-macos-amd64
   rules:
    - if: $I_CAN_HAZ_THE_APPLES
   stage: packaging
