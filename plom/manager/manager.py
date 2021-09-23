@@ -56,7 +56,7 @@ from plom.plom_exceptions import (
 )
 from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
-from plom.server.aliceBob import simple_password
+from plom.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
 
