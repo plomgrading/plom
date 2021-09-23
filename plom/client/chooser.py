@@ -40,7 +40,6 @@ from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
 
-from plom.manager import Manager
 from plom.messenger import ManagerMessenger
 
 
@@ -258,6 +257,9 @@ class Chooser(QDialog):
         # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
         if which_subapp == "Manager":
+            # Importing here avoids a circular import
+            from plom.manager import Manager
+
             self.setEnabled(False)
             self.hide()
             window = Manager(
