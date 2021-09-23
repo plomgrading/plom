@@ -280,7 +280,7 @@ def main():
             SpecVerifier.create_template(fname)
 
         print('Creating "sourceVersions" directory for your test source PDFs.')
-        os.makedirs("sourceVersions", exist_ok=True)
+        Path("sourceVersions").mkdir(exist_ok=True)
         if not args.demo:
             print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
         if args.demo:
