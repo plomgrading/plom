@@ -340,14 +340,22 @@ class ProgressBox(QGroupBox):
 
 
 class Manager(QWidget):
-    def __init__(self, parent, manager_msgr=None):
+    def __init__(
+        self, parent, *, server=None, user=None, password=None, manager_msgr=None
+    ):
         """Start a new Plom Manager window.
 
         Args:
             parent: A QApplication (I think).
-            manager_msgr (ManagerMessenger): a connected ManagerMessenger.
+
+        Keyword Args:
+            manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
                 Note that the plain 'ol Messenger will not work.  By default
-                or if `None` is passed, we'll make the user login.
+                or if `None` is passed, we'll make the user login or use
+                other kwargs.
+            server (str/None):
+            user (str/None):
+            password (str/None):
         """
         self.APIVersion = Plom_API_Version
         super().__init__()
@@ -360,6 +368,13 @@ class Manager(QWidget):
         )
         self.ui = Ui_Manager()
         self.ui.setupUi(self)
+        if user:
+            self.ui.userLE.setText(user)
+        if password:
+            self.ui.passwordLE.setText(password)
+        if server:
+            self.setServer(server)
+
         self.ui.passwordLE.setFocus(True)
         self.connectButtons()
         self.ui.scanningAllTab.setEnabled(False)
@@ -368,6 +383,9 @@ class Manager(QWidget):
         self.ui.userAllTab.setEnabled(False)
         if self.msgr:
             self.initial_login()
+        else:
+            if password:
+                self.login()
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
