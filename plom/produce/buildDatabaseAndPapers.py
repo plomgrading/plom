@@ -8,7 +8,7 @@ from pathlib import Path
 from plom import check_version_map
 from plom.misc_utils import working_directory
 from plom.produce.buildNamedPDF import build_papers_backend
-from plom.produce.buildNamedPDF import confirm_processed, identify_prenamed
+from plom.produce.buildNamedPDF import check_pdf_and_id_if_needed
 from plom.produce import paperdir as paperdir_name
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingDatabase
@@ -64,6 +64,13 @@ def build_papers(
             # TODO: Issue #1646 mostly student number (w fallback)
             # TODO: but careful about identify_prenamed below which may need id
             classlist = [(x["id"], x["studentName"]) for x in _classlist]
+            # Do sanity check on length of classlist
+            if len(classlist) < spec["numberToName"]:
+                raise ValueError(
+                    "Classlist is too short for {} pre-named papers".format(
+                        spec["numberToName"]
+                    )
+                )
             print(
                 'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                     spec["numberToName"],
@@ -79,6 +86,10 @@ def build_papers(
                 )
             )
         if indexToMake:
+            if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
+                raise ValueError(
+                    f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
+                )
             if indexToMake <= spec["numberToName"]:
                 print(f"Building only specific paper {indexToMake} (prenamed)")
             else:
@@ -94,10 +105,12 @@ def build_papers(
                 ycoord=ycoord,
             )
 
-        print("Checking papers produced and updating databases")
-        confirm_processed(spec, msgr, classlist, paperdir=paperdir)
-        print("Identifying any pre-named papers into the database")
-        identify_prenamed(spec, msgr, classlist, paperdir=paperdir)
+        print(
+            "Checking papers produced and ID-ing any pre-named papers into the database"
+        )
+        check_pdf_and_id_if_needed(
+            spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
+        )
     finally:
         msgr.closeUser()
         msgr.stop()

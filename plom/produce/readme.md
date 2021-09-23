@@ -25,17 +25,6 @@
 * Also - we strongly recommend that the user produce extra tests - just in case of some contingency. It is much easier to produce extra PDFs at this stage rather than trying to produce extra ones later. (again learned through painful experience)
 
 ## Files
-* testspecification.py = gives testSpec object. This object encodes all the information about the setting up and producing the tests. Also does basic tests for self-consistency.
-
-* 01_construct_a_specification = a script (that at present the manager edits) that interacts with the test specification class to produce and save the specification in the resources directory
- * Note - always set id pages first. set page groups in order. id-pages are effectively pagegroup0, while the other pagegroups go from 1 onwards. This does make a few scripts a little awkward later since one has to avoid pagegroup0.
- * Note - the script saves the test specification as "testSpec.json" in the ../resources directory where it can be accessed by other scripts
-
-* 02 build_tests_from_spec = a script to build the pdfs of the tests from the specifications given. No hacking required.
-  * Note this stores data in the ../resources directory as "examsProduced.json" - this encodes test-by-test which version was used for each page.
-
-* examsToBuild = a temp-ish directory that contains the latex files of the tests to be built (roughly speaking - just enough latex to load in the pdf pages of the source test versions and put the required QRcode stamps on them)
-
 * examsToPrint = a directory where the built tests go. There is one per student.
 
 * sourceVersions = the manager needs to put the original test pdfs in here. The code will then mix and match pages from these to build the tests printed for the students.

@@ -74,43 +74,6 @@ class ManagerMessenger(BaseMessenger):
 
         return response.text
 
-    def notify_pdf_of_paper_produced(self, test_num):
-        """Notify the server that we have produced the PDF for a paper.
-
-        Args:
-            test_num (int): the test number.
-
-        Returns:
-            None
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.put(
-                "https://{}/admin/pdf_produced/{}".format(self.server, test_num),
-                verify=False,
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomRangeException(
-                    "Paper number {} is outside valid range".format(test_num)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomConflict(
-                    "Paper number {} has already been produced".format(test_num)
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
     def getGlobalPageVersionMap(self):
         self.SRmutex.acquire()
         try:

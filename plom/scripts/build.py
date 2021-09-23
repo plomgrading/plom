@@ -360,14 +360,19 @@ def main():
             print(status)
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
-        build_papers(
-            args.server,
-            args.password,
-            fakepdf=args.no_pdf,
-            no_qr=args.without_qr,
-            indexToMake=args.number,
-            ycoord=args.namebox_ypos,
-        )
+        try:
+            build_papers(
+                args.server,
+                args.password,
+                fakepdf=args.no_pdf,
+                no_qr=args.without_qr,
+                indexToMake=args.number,
+                ycoord=args.namebox_ypos,
+            )
+        except ValueError as err:
+            print(f"A value error - {err}")
+        except Exception as err:
+            print(f"Some other sort of error - {err}")
 
     elif args.command == "rubric":
         msgr = get_messenger(args.server, args.password)

@@ -41,7 +41,6 @@ Storing both uploaded page-images as well as images annotated by clients.
 The overarching class that represents 1 whole paper. The main things it has to encode are the number of that testpaper and a bunch of boolean flags telling us what stage of marking it is at (see below).
 
 * testNumber = each separate paper has a unique numerical ID - which is encoded in the QR-codes that get stamped on it. This need not be the same as the auto-generated database ID for this object (but hopefully is).
-* produced = was this test generated. This should almost always be true.... and so might be redundant. **check this**
 * used = was any part of this test actually scanned - ie we typically produce more test-papers than we need, so not all end up being written on and being submitted.
 * scanned = has the whole test been scanned in.
 * identified = have we associated a student to this paper (either automatically on test generation (ie we print name on the front), or by a human reading the name and ID number).

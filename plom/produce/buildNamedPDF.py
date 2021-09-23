@@ -157,8 +157,10 @@ def build_papers_backend(
     outputProductionCSV(spec, make_PDF_args)
 
 
-def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
-    """Checks that each PDF file was created and notify server.
+def check_pdf_and_id_if_needed(
+    spec, msgr, classlist, *, paperdir=Path(paperdir_name), indexToCheck=None
+):
+    """Check pdf(s) are present on disk and id papers that are prenamed.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
@@ -167,63 +169,29 @@ def confirm_processed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
 
     Keyword Arguments:
         paperdir (pathlib.Path): where to find the papers to print.
+        indexToID (int,None): the index of single paper to ID or (if none), then ID all.
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
         ValueError: classlist is invalid in some way.
     """
     paperdir = Path(paperdir)
-    if spec["numberToName"] > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist for pre-named papers")
-        if len(classlist) < spec["numberToName"]:
-            raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(
-                    spec["numberToName"]
-                )
-            )
-    for papernum in range(1, spec["numberToProduce"] + 1):
+    if indexToCheck:
+        range_to_check = [indexToCheck]
+    else:  # check production of all papers
+        range_to_check = range(1, spec["numberToProduce"] + 1)
+    # now check that paper(s) are actually on disk
+    for papernum in range_to_check:
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
             pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
-        else:
-            pdf_file = paperdir / f"exam_{papernum:04}.pdf"
-
-        if not pdf_file.is_file():
-            raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
-        try:
-            msgr.notify_pdf_of_paper_produced(papernum)
-        except PlomConflict as e:
-            print(e)
-
-
-def identify_prenamed(spec, msgr, classlist, *, paperdir=Path(paperdir_name)):
-    """Identify papers that pre-printed names on the server.
-
-    Arguments:
-        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        msgr (Messenger): an open active connection to the server.
-        classlist (list, None): ordered list of (sid, sname) pairs.
-
-    Keyword Arguments:
-        paperdir (pathlib.Path): where to find the papers to print.
-
-    Raises:
-        RuntimeError: raised if any of the expected PDF files not found.
-        ValueError: classlist is invalid in some way.
-    """
-    paperdir = Path(paperdir)
-    if spec["numberToName"] > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist to prename papers")
-        if len(classlist) < spec["numberToName"]:
-            raise ValueError(
-                f"Classlist is too short for {spec['numberToName']} pre-named papers"
-            )
-    for papernum in range(1, spec["numberToProduce"] + 1):
-        if papernum <= spec["numberToName"]:
-            sid, sname = classlist[papernum - 1]
-            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
+            # if file is not there - error, else tell DB it is ID'd
             if not pdf_file.is_file():
                 raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
-            msgr.id_paper(papernum, sid, sname)
+            else:
+                msgr.id_paper(papernum, sid, sname)
+        else:
+            pdf_file = paperdir / f"exam_{papernum:04}.pdf"
+            # if file is not there - error.
+            if not pdf_file.is_file():
+                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
