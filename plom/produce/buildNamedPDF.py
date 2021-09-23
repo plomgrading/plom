@@ -176,13 +176,11 @@ def check_pdf_and_id_if_needed(
         ValueError: classlist is invalid in some way.
     """
     paperdir = Path(paperdir)
-
-    # if indexToID set, then we only check that one
     if indexToCheck:
         range_to_check = [indexToCheck]
     else:  # check production of all papers
         range_to_check = range(1, spec["numberToProduce"] + 1)
-    # now check that paper(s) are actuall on disk
+    # now check that paper(s) are actually on disk
     for papernum in range_to_check:
         if papernum <= spec["numberToName"]:
             sid, sname = classlist[papernum - 1]
