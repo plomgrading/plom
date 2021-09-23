@@ -59,12 +59,12 @@ def checkTomlExtension(fname):
 
 
 def parseAndVerifySpecification(fname):
-    os.makedirs(specdir, exist_ok=True)
-    os.makedirs("sourceVersions", exist_ok=True)
-    print('Parsing and verifying the specification "{}"'.format(fname))
-    if not os.path.isfile(fname):
-        print('Cannot find "{}" - try "plom-build new"?'.format(fname))
-        exit(1)
+    fname = Path(fname)
+    specdir.mkdir(exist_ok=True)
+    Path("sourceVersions").mkdir(exist_ok=True)
+    print(f'Parsing and verifying the specification "{fname}"')
+    if not fname.exists():
+        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-build new"?')
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
