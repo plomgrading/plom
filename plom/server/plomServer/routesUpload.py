@@ -747,6 +747,9 @@ class UploadHandler:
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec; cannot populate DB")
 
         # TODO: talking to DB directly is not design we use elsewhere: call helper?
         from plom.db import buildExamDatabaseFromSpec
@@ -756,9 +759,6 @@ class UploadHandler:
         else:
             vmap = undo_json_packing_of_version_map(data["version_map"])
 
-        spec = self.server.testSpec
-        if not spec:
-            raise web.HTTPNotFound(reason="Server has no spec; cannot populate DB")
         try:
             r, summary = buildExamDatabaseFromSpec(spec, self.server.DB, vmap)
         except ValueError:
