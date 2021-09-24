@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Various CI cleanups that should help external contributors.
 
 
 
@@ -527,7 +528,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.1...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.1...main
 [0.7.1]: https://gitlab.com/plom/plom/compare/v0.7.0...v0.7.1
 [0.7.0]: https://gitlab.com/plom/plom/compare/v0.6.5...v0.7.0
 [0.6.5]: https://gitlab.com/plom/plom/compare/v0.6.4...v0.6.5
