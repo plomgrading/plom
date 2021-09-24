@@ -103,9 +103,19 @@ def createNewBundle(self, bundle_name, md5):
 
 
 ########## Test creation stuff ##############
-def areAnyPapersProduced(self):
-    """True if any papers have been created in the DB."""
-    return len(Test.select()) > 0
+def how_many_papers_in_database(self):
+    """How many papers have been created in the database."""
+    return len(Test.select())
+
+
+def is_paper_database_populated(self):
+    """True if any papers have been created in the DB.
+
+    The database is initially created with empty tables.  Users get added.
+    This function still returns False.  Eventually `Test`s (i.e., "papers")
+    get created.  Then this function returns True.
+    """
+    return self.how_many_papers_in_database() > 0
 
 
 def nextqueue_position(self):
