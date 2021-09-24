@@ -199,7 +199,7 @@ class ManagerMessenger(BaseMessenger):
             specdata (dict): see :func:`plom.SpecVerifier`.
 
         Exceptions:
-            PlomConflict: server already has one, and it doesn't match.
+            PlomConflict: server already has a database, cannot accept spec.
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
         TODO anything else?
@@ -217,14 +217,15 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
         except requests.HTTPError as e:
-            if response.status_code == 409:
-                raise PlomConflict(e) from None
-            elif response.status_code == 401:
+            if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            if response.status_code == 403:
+                raise PlomSeriousException(response.text) from None
+            if response.status_code == 400:
+                raise PlomSeriousException(response.text) from None
+            if response.status_code == 409:
+                raise PlomConflict(response.text) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 

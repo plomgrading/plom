@@ -183,14 +183,14 @@ class UserInitHandler:
             raise web.HTTPForbidden(reason="Not manager")
 
         if self.server.DB.is_paper_database_populated():
-            raise web.HTTPConflict(reason="Server has populated the DB: cannot accept a spec")
+            raise web.HTTPConflict(reason="Server has populated DB: cannot accept spec")
         # raise web.HTTPConflict(reason="we already have a spec and it doesn't match the one you gave us")
         sv = SpecVerifier(data["spec"])
         try:
             sv.verifySpec(verbose="log")
             sv.checkCodes(verbose="log")
         except ValueError as e:
-            raise web.HTTPBadRequest(reason=f"Invalid spec data: {e}")
+            raise web.HTTPBadRequest(reason=f"{e}")
         sv.saveVerifiedSpec()
         self.server.testSpec = SpecVerifier.load_verified()
         log.info("spec loaded: %s", self.server.info_spec())
