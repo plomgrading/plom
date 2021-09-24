@@ -89,7 +89,7 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
         ValueError: if database already populated.
         KeyError: invalid question selection scheme in spec.
     """
-    if db.areAnyPapersProduced():
+    if db.is_paper_database_populated():
         raise ValueError("Database already populated")
 
     # TODO: perhaps this should be called separately...
