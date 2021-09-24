@@ -171,7 +171,8 @@ class UserInitHandler:
 
         Response:
             403: only manager can upload a spec.
-            400: the provided spec is not valid.  NOT IMPLEMENTED YET.
+            400: the provided spec is not valid.
+            409: Conflict: server has already populated the database.
             409: Conflict: we already had a spec and it does not match
                 this new one.  TODO: how to handle private key?
                 NOT IMPLEMENTED YET.
