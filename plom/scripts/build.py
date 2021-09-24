@@ -86,7 +86,9 @@ def parseAndVerifySpecification(fname):
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
     sub = parser.add_subparsers(
         dest="command", description="Perform tasks related to building tests."
     )
@@ -268,7 +270,7 @@ def get_parser():
     group.add_argument(
         "--demo",
         action="store_true",
-        help="Use auto-generated rubric list.",
+        help="Upload an auto-generated rubric list for demos.",
     )
 
     spClear = sub.add_parser(
