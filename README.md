@@ -24,3 +24,10 @@
 ## Want to know more?
 
 Take a look at the [plomgrading.org](https://plomgrading.org).
+
+
+## Getting in touch
+
+  * Our dev channel is [gitter.im/plomgrading/dev](https://gitter.im/plomgrading/dev).
+  * Our [main developement repo is on Gitlab.com](https://gitlab.com/plom/plom)
+    and [mirrored on GitHub](https://github.com/plomgrading/plom).
