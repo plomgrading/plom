@@ -185,10 +185,11 @@ class UserInitHandler:
             raise web.HTTPConflict(reason="Server has populated the DB: cannot accept a spec")
         # raise web.HTTPConflict(reason="we already have a spec and it doesn't match the one you gave us")
         sv = SpecVerifier(data["spec"])
-        sv.verifySpec()
-        sv.checkCodes()
-        # TODO: error handing
-        # raise web.HTTPBadRequest(reason="Invalid spec data")
+        try:
+            sv.verifySpec(verbose="log")
+            sv.checkCodes(verbose="log")
+        except ValueError as e:
+            raise web.HTTPBadRequest(reason=f"Invalid spec data: {e}")
         sv.saveVerifiedSpec()
         self.server.testSpec = SpecVerifier.load_verified()
         log.info("spec loaded: %s", self.server.info_spec())
