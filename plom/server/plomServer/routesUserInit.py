@@ -180,7 +180,9 @@ class UserInitHandler:
         """
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
-        # TODO: support a --force?
+
+        if self.server.DB.is_paper_database_populated():
+            raise web.HTTPConflict(reason="Server has populated the DB: cannot accept a spec")
         # raise web.HTTPConflict(reason="we already have a spec and it doesn't match the one you gave us")
         sv = SpecVerifier(data["spec"])
         sv.verifySpec()

@@ -348,9 +348,6 @@ def main():
             # TODO: sv.spec versus sv.get_public_spec_dict()?
             # TODO: think about who is supposed to know/generate the privateSeed
             msgr.upload_spec(sv.spec)
-        except PlomConflict:
-            print("Error: Server already has a spec (TODO: add force?).")
-            sys.exit(3)
         finally:
             msgr.closeUser()
             msgr.stop()
