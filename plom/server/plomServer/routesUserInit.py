@@ -173,18 +173,14 @@ class UserInitHandler:
             403: only manager can upload a spec.
             400: the provided spec is not valid.
             409: Conflict: server has already populated the database.
-            409: Conflict: we already had a spec and it does not match
-                this new one.  TODO: how to handle private key?
-                NOT IMPLEMENTED YET.
-            200: new spec file accepted or spec file matches what we
-                already have.
+            200: new spec file accepted.  TODO: would be polite to inform
+                caller if we already had one or not.
         """
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
 
         if self.server.DB.is_paper_database_populated():
             raise web.HTTPConflict(reason="Server has populated DB: cannot accept spec")
-        # raise web.HTTPConflict(reason="we already have a spec and it doesn't match the one you gave us")
         sv = SpecVerifier(data["spec"])
         try:
             sv.verifySpec(verbose="log")
