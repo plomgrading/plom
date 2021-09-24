@@ -746,7 +746,7 @@ class UploadHandler:
         TODO: maybe the api call should just be for one row of the database.
         """
         if not data["user"] == "manager":
-            return web.Response(status=400)  # malformed request.
+            raise web.HTTPBadRequest(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPNotFound(reason="Server has no spec; cannot populate DB")
