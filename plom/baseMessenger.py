@@ -5,7 +5,6 @@
 
 from io import BytesIO
 import logging
-import ssl
 import threading
 
 import urllib3
@@ -40,9 +39,6 @@ class BaseMessenger:
     """
 
     def __init__(self, s=None, port=Default_Port):
-        sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-        sslContext.check_hostname = False
-        # Server defaults
         self.session = None
         self.user = None
         self.token = None
