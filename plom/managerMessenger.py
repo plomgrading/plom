@@ -1180,6 +1180,7 @@ class ManagerMessenger(BaseMessenger):
             return [True, "User created."]
         elif response.status_code == 202:
             return [True, "User password updated"]
+        raise PlomSeriousException(f"Unexpected {response.status_code}") from None
 
     def MrevertTask(self, code):
         self.SRmutex.acquire()
