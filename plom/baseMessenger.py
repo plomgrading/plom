@@ -81,10 +81,11 @@ class BaseMessenger:
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+            # TODO: hardcoded to accept self-signed certs
+            self.session.verify = False
         try:
             response = self.session.get(
                 "https://{}/Version".format(self.server),
-                verify=False,
             )
             response.raise_for_status()
         except requests.ConnectionError as err:
@@ -136,7 +137,6 @@ class BaseMessenger:
                     "api": Plom_API_Version,
                     "client_ver": __version__,
                 },
-                verify=False,
                 timeout=5,
             )
             # throw errors when response code != 200.
@@ -169,7 +169,6 @@ class BaseMessenger:
             response = self.session.delete(
                 "https://{}/authorisation".format(self.server),
                 json={"user": user, "password": pw},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -188,7 +187,6 @@ class BaseMessenger:
             response = self.session.delete(
                 "https://{}/users/{}".format(self.server, self.user),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -210,9 +208,7 @@ class BaseMessenger:
     def getInfoShortName(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/info/shortName".format(self.server), verify=False
-            )
+            response = self.session.get("https://{}/info/shortName".format(self.server))
             response.raise_for_status()
             shortName = response.text
         except requests.HTTPError as e:
@@ -237,10 +233,7 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/info/spec".format(self.server),
-                verify=False,
-            )
+            response = self.session.get("https://{}/info/spec".format(self.server))
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
@@ -269,7 +262,6 @@ class BaseMessenger:
             response = self.session.get(
                 "https://{}/ID/classlist".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -316,7 +308,6 @@ class BaseMessenger:
                     "token": self.token,
                     "rubric": new_rubric,
                 },
-                verify=False,
             )
             response.raise_for_status()
 
@@ -357,7 +348,6 @@ class BaseMessenger:
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -393,7 +383,6 @@ class BaseMessenger:
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -431,7 +420,6 @@ class BaseMessenger:
                     "token": self.token,
                     "rubric": new_rubric,
                 },
-                verify=False,
             )
             response.raise_for_status()
 
@@ -463,7 +451,6 @@ class BaseMessenger:
             response = self.session.get(
                 "https://{}/ID/images/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -503,7 +490,6 @@ class BaseMessenger:
             response = self.session.get(
                 f"https://{self.server}/ID/donotmark_images/{papernum}",
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -564,7 +550,6 @@ class BaseMessenger:
                     "token": self.token,
                     "integrity": integrity,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -619,7 +604,6 @@ class BaseMessenger:
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return BytesIO(response.content).getvalue()

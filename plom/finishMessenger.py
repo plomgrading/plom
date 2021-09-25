@@ -31,7 +31,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/completionStatus".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -52,7 +51,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/outToDo".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -73,7 +71,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/spreadSheet".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -94,7 +91,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/identified".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -119,7 +115,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/completions".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -144,7 +139,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/coverPageInfo/{}".format(self.server, test),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -169,7 +163,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/originalFiles/{}".format(self.server, testNumber),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -190,7 +183,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/MK/allMax".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

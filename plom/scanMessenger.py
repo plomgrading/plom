@@ -55,7 +55,6 @@ class ScanMessenger(BaseMessenger):
                     "bundle": bundle_name,
                     "md5sum": md5sum,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -88,7 +87,6 @@ class ScanMessenger(BaseMessenger):
                     "bundle": bundle_name,
                     "md5sum": md5sum,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -119,7 +117,6 @@ class ScanMessenger(BaseMessenger):
                     "token": self.token,
                     "sid": student_id,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -184,7 +181,6 @@ class ScanMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -257,7 +253,6 @@ class ScanMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -297,7 +292,6 @@ class ScanMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -335,7 +329,6 @@ class ScanMessenger(BaseMessenger):
                 "https://{}/admin/unknownPages".format(self.server),
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -377,7 +370,6 @@ class ScanMessenger(BaseMessenger):
                 "https://{}/admin/collidingPages/{}".format(self.server, code),
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -397,7 +389,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/scanned".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -418,7 +409,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/unused".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -437,7 +427,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/incomplete".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -458,7 +447,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/completeHW".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -479,7 +467,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/missingHW".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -500,7 +487,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/testPagesUploaded".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -521,7 +507,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/hwPagesUploaded".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -542,7 +527,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/loosePagesUploaded".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -564,7 +548,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/missingHWQuestion".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,

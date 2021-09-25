@@ -63,7 +63,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/progress".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -95,7 +94,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/tasks/available".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -120,7 +118,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/predictions".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             # TODO: print(response.encoding) autodetected
@@ -147,7 +144,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/tasks/complete".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             idList = response.json()
@@ -174,7 +170,6 @@ class Messenger(BaseMessenger):
             response = self.session.patch(
                 "https://{}/ID/tasks/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             if response.status_code == 204:
                 raise PlomTakenException("Task taken by another user.")
@@ -214,7 +209,6 @@ class Messenger(BaseMessenger):
                     "sid": studentID,
                     "sname": studentName,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -240,7 +234,6 @@ class Messenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/ID/tasks/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -271,7 +264,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/maxMark".format(self.server),
                 json={"user": self.user, "token": self.token, "q": question, "v": ver},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -297,7 +289,6 @@ class Messenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/MK/tasks/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -318,7 +309,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/tasks/complete".format(self.server),
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
-                verify=False,
             )
             response.raise_for_status()
             mList = response.json()
@@ -340,7 +330,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/progress".format(self.server),
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -370,7 +359,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/tasks/available".format(self.server),
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
-                verify=False,
             )
             # throw errors when response code != 200.
             if response.status_code == 204:
@@ -405,7 +393,6 @@ class Messenger(BaseMessenger):
             response = self.session.patch(
                 "https://{}/MK/tasks/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -428,7 +415,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/latex".format(self.server),
                 json={"user": self.user, "token": self.token, "fragment": latex},
-                verify=False,
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
@@ -454,7 +440,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/originalImages/{}".format(self.server, task),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             if response.status_code == 204:
                 raise PlomNoMoreException("No task = {}.".format(task))
@@ -536,7 +521,6 @@ class Messenger(BaseMessenger):
                 "https://{}/MK/tasks/{}".format(self.server, code),
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
                 timeout=(10, 120),
             )
             response.raise_for_status()
@@ -580,7 +564,6 @@ class Messenger(BaseMessenger):
             response = self.session.patch(
                 "https://{}/MK/tags/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token, "tags": tags},
-                verify=False,
             )
             response.raise_for_status()
 
@@ -604,7 +587,6 @@ class Messenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/MK/whole/{}/{}".format(self.server, code, questionNumber),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
 
@@ -652,7 +634,6 @@ class Messenger(BaseMessenger):
                     self.server, code, questionNumber
                 ),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             ret = response.json()
@@ -693,7 +674,6 @@ class Messenger(BaseMessenger):
                     self.server, task_code, image_id, md5sum
                 ),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
@@ -736,7 +716,6 @@ class Messenger(BaseMessenger):
                     "token": self.token,
                     "question": question,
                 },
-                verify=False,
             )
             response.raise_for_status()
 
@@ -788,7 +767,6 @@ class Messenger(BaseMessenger):
                     "question": question,
                     "rubric_config": tab_config,
                 },
-                verify=False,
             )
             response.raise_for_status()
 
