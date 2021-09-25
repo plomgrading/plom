@@ -281,9 +281,16 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     sslContext.check_hostname = False
-    sslContext.load_cert_chain(
-        basedir / confdir / "plom-selfsigned.crt", basedir / confdir / "plom.key"
-    )
+    try:
+        sslContext.load_cert_chain(
+            basedir / confdir / "plom-custom.crt", basedir / confdir / "plom-custom.key"
+        )
+        log.info("SSL: Loaded custom cert and key")
+    except FileNotFoundError:
+        sslContext.load_cert_chain(
+            basedir / confdir / "plom-selfsigned.crt", basedir / confdir / "plom.key"
+        )
+        log.warn("SSL: Loaded default selfsigned cert and key")
     log.info("Start the server!")
     with working_directory(basedir):
         web.run_app(app, ssl_context=sslContext, port=server_info["port"])
