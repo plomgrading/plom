@@ -61,8 +61,8 @@ class Messenger(BaseMessenger):
     def IDprogressCount(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/progress".format(self.server),
+            response = self.get(
+                "/ID/progress",
                 json={"user": self.user, "token": self.token},
             )
             # throw errors when response code != 200.
@@ -92,8 +92,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/tasks/available".format(self.server),
+            response = self.get(
+                "/ID/tasks/available",
                 json={"user": self.user, "token": self.token},
             )
             # throw errors when response code != 200.
@@ -116,8 +116,8 @@ class Messenger(BaseMessenger):
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/predictions".format(self.server),
+            response = self.get(
+                "/ID/predictions",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -142,8 +142,8 @@ class Messenger(BaseMessenger):
     def IDrequestDoneTasks(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/tasks/complete".format(self.server),
+            response = self.get(
+                "/ID/tasks/complete",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -168,8 +168,8 @@ class Messenger(BaseMessenger):
     def IDclaimThisTask(self, code):
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/ID/tasks/{}".format(self.server, code),
+            response = self.patch(
+                f"/ID/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             if response.status_code == 204:
@@ -202,8 +202,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/ID/tasks/{}".format(self.server, code),
+            response = self.put(
+                f"/ID/tasks/{code}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -232,8 +232,8 @@ class Messenger(BaseMessenger):
     def IDdidNotFinishTask(self, code):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/ID/tasks/{}".format(self.server, code),
+            response = self.delete(
+                "/ID/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -262,8 +262,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/maxMark".format(self.server),
+            response = self.get(
+                "/MK/maxMark",
                 json={"user": self.user, "token": self.token, "q": question, "v": ver},
             )
             # throw errors when response code != 200.
@@ -287,8 +287,8 @@ class Messenger(BaseMessenger):
     def MdidNotFinishTask(self, code):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/MK/tasks/{}".format(self.server, code),
+            response = self.delete(
+                f"/MK/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -307,8 +307,8 @@ class Messenger(BaseMessenger):
     def MrequestDoneTasks(self, q, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/tasks/complete".format(self.server),
+            response = self.get(
+                "/MK/tasks/complete",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -328,8 +328,8 @@ class Messenger(BaseMessenger):
     def MprogressCount(self, q, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/progress".format(self.server),
+            response = self.get(
+                "/MK/progress",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             # throw errors when response code != 200.
@@ -357,8 +357,8 @@ class Messenger(BaseMessenger):
 
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/tasks/available".format(self.server),
+            response = self.get(
+                "/MK/tasks/available",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             # throw errors when response code != 200.
@@ -391,8 +391,8 @@ class Messenger(BaseMessenger):
 
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/MK/tasks/{}".format(self.server, code),
+            response = self.patch(
+                f"/MK/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -413,8 +413,8 @@ class Messenger(BaseMessenger):
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/latex".format(self.server),
+            response = self.get(
+                "/MK/latex",
                 json={"user": self.user, "token": self.token, "fragment": latex},
             )
             response.raise_for_status()
@@ -438,8 +438,8 @@ class Messenger(BaseMessenger):
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/originalImages/{}".format(self.server, task),
+            response = self.get(
+                f"/MK/originalImages/{task}",
                 json={"user": self.user, "token": self.token},
             )
             if response.status_code == 204:
@@ -518,8 +518,8 @@ class Messenger(BaseMessenger):
         )
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/MK/tasks/{}".format(self.server, code),
+            response = self.put(
+                f"/MK/tasks/{code}",
                 data=dat,
                 headers={"Content-Type": dat.content_type},
                 timeout=(10, 120),
@@ -562,8 +562,8 @@ class Messenger(BaseMessenger):
     def MsetTag(self, code, tags):
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/MK/tags/{}".format(self.server, code),
+            response = self.patch(
+                f"/MK/tags/{code}",
                 json={"user": self.user, "token": self.token, "tags": tags},
             )
             response.raise_for_status()
@@ -585,8 +585,8 @@ class Messenger(BaseMessenger):
         # note - added default value for questionNumber so that this works correctly
         # when called from identifier. - Fixes #921
         try:
-            response = self.session.get(
-                "https://{}/MK/whole/{}/{}".format(self.server, code, questionNumber),
+            response = self.get(
+                f"/MK/whole/{code}/{questionNumber}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -630,10 +630,8 @@ class Messenger(BaseMessenger):
         # note - added default value for questionNumber so that this works correctly
         # when called from identifier. - Fixes #921
         try:
-            response = self.session.get(
-                "https://{}/MK/TMP/whole/{}/{}".format(
-                    self.server, code, questionNumber
-                ),
+            response = self.get(
+                f"/MK/TMP/whole/{code}/{questionNumber}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -670,10 +668,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/images/{}/{}/{}".format(
-                    self.server, task_code, image_id, md5sum
-                ),
+            response = self.get(
+                f"/MK/images/{task_code}/{image_id}/{md5sum}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -710,8 +706,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/user/{}/{}".format(self.server, self.user, question),
+            response = self.get(
+                f"/MK/user/{self.user}/{question}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -760,8 +756,8 @@ class Messenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/MK/user/{}/{}".format(self.server, self.user, question),
+            response = self.put(
+                f"/MK/user/{self.user}/{question}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -787,8 +783,8 @@ class Messenger(BaseMessenger):
     def MgetSolutionImage(self, question, version):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/solution".format(self.server),
+            response = self.get(
+                "/MK/solution",
                 json={
                     "user": self.user,
                     "token": self.token,

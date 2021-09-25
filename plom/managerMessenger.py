@@ -49,8 +49,8 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/populateDB".format(self.server),
+            response = self.put(
+                "/admin/populateDB",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -73,8 +73,8 @@ class ManagerMessenger(BaseMessenger):
     def getGlobalPageVersionMap(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/pageVersionMap".format(self.server),
+            response = self.get(
+                "/admin/pageVersionMap",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -94,8 +94,8 @@ class ManagerMessenger(BaseMessenger):
     def getGlobalQuestionVersionMap(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/questionVersionMap".format(self.server),
+            response = self.get(
+                "/admin/questionVersionMap",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -123,8 +123,8 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/ID/{}".format(self.server, code),
+            response = self.put(
+                f"/ID/{code}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -169,8 +169,8 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/ID/classlist".format(self.server),
+            response = self.put(
+                "/ID/classlist",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -195,8 +195,8 @@ class ManagerMessenger(BaseMessenger):
     def RgetCompletionStatus(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/completionStatus".format(self.server),
+            response = self.get(
+                "/REP/completionStatus",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -215,8 +215,8 @@ class ManagerMessenger(BaseMessenger):
     def RgetStatus(self, test):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/status/{}".format(self.server, test),
+            response = self.get(
+                f"/REP/status/{test}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -239,8 +239,8 @@ class ManagerMessenger(BaseMessenger):
     def getScannedTests(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/scanned".format(self.server),
+            response = self.get(
+                "/REP/scanned",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -264,8 +264,8 @@ class ManagerMessenger(BaseMessenger):
     def getIncompleteTests(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/incomplete".format(self.server),
+            response = self.get(
+                "/REP/incomplete",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -289,8 +289,8 @@ class ManagerMessenger(BaseMessenger):
     def IDprogressCount(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/progress".format(self.server),
+            response = self.get(
+                "/ID/progress",
                 json={"user": self.user, "token": self.token},
             )
             # throw errors when response code != 200.
@@ -312,8 +312,8 @@ class ManagerMessenger(BaseMessenger):
     def IDgetImageList(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/TMP/imageList".format(self.server),
+            response = self.get(
+                "/TMP/imageList",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -334,8 +334,8 @@ class ManagerMessenger(BaseMessenger):
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/predictions".format(self.server),
+            response = self.get(
+                "/ID/predictions",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -360,8 +360,8 @@ class ManagerMessenger(BaseMessenger):
     def IDgetImageFromATest(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/randomImage".format(self.server),
+            response = self.get(
+                "/ID/randomImage",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -393,8 +393,8 @@ class ManagerMessenger(BaseMessenger):
     def getProgress(self, q, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/progress".format(self.server),
+            response = self.get(
+                "/REP/progress",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -418,8 +418,8 @@ class ManagerMessenger(BaseMessenger):
     def getQuestionUserProgress(self, q, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/questionUserProgress".format(self.server),
+            response = self.get(
+                "/REP/questionUserProgress",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -443,8 +443,8 @@ class ManagerMessenger(BaseMessenger):
     def getMarkHistogram(self, q, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/markHistogram".format(self.server),
+            response = self.get(
+                "/REP/markHistogram",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -468,8 +468,8 @@ class ManagerMessenger(BaseMessenger):
     def replaceMissingTestPage(self, t, p, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/missingTestPage".format(self.server),
+            response = self.put(
+                "/admin/missingTestPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -502,8 +502,8 @@ class ManagerMessenger(BaseMessenger):
         # can replace by SID or by test-number
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/missingHWQuestion".format(self.server),
+            response = self.put(
+                "/admin/missingHWQuestion",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -537,8 +537,8 @@ class ManagerMessenger(BaseMessenger):
     def removeAllScannedPages(self, test_number):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/admin/scannedPages".format(self.server),
+            response = self.delete(
+                "/admin/scannedPages",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -568,8 +568,8 @@ class ManagerMessenger(BaseMessenger):
     def getUnknownPageNames(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/unknownPageNames".format(self.server),
+            response = self.get(
+                "/admin/unknownPageNames",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -592,8 +592,8 @@ class ManagerMessenger(BaseMessenger):
     def getDiscardNames(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/discardNames".format(self.server),
+            response = self.get(
+                "/admin/discardNames",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -613,8 +613,8 @@ class ManagerMessenger(BaseMessenger):
     def getCollidingPageNames(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/collidingPageNames".format(self.server),
+            response = self.get(
+                "/admin/collidingPageNames",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -634,8 +634,8 @@ class ManagerMessenger(BaseMessenger):
     def getTPageImage(self, t, p, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/scannedTPage".format(self.server),
+            response = self.get(
+                "/admin/scannedTPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -663,8 +663,8 @@ class ManagerMessenger(BaseMessenger):
     def getHWPageImage(self, t, q, o):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/scannedHWPage".format(self.server),
+            response = self.get(
+                "/admin/scannedHWPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -692,8 +692,8 @@ class ManagerMessenger(BaseMessenger):
     def getEXPageImage(self, t, q, o):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/scannedEXPage".format(self.server),
+            response = self.get(
+                "/admin/scannedEXPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -721,8 +721,8 @@ class ManagerMessenger(BaseMessenger):
     def getLPageImage(self, t, o):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/scannedLPage".format(self.server),
+            response = self.get(
+                "/admin/scannedLPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -749,8 +749,8 @@ class ManagerMessenger(BaseMessenger):
     def getUnknownImage(self, fname):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/unknownImage".format(self.server),
+            response = self.get(
+                "/admin/unknownImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -775,8 +775,8 @@ class ManagerMessenger(BaseMessenger):
     def getDiscardImage(self, fname):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/discardImage".format(self.server),
+            response = self.get(
+                "/admin/discardImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -801,8 +801,8 @@ class ManagerMessenger(BaseMessenger):
     def getCollidingImage(self, fname):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/collidingImage".format(self.server),
+            response = self.get(
+                "/admin/collidingImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -827,8 +827,8 @@ class ManagerMessenger(BaseMessenger):
     def removeUnknownImage(self, fname):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/admin/unknownImage".format(self.server),
+            response = self.delete(
+                "/admin/unknownImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -852,8 +852,8 @@ class ManagerMessenger(BaseMessenger):
     def removeCollidingImage(self, fname):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/admin/collidingImage".format(self.server),
+            response = self.delete(
+                "/admin/collidingImage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -877,8 +877,8 @@ class ManagerMessenger(BaseMessenger):
     def getQuestionImages(self, testNumber, questionNumber):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/questionImages".format(self.server),
+            response = self.get(
+                "/admin/questionImages",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -916,8 +916,8 @@ class ManagerMessenger(BaseMessenger):
     def getTestImages(self, testNumber):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/testImages".format(self.server),
+            response = self.get(
+                "/admin/testImages",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -952,8 +952,8 @@ class ManagerMessenger(BaseMessenger):
     def checkTPage(self, testNumber, pageNumber):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/admin/checkTPage".format(self.server),
+            response = self.get(
+                "/admin/checkTPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -988,8 +988,8 @@ class ManagerMessenger(BaseMessenger):
     def unknownToTestPage(self, fname, test, page, theta):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/unknownToTestPage".format(self.server),
+            response = self.put(
+                "/admin/unknownToTestPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1022,8 +1022,8 @@ class ManagerMessenger(BaseMessenger):
     def unknownToExtraPage(self, fname, test, question, theta):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/unknownToExtraPage".format(self.server),
+            response = self.put(
+                "/admin/unknownToExtraPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1053,8 +1053,8 @@ class ManagerMessenger(BaseMessenger):
     def unknownToHWPage(self, fname, test, question, theta):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/unknownToHWPage".format(self.server),
+            response = self.put(
+                "/admin/unknownToHWPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1084,8 +1084,8 @@ class ManagerMessenger(BaseMessenger):
     def collidingToTestPage(self, fname, test, page, version):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/collidingToTestPage".format(self.server),
+            response = self.put(
+                "/admin/collidingToTestPage",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1115,8 +1115,8 @@ class ManagerMessenger(BaseMessenger):
     def discardToUnknown(self, fname):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/admin/discardToUnknown".format(self.server),
+            response = self.put(
+                "/admin/discardToUnknown",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1140,8 +1140,8 @@ class ManagerMessenger(BaseMessenger):
     def IDdeletePredictions(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/ID/predictedID".format(self.server),
+            response = self.delete(
+                "/ID/predictedID",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1164,8 +1164,8 @@ class ManagerMessenger(BaseMessenger):
     def IDrunPredictions(self, rectangle, fileNumber, ignoreTimeStamp):
         self.SRmutex.acquire()
         try:
-            response = self.session.post(
-                "https://{}/ID/predictedID".format(self.server),
+            response = self.post(
+                "/ID/predictedID",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1195,8 +1195,8 @@ class ManagerMessenger(BaseMessenger):
     def getIdentified(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/identified".format(self.server),
+            response = self.get(
+                "/REP/identified",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1219,8 +1219,8 @@ class ManagerMessenger(BaseMessenger):
     def getUserList(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/userList".format(self.server),
+            response = self.get(
+                "/REP/userList",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1243,8 +1243,8 @@ class ManagerMessenger(BaseMessenger):
     def getUserDetails(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/userDetails".format(self.server),
+            response = self.get(
+                "/REP/userDetails",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1267,8 +1267,8 @@ class ManagerMessenger(BaseMessenger):
     def getMarkReview(self, filterQ, filterV, filterU):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/markReview".format(self.server),
+            response = self.get(
+                "/REP/markReview",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1294,8 +1294,8 @@ class ManagerMessenger(BaseMessenger):
     def getIDReview(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/idReview".format(self.server),
+            response = self.get(
+                "/REP/idReview",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1318,8 +1318,8 @@ class ManagerMessenger(BaseMessenger):
     def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/authorisation/{}".format(self.server, someuser),
+            response = self.delete(
+                f"/authorisation/{someuser}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -1336,8 +1336,8 @@ class ManagerMessenger(BaseMessenger):
     def setUserEnable(self, someuser, enableFlag):
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/enableDisable/{}".format(self.server, someuser),
+            response = self.put(
+                f"/enableDisable/{someuser}",
                 json={"user": self.user, "token": self.token, "enableFlag": enableFlag},
             )
             response.raise_for_status()
@@ -1354,8 +1354,8 @@ class ManagerMessenger(BaseMessenger):
     def createModifyUser(self, someuser, password):
         self.SRmutex.acquire()
         try:
-            response = self.session.post(
-                "https://{}/authorisation/{}".format(self.server, someuser),
+            response = self.post(
+                f"/authorisation/{someuser}",
                 json={"user": self.user, "token": self.token, "password": password},
             )
             response.raise_for_status()
@@ -1378,8 +1378,8 @@ class ManagerMessenger(BaseMessenger):
     def MrevertTask(self, code):
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/MK/revert/{}".format(self.server, code),
+            response = self.patch(
+                f"/MK/revert/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -1399,8 +1399,8 @@ class ManagerMessenger(BaseMessenger):
     def MreviewQuestion(self, testNumber, questionNumber, version):
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/MK/review".format(self.server),
+            response = self.patch(
+                "/MK/review",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1430,8 +1430,8 @@ class ManagerMessenger(BaseMessenger):
     def IDreviewID(self, testNumber):
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/ID/review".format(self.server),
+            response = self.patch(
+                "/ID/review",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1456,8 +1456,8 @@ class ManagerMessenger(BaseMessenger):
     def RgetOutToDo(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/outToDo".format(self.server),
+            response = self.get(
+                "/REP/outToDo",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -1476,8 +1476,8 @@ class ManagerMessenger(BaseMessenger):
     def RgetMarked(self, q, v):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/marked".format(self.server),
+            response = self.get(
+                "/REP/marked",
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -1516,8 +1516,8 @@ class ManagerMessenger(BaseMessenger):
     def getSolutionImage(self, question, version):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/solution".format(self.server),
+            response = self.get(
+                "/MK/solution",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1560,8 +1560,8 @@ class ManagerMessenger(BaseMessenger):
                     "image": open(fileName, "rb"),  # image
                 }
             )
-            response = self.session.put(
-                "https://{}/admin/solution".format(self.server),
+            response = self.put(
+                "/admin/solution",
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
@@ -1570,18 +1570,15 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
     def deleteSolutionImage(self, question, version):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/admin/solution".format(self.server),
+            response = self.delete(
+                "/admin/solution",
                 json={
                     "user": self.user,
                     "token": self.token,

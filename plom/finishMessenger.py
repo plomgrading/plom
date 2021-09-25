@@ -26,8 +26,8 @@ class FinishMessenger(BaseMessenger):
     def RgetCompletionStatus(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/completionStatus".format(self.server),
+            response = self.get(
+                "/REP/completionStatus",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -46,8 +46,8 @@ class FinishMessenger(BaseMessenger):
     def RgetOutToDo(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/outToDo".format(self.server),
+            response = self.get(
+                "/REP/outToDo",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -66,8 +66,8 @@ class FinishMessenger(BaseMessenger):
     def RgetSpreadsheet(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/spreadSheet".format(self.server),
+            response = self.get(
+                "/REP/spreadSheet",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -86,12 +86,9 @@ class FinishMessenger(BaseMessenger):
     def RgetIdentified(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/identified".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
+            response = self.get(
+                "/REP/identified",
+                json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
             rval = response.json()
@@ -110,12 +107,9 @@ class FinishMessenger(BaseMessenger):
     def RgetCompletions(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/completions".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
+            response = self.get(
+                "/REP/completions",
+                json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
             rval = response.json()
@@ -134,12 +128,9 @@ class FinishMessenger(BaseMessenger):
     def RgetCoverPageInfo(self, test):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/coverPageInfo/{}".format(self.server, test),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
+            response = self.get(
+                f"/REP/coverPageInfo/{test}",
+                json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
             rval = response.json()
@@ -158,8 +149,8 @@ class FinishMessenger(BaseMessenger):
     def RgetOriginalFiles(self, testNumber):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/originalFiles/{}".format(self.server, testNumber),
+            response = self.get(
+                f"/REP/originalFiles/{testNumber}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -178,8 +169,8 @@ class FinishMessenger(BaseMessenger):
     def MgetAllMax(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/allMax".format(self.server),
+            response = self.get(
+                "/MK/allMax",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -198,8 +189,8 @@ class FinishMessenger(BaseMessenger):
     def getSolutionStatus(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/REP/solutions".format(self.server),
+            response = self.get(
+                "/REP/solutions",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -218,8 +209,8 @@ class FinishMessenger(BaseMessenger):
     def getSolutionImage(self, question, version):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/solution".format(self.server),
+            response = self.get(
+                "/MK/solution",
                 json={
                     "user": self.user,
                     "token": self.token,

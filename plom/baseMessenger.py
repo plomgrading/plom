@@ -90,6 +90,18 @@ class BaseMessenger:
     def whoami(self):
         return self.user
 
+    def get(self, url, *args, **kwargs):
+        return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
+
+    def put(self, url, *args, **kwargs):
+        return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
+
+    def delete(self, url, *args, **kwargs):
+        return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
+
+    def patch(self, url, *args, **kwargs):
+        return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
+
     def start(self):
         """Start the messenger session"""
         if self.session:
@@ -104,7 +116,7 @@ class BaseMessenger:
 
         try:
             try:
-                response = self.session.get(f"https://{self.server}/Version")
+                response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -117,7 +129,7 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.session.get(f"https://{self.server}/Version")
+                response = self.get("/Version")
                 response.raise_for_status()
                 return response.text
         except requests.ConnectionError as err:
@@ -155,8 +167,8 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/users/{}".format(self.server, user),
+            response = self.put(
+                f"/users/{user}",
                 json={
                     "user": user,
                     "pw": pw,
@@ -192,9 +204,8 @@ class BaseMessenger:
     def clearAuthorisation(self, user, pw):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/authorisation".format(self.server),
-                json={"user": user, "password": pw},
+            response = self.delete(
+                "/authorisation", json={"user": user, "password": pw}
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -210,8 +221,8 @@ class BaseMessenger:
     def closeUser(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/users/{}".format(self.server, self.user),
+            response = self.delete(
+                f"/users/{self.user}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -234,7 +245,7 @@ class BaseMessenger:
     def getInfoShortName(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get("https://{}/info/shortName".format(self.server))
+            response = self.get("/info/shortName")
             response.raise_for_status()
             shortName = response.text
         except requests.HTTPError as e:
@@ -259,7 +270,7 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get("https://{}/info/spec".format(self.server))
+            response = self.get("/info/spec")
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
@@ -285,8 +296,8 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/classlist".format(self.server),
+            response = self.get(
+                "/ID/classlist",
                 json={"user": self.user, "token": self.token},
             )
             # throw errors when response code != 200.
@@ -327,8 +338,8 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/MK/rubric".format(self.server),
+            response = self.put(
+                "/MK/rubric",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -368,8 +379,8 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/rubric".format(self.server),
+            response = self.get(
+                "/MK/rubric",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -403,8 +414,8 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/rubric/{}".format(self.server, question_number),
+            response = self.get(
+                f"/MK/rubric/{question_number}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -439,8 +450,8 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/MK/rubric/{}".format(self.server, key),
+            response = self.patch(
+                f"/MK/rubric/{key}",
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -461,21 +472,17 @@ class BaseMessenger:
                 raise PlomSeriousException("Rubric sent was incomplete.") from None
             elif response.status_code == 409:
                 raise PlomSeriousException("No rubric with that key found.") from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-            messenger_response = [False]
-
+            raise PlomSeriousException(
+                f"Error of type {e} when creating new rubric"
+            ) from None
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def request_ID_images(self, code):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
+            response = self.get(
+                f"/ID/images/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -513,8 +520,8 @@ class BaseMessenger:
         """Get the various Do Not Mark images for a paper."""
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                f"https://{self.server}/ID/donotmark_images/{papernum}",
+            response = self.get(
+                f"/ID/donotmark_images/{papernum}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -562,14 +569,14 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            url = f"https://{self.server}/annotations/{num}/{question}"
+            url = f"/annotations/{num}/{question}"
         else:
-            url = f"https://{self.server}/annotations/{num}/{question}/{edition}"
+            url = f"/annotations/{num}/{question}/{edition}"
         if integrity is None:
             integrity = ""
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
+            response = self.get(
                 url,
                 json={
                     "user": self.user,
@@ -619,18 +626,12 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            url = f"https://{self.server}/annotations_image/{num}/{question}"
+            url = f"/annotations_image/{num}/{question}"
         else:
-            url = f"https://{self.server}/annotations_image/{num}/{question}/{edition}"
+            url = f"/annotations_image/{num}/{question}/{edition}"
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                url,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-            )
+            response = self.get(url, json={"user": self.user, "token": self.token})
             response.raise_for_status()
             return BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
