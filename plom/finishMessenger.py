@@ -31,17 +31,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def RgetOutToDo(self):
         self.SRmutex.acquire()
@@ -51,17 +47,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def RgetSpreadsheet(self):
         self.SRmutex.acquire()
@@ -71,17 +63,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def RgetIdentified(self):
         self.SRmutex.acquire()
@@ -91,18 +79,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
-            rval = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return rval
 
     def RgetCompletions(self):
         self.SRmutex.acquire()
@@ -112,18 +95,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
-            rval = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return rval
 
     def RgetCoverPageInfo(self, test):
         self.SRmutex.acquire()
@@ -133,18 +111,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
-            rval = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return rval
 
     def RgetOriginalFiles(self, testNumber):
         self.SRmutex.acquire()
@@ -154,17 +127,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def MgetAllMax(self):
         self.SRmutex.acquire()
@@ -174,17 +143,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def getSolutionStatus(self):
         self.SRmutex.acquire()
@@ -194,17 +159,13 @@ class FinishMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def getSolutionImage(self, question, version):
         self.SRmutex.acquire()
@@ -228,10 +189,7 @@ class FinishMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
         return img

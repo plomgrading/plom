@@ -67,19 +67,14 @@ class Messenger(BaseMessenger):
             )
             # throw errors when response code != 200.
             response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
             progress = response.json()
+            return progress
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return progress
 
     def IDaskNextTask(self):
         """Return the TGV of a paper that needs IDing.
@@ -101,17 +96,13 @@ class Messenger(BaseMessenger):
             if response.status_code == 204:
                 return None
             tgv = response.json()
+            return tgv
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return tgv
 
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
@@ -123,21 +114,17 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
             # TODO: print(response.encoding) autodetected
             predictions = StringIO(response.text)
+            return predictions
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise PlomSeriousException(
                     "Server cannot find the prediction list."
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return predictions
 
     def IDrequestDoneTasks(self):
         self.SRmutex.acquire()
@@ -148,17 +135,13 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
             idList = response.json()
+            return idList
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return idList
 
     # ------------------------
 
@@ -178,18 +161,14 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
         imageList = []
         for img in MultipartDecoder.from_response(response).parts:
-            imageList.append(
-                BytesIO(img.content).getvalue()
-            )  # pass back image as bytes
+            # pass back images as bytes
+            imageList.append(BytesIO(img.content).getvalue())
         return imageList
 
     def IDreturnIDdTask(self, code, studentID, studentName):
@@ -215,14 +194,11 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 409:
                 raise PlomConflict(e) from None
-            elif response.status_code == 401:
+            if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise PlomSeriousException(e) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -240,10 +216,7 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -268,21 +241,15 @@ class Messenger(BaseMessenger):
             )
             # throw errors when response code != 200.
             response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
-            maxMark = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 416:
+            if response.status_code == 416:
                 raise PlomRangeException(response.text) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return maxMark
 
     def MdidNotFinishTask(self, code):
         self.SRmutex.acquire()
@@ -295,10 +262,7 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -313,17 +277,13 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
             mList = response.json()
+            return mList
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return mList
 
     def MprogressCount(self, q, v):
         self.SRmutex.acquire()
@@ -334,19 +294,14 @@ class Messenger(BaseMessenger):
             )
             # throw errors when response code != 200.
             response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
             progress = response.json()
+            return progress
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return progress
 
     def MaskNextTask(self, q, v):
         """Ask server for a new marking task, return tgv or None.
@@ -365,19 +320,14 @@ class Messenger(BaseMessenger):
             if response.status_code == 204:
                 return None
             response.raise_for_status()
-            # convert the content of the response to a textfile for identifier
             tgv = response.json()
+            return tgv
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return tgv
 
     def MclaimThisTask(self, code):
         """Claim a task from server and get back metadata.
@@ -398,17 +348,13 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
             if response.status_code == 204:
                 raise PlomTakenException("Task taken by another user.")
-            ret = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-        return ret
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()
@@ -423,15 +369,12 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
+            if response.status_code == 406:
                 return (False, response.text)
                 # raise PlomLatexException(
                 #     f"Server reported an error processing your TeX fragment:\n\n{response.text}"
                 # ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -449,22 +392,17 @@ class Messenger(BaseMessenger):
             imageList = []
             for img in MultipartDecoder.from_response(response).parts:
                 imageList.append(BytesIO(img.content).getvalue())
-
+            return imageList
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise PlomNoMoreException(
                     "Cannot find image file for {}".format(task)
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return imageList
 
     def MreturnMarkedTask(
         self,
@@ -550,10 +488,7 @@ class Messenger(BaseMessenger):
                 ) from None
             elif response.status_code == 400:
                 raise PlomSeriousException(response.text) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
         return ret
@@ -571,12 +506,9 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 409:
+            if response.status_code == 409:
                 raise PlomTakenException("Task taken by another user.") from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -608,12 +540,9 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             # TODO?
-            elif response.status_code == 409:
+            if response.status_code == 409:
                 raise PlomTakenException("Task taken by another user.") from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -639,10 +568,7 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
         return ret
@@ -677,14 +603,11 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 409:
+            if response.status_code == 409:
                 raise PlomConflict("Wrong md5sum provided") from None
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise PlomNoMoreException("Cannot find image") from None
-            else:
-                raise PlomSeriousException(
-                    "Some other unexpected error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
         return image
@@ -729,13 +652,11 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 403:
+            if response.status_code == 403:
                 raise PlomSeriousException(response.text) from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-
+            raise PlomSeriousException(
+                f"Error of type {e} when creating new rubric"
+            ) from None
         finally:
             self.SRmutex.release()
 
@@ -770,13 +691,11 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 403:
+            if response.status_code == 403:
                 raise PlomSeriousException(response.text) from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-
+            raise PlomSeriousException(
+                f"Error of type {e} when creating new rubric"
+            ) from None
         finally:
             self.SRmutex.release()
 
@@ -802,10 +721,7 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
         return img

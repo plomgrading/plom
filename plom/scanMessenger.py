@@ -55,10 +55,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -83,17 +80,13 @@ class ScanMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return response.json()
 
     def listBundles(self):
         """Ask server for list of bundles in database.
@@ -113,10 +106,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -143,10 +133,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -207,10 +194,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -279,10 +263,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -318,10 +299,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -355,10 +333,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -396,10 +371,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -416,10 +388,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -436,8 +405,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException("Some other sort of error {}".format(e))
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -454,10 +422,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -474,10 +439,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -494,10 +456,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -514,10 +473,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -534,10 +490,7 @@ class ScanMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -558,21 +511,16 @@ class ScanMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
-            rval = response.json()
+            return response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
                     "Server could not find the TPV - this should not happen!"
                 ) from None
-            elif response.status_code == 401:
+            if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 409:  # that question already has pages
+            if response.status_code == 409:  # that question already has pages
                 raise PlomTakenException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return rval

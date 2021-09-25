@@ -188,10 +188,7 @@ class BaseMessenger:
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:
                 raise PlomExistingLoginException(response.json()) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
                 "Cannot connect to server\n {}\n Please check details before trying again.".format(
@@ -211,10 +208,7 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -229,14 +223,9 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return True
 
     # ----------------------
     # ----------------------
@@ -247,20 +236,15 @@ class BaseMessenger:
         try:
             response = self.get("/info/shortName")
             response.raise_for_status()
-            shortName = response.text
+            return response.text
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
                     "Server could not find the spec - this should not happen!"
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return shortName
 
     def get_spec(self):
         """Get the specification of the exam from the server.
@@ -276,8 +260,7 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException("Server could not find the spec") from None
-            else:
-                raise PlomSeriousException("Some other sort of error {}".format(e))
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -312,12 +295,9 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise PlomBenignException("Server cannot find the class list") from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -347,24 +327,16 @@ class BaseMessenger:
                 },
             )
             response.raise_for_status()
-
             new_key = response.json()
-            messenger_response = [True, new_key]
-
+            return [True, new_key]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
+            if response.status_code == 406:
                 raise PlomSeriousException("Rubric sent was incomplete.") from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-            messenger_response = [False]
-
+            raise PlomSeriousException(f"Error when creating new rubric: {e}") from None
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def MgetRubrics(self):
         """Retrieve list of all rubrics from server.
@@ -391,10 +363,7 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} getting rubric list".format(e)
-                ) from None
+            raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -426,10 +395,7 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} getting rubric list".format(e)
-                ) from None
+            raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -459,9 +425,8 @@ class BaseMessenger:
                 },
             )
             response.raise_for_status()
-
             new_key = response.json()
-            messenger_response = [True, new_key]
+            return [True, new_key]
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -509,10 +474,7 @@ class BaseMessenger:
                         code
                     )
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {f}") from None
         finally:
             self.SRmutex.release()
 
@@ -542,10 +504,7 @@ class BaseMessenger:
                 raise PlomBenignException(
                     f"The DNM group of {papernum} has not been scanned."
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -601,10 +560,7 @@ class BaseMessenger:
                 raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(num)
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -649,9 +605,6 @@ class BaseMessenger:
                 raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(num)
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
