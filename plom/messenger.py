@@ -202,9 +202,6 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        # TODO - do we need this return value?
-        return True
-
     def IDdidNotFinishTask(self, code):
         self.SRmutex.acquire()
         try:
@@ -219,8 +216,6 @@ class Messenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return True
 
     # ------------------------
     # ------------------------

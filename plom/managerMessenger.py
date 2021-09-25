@@ -137,9 +137,6 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-        # TODO - do we need this return value?
-        return True
-
     def upload_classlist(self, classdict):
         """Give the server a classlist.
 
