@@ -68,7 +68,7 @@ def upload_rubrics_from_file(msgr, filename, *, verbose=True):
     Args:
         msgr (Messenger): a connected Messenger.
         filename (pathlib.Path): A filename to load from.  Types  `.json`,
-            `.toml`, and `.csv` are suppported.  If no suffix is included
+            `.toml`, and `.csv` are supported.  If no suffix is included
             we'll try to append `.toml`.
     """
     if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
