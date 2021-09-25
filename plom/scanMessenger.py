@@ -5,7 +5,6 @@
 import json
 import mimetypes
 
-import urllib3
 import requests
 from requests_toolbelt import MultipartEncoder
 
@@ -21,11 +20,6 @@ from plom.baseMessenger import BaseMessenger
 # _userName = "scanner"
 
 # ----------------------
-
-
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class ScanMessenger(BaseMessenger):

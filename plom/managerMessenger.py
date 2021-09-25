@@ -4,7 +4,6 @@
 
 from io import StringIO, BytesIO
 
-import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
 
@@ -19,11 +18,6 @@ from plom.plom_exceptions import (
     PlomExistingDatabase,
 )
 from plom.baseMessenger import BaseMessenger
-
-
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 # TODO:

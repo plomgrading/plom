@@ -2,7 +2,6 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-import urllib3
 import requests
 
 from plom.plom_exceptions import PlomSeriousException, PlomAuthenticationException
@@ -13,11 +12,6 @@ from plom.baseMessenger import BaseMessenger
 # _userName = "manager"
 
 # ----------------------
-
-
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class FinishMessenger(BaseMessenger):

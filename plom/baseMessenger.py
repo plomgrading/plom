@@ -7,9 +7,9 @@ from io import BytesIO
 import logging
 import threading
 
-import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
+import urllib3
 
 from plom import __version__, Plom_API_Version, Default_Port
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
@@ -26,10 +26,6 @@ log = logging.getLogger("messenger")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 class BaseMessenger:
     """Basic communication with a Plom Server.
@@ -38,7 +34,16 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port):
+    def __init__(self, s=None, port=Default_Port, verify=False):
+        """Initialize a new BaseMessenger.
+
+        Args:
+
+        Keyword Arguments:
+            verify (True/False/str): controls where SSL certs are
+                checked, see `requests` lib which ultimately receives
+                this.
+        """
         self.session = None
         self.user = None
         self.token = None
@@ -49,6 +54,11 @@ class BaseMessenger:
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
         # base = "https://{}:{}/".format(s, mp)
+        self.verify = verify
+        if not self.verify:
+            # If we use unverified ssl certificates we get lots of warnings,
+            # so put in this to hide them.
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
     def clone(cls, m):
@@ -77,8 +87,7 @@ class BaseMessenger:
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
-            # TODO: hardcoded to accept self-signed certs
-            self.session.verify = False
+            self.session.verify = self.verify
         try:
             response = self.session.get(
                 "https://{}/Version".format(self.server),

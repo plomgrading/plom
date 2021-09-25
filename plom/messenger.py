@@ -16,7 +16,6 @@ import hashlib
 import logging
 from io import StringIO, BytesIO
 
-import urllib3
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
@@ -36,10 +35,6 @@ log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
-
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from plom.baseMessenger import BaseMessenger
 from plom.scanMessenger import ScanMessenger
