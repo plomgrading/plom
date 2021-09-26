@@ -93,30 +93,26 @@ class BaseMessenger:
             # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
             self.session.verify = self.verify
-        try:
-            response = self.session.get(f"https://{self.server}/Version")
-            response.raise_for_status()
 
-        except requests.exceptions.SSLError as err:
-            if "dev" not in __version__:
-                raise PlomSSLError(err) from None
-            log.warn("Server SSL cert invalid/self-signed: bypassing b/c devel client")
-            self.verify = False
-            self.session.verify = False
-            self._shutup_urllib3()
+        # "While(True)" but limited to couple tries in case of repeated SSL failure
+        for _ in range(0, 2):
             try:
                 response = self.session.get(f"https://{self.server}/Version")
                 response.raise_for_status()
+                return response.text
+            except requests.exceptions.SSLError as err:
+                if "dev" not in __version__:
+                    raise PlomSSLError(err) from None
+                log.warn("Server SSL cert self-signed/invalid: bypassing b/c devel client")
+                self.verify = False
+                self.session.verify = False
+                self._shutup_urllib3()
+                # now we try again with new setting
             except requests.ConnectionError as err:
                 raise PlomConnectionError(err) from None
             except requests.exceptions.InvalidURL as err:
                 raise PlomConnectionError(f"Invalid URL: {err}") from None
-        except requests.ConnectionError as err:
-            raise PlomConnectionError(err) from None
-        except requests.exceptions.InvalidURL as err:
-            raise PlomConnectionError(f"Invalid URL: {err}") from None
-        r = response.text
-        return r
+        raise PlomConnectionError("Too many tries, likely repeated SSL-related failure")
 
     def stop(self):
         """Stop the messenger"""
