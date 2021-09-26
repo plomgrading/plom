@@ -67,7 +67,7 @@ class BaseMessenger:
         In particular, we have our own mutex.
         """
         log.debug("cloning a messeger, but building new session...")
-        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1])
+        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1], verify=m.verify)
         x.start()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
