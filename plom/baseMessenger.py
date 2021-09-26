@@ -58,9 +58,12 @@ class BaseMessenger:
         # base = "https://{}:{}/".format(s, mp)
         self.verify = verify
         if not self.verify:
-            # If we use unverified ssl certificates we get lots of warnings,
-            # so put in this to hide them.
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            self._shutup_urllib3()
+
+    def _shutup_urllib3(self):
+        # If we use unverified ssl certificates we get lots of warnings,
+        # so put in this to hide them.
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
     def clone(cls, m):
@@ -91,13 +94,23 @@ class BaseMessenger:
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
             self.session.verify = self.verify
         try:
-            response = self.session.get(
-                "https://{}/Version".format(self.server),
-            )
+            response = self.session.get(f"https://{self.server}/Version")
             response.raise_for_status()
 
         except requests.exceptions.SSLError as err:
-            raise PlomSSLError(err) from None
+            if "dev" not in __version__:
+                raise PlomSSLError(err) from None
+            log.warn("Server SSL cert invalid/self-signed: bypassing b/c devel client")
+            self.verify = False
+            self.session.verify = False
+            self._shutup_urllib3()
+            try:
+                response = self.session.get(f"https://{self.server}/Version")
+                response.raise_for_status()
+            except requests.ConnectionError as err:
+                raise PlomConnectionError(err) from None
+            except requests.exceptions.InvalidURL as err:
+                raise PlomConnectionError(f"Invalid URL: {err}") from None
         except requests.ConnectionError as err:
             raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
