@@ -16,7 +16,9 @@ from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomAPIException,
+    PlomConnectionError,
     PlomExistingLoginException,
+    PlomSSLError,
     PlomTaskChangedError,
     PlomTaskDeletedError,
 )
@@ -93,14 +95,13 @@ class BaseMessenger:
                 "https://{}/Version".format(self.server),
             )
             response.raise_for_status()
+
+        except requests.exceptions.SSLError as err:
+            raise PlomSSLError(err) from None
         except requests.ConnectionError as err:
-            raise PlomBenignException(
-                "Cannot connect to server. Please check server details."
-            ) from None
+            raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
-            raise PlomBenignException(
-                "The URL format was invalid. Please try again."
-            ) from None
+            raise PlomConnectionError(f"Invalid URL: {err}") from None
         r = response.text
         return r
 

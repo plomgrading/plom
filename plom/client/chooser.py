@@ -210,7 +210,9 @@ class Chooser(QDialog):
         try:
             self.messenger.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage(
+                "Could not connect to server:", info=f"{e}", info_preformatted=False
+            ).exec_()
             self.messenger = None
             return
 
@@ -392,7 +394,9 @@ class Chooser(QDialog):
         try:
             ver = self.messenger.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage(
+                "Could not connect to server:", info=f"{e}", info_preformatted=False
+            ).exec_()
             self.messenger = None
             return
         self.ui.infoLabel.setText(ver)

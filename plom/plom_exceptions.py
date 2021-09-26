@@ -33,6 +33,14 @@ class PlomAPIException(PlomBenignException):
     pass
 
 
+class PlomSSLError(PlomBenignException):
+    pass
+
+
+class PlomConnectionError(PlomBenignException):
+    pass
+
+
 class PlomConflict(PlomBenignException):
     """The action was contradictory to info already in the system."""
 
