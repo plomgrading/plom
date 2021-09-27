@@ -101,8 +101,7 @@ class BaseMessenger:
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
             self.session.verify = self.verify
 
-        # "While(True)" but limited to couple tries in case of repeated SSL failure
-        for _ in range(0, 2):
+        try:
             try:
                 response = self.session.get(f"https://{self.server}/Version")
                 response.raise_for_status()
@@ -112,11 +111,10 @@ class BaseMessenger:
                     raise PlomSSLError(err) from None
                 log.warn("Server SSL cert self-signed/invalid: skipping w/ dev client")
                 self.force_ssl_unverified()
-            except requests.ConnectionError as err:
-                raise PlomConnectionError(err) from None
-            except requests.exceptions.InvalidURL as err:
-                raise PlomConnectionError(f"Invalid URL: {err}") from None
-        raise PlomConnectionError("Too many tries, likely repeated SSL-related failure")
+        except requests.ConnectionError as err:
+            raise PlomConnectionError(err) from None
+        except requests.exceptions.InvalidURL as err:
+            raise PlomConnectionError(f"Invalid URL: {err}") from None
 
     def stop(self):
         """Stop the messenger"""
