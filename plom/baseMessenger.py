@@ -36,7 +36,7 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port, verify=False):
+    def __init__(self, s=None, port=Default_Port, verify=True):
         """Initialize a new BaseMessenger.
 
         Args:
