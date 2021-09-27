@@ -217,6 +217,7 @@ class Chooser(QDialog):
                     "Do you want to disable SSL certificate verification?  Not recommended.",
                     details=f"{e}",
                 )
+                msg.setDefaultButton(QMessageBox.No)
                 if msg.exec_() == QMessageBox.No:
                     self.messenger = None
                     return
@@ -411,6 +412,7 @@ class Chooser(QDialog):
                     "Do you want to disable SSL certificate verification?  Not recommended.",
                     details=f"{e}",
                 )
+                msg.setDefaultButton(QMessageBox.No)
                 if msg.exec_() == QMessageBox.No:
                     self.messenger = None
                     return
