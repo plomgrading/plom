@@ -79,6 +79,13 @@ class BaseMessenger:
         x.token = m.token
         return x
 
+    def force_ssl_unverified(self):
+        """This connection (can be open) does not need to verify cert SSL going forward"""
+        self.verify = False
+        if self.session:
+            self.session.verify = False
+        self._shutup_urllib3()
+
     def whoami(self):
         return self.user
 
@@ -103,11 +110,8 @@ class BaseMessenger:
             except requests.exceptions.SSLError as err:
                 if "dev" not in __version__:
                     raise PlomSSLError(err) from None
-                log.warn("Server SSL cert self-signed/invalid: bypassing b/c devel client")
-                self.verify = False
-                self.session.verify = False
-                self._shutup_urllib3()
-                # now we try again with new setting
+                log.warn("Server SSL cert self-signed/invalid: skipping w/ dev client")
+                self.force_ssl_unverified()
             except requests.ConnectionError as err:
                 raise PlomConnectionError(err) from None
             except requests.exceptions.InvalidURL as err:
