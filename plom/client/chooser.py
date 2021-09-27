@@ -16,6 +16,7 @@ from datetime import datetime
 import logging
 from pathlib import Path
 import tempfile
+from textwrap import dedent
 
 import toml
 import appdirs
@@ -34,6 +35,7 @@ from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
     PlomExistingLoginException,
+    PlomSSLError,
 )
 from plom.messenger import Messenger
 from plom.client import MarkerClient, IDClient
@@ -208,7 +210,24 @@ class Chooser(QDialog):
             else:
                 self.messenger = Messenger(server, mport)
         try:
-            self.messenger.start()
+            try:
+                self.messenger.start()
+            except PlomSSLError as e:
+                _ = dedent(
+                    f"""
+                    <p>SSL error: cannot verify the identity of the server!</p>
+                    <small><pre style="white-space: pre-wrap;">
+                    {e}
+                    </pre></small>
+                    <p>Do you want to disable SSL certificate verification?
+                    This is <em>not recommended.</em></p>
+                    """
+                )
+                if SimpleMessage(_).exec_() == QMessageBox.No:
+                    self.messenger = None
+                    return
+                self.messenger.force_ssl_unverified()
+                self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage(
                 "Could not connect to server:", info=f"{e}", info_preformatted=False
@@ -391,8 +410,26 @@ class Chooser(QDialog):
 
         if not self.messenger:
             self.messenger = Messenger(server, mport)
+
         try:
-            ver = self.messenger.start()
+            try:
+                ver = self.messenger.start()
+            except PlomSSLError as e:
+                _ = dedent(
+                    f"""
+                    <p>SSL error: cannot verify the identity of the server!</p>
+                    <small><pre style="white-space: pre-wrap;">
+                    {e}
+                    </pre></small>
+                    <p>Do you want to disable SSL certificate verification?
+                    This is <em>not recommended.</em></p>
+                    """
+                )
+                if SimpleMessage(_).exec_() == QMessageBox.No:
+                    self.messenger = None
+                    return
+                self.messenger.force_ssl_unverified()
+                ver = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage(
                 "Could not connect to server:", info=f"{e}", info_preformatted=False
