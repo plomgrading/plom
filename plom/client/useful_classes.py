@@ -62,11 +62,31 @@ class ErrorMessage(QMessageBox):
 class SimpleMessage(QMessageBox):
     """A simple message pop-up with yes/no buttons."""
 
-    def __init__(self, txt):
+    def __init__(self, txt, question=None, details=None):
         super().__init__()
         self.setText(txt)
+        if details:
+            self.setDetailedText(details)
+        if question:
+            self.setInformativeText(question)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
+
+
+class SimpleQuestion(SimpleMessage):
+    """A simple message pop-up with yes/no buttons and question icon."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setIcon(QMessageBox.Question)
+
+
+class WarningQuestion(SimpleMessage):
+    """A simple message pop-up with yes/no buttons and warning icon."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setIcon(QMessageBox.Warning)
 
 
 class SimpleMessageCheckBox(QMessageBox):
