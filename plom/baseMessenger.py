@@ -111,6 +111,9 @@ class BaseMessenger:
                     raise PlomSSLError(err) from None
                 log.warn("Server SSL cert self-signed/invalid: skipping w/ dev client")
                 self.force_ssl_unverified()
+                response = self.session.get(f"https://{self.server}/Version")
+                response.raise_for_status()
+                return response.text
         except requests.ConnectionError as err:
             raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
