@@ -291,7 +291,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
             basedir / confdir / "plom-selfsigned.crt",
             basedir / confdir / "plom-selfsigned.key",
         )
-        log.warn("SSL: Loaded default selfsigned cert and key")
+        log.warning("SSL: Loaded default self-signed cert and key")
     log.info("Start the server!")
     with working_directory(basedir):
         web.run_app(app, ssl_context=sslContext, port=server_info["port"])

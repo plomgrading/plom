@@ -109,9 +109,11 @@ class BaseMessenger:
                 return response.text
             except requests.exceptions.SSLError as err:
                 if os.environ.get("PLOM_NO_SSL_VERIFY"):
-                    log.warn("Server SSL cert self-signed/invalid: skip via env var")
+                    log.warning("Server SSL cert self-signed/invalid: skip via env var")
                 elif "dev" in __version__:
-                    log.warn("Server SSL cert self-signed/invalid: skip b/c dev client")
+                    log.warning(
+                        "Server SSL cert self-signed/invalid: skip b/c dev client"
+                    )
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
