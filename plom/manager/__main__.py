@@ -19,11 +19,11 @@ import sys
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QStyleFactory
 
-from plom.manager import Manager
 from plom import Default_Port
 from plom import __version__
-from plom.scripts.client import add_popup_to_toplevel_exception_handler
-from plom.scripts.client import sigint_handler
+from plom.manager import Manager
+from plom.client.__main__ import add_popup_to_toplevel_exception_handler
+from plom.client.__main__ import sigint_handler
 
 
 def main():
