@@ -5,6 +5,7 @@
 
 from io import BytesIO
 import logging
+import os
 import threading
 
 import requests
@@ -107,9 +108,12 @@ class BaseMessenger:
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
-                if "dev" not in __version__:
+                if os.environ.get("PLOM_NO_SSL_VERIFY"):
+                    log.warn("Server SSL cert self-signed/invalid: skip via env var")
+                elif "dev" in __version__:
+                    log.warn("Server SSL cert self-signed/invalid: skip b/c dev client")
+                else:
                     raise PlomSSLError(err) from None
-                log.warn("Server SSL cert self-signed/invalid: skipping w/ dev client")
                 self.force_ssl_unverified()
                 response = self.session.get(f"https://{self.server}/Version")
                 response.raise_for_status()
