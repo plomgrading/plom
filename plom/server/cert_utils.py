@@ -25,7 +25,7 @@ def build_self_signed_SSL_keys(dur=confdir, extra_args=""):
         RuntimeError: on subprocess failure.
         FileExistsError: keys are already there.
     """
-    key = Path(dur) / "plom.key"
+    key = Path(dur) / "plom-selfsigned.key"
     cert = Path(dur) / "plom-selfsigned.crt"
     if key.is_file() and cert.is_file():
         raise FileExistsError("SSL key and certificate already exist")
