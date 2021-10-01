@@ -29,7 +29,7 @@ $ pip3 install passlib \
                PyQt5 aiohttp peewee pandas requests-toolbelt toml\
                weasyprint pillow tqdm pytest tex
 ```
-```
+
 An optional dependency:
 ```
 $ pip3 install passlib jpegtran-cffi
@@ -40,7 +40,7 @@ https://gitlab.com/plom/plom/-/merge_requests/960).
 
 More dependencies for the machine-learning-based ID Reader:
 ```
-  # pip3 install termcolor wheel grpcio markdown h5py
-  # pip3 install --user imutils lapsolver opencv-python scikit-learn
+$ pip3 install termcolor wheel grpcio markdown h5py
+$ pip3 install --user imutils lapsolver opencv-python scikit-learn
 ```
 (Also `tensorflow` if using that ID Reader instead).

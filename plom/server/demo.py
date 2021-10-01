@@ -33,6 +33,7 @@ class PlomDemoServer(PlomServer):
     /home/user/plomdemo_s7j9x
 
     We can then get the credientials needed to interact with the server:
+
     >>> demo.get_env_vars()    # doctest: +NORMALIZE_WHITESPACE
       {'PLOM_SERVER': 'localhost:41981',
        'PLOM_MANAGER_PASSWORD': '1234',
@@ -41,6 +42,7 @@ class PlomDemoServer(PlomServer):
        'PLOM_PASSWORD': '0123'}
 
     We can communicate with the demo server using command line tools:
+
     >>> import os, subprocess
     >>> env = {**os.environ, **demo.get_env_vars()}
     >>> subprocess.check_call(["plom-scan", "status"], env=env)
@@ -74,6 +76,7 @@ class PlomDemoServer(PlomServer):
     At that point, we can connect a Plom Client and do some marking.
 
     Finally we stop the server:
+
     >>> demo.stop()
     Stopping PlomServer ...
     """
