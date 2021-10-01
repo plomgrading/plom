@@ -821,6 +821,8 @@ def updateTestAfterUpload(self, tref):
         # set the test as scanned
         with plomdb.atomic():
             tref.scanned = True
+            # test is also all cleaned up, so can remove this.
+            tref.recent_upload = False
             log.info("Test {} is scanned".format(tref.test_number))
             tref.save()
 
