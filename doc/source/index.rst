@@ -76,7 +76,7 @@ Plom client
 TODO: new sphinx deps
 =====================
 
-Fedora: `dnf install python3-recommonmark python3-sphinx`, others
+Fedora: `dnf install python3-myst-parser python3-sphinx`, others
 
 
 Indices and tables
