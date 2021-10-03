@@ -8,10 +8,18 @@ Understanding the code
 The Plom code is organized into several main modules.
 The primary modules are:
 
-  * `plom.client`
 
-    .. automodule:: plom.client
-        :members:
+Plom Client
+-----------
+
+.. automodule:: plom.client
+    :members:
+.. automodule:: plom.client.annotator
+    :members:
+
+
+Plom Server
+-----------
 
   * `plom.server`
 
@@ -25,8 +33,20 @@ Tools for producing papers, scanning papers, and finishing the grading process.
 
     .. automodule:: plom.finish
 
-  * Other supporting code
 
-    .. automodule:: plom.db
-    .. automodule:: plom.manager
+Other supporting code
+---------------------
+
+.. automodule:: plom.db
+
+.. automodule:: plom.manager
+
+.. automodule:: plom.produce.faketools
+    :members:
+
+TeX Tools
+---------
+
+.. automodule:: plom.textools
+    :members:
 
