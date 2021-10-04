@@ -21,17 +21,20 @@ Plom Client
 Plom Server
 -----------
 
-  * `plom.server`
+.. automodule:: plom.server
+    :members:
 
-    .. automodule:: plom.server
 
 Tools for producing papers, scanning papers, and finishing the grading process.
 
-    .. automodule:: plom.produce
+.. automodule:: plom.produce
+    :members:
 
-    .. automodule:: plom.scan
+.. automodule:: plom.scan
+    :members:
 
-    .. automodule:: plom.finish
+.. automodule:: plom.finish
+    :members:
 
 
 Other supporting code
