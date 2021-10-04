@@ -36,7 +36,7 @@ def download_rubrics_to_file(msgr, filename, *, verbose=True):
         msgr (Messenger): a connected Messenger.
         filename (pathlib.Path): A filename to save to.  The extension is
             used to determine what format, supporting:
-                `.json`, `.toml`, and `.csv`.
+            `.json`, `.toml`, and `.csv`.
             If no extension is included, default to `.toml`.
 
     Returns:

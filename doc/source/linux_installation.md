@@ -100,7 +100,7 @@ Finally: it has been noted that ImageMagick doesn't allow hacking
 of pdf files by default, some edits are needed to
 `/etc/ImageMagick-6/policy.xml`.  Near the end of the file,
 comment out the `pattern="PDF"` part:
-```dif
+```diff
    <policy domain="coder" rights="none" pattern="EPS" />
 -  <policy domain="coder" rights="none" pattern="PDF" />
 +  <!--<policy domain="coder" rights="none" pattern="PDF" />-->
