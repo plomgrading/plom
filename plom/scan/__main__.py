@@ -60,33 +60,7 @@ from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages
 
 
-def frontend(args):
-    if args.command == "process":
-        processScans(
-            args.server,
-            args.password,
-            args.scanPDF,
-            gamma=args.gamma,
-            extractbmp=args.extractbmp,
-        )
-    elif args.command == "upload":
-        uploadImages(
-            args.server,
-            args.password,
-            args.bundleName,
-            do_unknowns=args.unknowns,
-            do_collisions=args.collisions,
-        )
-    elif args.command == "status":
-        check_and_print_scan_status(args.server, args.password)
-    elif args.command == "clear":
-        clear_login(args.server, args.password)
-    else:
-        # parser.print_help()
-        raise RuntimeError("Unexpected choice: report this as a bug!?")
-
-
-def parse_the_user_args():
+def get_parser():
     parser = argparse.ArgumentParser(
         description=__doc__.split("\n")[0],
         epilog="\n".join(__doc__.split("\n")[1:]),
@@ -189,6 +163,11 @@ def parse_the_user_args():
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
         x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
+    return parser
+
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if hasattr(args, "server"):
@@ -200,12 +179,28 @@ def parse_the_user_args():
     if hasattr(args, "password") and not args.password:
         args.password = getpass('Please enter the "scanner" password: ')
 
-    return args
-
-
-def main():
-    args = parse_the_user_args()
-    frontend(args)
+    if args.command == "process":
+        processScans(
+            args.server,
+            args.password,
+            args.scanPDF,
+            gamma=args.gamma,
+            extractbmp=args.extractbmp,
+        )
+    elif args.command == "upload":
+        uploadImages(
+            args.server,
+            args.password,
+            args.bundleName,
+            do_unknowns=args.unknowns,
+            do_collisions=args.collisions,
+        )
+    elif args.command == "status":
+        check_and_print_scan_status(args.server, args.password)
+    elif args.command == "clear":
+        clear_login(args.server, args.password)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":
