@@ -929,3 +929,30 @@ def removeAllScannedPages(self, test_number):
         tref.save()
     self.updateTestAfterUpload(tref)
     return [True, "Test {} wiped clean".format(test_number)]
+
+
+### some bundle related stuff
+def listBundles(self):
+    """Returns a list of bundles in the database
+
+    Args: None
+
+    Returns:
+        List (dict). One for each bundle. Each dict contains three
+            key-value pairs: "name", "md5sum" and "numberOfPages".
+            If no bundles in the system, then it returns an empty list.
+    """
+
+    bundle_info = []
+    for bref in Bundle.select():
+        # do not list the system generated bundles.
+        if bref.name == "replacements":
+            continue
+        bundle_info.append(
+            {
+                "name": bref.name,
+                "md5sum": bref.md5sum,
+                "numberOfPages": len(bref.images),
+            }
+        )
+    return bundle_info

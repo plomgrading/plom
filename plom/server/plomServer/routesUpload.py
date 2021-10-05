@@ -63,6 +63,18 @@ class UploadHandler:
         rval = self.server.createNewBundle(data["bundle"], data["md5sum"])
         return web.json_response(rval, status=200)  # all fine
 
+    async def listBundles(self, request):
+        """Returns a list of dicts of bundles in the database."""
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.listBundles(data["bundle"], data["md5sum"])
+        return web.json_response(rval, status=200)  # all fine
+
     async def sidToTest(self, request):
         """Match given student_id to a test-number.
 
@@ -943,6 +955,7 @@ class UploadHandler:
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
         router.add_put("/admin/bundle", self.createNewBundle)
+        router.add_get("/admin/bundle/list", self.listBundles)
         router.add_get("/admin/sidToTest", self.sidToTest)
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
