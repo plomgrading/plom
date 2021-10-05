@@ -104,7 +104,7 @@ class ScanMessenger(BaseMessenger):
         return response.json()
 
     def listBundles(self):
-        """Ask server for list of bundles in datbase.
+        """Ask server for list of bundles in database.
 
         returns a list of dict. each dict contains the name, md5sum and numberOfPages for each bundle.
         """
