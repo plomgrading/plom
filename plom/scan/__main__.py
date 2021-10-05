@@ -36,7 +36,10 @@
 
   4. Run "plom-scan status" to get a brief summary of scanning to date.
 
-  5. If something goes wrong such as crashes or interruptions, you may
+  5. Run "plom-scan bundles" to get a list of the bundles that have been
+          uploaded into the system.
+
+  6. If something goes wrong such as crashes or interruptions, you may
      need to clear the "scanner" login with the `clear` command.
 
   These steps may be repeated as new PDF files come in: it is not
