@@ -246,7 +246,7 @@ class Annotator(QWidget):
         m.addAction("Previous paper", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
-        m.addAction("View solutions", self.viewSolutions)
+        m.addAction("View solutions\tF2", self.viewSolutions)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         subm = m.addMenu("Tools")

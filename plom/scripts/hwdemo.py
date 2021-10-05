@@ -118,12 +118,13 @@ def main():
     with working_directory(args.server_dir):
         subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
 
-    print("Upload solutions to server")
-    for (q, v, f) in demo_solution_list:
-        fn = os.path.join("sourceVersions", f)
-        subprocess.check_call(
-            split("plom-solution upload -w 1234 {} {} {}".format(q, v, fn))
-        )
+    with working_directory(args.server_dir):
+        print("Upload solutions to server")
+        for (q, v, f) in demo_solution_list:
+            fn = os.path.join("sourceVersions", f)
+            subprocess.check_call(
+                split("plom-solution upload -w 1234 {} {} {}".format(q, v, fn))
+            )
 
     print("Uploading fake scanned data to the server")
     with working_directory(args.server_dir):

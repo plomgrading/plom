@@ -61,16 +61,17 @@ def buildDemoSourceFiles(basedir=Path("."), solutions=False):
     # if requested then also make the pdfs with solutions
     if solutions:
         print("LaTeXing example solution file: latexTemplate.tex -> solution1.pdf")
-        content = pkg_resources.resource_string(
-            "plom", "testTemplates/latexTemplate.tex"
-        ).replace(b"% \\printanswers", b"\\printanswers")
+        content = resources.read_text(plom, "latexTemplate.tex").replace(
+            "% \\printanswers", "\\printanswers"
+        )
         # uncomment the line "% \printanswers..."
         if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions1.pdf"):
             return False
-        print("LaTeXing example exam file: latexTemplatev2.tex -> solutions2.pdf")
-        content = pkg_resources.resource_string(
-            "plom", "testTemplates/latexTemplatev2.tex"
-        ).replace(b"% \\printanswers", b"\\printanswers")
+
+        print("LaTeXing example solution file: latexTemplatev2.tex -> solutions2.pdf")
+        content = resources.read_text(plom, "latexTemplatev2.tex").replace(
+            "% \\printanswers", "\\printanswers"
+        )
         # uncomment the line "% \printanswers..."
         if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions2.pdf"):
             return False
