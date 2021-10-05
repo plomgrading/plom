@@ -13,7 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-from pathlib import Path
+from stdiomask import getpass
 
 from plom import __version__
 from plom.scan import clear_login
@@ -193,8 +193,12 @@ for x in (spW, spP, spA, spS, spB, spC, spM):
 def main():
     args = parser.parse_args()
 
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+    if hasattr(args, "server"):
+        args.server = args.server or os.environ.get("PLOM_SERVER")
+    if hasattr(args, "password"):
+        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+    if hasattr(args, "password") and not args.password:
+        args.password = getpass('Please enter the "scanner" password: ')
 
     if args.command == "submitted":
         print_who_submitted_what(args.server, args.password, args.directory)
@@ -210,7 +214,8 @@ def main():
                 args.extractbmp,
             )
         else:
-            questions = args.question[0]  # args passes '[q]' rather than just 'q'
+            # args passes '[q]' rather than just 'q'
+            questions = args.question[0]
             processHWScans(
                 args.server,
                 args.password,

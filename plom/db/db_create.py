@@ -33,7 +33,7 @@ log = logging.getLogger("DB")
 
 def createReplacementBundle(self):
     try:
-        bref = Bundle.create(name="replacements")
+        bref = Bundle.create(name="__replacements__system__")
     except pw.IntegrityError as e:
         log.error("Create replacement page bundle = {}.{} error - {}".format(e))
         return False

@@ -167,7 +167,7 @@ def replaceMissingTestPage(
     # we can actually just call uploadTPage - we just need to set the bundle_name and bundle_order.
     # hw is different because we need to verify no hw pages present already.
 
-    bref = Bundle.get_or_none(name="replacements")
+    bref = Bundle.get_or_none(name="__replacements__system__")
     if bref is None:
         return [False, "bundleError", f'Cannot find bundle "replacements"']
 
@@ -185,7 +185,7 @@ def replaceMissingTestPage(
         original_name,
         file_name,
         md5,
-        "replacements",
+        "__replacements__system__",
         bundle_order,
     )
     if rval[0]:  # success - so trigger an update.
@@ -379,7 +379,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     # todo = merge this somehow with uploadHWPage? - most of function is sanity checks.
 
     order = 1
-    bundle_name = "replacements"
+    bundle_name = "__replacements__system__"
 
     iref = IDGroup.get_or_none(student_id=sid)
     if iref is None:
@@ -727,7 +727,8 @@ def updateQGroup(self, qref):
     # otherwise ready.
     scan_list = [p.scanned for p in gref.tpages]  # list never zero length.
     if True in scan_list:  # some tpages scanned.
-        if False in scan_list:  # some tpages unscanned - definitely not ready to go.
+        # some tpages unscanned - definitely not ready to go.
+        if False in scan_list:
             log.info("Group {} is only half-scanned - not ready".format(gref.gid))
             return False
         else:
@@ -945,9 +946,6 @@ def listBundles(self):
 
     bundle_info = []
     for bref in Bundle.select():
-        # do not list the system generated bundles.
-        if bref.name == "replacements":
-            continue
         bundle_info.append(
             {
                 "name": bref.name,
