@@ -72,7 +72,7 @@ class UploadHandler:
             return web.Response(status=401)
         if not data["user"] in ["scanner", "manager"]:
             return web.Response(status=401)
-        rval = self.server.listBundles(data["bundle"], data["md5sum"])
+        rval = self.server.listBundles()
         return web.json_response(rval, status=200)  # all fine
 
     async def sidToTest(self, request):

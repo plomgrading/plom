@@ -4,26 +4,46 @@
 # Copyright (C) 2021 Peter Lee
 
 from plom.messenger import ScanMessenger
+from plom.plom_exceptions import PlomExistingLoginException
 
 
-def get_bundle_list(server=None, password=None):
+def get_bundle_list(server=None, pwd=None):
     if server and ":" in server:
         s, p = server.split(":")
-        scanMessenger = ScanMessenger(s, port=p)
+        msgr = ScanMessenger(s, port=p)
     else:
-        scanMessenger = ScanMessenger(server)
-    scanMessenger.start()
+        msgr = ScanMessenger(server)
+    msgr.start()
 
     try:
-        bundle_list = scanMessenger.listBundles()
+        msgr.requestAndSaveToken("scanner", pwd)
+    except PlomExistingLoginException:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another scanner-script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-scan clear"'
+        )
+        raise
+
+    try:
+        bundle_list = msgr.listBundles()
     finally:
-        scanMessenger.closeUser()
-        scanMessenger.stop()
+        msgr.closeUser()
+        msgr.stop()
 
     return bundle_list
 
 
 def print_bundle_list(server=None, password=None):
+    # TODO - sort list by filename?
+
     bundle_list = get_bundle_list(server, password)
+    if len(bundle_list) == 0:
+        print("No bundles in database.")
+        return
+
+    print("Name\tnumberOfPages\tmd5sum")
     for X in bundle_list:
         print(f"{X['name']}\t{X['numberOfPages']}\t{X['md5sum']}")
