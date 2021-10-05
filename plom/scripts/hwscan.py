@@ -21,6 +21,7 @@ from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
 from plom.scan import processHWScans, processLooseScans, processMissing
 from plom.scan import processAllHWByQ
+from plom.scan import print_bundle_list
 
 
 parser = argparse.ArgumentParser(
@@ -65,6 +66,11 @@ spM = sub.add_parser(
     help="Replace missing answers with 'not submitted' pages.",
 )
 spS = sub.add_parser("status", help="Get scanning status report from server")
+spB = sub.add_parser(
+    "bundles",
+    help="Get a list of bundles in the plom database",
+    description="Get a list of bundles in the plom database.",
+)
 spC = sub.add_parser(
     "clear",
     help="Clear 'scanner' login",
@@ -179,7 +185,7 @@ spM.add_argument(
 )
 
 
-for x in (spW, spP, spA, spS, spC, spM):
+for x in (spW, spP, spA, spS, spB, spC, spM):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -222,6 +228,8 @@ def main():
         processMissing(args.server, args.password, yes_flag=args.yes)
     elif args.command == "status":
         check_and_print_scan_status(args.server, args.password)
+    elif args.command == "bundles":
+        list_bundles(args.server, args.password)
     elif args.command == "clear":
         clear_login(args.server, args.password)
     else:
