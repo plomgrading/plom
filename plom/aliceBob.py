@@ -3,6 +3,7 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2021 Nicholas J H Lai
 
 """
 Utilities for canned users and auto-generated (poor) passwords
@@ -133,6 +134,6 @@ def make_numbered_user_list(number):
     returns:
         list: a list of (user, password) tuples.
     """
-    digits = max(1, int(math.ceil(math.log10(number))))
+    digits = max(1, int(math.ceil(math.log10(number if number > 0 else 1))))
     names = ["user" + "{}".format(n).zfill(digits) for n in range(number)]
     return [(name, simple_password()) for name in names]

@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
+
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
 class CommandMoveText(QUndoCommand):
@@ -25,19 +27,19 @@ class CommandMoveText(QUndoCommand):
         return 102
 
     def redo(self):
-        # Temporarily disable the item emiting "I've changed" signals
+        # Temporarily disable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
         # Move the object
         self.xitem.setPos(self.new_pos)
-        # Reenable the item emiting "I've changed" signals
+        # Re-enable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def undo(self):
-        # Temporarily disable the item emiting "I've changed" signals
+        # Temporarily disable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, False)
         # Move the object back
         self.xitem.setPos(self.old_pos)
-        # Reenable the item emiting "I've changed" signals
+        # Re-enable the item emitting "I've changed" signals
         self.xitem.setFlag(QGraphicsItem.ItemSendsGeometryChanges, True)
 
     def mergeWith(self, other):
@@ -49,13 +51,13 @@ class CommandMoveText(QUndoCommand):
         return True
 
 
-class CommandText(QUndoCommand):
+class CommandText(CommandTool):
     def __init__(self, scene, pt, text):
-        super().__init__()
-        self.scene = scene
+        super().__init__(scene)
         self.blurb = TextItem(
             pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
         )
+        self.do = DeleteObject(self.blurb.shape(), fill=True)
         self.setText("Text")
 
     @classmethod
@@ -69,12 +71,24 @@ class CommandText(QUndoCommand):
         return cls(scene, QPointF(X[1], X[2]), X[0])
 
     def redo(self):
-        self.blurb.flash_redo()
         self.scene.addItem(self.blurb)
+        # update the deleteobject since the text may have been updated
+        # use getshape - takes offset into account
+        self.do.item.setPath(self.blurb.getShape())
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_redo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        self.blurb.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.blurb))
+        self.scene.removeItem(self.blurb)
+        # update the deleteobject since the text may have been updated
+        # use getshape - takes offset into account
+        self.do.item.setPath(self.blurb.getShape())
+        # animate
+        self.scene.addItem(self.do.item)
+        self.do.flash_undo()
+        QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
 class TextItem(QGraphicsTextItem):
@@ -97,32 +111,32 @@ class TextItem(QGraphicsTextItem):
     def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
         super().__init__()
         self.saveable = True
-        self.animator = [self]
-        self.animateFlag = False
         # TODO: really this is PageScene or Marker: someone who can TeX for us
         # TODO: its different from e.g., BoxItem (where parent is the animator)
         self.parent = parent
-        # Thick is thickness of bounding box hightlight used
-        # to highlight the object when undo / redo happens.
-        self.thick = 0
         self.setDefaultTextColor(color)
         self.setPlainText(text)
         font = QFont("Helvetica")
-        font.setPointSizeF(fontsize)
+        font.setPixelSize(fontsize)
         self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
-        # Undo/redo animates via the thickness property
-        self.anim = QPropertyAnimation(self, b"thickness")
         self.setPos(pt)
         # If displaying png-rendered-latex, store the original text here
         self._tex_src_cache = None
         if text.casefold().startswith("tex:"):
+            # TODO: Issue #1624: this is causing two API rendering calls
             # self.textToPng()
             # instead, hide latency of API call: meanwhile source text displayed
             # Issue #1391: unfortunately causes a race, at least in randomarker
             QTimer.singleShot(5, self.textToPng)
+
+    def getShape(self):
+        # returns shape, but with offset
+        shp = self.shape()
+        shp.translate(self.pos())
+        return shp
 
     def enable_interactive(self):
         """Set it as editable with the text-editor."""
@@ -193,7 +207,7 @@ class TextItem(QGraphicsTextItem):
         c = self.defaultTextColor().getRgb()
 
         assert len(c) == 4
-        if c != (255, 0, 0, 0):
+        if c != (255, 0, 0, 255):
             # Careful: red is default, using this would cause a cache miss
             # TODO: maybe its nicer to pass the colour to latexAFragment?
             texIt = (
@@ -203,7 +217,9 @@ class TextItem(QGraphicsTextItem):
                 + "\\color{annot}\n"
                 + texIt
             )
-        fragfilename = self.parent.latexAFragment(texIt)
+        fragfilename = self.parent.latexAFragment(
+            texIt, quiet=False, cache_invalid_tryagain=True
+        )
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")
@@ -246,11 +262,6 @@ class TextItem(QGraphicsTextItem):
                 painter.drawLine(option.rect.topLeft(), option.rect.bottomRight())
                 painter.drawLine(option.rect.topRight(), option.rect.bottomLeft())
                 painter.drawRoundedRect(option.rect, 10, 10)
-        else:
-            # paint a bounding rectangle for undo/redo highlighting
-            if self.thick > 0:
-                painter.setPen(QPen(self.defaultTextColor(), self.thick))
-                painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
         super().paint(painter, option, widget)
 
@@ -261,36 +272,9 @@ class TextItem(QGraphicsTextItem):
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
 
-    def flash_undo(self):
-        """Undo animation: thin -> thick -> none border around text"""
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 8)  # TODO: should be 4*style["pen_width"]
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        """Redo animation: thin -> med -> thin border around text."""
-        self.anim.setDuration(200)
-        self.anim.setStartValue(0)
-        self.anim.setKeyValueAt(0.5, 4)  # TODO: should be 2*style["pen_width"]
-        self.anim.setEndValue(0)
-        self.anim.start()
-
     def pickle(self):
         src = self.toPlainText()
         return ["Text", src, self.scenePos().x(), self.scenePos().y()]
-
-    # For the animation of border
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.thick
-
-    # For the animation of border
-    @thickness.setter
-    def thickness(self, value):
-        self.thick = value
-        self.update()
 
 
 class GhostText(QGraphicsTextItem):
@@ -304,7 +288,7 @@ class GhostText(QGraphicsTextItem):
             self.setDefaultTextColor(Qt.lightGray)
         self.setPlainText(txt)
         font = QFont("Helvetica")
-        font.setPointSizeF(fontsize)
+        font.setPixelSize(fontsize)
         self.setFont(font)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -328,7 +312,7 @@ class GhostText(QGraphicsTextItem):
                     "\\color{gray}\n" + txt[4:].strip()
                 )  # make color gray for ghost rendering (when delta not legal)
 
-            fragfilename = self.scene().latexAFragment(texIt)
+            fragfilename = self.scene().latexAFragment(texIt, quiet=True)
             if fragfilename:
                 self._tex_src_cache = txt
                 self.setPlainText("")

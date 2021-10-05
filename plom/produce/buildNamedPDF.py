@@ -1,17 +1,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Peter Lee
 
-import os
-from pathlib import Path
-from multiprocessing import Pool
-from tqdm import tqdm
 import csv
+from multiprocessing import Pool
+from pathlib import Path
 
-from .mergeAndCodePages import make_PDF, make_fakePDF
-from . import paperdir
+from tqdm import tqdm
+
+from plom.plom_exceptions import PlomConflict
+from plom.produce import paperdir as paperdir_name
+from .mergeAndCodePages import make_PDF
 
 
 def _make_PDF(x):
@@ -23,12 +25,7 @@ def _make_PDF(x):
     Arguments:
         x (tuple): this is expanded as the arguments to :func:`make_PDF`.
     """
-    fakepdf = x[-1]  # look at last arg - x[-1] = fakepdf
-    y = x[:-1]  # drop the last argument = fakepdf
-    if fakepdf:
-        make_fakePDF(*y)
-    else:
-        make_PDF(*y)
+    make_PDF(*x)
 
 
 def outputProductionCSV(spec, make_PDF_args):
@@ -72,8 +69,15 @@ def outputProductionCSV(spec, make_PDF_args):
             csv_writer.writerow(row)
 
 
-def build_all_papers(
-    spec, global_page_version_map, classlist, fakepdf=False, no_qr=False
+def build_papers_backend(
+    spec,
+    global_page_version_map,
+    classlist,
+    *,
+    fakepdf=False,
+    no_qr=False,
+    indexToMake=None,
+    ycoord=None,
 ):
     """Builds the papers using _make_PDF.
 
@@ -88,12 +92,22 @@ def build_all_papers(
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
+
+    Keyword arguments:
         fakepdf (bool): when true, the build empty pdfs (actually empty files)
             for use when students upload homework or similar (and only 1 version).
+        no_qr (bool): when True, don't stamp with QR codes.  Default: False
+            (which means *do* stamp with QR codes).
+        indexToMake (int/None): specified paper number to be built.  If
+            None then build all papers.  If this parameter is specified,
+            only this paper will be built and the others will be ignored.
+        ycoord (float): percentage from top to bottom of page to place
+            ID/Signature box.
 
     Raises:
         ValueError: classlist is invalid in some way.
     """
+
     if spec["numberToName"] > 0:
         if not classlist:
             raise ValueError("You must provide a classlist to prename papers")
@@ -104,7 +118,11 @@ def build_all_papers(
                 )
             )
     make_PDF_args = []
-    for paper_index in range(1, spec["numberToProduce"] + 1):
+    if indexToMake is None:
+        papersToMake = range(1, spec["numberToProduce"] + 1)
+    else:
+        papersToMake = [indexToMake]
+    for paper_index in papersToMake:
         page_version = global_page_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
             student_info = {
@@ -123,7 +141,8 @@ def build_all_papers(
                 page_version,
                 student_info,
                 no_qr,
-                fakepdf,  # should be last
+                fakepdf,
+                ycoord,
             )
         )
 
@@ -138,74 +157,41 @@ def build_all_papers(
     outputProductionCSV(spec, make_PDF_args)
 
 
-def confirm_processed(spec, msgr, classlist):
-    """Checks that each PDF file was created and notify server.
+def check_pdf_and_id_if_needed(
+    spec, msgr, classlist, *, paperdir=Path(paperdir_name), indexToCheck=None
+):
+    """Check pdf(s) are present on disk and id papers that are prenamed.
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         msgr (Messenger): an open active connection to the server.
         classlist (list, None): ordered list of (sid, sname) pairs.
 
-    Raises:
-        RuntimeError: raised if any of the expected PDF files not found.
-        ValueError: classlist is invalid in some way.
-    """
-    if spec["numberToName"] > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist for pre-named papers")
-        if len(classlist) < spec["numberToName"]:
-            raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(
-                    spec["numberToName"]
-                )
-            )
-    for paper_index in range(1, spec["numberToProduce"] + 1):
-        if paper_index <= spec["numberToName"]:
-            PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-                str(paper_index).zfill(4), classlist[paper_index - 1][0]
-            )
-        else:
-            PDF_file_name = Path(paperdir) / "exam_{}.pdf".format(
-                str(paper_index).zfill(4)
-            )
-
-        # We will raise and error if the pdf file was not found
-        if os.path.isfile(PDF_file_name):
-            msgr.notify_pdf_of_paper_produced(paper_index)
-        else:
-            raise RuntimeError('Cannot find pdf for paper "{}"'.format(PDF_file_name))
-
-
-def identify_prenamed(spec, msgr, classlist):
-    """Identify papers that pre-printed names on the server.
-
-    Arguments:
-        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        msgr (Messenger): an open active connection to the server.
-        classlist (list, None): ordered list of (sid, sname) pairs.
+    Keyword Arguments:
+        paperdir (pathlib.Path): where to find the papers to print.
+        indexToID (int,None): the index of single paper to ID or (if none), then ID all.
 
     Raises:
         RuntimeError: raised if any of the expected PDF files not found.
         ValueError: classlist is invalid in some way.
     """
-    if spec["numberToName"] > 0:
-        if not classlist:
-            raise ValueError("You must provide a classlist to prename papers")
-        if len(classlist) < spec["numberToName"]:
-            raise ValueError(
-                "Classlist is too short for {} pre-named papers".format(
-                    spec["numberToName"]
-                )
-            )
-    for paper_index in range(1, spec["numberToProduce"] + 1):
-        if paper_index <= spec["numberToName"]:
-            sid, sname = classlist[paper_index - 1]
-            PDF_file_name = Path(paperdir) / "exam_{}_{}.pdf".format(
-                str(paper_index).zfill(4), sid
-            )
-            if os.path.isfile(PDF_file_name):
-                msgr.id_paper(paper_index, sid, sname)
+    paperdir = Path(paperdir)
+    if indexToCheck:
+        range_to_check = [indexToCheck]
+    else:  # check production of all papers
+        range_to_check = range(1, spec["numberToProduce"] + 1)
+    # now check that paper(s) are actually on disk
+    for papernum in range_to_check:
+        if papernum <= spec["numberToName"]:
+            sid, sname = classlist[papernum - 1]
+            pdf_file = paperdir / f"exam_{papernum:04}_{sid}.pdf"
+            # if file is not there - error, else tell DB it is ID'd
+            if not pdf_file.is_file():
+                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')
             else:
-                raise RuntimeError(
-                    'Cannot find pdf for paper "{}"'.format(PDF_file_name)
-                )
+                msgr.id_paper(papernum, sid, sname)
+        else:
+            pdf_file = paperdir / f"exam_{papernum:04}.pdf"
+            # if file is not there - error.
+            if not pdf_file.is_file():
+                raise RuntimeError(f'Cannot find pdf for paper "{pdf_file}"')

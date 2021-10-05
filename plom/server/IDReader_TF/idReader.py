@@ -2,7 +2,7 @@
 # Copyright (C) 2019-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
 Use Tensorflow Neural Network model to read student IDs from ID-pages.
@@ -14,7 +14,6 @@ Note: Code in this file is very similar to idReader code for the Sklearn
 model.
 """
 
-import os
 from pathlib import Path
 import csv
 
@@ -27,7 +26,7 @@ from .predictStudentID import compute_probabilities
 from .trainTensorFlowModel import train_model
 
 
-def is_model_absent():
+def is_model_present():
     """Checks if the ML model is available.
 
     Returns:
@@ -42,11 +41,9 @@ def is_model_absent():
         "variables/variables.data-00000-of-00001",
     ]
     for file_name in files:
-        if os.path.isfile(base_path / file_name):
-            continue
-        else:
-            return True
-    return False
+        if not (base_path / file_name).is_file():
+            return False
+    return True
 
 
 def download_model():
@@ -58,8 +55,7 @@ def download_model():
 
     # make a directory into which to save things
     base_path = Path("model_cache")
-    # make both the base_path and its variables subdir
-    os.makedirs(base_path / "variables", exist_ok=True)
+    (base_path / "variables").mkdir(parents=True, exist_ok=True)
     base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
     files = [
         "saved_model.pb",
@@ -80,7 +76,7 @@ def download_model():
 
 
 def download_or_train_model():
-    """Dowload the ID detection model if possible, if not, train it."""
+    """Download the ID detection model if possible, if not, train it."""
 
     print(
         "Will try to download model and if that fails, then build it locally (which is time-consuming)"
@@ -146,8 +142,7 @@ def run_id_reader(files_dict, rectangle):
     # will need this for cost-matrix
     test_numbers = list(files_dict.keys())
 
-    # check to see if model already there and if not get it or train it.
-    if is_model_absent():
+    if not is_model_present():
         download_or_train_model()
     # probabilities that digit k of ID is "n" for each file.
     # this is potentially time-consuming - could be parallelized
@@ -159,9 +154,7 @@ def run_id_reader(files_dict, rectangle):
 
     # Put student numbers in list
     student_IDs = []
-    with open(
-        Path(specdir) / "classlist.csv", newline=""
-    ) as csvfile:  # todo update file paths
+    with open(specdir / "classlist.csv", newline="") as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
@@ -184,7 +177,7 @@ def run_id_reader(files_dict, rectangle):
     row_IDs, column_IDs = solve_dense(costs)
 
     # now save the result
-    with open(Path(specdir) / "predictionlist.csv", "w") as file_header:
+    with open(specdir / "predictionlist.csv", "w") as file_header:
         file_header.write("test, id\n")
         for r, c in zip(row_IDs, column_IDs):
             # the get test-number of r-th from the test_numbers

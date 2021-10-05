@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Plom server management GUI tool."""
 
@@ -14,53 +15,15 @@ import argparse
 import signal
 import os
 import sys
-import traceback as tblib
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
+from PyQt5.QtWidgets import QApplication, QStyleFactory
 
-from plom.manager.manager import Manager
+from plom.manager import Manager
 from plom import Default_Port
 from plom import __version__
-
-
-# Pop up a dialog for unhandled exceptions and then exit
-sys._excepthook = sys.excepthook
-
-
-def _exception_hook(exctype, value, traceback):
-    s = "".join(tblib.format_exception(exctype, value, traceback))
-    mb = QMessageBox()
-    mb.setText(
-        "Something unexpected has happened!\n\n"
-        "Please file a bug and copy-paste the following:\n\n"
-        "{0}".format(s)
-    )
-    mb.setStandardButtons(QMessageBox.Ok)
-    mb.exec_()
-    sys._excepthook(exctype, value, traceback)
-    sys.exit(1)
-
-
-sys.excepthook = _exception_hook
-
-
-# in order to have a graceful exit on control-c
-# https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
-def sigint_handler(*args):
-    """Handler for the SIGINT signal."""
-    sys.stderr.write("\r")
-    if (
-        QMessageBox.question(
-            None,
-            "",
-            "Are you sure you want to force-quit?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        == QMessageBox.Yes
-    ):
-        QApplication.quit()
+from plom.scripts.client import add_popup_to_toplevel_exception_handler
+from plom.scripts.client import sigint_handler
 
 
 def main():
@@ -78,21 +41,14 @@ def main():
     )
     args = parser.parse_args()
 
-    if not hasattr(args, "server") or not args.server:
-        try:
-            args.server = os.environ["PLOM_SERVER"]
-        except KeyError:
-            pass
-    if not hasattr(args, "password") or not args.password:
-        try:
-            args.password = os.environ["PLOM_MANAGER_PASSWORD"]
-        except KeyError:
-            pass
+    args.server = args.server or os.environ.get("PLOM_SERVER")
+    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
 
     signal.signal(signal.SIGINT, sigint_handler)
+    add_popup_to_toplevel_exception_handler()
 
     # create a small timer here, so that we can
     # kill the app with ctrl-c.
@@ -102,13 +58,8 @@ def main():
     # got this solution from
     # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
 
-    window = Manager(app)
+    window = Manager(app, server=args.server, password=args.password)
     window.show()
-
-    window.ui.userLE.setText("manager")
-    window.ui.passwordLE.setText(args.password)
-    if args.server:
-        window.setServer(args.server)
 
     sys.exit(app.exec_())
 

@@ -1,27 +1,27 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, QEvent
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (
-    QApplication,
     QDialog,
     QGroupBox,
     QGridLayout,
     QLabel,
     QLineEdit,
     QPushButton,
-    QWidget,
 )
 from .useful_classes import ErrorMessage
+
 
 stringOfLegalKeys = "qwertyuiop[]asdfghjkl;'zxcvbnm,./"
 
 the_actions = [
     "previousRubric",
     "nextRubric",
-    "previousPane",
-    "nextPane",
+    "previousTab",
+    "nextTab",
     "previousTool",
     "nextTool",
     "redo",
@@ -38,8 +38,8 @@ key_layouts = {
         "undo": "G",
         "nextRubric": "D",
         "previousRubric": "E",
-        "nextPane": "F",
-        "previousPane": "S",
+        "nextTab": "F",
+        "previousTab": "S",
         "nextTool": "R",
         "previousTool": "W",
         "delete": "Q",
@@ -51,8 +51,8 @@ key_layouts = {
         "undo": "G",
         "nextRubric": "D",
         "previousRubric": "E",
-        "nextPane": "F",
-        "previousPane": "S",
+        "nextTab": "F",
+        "previousTab": "S",
         "nextTool": "R",
         "previousTool": "Z",
         "delete": "A",
@@ -64,8 +64,8 @@ key_layouts = {
         "undo": "I",
         "nextRubric": "E",
         "previousRubric": ".",
-        "nextPane": "U",
-        "previousPane": "O",
+        "nextTab": "U",
+        "previousTab": "O",
         "nextTool": "P",
         "previousTool": ",",
         "delete": "'",
@@ -77,8 +77,8 @@ key_layouts = {
         "undo": "F",
         "nextRubric": "S",
         "previousRubric": "W",
-        "nextPane": "D",
-        "previousPane": "A",
+        "nextTab": "D",
+        "previousTab": "A",
         "nextTool": "E",
         "previousTool": "Q",
         "delete": "C",
@@ -90,8 +90,8 @@ key_layouts = {
         "undo": "H",
         "nextRubric": "K",
         "previousRubric": "I",
-        "nextPane": "L",
-        "previousPane": "J",
+        "nextTab": "L",
+        "previousTab": "J",
         "nextTool": "O",
         "previousTool": "U",
         "delete": "P",
@@ -199,10 +199,10 @@ class KeyWrangler(QDialog):
         grid.addWidget(self.nextToolLabel, 1, 7)
         grid.addWidget(self.nextToolKey, 1, 8)
         ##
-        grid.addWidget(self.previousPaneLabel, 4, 3)
-        grid.addWidget(self.previousPaneKey, 4, 4)
-        grid.addWidget(self.nextPaneLabel, 4, 7)
-        grid.addWidget(self.nextPaneKey, 4, 8)
+        grid.addWidget(self.previousTabLabel, 4, 3)
+        grid.addWidget(self.previousTabKey, 4, 4)
+        grid.addWidget(self.nextTabLabel, 4, 7)
+        grid.addWidget(self.nextTabKey, 4, 8)
         ##
         grid.addWidget(self.previousRubricLabel, 2, 5)
         grid.addWidget(self.previousRubricKey, 2, 6)

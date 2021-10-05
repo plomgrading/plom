@@ -23,8 +23,8 @@ def RgetUnusedTests(self):
     return self.DB.RgetUnusedTests()
 
 
-def RgetProgress(self, qu, v):
-    return self.DB.RgetProgress(qu, v)
+def RgetProgress(self, spec, qu, v):
+    return self.DB.RgetProgress(spec, qu, v)
 
 
 def RgetQuestionUserProgress(self, qu, v):
@@ -33,10 +33,6 @@ def RgetQuestionUserProgress(self, qu, v):
 
 def RgetMarkHistogram(self, qu, v):
     return self.DB.RgetMarkHistogram(qu, v)
-
-
-def RgetMarked(self, qu, v):
-    return self.DB.RgetMarked(qu, v)
 
 
 def RgetIdentified(self):
@@ -67,10 +63,6 @@ def RgetOriginalFiles(self, testNumber):
     return self.DB.RgetOriginalFiles(testNumber)
 
 
-def RgetAnnotatedFiles(self, testNumber):
-    return self.DB.RgetAnnotatedFiles(testNumber)
-
-
 def RgetMarkReview(self, filterQ, filterV, filterU):
     return self.DB.RgetMarkReview(filterQ, filterV, filterU)
 
@@ -81,10 +73,6 @@ def RgetIDReview(self):
 
 def RgetTotReview(self):
     return self.DB.RgetTotReview()
-
-
-def RgetAnnotatedImage(self, testNumber, questionNumber, version):
-    return self.DB.RgetAnnotatedImage(testNumber, questionNumber, version)
 
 
 def RgetUserList(self):

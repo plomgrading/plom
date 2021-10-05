@@ -676,7 +676,7 @@ class Ui_Manager(object):
 
     def retranslateUi(self, Manager):
         _translate = QtCore.QCoreApplication.translate
-        Manager.setWindowTitle(_translate("Manager", "Overview and Management"))
+        Manager.setWindowTitle(_translate("Manager", "Plom: Overview and Management"))
         self.userGBox.setTitle(_translate("Manager", "User Information"))
         self.label.setText(_translate("Manager", "Username:"))
         self.userLE.setText(_translate("Manager", "manager"))
@@ -696,7 +696,7 @@ class Ui_Manager(object):
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.scanTab), _translate("Manager", "&Scan Status"))
         self.actionUButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.unknownTab), _translate("Manager", "&Unknown Pages"))
-        self.actionCButton.setText(_translate("Manager", "Perfrom actions"))
+        self.actionCButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.collideTab), _translate("Manager", "&Colliding Pages"))
         self.actionDButton.setText(_translate("Manager", "Perform actions"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.discardTab), _translate("Manager", "&Discarded Pages"))

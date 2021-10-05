@@ -1,16 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 
 import hashlib
+import logging
 import os
-import shlex
 import shutil
 import subprocess
 import uuid
-import logging
 
 from plom.server import pageNotSubmitted
 
@@ -160,7 +159,6 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
         newName = prefix + unique + ".png"
         if not os.path.isfile(newName):
             break
-        newName = "pages/originalPages/" + prefix + unique + ".png"
     # compute md5sum and put into database
     md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
     # now try to put it into place
@@ -242,7 +240,7 @@ def removeCollidingImage(self, file_name):
 def unknownToTestPage(self, file_name, test, page, rotation):
     # checkpage returns
     # -- [False, reason] no such page exists, or owners logged in
-    # -- [True, 'unscanned', version] page exists but hasnt been scanned
+    # -- [True, 'unscanned', version] page exists but hasn't been scanned
     # -- or [True, 'collision', version, image] page exists and has been scanned
     val = self.DB.checkTPage(test, page)
     if val[0]:

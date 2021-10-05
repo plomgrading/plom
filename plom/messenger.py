@@ -6,6 +6,11 @@
 Backend bits n bobs to talk to the server
 """
 
+from plom.managerMessenger import ManagerMessenger
+from plom.finishMessenger import FinishMessenger
+from plom.scanMessenger import ScanMessenger
+from plom.baseMessenger import BaseMessenger
+
 __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
@@ -41,11 +46,6 @@ log = logging.getLogger("messenger")
 # If we use unverified ssl certificates we get lots of warnings,
 # so put in this to hide them.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-from plom.baseMessenger import BaseMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.managerMessenger import ManagerMessenger
 
 
 class Messenger(BaseMessenger):
@@ -163,42 +163,6 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
         return idList
-
-    def IDrequestImage(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return imageList
 
     # ------------------------
 
@@ -469,97 +433,21 @@ class Messenger(BaseMessenger):
             )
             response.raise_for_status()
             image = BytesIO(response.content).getvalue()
+            return (True, image)
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
-                raise PlomLatexException(
-                    "There is an error in your latex fragment"
-                ) from None
+                return (False, response.text)
+                # raise PlomLatexException(
+                #     f"Server reported an error processing your TeX fragment:\n\n{response.text}"
+                # ) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
                 ) from None
         finally:
             self.SRmutex.release()
-
-        return image
-
-    def MrequestImages(self, code, integrity_check):
-        """Download images relevant to a question, both original and annotated.
-
-        Args:
-            code (str): the task code such as "q1234g9".
-
-        Returns:
-            3-tuple: `(image_metadata, annotated_image, plom_file)`
-                `image_metadata` has various stuff: DB ids, md5sums, etc
-                `annotated_image` and `plom_file` are the png file and
-                and data associated with a previous annotations, or None.
-
-        Raises:
-            PlomAuthenticationException
-            PlomTaskChangedError: you no longer own this task.
-            PlomTaskDeletedError
-            PlomSeriousException
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/MK/images/{}".format(self.server, code),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "integrity_check": integrity_check,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-
-            # response is either [metadata] or [metadata, annotated_image, plom_file]
-            imagesAnnotAndPlom = MultipartDecoder.from_response(response).parts
-            image_metadata = json.loads(imagesAnnotAndPlom[0].text)
-            if len(imagesAnnotAndPlom) == 1:
-                # all is fine - no annotated image or plom data
-                anImage = None
-                plDat = None
-            elif len(imagesAnnotAndPlom) == 3:
-                # all fine - last two parts are annotated image + plom-data
-                anImage = BytesIO(imagesAnnotAndPlom[1].content).getvalue()
-                plDat = BytesIO(imagesAnnotAndPlom[2].content).getvalue()
-            else:
-                raise PlomSeriousException(
-                    "Number of returns doesn't make sense: should be 1 or 3 but is {}".format(
-                        len(imagesAnnotAndPlom)
-                    )
-                )
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomTaskChangedError(
-                    "Ownership of task {} has changed.".format(code)
-                ) from None
-            elif response.status_code == 406:
-                raise PlomTaskChangedError(
-                    "Task {} has been changed by manager.".format(code)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "Task {} has been deleted by manager.".format(code)
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return image_metadata, anImage, plDat
 
     def MrequestOriginalImages(self, task):
         self.SRmutex.acquire()
@@ -601,8 +489,8 @@ class Messenger(BaseMessenger):
         score,
         mtime,
         tags,
-        aname,
-        pname,
+        annotated_img,
+        plomfile,
         rubrics,
         integrity_check,
         image_md5_list,
@@ -616,49 +504,60 @@ class Messenger(BaseMessenger):
             PlomAuthenticationException
             PlomConflict: integrity check failed, perhaps manager
                 altered task.
+            PlomTimeoutError: network trouble such as timeouts.
             PlomTaskChangedError
             PlomTaskDeletedError
             PlomSeriousException
         """
+        # doesn't like ints, so convert ints to strings
+        param = {
+            "user": self.user,
+            "token": self.token,
+            "pg": str(pg),
+            "ver": str(ver),
+            "score": str(score),
+            "mtime": str(mtime),
+            "tags": tags,
+            "rubrics": rubrics,
+            "md5sum": hashlib.md5(open(annotated_img, "rb").read()).hexdigest(),
+            "integrity_check": integrity_check,
+            "image_md5s": image_md5_list,
+        }
+
+        dat = MultipartEncoder(
+            fields={
+                "param": json.dumps(param),
+                "annotated": (annotated_img, open(annotated_img, "rb"), "image/png"),
+                "plom": (plomfile, open(plomfile, "rb"), "text/plain"),
+            }
+        )
         self.SRmutex.acquire()
         try:
-            # doesn't like ints, so convert ints to strings
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "pg": str(pg),
-                "ver": str(ver),
-                "score": str(score),
-                "mtime": str(mtime),
-                "tags": tags,
-                "rubrics": rubrics,
-                "md5sum": hashlib.md5(open(aname, "rb").read()).hexdigest(),
-                "integrity_check": integrity_check,
-                "image_md5s": image_md5_list,
-            }
-
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "annotated": (aname, open(aname, "rb"), "image/png"),  # image
-                    "plom": (pname, open(pname, "rb"), "text/plain"),  # plom-file
-                }
-            )
             response = self.session.put(
                 "https://{}/MK/tasks/{}".format(self.server, code),
                 data=dat,
                 headers={"Content-Type": dat.content_type},
                 verify=False,
+                timeout=(10, 120),
             )
             response.raise_for_status()
             ret = response.json()
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise PlomTimeoutError(
+                "Upload timeout/connect error: {}\n\n".format(e)
+                + "Retries are NOT YET implemented: as a workaround,"
+                + "you can re-open the Annotator on '{}'.\n\n".format(code)
+                + "We will now process any remaining upload queue."
+            ) from None
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 406:
-                raise PlomConflict(
-                    "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
-                ) from None
+                if response.text == "integrity_fail":
+                    raise PlomConflict(
+                        "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                    ) from None
+                raise PlomSeriousException(response.text) from None
             elif response.status_code == 409:
                 raise PlomTaskChangedError("Task ownership has changed.") from None
             elif response.status_code == 410:
@@ -666,9 +565,7 @@ class Messenger(BaseMessenger):
                     "No such task - it has been deleted from server."
                 ) from None
             elif response.status_code == 400:
-                raise PlomSeriousException(
-                    "Image file is corrupted. This should not happen"
-                ) from None
+                raise PlomSeriousException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
@@ -743,7 +640,7 @@ class Messenger(BaseMessenger):
     def MrequestWholePaperMetadata(self, code, questionNumber=0):
         """Get metadata about the images in this paper.
 
-        TODO: questionnumber?  why?
+        For now, questionNumber effects the "included" column...
 
         TODO: returns 404, so why not raise that instead?
         """
@@ -816,194 +713,20 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return image
 
-    def McreateRubric(self, new_rubric):
-        """Ask server to make a new rubric and get key back.
+    def MgetUserRubricTabs(self, question):
+        """Ask server for the user's rubric-tabs config file for this question
 
         Args:
-            new_rubric (dict): the new rubric info as dict.
+            question (int): which question to save to (rubric tabs are
+                generally per-question).
 
         Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
+            PlomAuthenticationException
+            PlomSeriousException
 
         Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, updated_commments_list] including the new comments.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.put(
-                "https://{}/MK/rubric".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "rubric": new_rubric,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-
-            new_key = response.json()
-            messenger_response = [True, new_key]
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
-                raise PlomSeriousException("Rubric sent was incomplete.") from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-            messenger_response = [False]
-
-        finally:
-            self.SRmutex.release()
-        return messenger_response
-
-    def MgetRubrics(self):
-        """Retrieve list of all rubrics from server.
-
-        Args:
-            current_comments_list (list): A list of the comments as dictionaries.
-
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
-
-        Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, list of rubrics]
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/MK/rubric".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-            rubric_list = response.json()
-            messenger_response = [True, rubric_list]
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} getting rubric list".format(e)
-                ) from None
-            messenger_response = [False]
-        finally:
-            self.SRmutex.release()
-        return messenger_response
-
-    def MgetRubricsByQuestion(self, question_number):
-        """Retrieve list of all rubrics from server for given question.
-
-        Args:
-            current_comments_list (list): A list of the comments as dictionaries.
-
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
-
-        Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, list of rubrics]
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/MK/rubric/{}".format(self.server, question_number),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-            rubric_list = response.json()
-            messenger_response = [True, rubric_list]
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} getting rubric list".format(e)
-                ) from None
-            messenger_response = [False]
-        finally:
-            self.SRmutex.release()
-        return messenger_response
-
-    def MmodifyRubric(self, key, new_rubric):
-        """Ask server to modify a rubric and get key back.
-
-        Args:
-            rubric (dict): the modified rubric info as dict.
-
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
-
-        Returns:
-            list: A list of:
-                [False] If operation was unsuccessful.
-                [True, updated_commments_list] including the new comments.
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.patch(
-                "https://{}/MK/rubric/{}".format(self.server, key),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "rubric": new_rubric,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-
-            new_key = response.json()
-            messenger_response = [True, new_key]
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 400:
-                raise PlomSeriousException("Key mismatch in request.") from None
-            elif response.status_code == 406:
-                raise PlomSeriousException("Rubric sent was incomplete.") from None
-            elif response.status_code == 409:
-                raise PlomSeriousException("No rubric with that key found.") from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-            messenger_response = [False]
-
-        finally:
-            self.SRmutex.release()
-        return messenger_response
-
-    def MgetUserRubricPanes(self, question):
-        """Ask server for the user's rubric-pane config file for this question
-
-        Args:
-            question (int): the current question number
-
-        Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
-
-        Returns:
-            paneConfig: [True, A json of the dict required to set up panes] or [False]
+            tuple: First element is bool for success.  If True, second
+                element is a dict of information about user's tabs.
         """
         self.SRmutex.acquire()
         try:
@@ -1020,44 +743,41 @@ class Messenger(BaseMessenger):
 
             if response.status_code == 200:
                 paneConfig = response.json()
-                messenger_response = [True, paneConfig]
+                return [True, paneConfig]
             elif response.status_code == 204:
-                messenger_response = [False]  # no content
+                return [False]  # server has no data
             else:
                 raise PlomSeriousException(
-                    "No other 20x error should come from server."
+                    "No other 20x response should come from server."
                 ) from None
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 403:
-                raise PlomSeriousException(
-                    "Username or question mismatch in request."
-                ) from None
+                raise PlomSeriousException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Error of type {} when creating new rubric".format(e)
                 ) from None
-            messenger_response = [False]
 
         finally:
             self.SRmutex.release()
-        return messenger_response
 
-    def MsaveUserRubricPanes(self, question, paneConfig):
-        """Ask server for the user's rubric-pane config file for this question
+    def MsaveUserRubricTabs(self, question, tab_config):
+        """Cache the user's rubric-tabs config for this question onto the server
 
         Args:
             question (int): the current question number
-            paneConfig (dict): the user's rubric pane configuration for this question
+            tab_config (dict): the user's rubric pane configuration for
+                this question.
 
         Raises:
-            PlomAuthenticationException: Authentication error.
-            PlomSeriousException: Other error types, possible needs fix or debugging.
+            PlomAuthenticationException
+            PlomSeriousException
 
         Returns:
-            paneConfig: [True] or [False]
+            None
         """
         self.SRmutex.acquire()
         try:
@@ -1067,34 +787,24 @@ class Messenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                     "question": question,
-                    "rubric_config": paneConfig,
+                    "rubric_config": tab_config,
                 },
                 verify=False,
             )
             response.raise_for_status()
 
-            messenger_response = True
-
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Username or question mismatch in request."
-                ) from None
-            elif response.status_code == 406:
-                raise PlomSeriousException(
-                    "Problem writing pane configuration on server."
-                ) from None
+            elif response.status_code == 403:
+                raise PlomSeriousException(response.text) from None
             else:
                 raise PlomSeriousException(
                     "Error of type {} when creating new rubric".format(e)
                 ) from None
-            messenger_response = False
 
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def MgetSolutionImage(self, question, version):
         self.SRmutex.acquire()

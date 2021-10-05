@@ -1,69 +1,30 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, Qt, QPropertyAnimation, pyqtProperty, QPointF
+from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsTextItem, QGraphicsItem
 
 from plom.client.tools.text import CommandMoveText
 
 
-class CommandDelta(QUndoCommand):
-    """Handle the placing and undoing/redoing of Deltas.
-
-    Very similar to CommandLine et al, but undo/redo
-    must send new mark to scene.
-    """
-
-    def __init__(self, scene, pt, delta):
-        super().__init__()
-        self.scene = scene
-        self.item = DeltaItem(pt, delta, style=scene.style, fontsize=scene.fontSize)
-        self.setText("Delta")
-
-    @classmethod
-    def from_pickle(cls, X, *, scene):
-        """Construct a CommandDelta from a serialized form."""
-        assert X[0] == "Delta"
-        X = X[1:]
-        if len(X) != 3:
-            raise ValueError("wrong length of pickle data")
-        return cls(scene, QPointF(X[1], X[2]), X[0])
-
-    def redo(self):
-        # Mark increased by delta
-        self.scene.changeTheMark(self.item.delta, undo=False)
-        self.item.flash_redo()
-        self.scene.addItem(self.item)
-
-    def undo(self):
-        # Mark decreased by delta - handled by undo flag
-        self.scene.changeTheMark(self.item.delta, undo=True)
-        self.item.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.item))
-
-
 class DeltaItem(QGraphicsTextItem):
     def __init__(self, pt, delta, style, fontsize=10):
         super().__init__()
         self.saveable = True
-        self.animator = [self]
-        self.animateFlag = False
         self.delta = delta
         self.restyle(style)
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        font.setPointSizeF(1.25 * fontsize)
+        font.setPixelSize(1.25 * fontsize)
         self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
-        # Has an animated border for undo/redo.
-        self.anim = QPropertyAnimation(self, b"thickness")
         # centre under the mouse-click.
         self.setPos(pt)
         cr = self.boundingRect()
@@ -96,22 +57,6 @@ class DeltaItem(QGraphicsTextItem):
             self.scene().undoStack.push(command)
         return super().itemChange(change, value)
 
-    def flash_undo(self):
-        # Animate border when undo thin->thick->none
-        self.anim.setDuration(200)
-        self.anim.setStartValue(self.normal_thick)
-        self.anim.setKeyValueAt(0.5, 4 * self.normal_thick)
-        self.anim.setEndValue(0)
-        self.anim.start()
-
-    def flash_redo(self):
-        # Animate border when undo thin->med->thin
-        self.anim.setDuration(200)
-        self.anim.setStartValue(self.normal_thick)
-        self.anim.setKeyValueAt(0.5, 2 * self.normal_thick)
-        self.anim.setEndValue(self.normal_thick)
-        self.anim.start()
-
     def pickle(self):
         return [
             "Delta",
@@ -119,17 +64,6 @@ class DeltaItem(QGraphicsTextItem):
             self.scenePos().x(),
             self.scenePos().y() - self.offset,
         ]
-
-    # For the animation of border
-    @pyqtProperty(int)
-    def thickness(self):
-        return self.thick
-
-    # For the animation of border
-    @thickness.setter
-    def thickness(self, value):
-        self.thick = value
-        self.update()
 
 
 class GhostDelta(QGraphicsTextItem):
@@ -144,7 +78,7 @@ class GhostDelta(QGraphicsTextItem):
         self.setPlainText(" {} ".format(self.delta))
         font = QFont("Helvetica")
         # Slightly larger font than regular textitem.
-        font.setPointSizeF(1.25 * fontsize)
+        font.setPixelSize(1.25 * fontsize)
         self.setFont(font)
         # Is not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)

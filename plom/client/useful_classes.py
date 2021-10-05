@@ -1,7 +1,6 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPixmap
@@ -19,19 +18,45 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QTableView,
+    QTextEdit,
     QToolButton,
     QVBoxLayout,
 )
+
 from plom import isValidStudentNumber
 
 
 class ErrorMessage(QMessageBox):
-    """A simple error message pop-up"""
+    """A simple error message pop-up
 
-    def __init__(self, txt):
+    args:
+        txt (str): the main error message.
+
+    kw-args:
+        details (str/None): a potentially large amount of details.  Might be
+            hidden by default.  Should be copy-pastable.
+        info (str/None): some more details, like an error message or part
+            of an error message.  Will be presented smaller or otherwise
+            deemphasized.
+        info_preformatted (bool): True by default which means the info text
+            is assumed to be preformatted (whitespace, newlines etc will be
+            preserved).  Long lines will be wrapped.
+    """
+
+    def __init__(self, txt, details=None, info=None, info_preformatted=True):
         super().__init__()
         self.setText(txt)
+        if details:
+            self.setDetailedText(details)
+        if info:
+            if info_preformatted:
+                self.setInformativeText(
+                    f'<small><pre style="white-space: pre-wrap;">\n{info}\n</pre></small>'
+                )
+            else:
+                self.setInformativeText(f"<small>{info}</small>")
         self.setStandardButtons(QMessageBox.Ok)
+        self.setDefaultButton(QMessageBox.Ok)
 
 
 class SimpleMessage(QMessageBox):
@@ -261,12 +286,6 @@ class ClientSettingsDialog(QDialog):
         line.setFrameShadow(QFrame.Sunken)
         flay.addRow(line)
 
-        self.leftHandMouse = QCheckBox("Left-handed mouse")
-        self.leftHandMouse.setCheckState(
-            Qt.Checked if s.get("mouse").lower() == "left" else Qt.Unchecked
-        )
-        flay.addWidget(self.leftHandMouse)
-
         self.checkSidebarOnRight = QCheckBox("Annotator sidebar on right")
         self.checkSidebarOnRight.setCheckState(
             Qt.Checked if s.get("SidebarOnRight") else Qt.Unchecked
@@ -322,6 +341,40 @@ class ClientSettingsDialog(QDialog):
             self.checkLogFile.checkState() == Qt.Checked,
             self.checkWarnCom.checkState() == Qt.Checked,
             self.checkWarnMark.checkState() == Qt.Checked,
-            self.leftHandMouse.checkState() == Qt.Checked,
             self.checkSidebarOnRight.checkState() == Qt.Checked,
         )
+
+
+class AddTagBox(QDialog):
+    def __init__(self, parent, currentTag, tagList=[]):
+        super(QDialog, self).__init__()
+        self.parent = parent
+        self.CB = QComboBox()
+        self.TE = QTextEdit()
+
+        flay = QFormLayout()
+        flay.addRow("Enter tag\n(max 256 char)", self.TE)
+        flay.addRow("Choose tag", self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+
+        vlay = QVBoxLayout()
+        vlay.addLayout(flay)
+        vlay.addWidget(buttons)
+        self.setLayout(vlay)
+
+        # set up widgets
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.CB.addItem("")
+        self.CB.addItems(tagList)
+        # Set up TE and CB so that when CB changed, text is updated
+        self.CB.currentTextChanged.connect(self.changedCB)
+        # If supplied with current text/delta then set them
+        if currentTag is not None:
+            self.TE.clear()
+            self.TE.insertPlainText(currentTag)
+
+    def changedCB(self):
+        self.TE.clear()
+        self.TE.insertPlainText(self.CB.currentText())

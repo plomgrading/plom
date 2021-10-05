@@ -35,7 +35,7 @@ __license__ = "GFDL"
 
 ## Image server
 * A port is used for message passing (to and from the clients).  The default port was chosen because it is the backup ssh port (and so our IT lads have it open on the departmental firewall).  If you want to play around (and serve files to other machines) you might need to ask the IT lads to open a port for you. Though if you are doing things on UBC wireless it might be different. Experiment.
-* Before you run the server, first run userManager.py and put in a couple of users with passwords. (this is not yet ready to be done while the server is running, but it shouldnt be too hard to get that working)
+* Before you run the server, first run userManager.py and put in a couple of users with passwords. (this is not yet ready to be done while the server is running, but it shouldn't be too hard to get that working)
     - If you want to re-use a user list from previous exam, copy
       the `resources/userList.json` file from the old test.
 * When you run image_server.py, it reads all the relevant page group images and indexes them in 2 databases (in ../resources) - one for identifying and one for marks. It also loads in the user list you have generated so that it can authenticate clients.
@@ -61,7 +61,7 @@ __license__ = "GFDL"
 * You can then either click "annotate and get next" or simply press enter.
 * This then opens up the annotation window.
 * This has simple drawing options - line, pen, box, tick, cross. Also simple text entry. Note line, tick and cross also work with right-click. right-click with line draws an arrow, while right-click with tick gives a cross and vice-versa.
-* Also one can click on the list of comments and then click into the annotation window (ie not drag) and the comment is pasted into place. Comments in the list can be added, edited, deleted. Draging them up and down reorders them.
+* Also one can click on the list of comments and then click into the annotation window (ie not drag) and the comment is pasted into place. Comments in the list can be added, edited, deleted. Dragging them up and down reorders them.
 * After the test has been annotated you can simply click a mark button (the max mark is set by the server on the basis of what you told it way back in 0101_construct_a_spec).
 * Pressing cancel discards all of this and returns to the first window
 * Pressing finish saves the annotated image and the mark and uploads them to the server (which files them away).

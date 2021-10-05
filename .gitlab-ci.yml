@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019 John Hsu
 # Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
+# Copyright (C) 2021 Morgan Arnold
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -8,17 +10,11 @@
 # without any warranty.
 
 # This the CI configuration for Plom
-#
-# TODO list
-# ---------
-#   * bump docker image to 20.10.2
-#     https://docs.docker.com/engine/release-notes/
-#   * bump Ubuntu 18.04 to 20.04 (and in Dockerfile)
 
-image: docker:19.03.14
+image: docker:20.10.8
 
 services:
-  - docker:19.03.14-dind
+  - docker:20.10.8-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -67,8 +63,18 @@ quick-pytests:
     - docker run $IM pytest-3 -l --pyargs plom
 
 
-# If we are on the master branch, we tag the above as "latest"
-docker-image-master:
+codespell:
+  image: python:3.9
+  stage: static_analysis
+  before_script:
+    - python3 -m pip install codespell
+  script:
+    - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
+  allow_failure: true
+
+
+# If on main branch, tag earlier image as "latest" (in Gitlab Container Registry)
+docker-tag-latest:
   stage: packaging
   needs: ["docker-image"]
   before_script:
@@ -78,7 +84,8 @@ docker-image-master:
     - docker tag $IM $IM_LATEST
     - docker push $IM_LATEST
   only:
-    - master
+    - main
+    - tags
 
 
 # If we have a tag, then push to PyPI using TWINE_* env vars
@@ -89,7 +96,7 @@ pypi:
   needs: ["docker-image"]
   cache: {}
   script:
-    - python3 -m pip install -U twine wheel setuptools
+    - pip install --upgrade twine wheel setuptools
     - python3 setup.py sdist bdist_wheel
     - python3 -m twine check dist/*
     - python3 -m twine upload dist/*
@@ -123,13 +130,13 @@ tag_matches_ver:
   rules:
    - if: $CI_COMMIT_TAG
   script:
-    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
     - echo "Now comparing to CI_COMMIT_TAG '$CI_COMMIT_TAG'"
     - echo $VER
     - echo $CI_COMMIT_TAG
     # note reversed logic and extra "v"
-    - python -c "exit(not 'v$VER' == '$CI_COMMIT_TAG')"
+    - python3 -c "exit(not 'v$VER' == '$CI_COMMIT_TAG')"
 
 
 black:
@@ -138,7 +145,7 @@ black:
   before_script:
     - pip3 install "black~=20.8b"
   script:
-    - black --check --diff plom
+    - black --check --diff .
   allow_failure: true
 
 
@@ -197,13 +204,13 @@ demoserver:
     - plom-build make -w 1234
     - python3 -m plom.produce.faketools -w 1234
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 fake_scribbled_exams1
+    - plom-scan upload -w 4567 fake_scribbled_exams1.pdf
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 fake_scribbled_exams2
+    - plom-scan upload -w 4567 fake_scribbled_exams2.pdf
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 fake_scribbled_exams3
+    - plom-scan upload -w 4567 fake_scribbled_exams3.pdf
     - plom-scan status -w 4567
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
@@ -236,14 +243,33 @@ hwdemoserver:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
-    - plom-hwscan status -w 4567
-    - python3 -m plom.produce.hwFaker -w 1234
-    - plom-hwscan allbyq -w 4567 -y
-    - plom-hwscan missing -w 4567 -y
-    - plom-hwscan submitted -w 4567
+    - export PLOM_USER=user0
+    - export PLOM_PASSWORD=0123
+    - export PLOM_MANAGER_PASSWORD=1234
+    - export PLOM_SCAN_PASSWORD=4567
+    - plom-build class --demo
+    - plom-build make
+    - plom-hwscan status
+    - python3 -m plom.produce.hwFaker
+    # TODO: the actual hwdemo script does more with qstr, semiloose
+    - plom-hwscan allbyq -y
+    - plom-hwscan missing -y
+    - plom-hwscan submitted
     - plom-hwscan submitted -d
+    - python3 -m plom.client.randoMarker
+    - plom-finish status
+    - plom-finish csv
+    - A=`cat marks.csv  | wc -l`     # How many lines?
+    - echo $A
+    - A="$((A-1))"
+    - bash -c "[[ $A -le 10 ]]"      # 10 named papers
+    - bash -c "[[ $A == 6 ]]"        # hwFaker makes 4 "semiloose"
+    - file marks.csv
+    - file marks.csv | grep text
+    - plom-finish reassemble
+    - B=`ls reassembled/ | wc -l`    # How many files?
+    - echo $B
+    - bash -c "[[ $B == $A ]]"
     - echo "Now take down the server"
     # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
     - jobs -l
@@ -291,14 +317,14 @@ fullworkflow:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
     # TODO: I removed some -c lines here...
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
     - plom-scan status -w 4567
     ## not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
@@ -307,8 +333,11 @@ fullworkflow:
     - plom-finish status -w 1234
     - plom-finish csv -w 1234
     - A=`cat marks.csv  | wc -l`      # How many lines?
-    - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
-    - file -b marks.csv  | grep ASCII   # should be ascii test
+    - echo $A
+    - A="$((A-1))"
+    - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
+    - file marks.csv
+    - file marks.csv | grep text
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
@@ -326,6 +355,7 @@ fullworkflow:
     - jobs -l
     - popd
 
+
 backgroundTest:
   image: alpine
   stage: static_analysis
@@ -342,6 +372,7 @@ backgroundTest:
     - echo "Should be no jobs and this should succeed"
     - jobs -p
 
+
 appstreamValid:
   stage: static_analysis
   image: alpine
@@ -353,34 +384,33 @@ appstreamValid:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-# TODO: use newer ubuntu too?
-nodock_newdeps:
+# TODO: pip stuff not working on fedora:35
+# TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
+fedora_build:
   stage: build
   needs: []
-  image: ubuntu:18.04
+  image: fedora:34
   allow_failure: true
-  # Need pip >= 19, which turns out to be nontrivial: cannot just call
-  # pip/pip3 after upgrading, hence `python3 -m pip` stuff below
   before_script:
-    - apt-get update
-    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
-    - apt-get --no-install-recommends --yes install
-      zbar-tools cmake make imagemagick g++ openssl
-      python3-pytest python3-dev
-      python3-pip python3-setuptools python3-wheel
-      texlive-latex-extra dvipng latexmk texlive-fonts-recommended
-      libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev
-      libgl1-mesa-glx libsm6 libxrender1
-      iproute2 psmisc file
-    # apt-get --no-install-recommends --yes install libimage-exiftool-perl
-    - pip3 install --upgrade pip
-    - python3 -m pip -V
-    - python3 -m pip install --upgrade setuptools wheel
-    - python3 -m pip install packaging
-    # https://github.com/jbaiter/jpegtran-cffi/issues/27
-    - python3 -m pip install cffi
+    - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
+          turbojpeg-devel libjpeg-turbo-devel
+          latexmk tex-dvipng texlive-scheme-basic
+          tex-preview tex-charter tex-exam tex-preprint
+          python3-cffi python3-passlib python3-qt5
+          python3-jsmin python3-defusedxml python3-yaml
+          python3-urllib3 python3-more-itertools
+          python3-seaborn python3-aiohttp
+          python3-peewee python3-pandas python3-requests-toolbelt
+          python3-pip python3-wheel python3-setuptools
+          python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs
+          python3-pytest
+          python3-PyMuPDF python3-scikit-learn
+          file python3-file-magic
+          iproute
+    - pip --version
   script:
-    - python3 -m pip install .
+    - pip install jpegtran-cffi
+    - pip install .
     # First, run the unit tests
     - pytest-3 -l --pyargs plom
     # Build tests
@@ -408,14 +438,14 @@ nodock_newdeps:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
     # TODO: I removed some -c lines here...
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
     - plom-scan status -w 4567
     # not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
@@ -424,8 +454,104 @@ nodock_newdeps:
     - plom-finish status -w 1234
     - plom-finish csv -w 1234
     - A=`cat marks.csv  | wc -l`      # How many lines?
-    - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
-    - file -b marks.csv  | grep ASCII   # should be ascii test
+    - echo $A
+    - A="$((A-1))"
+    - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
+    - file marks.csv
+    - file marks.csv | grep text
+    - plom-finish reassemble -w 1234
+    - A=`ls reassembled/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
+    - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
+    - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
+    - plom-finish webpage
+    - A=`ls codedReturn/ | wc -l`    # How many files?
+    - bash -c "[[ $A == 20 ]]"       # 20-1 pdf + 1 html
+    - echo "Now take down the server"
+    # https://gitlab.com/gitlab-org/gitlab-runner/issues/2880
+    - jobs -l
+    - kill %1
+    - sleep 2
+    - echo "Should be no jobs and this should succeed"
+    - jobs -l
+    - popd
+
+
+# get latest pip deps, doesn't use docker, closer to user install
+# allowed to fail (some pip stuff might be new) but we want to know
+nodock_newdeps:
+  stage: build
+  needs: []
+  image: ubuntu:21.04
+  allow_failure: true
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+    - apt-get --no-install-recommends --yes install
+      cmake make g++ imagemagick openssl
+      dvipng latexmk texlive-latex-extra texlive-fonts-recommended
+      libpango-1.0-0 libpangocairo-1.0-0
+      libzbar0
+      libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev
+      libgl1-mesa-glx libsm6 libxrender1
+      python3-pytest python3-dev
+      python3-pip python3-setuptools python3-wheel
+      iproute2 psmisc file python3-magic
+    # apt-get --no-install-recommends --yes install libimage-exiftool-perl
+    - python3 -m pip install --upgrade pip setuptools wheel
+    - pip --version
+    # https://github.com/jbaiter/jpegtran-cffi/issues/27
+    - pip install cffi
+  script:
+    - pip install .
+    # First, run the unit tests
+    - pytest-3 -l --pyargs plom
+    # Build tests
+    - mkdir play
+    - pushd play
+    - plom-server init
+    - plom-server users --demo
+    - plom-build new
+    - plom-build parse
+    - python3 -m plom.produce.demotools
+    - ip addr
+    - plom-server launch &
+    - sleep 2
+    - sleep 2
+    - echo "Server should be in background"
+    - jobs -l
+    - echo "We should be able to connect to it"
+    - curl -k https://localhost:41984/Version
+    - plom-build class --demo -w 1234
+    - plom-build make -w 1234
+    - A=`ls papersToPrint/ | wc -l`  # How many files?
+    - bash -c "[[ $A == 20 ]]"       # should be 20
+    - python3 -m plom.produce.faketools -w 1234
+    # Scan and upload
+    # supposed to fail:
+    - if (plom-scan process); then false; else true; fi
+    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
+    # TODO: I removed some -c lines here...
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
+    - plom-scan status -w 4567
+    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
+    - plom-scan status -w 4567
+    # not supposed to be done yet:
+    - if (plom-finish status -w 1234); then false; else true; fi
+    - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
+    - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
+    - plom-finish status -w 1234
+    - plom-finish csv -w 1234
+    - A=`cat marks.csv  | wc -l`      # How many lines?
+    - echo $A
+    - A="$((A-1))"
+    - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
+    - file marks.csv
+    - file marks.csv | grep text
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
@@ -457,22 +583,24 @@ nodock_mindeps:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
     - apt-get --no-install-recommends --yes install
-      zbar-tools cmake make imagemagick g++ openssl
-      python3-pytest python3-dev
-      python3-pip python3-setuptools python3-wheel
-      texlive-latex-extra dvipng latexmk texlive-fonts-recommended
-      libpango-1.0 libpangocairo-1.0 libjpeg-turbo8-dev libturbojpeg0-dev
+      cmake make g++ imagemagick openssl
+      dvipng latexmk texlive-latex-extra texlive-fonts-recommended
+      libpango-1.0-0 libpangocairo-1.0-0
+      libzbar0
+      libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev
       libgl1-mesa-glx libsm6 libxrender1
+      python3-pytest python3 python3-dev
+      python3-pip python3-setuptools python3-wheel
       python3-cffi python3-passlib python3-pandas python3-pyqt5
-      python3-pyqrcode python3-png python3-dev
       python3-requests-toolbelt python3-pil python3-tqdm
       python3-defusedxml python3-jsmin python3-packaging
-      iproute2 psmisc file
-    - pip3 install --upgrade pip
+      iproute2 psmisc file python3-magic
+    - python3 -m pip install --upgrade pip
+    # On 18.04, for pip < 19 upgrading is nontrivial: need `python3 -m pip`
     - python3 -m pip -V
-    - python3 -m pip install --upgrade setuptools wheel
-    - python3 -m pip install -r requirements.txt.tempminima
+    - python3 -m pip install --upgrade pip setuptools wheel
   script:
+    - python3 -m pip install -r requirements.txt.tempminima
     - python3 -m pip install .
     # First, run the unit tests
     - pytest-3 -l --pyargs plom
@@ -501,14 +629,14 @@ nodock_mindeps:
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1
+    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
     # TODO: I removed some -c lines here...
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2
+    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
     - plom-scan status -w 4567
     - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3
+    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
     - plom-scan status -w 4567
     # not supposed to be done yet:
     - if (plom-finish status -w 1234); then false; else true; fi
@@ -517,8 +645,11 @@ nodock_mindeps:
     - plom-finish status -w 1234
     - plom-finish csv -w 1234
     - A=`cat marks.csv  | wc -l`      # How many lines?
-    - bash -c "[[ $A == 20 ]]"        # should be 19 + 1 - since 1 page from 1 test is deleted
-    - file -b marks.csv  | grep ASCII   # should be ascii test
+    - echo $A
+    - A="$((A-1))"
+    - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
+    - file marks.csv
+    - file marks.csv | grep text
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
@@ -536,33 +667,6 @@ nodock_mindeps:
     - jobs -l
     - popd
 
-
-# Build Client Binaries on Ubuntu 18.04
-# this one is built from our official docker image
-# Before extracting the version, we did:
-# for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu1804.bin}"; done;
-linuxbin_ubuntu1804:
-  stage: packaging
-  needs: ["docker-image"]
-  image: $IM
-  before_script:
-    - apt-get --no-install-recommends --yes install iproute2 psmisc file curl
-    - apt-get install -y libglib2.0 qt5-default
-    - python3 -m pip install pyinstaller
-  script:
-    - pyinstaller client.linux.spec
-    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
-    - echo "Extracted version string '$VER'"
-    - export NAME=PlomClient-$VER-linux-ubuntu1804.bin
-    - mv dist/PlomClient*.bin $NAME
-    - chmod 755 PlomClient*.bin
-    - md5sum PlomClient*.bin > md5sum
-    - ls $NAME
-    - cat md5sum
-  artifacts:
-    paths:
-    - PlomClient*.bin
-    - md5sum
 
 # upload binaries are generic gitlab packages
 binary_upload:
@@ -589,7 +693,7 @@ binary_upload:
       #### md5sum of compiled clients and other artifacts
 
       *TODO* indent four spaces
-      *TODO* paste in pypi and macos
+      *TODO* paste in pypi
       EOF
     - md5sum PlomClient* >> "release_desc.md"
     - export VER=${CI_COMMIT_TAG:1}
@@ -597,11 +701,11 @@ binary_upload:
     - export LINKNAME1="Compiled client for GNU/Linux (compiled on Ubuntu 18.04)"
     - export LINKNAME2="Compiled client for GNU/Linux (compiled on CentOS 7)"
     - export LINKNAME3="Compiled client for Windows"
-    - export LINKNAME4="Compiled client for macOS (for macOS ≥ 10.13.6)"
+    - export LINKNAME4="Compiled client for macOS (for macOS 11)"
     - export FILENAME1="PlomClient-$VER-linux-ubuntu1804.bin"
     - export FILENAME2="PlomClient-$VER-linux-centos7.bin"
     - export FILENAME3="PlomClient-$VER.exe"
-    - export FILENAME4="PlomClient-$VER-macos.bin"
+    - export FILENAME4="PlomClient-$VER-macos11.zip"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
     - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME3"
@@ -613,6 +717,8 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "$URL2"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME4 "$URL4"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
     - echo "" >> release_desc.md
@@ -625,20 +731,21 @@ binary_upload:
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
     - echo "" >> release_desc.md
-    - echo "https://pypi.org/project/plom/$VER  Find Plom on PyPI" >> release_desc.md
+    - echo "https://pypi.org/project/plom  Find Plom on PyPI" >> release_desc.md
     - echo "https://flathub.org/apps/details/org.plomgrading.PlomClient  Install Plom Client from Flathub (GNU/Linux)" >> release_desc.md
     - echo "https://hub.docker.com/r/plomgrading/server  Plom Server on DockerHub" >> release_desc.md
     - cat release_desc.md
   artifacts:
     paths:
       - release_desc.md
+    expire_in: 30 days
 
 
-# TODO: consider doing only on the master branch and only when tests pass
-linuxbin_ubuntu2004:
+# Build Client Binaries
+# These are run once tests pass: to change re-add `needs: []`
+linuxbin_ubuntu1804:
   stage: packaging
-  needs: []
-  image: ubuntu:20.04
+  image: ubuntu:18.04
   before_script:
     - apt-get update
     - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
@@ -647,25 +754,57 @@ linuxbin_ubuntu2004:
     - apt-get install -y libglib2.0 qt5-default
     - pip3 install --upgrade pip
     - python3 -m pip install pyinstaller
+    # On 18.04, for pip < 19 upgrading is nontrivial: need `python3 -m pip`
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - mv dist/PlomClient*.bin .
-    - chmod 755 PlomClient*.bin
-    - for f in PlomClient*.bin; do mv -v "$f" "${f/.bin/-ubuntu2004.bin}"; done;
-    - md5sum PlomClient*.bin > md5sum
-    - ls PlomClient*.bin
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - echo "Extracted version string '$VER'"
+    - export NAME=PlomClient-$VER-linux-ubuntu1804.bin
+    - mv dist/PlomClient*.bin $NAME
+    - chmod 755 $NAME
+    - md5sum $NAME > md5sum
+    - ls $NAME
     - cat md5sum
   artifacts:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
 
 
-# TODO: consider doing only on the master branch and only when tests pass
+linuxbin_ubuntu2004:
+  stage: packaging
+  image: ubuntu:20.04
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata curl
+    - apt-get --no-install-recommends --yes install iproute2 psmisc file binutils
+      python3 python3-dev python3-wheel python3-setuptools python3-pip
+    - apt-get install -y libglib2.0 qt5-default
+    - pip install --upgrade pip
+    - pip install pyinstaller
+  script:
+    - pip install -r requirements.txt.client
+    - pyinstaller client.linux.spec
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - echo "Extracted version string '$VER'"
+    - export NAME=PlomClient-$VER-linux-ubuntu2004.bin
+    - mv dist/PlomClient*.bin $NAME
+    - chmod 755 $NAME
+    - md5sum $NAME > md5sum
+    - ls $NAME
+    - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.bin
+    - md5sum
+    expire_in: 30 days
+
+
+# TODO: consider doing only on the main branch and only when tests pass
 linuxbin_centos:
   stage: packaging
-  needs: []
   image: centos:7
   before_script:
     - yum install -y dnf
@@ -678,7 +817,7 @@ linuxbin_centos:
   script:
     - python3 -m pip install -r requirements.txt.client
     - pyinstaller client.linux.spec
-    - export VER=$(python -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
     - export NAME=PlomClient-$VER-linux-centos7.bin
     - mv dist/PlomClient*.bin $NAME
@@ -690,6 +829,182 @@ linuxbin_centos:
     paths:
     - PlomClient*.bin
     - md5sum
+    expire_in: 30 days
+
+
+# Notes on macOS client builds
+# - build python from src for https://github.com/danhper/asdf-python/issues/38
+# - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
+# - to get hardcoded path: verbose `pip install -v -v pyinstaller`
+macos11_client:
+  image: macos-11-xcode-12
+  tags:
+  - shared-macos-amd64
+  except:
+  - external_pull_requests
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - asdf which python
+  - asdf uninstall python 3.9.1
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf shell python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos11.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
+macos1015_client:
+  image: macos-10.15-xcode-11
+  tags:
+  - shared-macos-amd64
+  when: manual
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - asdf which python
+  - asdf uninstall python 3.8.0
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf shell python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - export ZIPNAME=PlomClient-$VER-macos10_15.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
+macos1014_client:
+  image: macos-10.14-xcode-10
+  tags:
+  - shared-macos-amd64
+  when: manual
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf local python 3.9.6
+  - asdf which python
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos10_14.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
+
+macos1013_client:
+  image: macos-10.13-xcode-9
+  tags:
+  - shared-macos-amd64
+  when: manual
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - asdf current
+  - asdf which python
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - asdf which python
+  - asdf local python 3.9.6
+  - python --version
+  - pip --version
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install PyQt5==5.15.2  # Issue #1434
+  - pip install pyinstaller==4.3  # Issue #1587 codesign failure
+  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
 
 
 .shared_windows_runners:
@@ -715,23 +1030,25 @@ winmintest:
 
 # Build Windows client binaries
 # This section written in PowerShell
-# TODO: consider doing this only on the master branch
 winpyinst:
   extends:
   - .shared_windows_runners
   stage: packaging
-  needs: []
   before_script:
   - choco install -y python3 --version 3.9
   - refreshenv
+  - c:\python39\python -m pip --version
+  - c:\python39\python -m pip install --user --upgrade pip
+  - c:\python39\python -m pip --version
+  - c:\python39\python -m pip install --user --upgrade setuptools wheel
   script:
-  - C:\Python39\Scripts\pip install -r requirements.txt.client
-  # temporarily limit to 4.1 for Issue #1353
-  - C:\Python39\Scripts\pip install pyinstaller==4.1
+  - c:\python39\python -m pip install -r requirements.txt.client
+  # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
+  - c:\python39\python -m pip install pyinstaller==4.5.1
   - refreshenv
-  - c:\Python39\python -m plom.scripts.client -h
-  - c:\Python39\Scripts\pyinstaller client.windows.spec
-  - $VER = &"c:\Python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
+  - c:\python39\python -m plom.scripts.client -h
+  - c:\python39\scripts\pyinstaller client.windows.spec
+  - $VER = &"c:\python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
   - $NAME = "PlomClient-$VER.exe"
   - move dist\PlomClient*.exe $NAME
@@ -742,3 +1059,4 @@ winpyinst:
     paths:
     - PlomClient*.exe
     - md5sum.txt
+    expire_in: 30 days

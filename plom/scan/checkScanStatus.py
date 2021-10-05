@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-
-import getpass
+# Copyright (C) 2021 Jed Yeo
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import ScanMessenger
@@ -18,9 +17,6 @@ def get_number_of_questions(server=None, pwd=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException:
@@ -31,15 +27,24 @@ def get_number_of_questions(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(-1)
+        raise
 
-    spec = msgr.get_spec()
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return spec["numberOfQuestions"]
 
 
-def checkStatus(server=None, pwd=None):
+def check_and_print_scan_status(server=None, pwd=None):
+    """Prints summary of test/hw uploads.
+
+    More precisely. Prints lists
+    * which tests have been used (ie at least one uploaded page)
+    * which tests completely scanned (both tpages and hwpage)
+    * incomplete tests (missing one tpage or one hw-question)
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ScanMessenger(s, port=p)
@@ -47,10 +52,6 @@ def checkStatus(server=None, pwd=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-
-    # get started
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException as e:
@@ -61,15 +62,17 @@ def checkStatus(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
-    spec = msgr.get_spec()
-
-    ST = msgr.getScannedTests()  # returns pairs of [page,version] - only display pages
-    UT = msgr.getUnusedTests()
-    IT = msgr.getIncompleteTests()
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+        # returns pairs of [page,version] - only display pages
+        ST = msgr.getScannedTests()
+        UT = msgr.getUnusedTests()
+        IT = msgr.getIncompleteTests()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     print("Test papers unused: [{}]".format(format_int_list_with_runs(UT)))
 
@@ -93,7 +96,7 @@ def checkStatus(server=None, pwd=None):
                 format_int_list_with_runs(scannedHWPages),
             )
         )
-
+    print("Number of scanned tests in the system: {}".format(len(ST)))
     print("Incomplete scans - listed with their missing pages: ")
     for t in IT:
         missingPagesT = []
@@ -124,9 +127,6 @@ def checkMissingHWQ(server=None, pwd=None):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException as e:
@@ -137,12 +137,13 @@ def checkMissingHWQ(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
-    missingHWQ = msgr.getMissingHW()
-    msgr.closeUser()
-    msgr.stop()
-
+    try:
+        missingHWQ = msgr.getMissingHW()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return missingHWQ
 
 
@@ -154,9 +155,6 @@ def replaceMissingHWQ(server, pwd, student_id, question):
         msgr = ScanMessenger(server)
     msgr.start()
 
-    if not pwd:
-        pwd = getpass.getpass("Please enter the 'scanner' password:")
-
     try:
         msgr.requestAndSaveToken("scanner", pwd)
     except PlomExistingLoginException as e:
@@ -167,14 +165,14 @@ def replaceMissingHWQ(server, pwd, student_id, question):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
-    rval = msgr.replaceMissingHWQuestion(
-        student_id=student_id, test=None, question=question
-    )  # can replace by SID or by test-number
-    msgr.triggerUpdateAfterHWUpload()
-
-    msgr.closeUser()
-    msgr.stop()
-
+    try:
+        rval = msgr.replaceMissingHWQuestion(
+            student_id=student_id, test=None, question=question
+        )  # can replace by SID or by test-number
+        msgr.triggerUpdateAfterHWUpload()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return rval

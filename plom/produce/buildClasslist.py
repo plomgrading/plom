@@ -1,19 +1,22 @@
-#!/usr/bin/env python3
-
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
-import os
+from pathlib import Path
 import sys
 import tempfile
 
-import pkg_resources
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 import pandas
 
+import plom
 from ..finish.return_tools import import_canvas_csv
 
 
@@ -44,10 +47,10 @@ def clean_non_canvas_csv(csv_file_name):
     You may want to check first with `check_is_non_canvas_csv`.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName.
+        pandas.DataFrame: data with columns `id` and `studentName`.
     """
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
@@ -109,17 +112,17 @@ def clean_non_canvas_csv(csv_file_name):
 
 
 def check_is_non_canvas_csv(csv_file_name):
-    """Read the csv file and check to see if the id and student name exist.
+    """Read the csv file and check if id and appropriate student name exist.
 
     1. Check if id is present.
     2. Check if studentName is preset.
     3. If not, check for given name and surname in the document.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        bool -- True/False
+        bool
     """
 
     student_info_df = pandas.read_csv(csv_file_name, dtype="object")
@@ -182,10 +185,10 @@ def clean_canvas_csv(csv_file_name):
     using `check_is_canvas_csv`.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): the csv file.
 
     Returns:
-        pandas.core.frame.DataFrame -- Dataframe object returned with columns id and studentName.
+        pandas.DataFrame: data with columns `id` and `studentName`
     """
     student_info_df = import_canvas_csv(csv_file_name)
     student_info_df = student_info_df[["Student Number", "Student"]]
@@ -194,13 +197,14 @@ def clean_canvas_csv(csv_file_name):
 
 
 def check_is_canvas_csv(csv_file_name):
-    """Checks to see if a function is a canvas style csv file.
+    """Detect if a csv file is likely a Canvas-exported classlist.
 
     Arguments:
-        csv_file_name {Str} -- Name of the csv file.
+        csv_file_name (pathlib.Path/str): csv file to be checked.
 
     Returns:
-        boolean -- True/False
+        bool: True if we think the input was from Canvas, based on
+            presence of certain header names.  Otherwise False.
     """
     with open(csv_file_name) as csvfile:
         csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
@@ -209,17 +213,17 @@ def check_is_canvas_csv(csv_file_name):
 
 
 def check_latin_names(student_info_df):
-    """Pass the pandas object and check studentNames encode to Latin-1.
+    """Check if a dataframe has "studentName"s that encode to Latin-1.
 
     Prints out a warning message for any that are not encodable.
 
     Arguments:
-        student_info_df {pandas.core.frame.DataFrame} -- Dataframe object returned with columns id and studentName.
+        student_info_df (pandas.DataFrame): with at least columns `id`
+            and `studentName`.
 
     Returns:
-        bool -- True/False
+        bool: False if one or more names contain non-Latin characters.
     """
-
     # TODO - make this less eurocentric in the future.
     encoding_problems = []
     for index, row in student_info_df.iterrows():
@@ -247,17 +251,15 @@ def process_classlist_backend(student_csv_file_name):
     1. Check if the file is a csv exported from Canvas.  If so extract
        relevant headers and clean-up the file.
     2. Otherwise check for suitable ID and name columns.
-    3. Otherwise exit(1).  TODO: library calls shouldn't do this!
-    4. Check for latin character encodability, a restriction to be
+    3. Check for latin character encodability, a restriction to be
        loosened in the future.
 
     Arguments:
-        student_csv_file_name (str): Name of the class info csv file.
+        student_csv_file_name (pathlib.Path/str): class info csv file.
 
     Return:
-        pandas dataframe: the processed classlist data.
+        pandas.DataFrame: the processed classlist data.
     """
-
     with open(student_csv_file_name) as csvfile:
         csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
         csv_fields = csv_reader.fieldnames
@@ -280,10 +282,8 @@ def process_classlist_backend(student_csv_file_name):
         print(
             "We have successfully extracted and renamed columns from the non Canvas data."
         )
-    # Otherwise we have an error
     else:
-        print("Problems with the classlist you supplied. See output above.")
-        sys.exit(1)
+        raise ValueError("Problems with the supplied classlist. See output above.")
 
     # Check characters in names are latin-1 compatible
     if not check_latin_names(student_info_df):
@@ -300,7 +300,21 @@ def process_classlist_backend(student_csv_file_name):
     return student_info_df
 
 
-def process_class_list(student_csv_file_name, demo=False):
+def get_demo_classlist():
+    """Get the demo classlist."""
+    # Direct approach: but maybe I like exercising code-paths with below...
+    # with resources.open_binary(plom, "demoClassList.csv") as f:
+    #     df = clean_non_canvas_csv(f)
+    # classlist = df.to_dict("records")
+
+    b = resources.read_binary(plom, "demoClassList.csv")
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
+        with open(f.name, "wb") as fh:
+            fh.write(b)
+        return process_classlist_file(f.name)
+
+
+def process_classlist_file(student_csv_file_name):
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
@@ -315,33 +329,18 @@ def process_class_list(student_csv_file_name, demo=False):
     Alternatively, give a .csv exported from Canvas (experimental!)
 
     Arguments:
-        student_csv_file_name (str): Name of the class info csv file.
+        student_csv_file_name (pathlib.Path/str): class info csv file.
 
     Keyword Arguments:
         demo (bool): if `True`, the filename is ignored and we use demo
             data (default: `False`).
 
     Return:
-        dict: keys are student IDs (str), values are student names (str).
+        list: A list of dicts, each with `"id"` and `"studentName"`.
     """
-    if demo:
-        print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
-        cl = pkg_resources.resource_string("plom", "demoClassList.csv")
-        # this is dumb, make it work right out of the string/bytes
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
-            with open(f.name, "wb") as fh:
-                fh.write(cl)
-            return process_class_list(f.name)
-        # from io import StringIO, BytesIO
-        # student_csv_file_name = BytesIO(cl)
-
-    if not student_csv_file_name:
-        print("Please provide a classlist file: see help")
-        sys.exit(1)
-
-    if not os.path.isfile(student_csv_file_name):
-        print('Cannot find file "{}"'.format(student_csv_file_name))
-        sys.exit(1)
+    student_csv_file_name = Path(student_csv_file_name)
+    if not student_csv_file_name.exists():
+        raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
     df = process_classlist_backend(student_csv_file_name)
-    # order is important, leave it as a list
-    return list(zip(df.id, df.studentName))
+    # "records" makes it output a list-of-dicts, one per row
+    return df.to_dict("records")

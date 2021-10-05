@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from collections import defaultdict
-import getpass
 import json
 import os
 import shutil
@@ -22,7 +21,7 @@ from plom.tpv_utils import (
 from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan import QRextract
-from plom.scan import rotateBitmap
+from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
 
 
@@ -262,7 +261,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             flag = False
         if not flag:
             print(">> Mismatch between page scanned and spec - this should NOT happen")
-            print(">> Produced t{} p{} v{}".format(t, p, tfv[1]))
+            print(f">> Produced t{t} p{p} v{v}")
             print(
                 ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
                     spec["numberToProduce"],
@@ -278,7 +277,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             )  # pref = "bname/pageImages", suf = blah-n.png
             dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
 
-            print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
+            print(f"[F] {fname}: moving to unknownPages")
             # move the blah.<ext> and blah.<ext>.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
@@ -289,7 +288,6 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
 
 
 def moveScansIntoPlace(examsScannedNow):
-    # os.chdir("pageImages")
     # For each test we have just scanned
     for fname in examsScannedNow:
         t = examsScannedNow[fname][0]
@@ -320,19 +318,8 @@ def processBitmaps(bundle, server=None, password=None):
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'scanner' password:")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
-
-    # get started
     try:
-        scanMessenger.requestAndSaveToken("scanner", pwd)
+        scanMessenger.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -341,11 +328,13 @@ def processBitmaps(bundle, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
-    spec = scanMessenger.get_spec()
-    scanMessenger.closeUser()
-    scanMessenger.stop()
+    try:
+        spec = scanMessenger.get_spec()
+    finally:
+        scanMessenger.closeUser()
+        scanMessenger.stop()
 
     decode_QRs_in_image_files(bundle / "pageImages")
     checkQRsValid(bundle, spec, examsScannedNow)

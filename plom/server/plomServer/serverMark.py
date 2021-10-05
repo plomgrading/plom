@@ -6,6 +6,8 @@
 from datetime import datetime
 import hashlib
 import imghdr
+from io import BytesIO
+import json
 import os
 import logging
 
@@ -25,7 +27,7 @@ def MgetQuestionMax(self, question_number, version_number):
     Returns:
         list: A list where the first element is a boolean operation
             status response. The second element is either a string
-            indicating if question fo version number is incorrect, or,
+            indicating if question or version number is incorrect, or,
             the maximum score for this question as an integer.
     """
 
@@ -112,25 +114,16 @@ def MgetNextTask(self, question_number, version_number):
         return [True, give]
 
 
-def MlatexFragment(self, username, latex_fragment):
-    """Respond with a path to the latex fragment image.
+def MlatexFragment(self, latex_fragment):
+    """Respond with image data for a rendered latex of a text fragment.
 
     Args:
-        username (str): Username string.
-        latex_fragment (str): The latex string for the latex image requested.
+        latex_fragment (str): The string to be rendered.
 
     Returns:
-        list: A list with either False or True with the latex image's
-            file name.
+        tuple: `(True, imgdata)`, or `(False, error_message)`.
     """
-
-    # TODO - only one frag file per user - is this okay?
-    filename = os.path.join(self.tempDirectory.name, "{}_frag.png".format(username))
-
-    if texFragmentToPNG(latex_fragment, filename):
-        return [True, filename]
-    else:
-        return [False]
+    return texFragmentToPNG(latex_fragment)
 
 
 def MclaimThisTask(self, username, task_code):
@@ -167,12 +160,12 @@ def MreturnMarkedTask(
     question_number,
     version_number,
     mark,
-    image,
+    annotated_image,
     plomdat,
     rubrics,
     time_spent_marking,
     tags,
-    md5_code,
+    annotated_image_md5,
     integrity_check,
     image_md5s,
 ):
@@ -184,13 +177,13 @@ def MreturnMarkedTask(
         question_number (int): Marked queston number.
         version_number (int): Marked question version number.
         mark (int): Question mark.
-        image (bytearray): Marked image of question.
+        annotated_image (bytearray): Marked image of question.
         plomdat (bytearray): Plom data file used for saving marking information in
-            editable format.
+            editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
         tags (str): Tag assigned to the paper.
-        md5_code (str): MD5 hash key for this task.
+        annotated_image_md5 (str): MD5 hash of the annotated image.
         integrity_check (str): the integrity_check string for this task
         image_md5s (list[str]): list of image md5sums used.
 
@@ -200,37 +193,39 @@ def MreturnMarkedTask(
             [False, Error message of either mismatching codes or database owning the task.]
             [True, number of graded tasks, total number of tasks.]
     """
-
-    # TODO: score + file sanity checks were done at client. Do we need to redo here?
-    # image, plomdat are bytearrays, comments = list
     annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
     plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
 
     # do sanity checks on incoming annotation image file
-    # Check the annotated_filename is valid png - just check header presently
-    # notice that 'imghdr.what(name, h=blah)' ignores the name, instead checks stream blah.
-    if imghdr.what(annotated_filename, h=image) != "png":
-        log.error(
-            "Uploaded annotation file is not a PNG. Instead is = {}".format(
-                imghdr.what(annotated_filename, h=image)
-            )
-        )
-        return [False, "Misformed image file. Try again."]
+    # Check the annotated_image is valid png - just check header presently
+    imgtype = imghdr.what(annotated_filename, h=annotated_image)
+    if imgtype != "png":
+        errstr = f'Malformed annotated image file: expected png got "imgtype"'
+        log.error(errstr)
+        return [False, errstr]
 
     # Also check the md5sum matches
-    md5n = hashlib.md5(image).hexdigest()
-    if md5_code != md5n:
-        log.error(
-            "Mismatched between client ({}) and server ({}) md5sums of annotated image.".format(
-                md5_code, md5n
+    md5 = hashlib.md5(annotated_image).hexdigest()
+    if md5 != annotated_image_md5:
+        errstr = f"Checksum mismatch: annotated image data has {md5} but client said {annotated_image_md5}"
+        log.error(errstr)
+        return [False, errstr]
+
+    # Sanity check the plomfile
+    # TODO: ok to read plomdat twice?  Maybe save the json later
+    try:
+        plom_data = json.load(BytesIO(plomdat))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        return [False, f"Invalid JSON in plom file data: {str(e)}"]
+    if plom_data.get("currentMark") != mark:
+        return [False, f"Mark mismatch: {mark} does not match plomfile content"]
+    for x, y in zip(image_md5s, plom_data["base_images"]):
+        if x != y["md5"]:
+            errstr = (
+                "data mismatch: base image md5s do not match plomfile: "
+                + f'{image_md5s} versus {plom_data["base_images"]}'
             )
-        )
-        return [
-            False,
-            "Misformed image file - md5sum doesn't match serverside={} vs clientside={}. Try again.".format(
-                md5n, md5_code
-            ),
-        ]
+            return [False, errstr]
 
     # now update the database
     database_task_response = self.DB.MtakeTaskFromClient(
@@ -242,7 +237,7 @@ def MreturnMarkedTask(
         rubrics,
         time_spent_marking,
         tags,
-        md5n,
+        annotated_image_md5,
         integrity_check,
         image_md5s,
     )
@@ -261,7 +256,7 @@ def MreturnMarkedTask(
 
     # now write in the files
     with open(annotated_filename, "wb") as file_header:
-        file_header.write(image)
+        file_header.write(annotated_image)
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
 
@@ -269,8 +264,10 @@ def MreturnMarkedTask(
     # return ack with current counts.
     return [
         True,
-        self.DB.McountMarked(question_number, version_number),
-        self.DB.McountAll(question_number, version_number),
+        (
+            self.DB.McountMarked(question_number, version_number),
+            self.DB.McountAll(question_number, version_number),
+        ),
     ]
 
 
@@ -296,24 +293,6 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
                 tags,
             )
         )
-
-
-def MgetImages(self, username, task_code, integrity_check):
-    """Respond with paths to the marked and original images of a marked question.
-
-    Args:
-        username (str): User who marked the paper.
-        task_code (str): Code string for the task.
-        integrity_check (str): Integrity check string for the task.
-
-    Returns:
-        list: A list of the format:
-            [False, Error message string.]
-            [True, Number of papers in the question, md5 list, Original images paths,
-            Annotated image path, Plom data file for this page]
-    """
-
-    return self.DB.MgetImages(username, task_code, integrity_check)
 
 
 # TODO: Have to figure this out.  Please needs documentation.
@@ -346,11 +325,10 @@ def MgetWholePaper(self, test_number, question_number):
 
     Returns:
         list: A list including the following information:
-            Boolean of wether we got the paper images.
+            Boolean of whether we got the paper images.
             A list of lists including [`test_version`, `image_md5sum_list`, `does_page_belong_to_question`].
             Followed by a series of image paths for the pages of the paper.
     """
-
     return self.DB.MgetWholePaper(test_number, question_number)
 
 

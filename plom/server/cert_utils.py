@@ -5,15 +5,11 @@
 """SSL and related utilities for the Plom Server"""
 
 import locale
-import logging
 from pathlib import Path
 import subprocess
 import shlex
 
 from plom.server import confdir
-
-
-log = logging.getLogger("server")
 
 
 def build_self_signed_SSL_keys(dur=confdir, extra_args=""):

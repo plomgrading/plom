@@ -1,8 +1,6 @@
 ## Files n things
 * reassembled = directory that will contain the reassembled and marked papers.
 
-* coverPages = directory that contains the front pages (containing student info + marks) for each completed paper.
-
 * 07_check_completed - this script checks to see which of the exams scanned and grouped have been id'd and marked in their entirety. If a paper has been completed, then a coverpage is produced, and globbed together with the id pages and the pagegroup to form a reassembled exam. That exam is stored in the 'reassembled' directory and saved as 'exam_X.pdf' where X is the student number.
  * The cover page consists of
    * student number

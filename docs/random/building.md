@@ -7,9 +7,9 @@
 
 * TA = individual who will mark questions.
 
-* Exam = refers to the whole project. A midterm-test, or quiz, or final-exam, the associated specifications and marking proceses etc etc, will be an "Exam" in this context.
+* Exam = refers to the whole project. A midterm-test, or quiz, or final-exam, the associated specifications and marking processes etc etc, will be an "Exam" in this context.
 
-* Exam-name = a name for the piece of assessment. An alpha-numeric string with no spaces(?). For example,  "m101mt1" meaning "Mathematics101 midterm 1". This will be used by the system to ensure scans from one project/exam are not uploaded into another project/exam.
+* Exam-name = a name for the piece of assessment. An alphanumeric string with no spaces(?). For example,  "m101mt1" meaning "Mathematics101 midterm 1". This will be used by the system to ensure scans from one project/exam are not uploaded into another project/exam.
 
 * Test = the actual piece of assessment (midterm / quiz / final) and not all the associated infrastructure and stuff. This is perhaps what we typically think of when we think of a test - the questions and papers etc.
 
@@ -116,16 +116,16 @@ So the blueprint needs:
 
 ## Construction of papers
 * Each page of each paper should be marked with:
-  * A triangle in the staple-corner which will contain the exam-name. Human readible. Since the page is (typically) stapled at the top-left, this will be on the top-left on odd-numbered pages and top-right on even-numbered pages.
+  * A triangle in the staple-corner which will contain the exam-name. Human readable. Since the page is (typically) stapled at the top-left, this will be on the top-left on odd-numbered pages and top-right on even-numbered pages.
 
-  * A rectangle in the top-centre containing the number of the test and the page - for example "0073.4" meaning paper-73, page-4.  Human readible. This helps for manual sorting and also identification of mis-scanned pages.
+  * A rectangle in the top-centre containing the number of the test and the page - for example "0073.4" meaning paper-73, page-4.  Human readable. This helps for manual sorting and also identification of mis-scanned pages.
 
-  * A QR-code that encodes the TPV-code of the page. At present this is encoded as the tring "tXXXXpYYvZ" where XXXX is the number of the test (zero-padded), YY is the page-number (zero padded) and Z indicates from which source-version the page was pulled. This should be placed on the opposite side of the page from the staple-corner. So top-right on odd-numbered pages and top-left on even-numbered pages.
+  * A QR-code that encodes the TPV-code of the page. At present this is encoded as the string "tXXXXpYYvZ" where XXXX is the number of the test (zero-padded), YY is the page-number (zero padded) and Z indicates from which source-version the page was pulled. This should be placed on the opposite side of the page from the staple-corner. So top-right on odd-numbered pages and top-left on even-numbered pages.
 
   * In the current implementation the above QR code is also stamped on the same side of the page but at the bottom. A third QR-code containing the name of the test is stamped in the last corner.
 
   * **Improvement that needs testing** replace the current 3 qr-codes with a single qr-code at the top non-staple corner of the form "tXXXXpYYvZnS" where
-  "S" is now the test name as a string. Some care is required on restricting the name of the test to be of reasonably short length and only contain alpha-numeric. Otherwise the qr-code might need to be too large. It would be good to keep it a reasonable size.
+  "S" is now the test name as a string. Some care is required on restricting the name of the test to be of reasonably short length and only contain alphanumeric. Otherwise the qr-code might need to be too large. It would be good to keep it a reasonable size.
 
 * At present the pdf-manipulation (gluing and stamping) is done using pymupdf. However we have found it to be a bit delicate (errors on certain source pdfs), so perhaps it would be better to see if it could all be done using imagemagick?
 

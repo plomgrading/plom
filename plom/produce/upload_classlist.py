@@ -2,15 +2,13 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-import sys
-from getpass import getpass
-
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomConflict,
     PlomRangeException,
 )
+from .buildClasslist import get_demo_classlist
 
 
 def get_messenger(server=None, password=None):
@@ -21,9 +19,6 @@ def get_messenger(server=None, password=None):
         msgr = ManagerMessenger(server)
 
     msgr.start()
-
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
 
     try:
         msgr.requestAndSaveToken("manager", password)
@@ -36,36 +31,49 @@ def get_messenger(server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
-        sys.exit(10)
+        raise
 
     return msgr
 
 
-def upload_classlist(classlist, msgr):
+def upload_classlist(classlist, server, password):
     """Uploads a classlist file to the server.
 
     Arguments:
-        classdict (list): list of (str, str) pairs of the form
-                (student ID, student name).
+        classdict (list): list of dict, each has at least keys `"id"` and
+            `"studentName"`, optionally other fields too.
         msgr (ManagerMessenger): an already-connected messenger object for
-                talking to the server.
-
-
+            talking to the server.
     """
+    msgr = get_messenger(server, password)
+    _raw_upload_classlist(classlist, msgr)
 
+
+def _raw_upload_classlist(classlist, msgr):
+    # TODO: does this distinct only exist for the mock test?  Maybe not worth it!
     try:
         msgr.upload_classlist(classlist)
+        print(f"Uploaded classlist of length {len(classlist)}.")
+        print(f"  First student:  {classlist[0]}.")
+        print(f"  Last student: {classlist[-1]}.")
     except PlomRangeException as e:
         print(
             "Error: classlist lead to the following specification error:\n"
             "  {}\n"
             "Perhaps classlist is too large for specTest.numberToProduce?".format(e)
         )
-        # TODO: I think the caller should be doing all this exit() stuff
-        sys.exit(4)
+        raise
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")
-        sys.exit(3)
+        raise
     finally:
         msgr.closeUser()
         msgr.stop()
+
+
+def upload_demo_classlist(server=None, password=None):
+    """Uploads the demo classlist file to the server."""
+
+    print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
+    classlist = get_demo_classlist()
+    upload_classlist(classlist, server, password)

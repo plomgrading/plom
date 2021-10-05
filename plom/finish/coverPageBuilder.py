@@ -3,6 +3,7 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Liam Yih
 
 import sys
 from weasyprint import HTML, CSS
@@ -28,7 +29,7 @@ table, th, td {
 )
 
 
-def makeCover(test_num, sname, sid, tab):
+def makeCover(test_num, sname, sid, tab, pdfname):
     """Create html page of name ID etc and table of marks.
 
     Args:
@@ -36,6 +37,7 @@ def makeCover(test_num, sname, sid, tab):
         sname (str): student name.
         sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.
+        pdfname (pathlib.Path): filename to save the pdf into
     """
     htmlText = """
 <html>
@@ -70,19 +72,4 @@ def makeCover(test_num, sname, sid, tab):
 </html>"""
     # Pipe the htmltext into weasyprint.
     cover = HTML(string=htmlText)
-    # Write out the coverpage to PDF call it cover_X.pdf where X=StudentID.
-    cover.write_pdf(
-        "coverPages/cover_{}.pdf".format(str(test_num).zfill(4)), stylesheets=[css]
-    )
-
-
-if __name__ == "__main__":
-    # Take the arguments from the commandline.
-    # The args should be
-    #   TestNumber, 'The Name', ID
-    # and then for a list of lists of 4 numbers for each group:
-    #   '[[group, version, mark, maxPossibleMark], [...], [...]]'
-    arg = sys.argv[1:]
-    # build list of lists
-    arg[3] = eval(arg[3])
-    makeCover(*arg)
+    cover.write_pdf(pdfname, stylesheets=[css])

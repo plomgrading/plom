@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
+# Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
 import os
@@ -45,9 +46,19 @@ from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
-from plom.plom_exceptions import *
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomAPIException,
+    PlomExistingLoginException,
+    PlomAuthenticationException,
+    PlomOwnersLoggedInException,
+    PlomTakenException,
+    PlomNoMoreException,
+)
+from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
-from plom.server.aliceBob import simple_password
+from plom.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
 
@@ -56,7 +67,7 @@ class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
     def __init__(self, name=None, extant=[]):
-        super(UserDialog, self).__init__()
+        super().__init__()
         self.name = name
         self.initUI()
         if name is not None:
@@ -145,7 +156,7 @@ class UserDialog(QDialog):
 
 class QVHistogram(QDialog):
     def __init__(self, q, v, hist):
-        super(QVHistogram, self).__init__()
+        super().__init__()
         self.question = q
         self.version = v
         self.setWindowTitle("Histograms")
@@ -215,7 +226,7 @@ class QVHistogram(QDialog):
 
 class TestStatus(QDialog):
     def __init__(self, nq, status):
-        super(TestStatus, self).__init__()
+        super().__init__()
         self.status = status
         self.setWindowTitle("Status of test {}".format(self.status["number"]))
 
@@ -267,7 +278,7 @@ class TestStatus(QDialog):
 
 class ProgressBox(QGroupBox):
     def __init__(self, parent, qu, v, stats):
-        super(ProgressBox, self).__init__()
+        super().__init__()
         self.parent = parent
         self.question = qu
         self.version = v
@@ -312,7 +323,11 @@ class ProgressBox(QGroupBox):
             self.setVisible(False)
             return
         if self.stats["NMarked"] > 0:
-            self.avgL.setText("Average mark = {:0.2f}".format(self.stats["avgMark"]))
+            self.avgL.setText(
+                "Average mark = {:0.2f} / {}".format(
+                    self.stats["avgMark"], self.stats["fullMark"]
+                )
+            )
             self.mtL.setText(
                 "Avg marking time = {:0.1f}s".format(self.stats["avgMTime"])
             )
@@ -327,12 +342,27 @@ class ProgressBox(QGroupBox):
 
 
 class Manager(QWidget):
-    def __init__(self, parent):
+    def __init__(
+        self, parent, *, server=None, user=None, password=None, manager_msgr=None
+    ):
+        """Start a new Plom Manager window.
+
+        Args:
+            parent: A QApplication (I think).
+
+        Keyword Args:
+            manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
+                Note that the plain 'ol Messenger will not work.  By default
+                or if `None` is passed, we'll make the user login or use
+                other kwargs.
+            server (str/None):
+            user (str/None):
+            password (str/None):
+        """
         self.APIVersion = Plom_API_Version
-        super(Manager, self).__init__()
+        super().__init__()
         self.parent = parent
-        global managerMessenger
-        managerMessenger = None
+        self.msgr = manager_msgr
         print(
             "Plom Manager Client {} (communicates with api {})".format(
                 __version__, self.APIVersion
@@ -340,12 +370,24 @@ class Manager(QWidget):
         )
         self.ui = Ui_Manager()
         self.ui.setupUi(self)
+        if user:
+            self.ui.userLE.setText(user)
+        if password:
+            self.ui.passwordLE.setText(password)
+        if server:
+            self.setServer(server)
+
         self.ui.passwordLE.setFocus(True)
         self.connectButtons()
         self.ui.scanningAllTab.setEnabled(False)
         self.ui.progressAllTab.setEnabled(False)
         self.ui.reviewAllTab.setEnabled(False)
         self.ui.userAllTab.setEnabled(False)
+        if self.msgr:
+            self.initial_login()
+        else:
+            if password:
+                self.login()
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -373,9 +415,8 @@ class Manager(QWidget):
         self.ui.newUserB.clicked.connect(self.createUser)
 
     def closeWindow(self):
-        global managerMessenger
-        if managerMessenger is not None:
-            managerMessenger.closeUser()
+        if self.msgr is not None:
+            self.msgr.closeUser()
         self.close()
 
     def setServer(self, s):
@@ -414,24 +455,24 @@ class Manager(QWidget):
         mport = self.ui.mportSB.value()
 
         try:
-            # Have Messenger login into to server
-            global managerMessenger
-            managerMessenger = ManagerMessenger(server, mport)
-            managerMessenger.start()
+            self.msgr = ManagerMessenger(server, mport)
+            self.msgr.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage("Could not connect to server.\n\n{}".format(e)).exec_()
+            self.msgr = None  # reset to avoid Issue #1622
             return
 
         try:
-            managerMessenger.requestAndSaveToken(user, pwd)
+            self.msgr.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
             ErrorMessage(
                 "Could not authenticate due to API mismatch."
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
+            self.msgr = None  # reset to avoid Issue #1622
             return
-        except PlomExistingLoginException as e:
+        except PlomExistingLoginException:
             if (
                 SimpleMessage(
                     "You appear to be already logged in!\n\n"
@@ -444,18 +485,23 @@ class Manager(QWidget):
                 ).exec_()
                 == QMessageBox.Yes
             ):
-                managerMessenger.clearAuthorisation("manager", pwd)
+                self.msgr.clearAuthorisation("manager", pwd)
+            self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
             ErrorMessage("Could not authenticate: {}".format(e)).exec_()
+            self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomSeriousException as e:
             ErrorMessage(
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
             ).exec_()
+            self.msgr = None  # reset to avoid Issue #1622
             return
+        self.initial_login()
 
+    def initial_login(self):
         self.ui.scanningAllTab.setEnabled(True)
         self.ui.progressAllTab.setEnabled(True)
         self.ui.reviewAllTab.setEnabled(True)
@@ -490,7 +536,7 @@ class Manager(QWidget):
 
     # -------------------
     def getTPQV(self):
-        info = managerMessenger.get_spec()
+        info = self.msgr.get_spec()
         self.max_papers = info["numberToProduce"]
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
@@ -528,7 +574,7 @@ class Manager(QWidget):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
 
-        incomplete = managerMessenger.getIncompleteTests()  # triples [p,v,true/false]
+        incomplete = self.msgr.getIncompleteTests()  # triples [p,v,true/false]
         for t in incomplete:
             l0 = QTreeWidgetItem(["{}".format(t), ""])
             for (p, v, s) in incomplete[t]:
@@ -549,8 +595,8 @@ class Manager(QWidget):
                 l0i.removeChild(l0i.child(0))
             root.removeChild(l0i)
 
-        scanned = managerMessenger.getScannedTests()  # pairs [p,v]
-        colDict = managerMessenger.getCollidingPageNames()  # dict [fname]=[t,p,v]
+        scanned = self.msgr.getScannedTests()  # pairs [p,v]
+        colDict = self.msgr.getCollidingPageNames()  # dict [fname]=[t,p,v]
         cdtp = {u: "{}.{}".format(colDict[u][0], colDict[u][1]) for u in colDict}
 
         for t in scanned:
@@ -568,18 +614,18 @@ class Manager(QWidget):
     def viewPage(self, t, pdetails, v):
         if pdetails[0] == "t":  # is a test-page t.PPP
             p = pdetails.split(".")[1]
-            vp = managerMessenger.getTPageImage(t, p, v)
+            vp = self.msgr.getTPageImage(t, p, v)
         elif pdetails[0] == "h":  # is a hw-page = h.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = managerMessenger.getHWPageImage(t, q, o)
+            vp = self.msgr.getHWPageImage(t, q, o)
         elif pdetails[0] == "e":  # is a extra-page = e.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = managerMessenger.getEXPageImage(t, q, o)
+            vp = self.msgr.getEXPageImage(t, q, o)
         elif pdetails[0] == "l":  # is an l-page = l.o
             o = pdetails.split(".")[1]
-            vp = managerMessenger.getLPageImage(t, o)
+            vp = self.msgr.getLPageImage(t, o)
         else:
             return
 
@@ -641,7 +687,7 @@ class Manager(QWidget):
             return
         else:
             try:
-                rval = managerMessenger.removeAllScannedPages(test_number)
+                rval = self.msgr.removeAllScannedPages(test_number)
                 ErrorMessage("{}".format(rval)).exec_()
             except PlomOwnersLoggedInException as err:
                 ErrorMessage(
@@ -661,7 +707,7 @@ class Manager(QWidget):
             return
         else:
             try:
-                rval = managerMessenger.replaceMissingTestPage(
+                rval = self.msgr.replaceMissingTestPage(
                     test_number, page_number, version
                 )
                 ErrorMessage("{}".format(rval)).exec_()
@@ -683,7 +729,7 @@ class Manager(QWidget):
             return
         else:
             try:
-                rval = managerMessenger.replaceMissingHWQuestion(
+                rval = self.msgr.replaceMissingHWQuestion(
                     student_id=None, test=test_number, question=question
                 )
                 ErrorMessage("{}".format(rval)).exec_()
@@ -721,7 +767,7 @@ class Manager(QWidget):
             question, order = pvi[0].text(1)[2:].split(".")
             # drop the "h.", then split on "." - don't need 'order'
             self.substituteHWQuestion(test, int(question))
-        else:  # can't subtitute other sorts of pages
+        else:  # can't substitute other sorts of pages
             return
 
     def initUnknownTab(self):
@@ -746,7 +792,7 @@ class Manager(QWidget):
 
     def refreshUList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
-        unkList = managerMessenger.getUnknownPageNames()
+        unkList = self.msgr.getUnknownPageNames()
         r = 0
         for u in unkList:
             it0 = QStandardItem(os.path.split(u)[1])
@@ -770,11 +816,11 @@ class Manager(QWidget):
             return
         r = pvi[0].row()
         fname = self.unknownModel.item(r, 0).text()
-        vp = managerMessenger.getUnknownImage(fname)
+        vp = self.msgr.getUnknownImage(fname)
         if vp is None:
             return
         # get the list of ID'd papers
-        iDict = managerMessenger.getIdentified()
+        iDict = self.msgr.getIdentified()
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
             uvw = UnknownViewWindow(
@@ -808,10 +854,10 @@ class Manager(QWidget):
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
             if self.unknownModel.item(r, 2).text() == "discard":
-                managerMessenger.removeUnknownImage(self.unknownModel.item(r, 0).text())
+                self.msgr.removeUnknownImage(self.unknownModel.item(r, 0).text())
             elif self.unknownModel.item(r, 2).text() == "extra":
                 try:
-                    managerMessenger.unknownToExtraPage(
+                    self.msgr.unknownToExtraPage(
                         self.unknownModel.item(r, 0).text(),
                         self.unknownModel.item(r, 4).text(),
                         self.unknownModel.item(r, 5).text(),
@@ -826,7 +872,7 @@ class Manager(QWidget):
             elif self.unknownModel.item(r, 2).text() == "test":
                 try:
                     if (
-                        managerMessenger.unknownToTestPage(
+                        self.msgr.unknownToTestPage(
                             self.unknownModel.item(r, 0).text(),
                             self.unknownModel.item(r, 4).text(),
                             self.unknownModel.item(r, 5).text(),
@@ -847,7 +893,7 @@ class Manager(QWidget):
                     ).exec_()
             elif self.unknownModel.item(r, 2).text() == "homework":
                 try:
-                    managerMessenger.unknownToHWPage(
+                    self.msgr.unknownToHWPage(
                         self.unknownModel.item(r, 0).text(),
                         self.unknownModel.item(r, 4).text(),
                         self.unknownModel.item(r, 5).text(),
@@ -868,7 +914,7 @@ class Manager(QWidget):
         self.refreshUList()
 
     def viewWholeTest(self, testNumber):
-        vt = managerMessenger.getTestImages(testNumber)
+        vt = self.msgr.getTestImages(testNumber)
         if vt is None:
             return
         with tempfile.TemporaryDirectory() as td:
@@ -882,7 +928,7 @@ class Manager(QWidget):
             tv.exec_()
 
     def viewQuestion(self, testNumber, questionNumber):
-        vq = managerMessenger.getQuestionImages(testNumber, questionNumber)
+        vq = self.msgr.getQuestionImages(testNumber, questionNumber)
         if vq is None:
             return
         with tempfile.TemporaryDirectory() as td:
@@ -896,7 +942,7 @@ class Manager(QWidget):
             qv.exec_()
 
     def checkTPage(self, testNumber, pageNumber):
-        cp = managerMessenger.checkTPage(testNumber, pageNumber)
+        cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] == None:
             ErrorMessage(
@@ -929,7 +975,7 @@ class Manager(QWidget):
 
     def refreshCList(self):
         self.collideModel.removeRows(0, self.collideModel.rowCount())
-        colDict = managerMessenger.getCollidingPageNames()  # dict [fname]=[t,p,v]
+        colDict = self.msgr.getCollidingPageNames()  # dict [fname]=[t,p,v]
         r = 0
         for u in colDict.keys():
             it0 = QStandardItem(u)
@@ -958,8 +1004,8 @@ class Manager(QWidget):
         page = int(self.collideModel.item(r, 4).text())
         version = int(self.collideModel.item(r, 5).text())
 
-        vop = managerMessenger.getTPageImage(test, page, version)
-        vcp = managerMessenger.getCollidingImage(fname)
+        vop = self.msgr.getTPageImage(test, page, version)
+        vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
         with tempfile.NamedTemporaryFile() as oh:
@@ -988,12 +1034,10 @@ class Manager(QWidget):
     def doCActions(self):
         for r in range(self.collideModel.rowCount()):
             if self.collideModel.item(r, 2).text() == "discard":
-                managerMessenger.removeCollidingImage(
-                    self.collideModel.item(r, 0).text()
-                )
+                self.msgr.removeCollidingImage(self.collideModel.item(r, 0).text())
             elif self.collideModel.item(r, 2).text() == "replace":
                 try:
-                    managerMessenger.collidingToTestPage(
+                    self.msgr.collidingToTestPage(
                         self.collideModel.item(r, 0).text(),
                         self.collideModel.item(r, 3).text(),
                         self.collideModel.item(r, 4).text(),
@@ -1032,7 +1076,7 @@ class Manager(QWidget):
 
     def refreshDList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
-        disList = managerMessenger.getDiscardNames()  # list of pairs [filename, reason]
+        disList = self.msgr.getDiscardNames()  # list of pairs [filename, reason]
         r = 0
         for fname, reason in disList:
             it0 = QStandardItem(fname)
@@ -1052,7 +1096,7 @@ class Manager(QWidget):
             return
         r = pvi[0].row()
         fname = self.discardModel.item(r, 0).text()
-        vdp = managerMessenger.getDiscardImage(fname)
+        vdp = self.msgr.getDiscardImage(fname)
         if vdp is None:
             return
         with tempfile.NamedTemporaryFile() as dh:
@@ -1073,7 +1117,7 @@ class Manager(QWidget):
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
             if self.discardModel.item(r, 3).text() == "move":
-                managerMessenger.discardToUnknown(self.discardModel.item(r, 0).text())
+                self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
             else:
                 pass
                 # print(
@@ -1109,14 +1153,14 @@ class Manager(QWidget):
             return
         r = pvi[0].row()
         testNumber = int(self.ui.overallTW.item(r, 0).text())
-        stats = managerMessenger.RgetStatus(testNumber)
+        stats = self.msgr.RgetStatus(testNumber)
         TestStatus(self.numberOfQuestions, stats).exec_()
 
     def refreshOverallTab(self):
         self.ui.overallTW.clearContents()
         self.ui.overallTW.setRowCount(0)
 
-        opDict = managerMessenger.RgetCompletionStatus()
+        opDict = self.msgr.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
         r = 0
@@ -1147,7 +1191,7 @@ class Manager(QWidget):
         self.ui.predictionTW.activated.connect(self.viewIDPage)
 
     def refreshIDTab(self):
-        ti = managerMessenger.IDprogressCount()
+        ti = self.msgr.IDprogressCount()
         self.ui.papersLE.setText(str(ti[1]))
         self.ui.idPB.setValue(ti[0])
         self.ui.idPB.setMaximum(ti[1])
@@ -1155,7 +1199,7 @@ class Manager(QWidget):
 
     def selectRectangle(self):
         try:
-            imageList = managerMessenger.IDgetImageFromATest()
+            imageList = self.msgr.IDgetImageFromATest()
         except PlomNoMoreException as err:
             ErrorMessage("No unIDd images to show.").exec_()
             return
@@ -1185,7 +1229,7 @@ class Manager(QWidget):
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
-            imageList = managerMessenger.IDrequestImage(test)
+            imageList = self.msgr.request_ID_images(test)
         except PlomException as err:
             ErrorMessage(err).exec_()
             return
@@ -1200,7 +1244,7 @@ class Manager(QWidget):
             IDViewWindow(self, inames, sid).exec_()
 
     def runPredictor(self, ignoreStamp=False):
-        rmsg = managerMessenger.IDrunPredictions(
+        rmsg = self.msgr.IDrunPredictions(
             [
                 self.IDrectangle.left(),
                 self.IDrectangle.top(),
@@ -1230,12 +1274,12 @@ class Manager(QWidget):
                 self.runPredictor(ignoreStamp=True)
 
     def getPredictions(self):
-        csvfile = managerMessenger.IDrequestPredictions()
+        csvfile = self.msgr.IDrequestPredictions()
         pdict = {}
         reader = csv.DictReader(csvfile, skipinitialspace=True)
         for row in reader:
             pdict[int(row["test"])] = str(row["id"])
-        iDict = managerMessenger.getIdentified()
+        iDict = self.msgr.getIdentified()
         for t in iDict.keys():
             pdict[int(t)] = str(iDict[t][0])
 
@@ -1264,7 +1308,7 @@ class Manager(QWidget):
         if msg.exec_() == QMessageBox.No:
             return
         # returns [True] or [False, message]
-        rval = managerMessenger.IDdeletePredictions()
+        rval = self.msgr.IDdeletePredictions()
         if rval[0] is False:  # some sort of problem, show returned message
             ErrorMessage(rval[1]).exec_()
         else:
@@ -1275,7 +1319,7 @@ class Manager(QWidget):
         self.pd = {}
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
-                stats = managerMessenger.getProgress(q, v)
+                stats = self.msgr.getProgress(q, v)
                 self.pd[(q, v)] = ProgressBox(self, q, v, stats)
                 grid.addWidget(self.pd[(q, v)], q, v)
         self.ui.markBucket.setLayout(grid)
@@ -1283,11 +1327,11 @@ class Manager(QWidget):
     def refreshMarkTab(self):
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
-                stats = managerMessenger.getProgress(q, v)
+                stats = self.msgr.getProgress(q, v)
                 self.pd[(q, v)].refresh(stats)
 
     def viewMarkHistogram(self, question, version):
-        mhist = managerMessenger.getMarkHistogram(question, version)
+        mhist = self.msgr.getMarkHistogram(question, version)
         QVHistogram(question, version, mhist).exec_()
 
     def initOutTab(self):
@@ -1295,7 +1339,7 @@ class Manager(QWidget):
         self.ui.tasksOutTW.setHorizontalHeaderLabels(["Task", "User", "Time"])
 
     def refreshOutTab(self):
-        tasksOut = managerMessenger.RgetOutToDo()
+        tasksOut = self.msgr.RgetOutToDo()
         self.ui.tasksOutTW.clearContents()
         self.ui.tasksOutTW.setRowCount(0)
 
@@ -1342,7 +1386,7 @@ class Manager(QWidget):
         self.ui.versionCB.addItem("*")
         for v in range(self.numberOfVersions):
             self.ui.versionCB.addItem(str(v + 1))
-        ulist = managerMessenger.getUserList()
+        ulist = self.msgr.getUserList()
         self.ui.userCB.addItem("*")
         for u in ulist:
             self.ui.userCB.addItem(u)
@@ -1352,7 +1396,7 @@ class Manager(QWidget):
         """Refresh the user list in the marking review tab."""
         # clean out the combox box and then rebuild it.
         self.ui.userCB.clear()
-        ulist = managerMessenger.getUserList()
+        ulist = self.msgr.getUserList()
         self.ui.userCB.addItem("*")
         for u in ulist:
             self.ui.userCB.addItem(u)
@@ -1367,7 +1411,7 @@ class Manager(QWidget):
                 'Please set at least one of "Question", "Version", "User" to specific values.'
             ).exec_()
             return
-        mrList = managerMessenger.getMarkReview(
+        mrList = self.msgr.getMarkReview(
             self.ui.questionCB.currentText(),
             self.ui.versionCB.currentText(),
             self.ui.userCB.currentText(),
@@ -1396,19 +1440,19 @@ class Manager(QWidget):
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
-        img = managerMessenger.RgetAnnotatedImage(test, question, version)
+        img = self.msgr.get_annotations_image(test, question)
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(img)
             rvw = ReviewViewWindow(self, [fh.name])
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
-                    if self.ui.reviewTW.item(r, 4).text() != "reviwer":
-                        managerMessenger.clearAuthorisationUser(
+                    if self.ui.reviewTW.item(r, 4).text() != "reviewer":
+                        self.msgr.clearAuthorisationUser(
                             self.ui.reviewTW.item(r, 4).text()
                         )
                     # then map that question's owner "reviewer"
-                    managerMessenger.MreviewQuestion(test, question, version)
+                    self.msgr.MreviewQuestion(test, question, version)
                     self.ui.reviewTW.item(r, 4).setText("reviewer")
 
     def initRevIDTab(self):
@@ -1422,7 +1466,7 @@ class Manager(QWidget):
         self.ui.reviewIDTW.activated.connect(self.reviewIDd)
 
     def refreshIDRev(self):
-        irList = managerMessenger.getIDReview()
+        irList = self.msgr.getIDReview()
         self.ui.reviewIDTW.clearContents()
         self.ui.reviewIDTW.setRowCount(0)
         r = 0
@@ -1457,7 +1501,7 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        imageList = managerMessenger.IDrequestImage(test)
+        imageList = self.msgr.request_ID_images(test)
         inames = []
         with tempfile.TemporaryDirectory() as td:
             for i in range(len(imageList)):
@@ -1469,13 +1513,13 @@ class Manager(QWidget):
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
-                    if self.ui.reviewIDTW.item(r, 1).text() != "reviwer":
-                        managerMessenger.clearAuthorisationUser(
+                    if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
+                        self.msgr.clearAuthorisationUser(
                             self.ui.reviewIDTW.item(r, 1).text()
                         )
                     # then map that question's owner "reviewer"
                     self.ui.reviewIDTW.item(r, 1).setText("reviewer")
-                    managerMessenger.IDreviewID(test)
+                    self.msgr.IDreviewID(test)
 
     ##################
     # Solution tab stuff
@@ -1621,7 +1665,7 @@ class Manager(QWidget):
             ).exec_()
             == QMessageBox.Yes
         ):
-            managerMessenger.clearAuthorisationUser(user)
+            self.msgr.clearAuthorisationUser(user)
             self.refreshUserList()
 
     def toggleEnableDisable(self):
@@ -1640,9 +1684,9 @@ class Manager(QWidget):
             == QMessageBox.Yes
         ):
             if self.ui.userListTW.item(r, 1).text() == "True":
-                managerMessenger.setUserEnable(user, False)
+                self.msgr.setUserEnable(user, False)
             else:
-                managerMessenger.setUserEnable(user, True)
+                self.msgr.setUserEnable(user, True)
             self.refreshUserList()
 
     def changeUserPassword(self):
@@ -1653,7 +1697,7 @@ class Manager(QWidget):
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(name=user)
         if cpwd.exec_() == QDialog.Accepted:
-            rval = managerMessenger.createModifyUser(user, cpwd.password)
+            rval = self.msgr.createModifyUser(user, cpwd.password)
             ErrorMessage(rval[1]).exec_()
         return
 
@@ -1665,13 +1709,13 @@ class Manager(QWidget):
         ]
         cpwd = UserDialog(name=None, extant=uList)
         if cpwd.exec_() == QDialog.Accepted:
-            rval = managerMessenger.createModifyUser(cpwd.name, cpwd.password)
+            rval = self.msgr.createModifyUser(cpwd.name, cpwd.password)
             ErrorMessage(rval[1]).exec_()
             self.refreshUserList()
         return
 
     def refreshUserList(self):
-        uDict = managerMessenger.getUserDetails()
+        uDict = self.msgr.getUserDetails()
         self.ui.userListTW.clearContents()
         self.ui.userListTW.setRowCount(0)
         r = 0
@@ -1719,7 +1763,7 @@ class Manager(QWidget):
         r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
-                qpu = managerMessenger.getQuestionUserProgress(q, v)
+                qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
                     uprog[u].append([q, v, n, qpu[0]])  # question, version, no marked

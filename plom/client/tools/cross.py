@@ -1,25 +1,24 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QPointF, QTimer, QPropertyAnimation
+from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QColor, QBrush
 from PyQt5.QtWidgets import (
-    QUndoCommand,
     QGraphicsPathItem,
     QGraphicsItem,
 )
 
 from plom.client.tools import CommandMoveItem
-from plom.client.tools.tick import TickItemObject
+from plom.client.tools.tool import CommandTool, DeleteObject
 
 
-class CommandCross(QUndoCommand):
+class CommandCross(CommandTool):
     def __init__(self, scene, pt):
-        super().__init__()
-        self.scene = scene
-        self.obj = CrossItemObject(pt, scene.style)
+        super().__init__(scene)
+        self.obj = CrossItem(pt, scene.style)
+        self.do = DeleteObject(self.obj.shape())
         self.setText("Cross")
 
     @classmethod
@@ -31,28 +30,11 @@ class CommandCross(QUndoCommand):
             raise ValueError("wrong length of pickle data")
         return cls(scene, QPointF(X[0], X[1]))
 
-    def redo(self):
-        self.obj.flash_redo()
-        self.scene.addItem(self.obj.item)
-
-    def undo(self):
-        self.obj.flash_undo()
-        QTimer.singleShot(200, lambda: self.scene.removeItem(self.obj.item))
-
-
-class CrossItemObject(TickItemObject):
-    def __init__(self, pt, style):
-        super(TickItemObject, self).__init__()
-        self.item = CrossItem(pt, style=style, parent=self)
-        self.anim = QPropertyAnimation(self, b"thickness")
-
 
 class CrossItem(QGraphicsPathItem):
     def __init__(self, pt, style, parent=None):
         super(CrossItem, self).__init__()
         self.saveable = True
-        self.animator = [parent]
-        self.animateFlag = False
         self.pt = pt
         self.path = QPainterPath()
         # Draw a cross whose vertex is at pt (under mouse click)

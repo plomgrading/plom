@@ -10,6 +10,7 @@ import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder, MultipartEncoder
 
+from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -18,6 +19,7 @@ from plom.plom_exceptions import (
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomRangeException,
+    PlomExistingDatabase,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -37,15 +39,17 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def TriggerPopulateDB(self):
+    def TriggerPopulateDB(self, version_map={}):
         """Instruct the server to generate paper data in the database.
 
         Returns:
             str: a big block of largely useless status or summary info
                 from the database commands.
 
+        TODO: would be more symmetric to use PUT:/admin/pageVersionMap
+
         Raises:
-            PlomBenignException: already has a populated database.
+            PlomExistingDatabase: already has a populated database.
             PlomAuthenticationException: cannot login.
             PlomSeriousException: unexpected errors.
         """
@@ -54,57 +58,24 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.put(
                 "https://{}/admin/populateDB".format(self.server),
                 verify=False,
-                json={"user": self.user, "token": self.token},
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "version_map": version_map,
+                },
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             elif response.status_code == 409:
-                raise PlomBenignException(e) from None
+                raise PlomExistingDatabase() from None
             else:
                 raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
             self.SRmutex.release()
 
         return response.text
-
-    def notify_pdf_of_paper_produced(self, test_num):
-        """Notify the server that we have produced the PDF for a paper.
-
-        Args:
-            test_num (int): the test number.
-
-        Returns:
-            None
-        """
-        self.SRmutex.acquire()
-        try:
-            response = self.session.put(
-                "https://{}/admin/pdf_produced/{}".format(self.server, test_num),
-                verify=False,
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 400:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomRangeException(
-                    "Paper number {} is outside valid range".format(test_num)
-                ) from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Paper number {} has already been produced".format(test_num)
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
 
     def getGlobalPageVersionMap(self):
         self.SRmutex.acquire()
@@ -126,10 +97,29 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         # JSON casts dict keys to str, force back to ints
-        d = {}
-        for k, v in response.json().items():
-            d[int(k)] = {int(kk): vv for kk, vv in v.items()}
-        return d
+        return undo_json_packing_of_version_map(response.json())
+
+    def getGlobalQuestionVersionMap(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/questionVersionMap".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        # JSON casts dict keys to str, force back to ints
+        return undo_json_packing_of_version_map(response.json())
 
     # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
     def id_paper(self, code, studentID, studentName):
@@ -174,8 +164,10 @@ class ManagerMessenger(BaseMessenger):
         """Give the server a classlist.
 
         Args:
-            classdict (list): list of (str, str) pairs of the form
-                (student ID, student name).
+            classdict (list): list of dict.  Each dict is one student.
+                It MUST have keys `"id"` and `"studentNumber"` (case
+                matters).  There may be other keys included as well.
+                Keys should probably be homogeneous between rows (TODO?).
 
         Exceptions:
             PlomConflict: server already has one.
@@ -379,46 +371,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return imageList
-
-    def IDrequestImage(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
-                json={"user": self.user, "token": self.token},
-                verify=False,
-            )
-            response.raise_for_status()
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(
-                    BytesIO(img.content).getvalue()
-                )  # pass back image as bytes
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.".format(code)
-                ) from None
-            elif response.status_code == 410:
-                raise PlomBenignException(
-                    "That ID group of {} has not been scanned.".format(code)
-                ) from None
             elif response.status_code == 409:
                 raise PlomSeriousException(
                     "Another user has the image for {}. This should not happen".format(
@@ -1392,41 +1344,6 @@ class ManagerMessenger(BaseMessenger):
 
         return rval
 
-    def RgetAnnotatedImage(self, testNumber, questionNumber, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/annotatedImage".format(self.server),
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "testNumber": testNumber,
-                    "questionNumber": questionNumber,
-                    "version": version,
-                },
-                verify=False,
-            )
-            response.raise_for_status()
-            img = BytesIO(response.content).getvalue()
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}.{}.{}".format(
-                        testNumber, questionNumber, version
-                    )
-                ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return img
-
     def clearAuthorisationUser(self, someuser):
         self.SRmutex.acquire()
         try:
@@ -1578,27 +1495,6 @@ class ManagerMessenger(BaseMessenger):
                 "https://{}/REP/outToDo".format(self.server),
                 verify=False,
                 json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
-    def RgetMarked(self, q, v):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.get(
-                "https://{}/REP/marked".format(self.server),
-                verify=False,
-                json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
         except requests.HTTPError as e:

@@ -1,4 +1,4 @@
-# Plom Developement hints
+# Plom Development hints
 
 So you wanna help?  Awesome.  This document will try to collect some hints to get started.  See something wrong here?  Help us fix it!
 

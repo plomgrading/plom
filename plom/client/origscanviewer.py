@@ -4,8 +4,6 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
-import os
-import sys
 import logging
 
 from PyQt5.QtCore import Qt, QSize
@@ -152,6 +150,7 @@ class SinkList(QListWidget):
         )  # whether or not the item 'officially' belongs to the question
         self.item_files = {}
         self.item_orientation = {}
+        self.item_id = {}
         self.itemDoubleClicked.connect(self.viewImage)
         # self.setSelectionMode(QListView.SingleSelection)
 
@@ -162,10 +161,11 @@ class SinkList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addPotentialItem(self, p, pfile, belongs):
+    def addPotentialItem(self, p, pfile, belongs, db_id=None):
         name = str(p)
         self.item_files[name] = pfile
         self.item_orientation[name] = 0  # TODO
+        self.item_id[name] = db_id
         self.item_belongs[name] = belongs
 
     def removeSelectedItems(self):
@@ -263,7 +263,7 @@ class SinkList(QListWidget):
         self.item_orientation[name] = angle
         rot = QTransform()
         rot.rotate(angle)
-        # TODO: instead of loading pixmap again, can we tranform the QIcon?
+        # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
         rfile = self.item_files[name]
         cpix = QPixmap(rfile)
@@ -347,20 +347,8 @@ class RearrangementViewer(QDialog):
         self.revertB = QPushButton("Revert to original state")
         self.revertB.clicked.connect(self.populateListOriginal)
 
-        try:
-            base_path = sys._MEIPASS
-        except Exception:
-            # a hack - fix soon.
-            base_path = os.path.join(os.path.dirname(__file__), "icons")
-            # base_path = "./icons"
-        self.rotateB_cw = QPushButton(
-            QIcon("{}/rotate_clockwise.svg".format(base_path)), ""
-        )
-        self.rotateB_cw.setText("Rotate CW")
-        self.rotateB_ccw = QPushButton(
-            QIcon("{}/rotate_counter_clockwise.svg".format(base_path)), ""
-        )
-        self.rotateB_ccw.setText("Rotate CCW")
+        self.rotateB_cw = QPushButton("\N{Clockwise Open Circle Arrow} Rotate CW")
+        self.rotateB_ccw = QPushButton("\N{Anticlockwise Open Circle Arrow} Rotate CCW")
 
         self.closeB = QPushButton("&Cancel")
         self.acceptB = QPushButton("&Accept")
@@ -586,7 +574,7 @@ class RearrangementViewer(QDialog):
             # add every page image to list A
             self.listA.addImageItem(row[0], row[5], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2])
+            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
             # if position in current annot is non-null then add to list of pages to move between lists.
             if row[2] and row[3]:
                 move_order[row[3]] = row[0]
@@ -611,7 +599,7 @@ class RearrangementViewer(QDialog):
             # add every page image to list A
             self.listA.addImageItem(row[0], row[5], row[2])
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2])
+            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
         for kv in current:
             match = [row[0] for row in self.pageData if row[1] == kv["md5"]]
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
@@ -707,7 +695,10 @@ class RearrangementViewer(QDialog):
         Reorders and saves pages according to user's selections.
 
         Returns:
-
+            Doesn't return anything directly but sets `permute` instance
+            variable which contains a list of tuples:
+                `(iref, filename, angle, database_id)`
+            (where `iref` seems to be md5sum?  TODO).
         """
         if self.listB.count() == 0:
             msg = ErrorMessage("You must have at least one page in the bottom list.")
@@ -724,13 +715,14 @@ class RearrangementViewer(QDialog):
         self.permute = []
         for n in self.listB.getNameList():
             tmp = self.nameToIrefNFile[n]
-            self.permute.append((*tmp, self.listB.item_orientation[n]))
-            # return triples of [iref, file, angle]
+            self.permute.append(
+                (*tmp, self.listB.item_orientation[n], self.listB.item_id[n])
+            )
         self.accept()
 
     def singleSelect(self, currentList, allPages):
         """
-        If item selected by user isnt in currentList, deselects currentList.
+        If item selected by user isn't in currentList, deselects currentList.
 
         Args:
             currentList (QListWidget): the list being checked.

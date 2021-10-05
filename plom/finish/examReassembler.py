@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
@@ -17,17 +17,19 @@ papersize_landscape = (792, 612)
 margin = 10
 
 
-def reassemble(outname, shortName, sid, coverfname, img_list):
+def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_images):
     """Reassemble a pdf from the cover and question images.
 
     args:
-        outname (str, Path): name of a PDF file to write.
+        outname (str/pathlib.Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
         sid (str): Student ID, to be written into metadata.
-        coverfname (str, Path): a coversheet already in PDF format.
+        coverfile (str/pathlib.Path): a coversheet already in PDF format.
             Pass None to omit (deprecated "totalling mode" did this).
-        img_list (list): list of str or Path images to be inserted one
-            per page.
+        id_images (list): str/Path images to be inserted one per page.
+        marked_pages (list): str/Path images to be inserted one per page.
+        dnm_images (list): str/Path images to be combined into a new
+            final page.
 
     return:
         bool: True if successful or False if PDF file already exists.
@@ -39,10 +41,10 @@ def reassemble(outname, shortName, sid, coverfname, img_list):
         return False
 
     exam = fitz.open()
-    if coverfname:
-        exam.insertPDF(fitz.open(coverfname))
+    if coverfile:
+        exam.insertPDF(fitz.open(coverfile))
 
-    for img_name in img_list:
+    for img_name in [*id_images, *marked_pages]:
         img_name = Path(img_name)
         png_size = img_name.stat().st_size
         im = Image.open(img_name)
@@ -66,8 +68,36 @@ def reassemble(outname, shortName, sid, coverfname, img_list):
                 jpeg_file.seek(0)
                 pg.insert_image(rec, stream=jpeg_file.read())
             else:
-                # TODO: can remove str() once minimum pymupdf is 1.18.9
-                pg.insert_image(rec, filename=str(img_name))
+                pg.insert_image(rec, filename=img_name)
+
+    if len(dnm_images) > 1:
+        w, h = papersize_landscape
+    else:
+        w, h = papersize_portrait
+    if dnm_images:
+        pg = exam.newPage(width=w, height=h)
+        W = (w - 2 * margin) // len(dnm_images)
+        header_bottom = margin + h // 10
+        offset = margin
+        for f in dnm_images:
+            rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
+            pg.insert_image(rect, filename=f)
+            offset += W
+        if len(dnm_images) > 1:
+            text = 'These pages were flagged "Do No Mark" by the instructor.'
+        else:
+            text = 'This page was flagged "Do No Mark" by the instructor.'
+        text += "  In most cases nothing here was marked."
+        r = pg.insert_textbox(
+            fitz.Rect(margin, margin, w - margin, header_bottom),
+            text,
+            fontsize=12,
+            color=[0, 0, 0],
+            fontname="Helvetica",
+            fontfile=None,
+            align="left",
+        )
+        assert r > 0
 
     exam.setMetadata(
         {

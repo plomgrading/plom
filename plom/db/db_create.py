@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
 
 from datetime import datetime
 import logging
@@ -10,7 +11,19 @@ import peewee as pw
 
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
-from plom.db.tables import *
+from plom.db.tables import (
+    Annotation,
+    Bundle,
+    DNMGroup,
+    Group,
+    IDGroup,
+    QGroup,
+    Rubric,
+    Test,
+    TPage,
+    User,
+)
+from plom.db.tables import plomdb
 
 log = logging.getLogger("DB")
 
@@ -21,76 +34,95 @@ log = logging.getLogger("DB")
 def createReplacementBundle(self):
     try:
         bref = Bundle.create(name="replacements")
-    except IntegrityError as e:
+    except pw.IntegrityError as e:
         log.error("Create replacement page bundle = {}.{} error - {}".format(e))
         return False
     return True
 
 
 def doesBundleExist(self, bundle_name, md5):
+    """Checks if bundle with certain name and md5sum exists.
+
+    Args:
+        bundle_name (str)
+        md5 (str)
+
+    Returns:
+        2-tuple: there are 4 possibilities:
+            * neither match: no matching bundle, return `(False, None)`
+            * name but not md5: return `(True, "name")` - user is trying
+              to upload different bundles with same name.
+            * md5 but not name: return `(True, "md5sum")` - user is trying
+              to upload same bundle with different name.
+            * both match: return `(True, "both")` - user could be retrying
+              after network failure (for example) or uploading unknown or
+              colliding pages.  That is, they previously uploaded some
+              from the bundle but now are uploading more (Issue #1008).
     """
-    Checks if bundle with name=bundle_name or md5sum=md5 exists.
-    4 possibilities
-    * neither = no matching bundle, return [False]
-    * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
-    * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
-    * both match = return [True, 'both'] - user could be retrying after
-      network failure (for example) or uploading unknown or colliding
-      pages.
-    """
-    # check if that bundle-name is on file, and if the md5sum is known.
     bref = Bundle.get_or_none(name=bundle_name)
     if bref is not None:
         if bref.md5sum == md5:
-            # name and md5sum match one in system
-            # probably a crash occurred, so also return all the bundle_orders known in this bundle
-            skip_list = []
-            for iref in bref.images:
-                skip_list.append(iref.bundle_order)
-            return [True, "both", skip_list]
-
+            return (True, "both")
         else:
-            return [True, "name"]
+            return (True, "name")
     # name not known, so just check md5sum
     if Bundle.get_or_none(md5sum=md5) is not None:
-        return [True, "md5sum"]
-    return [False, "no such bundle"]
+        return (True, "md5sum")
+    return (False, None)
 
 
 def createNewBundle(self, bundle_name, md5):
+    """Checks to see if bundle exists.
+
+    Args:
+        bundle_name (str)
+        md5 (str)
+
+    Returns:
+        2-tuple: If bundle exists that matches by name *xor* by md5sum
+            then return `(False, "name")` or `(False, "md5sum")`.
+            If bundle matches both 'name' *and* 'md5sum' then return
+            `(True, skip_list)` where `skip_list` is a list of the
+            page-orders from that bundle that are already in the
+            system.  The scan scripts will then skip those uploads.
+            If no such bundle return `(True, [])`: we have created
+            the bundle and return an empty skip-list.
     """
-    Checks to see if bundle exists using 'doesBundleExist'.
-    If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
-    If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
-    If no such bundle return [True, []] - create the bundle and return an empty skip-list.
-    """
-    # use the doesBundleExist command logic to sanity check
-    bundle_check = self.doesBundleExist(bundle_name, md5)
-    if bundle_check[0] is False:
+    exists, reason = self.doesBundleExist(bundle_name, md5)
+    if not exists:
         Bundle.create(name=bundle_name, md5sum=md5)
-        return [True, []]
-    elif bundle_check[1] == "both":  # return [True, skip-list]
+        return (True, [])
+    elif reason == "both":
         bref = Bundle.get_or_none(name=bundle_name, md5sum=md5)
         skip_list = []
         for iref in bref.images:
             skip_list.append(iref.bundle_order)
-        return [True, skip_list]
+        return (True, skip_list)
     else:
-        return [False, bundle_check[1]]
+        return (False, reason)
 
 
 ########## Test creation stuff ##############
-def areAnyPapersProduced(self):
-    """True if any papers have been produced."""
-    return len(Test.select()) > 0
+def how_many_papers_in_database(self):
+    """How many papers have been created in the database."""
+    return len(Test.select())
+
+
+def is_paper_database_populated(self):
+    """True if any papers have been created in the DB.
+
+    The database is initially created with empty tables.  Users get added.
+    This function still returns False.  Eventually `Test`s (i.e., "papers")
+    get created.  Then this function returns True.
+    """
+    return self.how_many_papers_in_database() > 0
 
 
 def nextqueue_position(self):
     lastPos = Group.select(fn.MAX(Group.queue_position)).scalar()
     if lastPos is None:
         return 0
-    else:
-        return lastPos + 1
+    return lastPos + 1
 
 
 def createTest(self, t):
@@ -141,7 +173,7 @@ def createIDGroup(self, t, pages):
             )  # must be unique
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create Group {} of test {} error - {}".format(
+                "Create ID for gid={} test={}: cannot create Group - {}".format(
                     gid, t, e
                 )
             )
@@ -151,8 +183,8 @@ def createIDGroup(self, t, pages):
             iref = IDGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
             log.error(
-                "Create ID - cannot create IDGroup {} of group {} error - {}.".format(
-                    qref, gref, e
+                "Create ID for gid={} test={} Group={}: cannot create IDGroup - {}.".format(
+                    gid, t, gref, e
                 )
             )
             return False
@@ -197,6 +229,7 @@ def createDNMGroup(self, t, pages):
         return self.addTPages(tref, gref, t, pages, 1)
 
 
+# def createQGroup(self, t, q, v, pages, mark):
 def createQGroup(self, t, q, v, pages):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
@@ -223,6 +256,9 @@ def createQGroup(self, t, q, v, pages):
             )
             return False
         try:
+            # qref = QGroup.create(
+            #     test=tref, group=gref, question=q, version=v, fullmark=mark
+            # )
             qref = QGroup.create(test=tref, group=gref, question=q, version=v)
         except pw.IntegrityError as e:
             log.error(
@@ -259,35 +295,23 @@ def getPageVersions(self, t):
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         return {}
-    else:
-        pvDict = {p.page_number: p.version for p in tref.tpages}
-        return pvDict
+    return {p.page_number: p.version for p in tref.tpages}
 
 
-def produceTest(self, t):
-    """Someone has told us they produced (made PDF) for this paper.
+def getQuestionVersions(self, t):
+    """Get the mapping between question numbers and versions for a test.
 
     Args:
         t (int): a paper number.
 
-    Exceptions:
-        IndexError: no such paper exists.
-        ValueError: you already told us you made it.
+    Returns:
+        dict: keys are question numbers (int) and value is the question
+            version (int), or empty dict if there was no such paper.
     """
     tref = Test.get_or_none(test_number=t)
     if tref is None:
-        log.error('Cannot set paper {} to "produced" - it does not exist'.format(t))
-        raise IndexError("Paper number does not exist: out of range?")
-    else:
-        # TODO - work out how to make this more efficient? Multiple updates in one op?
-        with plomdb.atomic():
-            if tref.produced:
-                # TODO be less harsh if we have the same md5sum
-                log.error('Paper {} was already "produced"!'.format(t))
-                raise ValueError("Paper was already produced")
-            tref.produced = True
-            tref.save()
-        log.info('Paper {} is set to "produced"'.format(t))
+        return {}
+    return {q.question: q.version for q in tref.qgroups}
 
 
 def id_paper(self, paper_num, user_name, sid, sname):
@@ -302,7 +326,7 @@ def id_paper(self, paper_num, user_name, sid, sname):
         sname (str): student name.
 
     Returns:
-        tuple: `(True, None, None)` if succesful, `(False, 409, msg)`
+        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
             means `sid` is in use elsewhere, a serious problem for
             the caller to deal with.  `(False, int, msg)` covers all
             other errors.  `msg` gives details about errors.  Some
@@ -349,7 +373,7 @@ def id_paper(self, paper_num, user_name, sid, sname):
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
 
-    Each question needs 2 such rubrics - for mark-up and mark-down styles
+    Each question needs one such rubric
 
     Args:
         questionNumber (int)
@@ -358,7 +382,7 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
     Returns:
         Bool: True if successful, False if rubric already exists.
     """
-    rID = 1000 + 2 * questionNumber  # +0 for mark-up and +1 for mark-down
+    rID = 1000 + questionNumber
     uref = User.get(name="HAL")
 
     if Rubric.get_or_none(rID) is None:
@@ -366,12 +390,13 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
             key=rID,
             delta="0",
             text="No answer given",
+            kind="absolute",
             question=questionNumber,
             user=uref,
             creationTime=datetime.now(),
             modificationTime=datetime.now(),
         )
-        log.info("Created no-answer-rubric (up) for question {}".format(questionNumber))
+        log.info("Created no-answer-rubric for question {}".format(questionNumber))
     else:
         log.info(
             "No-answer-rubric (up) for question {} already exists".format(
@@ -380,25 +405,4 @@ def createNoAnswerRubric(self, questionNumber, maxMark):
         )
         return False
 
-    rID += 1
-    if Rubric.get_or_none(rID) is None:
-        Rubric.create(
-            key=rID,
-            delta="-{}".format(maxMark),
-            text="No answer given",
-            question=questionNumber,
-            user=uref,
-            creationTime=datetime.now(),
-            modificationTime=datetime.now(),
-        )
-        log.info(
-            "Created no-answer-rubric (down) for question {}".format(questionNumber)
-        )
-    else:
-        log.info(
-            "No-answer-rubric (down) for question {} already exists".format(
-                questionNumber
-            )
-        )
-        return False
     return True

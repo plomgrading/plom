@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Jenny Li
@@ -19,9 +21,9 @@ from pathlib import Path
 import pandas as pd
 
 
-where_csv = Path('.')
+where_csv = Path(".")
 in_csv = where_csv / "Canvas_classlist_042_urls.csv"
-out_csv = where_csv / 'Canvas_classlist_043_ready.csv'
+out_csv = where_csv / "Canvas_classlist_043_ready.csv"
 
 df = pd.read_csv(in_csv, index_col=False, dtype="object")
 
@@ -41,7 +43,7 @@ room_name_to_backup_link = {
 }
 room_name_to_time = {
     "quiz1": "2:00pm",
-    "cfa": "2:00pm" ,
+    "cfa": "2:00pm",
     "evening": "9:00pm",
 }
 
@@ -58,7 +60,11 @@ df["test_time"] = df["test_room"].map(room_name_to_time)
 
 
 def assert_it_worked(r):
-    if pd.isnull(r["test_room_human"]) or pd.isnull(r["test_backup_submit_url"]) or pd.isnull(r["test_time"]):
+    if (
+        pd.isnull(r["test_room_human"])
+        or pd.isnull(r["test_backup_submit_url"])
+        or pd.isnull(r["test_time"])
+    ):
         print("problem row:")
         print(r)
         raise ValueError("Expect non-null entry was not!  Missing student somewhere?")

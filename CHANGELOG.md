@@ -5,15 +5,124 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
 
 ### Added
 
 ### Changed
-* Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
 
 ### Fixed
+* Various CI cleanups that should help external contributors.
 
+
+
+## [0.7.1] - 2021-09-23
+
+### Added
+* Client binaries for macOS are now distributed as standard .app bundles (still unsigned unfortunately).
+* `plom-build make` can now tweak the vertical position of the pre-printed name/ids.
+* `plom-build make` can build single papers.
+* The server manager UI is now accessible from PlomClient: just login with the manager account.
+
+### Changed
+* Classlists can contain additional columns.
+* Classlist-related API updates.
+* Ongoing improvements to scripting Plom via import and module improvements.
+
+### Fixed
+* Papers can be re-printed (without repopulating the database).
+* Misc fixes.
+
+
+## [0.7.0] - 2021-09-04
+
+### Added
+* `plom-server launch foo` starts a plom server in the directory `foo`.
+* `plom-server` has new command line args to control logging.
+* New `PlomServer`, `PlomDemoServer`, and `PlomLiteDemoServer` objects for interactively running servers, or otherwise running a server in a background process.
+* `plom-hwscan` can now specify precise per-page mappings from the bundle to questions on the server.
+* `plom-hwscan` can override the bundle name.
+* LaTeX errors are now displayed to markers.
+* `plom-build rubrics` now supports csv in addition to json and toml.
+
+### Changed
+* `plom-server launch --mastertoken aabbccdd...` replaces the old way (without the keyword argument).
+* QR creation now uses `segno` instead of `pyqrcode`.
+* `plom-hwscan` is more flexible about filenames: you do not need to put PDF files in a special directory.
+* The `plomgrading/server` container (Docker image) is now based on Ubuntu 20.04.
+
+### Fixed
+* `plom-finish reassemble` not longer needs direct file access to the server (except when using the `--ided-only` option).
+* Low-level API changes and improvements.
+* Many bug fixes.
+
+
+## [0.6.5] - 2021-07-19
+
+### Changed
+* The `jpegtran-cffi` package which is used for lossless jpeg rotations is not longer a hard dependency.  Jpeg is still only used rarely and improvements to the client means its not a serious problem if a few pages are rotated.
+
+### Fixed
+* Client: better handling of rare upload failures: warning dialog pops up if the queue is growing, and a single timeout will no longer block the entire queue.
+* Misc bug fixes and doc updates.
+
+
+## [0.6.4] - 2021-06-23
+
+### Added
+* Experimental support for writing graded papers and final marks to Canvas.
+
+### Changed
+* The `userListRaw.csv` file is no longer inside the serverConfiguration directory.
+* Server saves its log to a file automatically (as well as echoing to stdout).
+
+### Fixed
+* Misc bug fixes.
+
+
+## [0.6.3] - 2021-05-28
+
+### Fixed
+* Minor bug fix to stop user being able to create 0-point relative rubrics. Related server-side rubric sanity checking.
+* Fix Flatpak and source packaging to include icons and cursors.
+* Misc bug fixes.
+
+
+## [0.6.2] - 2021-05-16
+
+### Changed
+* Packaging fixes including a revamp of `.../share/plom`.
+
+### Fixed
+* Workaround for blurry results from very tall scans.
+* Misc bug and documentation fixes.
+
+
+## [0.6.1] - 2021-04-16
+
+### Changed
+* Client now has two tabs for + and - deltas, which improves their shortcut key access.
+* Minor tweaks and bug fixes.
+
+
+## [0.6.0] - 2021-04-14
+
+### Added
+* Questions can be given custom labels in the spec file.  These will generally be used instead of "Q1", "Q2", etc.
+* `plom-demo` now has `--port` option.
+* New `plom-build rubric` subcommand can upload/download rubric lists from the server.
+
+### Changed
+* The left-hand-on-mouse option has been removed from annotator/marker - replaced with general key-binding options.
+* Significant changes to rubrics: now shared between users and can be grouped into "tabs" within the user interface.
+* Client: "Deltas" are now a special kind of rubric with their own tab.
+* New client default keybindings involve a "spatial navigation" metaphor: left-right between tabs, up-down between rubrics.
+* Rubrics are not longer saved on disc on client systems.
+* Client: click-and-drag associates a rubric with a box on the page: no need for shift-modifier key as before.
+* Client: The escape-key will now cancel an annotation mid-draw (box, ellipse, line, arrows, rubric)
+* Client: There is no longer an explicit choice of "marking up/down mode" - it is determined by the rubrics used.
+* Changed order of commands to start server: `plom-server init` now should be run before `plom-build parse`.
 
 
 ## [0.5.21] - 2021-03-18
@@ -240,7 +349,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changes to various command-line tools to streamline uploading and other operations.
 * Scanning is now based more strongly on concept of "bundles" of papers.
 * Most tools now interact with the server via the API instead of using the file system.
-* Server docker image uses pinned dependency information for reproducibility.* Server, Manager and Client handling of "unknown" pages has improved.
+* Server docker image uses pinned dependency information for reproducibility.
+* Server, Manager and Client handling of "unknown" pages has improved.
 * Client has visual feedback for ctrl-, shift- tool alternatives via mouse cursor.
 * Various client UI tweaks.
 * Various improvements to the manager UI tool.
@@ -369,7 +479,7 @@ in most cases.
 * certain file transfers are more robust at reporting errors.
 * userManager was failing to start.
 * return to greeter dialog on e.g., wrong server or pagegroup/version out of range.
-* `mark_reverter` less fragile if files DNE.
+* `mark_reverter` less fragile if files do not exist.
 * if you skip identifying a test, the client will defer it until the end.
 * identifying has various other UI fixes.
 
@@ -418,7 +528,15 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.5.21...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.1...main
+[0.7.1]: https://gitlab.com/plom/plom/compare/v0.7.0...v0.7.1
+[0.7.0]: https://gitlab.com/plom/plom/compare/v0.6.5...v0.7.0
+[0.6.5]: https://gitlab.com/plom/plom/compare/v0.6.4...v0.6.5
+[0.6.4]: https://gitlab.com/plom/plom/compare/v0.6.3...v0.6.4
+[0.6.3]: https://gitlab.com/plom/plom/compare/v0.6.2...v0.6.3
+[0.6.2]: https://gitlab.com/plom/plom/compare/v0.6.1...v0.6.2
+[0.6.1]: https://gitlab.com/plom/plom/compare/v0.6.0...v0.6.1
+[0.6.0]: https://gitlab.com/plom/plom/compare/v0.5.21...v0.6.0
 [0.5.21]: https://gitlab.com/plom/plom/compare/v0.5.19...v0.5.21
 [0.5.19]: https://gitlab.com/plom/plom/compare/v0.5.18...v0.5.19
 [0.5.18]: https://gitlab.com/plom/plom/compare/v0.5.17...v0.5.18

@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-import hashlib
-import logging
-import os
-import shutil
-import uuid
-from pathlib import Path
 from datetime import datetime
 import json
+import logging
+import os
+from pathlib import Path
+import shutil
 import subprocess
+
 from plom import specdir
+
 
 log = logging.getLogger("servID")
 
@@ -24,7 +24,6 @@ def IDprogressCount(self):
         list: A list including the number of identified papers
             and the total number of papers.
     """
-
     return [self.DB.IDcountIdentified(), self.DB.IDcountAll()]
 
 
@@ -34,7 +33,6 @@ def IDgetNextTask(self):
     Returns:
         list: A list including the next task number.
     """
-
     # Get number of next unidentified test from the database
     give = self.DB.IDgetNextTask()
     if give is None:
@@ -57,18 +55,29 @@ def IDgetDoneTasks(self, username):
     return self.DB.IDgetDoneTasks(username)
 
 
-def IDgetImage(self, username, test_number):
-    """Respond with a list of image paths for an already ID'd paper.
+def IDgetImages(self, username, test_number):
+    """Respond with a list of image paths the ID pages of a paper.
 
     Args:
         username (str): Username requesting ID'd paper's image.
-        test_number (str): Test ID number.
+        test_number (str): Test number.
 
     Returns:
-        list: True/False plus a list of the image paths for ID'd task.
+        2-tuple: True/False plus a list of the image paths or a short error code.
     """
+    return self.DB.IDgetImages(username, test_number)
 
-    return self.DB.IDgetImage(username, test_number)
+
+def ID_get_donotmark_images(self, paper_number):
+    """Respond with a list of image paths for the Do Not Mark pages of a paper.
+
+    Args:
+        test_number (str): Test number.
+
+    Returns:
+        2-tuple: True/False plus a list of the image paths or a short error code.
+    """
+    return self.DB.ID_get_donotmark_images(paper_number)
 
 
 def IDclaimThisTask(self, username, test_number):
@@ -120,7 +129,7 @@ def ID_id_paper(self, *args, **kwargs):
             matched_student_id, matched_student_name).
         kwargs (dict): Empty dict, not sure why TODO: Assuming this is a
             True/False parameter (defaults to True if empty dict) which
-            indicates wether checks need to be applied ie the additional
+            indicates whether checks need to be applied ie the additional
             404,403 error on top of what id_paper would return.
 
     Returns:
@@ -168,18 +177,16 @@ def IDdeletePredictions(self):
     """
 
     # check to see if predictor is running
-    lock_file = os.path.join(specdir, "IDReader.lock")
+    lock_file = specdir / "IDReader.lock"
     if os.path.isfile(lock_file):
         log.info("ID reader currently running.")
         return [False, "ID reader is currently running"]
 
     # move old file out of way
-    if not os.path.isfile(Path(specdir) / "predictionlist.csv"):
+    if not os.path.isfile(specdir / "predictionlist.csv"):
         return [False, "No prediction file present."]
-    shutil.move(
-        Path(specdir) / "predictionlist.csv", Path(specdir) / "predictionlist.bak"
-    )
-    with open(Path(specdir) / "predictionlist.csv", "w") as fh:
+    shutil.move(specdir / "predictionlist.csv", specdir / "predictionlist.bak")
+    with open(specdir / "predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
     log.info("ID prediction list deleted")
 
@@ -227,8 +234,8 @@ def IDrunPredictions(
     """
 
     # from plom.server.IDReader.idReader import runIDReader
-    lock_file = os.path.join(specdir, "IDReader.lock")
-    timestamp = os.path.join(specdir, "IDReader.timestamp")
+    lock_file = specdir / "IDReader.lock"
+    timestamp = specdir / "IDReader.timestamp"
     if os.path.isfile(lock_file):
         log.info("ID reader is already running.")
         return [True, False]

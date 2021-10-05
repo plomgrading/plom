@@ -1,22 +1,22 @@
-# -*- coding: utf-8 -*-
-
-"""
-Identifier Tool
-"""
-
-__author__ = "Andrew Rechnitzer, Colin B. Macdonald"
-__copyright__ = "Copyright (C) 2018-2019 Andrew Rechnitzer, Colin B. Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
+
+"""
+The Plom Identifier client
+"""
+
+__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__credits__ = "The Plom Project Developers"
+__license__ = "AGPL-3.0-or-later"
+
 
 from collections import defaultdict
 import csv
-import json
-import os
-import sys
-import tempfile
 import logging
+import os
+from pathlib import Path
+import tempfile
 
 from PyQt5.QtCore import (
     Qt,
@@ -32,27 +32,25 @@ from PyQt5.QtWidgets import (
     QCompleter,
     QDialog,
     QWidget,
-    QMainWindow,
-    QInputDialog,
     QMessageBox,
 )
+
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomBenignException,
+    PlomTakenException,
+)
+from plom import isValidStudentNumber
+from plom.rules import censorStudentNumber as censorID
+from plom.rules import censorStudentName as censorName
 
 from .examviewwindow import ExamViewWindow
 from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
 
-from plom.plom_exceptions import *
-from plom import Plom_API_Version
-from plom import isValidStudentNumber
-from plom.rules import censorStudentNumber as censorID
-from plom.rules import censorStudentName as censorName
 
 log = logging.getLogger("identr")
-
-# set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
-directoryPath = tempDirectory.name
 
 
 class Paper:
@@ -180,21 +178,39 @@ class ExamModel(QAbstractTableModel):
 class IDClient(QWidget):
     my_shutdown_signal = pyqtSignal(int)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, tmpdir=None):
+        """Initialize the Identifier Client.
 
-    def getToWork(self, mess):
-        global messenger
-        messenger = mess
+        Args:
+            tmpdir (pathlib.Path/str/None): a temporary directory for
+                storing image files and other data.  In principle can
+                be shared with Marker although this may not be implemented.
+                If `None`, we will make our own.
+        """
+        super().__init__()
+        # instance vars that get initialized later
         # Save the local temp directory for image files and the class list.
-        self.workingDirectory = directoryPath
+        if not tmpdir:
+            tmpdir = tempfile.mkdtemp(prefix="plom_")
+        self.workingDirectory = Path(tmpdir)
+        self.msgr = None
+
+    def setup(self, messenger):
+        """Performs setup procedure for the IDClient.
+
+        Args:
+            messenger (Messenger): handles communication with server.
+
+        TODO: move all this into init?
+        """
+        self.msgr = messenger
         # List of papers we have to ID.
         self.paperList = []
         # Fire up the interface.
         self.ui = Ui_IdentifyWindow()
         self.ui.setupUi(self)
         # Paste username into the GUI (TODO: but why?)
-        self.ui.userLabel.setText(mess.whoami())
+        self.ui.userLabel.setText(self.msgr.whoami())
         # Exam model for the table of papers - associate to table in GUI.
         self.exM = ExamModel()
         self.ui.tableView.setModel(self.exM)
@@ -276,26 +292,25 @@ class IDClient(QWidget):
     def getClassList(self):
         """Get the classlist from the server.
 
-        Returns nothing but modifies the state of self, adding two
+        Here and throughout 'snid' means "student_id_and_name" as one string.
+
+        Returns nothing but modifies the state of self, adding three
         dicts to the class data:
 
-        `student_id_to_name_map`
-            Maps unique ID (str) to name (str).
-
-        `student_name_to_idlist`
-            Names are not unique so we map each name to a list of IDs.
+        `snid_to_student_id`
+        `snid_to_student_name`
+        `student_id_to_snid`
         """
-        # a list of pairs [sid, sname]
-        self.student_id_and_name_list = messenger.IDrequestClasslist()
-        # use 'snid' to mean "student_id_and_name" as one string.
+        classlist = self.msgr.IDrequestClasslist()
         self.snid_to_student_id = dict()
         self.snid_to_student_name = dict()
-        # also need id to snid for predictionlist wrangling.
         self.student_id_to_snid = dict()
-
         name_list = []
-        for sid, sname in self.student_id_and_name_list:
-            snid = "{}: {}".format(sid, sname)
+        for person in classlist:
+            # TODO: Issue #1646 here we want student number with id fallback?
+            sid = person["id"]
+            sname = person["studentName"]
+            snid = f"{sid}: {sname}"
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname
             self.student_id_to_snid[sid] = snid
@@ -304,13 +319,14 @@ class IDClient(QWidget):
                 log.warning(
                     'Just FYI: multiple students with name "%s"', censorName(sname)
                 )
+            name_list.append(sname)
 
     def getPredictions(self):
         """Send request for prediction list (iRPL) to server. The server then sends
         back the CSV of the predictions testnumber -> studentID.
         """
         # Send request for prediction list to server
-        csvfile = messenger.IDrequestPredictions()
+        csvfile = self.msgr.IDrequestPredictions()
 
         # create dictionary from the prediction list
         self.predictedTestToNumbers = defaultdict(int)
@@ -365,7 +381,7 @@ class IDClient(QWidget):
         """
         self.DNF()
         try:
-            messenger.closeUser()
+            self.msgr.closeUser()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
@@ -384,13 +400,13 @@ class IDClient(QWidget):
             if self.exM.data(self.exM.index(r, 1)) != "identified":
                 # Tell user DNF, user, auth-token, and paper's code.
                 try:
-                    messenger.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
+                    self.msgr.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
                 except PlomSeriousException as err:
                     self.throwSeriousError(err)
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
-        idList = messenger.IDrequestDoneTasks()
+        idList = self.msgr.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
                 Paper(x[0], fnames=[], stat="identified", id=x[1], name=x[2]),
@@ -413,7 +429,7 @@ class IDClient(QWidget):
             return
         # else try to grab it from server
         try:
-            imageList = messenger.IDrequestImage(test)
+            imageList = self.msgr.ID_request_images(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
@@ -475,7 +491,7 @@ class IDClient(QWidget):
     def updateProgress(self):
         # update progressbars
         try:
-            v, m = messenger.IDprogressCount()
+            v, m = self.msgr.IDprogressCount()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
         if m == 0:
@@ -502,7 +518,7 @@ class IDClient(QWidget):
                 attempts += 1
             # ask server for ID of next task
             try:
-                test = messenger.IDaskNextTask()
+                test = self.msgr.IDaskNextTask()
                 if not test:  # no tasks left
                     ErrorMessage("No more tasks left on server.").exec_()
                     return False
@@ -511,7 +527,7 @@ class IDClient(QWidget):
                 return False
 
             try:
-                imageList = messenger.IDclaimThisTask(test)
+                imageList = self.msgr.IDclaimThisTask(test)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -605,7 +621,7 @@ class IDClient(QWidget):
         # Return paper to server with the code, ID, name.
         try:
             # TODO - do we need this return value
-            msg = messenger.IDreturnIDdTask(code, sid, sname)
+            msg = self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
             self.throwBenign(err)
             # If an error, revert the student and clear things.
@@ -724,11 +740,11 @@ class IDClient(QWidget):
                     )
                 ).exec_()
                 return
-            snid = "{}: {}".format(sid, sname)
+            snid = f"{sid}: {sname}"
             # update our lists
             self.snid_to_student_id[snid] = sid
             self.snid_to_student_name[snid] = sname
-            self.student_id_to_snid[sid] = sid
+            self.student_id_to_snid[sid] = snid
             # finally update the line-edit.  TODO: remove? used to be for identifyStudent call below but not needed anymore?
             self.ui.idEdit.setText(snid)
 
@@ -748,7 +764,7 @@ class IDClient(QWidget):
             return
         testNumber = self.exM.data(index[0])
         try:
-            pageNames, imagesAsBytes = messenger.MrequestWholePaper(testNumber)
+            pageNames, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             self.throwBenign(err)
 

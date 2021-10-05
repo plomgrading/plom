@@ -17,7 +17,7 @@ import sys
 import shutil
 from pathlib import Path
 
-from plom import SpecVerifier
+from plom.messenger import FinishMessenger
 from plom.rules import isValidStudentNumber, StudentIDLength
 from plom.finish import CSVFilename
 from .return_tools import csv_add_return_codes
@@ -57,7 +57,7 @@ def copy_soln_files(shortname, todir, sns):
             print("No solution file for student id = {}".format(sid))
 
 
-def main(use_hex, digits, salt=None, solutions=False):
+def main(use_hex, digits, salt=None, server=None, solutions=False):
     """Make the secret codes and the return-code webpage.
 
     args:
@@ -68,9 +68,19 @@ def main(use_hex, digits, salt=None, solutions=False):
             with this string.  Defaults to None, which means do not
             do this, use random secret codes.
         solutions (bool): add a solutions link to the website
+        server (str/None): server to contain or None for default
+            (probably localhost).
     """
-    # TODO: another case of filesystem access of spec
-    spec = SpecVerifier.load_verified()
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = FinishMessenger(s, port=p)
+    else:
+        msgr = FinishMessenger(server)
+    msgr.start()
+
+    spec = msgr.get_spec()
+    # Can also get spec via filesystem
+    # spec = SpecVerifier.load_verified()
     shortname = spec["name"]
     longname = html.escape(spec["longName"])
     codedReturnDir = Path("codedReturn")

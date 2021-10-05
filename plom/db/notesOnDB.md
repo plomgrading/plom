@@ -41,7 +41,6 @@ Storing both uploaded page-images as well as images annotated by clients.
 The overarching class that represents 1 whole paper. The main things it has to encode are the number of that testpaper and a bunch of boolean flags telling us what stage of marking it is at (see below).
 
 * testNumber = each separate paper has a unique numerical ID - which is encoded in the QR-codes that get stamped on it. This need not be the same as the auto-generated database ID for this object (but hopefully is).
-* produced = was this test generated. This should almost always be true.... and so might be redundant. **check this**
 * used = was any part of this test actually scanned - ie we typically produce more test-papers than we need, so not all end up being written on and being submitted.
 * scanned = has the whole test been scanned in.
 * identified = have we associated a student to this paper (either automatically on test generation (ie we print name on the front), or by a human reading the name and ID number).
@@ -129,7 +128,7 @@ Types of pages:
 
 * TPage - this corresponds to a test-page. To be more precise, a page we'd get when giving physical test-papers to students which we then scan. Very structured. As opposed to homework. It points to an image and knows its test-number, page-number and some other stuff.
 
-* HWPage - this corresponds to a page of student-uploaded homework (when each question is uploaded separately). It knows which student it belongs to (and so via some look-ups) it knows which test-number, which question, but it doesn't actually have a well-defined page-number, rather it only knows its "order" within the submission. This is because one student's HW response to a given question might be 2 pages, and anothers might be 7. So it no longer makes sense to talk about page numbers like we do for "test pages".
+* HWPage - this corresponds to a page of student-uploaded homework (when each question is uploaded separately). It knows which student it belongs to (and so via some look-ups) it knows which test-number, which question, but it doesn't actually have a well-defined page-number, rather it only knows its "order" within the submission. This is because one student's HW response to a given question might be 2 pages, and another's might be 7. So it no longer makes sense to talk about page numbers like we do for "test pages".
 
 * EXPage - an extra page - primarily for tests. Functionally similar to HWPages - they have an "order" but not a page number.
 

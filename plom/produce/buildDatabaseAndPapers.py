@@ -1,17 +1,48 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
 
-import os
-from getpass import getpass
+from pathlib import Path
 
-from plom.produce import build_all_papers, confirm_processed, identify_prenamed
-from plom.produce import paperdir
+from plom import check_version_map
+from plom.misc_utils import working_directory
+from plom.produce.buildNamedPDF import build_papers_backend
+from plom.produce.buildNamedPDF import check_pdf_and_id_if_needed
+from plom.produce import paperdir as paperdir_name
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomBenignException
+from plom.plom_exceptions import PlomExistingDatabase
 
 
-def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=False):
+def build_papers(
+    server=None,
+    password=None,
+    *,
+    basedir=Path("."),
+    fakepdf=False,
+    no_qr=False,
+    indexToMake=None,
+    ycoord=None,
+):
+    """Build the blank papers using version information from server and source PDFs.
+
+    Args:
+        server (str): server name and optionally port.
+        password (str): the manager password.
+
+    Keyword Args:
+        basedir (pathlib.Path/str): Look for the source version PDF files
+            in `basedir/sourceVersions`.  Produce the printable PDF files
+            in `basedir/papersToPrint`.
+        fakepdf (bool): when true, the build empty pdfs (actually empty files)
+            for use when students upload homework or similar (and only 1 version).
+        no_qr (bool): when True, don't stamp with QR codes.  Default: False
+            (which means *do* stamp with QR codes).
+        indexToMake (int/None): prepare a particular paper, or None to make
+            all papers.
+        ycoord (float/None): tweak the y-coordinate of the stamped name/id
+            box for prenamed papers.  None for a default value.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -19,38 +50,27 @@ def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=Fals
         msgr = ManagerMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass('Please enter the "manager" password: ')
+    msgr.requestAndSaveToken("manager", password)
 
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        # TODO: bit annoying, maybe want manager UI open...
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        exit(10)
+    basedir = Path(basedir)
+    paperdir = basedir / paperdir_name
+    paperdir.mkdir(exist_ok=True)
+
     try:
         spec = msgr.get_spec()
-        try:
-            status = msgr.TriggerPopulateDB()
-        except PlomBenignException:
-            print("Error: Server already has a populated database")
-            exit(3)
-        print(status)
         pvmap = msgr.getGlobalPageVersionMap()
-        os.makedirs(paperdir, exist_ok=True)
-
         if spec["numberToName"] > 0:
-            try:
-                classlist = msgr.IDrequestClasslist()
-            except PlomBenignException as e:
-                print("Failed to download classlist: {}".format(e))
-                exit(4)
+            _classlist = msgr.IDrequestClasslist()
+            # TODO: Issue #1646 mostly student number (w fallback)
+            # TODO: but careful about identify_prenamed below which may need id
+            classlist = [(x["id"], x["studentName"]) for x in _classlist]
+            # Do sanity check on length of classlist
+            if len(classlist) < spec["numberToName"]:
+                raise ValueError(
+                    "Classlist is too short for {} pre-named papers".format(
+                        spec["numberToName"]
+                    )
+                )
             print(
                 'Building {} pre-named papers and {} blank papers in "{}"...'.format(
                     spec["numberToName"],
@@ -65,12 +85,72 @@ def buildDatabaseAndPapers(server=None, password=None, fakepdf=False, no_qr=Fals
                     spec["numberToProduce"], paperdir
                 )
             )
-        build_all_papers(spec, pvmap, classlist, fakepdf, no_qr=no_qr)
+        if indexToMake:
+            if (indexToMake < 1) or (indexToMake > spec["numberToProduce"]):
+                raise ValueError(
+                    f"Index out of range. Must be in range [1,{ spec['numberToProduce']}]"
+                )
+            if indexToMake <= spec["numberToName"]:
+                print(f"Building only specific paper {indexToMake} (prenamed)")
+            else:
+                print(f"Building only specific paper {indexToMake} (blank)")
+        with working_directory(basedir):
+            build_papers_backend(
+                spec,
+                pvmap,
+                classlist,
+                fakepdf=fakepdf,
+                no_qr=no_qr,
+                indexToMake=indexToMake,
+                ycoord=ycoord,
+            )
 
-        print("Checking papers produced and updating databases")
-        confirm_processed(spec, msgr, classlist)
-        print("Identifying any pre-named papers into the database")
-        identify_prenamed(spec, msgr, classlist)
+        print(
+            "Checking papers produced and ID-ing any pre-named papers into the database"
+        )
+        check_pdf_and_id_if_needed(
+            spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
+        )
     finally:
         msgr.closeUser()
         msgr.stop()
+
+
+def build_database(server=None, password=None, vermap={}):
+    """Build the database from a pre-set version map.
+
+    args:
+        server (str): server name and optionally port.
+        password (str): the manager password.
+        vermap (dict): question version map.  If empty dict, server will
+            make its own mapping.  For the map format see
+            :func:`plom.finish.make_random_version_map`.
+
+    return:
+        str: long multiline string of all the version DB entries.
+    """
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    check_version_map(vermap)
+
+    msgr.requestAndSaveToken("manager", password)
+    try:
+        status = msgr.TriggerPopulateDB(vermap)
+    except PlomExistingDatabase:
+        msgr.closeUser()
+        msgr.stop()
+        raise
+
+    # grab map and sanity check
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    if vermap:
+        assert qvmap == vermap
+
+    msgr.closeUser()
+    msgr.stop()
+    return status

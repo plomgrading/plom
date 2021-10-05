@@ -24,10 +24,10 @@ import pandas as pd
 
 from plom.finish.return_tools import import_canvas_csv
 
-where_csv = Path('.')
-in_csv = where_csv / 'canvas_latest_export.csv'
-return_codes_csv = where_csv / 'return_codes.csv'
-out_csv = where_csv / 'classlist_return_links.csv'
+where_csv = Path(".")
+in_csv = where_csv / "canvas_latest_export.csv"
+return_codes_csv = where_csv / "return_codes.csv"
+out_csv = where_csv / "classlist_return_links.csv"
 
 basename = "253t1"
 baseurl = "https://amcweb.math.ubc.ca/~cbm/return20w1/" + basename
@@ -38,20 +38,24 @@ df_return_codes = pd.read_csv(return_codes_csv, dtype="object")
 
 df = import_canvas_csv(in_csv)
 # If you don't want to use the Plom function, do some cleaning something like:
-#df = pd.read_csv(in_csv, dtype="object")
-#df = df.drop([df.index[0], df.index[1]])
-#df = df.reset_index(drop=True)
+# df = pd.read_csv(in_csv, dtype="object")
+# df = df.drop([df.index[0], df.index[1]])
+# df = df.reset_index(drop=True)
 
-df = pd.merge(df, df_return_codes, how="left", left_on="Student Number", right_on="StudentID")
+df = pd.merge(
+    df, df_return_codes, how="left", left_on="Student Number", right_on="StudentID"
+)
+
 
 def f(x):
     """Apply this function to each row to define a new column."""
-    if pd.isnull(x['Return Code']):
-        return x['Return Code']
-    sid = x['Student Number']
-    code = x['Return Code']
+    if pd.isnull(x["Return Code"]):
+        return x["Return Code"]
+    sid = x["Student Number"]
+    code = x["Return Code"]
     return "{}/{}_{}_{}.pdf".format(baseurl, basename, sid, code)
 
-df['test_return_url'] = df.apply(f, axis=1)
+
+df["test_return_url"] = df.apply(f, axis=1)
 
 df.to_csv(out_csv, index=False)

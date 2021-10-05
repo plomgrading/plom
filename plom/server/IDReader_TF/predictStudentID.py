@@ -36,7 +36,7 @@ class keras_dropout_prediction_object(object):
         """Calculates digit predictions with dropout.
 
         Arguments:
-            x (np.array): The image that we are intersted in.
+            x (np.array): The image that we are interested in.
 
         Keyword Arguments:
             n_iter (int): Number of iterations to run the predictions with dropout.
@@ -87,7 +87,7 @@ def get_digit_box(image_box_fname, top, bottom):
     # Extract only the required portion of the image.
     cropped_image = front_image[:][top:bottom]
 
-    # Process the image so as to find the countours.
+    # Process the image so as to find the contours.
     # Grey, Blur and Edging are standard processes for text detection.
     # TODO: I must make these better formatted.
     grey_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)

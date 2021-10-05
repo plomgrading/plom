@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2021 Peter Lee
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 RUN apt-get -y update && \
     DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata && \
     apt-get --no-install-recommends -y install \
@@ -15,40 +16,37 @@ RUN apt-get -y update && \
         imagemagick \
         openssl \
         dvipng latexmk texlive-latex-extra texlive-fonts-recommended \
-        libpango-1.0 libpangocairo-1.0 \
+        libpango-1.0-0 libpangocairo-1.0-0 \
         libzbar0 \
-        libjpeg-dev \
-        libjpeg-turbo8-dev \
-        libturbojpeg0-dev \
+        libjpeg-dev libjpeg-turbo8-dev libturbojpeg0-dev \
+        file \
         python3 \
         python3-dev \
         python3-pip \
         python3-setuptools \
         python3-wheel \
-        python3-pytest
+        python3-pytest \
+        python3-magic
 
-RUN pip3 install --no-cache-dir --upgrade pip setuptools
-# Note: `python3 -m pip` used below on old Ubuntu 18.04
-# Note: need newer setuptools to avoid cairocffi issue
+# file-magic: https://gitlab.com/plom/plom/-/issues/1570
+
+RUN pip install --no-cache-dir --upgrade pip setuptools
+# Note: newer setuptools to avoid some cairocffi issue
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
-RUN python3 -m pip install --no-cache-dir cffi==1.14.5 pycparser==2.20
+RUN pip install --no-cache-dir cffi==1.14.6 pycparser==2.20 && \
+    pip install --no-cache-dir jpegtran-cffi==0.5.2
 COPY requirements.txt /src/
 WORKDIR /src
-RUN python3 -m pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # client dependency: keep in image for now after others so easy to discard
 RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install \
-        `apt-cache depends qt5-default  | awk '/Depends:/{print$2}'`
+    apt-get --no-install-recommends -y install qtbase5-dev
 
-# TODO: I want to install Plom (from current dir) into the Docker image...
-# TODO: don't need/want /src in the docker image
-COPY setup.py README.md org.plomgrading.PlomClient.* /src/
-COPY plom/ /src/plom/
-COPY contrib/ /src/contrib/
+COPY . /src
 WORKDIR /src
-RUN python3 -m pip install .
+RUN pip install .
 
 EXPOSE 41984
 

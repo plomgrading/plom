@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Matthew Coles
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
@@ -12,7 +12,7 @@ Most of the Canvas-related functions are overly UBC-specific or fragile.
 __copyright__ = "Copyright (C) 2018-2020 Colin B. Macdonald, Matthew Coles, and others"
 __license__ = "AGPL-3.0-or-later"
 
-import os
+from pathlib import Path
 
 import pandas
 
@@ -25,15 +25,15 @@ def import_canvas_csv(canvas_fromfile):
     """Imports a student information from canvas.
 
     Args:
-        canvas_fromfile (str): name of the csv file from Canvas.
+        canvas_fromfile (str/pathlib.Path): name of the csv file from Canvas.
 
     Returns:
-        pandas.DataFrame : dataframe of the student information from the Canvas csv file.
+        pandas.DataFrame: dataframe of student information.
     """
     df = pandas.read_csv(canvas_fromfile, dtype="object")
     print('Loading from Canvas csv file: "{0}"'.format(canvas_fromfile))
 
-    # Note: Canvas idoicy whereby "SIS User ID" is same as "Student Number"
+    # Note: Canvas idiocy whereby "SIS User ID" is same as "Student Number"
     cols = ["Student", "ID", "SIS User ID", "SIS Login ID", "Section", "Student Number"]
     assert all(
         [c in df.columns for c in cols]
@@ -67,7 +67,9 @@ def find_partial_column_name(df, parthead, at_start=True):
     Args:
         df (pandas.DataFrame): the dataframe that we get the column from.
         parthead (str): the first part of the column name(s) we are interested.
-        at_start (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+        at_start (bool, optional): if True we search for `parthead` from the
+            beginning of the column name, if False then `parthead` can be
+            anywhere in the column name. Defaults to True.
 
     Raises:
         ValueError: If there are no possible matches (or no unique matches).
@@ -98,7 +100,9 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
     Args:
         canvas_fromfile (str): name of the csv file containing student information from canvas.
         canvas_tofile (str): name of the csv file we are writing the marks to.
-        test_parthead (bool, optional): if True we search for parthead from the begining of the column name, if False then parthead can be anywhere in the column name. Defaults to True.
+        test_parthead (bool, optional): if True we search for `test_parthead`
+            from the beginning of the column name, if False then it can be
+            anywhere in the column name.  Defaults to True.
 
     Returns:
         pandas.DataFrame : the dataframe with student information (it is also written to a csv).
@@ -122,7 +126,7 @@ def make_canvas_gradefile(canvas_fromfile, canvas_tofile, test_parthead="Test"):
         input("Press Enter to continue and overwrite...")
 
     print('Loading "{}" data'.format(CSVFilename))
-    # TODO: should we be doing all this whereever the csv file is created?
+    # TODO: should we be doing all this wherever the csv file is created?
     marks = pandas.read_csv(CSVFilename, dtype="object")
 
     # Make dict: this looks fragile, try merge instead...
@@ -227,7 +231,7 @@ def canvas_csv_add_return_codes(csvin, csvout, saltstr, digits=9):
         ValueError: if the canvas return code is present but not correct.
 
     Returns:
-        dict : student number (str) -> hashed code.
+        dict: student number (str) -> hashed code.
     """
     print("*** Generating Return Codes Spreadsheet ***")
     df = import_canvas_csv(csvin)
@@ -303,35 +307,24 @@ def canvas_csv_check_pdf(sns):
     """Checks that each returned paper has a corresponding student number in the canvas files.
 
     Args:
-        sns (): student number (str) -> hashed code.
+        sns (dict): student number (str) -> hashed code.  NOTE: will be
+            modified via sideeffect.
     """
     print(
         "Checking that each codedReturn paper has a corresponding student in the canvas sheet..."
     )
-    for file in os.scandir("codedReturn"):
-        if file.name.endswith(".pdf"):
-            # TODO: this looks rather fragile!
-            parts = file.name.partition("_")[2].partition(".")[0]
-            sn, meh, code = parts.partition("_")
-            if sns.get(sn) == code:
-                print(
-                    "  Good: paper {2} has entry in spreadsheet {0}, {1}".format(
-                        sn, code, file.name
-                    )
-                )
-                sns.pop(sn)
-            else:
-                print(
-                    "  ***************************************************************"
-                )
-                print(
-                    "  Bad: we found a pdf file that has no student in the spreadsheet"
-                )
-                print("    Filename: {0}".format(file.name))
-                print(
-                    "  ***************************************************************"
-                )
-                # sys.exit()
+    for file in Path("codedReturn").glob("*.pdf"):
+        # TODO: this looks rather fragile!
+        parts = file.name.partition("_")[2].partition(".")[0]
+        sn, _, code = parts.partition("_")
+        if sns.get(sn) == code:
+            print(f"  Good: paper {file.name} has entry in spreadsheet {sn}, {code}")
+            sns.pop(sn)
+        else:
+            print("  ***************************************************************")
+            print("  Bad: we found a pdf file that has no student in the spreadsheet")
+            print("    Filename: {0}".format(file.name))
+            print("  ***************************************************************")
 
     # anyone that has a pdf file has been popped from the dict, report the remainders
     if len(sns) == 0:

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -24,41 +25,48 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
     # Defines __version__
     exec(f.read())
 
-iconList = []
-for fn in glob("plom/client/icons/*.svg"):
-    iconList.append(fn)
-cursorList = []
-for fn in glob("plom/client/cursors/*.png"):
-    cursorList.append(fn)
-
 # TODO: CI requires requirements.txt.tempminima synced with mins here:
 
-client_install_requires = ["toml>=0.10.0", "requests", "requests-toolbelt", "PyQt5"]
+client_install_requires = [
+    "appdirs>=1.4.3",
+    "toml>=0.10.0",
+    "passlib",
+    "stdiomask>=0.0.6",
+    "requests",
+    "requests-toolbelt",
+    "PyQt5",
+]
 
 server_install_requires = [
     "appdirs>=1.4.3",
+    "canvasapi>=2.0.0",
     "toml>=0.10.0",
     "tqdm",
     "numpy",
-    "pandas",
+    "pandas>=1.0.0",
     "passlib",
-    "pymupdf>=1.18.5,!=1.18.7",
+    "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
-    "cffi",  # not ours, why doesn't jpegtran-cffi pull this?
-    "jpegtran-cffi",
-    "weasyprint",
+    "weasyprint<53",  # temp pin for Issue #1594
     "aiohttp~=3.7.2",
-    "pypng",  # unlisted dep of pyqrcode
-    "pyqrcode",
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
     "opencv-python",
     "scikit-learn>=0.23.1",
+    "segno",
     "lapsolver",  # ID reading
     "requests",
     "requests-toolbelt",
+    "packaging",
+    'importlib_resources ; python_version<"3.7"',  # until we drop 3.6
+    "stdiomask>=0.0.6",
 ]
+# TODO: optional dependency to enable lossless jpeg rotations
+#   "cffi",
+#   "jpegtran-cffi",
+# TODO: how to get "or"?: https://gitlab.com/plom/plom/-/issues/1570
+#   "file-magic || python-magic>=0.4.20",
 
 # Non-Python deps for server
 #   - openssl
@@ -67,7 +75,7 @@ server_install_requires = [
 #   - latex installation including (Debian/Ubuntu pkg names):
 #       texlive-latex-extra dvipng latexmk texlive-fonts-recommended
 #   - latex installation including (Fedora pkg names):
-#       tex-preview tex-dvipng texlive-scheme-basic tex-xwatermark tex-charter
+#       tex-preview tex-dvipng texlive-scheme-basic tex-charter
 
 
 setup(
@@ -95,14 +103,12 @@ setup(
             "plom-hwdemo=plom.scripts.hwdemo:main",
             "plom-init=plom.scripts.plominit:main",
             "plom-build=plom.scripts.build:main",
-            "plom-server=plom.scripts.server:main",
-            "plom-scan=plom.scripts.scan:main",
-            "plom-solution=plom.scripts.solution:main",
             "plom-manager=plom.scripts.manager:main",
-            "plom-finish=plom.scripts.finish:main",
+            "plom-finish=plom.finish.__main__:main",
             "plom-fake-scribbles=plom.produce.faketools:main",
             "plom-fake-hwscribbles=plom.produce.hwFaker:main",
             "plom-hwscan=plom.scripts.hwscan:main",
+            "plom-solution=plom.scripts.solution:main",
         ],
     },
     include_package_data=True,
@@ -111,22 +117,13 @@ setup(
             "share/plom",
             [
                 "plom/templateTestSpec.toml",
-                "plom/produce/digits.json",
-                "plom/serverDetails.toml",
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
-                "plom/demoUserList.csv",
-                "plom/scan/test_zbar_fails.png",
-                "plom/server/target_Q_latex_plom.png",
-                "plom/testTemplates/latexTemplate.tex",
-                "plom/testTemplates/latexTemplatev2.tex",
-                "plom/testTemplates/idBox2.pdf",
-                "plom/client/backGrid1.svg",
-                "plom/client/backGrid2.png",
+                "plom/demo_rubrics.toml",
             ],
         ),
-        ("share/plom/icons", iconList),
-        ("share/plom/cursors", cursorList),
+        # TODO: move up from plom
+        ("share/plom/testTemplates", glob("plom/testTemplates/**/*", recursive=True)),
         ("share/applications", ["org.plomgrading.PlomClient.desktop"]),
         ("share/metainfo", ["org.plomgrading.PlomClient.metainfo.xml"]),
         ("share/icons/hicolor/128x128/apps/", ["org.plomgrading.PlomClient.png"]),
@@ -138,6 +135,7 @@ setup(
                 "contrib/plom-return_codes_to_canvas_csv.py",
                 "contrib/plom-write_grades_to_canvas_csv.py",
                 "contrib/upload_hw_from_zip_of_jpegs.py",
+                "contrib/plom-push-to-canvas.py",
             ],
         ),
     ],

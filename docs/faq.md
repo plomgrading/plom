@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2019-2020 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2021 Colin B. Macdonald"
 __license__ = "AGPL-3.0-or-later"
  -->
 
@@ -7,7 +7,7 @@ Frequently Asked Questions
 ==========================
 
 Common questions and tips 'n tricks that may not appear elsewhere in the
-documentaiton.
+documentation.
 
 
 Plom Client software

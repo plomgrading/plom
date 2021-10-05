@@ -10,7 +10,7 @@ StudentIDLength = 8
 def isValidUBCStudentNumber(n):
     """Is this a valid student number for UBC?
 
-    Input must be a string or string like or convertable by str().
+    Input must be a string or string like or convertible by str().
     """
     try:
         sid = int(str(n))
@@ -20,6 +20,24 @@ def isValidUBCStudentNumber(n):
         return False
     if len(str(n)) != StudentIDLength:
         return False
+    return True
+
+
+def is_z_padded_integer(n):
+    """Is this string a z-padded int
+
+    Input must be a string that when z's (or Z's) are removed gives a non-negative integer. We may require this for debugging with 'fake' student numbers which are constructed from some other id by padding with z's. Must have correct length - as per StudentIDLength
+    """
+    de_z = n.replace("z", 0).replace("Z", 0)
+    if len(de_z) != StudentIDLength:
+        return False
+    try:
+        sid = int(str(de_z))
+    except:
+        return False
+    if sid < 0:
+        return False
+
     return True
 
 
@@ -40,4 +58,7 @@ def censorStudentName(s):
     return r
 
 
-isValidStudentNumber = isValidUBCStudentNumber
+def isValidStudentNumber(n):
+    """Check if is either a valid UBC SID or a z-padded int of correct length."""
+
+    return isValidUBCStudentNumber(n) or is_z_padded_integer(n)

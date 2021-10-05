@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021 Nicholas J H Lai
+
 import peewee as pw
 
 plomdb = pw.SqliteDatabase(None)
@@ -34,7 +39,6 @@ class Image(BaseModel):
 class Test(BaseModel):
     test_number = pw.IntegerField(primary_key=True, unique=True)
     # some state pw.Bools
-    produced = pw.BooleanField(default=False)
     used = pw.BooleanField(default=False)
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)
@@ -78,6 +82,7 @@ class QGroup(BaseModel):
     status = pw.CharField(default="")
     time = pw.DateTimeField(null=True)
     marked = pw.BooleanField(default=False)
+    # fullmark = pw.IntegerField(null=False)
 
 
 class TPage(BaseModel):  # a test page that knows its tpgv
@@ -154,7 +159,6 @@ class Annotation(BaseModel):
     integrity_check = pw.CharField(null=True)  # random uuid
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
-    comment_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
@@ -175,7 +179,6 @@ class OldAnnotation(BaseModel):
     integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
-    comment_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
@@ -191,6 +194,7 @@ class OAPage(BaseModel):
 class Rubric(BaseModel):
     # unique key - user-generated have 12 digits, HAL uses 1XXX.
     key = pw.CharField(unique=True, null=False)
+    kind = pw.CharField(null=False)  # abs, neut, delt, relative
     delta = pw.CharField(null=False)
     text = pw.CharField(null=False)
     question = pw.IntegerField(null=False)

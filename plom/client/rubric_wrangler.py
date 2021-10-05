@@ -3,6 +3,8 @@
 # Copyright (C) 2021 Colin B. Macdonald
 # Copyright (C) 2021 Forest Kobayashi
 
+import logging
+
 from PyQt5.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QModelIndex
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
@@ -26,6 +28,9 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QWidget,
 )
+
+
+log = logging.getLogger("rubric_wrangler")
 
 
 def showRubricToUser(rubric):
@@ -167,7 +172,7 @@ class ShowTable(QTableWidget):
             # find the rubric with that key
             rindices = [i for i, v in enumerate(rubrics) if int(v["id"]) == int(k)]
             if len(rindices) != 1:
-                print(
+                log.error(
                     "We have a (minor) problem - trying to populate list with key not in our rubric list."
                 )
             else:
@@ -335,9 +340,12 @@ class ShowListFrame(QFrame):
 
 
 class RubricWrangler(QDialog):
-    def __init__(self, rubrics, wranglerState, username):
+    def __init__(self, rubrics, wranglerState, username, annotator_size=None):
         super().__init__()
-        self.resize(1200, 768)
+        # set size to be 3/4 or parent annotator
+        if annotator_size:
+            self.resize(annotator_size * 3 / 4)
+        ##
         self.username = username
         self.rubrics = rubrics
         self.model = RubricModel()
@@ -410,7 +418,7 @@ class RubricWrangler(QDialog):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
         # TODO: this doesn't yet set the names: but they can't change in here anyway
         # for p in range(self.num_user_tabs):
-        #     print(self.ST.STW.widget(p).shortname)
+        #     log.warn(self.ST.STW.widget(p).shortname)
         #     store["user_tab_names"].append(...)
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown

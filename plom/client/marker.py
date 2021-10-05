@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -13,21 +13,22 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPL-3.0-or-later"
 
 
+from collections import defaultdict
 import json
 import logging
+from math import ceil
 import os
-import secrets
-import io
-
-# in order to get shortcuts under OSX this needs to set this.... but only osx.
-# To test platform
-import platform
+from pathlib import Path
 import queue
+import secrets
 import shutil
 import tempfile
-import threading
+from textwrap import shorten
 import time
-from collections import defaultdict
+import threading
+
+# in order to get shortcuts under OSX this needs to set this.... but only osx.
+import platform
 
 from PyQt5.QtCore import (
     Qt,
@@ -45,6 +46,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from plom import get_question_label
 from plom.plom_exceptions import (
     PlomRangeException,
     PlomSeriousException,
@@ -53,17 +55,15 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomLatexException,
     PlomNoMoreException,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .comment_list import AddTagBox, commentLoadAllToml, commentIsVisible
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import GroupView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import ErrorMessage, SimpleMessage
+from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -71,10 +71,6 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 log = logging.getLogger("marker")
-
-# set up variables to store paths for marker and id clients
-tempDirectory = tempfile.TemporaryDirectory(prefix="plom_")
-directoryPath = tempDirectory.name
 
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
@@ -93,11 +89,11 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(str, list, str, str)
+    downloadSuccess = pyqtSignal(str, list, list, str, str)
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
-    def __init__(self, question, version, msgr_clone):
+    def __init__(self, question, version, msgr_clone, workdir):
         """
         Initializes a new downloader.
 
@@ -107,7 +103,8 @@ class BackgroundDownloader(QThread):
             msgr_clone (Messenger): use this for the actual downloads.
                 Note Messenger is not multithreaded and blocks using
                 mutexes, so you may want to pass a clone of your
-                Messenger, rather than the one you are using youself!
+                Messenger, rather than the one you are using yourself!
+            workdir (pathlib.Path): filespace for downloading.
 
         Notes:
             question/version may be able to be type int as well.
@@ -115,7 +112,7 @@ class BackgroundDownloader(QThread):
         super().__init__()
         self.question = question
         self.version = version
-        self.workingDirectory = directoryPath
+        self.workingDirectory = workdir
         self._msgr = msgr_clone
 
     def run(self):
@@ -159,17 +156,38 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        num = int(task[1:5])
+        full_pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
+
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
+
+        # Populate the orientation keys from the full pagedata
+        for i, row in enumerate(src_img_data):
+            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+            # There could easily be more than one: what if orientation is contradictory?
+            row["orientation"] = ori[0]  # just take first one
+
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
+            # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self._msgr.MrequestOneImage(task, row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        self.downloadSuccess.emit(task, src_img_data, tags, integrity_check)
+            row["filename"] = tmp
+            for r in full_pagedata:
+                if r["md5"] == row["md5"]:
+                    r["local_filename"] = tmp
+
+        self.downloadSuccess.emit(
+            task, src_img_data, full_pagedata, tags, integrity_check
+        )
         self.quit()
 
 
@@ -212,8 +230,12 @@ class BackgroundUploader(QThread):
         Returns:
             None
         """
-        log.debug("upQ enqueing item from main thread " + str(threading.get_ident()))
+        log.debug("upQ enqueuing item from main thread " + str(threading.get_ident()))
         self.q.put(args)
+
+    def queue_size(self):
+        """Return the (approx?) queue length, the number of papers waiting to upload."""
+        return self.q.qsize()
 
     def isEmpty(self):
         """
@@ -356,7 +378,7 @@ class ExamQuestion:
     A class storing identifying information for one Exam Question.
 
     A simple container for storing a groupimage's task ID,
-    numer, group, version, status, the mark, the original image
+    number, group, version, status, the mark, the original image
     filename, the annotated image filename, the mark, and the
     time spent marking the groupimage.
     """
@@ -412,7 +434,7 @@ class MarkerExamModel(QStandardItemModel):
             parent (QStandardItemModel): MarkerExamModel's Parent.
 
         """
-        QStandardItemModel.__init__(self, parent)
+        super().__init__(parent)
         self.setHorizontalHeaderLabels(
             [
                 "Task",
@@ -448,17 +470,17 @@ class MarkerExamModel(QStandardItemModel):
             pass
         else:
             ErrorMessage(
-                "Task {} has been modified by server - you will need to annotate it again.".format(
-                    paper.prefix
-                )
+                f"Task {paper.prefix} has been modified by server - you will need to annotate it again."
             ).exec_()
             self.removeRow(r)
         # Append new groupimage to list and append new row to table.
         r = self.rowCount()
+        # hide -1 which upstream tooling uses "not yet marked"
         try:
             markstr = str(paper.mark) if int(paper.mark) >= 0 else ""
         except ValueError:
             markstr = ""
+        # TODO: these *must* be strings but I don't understand why
         self.appendRow(
             [
                 QStandardItem(paper.prefix),
@@ -735,9 +757,9 @@ class MarkerExamModel(QStandardItemModel):
         # and the total marking time (in case it was annotated earlier)
         mt = int(self.data(self.index(r, 3)))
         # total elapsed time.
-        self.setData(self.index(r, 3), mtime + mt)
+        self.setData(self.index(r, 3), str(mtime + mt))
         self._setStatus(r, "uploading...")
-        self.setData(self.index(r, 2), mrk)
+        self.setData(self.index(r, 2), str(mrk))
         self._setAnnotatedFile(r, aname, pname)
         self._setPaperDir(r, tdir)
 
@@ -770,7 +792,7 @@ class ProxyModel(QSortFilterProxyModel):
         Args:
             parent (QObject): self's parent.
         """
-        QSortFilterProxyModel.__init__(self, parent)
+        super().__init__(parent)
         self.setFilterKeyColumn(4)
         self.filterString = ""
         self.invert = False
@@ -780,21 +802,20 @@ class ProxyModel(QSortFilterProxyModel):
         Sees if left data is less than right data.
 
         Args:
-            left (QModelIndex): the left map.
+            left (QModelIndex):
             right (QModelIndex):
 
         Returns:
-            True if left data is less than right data.
-
+            bool: if both can be converted to int, compare as ints.
+                Otherwise, convert to strings and compare.
         """
-        # Check to see if data is integer, and compare that
+        # try to compare as integers
         try:
-            lv = int(left.data())
-            rv = int(right.data())
-            return lv < rv
-        except ValueError:
-            # else let qt handle it.
-            return left.data() < right.data()
+            return int(left.data()) < int(right.data())
+        except (ValueError, TypeError):
+            pass
+        # else compare as strings
+        return str(left.data()) < str(right.data())
 
     def setFilterString(self, flt):
         """
@@ -921,24 +942,30 @@ class MarkerClient(QWidget):
 
     my_shutdown_signal = pyqtSignal(int, list)
 
-    def __init__(self, Qapp):
+    def __init__(self, Qapp, tmpdir=None):
         """
         Initialize a new MarkerClient
 
         Args:
             Qapp(QApplication): Main client application
-
+            tmpdir (pathlib.Path/str/None): a temporary directory for
+                storing image files and other data.  In principle can
+                be shared with Identifier although this may not be
+                implemented.  If `None`, we will make our own.
         """
         super().__init__()
         self.Qapp = Qapp
 
-        # instance vars we can initialize now
-        self.workingDirectory = (
-            directoryPath
-            # local temp directory for image files and the class list.
-        )
+        # Save the local temp directory for image files and the class list.
+        if not tmpdir:
+            tmpdir = tempfile.mkdtemp(prefix="plom_")
+        self.workingDirectory = Path(tmpdir)
+
         self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
         self.maxMark = -1  # temp value
+        # TODO: a not-fully-thought-out datastore for immutable pagedata
+        # Note: specific to this question
+        self._full_pagedata = {}
         self.examModel = (
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
@@ -962,18 +989,17 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.canViewAll = None
+        self.msgr = None
 
-    def setup(self, markerMessenger, question, version, lastTime):
-        """
-        Performs setup procedure for markerClient.
+    def setup(self, messenger, question, version, lastTime):
+        """Performs setup procedure for markerClient.
 
-        TODO: Change the __init__ params to include the
-            params below and move this method into init
+        TODO: move all this into init?
 
         TODO: verify all lastTime Params, there are almost certainly some missing
 
         Args:
-            markerMessenger (Messenger): messenger client for communicating with server
+            messenger (Messenger): handle communication with server.
             question (int): question number.
             version (int): version number
             lastTime (dict): a dictionary containing
@@ -997,7 +1023,7 @@ class MarkerClient(QWidget):
         Returns:
             None
         """
-        self.msgr = markerMessenger
+        self.msgr = messenger
         # BackgroundDownloaders come and go but share a single cloned Messenger
         # Note: BackgroundUploader is persistent and makes its own clone.
         self._bgdownloader_msgr = Messenger.clone(self.msgr)
@@ -1014,7 +1040,6 @@ class MarkerClient(QWidget):
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
-        self.setMarkStyleID()
 
         if not self.getMaxMark():  # indicates exception was caught
             return
@@ -1066,11 +1091,11 @@ class MarkerClient(QWidget):
         self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
         self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
 
-        # load in the rubric pane settings
-        log.info("Loading user's rubric pane configuration")
-        rval = self.msgr.MgetUserRubricPanes(self.question)
+        # load in the rubric tab settings
+        log.info("Loading user's rubric tab configuration")
+        rval = self.msgr.MgetUserRubricTabs(self.question)
         if rval[0]:
-            self.annotatorSettings["rubricWranglerState"] = rval[1]
+            self.annotatorSettings["rubricTabState"] = rval[1]
 
         if lastTime.get("POWERUSER", False):
             # if POWERUSER is set, disable warnings and allow viewing all
@@ -1080,15 +1105,6 @@ class MarkerClient(QWidget):
             self.allowBackgroundOps = False
 
         self.ui.sidebarRightCB.setChecked(lastTime.get("SidebarOnRight", False))
-
-        if lastTime["upDown"] == "up":
-            self.ui.markUpRB.animateClick()
-
-        elif lastTime["upDown"] == "down":
-            self.ui.markDownRB.animateClick()
-
-        if lastTime["mouse"] == "left":
-            self.ui.leftMouseCB.setChecked(True)
 
     def UIInitialization(self):
         """
@@ -1104,9 +1120,10 @@ class MarkerClient(QWidget):
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
         self.ui.userLabel.setText(self.msgr.whoami())
+        question_label = get_question_label(self.exam_spec, self.question)
         self.ui.infoBox.setTitle(
-            "Marking Q{} (ver. {}) of “{}”".format(
-                self.question, self.version, self.exam_spec["name"]
+            "Marking {} (ver. {}) of “{}”".format(
+                question_label, self.version, self.exam_spec["name"]
             )
         )
 
@@ -1167,36 +1184,14 @@ class MarkerClient(QWidget):
             return False
         return True
 
-    def setMarkStyleID(self):
-        """
-        Give IDs to the radio-buttons which select the marking style.
-
-        Notes:
-            Hides "mark total" style by default
-            Mark style ID's are as follows
-                1 = mark total = user clicks the total-mark, will likely be
-                    removed in the future.
-                2 = mark-up = mark starts at 0 and user increments it
-                3 = mark-down = mark starts at max and user decrements it
-
-        Returns:
-            None
-
-        """
-        self.ui.markStyleGroup.setId(self.ui.markTotalRB, 1)
-        self.ui.markTotalRB.hide()
-        self.ui.markTotalRB.setEnabled(False)
-        # continue with the other buttons
-        self.ui.markStyleGroup.setId(self.ui.markUpRB, 2)
-        self.ui.markStyleGroup.setId(self.ui.markDownRB, 3)
-
     def resizeEvent(self, event):
         """
         Resizes the image and surrounding table.
 
         Notes:
             Overrides QWidget.resizeEvent()
-            a resize can be triggered before "getToWork" is called.
+            a resize can be triggered before "setup" is called.
+            TODO: which is more evidence that "init" should consume "setup"
 
         Args:
             event (QEvent): the event to be resized.
@@ -1279,13 +1274,24 @@ class MarkerClient(QWidget):
         if len(self.examModel.getOriginalFiles(task)) > 0:
             return True
 
-        # TODO: plom file is lovely json: why we pack it around as binary bytes?
+        assert task[0] == "q"
+        assert task[5] == "g"
+        num = int(task[1:5])
+        question = int(task[6:])
+        assert question == self.question
+
         try:
-            [page_metadata, anImage, plomfile_data] = self.msgr.MrequestImages(
-                task, self.examModel.getIntegrityCheck(task)
+            integrity = self.examModel.getIntegrityCheck(task)
+            plomdata = self.msgr.get_annotations(
+                num, self.question, edition=None, integrity=integrity
+            )
+            annotated_image = self.msgr.get_annotations_image(
+                num, self.question, edition=plomdata["annotation_edition"]
             )
         except (PlomTaskChangedError, PlomTaskDeletedError) as ex:
             # TODO: better action we can take here?
+            # TODO: the real problem here is that the full_pagedata is potentially out of date!
+            # TODO: we also need (and maybe already have) a mechanism to invalidate existing annotations
             ErrorMessage(
                 '<p>The task "{}" has changed in some way by the manager; it '
                 "may need to be remarked.</p>\n\n"
@@ -1301,44 +1307,41 @@ class MarkerClient(QWidget):
             self.throwSeriousError(e)
             return False
 
-        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        log.debug("create paperDir {} for already-graded download".format(paperDir))
+        # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
+        # column means different things).  Instead, extract from .plom file.
+        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        self._full_pagedata[num] = full_pagedata
 
-        # TODO: keep more image_id, md5, server_path_filename
-        src_img_data = [{"md5": x[1]} for x in page_metadata]
+        log.info("importing source image data (orientations etc) from .plom file")
+        # filenames likely stale
+        src_img_data = plomdata["base_images"]
 
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            src_img_data[i]["filename"] = tmp
-            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
-        # Parse PlomFile early for orientation data: but PageScene is going
-        # to parse it later.  TODO: seems like duplication of effort.
-        plomdata = json.loads(io.BytesIO(plomfile_data).getvalue())
-        ori = plomdata.get("orientations")
-        if not ori:
-            log.warning("plom file has no orientation data: substituting zeros")
-            # TODO: hardcoding orientation Issue #1306: take from server data instead in this case
-            for d in src_img_data:
-                d["orientation"] = 0
-        else:
-            log.info("importing orientations from plom file")
-            for i, d in enumerate(src_img_data):
-                d["orientation"] = ori[i]
+            row["filename"] = tmp
+            for r in full_pagedata:
+                if r["md5"] == row["md5"]:
+                    r["local_filename"] = tmp
+
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
-        if anImage is None:
-            return True
-
+        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
+        log.debug("create paperDir {} for already-graded download".format(paperDir))
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
         pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
         with open(aname, "wb+") as fh:
-            fh.write(anImage)
-        with open(pname, "wb+") as fh:
-            fh.write(plomfile_data)
+            fh.write(annotated_image)
+        with open(pname, "w") as f:
+            json.dump(plomdata, f, indent="  ")
+            f.write("\n")
         self.examModel.setAnnotatedFile(task, aname, pname)
         return True
 
@@ -1438,16 +1441,39 @@ class MarkerClient(QWidget):
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        # TODO: hardcoding orientation to 0, Issue #1306
-        src_img_data = [{"md5": x[1], "orientation": 0} for x in page_metadata]
+        num = int(task[1:5])
+        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+        for r in full_pagedata:
+            r["local_filename"] = None
+        self._full_pagedata[num] = full_pagedata
+        # print("=" * 80)
+        # print(task)
+        # print("\n".join([str(x) for x in full_pagedata]))
+        # print("\n".join([str(x) for x in page_metadata]))
+        # print("=" * 80)
+
+        src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
+        del page_metadata
+
+        # Populate the orientation keys from the full pagedata
+        for i, row in enumerate(src_img_data):
+            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+            # There could easily be more than one: what if orientation is contradictory?
+            row["orientation"] = ori[0]  # just take first one
+
         # Image names = "<task>.<imagenumber>.<extension>"
-        for i, row in enumerate(page_metadata):
+        # TODO: use server filename from server_path_filename
+        for i, row in enumerate(src_img_data):
+            # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(task, row[0], row[1])
+            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            src_img_data[i]["filename"] = tmp
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
+            row["filename"] = tmp
+            for r in full_pagedata:
+                if r["md5"] == row["md5"]:
+                    r["local_filename"] = tmp
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1484,7 +1510,7 @@ class MarkerClient(QWidget):
             self.backgroundDownloader.wait()
         # New downloader but reuse the existing Messenger clone
         self.backgroundDownloader = BackgroundDownloader(
-            self.question, self.version, self._bgdownloader_msgr
+            self.question, self.version, self._bgdownloader_msgr, self.workingDirectory
         )
         self.backgroundDownloader.downloadSuccess.connect(
             self._requestNextInBackgroundFinished
@@ -1498,7 +1524,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, tags, integrity_check
+        self, task, src_img_data, full_pagedata, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1507,13 +1533,15 @@ class MarkerClient(QWidget):
             task (str): the task name for the next test.
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
+            full_pagedata (list): temporary hacks to merge with above?
             tags (str): tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
             None
-
         """
+        num = int(task[1:5])
+        self._full_pagedata[num] = full_pagedata
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -1639,11 +1667,8 @@ class MarkerClient(QWidget):
             None
 
         """
-        mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
-
         annotator = Annotator(
             self.ui.userLabel.text(),
-            mouseHand,
             parentMarkerUI=self,
             initialData=initialData,
         )
@@ -1755,17 +1780,21 @@ class MarkerClient(QWidget):
             pdict = None
 
         exam_name = self.exam_spec["name"]
-        markStyle = self.ui.markStyleGroup.checkedId()
+
+        # TODO: I dislike this packed-string: overdue for refactor
+        assert task[5] == "g"
+        question_num = int(task[6:])
         tgv = task[1:]
+        question_label = get_question_label(self.exam_spec, question_num)
         integrity_check = self.examModel.getIntegrityCheck(task)
         src_img_data = self.examModel.get_source_image_data(task)
         return (
             tgv,
+            question_label,
             exam_name,
             paperdir,
             aname,
             self.maxMark,
-            markStyle,
             pdict,
             integrity_check,
             src_img_data,
@@ -1775,18 +1804,14 @@ class MarkerClient(QWidget):
         """Get list of rubrics from server.
 
         Args:
-            none
+            question (int/None)
 
         Returns:
             list: A list of the dictionary objects.
         """
         if question is None:
-            response = self.msgr.MgetRubrics()
-        else:
-            response = self.msgr.MgetRubricsByQuestion(question)
-        if response[0] is False:
-            log.warning("Getting rubrics failed. ")
-        return response
+            return self.msgr.MgetRubrics()
+        return self.msgr.MgetRubricsByQuestion(question)
 
     def sendNewRubricToServer(self, new_rubric):
         return self.msgr.McreateRubric(new_rubric)
@@ -1821,6 +1846,11 @@ class MarkerClient(QWidget):
             if os.path.isfile(soln):
                 os.remove(soln)
             return None
+
+    def saveTabStateToServer(self, tab_state):
+        """Upload a tab state to the server."""
+        log.info("Saving user's rubric tab configuration to server")
+        self.msgr.MsaveUserRubricTabs(self.question, tab_state)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
@@ -1885,10 +1915,9 @@ class MarkerClient(QWidget):
 
         Returns:
             None
-
         """
         (
-            gr,
+            grade,
             markingTime,
             paperDir,
             aname,
@@ -1897,32 +1926,29 @@ class MarkerClient(QWidget):
             integrity_check,
             src_img_data,
         ) = stuff
-
-        if not (0 <= gr and gr <= self.maxMark):
-            msg = ErrorMessage(
-                "Mark of {} is outside allowed range. Rejecting. This should not happen. Please file a bug".format(
-                    gr
-                )
+        if not isinstance(grade, (int, float)):
+            raise RuntimeError(f"Mark {grade} type {type(grade)} is not a number")
+        if not (0 <= grade and grade <= self.maxMark):
+            raise RuntimeError(
+                f"Mark {grade} outside allowed range [0, {self.maxMark}]. Please file a bug!"
             )
-            msg.exec_()
-            # TODO: what do do here?  revert?
-            return
+        # TODO: sort this out whether task is "q00..." or "00..."?!
+        task = "q" + task
 
-        stat = self.examModel.getStatusByTask("q" + task)
+        stat = self.examModel.getStatusByTask(task)
 
         # Copy the mark, annotated filename and the markingtime into the table
-        # TODO: sort this out whether task is "q00..." or "00..."?!
         self.examModel.markPaperByTask(
-            "q" + task, gr, aname, plomFileName, markingTime, paperDir
+            task, grade, aname, plomFileName, markingTime, paperDir
         )
         # update the markingTime to be the total marking time
-        totmtime = self.examModel.getMTimeByTask("q" + task)
-        tags = self.examModel.getTagsByTask("q" + task)
+        totmtime = self.examModel.getMTimeByTask(task)
+        tags = self.examModel.getTagsByTask(task)
         # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
-            "q" + task,  # current task
-            gr,  # grade
+            task,
+            grade,
             (
                 aname,
                 plomFileName,
@@ -1990,8 +2016,7 @@ class MarkerClient(QWidget):
         return data
 
     def PermuteAndGetSamePaper(self, task, imageList):
-        """
-        Allows user to reorganize pages of an exam.
+        """User has reorganized pages of an exam.
 
         Args:
             task (str): the task ID of the current test.
@@ -2000,12 +2025,11 @@ class MarkerClient(QWidget):
 
         Returns:
             initialData (as described by getDataForAnnotator)
-
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
         # Image names = "<task>.<imagenumber>.<extension>"
-        img_src_data = []
+        src_img_data = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
         # TODO: something with tempfile instead
         # TODO: but why not keep using old name once they are static
@@ -2015,18 +2039,18 @@ class MarkerClient(QWidget):
                 self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
             )
             shutil.copyfile(imageList[i][1], tmp)
-            img_src_data.append(
+            src_img_data.append(
                 {
+                    "id": imageList[i][3],
                     "md5": imageList[i][0],
                     "filename": tmp,
                     "orientation": imageList[i][2],
                 }
             )
         task = "q" + task
-        self.examModel.setOriginalFilesAndData(task, img_src_data)
+        self.examModel.setOriginalFilesAndData(task, src_img_data)
         # set the status back to untouched so that any old plom files ignored
         self.examModel.setStatusByTask(task, "untouched")
-        # finally relaunch the annotator
         return self.getDataForAnnotator(task)
 
     def backgroundUploadFinished(self, task, numDone, numtotal):
@@ -2063,7 +2087,7 @@ class MarkerClient(QWidget):
             '<p>Background upload of "{}" has failed because the server '
             "changed something underneath us.</p>\n\n"
             '<p>Specifically, the server says: "{}"</p>\n\n'
-            "<p>This is a rare situation; no data corruption has occured but "
+            "<p>This is a rare situation; no data corruption has occurred but "
             "your annotations have been discarded just in case.  You will be "
             "asked to redo the task later.</p>\n\n"
             "<p>For now you've been logged out and we'll now force a shutdown "
@@ -2077,7 +2101,7 @@ class MarkerClient(QWidget):
         ) from None
 
     def backgroundUploadFailed(self, task, errmsg):
-        """An upload has failed, we don't know why, do something LOADLY.
+        """An upload has failed, we don't know why, do something LOUDLY.
 
         Args:
             task (str): the task ID of the current test.
@@ -2112,6 +2136,58 @@ class MarkerClient(QWidget):
         if len(idx) > 0:
             self._updateImage(idx[0].row())
 
+    def get_upload_queue_length(self):
+        """How long is the upload queue?
+
+        An overly long queue might be a sign of network troubles.
+
+        Returns:
+            int: The number of papers waiting to upload, possibly but
+                not certainly including the current upload-in-progress.
+                Value might also be approximate.
+        """
+        if not self.backgroundUploader:
+            return 0
+        if self.backgroundUploader.isEmpty():
+            return 0
+        return self.backgroundUploader.queue_size()
+
+    def wait_for_bguploader(self, timeout=0):
+        """Wait for the uploader queue to empty.
+
+        Args:
+            timeout (int): return early after approximately `timeout`
+                seconds.  If 0 then wait forever.
+
+        Returns:
+            bool: True if it shutdown.  False if we timed out.
+        """
+        dt = 0.1  # timestep
+        if timeout != 0:
+            N = ceil(float(timeout) / dt)
+        else:
+            N = 0  # zero/infinity: pretty much same
+        M = ceil(2.0 / dt)  # warn every M seconds
+        if self.backgroundUploader:
+            count = 0
+            while self.backgroundUploader.isRunning():
+                if self.backgroundUploader.isEmpty():
+                    # don't try to quit until the queue is empty
+                    self.backgroundUploader.quit()
+                time.sleep(dt)
+                count += 1
+                if N > 0 and count >= N:
+                    log.warning(
+                        "Timed out after {} seconds waiting for uploader to finish".format(
+                            timeout
+                        )
+                    )
+                    return False
+                if count % M == 0:
+                    log.warning("Still waiting for uploader to finish...")
+            self.backgroundUploader.wait()
+        return True
+
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown even")
         self.do_shutdown_tasks()
@@ -2130,41 +2206,27 @@ class MarkerClient(QWidget):
     def do_shutdown_tasks(self):
         """Shuts down self."""
         log.debug("Marker shutdown from thread " + str(threading.get_ident()))
-        if self.backgroundUploader:
-            count = 42
-            while self.backgroundUploader.isRunning():
-                if self.backgroundUploader.isEmpty():
-                    # don't try to quit until the queue is empty
-                    self.backgroundUploader.quit()
+        timeout = 1
+        while not self.wait_for_bguploader(timeout=timeout):
+            timeout = 5  # subsequent popups are less frequent
+            msg = SimpleMessage(
+                "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                # politely ask one more time
+                self.backgroundUploader.quit()
                 time.sleep(0.1)
-                count += 1
-                if count >= 50:
-                    count = 0
-                    msg = SimpleMessage(
-                        "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
-                    )
-                    if msg.exec_() == QMessageBox.No:
-                        # politely ask one more time
-                        self.backgroundUploader.quit()
-                        time.sleep(0.1)
-                        # then nuke it from orbit
-                        if self.backgroundUploader.isRunning():
-                            self.backgroundUploader.terminate()
-                        break
-            self.backgroundUploader.wait()
+                # then nuke it from orbit
+                if self.backgroundUploader.isRunning():
+                    self.backgroundUploader.terminate()
+                    break
 
         # When shutting down, first alert server of any images that were
-        # not marked - using 'DNF' (did not finish). Sever will put
+        # not marked - using 'DNF' (did not finish). Server will put
         # those files back on the todo pile.
         self.DNF()
-        # now save the annotator rubric pane state to server
-
-        if self.msgr.MsaveUserRubricPanes(
-            self.question, self.annotatorSettings["rubricWranglerState"]
-        ):
-            log.info("Saved user's rubric pane configuration to server")
-        else:
-            log.info("Problem saving user's rubric pane configuration to server")
+        # now save the annotator rubric tab state to server
+        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
 
         # Then send a 'user closing' message - server will revoke
         # authentication token.
@@ -2173,10 +2235,8 @@ class MarkerClient(QWidget):
         except PlomSeriousException as err:
             self.throwSeriousError(err)
 
-        markStyle = self.ui.markStyleGroup.checkedId()
-        mouseHand = 1 if self.ui.leftMouseCB.isChecked() else 0
         sidebarRight = self.ui.sidebarRightCB.isChecked()
-        self.my_shutdown_signal.emit(2, [markStyle, mouseHand, sidebarRight])
+        self.my_shutdown_signal.emit(2, [sidebarRight])
 
     def DNF(self):
         """
@@ -2194,7 +2254,7 @@ class MarkerClient(QWidget):
         """
         for r in range(self.examModel.rowCount()):
             if self.examModel.data(self.examModel.index(r, 1)) != "marked":
-                # Tell server the task fo any paper that is not marked.
+                # Tell server the task of any paper that is not marked.
                 # server will put that back on the todo-pile.
                 try:
                     self.msgr.MdidNotFinishTask(
@@ -2211,8 +2271,6 @@ class MarkerClient(QWidget):
 
         Returns:
             (tuple) containing pageData and viewFiles
-
-
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
@@ -2234,18 +2292,6 @@ class MarkerClient(QWidget):
 
         return [pageData, viewFiles]
 
-    def downloadWholePaperMetadata(self, testNumber):
-        """Get metadata about all images used in a particular test paper.
-
-        Args:
-            testNumber (int): the test number.
-
-        Returns:
-            (tuple) containing pageData and viewFiles
-        """
-        pageData = self.msgr.MrequestWholePaperMetadata(testNumber, self.question)
-        return pageData
-
     def downloadOneImage(self, task, image_id, md5):
         """Download one image from server by its database id."""
         return self.msgr.MrequestOneImage(task, image_id, md5)
@@ -2258,11 +2304,11 @@ class MarkerClient(QWidget):
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
-        # TODO: deprecated, remove?  what do we want to do for comment pre-latexing?
         if True:
+            log.debug("TODO: currently skipping LaTeX pre-rendering, see Issue #1491")
             return
 
-        clist = commentLoadAllToml()
+        clist = []
         # sort list in order of longest comment to shortest comment
         clist.sort(key=lambda C: -len(C["text"]))
 
@@ -2282,24 +2328,24 @@ class MarkerClient(QWidget):
         username = self.msgr.whoami()
 
         for X in clist:
-            if commentIsVisible(X, n, username) and X["text"][:4].upper() == "TEX:":
+            if X["text"][:4].upper() == "TEX:":
                 txt = X["text"][4:].strip()
                 pd.setLabelText("Caching:\n{}".format(txt[:64]))
                 # latex the red version
-                self.latexAFragment(txt)
+                self.latexAFragment(txt, quiet=True)
                 c += 1
                 pd.setValue(c)
                 # and latex the previews (legal and illegal versions)
                 txtp = (
                     "\\color{blue}" + txt
                 )  # make color blue for ghost rendering (legal)
-                self.latexAFragment(txtp)
+                self.latexAFragment(txtp, quiet=True)
                 c += 1
                 pd.setValue(c)
                 txtp = (
                     "\\color{gray}" + txt
                 )  # make color gray for ghost rendering (illegal)
-                self.latexAFragment(txtp)
+                self.latexAFragment(txtp, quiet=True)
                 c += 1
                 pd.setValue(c)
             else:
@@ -2308,7 +2354,9 @@ class MarkerClient(QWidget):
                 pd.setValue(c)
         pd.close()
 
-    def latexAFragment(self, txt):
+    def latexAFragment(
+        self, txt, *, quiet=False, cache_invalid=True, cache_invalid_tryagain=False
+    ):
         """
         Run LaTeX on a fragment of text and return the file name of a png.
 
@@ -2317,23 +2365,72 @@ class MarkerClient(QWidget):
         Args:
             txt (str): the text to be Latexed.
 
-        Returns:
-            (png): a file containing the Latexed text.
+        Keyword Args:
+            quiet (bool): if True, don't popup dialogs on errors.
+                Caution: this can result in a lot of API calls because
+                users can keep requesting the same (bad) TeX from the
+                server, e.g., by having bad TeX in a rubric.
+            cache_invalid (bool): whether to cache invalid TeX.  Useful
+                to prevent repeated calls to render bad TeX but might
+                prevent users from seeing (again) an error dialog that
+            try_again_if_cache_invalid (bool): if True then when we get
+                a cache hit of `None` (corresponding to bad TeX) then we
+                try to to render again.
 
+        Returns:
+            (pathlib.Path/str/None): a path and filename to a `.png` of
+                the rendered TeX.  Or None if there was an error: callers
+                will need to decide how to handle that, typically by
+                displaying the raw code instead.
         """
-        if txt in self.commentCache:
-            # have already latex'd this comment
-            return self.commentCache[txt]
-        log.debug('requesting latex for "{}"'.format(txt))
+        txt = txt.strip()
+        # If we already latex'd this text, return the cached image
         try:
-            fragment = self.msgr.MlatexFragment(txt)
-        except PlomLatexException:
+            r = self.commentCache[txt]
+        except KeyError:
+            # logic is convoluted: this is cache-miss...
+            r = None
+        else:
+            # ..and this is cache-hit of None
+            if r is None and not cache_invalid_tryagain:
+                log.debug(
+                    "tex: cache hit None, tryagain NOT set: %s",
+                    shorten(txt, 60, placeholder="..."),
+                )
+                return None
+        if r:
+            return r
+        log.debug("tex: request image for: %s", shorten(txt, 80, placeholder="..."))
+        r, fragment = self.msgr.MlatexFragment(txt)
+        if not r:
+            if not quiet:
+                # Heuristics to highlight error: latex errors seem to start with "! "
+                lines = fragment.split("\n")
+                idx = [i for i, line in enumerate(lines) if line.startswith("! ")]
+                if any(idx):
+                    n = idx[0]  # could be fancier if more than one match
+                    info = "\n".join(lines[max(0, n - 5) : n + 5])
+                    ErrorMessage(
+                        """
+                        <p>The server reported an error processing your TeX fragment.</p>
+                        <p>Perhaps the error is visible in the following snippet,
+                        otherwise see full logs under details:</p>
+                        """,
+                        details=fragment,
+                        info=info,
+                    ).exec_()
+                else:
+                    ErrorMessage(
+                        "<p>The server reported an error processing your TeX fragment.</p>",
+                        details=fragment,
+                    ).exec_()
+            if cache_invalid:
+                self.commentCache[txt] = None
             return None
         # a name for the fragment file
         fragFile = tempfile.NamedTemporaryFile(
             dir=self.workingDirectory, suffix=".png", delete=False
         ).name
-        # save it
         with open(fragFile, "wb+") as fh:
             fh.write(fragment)
         # add it to the cache

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Overview and Management</string>
+   <string>Plom: Overview and Management</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_7">
    <item>
@@ -457,7 +457,7 @@
              <item>
               <widget class="QPushButton" name="actionCButton">
                <property name="text">
-                <string>Perfrom actions</string>
+                <string>Perform actions</string>
                </property>
               </widget>
              </item>

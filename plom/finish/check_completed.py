@@ -4,8 +4,6 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-import getpass
-
 from plom.misc_utils import format_int_list_with_runs
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -67,9 +65,6 @@ def main(server=None, password=None):
         msgr = FinishMessenger(server)
     msgr.start()
 
-    if not password:
-        password = getpass.getpass("Please enter the 'manager' password:")
-
     try:
         msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException:
@@ -80,16 +75,17 @@ def main(server=None, password=None):
             "    e.g., on another computer?\n\n"
             "In order to force-logout the existing authorization run `plom-finish clear`."
         )
-        exit(-1)
+        raise
 
-    spec = msgr.get_spec()
-    max_papers = spec["numberToProduce"]
-    numberOfQuestions = spec["numberOfQuestions"]
-    completions = msgr.RgetCompletionStatus()
-    outToDo = msgr.RgetOutToDo()
-
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        spec = msgr.get_spec()
+        max_papers = spec["numberToProduce"]
+        numberOfQuestions = spec["numberOfQuestions"]
+        completions = msgr.RgetCompletionStatus()
+        outToDo = msgr.RgetOutToDo()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
     print_everything(completions, max_papers, numberOfQuestions)
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from plom import __version__
 from plom import Plom_API_Version
 from plom import Default_Port
+from plom import get_question_label
 from plom.plom_exceptions import (
     PlomSeriousException,
     PlomBenignException,
@@ -35,20 +36,12 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
 )
 from plom.messenger import Messenger
-
+from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
 from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
-from . import marker
-from . import identifier
 
+from plom.messenger import ManagerMessenger
 
-# TODO: for now, a global (to this module), later maybe in the QApp?
-messenger = None
-
-# set up variables to store paths for marker and id clients
-global tempDirectory, directoryPath
-# to store login + options for next run of client.
-lastTime = {}
 
 log = logging.getLogger("client")
 logdir = Path(appdirs.user_log_dir("plom", "PlomGrading.org"))
@@ -60,7 +53,7 @@ def readLastTime():
     """Read the login + server options that were used on
     the last run of the client.
     """
-    global lastTime
+    lastTime = {}
     # set some reasonable defaults.
     lastTime["LogToFile"] = True  # default until stable release?
     lastTime["user"] = ""
@@ -69,7 +62,6 @@ def readLastTime():
     lastTime["v"] = 1
     lastTime["fontSize"] = 10
     lastTime["upDown"] = "up"
-    lastTime["mouse"] = "right"
     lastTime["CommentsWarnings"] = True
     lastTime["MarkWarnings"] = True
     # update default from config file
@@ -77,9 +69,10 @@ def readLastTime():
         # too early to log: log.info("Loading config file %s", cfgfile)
         with open(cfgfile) as f:
             lastTime.update(toml.load(f))
+    return lastTime
 
 
-def writeLastTime():
+def writeLastTime(lastTime):
     """Write the options to the config file."""
     log.info("Saving config file %s", cfgfile)
     try:
@@ -100,11 +93,12 @@ class Chooser(QDialog):
         self.APIVersion = Plom_API_Version
         super().__init__()
         self.parent = Qapp
+        self.messenger = None
 
-        readLastTime()
+        self.lastTime = readLastTime()
 
         kwargs = {}
-        if lastTime.get("LogToFile"):
+        if self.lastTime.get("LogToFile"):
             logfile = datetime.now().strftime("plomclient-%Y%m%d_%H-%M-%S.log")
             try:
                 logdir.mkdir(parents=True, exist_ok=True)
@@ -118,21 +112,22 @@ class Chooser(QDialog):
             **kwargs,
         )
         # Default to INFO log level
-        logging.getLogger().setLevel(lastTime.get("LogLevel", "Info").upper())
+        logging.getLogger().setLevel(self.lastTime.get("LogLevel", "Info").upper())
 
         s = "Plom Client {} (communicates with api {})".format(
             __version__, self.APIVersion
         )
         log.info(s)
-        # runit = either marker or identifier clients.
-        self.runIt = None
 
         self.ui = Ui_Chooser()
         self.ui.setupUi(self)
         # Append version to window title
         self.setWindowTitle("{} {}".format(self.windowTitle(), __version__))
-        self.ui.markButton.clicked.connect(self.runMarker)
-        self.ui.identifyButton.clicked.connect(self.runIDer)
+        self.ui.markButton.clicked.connect(self.run_marker)
+        self.ui.identifyButton.clicked.connect(self.run_identifier)
+        # Hide button used for directly opening manager
+        # self.ui.manageButton.clicked.connect(self.run_manager)
+        self.ui.manageButton.setVisible(False)
         self.ui.closeButton.clicked.connect(self.closeWindow)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.optionsButton.clicked.connect(self.options)
@@ -141,15 +136,13 @@ class Chooser(QDialog):
         self.ui.mportSB.valueChanged.connect(self.ungetInfo)
         self.ui.vDrop.setVisible(False)
         self.ui.pgDrop.setVisible(False)
-        self.setLastTime()
 
-    def setLastTime(self):
         # set login etc from last time client ran.
-        self.ui.userLE.setText(lastTime["user"])
-        self.setServer(lastTime["server"])
-        self.ui.pgSB.setValue(int(lastTime["question"]))
-        self.ui.vSB.setValue(int(lastTime["v"]))
-        self.ui.fontSB.setValue(int(lastTime["fontSize"]))
+        self.ui.userLE.setText(self.lastTime["user"])
+        self.setServer(self.lastTime["server"])
+        self.ui.pgSB.setValue(int(self.lastTime["question"]))
+        self.ui.vSB.setValue(int(self.lastTime["v"]))
+        self.ui.fontSB.setValue(int(self.lastTime["fontSize"]))
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
@@ -163,26 +156,24 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(lastTime, logdir, cfgfile, tempfile.gettempdir())
+        d = ClientSettingsDialog(self.lastTime, logdir, cfgfile, tempfile.gettempdir())
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
-        lastTime["FOREGROUND"] = stuff[0]
-        lastTime["LogLevel"] = stuff[1]
-        lastTime["LogToFile"] = stuff[2]
-        lastTime["CommentsWarnings"] = stuff[3]
-        lastTime["MarkWarnings"] = stuff[4]
-        lastTime["mouse"] = "left" if stuff[5] else "right"
-        lastTime["SidebarOnRight"] = stuff[6]
-        logging.getLogger().setLevel(lastTime["LogLevel"].upper())
+        self.lastTime["FOREGROUND"] = stuff[0]
+        self.lastTime["LogLevel"] = stuff[1]
+        self.lastTime["LogToFile"] = stuff[2]
+        self.lastTime["CommentsWarnings"] = stuff[3]
+        self.lastTime["MarkWarnings"] = stuff[4]
+        self.lastTime["SidebarOnRight"] = stuff[5]
+        logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
-    def validate(self):
+    def validate(self, which_subapp):
         # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
         if (not user.isalnum()) or (not user):
             return
-        # check password at least 4 char long
         # Don't strip whitespace from passwords
         pwd = self.ui.passwordLE.text()
         if len(pwd) < 4:
@@ -200,28 +191,45 @@ class Chooser(QDialog):
         # save those settings
         self.saveDetails()
 
+        if user == "manager":
+            _ = """
+                <p>You are not allowed to mark or ID papers while logged-in
+                  as &ldquo;manager&rdquo;.</p>
+                <p>Would you instead like to run the Server Management tool?</p>
+            """
+            if SimpleMessage(_).exec_() == QMessageBox.No:
+                return
+            which_subapp = "Manager"
+            self.messenger = None
+
+        if not self.messenger:
+            if which_subapp == "Manager":
+                self.messenger = ManagerMessenger(server, mport)
+            else:
+                self.messenger = Messenger(server, mport)
         try:
-            # TODO: re-use existing messenger?
-            messenger = Messenger(server, mport)
-            messenger.start()
+            self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            self.messenger = None
             return
 
         try:
-            messenger.requestAndSaveToken(user, pwd)
+            self.messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
             ErrorMessage(
                 "Could not authenticate due to API mismatch."
                 "Your client version is {}.\n\n"
                 "Error was: {}".format(__version__, e)
             ).exec_()
+            self.messenger = None
             return
         except PlomAuthenticationException as e:
             # not PlomAuthenticationException(blah) has args [PlomAuthenticationException, "you are not authenticated, blah] - we only want the blah.
             ErrorMessage("Could not authenticate: {}".format(e.args[-1])).exec_()
+            self.messenger = None
             return
-        except PlomExistingLoginException as e:
+        except PlomExistingLoginException:
             if (
                 SimpleMessage(
                     "You appear to be already logged in!\n\n"
@@ -234,7 +242,8 @@ class Chooser(QDialog):
                 ).exec_()
                 == QMessageBox.Yes
             ):
-                messenger.clearAuthorisation(user, pwd)
+                self.messenger.clearAuthorisation(user, pwd)
+            self.messenger = None
             return
 
         except PlomSeriousException as e:
@@ -242,56 +251,73 @@ class Chooser(QDialog):
                 "Could not get authentication token.\n\n"
                 "Unexpected error: {}".format(e)
             ).exec_()
+            self.messenger = None
             return
 
-        # Now run the appropriate client sub-application
-        if self.runIt == "Marker":
-            # Run the marker client.
+        # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
+
+        if which_subapp == "Manager":
+            # Importing here avoids a circular import
+            from plom.manager import Manager
+
+            self.setEnabled(False)
+            self.hide()
+            window = Manager(
+                self.parent,
+                manager_msgr=self.messenger,
+                server=server,
+                user=user,
+                password=pwd,
+            )
+            window.show()
+            # store ref in Qapp to avoid garbase collection
+            self.parent._manager_window = window
+        elif which_subapp == "Marker":
             question = self.getQuestion()
             v = self.getv()
             self.setEnabled(False)
             self.hide()
-            markerwin = marker.MarkerClient(self.parent)
+            markerwin = MarkerClient(self.parent)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
-            markerwin.setup(messenger, question, v, lastTime)
+            markerwin.setup(self.messenger, question, v, self.lastTime)
+            # store ref in Qapp to avoid garbase collection
             self.parent.marker = markerwin
-        elif self.runIt == "IDer":
-            # Run the ID client.
+        elif which_subapp == "Identifier":
             self.setEnabled(False)
             self.hide()
-            idwin = identifier.IDClient()
+            idwin = IDClient()
             idwin.my_shutdown_signal.connect(self.on_other_window_close)
             idwin.show()
-            idwin.getToWork(messenger)
+            idwin.setup(self.messenger)
+            # store ref in Qapp to avoid garbase collection
             self.parent.identifier = idwin
+        else:
+            raise RuntimeError("Invalid subapplication value")
 
-    def runMarker(self):
-        self.runIt = "Marker"
-        self.validate()
+    def run_marker(self):
+        self.validate("Marker")
 
-    def runIDer(self):
-        self.runIt = "IDer"
-        self.validate()
+    def run_identifier(self):
+        self.validate("Identifier")
 
-    def runTotaler(self):
-        self.runIt = "Totaler"
-        self.validate()
+    def run_manager(self):
+        self.validate("Manager")
 
     def saveDetails(self):
-        lastTime["user"] = self.ui.userLE.text().strip()
-        lastTime["server"] = "{}:{}".format(
+        self.lastTime["user"] = self.ui.userLE.text().strip()
+        self.lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text().strip(), self.ui.mportSB.value()
         )
-        lastTime["question"] = self.getQuestion()
-        lastTime["v"] = self.getv()
-        lastTime["fontSize"] = self.ui.fontSB.value()
-        writeLastTime()
+        self.lastTime["question"] = self.getQuestion()
+        self.lastTime["v"] = self.getv()
+        self.lastTime["fontSize"] = self.ui.fontSB.value()
+        writeLastTime(self.lastTime)
 
     def closeWindow(self):
         self.saveDetails()
-        if messenger:
-            messenger.stop()
+        if self.messenger:
+            self.messenger.stop()
         self.close()
 
     def setFont(self, n):
@@ -307,12 +333,12 @@ class Chooser(QDialog):
     def getQuestion(self):
         """Return the integer question or None"""
         if self.ui.pgDrop.isVisible():
-            question = self.ui.pgDrop.currentText().lstrip("Q")
+            question = self.ui.pgDrop.currentIndex() + 1
         else:
             question = self.ui.pgSB.value()
         try:
             return int(question)
-        except:
+        except ValueError:
             return None
 
     def getv(self):
@@ -341,11 +367,9 @@ class Chooser(QDialog):
         self.ui.pgDrop.clear()
         self.ui.pgDrop.setVisible(False)
         self.ui.infoLabel.setText("")
-        # TODO: just `del messenger`?
-        global messenger
-        if messenger:
-            messenger.stop()
-        messenger = None
+        if self.messenger:
+            self.messenger.stop()
+        self.messenger = None
 
     def getInfo(self):
         self.partial_parse_address()
@@ -363,22 +387,22 @@ class Chooser(QDialog):
         # self.ui.infoLabel.setText("connecting...")
         # self.ui.infoLabel.repaint()
 
+        if not self.messenger:
+            self.messenger = Messenger(server, mport)
         try:
-            messenger = Messenger(server, mport)
-            r = messenger.start()
+            ver = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            self.messenger = None
             return
-        self.ui.infoLabel.setText(r)
+        self.ui.infoLabel.setText(ver)
 
         try:
-            spec = messenger.get_spec()
-        except PlomSeriousException:
-            try:
-                spec = messenger.getInfoGeneral()
-            except PlomSeriousException:
-                ErrorMessage("Could not connect to server.").exec_()
-                return
+            spec = self.messenger.get_spec()
+        except PlomSeriousException as e:
+            ErrorMessage("Could not connect to server", info=str(e)).exec_()
+            self.messenger = None
+            return
 
         self.ui.markGBox.setTitle("Marking information for “{}”".format(spec["name"]))
         question = self.getQuestion()
@@ -395,7 +419,7 @@ class Chooser(QDialog):
 
         self.ui.pgDrop.clear()
         self.ui.pgDrop.addItems(
-            ["Q{}".format(x + 1) for x in range(0, spec["numberOfQuestions"])]
+            [get_question_label(spec, n + 1) for n in range(spec["numberOfQuestions"])]
         )
         if question:
             if question >= 1 and question <= spec["numberOfQuestions"]:
@@ -439,19 +463,5 @@ class Chooser(QDialog):
         self.setEnabled(True)
         if not stuff:
             return
-        # update mouse-hand and up/down style for lasttime file
-        markStyle, mouseHand, sidebarRight = stuff
-        global lastTime
-        if markStyle == 2:
-            lastTime["upDown"] = "up"
-        elif markStyle == 3:
-            lastTime["upDown"] = "down"
-        else:
-            raise RuntimeError("tertium non datur")
-        if mouseHand == 0:
-            lastTime["mouse"] = "right"
-        elif mouseHand == 1:
-            lastTime["mouse"] = "left"
-        else:
-            raise RuntimeError("tertium non datur")
-        lastTime["SidebarOnRight"] = sidebarRight
+        # note `stuff` is list of options - used to contain more... may contain more in future
+        self.lastTime["SidebarOnRight"] = stuff[0]

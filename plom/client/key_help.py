@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
+
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -37,14 +41,14 @@ class KeyHelp(QDialog):
                 "Select the previous rubric",
             ],
             [
-                "Next pane",
+                "Next tab",
                 ["f"],
-                "Select the next pane of rubrics",
+                "Select the next tab of rubrics",
             ],
             [
-                "Previous pane",
+                "Previous tab",
                 ["s"],
-                "Select the previous pane of rubrics",
+                "Select the previous tab of rubrics",
             ],
             ["Redo", ["t", "ctrl-y"], "Redo the last undone-action."],
             ["Undo", ["g", "ctrl-z"], "Undo the last action."],
@@ -53,7 +57,7 @@ class KeyHelp(QDialog):
                 ["q"],
                 "Delete single item on click, or delete items in area on click and drag",
             ],
-            ["Move", ["a"], "Click and drag on an object ot move it."],
+            ["Move", ["a"], "Click and drag on an object to move it."],
         ],
         "Finishing": [
             [
@@ -122,7 +126,7 @@ class KeyHelp(QDialog):
             ],
             [
                 "Zoom",
-                ["a"],
+                ["z"],
                 "Selects the zoom-tool. Zoom the view in (out) on click (shift-click).",
             ],
             ["Zoom-in", ["+", "="], "Zooms the view in."],
@@ -131,7 +135,7 @@ class KeyHelp(QDialog):
     }
 
     def __init__(self, parent=None):
-        super(KeyHelp, self).__init__()
+        super().__init__()
         vb = QVBoxLayout()
         self.tab = QTabWidget()
         self.setTabs()
@@ -147,7 +151,7 @@ class KeyHelp(QDialog):
         tw = QTableWidget()
         tw.setColumnCount(3)
         tw.verticalHeader().hide()
-        tw.setHorizontalHeaderLabels(["Function", "Keys", "Decription"])
+        tw.setHorizontalHeaderLabels(["Function", "Keys", "Description"])
         tw.setAlternatingRowColors(True)
         tw.setEditTriggers(QAbstractItemView.NoEditTriggers)
         tw.setSortingEnabled(True)

@@ -2,12 +2,19 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-from plom.db.tables import *
 from datetime import datetime
-
+import json
 import logging
 
+import peewee as pw
+
+from plom.db.tables import plomdb
+from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
+from plom.db.tables import Image, Group, QGroup, LPage, Rubric, Test, TPage, User
+
+
 log = logging.getLogger("DB")
+
 
 # ------------------
 # Marker stuff
@@ -26,7 +33,7 @@ def McountAll(self, q, v):
             )
             .count()
         )
-    except QGroup.DoesNotExist:
+    except pw.DoesNotExist:
         return 0
 
 
@@ -44,7 +51,7 @@ def McountMarked(self, q, v):
             )
             .count()
         )
-    except QGroup.DoesNotExist:
+    except pw.DoesNotExist:
         return 0
 
 
@@ -92,7 +99,7 @@ def MgetNextTask(self, q, v):
                 )
                 .get()
             )
-        except QGroup.DoesNotExist as e:
+        except pw.DoesNotExist:
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None
 
@@ -363,55 +370,70 @@ def MtakeTaskFromClient(
         return [True, "test_done"]
 
 
-def MgetImages(self, user_name, task, integrity_check):
-    """Send image list back to user for the given marking task.
-    If question has been annotated then send back the annotated image and the plom file as well.
-    Use integrity_check to make sure client is not asking for something outdated.
+def Mget_annotations(self, number, question, edition=None, integrity=None):
+    """Retrieve the latest annotations, or a particular set of annotations.
+
+    args:
+        number (int): paper number.
+        question (int): question number.
+        edition (None/int): None means get the latest annotation, otherwise
+            this controls which annotation set.  Larger number is newer.
+        integrity (None/str): an optional checksum system the details of
+            which I have forgotten.
 
     Returns:
-        list: On error, return `[False, msg]`, maybe details in 3rd entry.
-            On success it can be:
-            `[True, metadata]`
-            Or if annotated already:
-            `[True, metadata, annotatedFile, plom_file]`
-
+        list: `[True, plom_file_data, annotation_image]` on success or
+            on error `[False, error_msg]`.  If the task is not yet
+            annotated, the error will be `"no_such_task"`.
     """
-    uref = User.get(name=user_name)  # authenticated, so not-None
+    if edition is None:
+        edition = -1
+    edition = int(edition)
+    task = f"q{number:04}g{question}"
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
-        # some sanity checks
         if gref is None:
-            log.info("Mgetimage - task {} not known".format(task))
+            log.info("M_get_annotations - task {} not known".format(task))
             return [False, "no_such_task"]
-        if gref.scanned == False:  # this should not happen either
+        if gref.scanned is False:  # perhaps this should not happen?
             return [False, "no_such_task"]
-        # grab associated qdata
         qref = gref.qgroups[0]
-        if qref.user != uref:
-            # belongs to another user - should not happen
-            return [
-                False,
-                "owner",
-                "Task {} does not belong to user {}".format(task, user_name),
-            ]
-        # check the integrity_check code against the db
-        aref = qref.annotations[-1]
-        if aref.integrity_check != integrity_check:
-            return [False, "integrity_fail"]
+        if edition == -1:
+            aref = qref.annotations[-1]
+        else:
+            aref = Annotation.get_or_none(qgroup=qref, edition=edition)
+        if integrity:
+            if aref.integrity_check != integrity:
+                return [False, "integrity_fail"]
+        # metadata for double-checking consistency with plom file
         metadata = []
         for p in aref.apages.order_by(APage.order):
             metadata.append([p.image.id, p.image.md5sum, p.image.file_name])
-        rval = [True, metadata]
-        if aref.aimage is not None:
-            rval.extend([aref.aimage.file_name, aref.plom_file])
-        return rval
+        if aref.aimage is None:
+            return [False, "no_such_task"]
+        plom_file = aref.plom_file
+        img_file = aref.aimage.file_name
+    with open(plom_file, "r") as f:
+        plom_data = json.load(f)
+    plom_data["user"] = aref.user.name
+    plom_data["annotation_edition"] = aref.edition
+    plom_data["annotation_reference"] = aref.id
+    # Report any duplication in DB and plomfile (and keep DB version!)
+    if plom_data["currentMark"] != aref.mark:
+        log.warning("Plom file has wrong score, replacing")
+        plom_data["currentMark"] = aref.mark
+    for i, (id_, md5, _) in enumerate(metadata):
+        if id_ != plom_data["base_images"][i]["id"]:
+            log.warning("Plom file has wrong base image id, replacing")
+            plom_data["base_images"][i]["id"] = id_
+        if md5 != plom_data["base_images"][i]["md5"]:
+            log.warning("Plom file has wrong base image md5, replacing")
+            plom_data["base_images"][i]["md5"] = md5
+    return (True, plom_data, img_file)
 
 
 def MgetOriginalImages(self, task):
-    """Return the original (unannotated) page images of the given task to the user.
-
-    Differs from MgetImages in that you need not be the owner.
-    """
+    """Return the original (unannotated) page images of the given task to the user."""
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:  # should not happen
@@ -470,8 +492,13 @@ def MgetWholePaper(self, test_number, question):
     # position in current annotation (or none if not)
     pageFiles = []  # the corresponding filenames.
     question = int(question)
-    # get the current annotation and position of images within it.
-    qref = QGroup.get_or_none(test=tref, question=question)
+    if question == 0:
+        # Issue #1549: Identifier uses special question=0, but we need an aref below
+        # TODO: for now we just get question 1 instead...
+        qref = QGroup.get_or_none(test=tref, question=1)
+    else:
+        # get the current annotation and position of images within it.
+        qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:  # this should not happen
         return [False]
     # dict of image-ids and positions in the current annotation
@@ -624,5 +651,5 @@ def MrevertTask(self, task):
             aref.aimage.delete_instance()
             # finally delete the annotation itself.
             aref.delete_instance()
-    log.info("Reverting tq {}.{}".format(test_number, question))
+    log.info(f"Reverted tq {task}")
     return [True]

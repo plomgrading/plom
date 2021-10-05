@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
+from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request, log
 
@@ -17,7 +18,7 @@ class UploadHandler:
         """Returns whether given bundle/md5sum known to database
 
         Checks both bundle's name and md5sum
-        * neither = no matching bundle, return [False]
+        * neither = no matching bundle, return [False, None]
         * name but not md5 = return [True, 'name'] - user is trying to upload different bundles with same name.
         * md5 but not name = return [True, 'md5sum'] - user is trying to same bundle with different names.
         * both match = return [True, 'both'] - user could be retrying
@@ -38,7 +39,7 @@ class UploadHandler:
         """Try to create bundle with given name/md5sum.
 
         First check name / md5sum of bundle.
-        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldnt happen if scanner working correctly.
+        * If bundle matches either 'name' or 'md5sum' then return [False, reason] - this shouldn't happen if scanner working correctly.
         * If bundle matches 'both' then return [True, skip_list] where skip_list = the page-orders from that bundle that are already in the system. The scan scripts will then skip those uploads.
         * If no such bundle return [True, []] - create the bundle and return an empty skip-list.
 
@@ -148,7 +149,7 @@ class UploadHandler:
         return web.json_response(rmsg, status=200)
 
     async def uploadHWPage(self, request):
-        """A homework page is self-scanned, known student, and known questions.
+        """A homework page is self-scanned, known student, and known(-ish) questions.
 
         Typically the page is without QR codes.  The uploader knows what
         student it belongs to and what question(s).  The order within the
@@ -601,7 +602,7 @@ class UploadHandler:
                     mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
-            return web.Response(status=404)  # couldnt find that test/question
+            return web.Response(status=404)  # couldn't find that test/question
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
@@ -622,7 +623,7 @@ class UploadHandler:
                         mpwriter.append(open(fn, "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
-            return web.Response(status=404)  # couldnt find that test/question
+            return web.Response(status=404)  # couldn't find that test/question
 
     async def checkTPage(self, request):
         data = await request.json()
@@ -643,7 +644,7 @@ class UploadHandler:
                     mpwriter.append(open(rmsg[3], "rb"))
             return web.Response(body=mpwriter, status=200)
         else:
-            return web.Response(status=404)  # couldnt find that test/question
+            return web.Response(status=404)  # couldn't find that test/question
 
     async def removeUnknownImage(self, request):
         data = await request.json()
@@ -832,7 +833,7 @@ class UploadHandler:
             aiohttp.web.Response: with status code as below.
 
         Status codes:
-            200 OK: action was taken, report numer of Papers updated.
+            200 OK: action was taken, report number of Papers updated.
             401 Unauthorized: invalid credientials.
             403 Forbidden: only "manager"/"scanner" allowed to do this.
         """
@@ -847,22 +848,27 @@ class UploadHandler:
         update_count = self.server.processTUploads()
         return web.json_response(update_count, status=200)
 
-    @authenticate_by_token_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user", "version_map"])
     def populateExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database.
 
         TODO: maybe the api call should just be for one row of the database.
-
-        TODO: or maybe we can pass the page-to-version mapping to this?
         """
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
 
+        # TODO: talking to DB directly is not design we use elsewhere: call helper?
         from plom.db import buildExamDatabaseFromSpec
 
-        # TODO this is not the design we have elsewhere, should call helper function
+        if len(data["version_map"]) == 0:
+            vmap = None
+        else:
+            vmap = undo_json_packing_of_version_map(data["version_map"])
+
         try:
-            r, summary = buildExamDatabaseFromSpec(self.server.testSpec, self.server.DB)
+            r, summary = buildExamDatabaseFromSpec(
+                self.server.testSpec, self.server.DB, vmap
+            )
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"
@@ -878,8 +884,11 @@ class UploadHandler:
         """Get the mapping between page number and version for one test.
 
         Returns:
-            dict: keyed by page number.  Note keys are strings b/c of
+            dict: keyed by page number. Note keys will be strings b/c of
                 json limitations; you may want to convert back to int.
+
+        Note: likely deprecated: not used by Plom itself and not
+            recommended for anyone else.
         """
         spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
@@ -898,6 +907,9 @@ class UploadHandler:
                 number.  Both keys are strings b/c of json limitations;
                 you may need to iterate and convert back to int.  Fails
                 with 500 Internal Server Error if a test does not exist.
+
+        Note: careful not to confuse this with /admin/questionVersionMap
+            which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
         vers = {}
@@ -906,53 +918,27 @@ class UploadHandler:
             if not ver:
                 return web.Response(status=500)
             vers[paper_idx] = ver
-        # JSON converts int keys to strings, we'll fix this at the far end
-        # return web.json_response(str(pickle.dumps(vers)), status=200)
         return web.json_response(vers, status=200)
 
-    # @route.put("/admin/pdf_produced/{t}")
-    @authenticate_by_token_required_fields(["user"])
-    def notify_pdf_of_paper_produced(self, data, request):
-        """Inform server that a PDF for this paper has been produced.
-
-        This is to be called one-at-a-time for each paper.  If this is a
-        bottleneck we could consider adding a "bulk" version.
-
-        Note that the file itself is not uploaded to the server: we're
-        just merely creating a record that such a file exists somewhere.
-
-        TODO: pass in md5sum too and if its unchanged no need to
-        complain about conflict, just quietly return 200.
-        TODO: implement force as mentioned below.
-
-        Inputs:
-            t (int?, str?): part of URL that specifies the paper number.
-            user (str): who's calling?  A field of the request.
-            force (bool): force production even if paper already exists.
-            md5sum (str): md5sum of the file that was produced.
+    @authenticate_by_token_required_fields([])
+    def getGlobalQuestionVersionMap(self, data, request):
+        """Get the mapping between question and version for all tests.
 
         Returns:
-            aiohttp.web.Response: with status code as below.
-
-        Status codes:
-            200 OK: the info was recorded.
-            400 Bad Request: only "manager" is allowed to do this.
-            401 Unauthorized: invalid credientials.
-            404 Not Found: paper number is outside valid range.
-            409 Conflict: this paper has already been produced, so its
-                unusual to be making it again. Maybe try `force=True`.
+            dict: dict of dicts, keyed first by paper index then by
+                question number.  Both keys will become strings b/c of
+                json limitations; you may need to convert back to int.
+                Fails with 500 Internal Server Error if a test does not
+                exist.
         """
-        if not data["user"] == "manager":
-            return web.Response(status=400)
-        # force_flag = request.match_info["force"]
-        paper_idx = request.match_info["papernum"]
-        try:
-            self.server.DB.produceTest(paper_idx)
-        except IndexError:
-            return web.Response(status=404)
-        except ValueError:
-            return web.Response(status=409)
-        return web.Response(status=200)
+        spec = self.server.testSpec
+        vers = {}
+        for paper_idx in range(1, spec["numberToProduce"] + 1):
+            ver = self.server.DB.getQuestionVersions(paper_idx)
+            if not ver:
+                return web.Response(status=500)
+            vers[paper_idx] = ver
+        return web.json_response(vers, status=200)
 
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
@@ -992,6 +978,4 @@ class UploadHandler:
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
-        router.add_put(
-            "/admin/pdf_produced/{papernum}", self.notify_pdf_of_paper_produced
-        )
+        router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)

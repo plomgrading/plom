@@ -1,7 +1,6 @@
 # PaperLess Open Marking - [Plom](https://plomgrading.org)
 
-  * A system for giving tests on paper, but marking and returning
-    them online.
+  * Plom is a system for the online marking of handwritten work.
   * Designed for giving consistent, meaningful feedback to students.
   * [Free/Open Source Software](https://www.gnu.org/licenses/agpl-3.0.en.html)
     written in Python using [Qt](https://pypi.org/project/PyQt5) and other
@@ -25,3 +24,10 @@
 ## Want to know more?
 
 Take a look at the [plomgrading.org](https://plomgrading.org).
+
+
+## Getting in touch
+
+  * Our dev channel is [gitter.im/plomgrading/dev](https://gitter.im/plomgrading/dev).
+  * Our [main development repo is on Gitlab.com](https://gitlab.com/plom/plom)
+    and [mirrored on GitHub](https://github.com/plomgrading/plom).

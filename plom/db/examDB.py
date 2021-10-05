@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 from datetime import datetime, timedelta
 
@@ -92,7 +92,8 @@ class PlomDB:
         doesBundleExist,
         createNewBundle,
         createReplacementBundle,
-        areAnyPapersProduced,
+        how_many_papers_in_database,
+        is_paper_database_populated,
         nextqueue_position,
         createTest,
         addTPages,
@@ -100,7 +101,7 @@ class PlomDB:
         createDNMGroup,
         createQGroup,
         getPageVersions,
-        produceTest,
+        getQuestionVersions,
         id_paper,
         createNoAnswerRubric,
     )
@@ -165,7 +166,6 @@ class PlomDB:
         RgetIdentified,
         RgetProgress,
         RgetMarkHistogram,
-        RgetMarked,
         RgetQuestionUserProgress,
         RgetCompletionStatus,
         RgetOutToDo,
@@ -173,9 +173,7 @@ class PlomDB:
         RgetSpreadsheet,
         RgetOriginalFiles,
         RgetCoverPageInfo,
-        RgetAnnotatedFiles,
         RgetMarkReview,
-        RgetAnnotatedImage,
         RgetIDReview,
         RgetUserFullProgress,
     )
@@ -186,8 +184,9 @@ class PlomDB:
         IDgetNextTask,
         IDgiveTaskToClient,
         IDgetDoneTasks,
-        IDgetImage,
+        IDgetImages,
         IDgetImageByNumber,
+        ID_get_donotmark_images,
         IDdidNotFinish,
         ID_id_paper,
         IDgetImageFromATest,
@@ -202,7 +201,7 @@ class PlomDB:
         MgiveTaskToClient,
         MdidNotFinish,
         MtakeTaskFromClient,
-        MgetImages,
+        Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,
         MsetTag,

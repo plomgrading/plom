@@ -1,41 +1,33 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
-import getpass
 import hashlib
 import json
-import os
-import shutil
 from pathlib import Path
+import shutil
 from textwrap import dedent
 
 from plom.messenger import ScanMessenger
-from plom.plom_exceptions import *
+from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
-from .sendUnknownsToServer import extractOrder
+from plom.scan.sendPagesToServer import extract_order
 
 
-def doFiling(rmsg, bundle, shortName, fname):
+def doFiling(rmsg, bundle, f):
     if rmsg[0]:  # msg should be [True, "success", success message]
-        # print(rmsg[2])
         for suf in ["", ".qr", ".collide"]:
             shutil.move(
-                Path(str(fname) + suf),
-                bundle / Path("uploads/sentPages/collisions") / Path(shortName + suf),
+                Path(str(f) + suf),
+                bundle / "uploads/sentPages/collisions" / (f.name + suf),
             )
     else:  # msg = [False, reason, message]
         if rmsg[1] == "duplicate":
             print(rmsg[2])
             for suf in ["", ".qr", ".collide"]:
                 shutil.move(
-                    Path(str(fname) + suf),
-                    bundle / Path("uploads/discardedPages") / Path(shortName + suf),
+                    Path(str(f) + suf),
+                    bundle / "uploads/discardedPages" / (f.name + suf),
                 )
         elif rmsg[1] == "original":
             print(rmsg[2])
@@ -59,20 +51,18 @@ def sendCollidingFiles(scanMessenger, bundle_name, fileList):
         vs = str(cdat[3])
         code = "t{}p{}v{}".format(ts, ps, vs)
         md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        shortName = os.path.split(fname)[1]
-        bundle_order = extractOrder(shortName)
+        bundle_order = extract_order(fname)
         rmsg = scanMessenger.uploadCollidingPage(
             code,
             int(ts),
             int(ps),
             int(vs),
-            shortName,
             fname,
             md5,
             bundle_name,
             bundle_order,
         )
-        doFiling(rmsg, Path("bundles") / bundle_name, shortName, fname)
+        doFiling(rmsg, Path("bundles") / bundle_name, fname)
 
 
 def bundle_has_nonuploaded_collisions(bundle_dir):
@@ -126,13 +116,8 @@ def upload_collisions(bundleDir, server=None, password=None):
         scanMessenger = ScanMessenger(server)
     scanMessenger.start()
 
-    if password is None:
-        pwd = getpass.getpass("Please enter the 'scanner' password: ")
-    else:
-        pwd = password
-
     try:
-        scanMessenger.requestAndSaveToken("scanner", pwd)
+        scanMessenger.requestAndSaveToken("scanner", password)
     except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
@@ -141,7 +126,7 @@ def upload_collisions(bundleDir, server=None, password=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-scan clear"'
         )
-        exit(10)
+        raise
 
     try:
         if not bundleDir.is_dir():

@@ -1,0 +1,82 @@
+# Copyright (C) 2021 Colin B. Macdonald
+# SPDX-License-Identifier: FSFAP
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
+[[rubric]]
+delta = "."
+text = "be careful"
+
+[[rubric]]
+delta = "."
+text = "tex: you can write \\LaTeX, $e^{i\\pi} + 1 = 0$"
+
+[[rubric]]
+delta = "+1"
+text = "good"
+
+[[rubric]]
+delta = "+2"
+text = "great"
+
+[[rubric]]
+delta = "+3"
+text = "correct use of Pythagoras"
+
+[[rubric]]
+delta = "-1"
+text = "arithmetic error"
+
+[[rubric]]
+delta = "-2"
+text = "logic error"
+
+[[rubric]]
+delta = "-1"
+text = "how does this follow?"
+
+[[rubric]]
+delta = "-2"
+text = "wrong angles used"
+
+[[rubric]]
+delta = "."
+text = "a comment specific to Q2"
+question = 2
+meta = "All rubrics are question specific."
+
+[[rubric]]
+delta = "."
+text = "another comment specific to Q2"
+question = 2
+tags = "foo"
+meta = "When the demo rubrics are loaded, most are auto-duplicated over multiple questions."
+
+# a series of rubrics all related to the chain rule
+[[rubric]]
+delta = "-3"
+text = "this is the product rule, not the chain rule"
+tags = "chainrule"
+
+[[rubric]]
+delta = "-1"
+text = "must evaluate the derivative when using the chain rule"
+tags = "chainrule"
+
+[[rubric]]
+delta = "-2"
+text = "need to use the chain rule here"
+tags = "chainrule"
+
+[[rubric]]
+delta = "."
+text = "tex: chain $\\sin(x^3)(3x)$ but\\\\also need to evaluate at $x=7$"
+tags = "chainrule"
+
+[[rubric]]
+delta = "+2"
+text = "yes, good use of good chain rule"
+tags = "chainrule"
