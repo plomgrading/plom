@@ -25,6 +25,10 @@ def createNewBundle(self, bundle_file, md5):
     return self.DB.createNewBundle(bundle_file, md5)
 
 
+def listBundles(self):
+    return self.DB.listBundles()
+
+
 def sidToTest(self, student_id):
     return self.DB.sidToTest(student_id)
 
