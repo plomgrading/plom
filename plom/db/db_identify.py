@@ -205,8 +205,13 @@ def IDgetImageByNumber(self, image_number):
     For every test, find the imageNumber'th page in the ID Pages and return the corresponding image filename. So gives returns a dictionary of testNumber -> filename.
     """
     rval = {}
+    uref = User.get(User.name == "HAL")
     query = IDGroup.select()
     for iref in query:
+        # we want to ignore pre-named papers - those are owned by HAL
+        # can improve this query.
+        if iref.user == uref:
+            continue
         # for each iref, check that it is scanned and then grab page.
         gref = iref.group
         if not gref.scanned:
