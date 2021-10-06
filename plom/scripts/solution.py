@@ -18,7 +18,13 @@ from plom import __version__
 def uploadSolutionImage(server, password, question, version, imageName):
     from plom.solutions import putSolutionImage
 
-    putSolutionImage.putSolutionImage(question, version, imageName, server, password)
+    rv = putSolutionImage.putSolutionImage(
+        question, version, imageName, server, password
+    )
+    if rv[0]:
+        print(f"Success - {rv[1]}")
+    else:
+        print(f"Failure - {rv[1]}")
 
 
 def deleteSolutionImage(server, password, question, version):
@@ -59,6 +65,15 @@ def solutionStatus(server, password):
             print("q {} v {} = solution with md5sum {}".format(qvm[0], qvm[1], qvm[2]))
 
 
+def extractSolutions(sever, password):
+    from plom.solutions.extractSolutions import extractSolutionImages
+
+    if extractSolutionImages(sever, password):
+        print("Solutions images extracted")
+    else:
+        print("Could not extract solution images - see messages above.")
+
+
 def clearLogin(server, password):
     from plom.solutions import clearManagerLogin
 
@@ -75,23 +90,28 @@ sub = parser.add_subparsers(dest="command")
 
 spU = sub.add_parser(
     "upload",
-    help="Upload solution image to server",
-    description="Upload solution image to server.",
+    help="Upload solution image to the server",
+    description="Upload solution image to the server.",
 )
 spG = sub.add_parser(
     "get",
-    help="Get solution image to server",
-    description="Get solution image from server.",
+    help="Get solution image from the server",
+    description="Get solution image from the server.",
 )
 spD = sub.add_parser(
     "delete",
-    help="Delete solution image to scanner",
-    description="Delete solution image from server.",
+    help="Delete solution image from the scanner",
+    description="Delete solution image from the server.",
 )
 spS = sub.add_parser(
     "status",
     help="Get uploaded solution status",
     description="Get list of which question/versions have solution-images uploaded",
+)
+spE = sub.add_parser(
+    "extract",
+    help="Extract solution images from solution pdfs",
+    description="Extract solutions images from solution pdfs - assumes that solution pdf has the same structure as the test pdf.",
 )
 spC = sub.add_parser(
     "clear",
@@ -132,7 +152,7 @@ spD.add_argument(
     help="The version to delete",
 )
 
-for x in (spU, spG, spD, spS, spC):
+for x in (spU, spG, spD, spS, spE, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
@@ -159,8 +179,12 @@ def main():
         deleteSolutionImage(args.server, args.password, args.q, args.v)
     elif args.command == "status":
         solutionStatus(args.server, args.password)
+    elif args.command == "extract":
+        extractSolutions(args.server, args.password)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":

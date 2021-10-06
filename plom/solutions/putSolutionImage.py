@@ -7,7 +7,6 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import getpass
-
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
@@ -46,10 +45,20 @@ def putSolutionImage(
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-solution clear"'
         )
-        exit(10)
+        raise
 
-    msgr.putSolutionImage(question, version, imageName)
-    print("Image uploaded")
+    spec = msgr.get_spec()
+    if question < 1 or question > spec["numberOfQuestions"]:
+        return [False, "Question number out of range"]
+    if version < 1 or version > spec["numberOfVersions"]:
+        return [False, "Version number out of range"]
+    if spec["question"][question].select == "fixed" and version != 1:
+        return [False, f"Question{question} has fixed version = 1"]
 
-    msgr.closeUser()
-    msgr.stop()
+    try:
+        msgr.putSolutionImage(question, version, imageName)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+
+    return [True, f"Solution for {question}.{version} uploaded"]

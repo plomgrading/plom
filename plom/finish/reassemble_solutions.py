@@ -178,7 +178,7 @@ def main(server=None, pwd=None):
     # for z in zip(cover_args, solution_args)
     #    _parfcn(z)
 
-    # shutil.rmtree(tmpdir)
+    shutil.rmtree(tmpdir)
 
 
 if __name__ == "__main__":
