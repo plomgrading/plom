@@ -197,7 +197,9 @@ def main():
     elif args.command == "solutions":
         plom.finish.reassemble_solutions.main(args.server, args.password)
     elif args.command == "webpage":
-        plom.finish.coded_return.main(args.hex, args.digits, args.salt, args.server)
+        plom.finish.coded_return.main(
+            args.hex, args.digits, args.salt, args.server, args.solutions
+        )
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:
