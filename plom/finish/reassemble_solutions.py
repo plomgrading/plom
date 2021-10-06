@@ -137,7 +137,6 @@ def main(server=None, pwd=None):
         msgr.stop()
         exit(1)
     print("All solutions present.")
-    print(solutionList)
     print("Downloading solution images to temp directory {}".format(tmpdir))
     for X in solutionList:
         # triples [q,v,md5]

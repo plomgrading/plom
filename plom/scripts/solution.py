@@ -65,11 +65,18 @@ def solutionStatus(server, password):
             print("q {} v {} = solution with md5sum {}".format(qvm[0], qvm[1], qvm[2]))
 
 
-def extractSolutions(sever, password):
+def extractSolutions(server, password, upload=False):
+    if upload:
+        from plom.solutions.putSolutionImage import putExtractedSolutionImages
+
+        print("Uploading extracted solution images extracted")
+        putExtractedSolutionImages(server, password)
+        return
+
     from plom.solutions.extractSolutions import extractSolutionImages
 
-    if extractSolutionImages(sever, password):
-        print("Solutions images extracted")
+    if extractSolutionImages(server, password):
+        print("Solution images extracted")
     else:
         print("Could not extract solution images - see messages above.")
 
@@ -152,6 +159,13 @@ spD.add_argument(
     help="The version to delete",
 )
 
+spE.add_argument(
+    "-u",
+    "--upload",
+    action="store_true",
+    help="Do not extract, instead upload already extracted solution images to server.",
+)
+
 for x in (spU, spG, spD, spS, spE, spC):
     x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
@@ -180,7 +194,7 @@ def main():
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "extract":
-        extractSolutions(args.server, args.password)
+        extractSolutions(args.server, args.password, args.upload)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
     else:

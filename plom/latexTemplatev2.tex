@@ -72,6 +72,17 @@
 \pagebreak
 }{} }
 
+% we also give a blank page that only prints in the solutions
+% this is useful to pad your solution pdf so that it has the same structure
+% as your test pdf - this makes auto-extracting solutions easier.
+
+\newcommand{\solnpage}[1][\thequestion]{
+\ifthenelse{\boolean{space}}{}{
+\pagebreak
+\noindent \emph{This blank page is to pad the PDF when showing solutions for \textbf{Question~{#1}}.}
+\pagebreak
+}}
+
 % Use this to make a nice answerbox which will display the correct answer
 % when solutions are printed and is otherwise blank for the students
 % to write their stuff.
@@ -174,7 +185,7 @@ You may find the following formulas useful in the questions that follow.
   \part Answer something simple, \textbf{but this is ver2}
   \answerbox{ABC}
   \begin{solution}
-    Some working will go here.
+    Some working will go here. \textbf{but this is ver2}
   \end{solution}
   \blank
   % Use \blank to space out the question parts nicely.
@@ -182,14 +193,14 @@ You may find the following formulas useful in the questions that follow.
   \part Another little thing here, \textbf{but this is ver2}
   \answerbox{\(\sin(x)\)}
   \begin{solution}
-    Putting in your solutions ahead of time really helps calibrate your test.
+    Putting in your solutions ahead of time really helps calibrate your test. \textbf{but this is ver2}
   \end{solution}
   \blank
 
   \part A third thing, \textbf{but this is ver2}
   \answerbox{\(\int \sin(x) dx\)}
   \begin{solution}
-    Yet another solution goes here.
+    Yet another solution goes here. \textbf{but this is ver2}
   \end{solution}
   \blank
 \end{parts}
@@ -205,7 +216,7 @@ from version 1; version 2 will never be used.]
   \part Answer something not quite so simple, \textbf{but this is ver2}
   \answerbox{ABC}
   \begin{solution}
-    Some working will go here.
+    Some working will go here. \textbf{but this is ver2 and less simple}
   \end{solution}
   \blank
   % Use \blank to space out the question parts nicely.
@@ -214,13 +225,15 @@ from version 1; version 2 will never be used.]
   \answerbox{\(\sin(x)\)}
   \begin{solution}
     Putting in your solutions ahead of time really helps calibrate your test.
+
+    \textbf{but this is ver2}
   \end{solution}
   \blank
 
   \part A third thing unsimple thing here, \textbf{but this is ver2}
   \answerbox{\(\int \sin(x) dx\)}
   \begin{solution}
-    Yet another solution goes here.
+    Yet another solution goes here. \textbf{but this is ver2}
   \end{solution}
   \blank
 \end{parts}
@@ -233,10 +246,11 @@ from version 1; version 2 will never be used.]
 [But this is ver2 which is the same question but some details have been changed slightly.]
 
 \begin{solution}
-  A long solution here. Maybe it even contains a diagram?
+  A long solution here. Maybe it even contains a diagram? \textbf{but this is ver2 of the diagram}
 \end{solution}
 
 \blankpage
+\solnpage
 
 \end{questions}
 \end{document}

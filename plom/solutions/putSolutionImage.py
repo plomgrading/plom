@@ -7,8 +7,12 @@ __license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import getpass
+from pathlib import Path
+
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
+
+solution_path = Path("solutionImages")
 
 
 def putSolutionImage(
@@ -48,11 +52,14 @@ def putSolutionImage(
         raise
 
     spec = msgr.get_spec()
-    if question < 1 or question > spec["numberOfQuestions"]:
+    # nb question,version are strings at this point
+    iq = int(question)
+    iv = int(version)
+    if iq < 1 or iq > spec["numberOfQuestions"]:
         return [False, "Question number out of range"]
-    if version < 1 or version > spec["numberOfVersions"]:
+    if iv < 1 or iv > spec["numberOfVersions"]:
         return [False, "Version number out of range"]
-    if spec["question"][question].select == "fixed" and version != 1:
+    if spec["question"][question]["select"] == "fixed" and iv != 1:
         return [False, f"Question{question} has fixed version = 1"]
 
     try:
@@ -62,3 +69,49 @@ def putSolutionImage(
         msgr.stop()
 
     return [True, f"Solution for {question}.{version} uploaded"]
+
+
+def putExtractedSolutionImages(server=None, password=None):
+    if server and ":" in server:
+        s, p = server.split(":")
+        msgr = ManagerMessenger(s, port=p)
+    else:
+        msgr = ManagerMessenger(server)
+    msgr.start()
+
+    # get the password if not specified
+    if password is None:
+        try:
+            pwd = getpass.getpass("Please enter the 'manager' password:")
+        except Exception as error:
+            print("ERROR", error)
+            exit(1)
+    else:
+        pwd = password
+
+    try:
+        msgr.requestAndSaveToken("manager", pwd)
+    except PlomExistingLoginException as e:
+        print(
+            "You appear to be already logged in!\n\n"
+            "  * Perhaps a previous session crashed?\n"
+            "  * Do you have another script running,\n"
+            "    e.g., on another computer?\n\n"
+            'In order to force-logout the existing authorisation run "plom-solution clear"'
+        )
+        raise
+
+    try:
+        spec = msgr.get_spec()
+        # nb question,version are strings at this point
+        for q in range(1, spec["numberOfQuestions"] + 1):
+            mxv = spec["numberOfVersions"]
+            if spec["question"][str(q)]["select"] == "fixed":
+                mxv = 1  # only do version 1 if 'fixed'
+            for v in range(1, mxv + 1):
+                image_name = solution_path / f"solution.q{q}.v{v}.png"
+                msgr.putSolutionImage(q, v, image_name)
+
+    finally:
+        msgr.closeUser()
+        msgr.stop()

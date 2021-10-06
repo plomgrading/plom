@@ -59,16 +59,6 @@ parser.add_argument(
     help=f"Which port to use for the demo server ({Default_Port} if omitted)",
 )
 
-# a list of solution page images (q,v,file)
-demo_solution_list = [
-    (1, 1, "solutions1-3.png"),
-    (2, 1, "solutions1-4.png"),
-    (3, 1, "solutions1-5.png"),
-    (1, 2, "solutions2-3.png"),
-    (2, 2, "solutions2-4.png"),
-    (3, 2, "solutions2-5.png"),
-]
-
 
 def main():
     args = parser.parse_args()
@@ -129,14 +119,17 @@ def main():
     subprocess.check_call(split(f"plom-build rubric --demo -w 1234 -s {server}"))
     with working_directory(args.server_dir):
         subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
+    # extract solution images
+    with working_directory(args.server_dir):
+        print("Extract solution images from pdfs")
+        subprocess.check_call(split(f"plom-solution extract -w 1234 -s {server}"))
 
+    # upload solution images
     with working_directory(args.server_dir):
         print("Upload solutions to server")
-        for (q, v, f) in demo_solution_list:
-            fn = os.path.join("sourceVersions", f)
-            subprocess.check_call(
-                split("plom-solution upload -w 1234 {} {} {}".format(q, v, fn))
-            )
+        subprocess.check_call(
+            split(f"plom-solution extract --upload -w 1234 -s {server}")
+        )
 
     print("Uploading fake scanned data to the server")
     with working_directory(args.server_dir):

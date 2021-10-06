@@ -72,6 +72,17 @@
 \pagebreak
 }{} }
 
+% we also give a blank page that only prints in the solutions
+% this is useful to pad your solution pdf so that it has the same structure
+% as your test pdf - this makes auto-extracting solutions easier.
+
+\newcommand{\solnpage}[1][\thequestion]{
+\ifthenelse{\boolean{space}}{}{
+\pagebreak
+\noindent \emph{This blank page is to pad the PDF when showing solutions for \textbf{Question~{#1}}.}
+\pagebreak
+}}
+
 % Use this to make a nice answerbox which will display the correct answer
 % when solutions are printed and is otherwise blank for the students
 % to write their stuff.
@@ -192,6 +203,8 @@ You may find the following formulas useful in the questions that follow.
   \answerbox{\(\int \sin(x) dx\)}
   \begin{solution}
     Yet another solution goes here.
+    \[ \int \sin(x) dx = -\cos(x) + C\]
+  Note--- (-1) if no \(+C\)
   \end{solution}
   \blank
 \end{parts}
@@ -207,7 +220,7 @@ from version 1; version 2 will never be used.]
   \part Answer something not quite so simple
   \answerbox{ABC}
   \begin{solution}
-    Some working will go here.
+    Some working will go here. Like the question, the solution will not be so simple and may span several lines, and have some rubric information for the marker to use.
   \end{solution}
   \blank
   % Use \blank to space out the question parts nicely.
@@ -215,14 +228,14 @@ from version 1; version 2 will never be used.]
   \part Another less simple thing here.
   \answerbox{\(\sin(x)\)}
   \begin{solution}
-    Putting in your solutions ahead of time really helps calibrate your test.
+    Putting in your solutions ahead of time really helps calibrate your test. If the answer is \(\sin(x)\) what was the question?
   \end{solution}
   \blank
 
   \part A third thing unsimple thing here.
   \answerbox{\(\int \sin(x) dx\)}
   \begin{solution}
-    Yet another solution goes here.
+    Yet another solution goes here. This one looks similar to a previous solution. Maybe there is a subtle difference in the solution which we should really make very clear to the grader (and student) here.
   \end{solution}
   \blank
 \end{parts}
@@ -232,10 +245,11 @@ from version 1; version 2 will never be used.]
 
 \question[10] A long question goes here. In fact it is sufficiently long that we make sure you have a whole extra blank page for your work.
 \begin{solution}
-  A long solution here. Maybe it even contains a diagram?
+  A long solution here. Maybe it even contains a diagram? A careful diagram is a beautiful thing.
 \end{solution}
 
 \blankpage
+\solnpage
 
 \end{questions}
 \end{document}

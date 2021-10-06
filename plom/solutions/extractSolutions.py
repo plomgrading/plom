@@ -104,7 +104,7 @@ def extractSolutionImages(server, password):
         mxv = spec["numberOfVersions"]
         if spec["question"][sq]["select"] == "fixed":
             mxv = 1  # only do version 1 if 'fixed'
-        for v in range(1, mxv):
+        for v in range(1, mxv + 1):
             image_list = [
                 tmpdir / f"solutions{v}-{p}.png" for p in spec["question"][sq]["pages"]
             ]
@@ -118,7 +118,7 @@ def extractSolutionImages(server, password):
                     shutil.rmtree(tmpdir)
                     return False
             #
-            destination = solution_path / f"solutions{v}.{q}.png"
+            destination = solution_path / f"solution.q{q}.v{v}.png"
             glueImages(image_list, destination)
 
     shutil.rmtree(tmpdir)
