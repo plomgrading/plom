@@ -17,12 +17,13 @@ papersize_landscape = (792, 612)
 margin = 10
 
 
-def reassemble(outname, shortName, sid, img_list):
+def reassemble(outname, shortName, sid, coverfile, img_list):
     """Reassemble a pdf from the solution images.
 
     args:
         outname (str, Path): name of a PDF file to write.
         shortName (str): The name of the exam, written into metadata.
+        coverfile (str/pathlib.Path): a coversheet already in PDF format.
         sid (str): Student ID, to be written into metadata.
         img_list (list): list of str or Path images to be inserted one
             per page.
@@ -37,6 +38,8 @@ def reassemble(outname, shortName, sid, img_list):
         return False
 
     exam = fitz.open()
+    if coverfile:
+        exam.insertPDF(fitz.open(coverfile))
 
     for img_name in img_list:
         img_name = Path(img_name)
