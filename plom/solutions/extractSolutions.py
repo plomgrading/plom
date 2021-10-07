@@ -6,6 +6,7 @@ from pathlib import Path
 from PIL import Image
 import shutil
 import tempfile
+import toml
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -79,10 +80,123 @@ def glueImages(image_list, destination):
     new_image.save(destination)
 
 
-def extractSolutionImages(server, password):
-    spec = getSpec(server, password)
+def createSolutionSpec(testSpec):
+    soln = {}
+    soln["numberOfVersions"] = testSpec["numberOfVersions"]
+    soln["numberOfPages"] = testSpec["numberOfPages"]
+    soln["numberOfQuestions"] = testSpec["numberOfQuestions"]
+    soln["solutionPages"] = {}
+    for q in range(1, testSpec["numberOfQuestions"] + 1):
+        soln["solutionPages"][str(q)] = testSpec["question"][str(q)]["pages"]
+    return soln
 
-    success, msg = check_solution_files_present(spec["numberOfVersions"])
+
+def saveSolutionSpec(solutionSpec):
+    with open("solutionSpec.toml", "w") as fh:
+        toml.dump(solutionSpec, fh)
+
+
+def loadSolutionSpec(spec_filename):
+    with open(spec_filename, "r") as fh:
+        solutionSpec = toml.dump(spec_filename, fh)
+    return solutionSpec
+
+
+def isPositiveInt(s):
+    try:
+        n = int(s)
+        if n > 0:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
+
+
+def isContiguousListPosInt(l, lastPage):
+    # check it is a list
+    if type(l) is not list:
+        return False
+    # check each entry is 0<n<=lastPage
+    for n in l:
+        if not isPositiveInt(n):
+            return False
+        if n > lastPage:
+            return False
+    # check it is contiguous
+    sl = set(l)
+    for n in range(min(sl), max(sl) + 1):
+        if n not in sl:
+            return False
+    # all tests passed
+    return True
+
+
+def checkSolutionSpec(testSpec, solutionSpec):
+    print("Checking = ", solutionSpec)
+    # make sure keys are present
+    for x in [
+        "numberOfVersions",
+        "numberOfPages",
+        "numberOfQuestions",
+        "solutionPages",
+    ]:
+        if x not in solutionSpec:
+            return (False, f"Missing key = {x}")
+    # check Q/V values match test-spec
+    for x in ["numberOfVersions", "numberOfQuestions"]:
+        if solutionSpec[x] != testSpec[x]:
+            return (False, f"Value of {x} does not match test spec")
+    # check pages is pos-int
+    if isPositiveInt(solutionSpec["numberOfPages"]) is False:
+        return (False, f"numberOfPages must be a positive integer.")
+
+    # make sure right number of question-keys - match test-spec
+    if len(solutionSpec["solutionPages"]) != solutionSpec["numberOfQuestions"]:
+        return (
+            False,
+            f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
+        )
+    # make sure each pagelist is contiguous an in range
+    for q in range(1, solutionSpec["numberOfQuestions"] + 1):
+        if str(q) not in solutionSpec["solutionPages"]:
+            return (
+                False,
+                f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
+            )
+        if (
+            isContiguousListPosInt(
+                solutionSpec["solutionPages"][str(q)], solutionSpec["numberOfPages"]
+            )
+            is False
+        ):
+            return (
+                False,
+                f"Pages for solution {q} are not a contiguous list in of positive integers between 1 and {solutionSpec['numberOfPages']}",
+            )
+    return (True, "All ok")
+
+
+def extractSolutionImages(server, password, solution_spec_filename=None):
+    testSpec = getSpec(server, password)
+
+    if solution_spec_filename is None:
+        solutionSpec = createSolutionSpec(testSpec)
+        saveSolutionSpec(solutionSpec)
+    elif Path(solution_spec_filename).is_file() is False:
+        print(f"Cannot find file {solution_spec_filename}")
+        return False
+    else:
+        solutionSpec = loadSolutionSpec(solution_spec_filename)
+
+    valid, msg = checkSolutionSpec(testSpec, solutionSpec)
+    if valid:
+        print("Valid solution specification - continuing.")
+    else:
+        print(f"Error in solution specification = {msg}")
+        return False
+
+    success, msg = check_solution_files_present(solutionSpec["numberOfVersions"])
     if success:
         print(msg)
     else:
@@ -93,20 +207,21 @@ def extractSolutionImages(server, password):
     tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
 
     # split sources pdf into page images
-    for v in range(1, spec["numberOfVersions"] + 1):
+    for v in range(1, testSpec["numberOfVersions"] + 1):
         processFileToBitmaps(source_path / f"solutions{v}.pdf", tmpdir)
     # we now have images of the form solutionsv-p.pdf
 
     # time to combine things and save in solution_path
     solution_path.mkdir(exist_ok=True)
-    for q in range(1, spec["numberOfQuestions"] + 1):
+    for q in range(1, testSpec["numberOfQuestions"] + 1):
         sq = str(q)
-        mxv = spec["numberOfVersions"]
-        if spec["question"][sq]["select"] == "fixed":
+        mxv = testSpec["numberOfVersions"]
+        if testSpec["question"][sq]["select"] == "fixed":
             mxv = 1  # only do version 1 if 'fixed'
         for v in range(1, mxv + 1):
             image_list = [
-                tmpdir / f"solutions{v}-{p}.png" for p in spec["question"][sq]["pages"]
+                tmpdir / f"solutions{v}-{p}.png"
+                for p in solutionSpec["solutionPages"][sq]
             ]
             # check the image list - make sure they exist
             for fn in image_list:

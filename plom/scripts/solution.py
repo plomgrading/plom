@@ -65,7 +65,7 @@ def solutionStatus(server, password):
             print("q {} v {} = solution with md5sum {}".format(qvm[0], qvm[1], qvm[2]))
 
 
-def extractSolutions(server, password, upload=False):
+def extractSolutions(server, password, solutionSpec=None, upload=False):
     if upload:
         from plom.solutions.putSolutionImage import putExtractedSolutionImages
 
@@ -75,7 +75,7 @@ def extractSolutions(server, password, upload=False):
 
     from plom.solutions.extractSolutions import extractSolutionImages
 
-    if extractSolutionImages(server, password):
+    if extractSolutionImages(server, password, solutionSpec):
         print("Solution images extracted")
     else:
         print("Could not extract solution images - see messages above.")
@@ -160,6 +160,11 @@ spD.add_argument(
 )
 
 spE.add_argument(
+    "solutionSpec",
+    nargs="?",
+    help="A simple spec file that describes the solutions. If none given, then one will be auto-generated from the test spec assuming the same structure and saved as solutionSpec.toml.",
+)
+spE.add_argument(
     "-u",
     "--upload",
     action="store_true",
@@ -194,7 +199,7 @@ def main():
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "extract":
-        extractSolutions(args.server, args.password, args.upload)
+        extractSolutions(args.server, args.password, args.solutionSpec, args.upload)
     elif args.command == "clear":
         clearLogin(args.server, args.password)
     else:
