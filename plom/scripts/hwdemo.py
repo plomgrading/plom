@@ -55,17 +55,6 @@ parser.add_argument(
 )
 
 
-# a list of solution page images (q,v,file)
-demo_solution_list = [
-    (1, 1, "solutions1-3.png"),
-    (2, 1, "solutions1-4.png"),
-    (3, 1, "solutions1-5.png"),
-    (1, 2, "solutions2-3.png"),
-    (2, 2, "solutions2-4.png"),
-    (3, 2, "solutions2-5.png"),
-]
-
-
 def main():
     args = parser.parse_args()
     print("Plom version {}".format(__version__))
@@ -121,7 +110,9 @@ def main():
     # extract solution images
     with working_directory(args.server_dir):
         print("Extract solution images from pdfs")
-        subprocess.check_call(split(f"plom-solution extract -w 1234 -s {server}"))
+        subprocess.check_call(
+            split(f"plom-solution extract solutionSpec.toml -w 1234 -s {server}")
+        )
 
     # upload solution images
     with working_directory(args.server_dir):

@@ -72,17 +72,6 @@
 \pagebreak
 }{} }
 
-% we also give a blank page that only prints in the solutions
-% this is useful to pad your solution pdf so that it has the same structure
-% as your test pdf - this makes auto-extracting solutions easier.
-
-\newcommand{\solnpage}[1][\thequestion]{
-\ifthenelse{\boolean{space}}{}{
-\pagebreak
-\noindent \emph{This blank page is to pad the PDF when showing solutions for \textbf{Question~{#1}}.}
-\pagebreak
-}}
-
 % Use this to make a nice answerbox which will display the correct answer
 % when solutions are printed and is otherwise blank for the students
 % to write their stuff.
@@ -250,7 +239,6 @@ from version 1; version 2 will never be used.]
 \end{solution}
 
 \blankpage
-\solnpage
 
 \end{questions}
 \end{document}

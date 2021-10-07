@@ -12,6 +12,7 @@ include requirements.txt requirements.txt.client
 # It seems I have to list files accessed with importlib.sources
 # Why?  This seems WET...
 include plom/templateTestSpec.toml
+include plom/templateSolutionSpec.toml
 include plom/produce/digits.json
 include plom/serverDetails.toml
 include plom/templateUserList.csv

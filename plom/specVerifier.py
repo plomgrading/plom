@@ -138,6 +138,13 @@ class SpecVerifier:
             fh.write(template)
 
     @classmethod
+    def create_solution_template(cls, fname):
+        """Create a documented example exam specification."""
+        template = resources.read_binary(plom, "templateSolutionSpec.toml")
+        with open(fname, "wb") as fh:
+            fh.write(template)
+
+    @classmethod
     def create_demo_template(cls, fname="demoSpec.toml", *, num_to_produce=None):
         """Create a documented demo exam specification.
 
@@ -164,6 +171,16 @@ class SpecVerifier:
             )
         with open(fname, "w") as fh:
             fh.write(s)
+
+    @classmethod
+    def create_demo_solution_template(cls, fname):
+        """Create a documented demo exam-solution specification.
+
+        This does not create a Spec object, but rather saves the
+        template to disc.
+        """
+        with open(fname, "w") as fh:
+            fh.write(resources.read_text(plom, "templateSolutionSpec.toml"))
 
     @classmethod
     def demo(cls):
@@ -299,7 +316,9 @@ class SpecVerifier:
         elif verbose:
             prnt = print
         else:
-            prnt = lambda x: None  # no-op
+
+            def prnt(x):
+                return None  # no-op
 
         self.check_keys(print=prnt)
         self.check_name_and_production_numbers(print=prnt)
@@ -342,7 +361,9 @@ class SpecVerifier:
         elif verbose:
             prnt = print
         else:
-            prnt = lambda x: None  # no-op
+
+            def prnt(x):
+                return None  # no-op
 
         if "privateSeed" in self.spec:
             prnt("WARNING - privateSeed is already set. Not replacing this.")

@@ -98,7 +98,7 @@ def saveSolutionSpec(solutionSpec):
 
 def loadSolutionSpec(spec_filename):
     with open(spec_filename, "r") as fh:
-        solutionSpec = toml.dump(spec_filename, fh)
+        solutionSpec = toml.load(fh)
     return solutionSpec
 
 
@@ -133,6 +133,8 @@ def isContiguousListPosInt(l, lastPage):
 
 
 def checkSolutionSpec(testSpec, solutionSpec):
+    # TODO - move into SpecVerifier
+
     print("Checking = ", solutionSpec)
     # make sure keys are present
     for x in [
@@ -164,6 +166,10 @@ def checkSolutionSpec(testSpec, solutionSpec):
                 False,
                 f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
             )
+        if (isinstance(solutionSpec["solutionPages"][str(q)], list) is False) or (
+            len(solutionSpec["solutionPages"][str(q)]) == 0
+        ):
+            return (False, f"Pages for solution {q} must be a non-empty list")
         if (
             isContiguousListPosInt(
                 solutionSpec["solutionPages"][str(q)], solutionSpec["numberOfPages"]

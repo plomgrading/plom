@@ -119,6 +119,7 @@ setup(
             "share/plom",
             [
                 "plom/templateTestSpec.toml",
+                "plom/templateSolutionSpec.toml",
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demo_rubrics.toml",
