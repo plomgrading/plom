@@ -222,9 +222,10 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
     for q in range(1, testSpec["numberOfQuestions"] + 1):
         sq = str(q)
         mxv = testSpec["numberOfVersions"]
-        if testSpec["question"][sq]["select"] == "fixed":
-            mxv = 1  # only do version 1 if 'fixed'
+        if testSpec["question"][sq]["select"] == "fix":
+            mxv = 1  # only do version 1 if 'fix'
         for v in range(1, mxv + 1):
+            print(f"Processing solutions for Q{q} V{v}")
             image_list = [
                 tmpdir / f"solutions{v}-{p}.png"
                 for p in solutionSpec["solutionPages"][sq]

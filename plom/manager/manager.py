@@ -55,6 +55,7 @@ from plom.plom_exceptions import (
     PlomOwnersLoggedInException,
     PlomTakenException,
     PlomNoMoreException,
+    PlomNoSolutionException,
 )
 from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
@@ -1076,7 +1077,8 @@ class Manager(QWidget):
 
     def refreshDList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
-        disList = self.msgr.getDiscardNames()  # list of pairs [filename, reason]
+        # list of pairs [filename, reason]
+        disList = self.msgr.getDiscardNames()
         r = 0
         for fname, reason in disList:
             it0 = QStandardItem(fname)
@@ -1542,7 +1544,7 @@ class Manager(QWidget):
 
     def refreshCurrentSolution(self):
         try:
-            imgBytes = managerMessenger.getSolutionImage(
+            imgBytes = self.msgr.getSolutionImage(
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
             )
         except PlomNoSolutionException:
@@ -1584,7 +1586,7 @@ class Manager(QWidget):
         if not os.path.isfile(fname[0]):
             return
         # push file to server
-        managerMessenger.putSolutionImage(
+        self.msgr.putSolutionImage(
             self.ui.solnQSB.value(), self.ui.solnVSB.value(), fname[0]
         )
         self.refreshCurrentSolution()
@@ -1598,7 +1600,7 @@ class Manager(QWidget):
             ).exec_()
             == QMessageBox.Yes
         ):
-            managerMessenger.deleteSolutionImage(
+            self.msgr.deleteSolutionImage(
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
             )
             solutionName = os.path.join(
@@ -1766,7 +1768,8 @@ class Manager(QWidget):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    uprog[u].append([q, v, n, qpu[0]])  # question, version, no marked
+                    # question, version, no marked
+                    uprog[u].append([q, v, n, qpu[0]])
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)

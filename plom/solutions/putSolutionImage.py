@@ -59,7 +59,7 @@ def putSolutionImage(
         return [False, "Question number out of range"]
     if iv < 1 or iv > spec["numberOfVersions"]:
         return [False, "Version number out of range"]
-    if spec["question"][question]["select"] == "fixed" and iv != 1:
+    if spec["question"][question]["select"] == "fix" and iv != 1:
         return [False, f"Question{question} has fixed version = 1"]
 
     try:
@@ -106,8 +106,8 @@ def putExtractedSolutionImages(server=None, password=None):
         # nb question,version are strings at this point
         for q in range(1, spec["numberOfQuestions"] + 1):
             mxv = spec["numberOfVersions"]
-            if spec["question"][str(q)]["select"] == "fixed":
-                mxv = 1  # only do version 1 if 'fixed'
+            if spec["question"][str(q)]["select"] == "fix":
+                mxv = 1  # only do version 1 if 'fix'
             for v in range(1, mxv + 1):
                 image_name = solution_path / f"solution.q{q}.v{v}.png"
                 msgr.putSolutionImage(q, v, image_name)
