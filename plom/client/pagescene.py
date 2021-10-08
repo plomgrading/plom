@@ -599,6 +599,9 @@ class PageScene(QGraphicsScene):
 
         self.mode = mode
         # if current mode is not rubric, make sure the ghostcomment is hidden
+        # do similarly for text - fixes #1540
+        # note - do separately else one can create #1540 by switching between
+        # rubrics and text.
         if self.mode != "rubric":
             self.hideGhost()
             # also check if mid-line draw and then delete the line item
@@ -606,6 +609,12 @@ class PageScene(QGraphicsScene):
                 self.removeItem(self.lineItem)
                 self.rubricFlag = 0
                 # also end the macro and then trigger an undo so box removed.
+                self.undoStack.endMacro()
+                self.undo()
+        if self.mode != "text":
+            if self.textFlag > 0:
+                self.removeItem(self.lineItem)
+                self.textFlag = 0
                 self.undoStack.endMacro()
                 self.undo()
 
