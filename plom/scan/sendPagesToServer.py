@@ -334,56 +334,6 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
     return (SIDQ, updates)
 
 
-def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None):
-    """Upload the hw pages to the server.
-
-    lpages uploaded to given student_id.
-    Skips pages-image with orders in the skip-list (i.e., the page
-    number within the bundle.pdf)
-
-    Bundle must already be created.  We will upload the
-    files and then send a 'please trigger an update' message to the server.
-    """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p)
-    else:
-        msgr = ScanMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
-        )
-        raise
-
-    file_list = []
-    # files are sitting in "bundles/submittedLoose/<bundle_name>"
-    with working_directory(os.path.join("bundles", "submittedLoose", bundle_name)):
-        # Look for pages in pageImages
-        for ext in PlomImageExts:
-            file_list.extend(
-                sorted(glob(os.path.join("pageImages", "*.{}".format(ext))))
-            )
-
-        LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
-
-        updates = msgr.triggerUpdateAfterLUpload()
-
-        # go back to original dir
-    # close down messenger
-    msgr.closeUser()
-    msgr.stop()
-
-    return [LUP, updates]
-
-
 def checkTestHasThatSID(student_id, server=None, password=None):
     """Get test-number corresponding to given student id
 

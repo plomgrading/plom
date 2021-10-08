@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
+from plom.db.tables import *
 from datetime import datetime, timedelta
 
 from peewee import *
@@ -14,7 +15,6 @@ import logging
 
 log = logging.getLogger("DB")
 
-from plom.db.tables import *
 
 ######################################################################
 
@@ -40,7 +40,6 @@ class PlomDB:
                     TPage,
                     HWPage,
                     EXPage,
-                    LPage,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
@@ -110,10 +109,8 @@ class PlomDB:
         createNewImage,
         attachImageToTPage,
         createNewHWPage,
-        createNewLPage,
         uploadTestPage,
         uploadHWPage,
-        uploadLPage,
         uploadUnknownPage,
         uploadCollidingPage,
         updateDNMGroup,
@@ -140,7 +137,6 @@ class PlomDB:
         getTPageImage,
         getHWPageImage,
         getEXPageImage,
-        getLPageImage,
         getAllTestImages,
         getQuestionImages,
         getUnknownImage,

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import logging
 
 from plom.db.tables import plomdb
-from plom.db.tables import Group, IDGroup, QGroup, LPage, Test, TPage, User
+from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
 
 
 log = logging.getLogger("DB")
@@ -39,9 +39,6 @@ def RgetScannedTests(self):
             gref = qref.group
             for p in gref.expages:
                 pScanned.append(["e.{}.{}".format(qref.question, p.order), p.version])
-        # then append loose-pages in order
-        for p in tref.lpages:
-            pScanned.append(["l.{}".format(p.order), 0])  # we don't know the version
         scan_dict[tref.test_number] = pScanned
     log.debug("Sending list of scanned tests")
     return scan_dict
@@ -85,10 +82,6 @@ def RgetIncompleteTests(self):
                     page_state.append(
                         ["e.{}.{}".format(qref.question, p.order), p.version, True]
                     )
-        # then append l-pages in order
-        for p in tref.lpages:
-            page_state.append(["l.{}".format(p.order), 0, True])
-            # we don't know the version
         incomp_dict[tref.test_number] = page_state
     log.debug("Sending list of incomplete tests")
     return incomp_dict
@@ -131,7 +124,7 @@ def RgetMissingHWQ(self):
 
 
 def RgetUnusedTests(self):
-    """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned, no loose pages scanned."""
+    """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned."""
     unused_list = []
     for tref in Test.select().where(Test.used == False):
         unused_list.append(tref.test_number)
@@ -394,15 +387,15 @@ def RgetOriginalFiles(self, test_number):
     tref = Test.get_or_none(test_number=test_number)
     if tref is None:
         return []
-    # append tpages, hwpages and then lpages.
+    # append tpages, hwpages and then expages.
     for pref in tref.tpages.order_by(TPage.page_number):
         if pref.scanned:
             page_files.append(pref.image.file_name)
     for qref in tref.qgroups.order_by(QGroup.question):
         for pref in qref.group.hwpages:
             page_files.append(pref.image.file_name)
-    for lref in tref.lpages.order_by(LPage.order):
-        page_files.append(pref.image.file_name)
+        for pref in qref.group.expages:
+            page_files.append(pref.image.file_name)
 
     log.debug("Sending original images of test {}".format(test_number))
     return page_files

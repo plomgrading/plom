@@ -105,7 +105,6 @@ class Server:
         addLPage,
         processHWUploads,
         processTUploads,
-        processLUploads,
         addUnknownPage,
         addCollidingPage,
         replaceMissingTestPage,

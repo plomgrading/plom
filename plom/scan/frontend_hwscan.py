@@ -25,7 +25,6 @@ import toml
 from plom.scan.sendPagesToServer import (
     does_bundle_exist_on_server,
     createNewBundle,
-    uploadLPages,
     upload_HW_pages,
     checkTestHasThatSID,
 )
@@ -33,116 +32,12 @@ from plom.scan.bundle_utils import (
     get_bundle_dir,
     make_bundle_dir,
     bundle_name_and_md5_from_file,
-    archiveLBundle,
     archiveHWBundle,
 )
 from plom.scan.checkScanStatus import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan.scansToImages import process_scans
 from plom.scan import checkScanStatus
-
-
-def processLooseScans(
-    server, password, pdf_fname, student_id, gamma=False, extractbmp=False
-):
-    """Process the given Loose-pages PDF into images, upload then archive the pdf.
-
-    pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
-    where XXXX should be student_id. Do basic sanity check to confirm.
-
-    Ask server to map student_id to a test-number; these should have been
-    pre-populated on test-generation and if id not known there is an error.
-
-    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
-     - abort if name xor md5sum known,
-     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
-
-    Process PDF into images.
-
-    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
-
-    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
-    """
-    pdf_fname = Path(pdf_fname)
-    if not pdf_fname.is_file():
-        print("Cannot find file {} - skipping".format(pdf_fname))
-        return
-
-    assert os.path.split(pdf_fname)[0] in [
-        "submittedLoose",
-        "./submittedLoose",
-    ], 'At least for now, you must your file into a directory named "submittedLoose"'
-    IDQ = IDQorIDorBad(pdf_fname.name)
-    if len(IDQ) != 2:  # should return [JID, sid]
-        print("File name has wrong format. Should be 'blah.sid.pdf'. Stopping.")
-        return
-    sid = IDQ[1]
-    if sid != student_id:
-        print(
-            "Student ID supplied {} does not match that in filename {}. Stopping.".format(
-                student_id, sid
-            )
-        )
-        return
-    print(
-        "Process and upload file {} as loose pages for sid {}".format(
-            pdf_fname.name, student_id
-        )
-    )
-
-    bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
-    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
-    if exists:
-        if reason == "name":
-            print(
-                f'The bundle "{bundle_name}" has been used previously for a different bundle'
-            )
-            return
-        elif reason == "md5sum":
-            print(
-                "A bundle with matching md5sum is already in system with a different name"
-            )
-            return
-        elif reason == "both":
-            print(
-                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
-            )
-        else:
-            raise RuntimeError("Should not be here: unexpected code path! File issue")
-
-    bundledir = Path("bundles") / "submittedLoose" / bundle_name
-    make_bundle_dir(bundledir)
-
-    with open(bundledir / "source.toml", "w") as f:
-        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
-
-    print("Processing PDF {} to images".format(pdf_fname))
-    process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
-
-    print("Creating bundle for {} on server".format(pdf_fname))
-    rval = createNewBundle(bundle_name, md5, server, password)
-    # should be [True, skip_list] or [False, reason]
-    if rval[0]:
-        skip_list = rval[1]
-        if len(skip_list) > 0:
-            print("Some images from that bundle were uploaded previously:")
-            print("Pages {}".format(skip_list))
-            print("Skipping those images.")
-    else:
-        print("There was a problem with this bundle.")
-        if rval[1] == "name":
-            print("A different bundle with the same name was uploaded previously.")
-        else:
-            print(
-                "A bundle with matching md5sum but different name was uploaded previously."
-            )
-        print("Stopping.")
-        return
-
-    # send the images to the server
-    uploadLPages(bundle_name, skip_list, student_id, server, password)
-    # now archive the PDF
-    archiveLBundle(pdf_fname)
 
 
 def _parse_questions(s):

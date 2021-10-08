@@ -8,7 +8,7 @@ from peewee import fn
 
 from plom.db.tables import plomdb
 from plom.db.tables import UnknownPage, DiscardedPage, CollidingPage
-from plom.db.tables import EXPage, HWPage, Image, QGroup, LPage, Test, TPage
+from plom.db.tables import EXPage, HWPage, Image, QGroup, Test, TPage
 
 
 log = logging.getLogger("DB")
@@ -82,17 +82,6 @@ def getEXPageImage(self, test_number, question, order):
         return [True, pref.image.file_name]
 
 
-def getLPageImage(self, test_number, order):
-    tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:
-        return [False]
-    pref = LPage.get_or_none(LPage.test == tref, LPage.order == order)
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
-
-
 def getAllTestImages(self, test_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
@@ -125,10 +114,6 @@ def getAllTestImages(self, test_number):
             rval.append(p.image.file_name)
         for p in gref.expages.order_by(EXPage.order):
             rval.append(p.image.file_name)
-
-    # finally give any loosepages
-    for p in tref.lpages.order_by(LPage.order):
-        rval.append(p.image.file_name)
 
     return rval
 
@@ -374,7 +359,8 @@ def moveDiscardToUnknown(self, file_name):
         return [False, "Cannot find discard page for that image."]
 
     with plomdb.atomic():
-        UnknownPage.create(image=iref, order=1)  # we have lost order information.
+        # we have lost order information.
+        UnknownPage.create(image=iref, order=1)
         dref.delete_instance()
     log.info("Moving discarded image {} to unknown image".format(file_name))
     return [True]
