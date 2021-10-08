@@ -569,9 +569,11 @@ class PageScene(QGraphicsScene):
         style = {
             "annot_color": c,
             "pen_width": 2,
-            "highlight_color": QColor(255, 255, 0, 64),  # TODO: 64 hardcoded elsewhere
+            # TODO: 64 hardcoded elsewhere
+            "highlight_color": QColor(255, 255, 0, 64),
             "highlight_width": 50,
-            "box_tint": QColor(255, 255, 0, 16),  # light highlight for backgrounds
+            # light highlight for backgrounds
+            "box_tint": QColor(255, 255, 0, 16),
         }
         self.ink = QPen(style["annot_color"], style["pen_width"])
         self.lightBrush = QBrush(style["box_tint"])
@@ -599,24 +601,13 @@ class PageScene(QGraphicsScene):
 
         self.mode = mode
         # if current mode is not rubric, make sure the ghostcomment is hidden
-        # do similarly for text - fixes #1540
-        # note - do separately else one can create #1540 by switching between
-        # rubrics and text.
+
+        # To fix issues with changing mode mid-draw - eg #1540
+        # trigger this
+        self.stopMidDraw()
+
         if self.mode != "rubric":
             self.hideGhost()
-            # also check if mid-line draw and then delete the line item
-            if self.rubricFlag > 0:
-                self.removeItem(self.lineItem)
-                self.rubricFlag = 0
-                # also end the macro and then trigger an undo so box removed.
-                self.undoStack.endMacro()
-                self.undo()
-        if self.mode != "text":
-            if self.textFlag > 0:
-                self.removeItem(self.lineItem)
-                self.textFlag = 0
-                self.undoStack.endMacro()
-                self.undo()
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
@@ -956,7 +947,8 @@ class PageScene(QGraphicsScene):
             return  # intersection - so don't stamp anything.
 
         # check the rubricFlag
-        if isinstance(event, QGraphicsSceneDragDropEvent):  # is a rubric drag event.
+        # is a rubric drag event.
+        if isinstance(event, QGraphicsSceneDragDropEvent):
             pass  # no rectangle-drag-rubric, only rubric-stamp
         elif self.rubricFlag == 0:
             # check if drag event
@@ -1977,7 +1969,8 @@ class PageScene(QGraphicsScene):
                 log.debug(
                     "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
                 )
-                self.undoStack.push(command)  # push the delta onto the undo stack.
+                # push the delta onto the undo stack.
+                self.undoStack.push(command)
                 self.refreshStateAndScore()  # and now refresh the markingstate and score
                 self.rubricFlag = 0  # reset the rubric flag
                 return
@@ -2224,7 +2217,8 @@ class PageScene(QGraphicsScene):
                 return False
             elif self.markingState == "neutral":  # score is None
                 return True
-            elif self.score + int(dn) > self.maxMark:  # we know score is pos-int here
+            # we know score is pos-int here
+            elif self.score + int(dn) > self.maxMark:
                 return False
             else:
                 return True
@@ -2332,6 +2326,7 @@ class PageScene(QGraphicsScene):
                     self.penFlag,
                     self.rubricFlag,
                     self.textFlag,
+                    self.zoomFlag,
                 ]
             )
         )
@@ -2376,3 +2371,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
             self.textFlag = 0
+        # check if mid-zoom-box draw:
+        if self.zoomFlag == 2:
+            self.removeItem(self.zoomBoxItem)
+            self.zoomFlag = 0
