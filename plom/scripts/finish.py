@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-# Copyright (C) 2020-2021 Colin B. Macdonald
-# Copyright (C) 2020-2021 Andrew Rechnitzer
+
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2021 Colin B. Macdonald
 
 """Stub for a deprecated technique of accessing Plom finishing tools."""
+
+from warnings import warn
 
 import plom.finish
 import plom.finish.__main__
