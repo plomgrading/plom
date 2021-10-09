@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-import getpass
+
 import os
 from pathlib import Path
-from PIL import Image
 import shutil
 import tempfile
+
+from PIL import Image
 import toml
 
 from plom.messenger import ManagerMessenger
@@ -24,18 +25,8 @@ def getSpec(server, password):
         msgr = ManagerMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'manager' password:")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
-
     try:
-        msgr.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException as e:
         print(
             "You appear to be already logged in!\n\n"

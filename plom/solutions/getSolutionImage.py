@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
-
-import getpass
+# Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2021 Colin B. Macdonald
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
@@ -25,18 +19,8 @@ def getSolutionImage(
         msgr = ManagerMessenger(server)
     msgr.start()
 
-    # get the password if not specified
-    if password is None:
-        try:
-            pwd = getpass.getpass("Please enter the 'manager' password:")
-        except Exception as error:
-            print("ERROR", error)
-            exit(1)
-    else:
-        pwd = password
-
     try:
-        msgr.requestAndSaveToken("manager", pwd)
+        msgr.requestAndSaveToken("manager", password)
     except PlomExistingLoginException as e:
         print(
             "You appear to be already logged in!\n\n"

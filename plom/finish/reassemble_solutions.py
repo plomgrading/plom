@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
 
-import getpass
 from multiprocessing import Pool
 import os
 from pathlib import Path
@@ -104,9 +103,6 @@ def main(server=None, pwd=None):
     else:
         msgr = FinishMessenger(server)
     msgr.start()
-
-    if not pwd:
-        pwd = getpass.getpass('Please enter the "manager" password: ')
 
     try:
         msgr.requestAndSaveToken("manager", pwd)
