@@ -25,7 +25,7 @@ def deleteSolutionImage(
 
     try:
         msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException as e:
+    except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
             "  * Perhaps a previous session crashed?\n"
@@ -33,7 +33,7 @@ def deleteSolutionImage(
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-solution clear"'
         )
-        exit(10)
+        raise
 
     try:
         success = msgr.deleteSolutionImage(question, version)

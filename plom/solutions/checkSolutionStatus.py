@@ -16,7 +16,7 @@ def checkStatus(server=None, pwd=None):
 
     try:
         msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException as e:
+    except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
             "  * Perhaps a previous session crashed?\n"
@@ -24,7 +24,7 @@ def checkStatus(server=None, pwd=None):
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-solution clear"'
         )
-        exit(10)
+        raise
 
     spec = msgr.get_spec()
 

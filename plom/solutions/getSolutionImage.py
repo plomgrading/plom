@@ -29,7 +29,7 @@ def getSolutionImage(
             "    e.g., on another computer?\n\n"
             'In order to force-logout the existing authorisation run "plom-solution clear"'
         )
-        exit(10)
+        raise
 
     try:
         img = msgr.getSolutionImage(question, version)
