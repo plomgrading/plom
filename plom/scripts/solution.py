@@ -87,96 +87,102 @@ def clearLogin(server, password):
     clearManagerLogin.clearLogin(server, password)
 
 
-parser = argparse.ArgumentParser(
-    description=__doc__.split("\n")[0],
-    epilog="\n".join(__doc__.split("\n")[1:]),
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-)
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
-sub = parser.add_subparsers(dest="command")
+def get_parser():
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+    sub = parser.add_subparsers(dest="command")
 
-spU = sub.add_parser(
-    "upload",
-    help="Upload solution image to the server",
-    description="Upload solution image to the server.",
-)
-spG = sub.add_parser(
-    "get",
-    help="Get solution image from the server",
-    description="Get solution image from the server.",
-)
-spD = sub.add_parser(
-    "delete",
-    help="Delete solution image from the scanner",
-    description="Delete solution image from the server.",
-)
-spS = sub.add_parser(
-    "status",
-    help="Get uploaded solution status",
-    description="Get list of which question/versions have solution-images uploaded",
-)
-spE = sub.add_parser(
-    "extract",
-    help="Extract solution images from solution pdfs",
-    description="Extract solutions images from solution pdfs - assumes that solution pdf has the same structure as the test pdf.",
-)
-spC = sub.add_parser(
-    "clear",
-    help='Clear "manager" login',
-    description='Clear "manager" login after a crash or other expected event.',
-)
+    spU = sub.add_parser(
+        "upload",
+        help="Upload solution image to the server",
+        description="Upload solution image to the server.",
+    )
+    spG = sub.add_parser(
+        "get",
+        help="Get solution image from the server",
+        description="Get solution image from the server.",
+    )
+    spD = sub.add_parser(
+        "delete",
+        help="Delete solution image from the scanner",
+        description="Delete solution image from the server.",
+    )
+    spS = sub.add_parser(
+        "status",
+        help="Get uploaded solution status",
+        description="Get list of which question/versions have solution-images uploaded",
+    )
+    spE = sub.add_parser(
+        "extract",
+        help="Extract solution images from solution pdfs",
+        description="Extract solutions images from solution pdfs - assumes that solution pdf has the same structure as the test pdf.",
+    )
+    spC = sub.add_parser(
+        "clear",
+        help='Clear "manager" login',
+        description='Clear "manager" login after a crash or other expected event.',
+    )
 
-spU.add_argument(
-    "q",
-    action="store",
-    help="The question to upload to",
-)
-spU.add_argument(
-    "v",
-    action="store",
-    help="The version to upload to",
-)
-spU.add_argument("image", help="The image of the solution.")
+    spU.add_argument(
+        "q",
+        action="store",
+        help="The question to upload to",
+    )
+    spU.add_argument(
+        "v",
+        action="store",
+        help="The version to upload to",
+    )
+    spU.add_argument("image", help="The image of the solution.")
 
-spG.add_argument(
-    "q",
-    action="store",
-    help="The question to get",
-)
-spG.add_argument(
-    "v",
-    action="store",
-    help="The version to get",
-)
-spD.add_argument(
-    "q",
-    action="store",
-    help="The question to delete",
-)
-spD.add_argument(
-    "v",
-    action="store",
-    help="The version to delete",
-)
+    spG.add_argument(
+        "q",
+        action="store",
+        help="The question to get",
+    )
+    spG.add_argument(
+        "v",
+        action="store",
+        help="The version to get",
+    )
+    spD.add_argument(
+        "q",
+        action="store",
+        help="The question to delete",
+    )
+    spD.add_argument(
+        "v",
+        action="store",
+        help="The version to delete",
+    )
 
-spE.add_argument(
-    "solutionSpec",
-    nargs="?",
-    help="A simple spec file that describes the solutions. If none given, then one will be auto-generated from the test spec assuming the same structure and saved as solutionSpec.toml.",
-)
-spE.add_argument(
-    "-u",
-    "--upload",
-    action="store_true",
-    help="Do not extract, instead upload already extracted solution images to server.",
-)
+    spE.add_argument(
+        "solutionSpec",
+        nargs="?",
+        help="A simple spec file that describes the solutions. If none given, then one will be auto-generated from the test spec assuming the same structure and saved as solutionSpec.toml.",
+    )
+    spE.add_argument(
+        "-u",
+        "--upload",
+        action="store_true",
+        help="Do not extract, instead upload already extracted solution images to server.",
+    )
 
-for x in (spU, spG, spD, spS, spE, spC):
-    x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
+    for x in (spU, spG, spD, spS, spE, spC):
+        x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+        x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
+
+    return parser
 
 
 def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if not hasattr(args, "server") or not args.server:
