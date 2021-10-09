@@ -15,6 +15,7 @@ import os
 from stdiomask import getpass
 
 from plom import __version__
+from plom.solutions import clear_manager_login
 
 
 def uploadSolutionImage(server, password, question, version, imageName):
@@ -81,12 +82,6 @@ def extractSolutions(server, password, solutionSpec=None, upload=False):
         print("Solution images extracted")
     else:
         print("Could not extract solution images - see messages above.")
-
-
-def clearLogin(server, password):
-    from plom.solutions import clearManagerLogin
-
-    clearManagerLogin.clearLogin(server, password)
 
 
 def get_parser():
@@ -191,10 +186,9 @@ def main():
         args.server = args.server or os.environ.get("PLOM_SERVER")
 
     if hasattr(args, "password"):
-        # TODO: is this a typo?  Some need manager...
-        args.password = args.password or os.environ.get("PLOM_SCAN_PASSWORD")
+        args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
         if not args.password:
-            args.password = getpass('Please enter the "scan" password: ')
+            args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "upload":
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
@@ -207,7 +201,7 @@ def main():
     elif args.command == "extract":
         extractSolutions(args.server, args.password, args.solutionSpec, args.upload)
     elif args.command == "clear":
-        clearLogin(args.server, args.password)
+        clear_manager_login(args.server, args.password)
     else:
         parser.print_help()
 
