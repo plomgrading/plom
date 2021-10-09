@@ -36,7 +36,7 @@ def getSolutionImage(
     except PlomNoSolutionException as err:
         print("No solution for question {} version {}".format(question, version))
         return None
-
-    msgr.closeUser()
-    msgr.stop()
+    finally:
+        msgr.closeUser()
+        msgr.stop()
     return img

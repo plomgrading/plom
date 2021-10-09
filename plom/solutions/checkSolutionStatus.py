@@ -26,9 +26,9 @@ def checkStatus(server=None, pwd=None):
         )
         raise
 
-    spec = msgr.get_spec()
-
-    solutionList = msgr.getSolutionStatus()
-    msgr.closeUser()
-    msgr.stop()
-    return solutionList
+    try:
+        solutionList = msgr.getSolutionStatus()
+        return solutionList
+    finally:
+        msgr.closeUser()
+        msgr.stop()

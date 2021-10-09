@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2019-2020 Andrew Rechnitzer and Colin Macdonald"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald"]
-__license__ = "AGPL-3.0-or-later"
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2021 Andrew Rechnitzer
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomNoSolutionException
@@ -37,10 +32,10 @@ def deleteSolutionImage(
 
     try:
         success = msgr.deleteSolutionImage(question, version)
-    except PlomNoSolutionException as err:
+        return success
+    except PlomNoSolutionException:
         print("No solution for question {} version {}".format(question, version))
         return None
-
-    msgr.closeUser()
-    msgr.stop()
-    return success
+    finally:
+        msgr.closeUser()
+        msgr.stop()

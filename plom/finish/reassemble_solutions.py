@@ -6,13 +6,13 @@ import os
 from pathlib import Path
 import shutil
 import tempfile
-from tqdm import tqdm
 
+from tqdm import tqdm
 
 from plom import get_question_label
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-from .solutionReassembler import reassemble
+from plom.finish.solutionReassembler import reassemble
 from plom.finish.coverPageBuilder import makeCover
 
 
@@ -116,48 +116,49 @@ def main(server=None, pwd=None):
         )
         raise
 
-    shortName = msgr.getInfoShortName()
-    spec = msgr.get_spec()
-    numberOfQuestions = spec["numberOfQuestions"]
+    try:
+        shortName = msgr.getInfoShortName()
+        spec = msgr.get_spec()
+        numberOfQuestions = spec["numberOfQuestions"]
 
-    outdir = Path("solutions")
-    outdir.mkdir(exist_ok=True)
-    tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-    print(f"Downloading to temp directory {tmpdir}")
+        outdir = Path("solutions")
+        outdir.mkdir(exist_ok=True)
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        print(f"Downloading to temp directory {tmpdir}")
 
-    solutionList = msgr.getSolutionStatus()
-    if not checkAllSolutionsPresent(solutionList):
-        print("Problems getting solution images. Exiting.")
+        solutionList = msgr.getSolutionStatus()
+        if not checkAllSolutionsPresent(solutionList):
+            raise RuntimeError("Problems getting solution images.")
+        print("All solutions present.")
+        print("Downloading solution images to temp directory {}".format(tmpdir))
+        for X in solutionList:
+            # triples [q,v,md5]
+            img = msgr.getSolutionImage(X[0], X[1])
+            filename = tmpdir / f"solution.{X[0]}.{X[1]}.png"
+            with open(filename, "wb") as f:
+                f.write(img)
+
+        # dict key = testnumber, then list id'd, #q's marked
+        completedTests = msgr.RgetCompletionStatus()
+        maxMarks = msgr.MgetAllMax()
+        # arg-list for reassemble solutions
+        solution_args = []
+        # get data for cover pages
+        cover_args = []
+        for t in completedTests:
+            # check if the given test is ready for reassembly (and hence soln ready for reassembly)
+            if (
+                completedTests[t][0] == True
+                and completedTests[t][1] == numberOfQuestions
+            ):
+                # append args for this test to list
+                cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
+                solution_args.append(
+                    build_reassemble_args(msgr, tmpdir, shortName, outdir, t)
+                )
+    finally:
         msgr.closeUser()
         msgr.stop()
-        exit(1)
-    print("All solutions present.")
-    print("Downloading solution images to temp directory {}".format(tmpdir))
-    for X in solutionList:
-        # triples [q,v,md5]
-        img = msgr.getSolutionImage(X[0], X[1])
-        filename = tmpdir / f"solution.{X[0]}.{X[1]}.png"
-        with open(filename, "wb") as f:
-            f.write(img)
-
-    # dict key = testnumber, then list id'd, #q's marked
-    completedTests = msgr.RgetCompletionStatus()
-    maxMarks = msgr.MgetAllMax()
-    # arg-list for reassemble solutions
-    solution_args = []
-    # get data for cover pages
-    cover_args = []
-    for t in completedTests:
-        # check if the given test is ready for reassembly (and hence soln ready for reassembly)
-        if completedTests[t][0] == True and completedTests[t][1] == numberOfQuestions:
-            # append args for this test to list
-            cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
-            solution_args.append(
-                build_reassemble_args(msgr, tmpdir, shortName, outdir, t)
-            )
-
-    msgr.closeUser()
-    msgr.stop()
 
     N = len(solution_args)
     print("Reassembling {} papers...".format(N))
