@@ -3,7 +3,7 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.plom_exceptions import PlomExistingLoginException, PlomNoSolutionException
 
 
 def getSolutionImage(
