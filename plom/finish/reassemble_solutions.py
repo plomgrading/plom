@@ -13,7 +13,6 @@ from tqdm import tqdm
 from plom import get_question_label
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-from plom.finish.locationSpecCheck import locationAndSpecCheck
 from .solutionReassembler import reassemble
 from plom.finish.coverPageBuilder import makeCover
 
