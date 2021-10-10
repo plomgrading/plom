@@ -118,7 +118,10 @@ def get_parser():
     spE = sub.add_parser(
         "extract",
         help="Extract solution images from solution pdfs",
-        description="Extract solutions images from solution pdfs - assumes that solution pdf has the same structure as the test pdf.",
+        description="""
+            Extract solutions images from solution PDF file.  By default
+            it assumes the same structure as the blank papers, or you
+            can pass in solution spec file.""",
     )
     spC = sub.add_parser(
         "clear",
@@ -162,7 +165,10 @@ def get_parser():
     spE.add_argument(
         "solutionSpec",
         nargs="?",
-        help="A simple spec file that describes the solutions. If none given, then one will be auto-generated from the test spec assuming the same structure and saved as solutionSpec.toml.",
+        help="""
+           A simple spec file that describes the solutions.  If none given,
+           then one will be auto-generated from the test spec assuming the
+           same structure and saved as solutionSpec.toml.""",
     )
     spE.add_argument(
         "-u",
