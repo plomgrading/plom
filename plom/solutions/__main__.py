@@ -17,14 +17,15 @@ from stdiomask import getpass
 
 from plom import __version__
 from plom.solutions import clear_manager_login
+from plom.solutions import deleteSolutionImage, putSolutionImage
+from plom.solutions import getSolutionImage
+from plom.solutions import checkStatus
+from plom.solutions import putExtractedSolutionImages
+from plom.solutions import extractSolutionImages
 
 
 def uploadSolutionImage(server, password, question, version, imageName):
-    from plom.solutions import putSolutionImage
-
-    rv = putSolutionImage.putSolutionImage(
-        question, version, imageName, server, password
-    )
+    rv = putSolutionImage(question, version, imageName, server, password)
     if rv[0]:
         print(f"Success - {rv[1]}")
     else:
@@ -32,9 +33,7 @@ def uploadSolutionImage(server, password, question, version, imageName):
 
 
 def deleteSolutionImage(server, password, question, version):
-    from plom.solutions import deleteSolutionImage
-
-    if deleteSolutionImage.deleteSolutionImage(question, version, server, password):
+    if deleteSolutionImage(question, version, server, password):
         print(
             "Successfully removed solution to question {} version {}".format(
                 question, version
@@ -49,18 +48,14 @@ def deleteSolutionImage(server, password, question, version):
 
 
 def getSolutionImage(server, password, question, version):
-    from plom.solutions import getSolutionImage
-
-    img = getSolutionImage.getSolutionImage(question, version, server, password)
+    img = getSolutionImage(question, version, server, password)
     if img is not None:
         with open("solution.{}.{}.png".format(question, version), "wb") as fh:
             fh.write(img)
 
 
 def solutionStatus(server, password):
-    from plom.solutions import checkSolutionStatus
-
-    solutionList = checkSolutionStatus.checkStatus(server, password)
+    solutionList = checkStatus(server, password)
     # will be a list of triples [q,v,md5sum] or [q,v,""]
     for qvm in solutionList:
         if qvm[2] == "":
@@ -71,13 +66,9 @@ def solutionStatus(server, password):
 
 def extractSolutions(server, password, solutionSpec=None, upload=False):
     if upload:
-        from plom.solutions.putSolutionImage import putExtractedSolutionImages
-
         print("Uploading extracted solution images extracted")
         putExtractedSolutionImages(server, password)
         return
-
-    from plom.solutions.extractSolutions import extractSolutionImages
 
     if extractSolutionImages(server, password, solutionSpec):
         print("Solution images extracted")
