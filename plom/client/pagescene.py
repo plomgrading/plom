@@ -179,7 +179,7 @@ class UnderlyingRect(QGraphicsRectItem):
     """
 
     def __init__(self, rect):
-        super(QGraphicsRectItem, self).__init__()
+        super().__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
         self.setBrush(QBrush(Qt.white))
         self.setRect(rect)
@@ -203,7 +203,7 @@ class UnderlyingImages(QGraphicsItemGroup):
                 every image is used and the list order determines
                 the order.  That is subject to change.
         """
-        super(QGraphicsItemGroup, self).__init__()
+        super().__init__()
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
@@ -869,9 +869,8 @@ class PageScene(QGraphicsScene):
             # also if in box,line,pen,rubric,text - stop mid-draw
             if self.mode in ["box", "line", "pen", "rubric", "text"]:
                 self.stopMidDraw()
-
         else:
-            super(PageScene, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         """
@@ -1294,7 +1293,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.OpenHandCursor)
-        super(PageScene, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         # refresh view after moving objects
         # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
         # self.updateSceneRectangle()
@@ -1312,7 +1311,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.OpenHandCursor)
-        super(PageScene, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
@@ -1411,7 +1410,7 @@ class PageScene(QGraphicsScene):
             event.accept()
             return True
         else:
-            return super(PageScene, self).event(event)
+            return super().event(event)
 
     def _debug_printUndoStack(self):
         """ A helper method for debugging the undoStack."""
