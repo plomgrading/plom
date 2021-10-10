@@ -611,15 +611,13 @@ class PageScene(QGraphicsScene):
 
         self.mode = mode
         # if current mode is not rubric, make sure the ghostcomment is hidden
+
+        # To fix issues with changing mode mid-draw - eg #1540
+        # trigger this
+        self.stopMidDraw()
+
         if self.mode != "rubric":
             self.hideGhost()
-            # also check if mid-line draw and then delete the line item
-            if self.rubricFlag > 0:
-                self.removeItem(self.lineItem)
-                self.rubricFlag = 0
-                # also end the macro and then trigger an undo so box removed.
-                self.undoStack.endMacro()
-                self.undo()
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
@@ -2342,6 +2340,7 @@ class PageScene(QGraphicsScene):
                     self.penFlag,
                     self.rubricFlag,
                     self.textFlag,
+                    self.zoomFlag,
                 ]
             )
         )
@@ -2386,3 +2385,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
             self.textFlag = 0
+        # check if mid-zoom-box draw:
+        if self.zoomFlag == 2:
+            self.removeItem(self.zoomBoxItem)
+            self.zoomFlag = 0
