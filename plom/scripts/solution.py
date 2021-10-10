@@ -173,7 +173,7 @@ def get_parser():
 
     for x in (spU, spG, spD, spS, spE, spC):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-        x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
+        x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
     return parser
 
