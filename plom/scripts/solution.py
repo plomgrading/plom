@@ -192,9 +192,9 @@ def main():
 
     if args.command == "upload":
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
-    if args.command == "get":
+    elif args.command == "get":
         getSolutionImage(args.server, args.password, args.q, args.v)
-    if args.command == "delete":
+    elif args.command == "delete":
         deleteSolutionImage(args.server, args.password, args.q, args.v)
     elif args.command == "status":
         solutionStatus(args.server, args.password)
