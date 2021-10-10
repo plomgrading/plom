@@ -8,9 +8,16 @@
 from collections import defaultdict
 import os
 import csv
+import sys
 import tempfile
 
 import urllib3
+
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
 from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
@@ -33,6 +40,8 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+import plom.client.icons
 
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
@@ -793,7 +802,11 @@ class Manager(QWidget):
         r = 0
         for u in unkList:
             it0 = QStandardItem(os.path.split(u)[1])
-            it0.setIcon(QIcon(QPixmap("./icons/manager_unknown.svg")))
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_unknown.svg")
+            )
+            it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
             it1.setTextAlignment(Qt.AlignCenter)
             it2 = QStandardItem("0")
@@ -832,21 +845,29 @@ class Manager(QWidget):
                 self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
                 self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
                 if uvw.action == "discard":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_discard.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_discard.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
                 elif uvw.action == "extra":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_extra.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_extra.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
                 elif uvw.action == "test":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_test.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_test.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
                 elif uvw.action == "homework":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_hw.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_hw.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
@@ -977,7 +998,11 @@ class Manager(QWidget):
         for u in colDict.keys():
             it0 = QStandardItem(u)
             it1 = QStandardItem(os.path.split(u)[1])
-            it1.setIcon(QIcon(QPixmap("./icons/manager_collide.svg")))
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_collide.svg")
+            )
+            it1.setIcon(QIcon(pm))
             it2 = QStandardItem("?")
             it2.setTextAlignment(Qt.AlignCenter)
             it3 = QStandardItem("{}".format(colDict[u][0]))
@@ -1018,14 +1043,20 @@ class Manager(QWidget):
                 )
                 if cvw.exec_() == QDialog.Accepted:
                     if cvw.action == "original":
-                        self.collideModel.item(r, 1).setIcon(
-                            QIcon(QPixmap("./icons/manager_discard.svg"))
+                        pm = QPixmap()
+                        pm.loadFromData(
+                            resources.read_binary(
+                                plom.client.icons, "manager_discard.svg"
+                            )
                         )
+                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
                         self.collideModel.item(r, 2).setText("discard")
                     elif cvw.action == "collide":
-                        self.collideModel.item(r, 1).setIcon(
-                            QIcon(QPixmap("./icons/manager_test.svg"))
+                        pm = QPixmap()
+                        pm.loadFromData(
+                            resources.read_binary(plom.client.icons, "manager_test.svg")
                         )
+                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
                         self.collideModel.item(r, 2).setText("replace")
 
     def doCActions(self):
@@ -1078,7 +1109,11 @@ class Manager(QWidget):
         for fname, reason in disList:
             it0 = QStandardItem(fname)
             it1 = QStandardItem(os.path.split(fname)[1])
-            it1.setIcon(QIcon(QPixmap("./icons/manager_none.svg")))
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_none.svg")
+            )
+            it1.setIcon(QIcon(pm))
             it2 = QStandardItem(reason)
             it3 = QStandardItem("none")
             it3.setTextAlignment(Qt.AlignCenter)
@@ -1101,14 +1136,18 @@ class Manager(QWidget):
             dvw = DiscardViewWindow(self, dh.name)
             if dvw.exec_() == QDialog.Accepted:
                 if dvw.action == "unknown":
-                    self.discardModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_move.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_move.svg")
                     )
+                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
                     self.discardModel.item(r, 3).setText("move")
                 elif dvw.action == "none":
-                    self.discardModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_none.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_none.svg")
                     )
+                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
                     self.discardModel.item(r, 3).setText("none")
 
     def doDActions(self):
