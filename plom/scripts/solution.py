@@ -107,7 +107,7 @@ def get_parser():
     )
     spD = sub.add_parser(
         "delete",
-        help="Delete solution image from the scanner",
+        help="Delete solution image from the server",
         description="Delete solution image from the server.",
     )
     spS = sub.add_parser(
