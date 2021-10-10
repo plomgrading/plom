@@ -4,7 +4,8 @@
 # Copyright (C) 2021 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Plom tools for pushing solution page image up to server"""
+"""Plom tools for pushing/pulling solution page images to/from a server"""
+
 __copyright__ = "Copyright (C) 2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
