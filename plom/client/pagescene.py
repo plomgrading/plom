@@ -2386,6 +2386,3 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
             self.textFlag = 0
-
-
-###
