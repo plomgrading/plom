@@ -1025,7 +1025,7 @@ winmintest:
   - c:\Python39\Scripts\pip install -r requirements.txt.client
   - refreshenv
   - echo $Env:Path
-  - c:\Python39\python -m plom.scripts.client -h
+  - c:\Python39\python -m plom.client -h
 
 
 # Build Windows client binaries
@@ -1046,7 +1046,7 @@ winpyinst:
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
   - c:\python39\python -m pip install pyinstaller==4.5.1
   - refreshenv
-  - c:\python39\python -m plom.scripts.client -h
+  - c:\python39\python -m plom.client -h
   - c:\python39\scripts\pyinstaller client.windows.spec
   - $VER = &"c:\python39\python" -c "exec(open('plom\\version.py').read()); print(__version__)"
   - echo "Extracted version string '$VER'"
