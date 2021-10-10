@@ -5,31 +5,68 @@
 
 import logging
 
-from PyQt5.QtCore import QEvent, QRectF, QPointF
+from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
 from PyQt5.QtGui import (
     QBrush,
     QColor,
     QCursor,
+    QImage,
     QFont,
     QGuiApplication,
     QPainter,
     QPainterPath,
+    QPen,
     QPixmap,
     QTransform,
 )
 from PyQt5.QtWidgets import (
+    QGraphicsEllipseItem,
+    QGraphicsLineItem,
+    QGraphicsPathItem,
     QGraphicsPixmapItem,
+    QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsSceneDragDropEvent,
-    QUndoStack,
+    QGraphicsTextItem,
+    QGraphicsItemGroup,
     QMessageBox,
+    QUndoStack,
 )
+from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubricsException
 
-# Import all the tool commands for undo/redo stack.
-from .tools import *
+from .tools import (
+    CrossItem,
+    DeleteItem,
+    DeltaItem,
+    ImageItem,
+    GhostComment,
+    GhostDelta,
+    GroupDeltaTextItem,
+    GhostText,
+    TextItem,
+    TickItem,
+)
+from .tools import (
+    CommandArrow,
+    CommandArrowDouble,
+    CommandBox,
+    CommandEllipse,
+    CommandImage,
+    CommandDelete,
+    CommandText,
+    CommandGroupDeltaText,
+    CommandLine,
+    CommandTick,
+    CommandQMark,
+    CommandCross,
+    CommandPen,
+    CommandHighlight,
+    CommandPenArrow,
+)
+
 
 log = logging.getLogger("pagescene")
 
