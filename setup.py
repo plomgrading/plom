@@ -110,7 +110,7 @@ setup(
             "plom-fake-scribbles=plom.produce.faketools:main",
             "plom-fake-hwscribbles=plom.produce.hwFaker:main",
             "plom-hwscan=plom.scripts.hwscan:main",
-            "plom-solution=plom.scripts.solution:main",
+            "plom-solutions=plom.solutions.__main__:main",
         ],
     },
     include_package_data=True,
