@@ -258,7 +258,5 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
     log.info("ID launch ID reader in background")
 
     # Yuck, should at least check its running, Issue #862
-    subprocess.Popen(
-        ["python3", "-m", "plom.server.run_the_predictor", lock_file]
-    )
+    subprocess.Popen(["python3", "-m", "plom.server.run_the_predictor", lock_file])
     return [True, True]
