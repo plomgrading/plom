@@ -4,7 +4,8 @@
 # Copyright (C) 2021 Colin B. Macdonald
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Plom tools for pushing solution page image up to server"""
+"""Plom tools for pushing/pulling solution page images to/from a server"""
+
 __copyright__ = "Copyright (C) 2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
@@ -16,14 +17,15 @@ from stdiomask import getpass
 
 from plom import __version__
 from plom.solutions import clear_manager_login
+from plom.solutions import deleteSolutionImage, putSolutionImage
+from plom.solutions import getSolutionImage
+from plom.solutions import checkStatus
+from plom.solutions import putExtractedSolutionImages
+from plom.solutions import extractSolutionImages
 
 
 def uploadSolutionImage(server, password, question, version, imageName):
-    from plom.solutions import putSolutionImage
-
-    rv = putSolutionImage.putSolutionImage(
-        question, version, imageName, server, password
-    )
+    rv = putSolutionImage(question, version, imageName, server, password)
     if rv[0]:
         print(f"Success - {rv[1]}")
     else:
@@ -31,9 +33,7 @@ def uploadSolutionImage(server, password, question, version, imageName):
 
 
 def deleteSolutionImage(server, password, question, version):
-    from plom.solutions import deleteSolutionImage
-
-    if deleteSolutionImage.deleteSolutionImage(question, version, server, password):
+    if deleteSolutionImage(question, version, server, password):
         print(
             "Successfully removed solution to question {} version {}".format(
                 question, version
@@ -48,18 +48,14 @@ def deleteSolutionImage(server, password, question, version):
 
 
 def getSolutionImage(server, password, question, version):
-    from plom.solutions import getSolutionImage
-
-    img = getSolutionImage.getSolutionImage(question, version, server, password)
+    img = getSolutionImage(question, version, server, password)
     if img is not None:
         with open("solution.{}.{}.png".format(question, version), "wb") as fh:
             fh.write(img)
 
 
 def solutionStatus(server, password):
-    from plom.solutions import checkSolutionStatus
-
-    solutionList = checkSolutionStatus.checkStatus(server, password)
+    solutionList = checkStatus(server, password)
     # will be a list of triples [q,v,md5sum] or [q,v,""]
     for qvm in solutionList:
         if qvm[2] == "":
@@ -70,13 +66,9 @@ def solutionStatus(server, password):
 
 def extractSolutions(server, password, solutionSpec=None, upload=False):
     if upload:
-        from plom.solutions.putSolutionImage import putExtractedSolutionImages
-
         print("Uploading extracted solution images extracted")
         putExtractedSolutionImages(server, password)
         return
-
-    from plom.solutions.extractSolutions import extractSolutionImages
 
     if extractSolutionImages(server, password, solutionSpec):
         print("Solution images extracted")
@@ -107,7 +99,7 @@ def get_parser():
     )
     spD = sub.add_parser(
         "delete",
-        help="Delete solution image from the scanner",
+        help="Delete solution image from the server",
         description="Delete solution image from the server.",
     )
     spS = sub.add_parser(
@@ -118,7 +110,10 @@ def get_parser():
     spE = sub.add_parser(
         "extract",
         help="Extract solution images from solution pdfs",
-        description="Extract solutions images from solution pdfs - assumes that solution pdf has the same structure as the test pdf.",
+        description="""
+            Extract solutions images from solution PDF file.  By default
+            it assumes the same structure as the blank papers, or you
+            can pass in solution spec file.""",
     )
     spC = sub.add_parser(
         "clear",
@@ -162,7 +157,10 @@ def get_parser():
     spE.add_argument(
         "solutionSpec",
         nargs="?",
-        help="A simple spec file that describes the solutions. If none given, then one will be auto-generated from the test spec assuming the same structure and saved as solutionSpec.toml.",
+        help="""
+           A simple spec file that describes the solutions.  If none given,
+           then one will be auto-generated from the test spec assuming the
+           same structure and saved as solutionSpec.toml.""",
     )
     spE.add_argument(
         "-u",
@@ -173,7 +171,7 @@ def get_parser():
 
     for x in (spU, spG, spD, spS, spE, spC):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-        x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
+        x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
     return parser
 
@@ -192,9 +190,9 @@ def main():
 
     if args.command == "upload":
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
-    if args.command == "get":
+    elif args.command == "get":
         getSolutionImage(args.server, args.password, args.q, args.v)
-    if args.command == "delete":
+    elif args.command == "delete":
         deleteSolutionImage(args.server, args.password, args.q, args.v)
     elif args.command == "status":
         solutionStatus(args.server, args.password)
