@@ -27,7 +27,7 @@ def getSolutionImage(
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another script running,\n"
             "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-solution clear"'
+            'In order to force-logout the existing authorisation run "plom-solutions clear"'
         )
         raise
 

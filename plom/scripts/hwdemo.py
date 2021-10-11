@@ -111,14 +111,14 @@ def main():
     with working_directory(args.server_dir):
         print("Extract solution images from pdfs")
         subprocess.check_call(
-            split(f"plom-solution extract solutionSpec.toml -w 1234 -s {server}")
+            split(f"plom-solutions extract solutionSpec.toml -w 1234 -s {server}")
         )
 
     # upload solution images
     with working_directory(args.server_dir):
         print("Upload solutions to server")
         subprocess.check_call(
-            split(f"plom-solution extract --upload -w 1234 -s {server}")
+            split(f"plom-solutions extract --upload -w 1234 -s {server}")
         )
 
     print("Uploading fake scanned data to the server")
