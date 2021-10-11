@@ -429,7 +429,7 @@ class IDClient(QWidget):
             return
         # else try to grab it from server
         try:
-            imageList = self.msgr.ID_request_images(test)
+            imageList = self.msgr.request_ID_images(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
