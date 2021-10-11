@@ -130,6 +130,7 @@ class PlomDB:
         replaceMissingHWQuestion,
         replaceMissingTestPage,
         removeAllScannedPages,
+        listBundles,
     )
 
     from plom.db.db_manage import (

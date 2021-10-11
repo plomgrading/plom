@@ -8,7 +8,7 @@ __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
-
+from copy import deepcopy
 import json
 import logging
 import os
@@ -677,8 +677,10 @@ class Annotator(QWidget):
             log.error(s)
             ErrorMessage(s).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        page_data = self.parentMarkerUI._full_pagedata[int(testNumber)]
-        page_data.copy()  # keep original readonly?
+        # do a deep copy of this list of dict - else hit #1690
+        # keep original readonly?
+        page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
+        #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:
                 s = dedent(

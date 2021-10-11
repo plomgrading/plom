@@ -9,7 +9,7 @@ with open(Path("plom") / "version.py") as f:
 
 block_cipher = None
 
-a = Analysis(['plom/scripts/client.py'],
+a = Analysis(['plom/client/__main__.py'],
              pathex=['./'],
              binaries=[],
              datas=[

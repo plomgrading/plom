@@ -132,6 +132,7 @@ class Server:
         unknownToExtraPage,
         collidingToTestPage,
         discardToUnknown,
+        listBundles,
     )
     from .plomServer.serverID import (
         IDprogressCount,
