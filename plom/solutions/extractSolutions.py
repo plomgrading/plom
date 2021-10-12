@@ -12,6 +12,7 @@ import toml
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan.scansToImages import processFileToBitmaps
+from plom.specVerifier import checkSolutionSpec
 
 source_path = Path("sourceVersions")
 solution_path = Path("solutionImages")
@@ -91,87 +92,6 @@ def loadSolutionSpec(spec_filename):
     with open(spec_filename, "r") as fh:
         solutionSpec = toml.load(fh)
     return solutionSpec
-
-
-def isPositiveInt(s):
-    try:
-        n = int(s)
-        if n > 0:
-            return True
-        else:
-            return False
-    except ValueError:
-        return False
-
-
-def isContiguousListPosInt(l, lastPage):
-    # check it is a list
-    if type(l) is not list:
-        return False
-    # check each entry is 0<n<=lastPage
-    for n in l:
-        if not isPositiveInt(n):
-            return False
-        if n > lastPage:
-            return False
-    # check it is contiguous
-    sl = set(l)
-    for n in range(min(sl), max(sl) + 1):
-        if n not in sl:
-            return False
-    # all tests passed
-    return True
-
-
-def checkSolutionSpec(testSpec, solutionSpec):
-    # TODO - move into SpecVerifier
-
-    print("Checking = ", solutionSpec)
-    # make sure keys are present
-    for x in [
-        "numberOfVersions",
-        "numberOfPages",
-        "numberOfQuestions",
-        "solutionPages",
-    ]:
-        if x not in solutionSpec:
-            return (False, f"Missing key = {x}")
-    # check Q/V values match test-spec
-    for x in ["numberOfVersions", "numberOfQuestions"]:
-        if solutionSpec[x] != testSpec[x]:
-            return (False, f"Value of {x} does not match test spec")
-    # check pages is pos-int
-    if isPositiveInt(solutionSpec["numberOfPages"]) is False:
-        return (False, f"numberOfPages must be a positive integer.")
-
-    # make sure right number of question-keys - match test-spec
-    if len(solutionSpec["solutionPages"]) != solutionSpec["numberOfQuestions"]:
-        return (
-            False,
-            f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
-        )
-    # make sure each pagelist is contiguous an in range
-    for q in range(1, solutionSpec["numberOfQuestions"] + 1):
-        if str(q) not in solutionSpec["solutionPages"]:
-            return (
-                False,
-                f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
-            )
-        if (isinstance(solutionSpec["solutionPages"][str(q)], list) is False) or (
-            len(solutionSpec["solutionPages"][str(q)]) == 0
-        ):
-            return (False, f"Pages for solution {q} must be a non-empty list")
-        if (
-            isContiguousListPosInt(
-                solutionSpec["solutionPages"][str(q)], solutionSpec["numberOfPages"]
-            )
-            is False
-        ):
-            return (
-                False,
-                f"Pages for solution {q} are not a contiguous list in of positive integers between 1 and {solutionSpec['numberOfPages']}",
-            )
-    return (True, "All ok")
 
 
 def extractSolutionImages(server, password, solution_spec_filename=None):

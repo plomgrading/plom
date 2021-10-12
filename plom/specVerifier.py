@@ -32,6 +32,10 @@ warn_mark = " [warning]"
 check_mark = " [check]"
 chk = check_mark
 
+##
+## Some useful functions
+##
+
 
 def get_question_label(spec, n):
     """Print question label for the nth question from spec dict
@@ -51,6 +55,48 @@ def get_question_label(spec, n):
     if label:
         return label
     return "Q{}".format(n)
+
+
+# a couple of useful functions
+def isPositiveInt(s):
+    """Check that given string s can be converted to a positive int"""
+    try:
+        n = int(s)
+        if n > 0:
+            return True
+        else:
+            return False
+    except ValueError:
+        return False
+
+
+def isContiguousListPosInt(l, lastPage):
+    """Check given list is a contiguous list of pos-int, or string that can be converted to pos-ints, bounded below by 1 and above by lastPage.
+
+    args:
+        l (list): a list of strings or ints
+        lastPage (int): no element of list can be greater.
+
+    returns:
+        Bool
+
+    """
+    # check it is a list
+    if type(l) is not list:
+        return False
+    # check each entry is 0<n<=lastPage
+    for n in l:
+        if not isPositiveInt(n):
+            return False
+        if n > lastPage:
+            return False
+    # check it is contiguous
+    sl = set(l)
+    for n in range(min(sl), max(sl) + 1):
+        if n not in sl:
+            return False
+    # all tests passed
+    return True
 
 
 class SpecVerifier:
@@ -389,45 +435,6 @@ class SpecVerifier:
             )
             toml.dump(self.spec, fh)
 
-    # a couple of useful functions
-    def isPositiveInt(self, s):
-        try:
-            n = int(s)
-            if n > 0:
-                return True
-            else:
-                return False
-        except ValueError:
-            return False
-
-    def isNonNegInt(self, s):
-        try:
-            n = int(s)
-            if n >= 0:
-                return True
-            else:
-                return False
-        except ValueError:
-            return False
-
-    def isContiguousListPosInt(self, l, lastPage):
-        # check it is a list
-        if type(l) is not list:
-            return False
-        # check each entry is 0<n<=lastPage
-        for n in l:
-            if not self.isPositiveInt(n):
-                return False
-            if n > lastPage:
-                return False
-        # check it is contiguous
-        sl = set(l)
-        for n in range(min(sl), max(sl) + 1):
-            if n not in sl:
-                return False
-        # all tests passed
-        return True
-
     def check_keys(self, print=print):
         """Check that spec contains required keys."""
         print("Checking specification keys")
@@ -469,7 +476,7 @@ class SpecVerifier:
 
         print("  Checking production numbers")
         for x in ("numberOfVersions", "numberOfPages", "numberOfQuestions"):
-            if not self.isPositiveInt(self.spec[x]):
+            if not isPositiveInt(self.spec[x]):
                 raise ValueError(
                     'Specification error - "{}" must be a positive integer.'.format(x)
                 )
@@ -523,7 +530,7 @@ class SpecVerifier:
         print("Checking IDpages")
         if "pages" not in self.spec["idPages"]:
             raise ValueError('IDpages error - could not find "pages" key')
-        if not self.isContiguousListPosInt(self.spec["idPages"]["pages"], lastPage):
+        if not isContiguousListPosInt(self.spec["idPages"]["pages"], lastPage):
             raise ValueError(
                 'IDpages error - "pages" = {} should be a list of positive integers in range'.format(
                     self.spec["idPages"]["pages"]
@@ -549,7 +556,7 @@ class SpecVerifier:
             )
         # should be a list of positive integers
         for n in self.spec["doNotMark"]["pages"]:
-            if self.isPositiveInt(n) and n <= lastPage:
+            if isPositiveInt(n) and n <= lastPage:
                 pass
             else:
                 raise ValueError(
@@ -570,7 +577,7 @@ class SpecVerifier:
             if k not in required_keys.union(optional_keys):
                 raise ValueError('Question error - unexpected extra key "{}"'.format(k))
         # check pages is contiguous list of positive integers
-        if not self.isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
+        if not isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
             raise ValueError(
                 "Question error - pages {} is not list of contiguous positive integers".format(
                     self.spec["question"][g]["pages"]
@@ -582,7 +589,7 @@ class SpecVerifier:
             )
         )
         # check mark is positive integer
-        if not self.isPositiveInt(self.spec["question"][g]["mark"]):
+        if not isPositiveInt(self.spec["question"][g]["mark"]):
             raise ValueError(
                 "Question error - mark {} is not a positive integer".format(
                     self.spec["question"][g]["mark"]
@@ -618,3 +625,64 @@ class SpecVerifier:
                     "Page overused - page {} used {} times".format(p, pageUse[p])
                 )
             print("  Page {} used once{}".format(p, chk))
+
+
+## For parsing solution spec
+def checkSolutionSpec(testSpec, solutionSpec):
+    """Check the given solution spec against the validated test-spec and confirm its validity.
+
+    Args:
+        testSpec (dict): a validated plom test specification
+        solutionSpec (dict): for example
+        { "numberOfVersions": 2, "numberOfPages": 6, "numberOfQuestions": 3, "solutionPages": {1: [3], 2: [4], 3: [5] } }
+
+    Returns:
+        Pair(Bool, str): Either (True,"All ok") or (False, Error message)
+    """
+
+    print("Checking = ", solutionSpec)
+    # make sure keys are present
+    for x in [
+        "numberOfVersions",
+        "numberOfPages",
+        "numberOfQuestions",
+        "solutionPages",
+    ]:
+        if x not in solutionSpec:
+            return (False, f"Missing key = {x}")
+    # check Q/V values match test-spec
+    for x in ["numberOfVersions", "numberOfQuestions"]:
+        if solutionSpec[x] != testSpec[x]:
+            return (False, f"Value of {x} does not match test spec")
+    # check pages is pos-int
+    if isPositiveInt(solutionSpec["numberOfPages"]) is False:
+        return (False, f"numberOfPages must be a positive integer.")
+
+    # make sure right number of question-keys - match test-spec
+    if len(solutionSpec["solutionPages"]) != solutionSpec["numberOfQuestions"]:
+        return (
+            False,
+            f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
+        )
+    # make sure each pagelist is contiguous an in range
+    for q in range(1, solutionSpec["numberOfQuestions"] + 1):
+        if str(q) not in solutionSpec["solutionPages"]:
+            return (
+                False,
+                f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
+            )
+        if (isinstance(solutionSpec["solutionPages"][str(q)], list) is False) or (
+            len(solutionSpec["solutionPages"][str(q)]) == 0
+        ):
+            return (False, f"Pages for solution {q} must be a non-empty list")
+        if (
+            isContiguousListPosInt(
+                solutionSpec["solutionPages"][str(q)], solutionSpec["numberOfPages"]
+            )
+            is False
+        ):
+            return (
+                False,
+                f"Pages for solution {q} are not a contiguous list in of positive integers between 1 and {solutionSpec['numberOfPages']}",
+            )
+    return (True, "All ok")
