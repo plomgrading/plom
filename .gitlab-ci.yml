@@ -353,7 +353,7 @@ fullworkflow:
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
     - plom-finish solutions -w 1234
     - A=`ls solutions/ | wc -l`    # How many files?
-    - bash -c "[[ $A == $19 ]]"
+    - bash -c "[[ $A == 19 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
     - bash -c "[[ $A -lt 40 ]]"          # not more than 10 MB
     - plom-finish webpage --solutions
