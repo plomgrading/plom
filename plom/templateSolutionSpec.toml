@@ -1,0 +1,23 @@
+# Example solution specification for Plom
+
+# >>> Edit the data below <<<
+
+# Information about the test
+# May have one or more versions of solutions - must be the same as test-specification
+numberOfVersions = 2
+# how many pages in the solution pdf - may be different from test-specification
+numberOfPages = 6
+# how many questions - must be the same as test-specification
+numberOfQuestions = 3
+
+# for each question give a non-empty list of pages
+# must be contiguous list of positive integers between 1 and numberOfPages
+# need not be distinct (ie one page can belong to two solutions)
+[solution.1]
+pages = [3]
+
+[solution.2]
+pages = [4]
+
+[solution.3]
+pages = [5]

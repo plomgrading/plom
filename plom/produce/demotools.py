@@ -21,6 +21,7 @@ import pandas
 
 import plom
 from plom.textools import buildLaTeX
+from plom.scan.scansToImages import processFileToBitmaps
 
 
 def getDemoClassList():
@@ -38,7 +39,7 @@ def getDemoClassListLength():
     return getDemoClassList().shape[0]
 
 
-def buildDemoSourceFiles(basedir=Path(".")):
+def buildDemoSourceFiles(basedir=Path("."), solutions=False):
     """Builds the LaTeX source files for the demo.
 
     Returns:
@@ -46,6 +47,7 @@ def buildDemoSourceFiles(basedir=Path(".")):
     """
     src_dir = basedir / "sourceVersions"
     src_dir.mkdir(exist_ok=True)
+
     print("LaTeXing example exam file: latexTemplate.tex -> version1.pdf")
     content = resources.read_text(plom, "latexTemplate.tex")
     if not buildLaTeXExam2(content, src_dir / "version1.pdf"):
@@ -55,6 +57,25 @@ def buildDemoSourceFiles(basedir=Path(".")):
     content = resources.read_text(plom, "latexTemplatev2.tex")
     if not buildLaTeXExam2(content, src_dir / "version2.pdf"):
         return False
+
+    # if requested then also make the pdfs with solutions
+    if solutions:
+        print("LaTeXing example solution file: latexTemplate.tex -> solution1.pdf")
+        content = resources.read_text(plom, "latexTemplate.tex").replace(
+            "% \\printanswers", "\\printanswers"
+        )
+        # uncomment the line "% \printanswers..."
+        if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions1.pdf"):
+            return False
+
+        print("LaTeXing example solution file: latexTemplatev2.tex -> solutions2.pdf")
+        content = resources.read_text(plom, "latexTemplatev2.tex").replace(
+            "% \\printanswers", "\\printanswers"
+        )
+        # uncomment the line "% \printanswers..."
+        if not buildLaTeXExam2(content, Path("sourceVersions") / "solutions2.pdf"):
+            return False
+    # all done
     return True
 
 
@@ -81,7 +102,11 @@ def buildLaTeXExam2(src, filename):
 
 
 def main():
-    if not buildDemoSourceFiles():
+    soln_flag = False
+    if len(sys.argv) == 2:
+        if sys.argv[1] == "solutions":
+            soln_flag = True
+    if not buildDemoSourceFiles(solutions=soln_flag):
         exit(1)
 
 

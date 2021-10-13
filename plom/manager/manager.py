@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QCheckBox,
     QDialog,
+    QFileDialog,
     QGroupBox,
     QGridLayout,
     QGroupBox,
@@ -46,6 +47,7 @@ import plom.client.icons
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
 from plom.client.origscanviewer import WholeTestView, GroupView
+from .imageview import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -62,6 +64,7 @@ from plom.plom_exceptions import (
     PlomOwnersLoggedInException,
     PlomTakenException,
     PlomNoMoreException,
+    PlomNoSolutionException,
 )
 from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
@@ -523,6 +526,7 @@ class Manager(QWidget):
         self.initProgressTab()
         self.initUserTab()
         self.initReviewTab()
+        self.initSolutionTab()
 
     def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.
@@ -1104,7 +1108,8 @@ class Manager(QWidget):
 
     def refreshDList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
-        disList = self.msgr.getDiscardNames()  # list of pairs [filename, reason]
+        # list of pairs [filename, reason]
+        disList = self.msgr.getDiscardNames()
         r = 0
         for fname, reason in disList:
             it0 = QStandardItem(fname)
@@ -1558,6 +1563,97 @@ class Manager(QWidget):
                     self.msgr.IDreviewID(test)
 
     ##################
+    # Solution tab stuff
+    def initSolutionTab(self):
+        self.tempDirectory = tempfile.TemporaryDirectory(prefix="plom_manager_")
+        self.solnPath = self.tempDirectory.name
+        # set up the viewer
+        self.solnIV = ImageViewWidget()
+        self.ui.solnGBLayout.addWidget(self.solnIV)
+
+        self.ui.solnQSB.setMaximum(self.numberOfQuestions)
+        self.ui.solnQSB.valueChanged.connect(self.viewCurrentSolution)
+        self.ui.solnVSB.setMaximum(self.numberOfVersions)
+        self.ui.solnVSB.valueChanged.connect(self.viewCurrentSolution)
+
+        self.ui.solnDeleteB.clicked.connect(self.deleteCurrentSolution)
+        self.ui.solnViewB.clicked.connect(self.viewCurrentSolution)
+        self.ui.solnRefreshB.clicked.connect(self.refreshCurrentSolution)
+        self.ui.solnUploadB.clicked.connect(self.uploadSolution)
+
+    def refreshCurrentSolution(self):
+        try:
+            imgBytes = self.msgr.getSolutionImage(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            )
+        except PlomNoSolutionException:
+            self.solnIV.updateImage([])
+            return False
+        # save the image
+        solutionName = os.path.join(
+            self.solnPath,
+            "solution.{}.{}.png".format(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            ),
+        )
+        with open(solutionName, "wb+") as fh:
+            fh.write(imgBytes)
+        self.solnIV.updateImage(solutionName)
+        return True
+
+    def viewCurrentSolution(self):
+        solutionName = os.path.join(
+            self.solnPath,
+            "solution.{}.{}.png".format(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            ),
+        )
+        # check if file there already
+        if os.path.isfile(solutionName):
+            self.solnIV.updateImage(solutionName)
+        else:  # not there - so try to update it
+            self.refreshCurrentSolution()
+
+    def uploadSolution(self):
+        # currently only png
+        fname = QFileDialog.getOpenFileName(
+            self, "Get solution image", "./", "PNG files (*.png)"
+        )  # returns (name, type)
+        if fname[0] == "":  # user didn't select file
+            return
+        # check file is actually there
+        if not os.path.isfile(fname[0]):
+            return
+        # push file to server
+        self.msgr.putSolutionImage(
+            self.ui.solnQSB.value(), self.ui.solnVSB.value(), fname[0]
+        )
+        self.refreshCurrentSolution()
+
+    def deleteCurrentSolution(self):
+        if (
+            SimpleMessage(
+                "Are you sure that you want to delete solution to question {} version {}.".format(
+                    self.ui.solnQSB.value(), self.ui.solnVSB.value()
+                )
+            ).exec_()
+            == QMessageBox.Yes
+        ):
+            self.msgr.deleteSolutionImage(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            )
+            solutionName = os.path.join(
+                self.solnPath,
+                "solution.{}.{}.png".format(
+                    self.ui.solnQSB.value(), self.ui.solnVSB.value()
+                ),
+            )
+            os.unlink(solutionName)
+            self.solnIV.updateImage([])
+        else:
+            return
+
+    ##################
     # User tab stuff
 
     def initUserTab(self):
@@ -1711,7 +1807,8 @@ class Manager(QWidget):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    uprog[u].append([q, v, n, qpu[0]])  # question, version, no marked
+                    # question, version, no marked
+                    uprog[u].append([q, v, n, qpu[0]])
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)

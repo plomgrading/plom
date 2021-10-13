@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
+from io import BytesIO
 import urllib3
 import requests
 
@@ -205,3 +206,55 @@ class FinishMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def getSolutionStatus(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/REP/solutions".format(self.server),
+                verify=False,
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getSolutionImage(self, question, version):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/MK/solution".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "version": version,
+                },
+            )
+            response.raise_for_status()
+            if response.status_code == 204:
+                raise PlomNoSolutionException(
+                    "No solution for {}.{} uploaded".format(question, version)
+                ) from None
+
+            img = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+        return img

@@ -110,6 +110,7 @@ setup(
             "plom-fake-scribbles=plom.produce.faketools:main",
             "plom-fake-hwscribbles=plom.produce.hwFaker:main",
             "plom-hwscan=plom.scripts.hwscan:main",
+            "plom-solutions=plom.solutions.__main__:main",
         ],
     },
     include_package_data=True,
@@ -118,6 +119,7 @@ setup(
             "share/plom",
             [
                 "plom/templateTestSpec.toml",
+                "plom/templateSolutionSpec.toml",
                 "plom/templateUserList.csv",
                 "plom/demoClassList.csv",
                 "plom/demo_rubrics.toml",

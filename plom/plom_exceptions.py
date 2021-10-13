@@ -89,6 +89,10 @@ class PlomTaskDeletedError(PlomBenignException):
     pass
 
 
+class PlomNoSolutionException(PlomBenignException):
+    pass
+
+
 class PlomInconsistentRubricsException(PlomSeriousException):
     pass
 
@@ -98,5 +102,3 @@ class PlomTimeoutError(PlomSeriousException):
 
     TODO: currently a PlomSeriousException but consider making this
     a PlomBenignException laer."""
-
-    pass

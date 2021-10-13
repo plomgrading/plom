@@ -275,22 +275,31 @@ def main():
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
         if args.demo:
-            print("DEMO MODE: creating demo specification file")
+            print("DEMO MODE: creating demo test specification file")
             SpecVerifier.create_demo_template(
                 fname, num_to_produce=args.demo_num_papers
             )
+            print("DEMO MODE: creating demo solution specification file")
+            SpecVerifier.create_demo_solution_template("solutionSpec.toml")
+
         else:
             print('Creating specification file from template: "{}"'.format(fname))
             print('  * Please edit the template spec "{}"'.format(fname))
             SpecVerifier.create_template(fname)
-
+            print("Creating solution specification file template = solutionSpec.toml")
+            print(
+                "  **Optional** - Please edit the template solution spec if you are including solutions in your workflow."
+            )
+            SpecVerifier.create_solution_template("solutionSpec.toml")
         print('Creating "sourceVersions" directory for your test source PDFs.')
         Path("sourceVersions").mkdir(exist_ok=True)
         if not args.demo:
             print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
         if args.demo:
-            print("DEMO MODE: building source files: version1.pdf, version2.pdf")
-            if not buildDemoSourceFiles():
+            print(
+                "DEMO MODE: building source files: version1.pdf, version2.pdf, solution1.pdf, solutions2.pdf"
+            )
+            if not buildDemoSourceFiles(solutions=True):
                 exit(1)
             print('DEMO MODE: continuing as if "parse" command was run...')
             parseAndVerifySpecification(fname)

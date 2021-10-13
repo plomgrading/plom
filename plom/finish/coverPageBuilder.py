@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2020 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
@@ -29,7 +29,7 @@ table, th, td {
 )
 
 
-def makeCover(test_num, sname, sid, tab, pdfname):
+def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     """Create html page of name ID etc and table of marks.
 
     Args:
@@ -38,11 +38,14 @@ def makeCover(test_num, sname, sid, tab, pdfname):
         sid (str): student id.
         tab (list): information about the test that should be put on the coverpage.
         pdfname (pathlib.Path): filename to save the pdf into
+        solution (bool): whether or not this is a cover page for solutions
     """
-    htmlText = """
-<html>
-<body>
-<h3>Results</h3>
+    htmlText = "<html><body>\n"
+    if solution:
+        htmlText += "<h3>Solutions</h3>\n"
+    else:
+        htmlText += "<h3>Results</h3>\n"
+    htmlText += """
 <ul>
   <li>Name = {}</li>
   <li>ID = {}</li>
@@ -51,9 +54,12 @@ def makeCover(test_num, sname, sid, tab, pdfname):
 <table>""".format(
         sname, sid, test_num
     )
-    htmlText += (
-        "<tr><th>question</th><th>version</th><th>mark</th><th>out of</th></tr>\n"
-    )
+    if solution:
+        htmlText += "<tr><th>question</th><th>version</th><th>mark out of</th></tr>\n"
+    else:
+        htmlText += (
+            "<tr><th>question</th><th>version</th><th>mark</th><th>out of</th></tr>\n"
+        )
     # Start computing total mark.
     totalMark = 0
     maxPossible = 0
@@ -61,11 +67,20 @@ def makeCover(test_num, sname, sid, tab, pdfname):
         totalMark += y[2]
         maxPossible += y[3]
         # Row of mark table with Group, Version, Mark, MaxPossibleMark
-        htmlText += "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n".format(*y)
+        g, v, m, x = y
+
+        if solution:  # ignore 'Mark'
+            htmlText += f"<tr><td>{g}</td><td>{v}</td><td>{x}</td></tr>\n"
+        else:
+            htmlText += f"<tr><td>{g}</td><td>{v}</td><td>{m}</td><td>{x}</td></tr>\n"
+
     # Final total mark out of maxPossible total mark.
-    htmlText += "<tr><td>total</td><td>&middot;</td><td>{}</td><td>{}</td>\n".format(
-        totalMark, maxPossible
-    )
+    if solution is False:
+        htmlText += (
+            "<tr><td>total</td><td>&middot;</td><td>{}</td><td>{}</td>\n".format(
+                totalMark, maxPossible
+            )
+        )
     htmlText += """
 </table>
 </body>

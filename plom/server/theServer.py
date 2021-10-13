@@ -33,6 +33,7 @@ from .plomServer.routesID import IDHandler
 from .plomServer.routesMark import MarkHandler
 from .plomServer.routesRubric import RubricHandler
 from .plomServer.routesReport import ReportHandler
+from .plomServer.routesSolution import SolutionHandler
 from ..misc_utils import working_directory
 
 
@@ -193,6 +194,12 @@ class Server:
         RgetUserList,
         RgetUserDetails,
     )
+    from .plomServer.serverSolution import (
+        uploadSolutionImage,
+        getSolutionImage,
+        deleteSolutionImage,
+        getSolutionStatus,
+    )
 
 
 def get_server_info(basedir):
@@ -268,6 +275,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         marker = MarkHandler(peon)
         rubricker = RubricHandler(peon)
         reporter = ReportHandler(peon)
+        solutioner = SolutionHandler(peon)
 
         # construct the web server
         app = web.Application()
@@ -278,6 +286,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         marker.setUpRoutes(app.router)
         rubricker.setUpRoutes(app.router)
         reporter.setUpRoutes(app.router)
+        solutioner.setUpRoutes(app.router)
 
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
@@ -288,15 +297,3 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     log.info("Start the server!")
     with working_directory(basedir):
         web.run_app(app, ssl_context=sslContext, port=server_info["port"])
-        # The KeyboardInterrupt is not explicitly caught, so code like below may be preferred
-        #   if the code crashes.
-
-    # cwd = os.getcwd()
-    # try:
-    #     os.chdir(basedir)
-    #     web.run_app(app, ssl_context=sslContext, port=server_info["port"])
-    # except KeyboardInterrupt:
-    #     # Above seems to have its own Ctrl-C handler so this never happens?
-    #     log.info("Closing down via keyboard interrupt")
-    # finally:
-    #     os.chdir(cwd)

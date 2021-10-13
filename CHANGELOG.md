@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Solutions
+  * manager can upload solutions for each question/version.
+  * solution-images can also be auto-extracted (assuming soln-pdf has same structure as test-pdf), else structure specified with simple solution-specification
+  * solutions for individual students can be returned along with marked test via webpage
+  * client can view solution for the current question/version.
 * Added a --no-scan option to plom-demo and plom-hwdemo so that fake-data created but not processed or uploaded. Useful for testing.
 
 ### Changed
