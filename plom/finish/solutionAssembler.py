@@ -17,8 +17,8 @@ papersize_landscape = (792, 612)
 margin = 10
 
 
-def reassemble(outname, shortName, sid, coverfile, img_list):
-    """Reassemble a pdf from the solution images.
+def assemble(outname, shortName, sid, coverfile, img_list):
+    """Assemble a pdf from the solution images.
 
     args:
         outname (str, Path): name of a PDF file to write.

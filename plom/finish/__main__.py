@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-21 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
@@ -16,12 +16,15 @@
 
   3. Run the `reassemble` command build PDFs of marked papers.
 
+  4. Run the `solutions` command to assemble individualised solution PDFs.
+
 
 ## Digital return
 
 The reassembled PDF files can be returned to students in various ways.
 The `webpage` command builds a webpage with individualized secret codes
 to be distributed to each student e.g., via Canvas or another LMS.
+Running `webpage --solutions` includes solution return on that webpage.
 """
 
 __copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
@@ -44,7 +47,7 @@ from plom.finish.spreadsheet import CSVFilename
 import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
-import plom.finish.reassemble_solutions
+import plom.finish.assemble_solutions
 
 
 def get_parser():
@@ -195,7 +198,7 @@ def main():
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "solutions":
-        plom.finish.reassemble_solutions.main(args.server, args.password)
+        plom.finish.assemble_solutions.main(args.server, args.password)
     elif args.command == "webpage":
         plom.finish.coded_return.main(
             args.hex, args.digits, args.salt, args.server, args.solutions

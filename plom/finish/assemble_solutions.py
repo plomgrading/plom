@@ -12,7 +12,7 @@ from tqdm import tqdm
 from plom import get_question_label
 from plom.messenger import FinishMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-from plom.finish.solutionReassembler import reassemble
+from plom.finish.solutionAssembler import assemble
 from plom.finish.coverPageBuilder import makeCover
 
 
@@ -23,12 +23,12 @@ def _parfcn(z):
     """Parallel function used below, must be defined in root of module.
 
     Args:
-        z (tuple): Arguments to reassemble and makeSolnCover.
+        z (tuple): Arguments to assemble and makeSolnCover.
     """
     x, y = z
     if x and y:
         makeCover(*x, solution=True)
-        reassemble(*y)
+        assemble(*y)
 
 
 def checkAllSolutionsPresent(solutionList):
@@ -67,8 +67,8 @@ def build_soln_cover_data(msgr, tmpdir, t, maxMarks):
     return (int(t), sname, sid, arg, covername)
 
 
-def build_reassemble_args(msgr, srcdir, short_name, outdir, t):
-    """Builds the information for reassembling the entire test.
+def build_assemble_args(msgr, srcdir, short_name, outdir, t):
+    """Builds the information for assembling the solutions.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
@@ -141,12 +141,12 @@ def main(server=None, pwd=None):
         # dict key = testnumber, then list id'd, #q's marked
         completedTests = msgr.RgetCompletionStatus()
         maxMarks = msgr.MgetAllMax()
-        # arg-list for reassemble solutions
+        # arg-list for assemble solutions
         solution_args = []
         # get data for cover pages
         cover_args = []
         for t in completedTests:
-            # check if the given test is ready for reassembly (and hence soln ready for reassembly)
+            # check if the given test is ready for reassembly (and hence soln ready for assembly)
             if (
                 completedTests[t][0] == True
                 and completedTests[t][1] == numberOfQuestions
@@ -154,14 +154,14 @@ def main(server=None, pwd=None):
                 # append args for this test to list
                 cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
                 solution_args.append(
-                    build_reassemble_args(msgr, tmpdir, shortName, outdir, t)
+                    build_assemble_args(msgr, tmpdir, shortName, outdir, t)
                 )
     finally:
         msgr.closeUser()
         msgr.stop()
 
     N = len(solution_args)
-    print("Reassembling {} papers...".format(N))
+    print("Assembling {} solutions...".format(N))
     with Pool() as p:
         r = list(
             tqdm(
