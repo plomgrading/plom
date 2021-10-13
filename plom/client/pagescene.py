@@ -5,31 +5,68 @@
 
 import logging
 
-from PyQt5.QtCore import QEvent, QRectF, QPointF
+from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
 from PyQt5.QtGui import (
     QBrush,
     QColor,
     QCursor,
+    QImage,
     QFont,
     QGuiApplication,
     QPainter,
     QPainterPath,
+    QPen,
     QPixmap,
     QTransform,
 )
 from PyQt5.QtWidgets import (
+    QGraphicsEllipseItem,
+    QGraphicsLineItem,
+    QGraphicsPathItem,
     QGraphicsPixmapItem,
+    QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsSceneDragDropEvent,
-    QUndoStack,
+    QGraphicsTextItem,
+    QGraphicsItemGroup,
     QMessageBox,
+    QUndoStack,
 )
+from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubricsException
 
-# Import all the tool commands for undo/redo stack.
-from .tools import *
+from .tools import (
+    CrossItem,
+    DeleteItem,
+    DeltaItem,
+    ImageItem,
+    GhostComment,
+    GhostDelta,
+    GroupDeltaTextItem,
+    GhostText,
+    TextItem,
+    TickItem,
+)
+from .tools import (
+    CommandArrow,
+    CommandArrowDouble,
+    CommandBox,
+    CommandEllipse,
+    CommandImage,
+    CommandDelete,
+    CommandText,
+    CommandGroupDeltaText,
+    CommandLine,
+    CommandTick,
+    CommandQMark,
+    CommandCross,
+    CommandPen,
+    CommandHighlight,
+    CommandPenArrow,
+)
+
 
 log = logging.getLogger("pagescene")
 
@@ -142,7 +179,7 @@ class UnderlyingRect(QGraphicsRectItem):
     """
 
     def __init__(self, rect):
-        super(QGraphicsRectItem, self).__init__()
+        super().__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
         self.setBrush(QBrush(Qt.white))
         self.setRect(rect)
@@ -166,7 +203,7 @@ class UnderlyingImages(QGraphicsItemGroup):
                 every image is used and the list order determines
                 the order.  That is subject to change.
         """
-        super(QGraphicsItemGroup, self).__init__()
+        super().__init__()
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
@@ -830,9 +867,8 @@ class PageScene(QGraphicsScene):
             # also if in box,line,pen,rubric,text - stop mid-draw
             if self.mode in ["box", "line", "pen", "rubric", "text"]:
                 self.stopMidDraw()
-
         else:
-            super(PageScene, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         """
@@ -1255,7 +1291,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.OpenHandCursor)
-        super(PageScene, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         # refresh view after moving objects
         # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
         # self.updateSceneRectangle()
@@ -1273,7 +1309,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.OpenHandCursor)
-        super(PageScene, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
@@ -1372,7 +1408,7 @@ class PageScene(QGraphicsScene):
             event.accept()
             return True
         else:
-            return super(PageScene, self).event(event)
+            return super().event(event)
 
     def _debug_printUndoStack(self):
         """ A helper method for debugging the undoStack."""
