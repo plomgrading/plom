@@ -64,10 +64,12 @@ longerHelp = """
         numberOfVersions = 2
         numberOfPages = 6
         numberOfQuestions = 3
-        [solutionPages]
-        1 = [3]
-        2 = [4]
-        3 = [5]
+        [solution.1]
+        pages = [3]
+        [solution.2]
+        pages = [4]
+        [solution.3]
+        pages = [5]
     "
     You can then extract and upload your solutions using this spec via
        `plom-solutions extract --upload mySolutionSpec.toml`

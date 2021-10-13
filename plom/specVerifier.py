@@ -634,7 +634,7 @@ def checkSolutionSpec(testSpec, solutionSpec):
     Args:
         testSpec (dict): a validated plom test specification
         solutionSpec (dict): for example
-        { "numberOfVersions": 2, "numberOfPages": 6, "numberOfQuestions": 3, "solutionPages": {1: [3], 2: [4], 3: [5] } }
+        { "numberOfVersions": 2, "numberOfPages": 6, "numberOfQuestions": 3, 'solution': {'1': {'pages': [3]}, '2': {'pages': [4]}, '3': {'pages': [5]} } }
 
     Returns:
         Pair(Bool, str): Either (True,"All ok") or (False, Error message)
@@ -646,7 +646,7 @@ def checkSolutionSpec(testSpec, solutionSpec):
         "numberOfVersions",
         "numberOfPages",
         "numberOfQuestions",
-        "solutionPages",
+        "solution",
     ]:
         if x not in solutionSpec:
             return (False, f"Missing key = {x}")
@@ -659,25 +659,25 @@ def checkSolutionSpec(testSpec, solutionSpec):
         return (False, f"numberOfPages must be a positive integer.")
 
     # make sure right number of question-keys - match test-spec
-    if len(solutionSpec["solutionPages"]) != solutionSpec["numberOfQuestions"]:
+    if len(solutionSpec["solution"]) != solutionSpec["numberOfQuestions"]:
         return (
             False,
-            f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
+            f"Question keys incorrect = {list(solutionSpec['solution'].keys() )}",
         )
     # make sure each pagelist is contiguous an in range
     for q in range(1, solutionSpec["numberOfQuestions"] + 1):
-        if str(q) not in solutionSpec["solutionPages"]:
+        if str(q) not in solutionSpec["solution"]:
             return (
                 False,
-                f"Question keys incorrect = {list(solutionSpec['solutionPages'].keys() )}",
+                f"Question keys incorrect = {list(solutionSpec['solution'].keys() )}",
             )
-        if (isinstance(solutionSpec["solutionPages"][str(q)], list) is False) or (
-            len(solutionSpec["solutionPages"][str(q)]) == 0
+        if (isinstance(solutionSpec["solution"][str(q)]["pages"], list) is False) or (
+            len(solutionSpec["solution"][str(q)]["pages"]) == 0
         ):
             return (False, f"Pages for solution {q} must be a non-empty list")
         if (
             isContiguousListPosInt(
-                solutionSpec["solutionPages"][str(q)], solutionSpec["numberOfPages"]
+                solutionSpec["solution"][str(q)]["pages"], solutionSpec["numberOfPages"]
             )
             is False
         ):

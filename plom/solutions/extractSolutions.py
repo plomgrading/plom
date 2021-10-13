@@ -77,9 +77,9 @@ def createSolutionSpec(testSpec):
     soln["numberOfVersions"] = testSpec["numberOfVersions"]
     soln["numberOfPages"] = testSpec["numberOfPages"]
     soln["numberOfQuestions"] = testSpec["numberOfQuestions"]
-    soln["solutionPages"] = {}
+    soln["solution"] = {}
     for q in range(1, testSpec["numberOfQuestions"] + 1):
-        soln["solutionPages"][str(q)] = testSpec["question"][str(q)]["pages"]
+        soln["solution"][str(q)] = {"pages": testSpec["question"][str(q)]["pages"]}
     return soln
 
 
@@ -139,7 +139,7 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
             print(f"Processing solutions for Q{q} V{v}")
             image_list = [
                 tmpdir / f"solutions{v}-{p}.png"
-                for p in solutionSpec["solutionPages"][sq]
+                for p in solutionSpec["solution"][sq]["pages"]
             ]
             # check the image list - make sure they exist
             for fn in image_list:

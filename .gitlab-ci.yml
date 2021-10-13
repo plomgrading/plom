@@ -302,7 +302,7 @@ fullworkflow:
     - plom-server users --demo
     - plom-build new
     - plom-build parse
-    - python3 -m plom.produce.demotools
+    - python3 -m plom.produce.demotools solutions # to get soln pdf copied
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml

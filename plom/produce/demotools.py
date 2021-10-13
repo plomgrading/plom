@@ -102,7 +102,11 @@ def buildLaTeXExam2(src, filename):
 
 
 def main():
-    if not buildDemoSourceFiles():
+    soln_flag = False
+    if len(sys.argv) == 2:
+        if sys.argv[1] == "solutions":
+            soln_flag = True
+    if not buildDemoSourceFiles(solutions=soln_flag):
         exit(1)
 
 
