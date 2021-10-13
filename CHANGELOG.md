@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Added a --no-scan option to plom-demo and plom-hwdemo so that fake-data created but not processed or uploaded. Useful for testing.
 
 ### Changed
 

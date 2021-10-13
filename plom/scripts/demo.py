@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-21 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Victoria Schuster
@@ -57,6 +57,11 @@ parser.add_argument(
     "--port",
     type=int,
     help=f"Which port to use for the demo server ({Default_Port} if omitted)",
+)
+parser.add_argument(
+    "--no-scans",
+    action="store_true",
+    help="Start demo server but without uploading fake-scans. For testing purposes.",
 )
 
 
@@ -120,20 +125,28 @@ def main():
     with working_directory(args.server_dir):
         subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
 
-    print("Uploading fake scanned data to the server")
+    print("Creating fake-scan data")
     with working_directory(args.server_dir):
         subprocess.check_call(split(f"plom-fake-scribbles -w 1234 -s {server}"))
-
-        opts = "--no-gamma-shift"
-        for f in (
-            "fake_scribbled_exams1.pdf",
-            "fake_scribbled_exams2.pdf",
-            "fake_scribbled_exams3.pdf",
-        ):
-            subprocess.check_call(
-                split(f"plom-scan process -w 4567 -s {server} {opts} {f}")
-            )
-            subprocess.check_call(split(f"plom-scan upload -w 4567 -s {server} -u {f}"))
+    if args.no_scans:
+        print(
+            "Have not uploaded fake scan data - you will need to run plom-scan manually."
+        )
+    else:
+        with working_directory(args.server_dir):
+            print("Uploading fake scanned data to the server")
+            opts = "--no-gamma-shift"
+            for f in (
+                "fake_scribbled_exams1.pdf",
+                "fake_scribbled_exams2.pdf",
+                "fake_scribbled_exams3.pdf",
+            ):
+                subprocess.check_call(
+                    split(f"plom-scan process -w 4567 -s {server} {opts} {f}")
+                )
+                subprocess.check_call(
+                    split(f"plom-scan upload -w 4567 -s {server} -u {f}")
+                )
 
     assert background_server.process_is_running(), "has the server died?"
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"

@@ -53,6 +53,11 @@ parser.add_argument(
     type=int,
     help=f"Which port to use for the demo server ({Default_Port} if omitted)",
 )
+parser.add_argument(
+    "--no-scans",
+    action="store_true",
+    help="Start demo server but without uploading fake-scans. For testing purposes.",
+)
 
 
 def main():
@@ -107,12 +112,11 @@ def main():
     with working_directory(args.server_dir):
         subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
 
-    print("Uploading fake scanned data to the server")
+    print("Creating fake-scan data")
     with working_directory(args.server_dir):
         # this creates two batches of fake hw - prefixes = hwA and hwB
         subprocess.check_call(split(f"plom-fake-hwscribbles -w 1234 -s {server}"))
 
-        print("Processing some individually, with a mix of semiloose uploading")
         # TODO: this is fragile, should not hardcode these student numbers!
         A = "semiloose.10433917._.pdf"
         B = "semiloose_10493869.pdf"
@@ -122,28 +126,48 @@ def main():
         shutil.move("submittedHWByQ/semiloose.10493869._.pdf", B)
         shutil.move("submittedHWByQ/semiloose.11015491._.pdf", C)
         shutil.move("submittedHWByQ/semiloose.11135153._.pdf", D)
-        subprocess.check_call(
-            split(f"plom-hwscan process {A} 10433917 -q 1,2,3 -w 4567 -s {server}")
-        )
-        subprocess.check_call(
-            split(f"plom-hwscan process {B} 10493869 -q all -w 4567 -s {server}")
-        )
-        subprocess.check_call(
-            split(f"plom-hwscan process {C} 11015491 -q all -w 4567 -s {server}")
-        )
-        doc = fitz.open(D)
-        qstr = "[[1,2,3],"
-        qstr += ",".join(f"[{randint(1,3)}]" for q in range(2, len(doc) + 1))
-        qstr += "]"
-        print(f'Using a randomish page->question mapping of "{qstr}"')
-        subprocess.check_call(
-            split(f"plom-hwscan process {D} 11135153 -q {qstr} -w 4567 -s {server}")
-        )
+        if args.no_scans:
+            print(
+                "Have not uploaded fake homework scans - you will need to run plom-hwscan manually."
+            )
+        else:
+            with working_directory(args.server_dir):
+                print("Uploading fake scanned data to the server")
+                print("Processing some individually, with a mix of semiloose uploading")
+                subprocess.check_call(
+                    split(
+                        f"plom-hwscan process {A} 10433917 -q 1,2,3 -w 4567 -s {server}"
+                    )
+                )
+                subprocess.check_call(
+                    split(
+                        f"plom-hwscan process {B} 10493869 -q all -w 4567 -s {server}"
+                    )
+                )
+                subprocess.check_call(
+                    split(
+                        f"plom-hwscan process {C} 11015491 -q all -w 4567 -s {server}"
+                    )
+                )
+                doc = fitz.open(D)
+                qstr = "[[1,2,3],"
+                qstr += ",".join(f"[{randint(1,3)}]" for q in range(2, len(doc) + 1))
+                qstr += "]"
+                print(f'Using a randomish page->question mapping of "{qstr}"')
+                subprocess.check_call(
+                    split(
+                        f"plom-hwscan process {D} 11135153 -q {qstr} -w 4567 -s {server}"
+                    )
+                )
 
-        print("Processing all hw by question submissions.")
-        subprocess.check_call(split(f"plom-hwscan allbyq -w 4567 -y -s {server}"))
-        print("Replacing all missing questions.")
-        subprocess.check_call(split(f"plom-hwscan missing -w 4567 -y -s {server}"))
+                print("Processing all hw by question submissions.")
+                subprocess.check_call(
+                    split(f"plom-hwscan allbyq -w 4567 -y -s {server}")
+                )
+                print("Replacing all missing questions.")
+                subprocess.check_call(
+                    split(f"plom-hwscan missing -w 4567 -y -s {server}")
+                )
 
     assert background_server.process_is_running(), "has the server died?"
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"
