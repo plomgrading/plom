@@ -230,7 +230,10 @@ if __name__ == "__main__":
     sis_id_to_marks = get_sis_id_to_marks()
     print("    done.")
 
-    print("\n\nPushing grades to Canvas...")
+    if args.dry_run:
+        print("\n\nPushing grades and marked papers to Canvas [DRY-RUN]...")
+    else:
+        print("\n\nPushing grades and marked papers to Canvas...")
     print("  --------------------------------------------------------------------")
     timeouts = []
     for pdf in tqdm(Path("reassembled").glob("*.pdf")):
