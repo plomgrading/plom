@@ -90,8 +90,6 @@ def get_parser():
         action="store_true",
         help="""
             Reassemble PDF files for ID'ed (but offline-graded) papers.
-            WARNING: This option still uses filesystem access and
-            must be run on the server.
         """,
     )
     spCodedReturn = sub.add_parser(
@@ -155,11 +153,6 @@ def get_parser():
             If all solution images present, then this will build individualised
             solution PDFs for the students (based on the particular q/v of their
             test.
-        """,
-        epilog="""
-            WARNING: This command must be run on the server, and in the
-            server's directory (where you ran `plom-server launch`).
-            This may change in the future.
         """,
     )
     spClear = sub.add_parser(
