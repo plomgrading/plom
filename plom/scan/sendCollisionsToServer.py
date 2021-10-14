@@ -88,7 +88,7 @@ def list_bundle_nonuploaded_collisions(bundle_dir):
     Return:
         list(Path)
     """
-    return list((bundle_dir / "uploads" / "collidingPages").glob("*.png"))
+    return list(((bundle_dir / "uploads") / "collidingPages").glob("*.png"))
 
 
 def count_bundle_nonuploaded_collisions(bundle_dir):
