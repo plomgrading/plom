@@ -65,7 +65,7 @@ def list_bundle_nonuploaded_unknowns(bundle_dir):
     Return:
         List(Path)
     """
-    return list((bundle_dir / "unknownPages").glob("*.png"))
+    return list((Path(bundle_dir) / "unknownPages").glob("*.png"))
 
 
 def count_bundle_nonuploaded_unknowns(bundle_dir):
