@@ -1629,6 +1629,16 @@ class Annotator(QWidget):
             None: modifies many instance vars.
         """
         log.debug("========CLOSE EVENT======: {}".format(self))
+
+        log.debug("Clean up any view-widows or solution-views")
+        # clean up after a testview
+        self.doneViewingPaper()
+        # clean up after a solution-view
+        if self.solutionView:
+            log.debug("Cleaning a solution-view")
+            self.solutionView.close()
+            self.solutionView = None
+
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
@@ -1647,15 +1657,9 @@ class Annotator(QWidget):
             if msg.exec_() == QMessageBox.No:
                 event.ignore()
                 return
+
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
-        # clean up after a testview
-        self.doneViewingPaper()
-        # clean up after a solution-view
-        if self.solutionView:
-            self.solutionView.close()
-            self.solutionView = None
-
         event.accept()
 
     def get_nonrubric_text_from_page(self):
