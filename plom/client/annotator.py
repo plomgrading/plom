@@ -1484,7 +1484,7 @@ class Annotator(QWidget):
         # warn if points where lost but insufficient annotations
         if (
             self.rubricWarn
-            and 0 < self.getScore() < self.maxMark
+            and (0 < self.getScore() < self.maxMark)
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
             msg = SimpleMessageCheckBox(

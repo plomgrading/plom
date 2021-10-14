@@ -2134,9 +2134,14 @@ class PageScene(QGraphicsScene):
         """
         for x in self.items():
             if getattr(x, "saveable", None):
-                if not isinstance(x, (TickItem, CrossItem, DeltaItem)):
-                    return False
-        return True
+                if isinstance(x, (TickItem, CrossItem)):
+                    continue
+                if isinstance(x, GroupDeltaTextItem):
+                    # check if this is a delta-rubric
+                    if x.kind == "delta":
+                        continue
+                return False  # otherwise
+        return True  # only tick,cross or delta-rubrics
 
     def itemWithinBounds(self, item):
         """Check if given item is within the margins or not."""
