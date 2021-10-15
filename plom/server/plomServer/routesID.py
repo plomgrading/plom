@@ -279,7 +279,8 @@ class IDHandler:
             aiohttp.web_response.Response: A response object with the code for the next task/paper.
         """
 
-        next_task_code = self.server.IDgetNextTask()  # returns [True, code] or [False]
+        # returns [True, code] or [False]
+        next_task_code = self.server.IDgetNextTask()
         next_task_available = next_task_code[0]
 
         if next_task_available:
@@ -311,7 +312,8 @@ class IDHandler:
 
         allow_access = image_path[0]
 
-        if allow_access:  # user allowed access - returns [true, fname0, fname1,...]
+        # user allowed access - returns [true, fname0, fname1,...]
+        if allow_access:
             with MultipartWriter("images") as writer:
                 image_paths = image_path[1:]
 
@@ -460,6 +462,25 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
+    @authenticate_by_token_required_fields(["user"])
+    def IDgetImageList(self, data, request):
+        """Get a list of paths to first ID page image for each test.
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A dictionary having the user/token
+
+            request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
+
+        Returns:
+            aiohttp.web_response.Response: returns a dict with keys test-number, values paths.
+        """
+
+        if data["user"] != "manager":
+            return web.Response(status=401)
+        return web.json_response(self.server.IDgetImageList(), status=200)
+
     @authenticate_by_token_required_fields(
         ["user", "rectangle", "fileNumber", "ignoreStamp"]
     )
@@ -539,6 +560,7 @@ class IDHandler:
         router.add_put("/ID/{papernum}", self.IdentifyPaper)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
+        router.add_get("/ID/imageList", self.IDgetImageList)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)

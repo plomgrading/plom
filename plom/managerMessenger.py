@@ -325,6 +325,29 @@ class ManagerMessenger(BaseMessenger):
 
         return progress
 
+    def IDgetImageList(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/ID/imageList".format(self.server),
+                json={"user": self.user, "token": self.token},
+                verify=False,
+            )
+            response.raise_for_status()
+            # TODO: print(response.encoding) autodetected
+            imageList = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return imageList
+
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
         try:

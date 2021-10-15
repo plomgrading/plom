@@ -207,6 +207,19 @@ def IDreviewID(self, test_number):
     return self.DB.IDreviewID(test_number)
 
 
+def IDgetImageList(self):
+    """Return the path to the ID page image for every paper
+
+    Args:
+        None
+
+    Returns:
+        dict: key=test number, value=path to the first id page image
+    """
+
+    return self.DB.IDgetImageByNumber(0)
+
+
 def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
     """Run the ML prediction model on the papers and saves the information.
 
