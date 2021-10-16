@@ -2450,8 +2450,8 @@ class MarkerClient(QWidget):
         atb = AddTagBox(self, currentTag, list(tagSet))
         if atb.exec_() == QDialog.Accepted:
             txt = atb.TE.toPlainText().strip()
-            # truncate at 256 characters.  TODO: without warning?
             if len(txt) > 256:
+                log.warning("overly long tags truncated to 256 chars")
                 txt = txt[:256]
 
             self.examModel.setTagsByTask(task, txt)
