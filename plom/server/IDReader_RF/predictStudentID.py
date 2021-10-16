@@ -130,8 +130,8 @@ def get_digit_images(ID_box, num_digits):
         sorted_contours = sorted(contour_lists, key=bounding_rect_area, reverse=True)
         # make sure we can find at least one contour
         if len(sorted_contours) == 0:
-            # can't make a prediction so return
-            return None
+            # can't make a prediction so return empty list
+            return []
         # get bounding rect of biggest contour
         bnd = cv2.boundingRect(sorted_contours[0])
         # put some padding around that rectangle
@@ -241,7 +241,8 @@ def compute_probabilities(
             bottom_coordinate,
             num_digits,
         )
-        if prob_lists is None:  # couldn't recognize digits
+        if not prob_lists:  # couldn't recognize digits
+            print(f"Skipping {testNumber}: could not recognize digits")
             continue
         probabilities[testNumber] = prob_lists
 
