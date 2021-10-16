@@ -63,6 +63,17 @@ Approx 7500 papers over 7 courses.
 Approx 8000 papers over 7 courses
 
 
-## Totals
+## Totals up to end of summer 2021
 
   * Approx 22000 papers in 26 courses.
+
+
+
+## 2021W1
+
+| Course  |  Tasks                  | # students |  Notes                      |
+|---------|-------------------------|:----------:|-----------------------------|
+| 253     | 3 quizzes + exam        | 680        |                             |
+| 102     | midterm + exam          | 1100       | 1st on-paper since Feb 2020 |
+
+Approx: 1800 as of oct 13)
