@@ -168,6 +168,8 @@ def run_id_reader(files_dict, rectangle):
     print("Going hungarian")
     row_IDs, column_IDs = solve_dense(costs)
 
+    prediction_pairs = []
+
     # now save the result
     with open(specdir / "predictionlist.csv", "w") as file_header:
         file_header.write("test, id\n")
@@ -176,7 +178,8 @@ def run_id_reader(files_dict, rectangle):
             test_number = test_numbers[r]
             # print("{}, {}".format(test_number, student_IDs[c]))
             file_header.write("{}, {}\n".format(test_number, student_IDs[c]))
+            prediction_pairs.append((test_number, student_IDs[c]))
         file_header.close()
 
     print("Results saved in predictionlist.csv")
-    return
+    return prediction_pairs
