@@ -34,11 +34,11 @@ def bounding_rect_area(bounding_rectangle):
     return w * h
 
 
-def get_digit_box(image_box_fname, top, bottom):
+def get_digit_box(filename, top, bottom):
     """Find the box that includes the student ID for extracting the digits.
 
     Args:
-        image_box_fname (str): Name of the front image.
+        filename (str/pathlib.Path): the image of the ID page.
         top (int): Top coordinate of the cropping.
         bottom (int): Bottom coordinate of the cropping.
 
@@ -46,9 +46,7 @@ def get_digit_box(image_box_fname, top, bottom):
         numpy.ndarray: The processed image that includes the student
             ID digits.
     """
-
-    # Read in the whole cropped image
-    front_image = cv2.imread(image_box_fname)
+    front_image = cv2.imread(str(filename))
 
     # TODO: Why do we even pass top and bottom.
     # Extract only the required portion of the image.
@@ -90,10 +88,6 @@ def get_digit_box(image_box_fname, top, bottom):
 
     # the digit box numbers again come from the IDBox template and numerology
     ID_box = scaled[30:300, 355:1220]
-
-    # TODO: This is for debugging
-    # cv2.imwrite('goddamns' + '.png', ID_box)
-    # input("Press Enter...")
 
     return ID_box
 
@@ -180,12 +174,12 @@ def get_digit_images(ID_box, num_digits):
     return processed_digits_images_list
 
 
-def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
+def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
     """Return a list of probability predictions for the student ID digits on the cropped image.
 
     Args:
         prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
-        image_box_fname (Str): File path for the cropped image which includes the ID box.
+        id_page_file (str/pathlib.Path): File path for the image which includes the ID box.
         top (int): Top boundary of image.
         bottom (int): Bottom boundary of image.
         num_digits (int): Number of digits in the student ID.
@@ -194,18 +188,29 @@ def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
         list: A list of lists of probabilities including the model's prediction for
             the digits.
     """
-
+    id_page_file = Path(id_page_file)
     # Retrieve the box including the digits in a row.
-    ID_box = get_digit_box(image_box_fname, top, bottom)
+    ID_box = get_digit_box(id_page_file, top, bottom)
 
-    # The list of the resulting probabilities.
+    debug = True
+    if debug:
+        dbdir = Path("debug_id_reader")
+        dbdir.mkdir(exist_ok=True)
+        p = dbdir / f"idbox_{id_page_file.stem}.png"
+        cv2.imwrite(str(p), ID_box)
+
+    processed_digits_images = get_digit_images(ID_box, num_digits)
+
+    if debug:
+        for n, digit_image in enumerate(processed_digits_images):
+            p = dbdir / f"digit_{id_page_file.stem}-pos{n}.png"
+            cv2.imwrite(str(p), digit_image)
+            # cv2.imshow("argh", digit_image)
+            # cv2.waitKey(0)
+
     prob_lists = []
-
-    processed_digits_images_list = get_digit_images(ID_box, num_digits)
-
-    # and append that prediction to list
-    for processed_digit_image in processed_digits_images_list:
-        number_pred_prob = prediction_model.predict_proba(processed_digit_image)
+    for digit_image in processed_digits_images:
+        number_pred_prob = prediction_model.predict_proba(digit_image)
         prob_lists.append(number_pred_prob[0])
 
     return prob_lists
@@ -233,10 +238,10 @@ def compute_probabilities(
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}
 
-    for testNumber in image_file_paths:
+    for testNumber, image_file in image_file_paths.items():
         prob_lists = get_digit_prob(
             prediction_model,
-            image_file_paths[testNumber],
+            image_file,
             top_coordinate,
             bottom_coordinate,
             num_digits,
