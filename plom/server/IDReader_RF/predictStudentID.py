@@ -43,6 +43,7 @@ def get_digit_box(filename, top, bottom):
         bottom (int): Bottom coordinate of the cropping.
 
     Returns:
+        None: in case of some sort of error, or
         numpy.ndarray: The processed image that includes the student
             ID digits.
     """
@@ -81,6 +82,10 @@ def get_digit_box(filename, top, bottom):
     # warped = four_point_transform(edged_image, id_box_contour.reshape(4, 2))
     output = four_point_transform(cropped_image, id_box_contour.reshape(4, 2))
 
+    # TODO = add in some dimensions check = this box should not be tiny.
+    if output.shape[0] < 32 or output.shape[1] < 32:
+        return None
+
     # TODO: Remove magic number creation.
     # note that this width of 1250 is defined by the IDbox template
     new_width = int(output.shape[0] * 1250.0 / output.shape[1])
@@ -101,6 +106,7 @@ def get_digit_images(ID_box, num_digits):
 
     Returns:
         list: A list of numpy.ndarray which are the images for each digit.
+            In case of errors, returns an empty list
     """
 
     processed_digits_images_list = []
@@ -181,10 +187,14 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
         list: A list of lists of probabilities.  The outer list is over
             the 8 positions.  Inner lists have length 10: the probability
             that the digit is a 0, 1, 2, ..., 9.
+            In case of errors it returns an empty list
     """
     id_page_file = Path(id_page_file)
     # Retrieve the box including the digits in a row.
     ID_box = get_digit_box(id_page_file, top, bottom)
+    if ID_box is None:  # some sort of error finding the ID box
+        print("Trouble finding the ID box")
+        return []
 
     debug = True
     if debug:
@@ -194,6 +204,9 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
         cv2.imwrite(str(p), ID_box)
 
     processed_digits_images = get_digit_images(ID_box, num_digits)
+    if len(processed_digits_images) == 0:
+        print("Trouble finding digits inside the ID box")
+        return []
 
     if debug:
         for n, digit_image in enumerate(processed_digits_images):
@@ -245,9 +258,11 @@ def compute_probabilities(
             bottom_coordinate,
             num_digits,
         )
-        if not prob_lists:
-            print(f"Test{testNumber}: could not read digits, assigning tiny probs")
-            probabilities[testNumber] = [np.array([1e-14] * 10)] * 8
+        if len(prob_lists) == 0:
+            print(
+                f"Test{testNumber}: could not read digits, excluding from calculations"
+            )
+            continue
         elif len(prob_lists) != 8:
             print(f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}")
             probabilities[testNumber] = prob_lists
