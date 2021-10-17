@@ -241,13 +241,13 @@ def compute_probabilities(
             bottom_coordinate,
             num_digits,
         )
-        if not prob_lists:  # couldn't recognize digits
-            print(
-                f"Test {testNumber}: could not read digits, assigning nearly zero prob"
-            )
+        if not prob_lists:
+            print(f"Test{testNumber}: could not read digits, assigning tiny probs")
             probabilities[testNumber] = [np.array([1e-14] * 10)] * 8
+        elif len(prob_lists) != 8:
+            print(f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}")
+            probabilities[testNumber] = prob_lists
         else:
-            print(f"Test {testNumber}: debug: len={len(prob_lists)}; prob={prob_lists}")
             probabilities[testNumber] = prob_lists
 
     return probabilities
