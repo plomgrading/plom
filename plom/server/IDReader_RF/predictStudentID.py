@@ -245,7 +245,7 @@ def compute_probabilities(
             print(
                 f"Test {testNumber}: could not read digits, assigning nearly zero prob"
             )
-            probabilities[testNumber] = [1e-14] * 8
+            probabilities[testNumber] = [[1e-14] * 10] * 8
         else:
             print(f"Test {testNumber}: debug: len={len(prob_lists)}; prob={prob_lists}")
             probabilities[testNumber] = prob_lists
