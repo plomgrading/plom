@@ -242,8 +242,12 @@ def compute_probabilities(
             num_digits,
         )
         if not prob_lists:  # couldn't recognize digits
-            print(f"Skipping {testNumber}: could not recognize digits")
-            continue
-        probabilities[testNumber] = prob_lists
+            print(
+                f"Test {testNumber}: could not read digits, assigning nearly zero prob"
+            )
+            probabilities[testNumber] = [1e-14] * 8
+        else:
+            print(f"Test {testNumber}: debug: len={len(prob_lists)}; prob={prob_lists}")
+            probabilities[testNumber] = prob_lists
 
     return probabilities
