@@ -109,7 +109,7 @@ def get_digit_images(ID_box, num_digits):
 
         # TODO: Maybe remove magical hackery.
         # extract the kth digit box. Some magical hackery / numerology here.
-        digit1 = ID_box[0:250, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
+        digit1 = ID_box[0:100, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
 
         # TODO: I think I could remove all of this.
         # Now some hackery to centre on the digit so closer to mnist dataset.
