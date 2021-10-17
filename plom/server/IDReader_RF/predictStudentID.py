@@ -87,7 +87,7 @@ def get_digit_box(filename, top, bottom):
     scaled = cv2.resize(output, (1250, new_width), cv2.INTER_CUBIC)
 
     # the digit box numbers again come from the IDBox template and numerology
-    ID_box = scaled[30:300, 355:1220]
+    ID_box = scaled[30:350, 355:1220]
 
     return ID_box
 
