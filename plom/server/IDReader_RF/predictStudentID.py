@@ -205,8 +205,10 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
     prob_lists = []
     for digit_image in processed_digits_images:
         # get it into format needed by model predictor
+        # TODO: is this the same as just flattening:
+        # digit_vector = digit_image.flatten()
         digit_vector = np.expand_dims(digit_image, 0)
-        digit_vector = digit_vector.reshape((1, 28 * 28))
+        digit_vector = digit_vector.reshape((1, np.prod(digit_image.shape)))
         number_pred_prob = prediction_model.predict_proba(digit_vector)
         prob_lists.append(number_pred_prob[0])
 
