@@ -185,8 +185,9 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
         num_digits (int): Number of digits in the student ID.
 
     Returns:
-        list: A list of lists of probabilities including the model's prediction for
-            the digits.
+        list: A list of lists of probabilities.  The outer list is over
+            the 8 positions.  Inner lists have length 10: the probability
+            that the digit is a 0, 1, 2, ..., 9.
     """
     id_page_file = Path(id_page_file)
     # Retrieve the box including the digits in a row.
