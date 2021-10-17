@@ -162,14 +162,7 @@ def get_digit_images(ID_box, num_digits):
         roi2 = cv2.copyMakeBorder(
             roi, px, 28 - w - px, py, 28 - h - py, cv2.BORDER_CONSTANT, value=[0, 0, 0]
         )
-
-        # get it into format needed by model predictor
-        roi3 = np.expand_dims(roi2, 0)
-        # do the actual prediction! (ie approx probabilities that image is digit 0,1,2,..,9)
-
-        roi3 = roi3.reshape((1, 28 * 28))
-
-        processed_digits_images_list.append(roi3)
+        processed_digits_images_list.append(roi2)
 
     return processed_digits_images_list
 
@@ -211,7 +204,10 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
 
     prob_lists = []
     for digit_image in processed_digits_images:
-        number_pred_prob = prediction_model.predict_proba(digit_image)
+        # get it into format needed by model predictor
+        digit_vector = np.expand_dims(digit_image, 0)
+        digit_vector = digit_vector.reshape((1, 28 * 28))
+        number_pred_prob = prediction_model.predict_proba(digit_vector)
         prob_lists.append(number_pred_prob[0])
 
     return prob_lists
