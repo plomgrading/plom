@@ -1,5 +1,8 @@
 [Desktop Entry]
 Name=Plom Client
+Name[hu]=Plom-ügyfél
+Comment=PaperLess Open Marking
+Comment[hu]=Papír nélküli nyílt osztályozás
 Exec=plom-client
 Icon=org.plomgrading.PlomClient
 Type=Application
