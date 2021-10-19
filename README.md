@@ -25,16 +25,20 @@
 
 Take a look at the [plomgrading.org](https://plomgrading.org).
 
+
 ## Translations
 
-Please see https://gitlab.com/plom/plom/-/issues/1725#note_705543181 if you can help 
-make translations available on [Weblate](https://hosted.weblate.org/).
+If you'd like to help translate Plom into another language,
+please if you can help at https://gitlab.com/plom/plom/-/issues/1725
 
-The `.desktop` file can be translated [here](/org.plomgrading.PlomClient.desktop).
+The AppStream metainfo and `.desktop` files (used for example on
+[Flathub](https://flathub.org/apps/details/org.plomgrading.PlomClient))
+can be translated
+[here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.metainfo.xml)
+and
+[here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.desktop)
 
-The AppStream metainfo file (containing the title, summary and description used in the 
-[Flathub Store](https://flathub.org/apps/details/org.plomgrading.PlomClient), etc.) 
-can be translated [here](/org.plomgrading.PlomClient.metainfo.xml).
+
 
 ## Getting in touch
 
