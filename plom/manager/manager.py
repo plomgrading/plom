@@ -1214,6 +1214,10 @@ class Manager(QWidget):
             if opDict[t][0]:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been scanned")
+            elif opDict[t][2] > 0:
+                it.setBackground(QBrush(Qt.red))
+                it.setToolTip("Has been (part-)marked but not completely scanned.")
+
             self.ui.overallTW.setItem(r, 1, it)
 
             it = QTableWidgetItem("{}".format(opDict[t][1]))
