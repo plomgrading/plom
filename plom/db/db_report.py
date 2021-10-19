@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -262,13 +262,13 @@ def RgetQuestionUserProgress(self, q, v):
 
 
 def RgetCompletionStatus(self):
-    """Return a dict of every scanned test (ie all test pages present). Each dict entry is of the form dict[test_number] = [identified_or_not, number_of_questions_marked]"""
+    """Return a dict of every (ie whether completely scanned or not). Each dict entry is of the form dict[test_number] = [scanned_or_not, identified_or_not, number_of_questions_marked]"""
     progress = {}
-    for tref in Test.select().where(Test.scanned == True):
+    for tref in Test.select():
         number_marked = (
             QGroup.select().where(QGroup.test == tref, QGroup.marked == True).count()
         )
-        progress[tref.test_number] = [tref.identified, number_marked]
+        progress[tref.test_number] = [tref.scanned, tref.identified, number_marked]
     log.debug("Sending list of completed tests")
     return progress
 
