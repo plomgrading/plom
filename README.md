@@ -33,10 +33,10 @@ please if you can help at https://gitlab.com/plom/plom/-/issues/1725
 
 The AppStream metainfo and `.desktop` files (used for example on
 [Flathub](https://flathub.org/apps/details/org.plomgrading.PlomClient))
-can be translated
+can be translated by editing
 [here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.metainfo.xml)
 and
-[here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.desktop)
+[here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.desktop).
 
 
 
