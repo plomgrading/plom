@@ -1,6 +1,6 @@
 # PaperLess Open Marking - [Plom](https://plomgrading.org)
 
-  * Plom is a system for the online marking of handwritten work.
+  * Plom is a system for large-scale marking by humans of handwritten work.
   * Designed for giving consistent, meaningful feedback to students.
   * [Free/Open Source Software](https://www.gnu.org/licenses/agpl-3.0.en.html)
     written in Python using [Qt](https://pypi.org/project/PyQt5) and other
@@ -25,6 +25,16 @@
 
 Take a look at the [plomgrading.org](https://plomgrading.org).
 
+## Translations
+
+Please see https://gitlab.com/plom/plom/-/issues/1725#note_705543181 if you can help 
+make translations available on [Weblate](https://hosted.weblate.org/).
+
+The `.desktop` file can be translated [here](/org.plomgrading.PlomClient.desktop).
+
+The AppStream metainfo file (containing the title, summary and description used in the 
+[Flathub Store](https://flathub.org/apps/details/org.plomgrading.PlomClient), etc.) 
+can be translated [here](/org.plomgrading.PlomClient.metainfo.xml).
 
 ## Getting in touch
 
