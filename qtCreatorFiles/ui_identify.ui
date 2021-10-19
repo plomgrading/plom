@@ -136,7 +136,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Accept
+            <string>&amp;Accept
  machine
  prediction</string>
            </property>

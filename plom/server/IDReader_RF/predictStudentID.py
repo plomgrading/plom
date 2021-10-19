@@ -34,21 +34,20 @@ def bounding_rect_area(bounding_rectangle):
     return w * h
 
 
-def get_digit_box(image_box_fname, top, bottom):
+def get_digit_box(filename, top, bottom):
     """Find the box that includes the student ID for extracting the digits.
 
     Args:
-        image_box_fname (str): Name of the front image.
+        filename (str/pathlib.Path): the image of the ID page.
         top (int): Top coordinate of the cropping.
         bottom (int): Bottom coordinate of the cropping.
 
     Returns:
+        None: in case of some sort of error, or
         numpy.ndarray: The processed image that includes the student
             ID digits.
     """
-
-    # Read in the whole cropped image
-    front_image = cv2.imread(image_box_fname)
+    front_image = cv2.imread(str(filename))
 
     # TODO: Why do we even pass top and bottom.
     # Extract only the required portion of the image.
@@ -83,17 +82,17 @@ def get_digit_box(image_box_fname, top, bottom):
     # warped = four_point_transform(edged_image, id_box_contour.reshape(4, 2))
     output = four_point_transform(cropped_image, id_box_contour.reshape(4, 2))
 
+    # TODO = add in some dimensions check = this box should not be tiny.
+    if output.shape[0] < 32 or output.shape[1] < 32:
+        return None
+
     # TODO: Remove magic number creation.
     # note that this width of 1250 is defined by the IDbox template
     new_width = int(output.shape[0] * 1250.0 / output.shape[1])
     scaled = cv2.resize(output, (1250, new_width), cv2.INTER_CUBIC)
 
     # the digit box numbers again come from the IDBox template and numerology
-    ID_box = scaled[30:300, 355:1220]
-
-    # TODO: This is for debugging
-    # cv2.imwrite('goddamns' + '.png', ID_box)
-    # input("Press Enter...")
+    ID_box = scaled[30:350, 355:1220]
 
     return ID_box
 
@@ -107,6 +106,7 @@ def get_digit_images(ID_box, num_digits):
 
     Returns:
         list: A list of numpy.ndarray which are the images for each digit.
+            In case of errors, returns an empty list
     """
 
     processed_digits_images_list = []
@@ -115,7 +115,7 @@ def get_digit_images(ID_box, num_digits):
 
         # TODO: Maybe remove magical hackery.
         # extract the kth digit box. Some magical hackery / numerology here.
-        digit1 = ID_box[0:250, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
+        digit1 = ID_box[0:100, digit_index * 109 + 5 : (digit_index + 1) * 109 - 5]
 
         # TODO: I think I could remove all of this.
         # Now some hackery to centre on the digit so closer to mnist dataset.
@@ -130,8 +130,8 @@ def get_digit_images(ID_box, num_digits):
         sorted_contours = sorted(contour_lists, key=bounding_rect_area, reverse=True)
         # make sure we can find at least one contour
         if len(sorted_contours) == 0:
-            # can't make a prediction so return
-            return None
+            # can't make a prediction so return empty list
+            return []
         # get bounding rect of biggest contour
         bnd = cv2.boundingRect(sorted_contours[0])
         # put some padding around that rectangle
@@ -168,44 +168,61 @@ def get_digit_images(ID_box, num_digits):
         roi2 = cv2.copyMakeBorder(
             roi, px, 28 - w - px, py, 28 - h - py, cv2.BORDER_CONSTANT, value=[0, 0, 0]
         )
-
-        # get it into format needed by model predictor
-        roi3 = np.expand_dims(roi2, 0)
-        # do the actual prediction! (ie approx probabilities that image is digit 0,1,2,..,9)
-
-        roi3 = roi3.reshape((1, 28 * 28))
-
-        processed_digits_images_list.append(roi3)
+        processed_digits_images_list.append(roi2)
 
     return processed_digits_images_list
 
 
-def get_digit_prob(prediction_model, image_box_fname, top, bottom, num_digits):
+def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
     """Return a list of probability predictions for the student ID digits on the cropped image.
 
     Args:
         prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
-        image_box_fname (Str): File path for the cropped image which includes the ID box.
+        id_page_file (str/pathlib.Path): File path for the image which includes the ID box.
         top (int): Top boundary of image.
         bottom (int): Bottom boundary of image.
         num_digits (int): Number of digits in the student ID.
 
     Returns:
-        list: A list of lists of probabilities including the model's prediction for
-            the digits.
+        list: A list of lists of probabilities.  The outer list is over
+            the 8 positions.  Inner lists have length 10: the probability
+            that the digit is a 0, 1, 2, ..., 9.
+            In case of errors it returns an empty list
     """
-
+    id_page_file = Path(id_page_file)
     # Retrieve the box including the digits in a row.
-    ID_box = get_digit_box(image_box_fname, top, bottom)
+    ID_box = get_digit_box(id_page_file, top, bottom)
+    if ID_box is None:  # some sort of error finding the ID box
+        print("Trouble finding the ID box")
+        return []
 
-    # The list of the resulting probabilities.
+    debug = True
+    if debug:
+        dbdir = Path("debug_id_reader")
+        dbdir.mkdir(exist_ok=True)
+        p = dbdir / f"idbox_{id_page_file.stem}.png"
+        cv2.imwrite(str(p), ID_box)
+
+    processed_digits_images = get_digit_images(ID_box, num_digits)
+    if len(processed_digits_images) == 0:
+        print("Trouble finding digits inside the ID box")
+        return []
+
+    if debug:
+        for n, digit_image in enumerate(processed_digits_images):
+            p = dbdir / f"digit_{id_page_file.stem}-pos{n}.png"
+            cv2.imwrite(str(p), digit_image)
+            # cv2.imshow("argh", digit_image)
+            # cv2.waitKey(0)
+
     prob_lists = []
-
-    processed_digits_images_list = get_digit_images(ID_box, num_digits)
-
-    # and append that prediction to list
-    for processed_digit_image in processed_digits_images_list:
-        number_pred_prob = prediction_model.predict_proba(processed_digit_image)
+    for digit_image in processed_digits_images:
+        # get it into format needed by model predictor
+        # TODO: is this the same as just flattening:
+        # digit_vector = digit_image.flatten()
+        digit_vector = np.expand_dims(digit_image, 0)
+        digit_vector = digit_vector.reshape((1, np.prod(digit_image.shape)))
+        number_pred_prob = prediction_model.predict_proba(digit_vector)
         prob_lists.append(number_pred_prob[0])
 
     return prob_lists
@@ -233,16 +250,23 @@ def compute_probabilities(
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}
 
-    for testNumber in image_file_paths:
+    for testNumber, image_file in image_file_paths.items():
         prob_lists = get_digit_prob(
             prediction_model,
-            image_file_paths[testNumber],
+            image_file,
             top_coordinate,
             bottom_coordinate,
             num_digits,
         )
-        if prob_lists is None:  # couldn't recognize digits
+        if len(prob_lists) == 0:
+            print(
+                f"Test{testNumber}: could not read digits, excluding from calculations"
+            )
             continue
-        probabilities[testNumber] = prob_lists
+        elif len(prob_lists) != 8:
+            print(f"Test{testNumber}: unexpectedly len={len(prob_lists)}: {prob_lists}")
+            probabilities[testNumber] = prob_lists
+        else:
+            probabilities[testNumber] = prob_lists
 
     return probabilities
