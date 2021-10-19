@@ -16,7 +16,7 @@
   <summary>Grading/marking client for the Plom online grading system</summary>
   <description>
     <p>
-      Plom is a system for the online marking of handwritten work.  It prepares
+      Plom is a system for large-scale marking by humans.  It prepares
       QR-coded test papers, collates scanned work, and coordinates a team of
       graders.  This is the graphical interface used for grading tests.
     </p>
