@@ -469,7 +469,7 @@ def MsetTag(self, user_name, task, tag):
             return False  # not your task - should not happen
         # grab the last annotation
         aref = qref.annotations[-1]
-        if aref.user != uref:
+        if aref.user != uref and aref.user.name != "HAL":
             return False  # not your annotation - should not happen
         # update tag
         aref.tags = tag

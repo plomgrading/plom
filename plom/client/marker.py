@@ -2450,23 +2450,22 @@ class MarkerClient(QWidget):
         atb = AddTagBox(self, currentTag, list(tagSet))
         if atb.exec_() == QDialog.Accepted:
             txt = atb.TE.toPlainText().strip()
-            # truncate at 256 characters.  TODO: without warning?
             if len(txt) > 256:
+                log.warning("overly long tags truncated to 256 chars")
                 txt = txt[:256]
-
-            self.examModel.setTagsByTask(task, txt)
-            # resize view too
-            self.ui.tableView.resizeRowsToContents()
-
             # send updated tag back to server.
             try:
                 self.msgr.MsetTag(task, txt)
             except PlomTakenException as err:
                 log.exception("exception when trying to set tag")
                 ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
+                return
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
-        return
+                return
+            self.examModel.setTagsByTask(task, txt)
+            # resize view too
+            self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
         """ Sets a filter tag. """
