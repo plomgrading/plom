@@ -36,7 +36,10 @@
 
   4. Run "plom-scan status" to get a brief summary of scanning to date.
 
-  5. If something goes wrong such as crashes or interruptions, you may
+  5. Run "plom-scan bundles" to get a list of the bundles that have been
+          uploaded into the system.
+
+  6. If something goes wrong such as crashes or interruptions, you may
      need to clear the "scanner" login with the `clear` command.
 
   These steps may be repeated as new PDF files come in: it is not
@@ -58,35 +61,10 @@ from plom.scan import __version__
 from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages
+from plom.scan import print_bundle_list
 
 
-def frontend(args):
-    if args.command == "process":
-        processScans(
-            args.server,
-            args.password,
-            args.scanPDF,
-            gamma=args.gamma,
-            extractbmp=args.extractbmp,
-        )
-    elif args.command == "upload":
-        uploadImages(
-            args.server,
-            args.password,
-            args.bundleName,
-            do_unknowns=args.unknowns,
-            do_collisions=args.collisions,
-        )
-    elif args.command == "status":
-        check_and_print_scan_status(args.server, args.password)
-    elif args.command == "clear":
-        clear_login(args.server, args.password)
-    else:
-        # parser.print_help()
-        raise RuntimeError("Unexpected choice: report this as a bug!?")
-
-
-def parse_the_user_args():
+def get_parser():
     parser = argparse.ArgumentParser(
         description=__doc__.split("\n")[0],
         epilog="\n".join(__doc__.split("\n")[1:]),
@@ -116,6 +94,11 @@ def parse_the_user_args():
         "clear",
         help='Clear "scanner" login',
         description='Clear "scanner" login after a crash or other expected event.',
+    )
+    spB = sub.add_parser(
+        "bundles",
+        help="Get a list of bundles in the plom database",
+        description="Get a list of bundles in the plom database.",
     )
     # TODO: maybe in the future?
     # spA = sub.add_parser(
@@ -185,10 +168,15 @@ def parse_the_user_args():
         help='Upload "collisions", pages which appear to already be on the server. '
         + "You should not need this option except under exceptional circumstances.",
     )
-    for x in (spU, spS, spC, spP):
+    for x in (spU, spS, spC, spB, spP):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
         x.add_argument("-w", "--password", type=str, help='for the "scanner" user')
 
+    return parser
+
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if hasattr(args, "server"):
@@ -200,12 +188,30 @@ def parse_the_user_args():
     if hasattr(args, "password") and not args.password:
         args.password = getpass('Please enter the "scanner" password: ')
 
-    return args
-
-
-def main():
-    args = parse_the_user_args()
-    frontend(args)
+    if args.command == "process":
+        processScans(
+            args.server,
+            args.password,
+            args.scanPDF,
+            gamma=args.gamma,
+            extractbmp=args.extractbmp,
+        )
+    elif args.command == "upload":
+        uploadImages(
+            args.server,
+            args.password,
+            args.bundleName,
+            do_unknowns=args.unknowns,
+            do_collisions=args.collisions,
+        )
+    elif args.command == "status":
+        check_and_print_scan_status(args.server, args.password)
+    elif args.command == "bundles":
+        print_bundle_list(args.server, args.password)
+    elif args.command == "clear":
+        clear_login(args.server, args.password)
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":

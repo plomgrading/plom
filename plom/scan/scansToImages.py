@@ -180,7 +180,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         if not (W == pix.width or H == pix.height):
             warn(
                 "Debug: some kind of rounding error in scaling image?"
-                "  Rendered to {pix.width}x{pix.height} from target {W}x{H}"
+                f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
         ## For testing, randomly make jpegs, sometimes of truly horrid quality

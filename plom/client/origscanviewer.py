@@ -974,3 +974,45 @@ class SelectTestQuestion(QDialog):
         grid.addWidget(self.ab, 4, 1)
         grid.addWidget(self.cb, 4, 3)
         self.setLayout(grid)
+
+
+class SolutionViewer(QWidget):
+    def __init__(self, parent, fname):
+        super(SolutionViewer, self).__init__()
+        self.parent = parent
+        self.solutionFile = fname
+        grid = QGridLayout()
+        self.sv = ExamViewWindow(self.solutionFile)
+        self.refreshButton = QPushButton("&Refresh")
+        self.closeButton = QPushButton("&Close")
+        self.maxNormButton = QPushButton("&Max/Norm")
+        grid.addWidget(self.sv, 1, 1, 6, 6)
+        grid.addWidget(self.refreshButton, 7, 1)
+        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(self.maxNormButton, 1, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.maxNormButton.clicked.connect(self.swapMaxNorm)
+        self.refreshButton.clicked.connect(self.refresh)
+
+        self.setMinimumSize(500, 500)
+
+        self.show()
+
+    def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+
+    def closeEvent(self, event):
+        self.closeWindow()
+
+    def closeWindow(self):
+        self.close()
+
+    def refresh(self):
+        self.parent.refreshSolutionImage()
+        self.close()
+        self.parent.viewSolutions()

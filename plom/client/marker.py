@@ -56,6 +56,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomException,
     PlomNoMoreException,
+    PlomNoSolutionException,
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
@@ -1818,6 +1819,34 @@ class MarkerClient(QWidget):
     def modifyRubricOnServer(self, key, updated_rubric):
         return self.msgr.MmodifyRubric(key, updated_rubric)
 
+    def getSolutionImage(self):
+        # get the file from disc if it exists, else grab from server
+        soln = os.path.join(
+            self.workingDirectory,
+            "solution.{}.{}.png".format(self.question, self.version),
+        )
+        if os.path.isfile(soln):
+            return soln
+        else:
+            return self.refreshSolutionImage()
+
+    def refreshSolutionImage(self):
+        # get solution and save it to temp dir
+        soln = os.path.join(
+            self.workingDirectory,
+            "solution.{}.{}.png".format(self.question, self.version),
+        )
+        try:
+            im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
+            with open(soln, "wb+") as fh:
+                fh.write(im_bytes)
+            return soln
+        except PlomNoSolutionException as err:
+            # if a residual file is there, delete it
+            if os.path.isfile(soln):
+                os.remove(soln)
+            return None
+
     def saveTabStateToServer(self, tab_state):
         """Upload a tab state to the server."""
         log.info("Saving user's rubric tab configuration to server")
@@ -2421,23 +2450,22 @@ class MarkerClient(QWidget):
         atb = AddTagBox(self, currentTag, list(tagSet))
         if atb.exec_() == QDialog.Accepted:
             txt = atb.TE.toPlainText().strip()
-            # truncate at 256 characters.  TODO: without warning?
             if len(txt) > 256:
+                log.warning("overly long tags truncated to 256 chars")
                 txt = txt[:256]
-
-            self.examModel.setTagsByTask(task, txt)
-            # resize view too
-            self.ui.tableView.resizeRowsToContents()
-
             # send updated tag back to server.
             try:
                 self.msgr.MsetTag(task, txt)
             except PlomTakenException as err:
                 log.exception("exception when trying to set tag")
                 ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
+                return
             except PlomSeriousException as err:
                 self.throwSeriousError(err)
-        return
+                return
+            self.examModel.setTagsByTask(task, txt)
+            # resize view too
+            self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
         """ Sets a filter tag. """

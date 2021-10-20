@@ -8,6 +8,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
+from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
 
 
@@ -54,8 +55,18 @@ def _raw_upload_classlist(classlist, msgr):
     try:
         msgr.upload_classlist(classlist)
         print(f"Uploaded classlist of length {len(classlist)}.")
-        print(f"  First student:  {classlist[0]}.")
-        print(f"  Last student: {classlist[-1]}.")
+        print(
+            "  First student:  {} - {}".format(
+                censorStudentNumber(classlist[0]["id"]),
+                censorStudentName(classlist[0]["studentName"]),
+            )
+        )
+        print(
+            "  Last student:  {} - {}".format(
+                censorStudentNumber(classlist[-1]["id"]),
+                censorStudentName(classlist[-1]["studentName"]),
+            )
+        )
     except PlomRangeException as e:
         print(
             "Error: classlist lead to the following specification error:\n"

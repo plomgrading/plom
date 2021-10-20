@@ -25,6 +25,10 @@ def createNewBundle(self, bundle_file, md5):
     return self.DB.createNewBundle(bundle_file, md5)
 
 
+def listBundles(self):
+    return self.DB.listBundles()
+
+
 def sidToTest(self, student_id):
     return self.DB.sidToTest(student_id)
 
@@ -66,28 +70,6 @@ def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
         if not os.path.isfile(newName):
             break
     val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle, bundle_order)
-    if val[0]:
-        with open(newName, "wb") as fh:
-            fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
-        assert md5n == md5o
-        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
-    else:
-        log.debug("Did not store page.  From database = {}".format(val[1]))
-    return val
-
-
-def addLPage(self, sid, o, fname, image, md5o, bundle, bundle_order):
-    # take extension from the client filename
-    base, ext = os.path.splitext(fname)
-    # create a filename for the image
-    prefix = "s{}o{}".format(sid, o)
-    while True:
-        unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ext
-        if not os.path.isfile(newName):
-            break
-    val = self.DB.uploadLPage(sid, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -183,10 +165,6 @@ def getHWPageImage(self, testNumber, question, order):
 
 def getEXPageImage(self, testNumber, question, order):
     return self.DB.getEXPageImage(testNumber, question, order)
-
-
-def getLPageImage(self, testNumber, order):
-    return self.DB.getLPageImage(testNumber, order)
 
 
 def getUnknownImage(self, fname):
@@ -345,10 +323,6 @@ def replaceMissingHWQuestion(self, sid, test, question):
 
 
 def processHWUploads(self):
-    return self.DB.processUpdatedTests()
-
-
-def processLUploads(self):
     return self.DB.processUpdatedTests()
 
 

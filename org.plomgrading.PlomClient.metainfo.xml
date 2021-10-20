@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   Copyright (C) 2020-2021 Colin B. Macdonald
+  Copyright (C) 2021 Óvári
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -13,13 +14,23 @@
   <metadata_license>FSFAP</metadata_license>
   <project_license>AGPL-3.0+</project_license>
   <name>Plom Client</name>
+  <name xml:lang="hu">Plom-ügyfél</name>
   <summary>Grading/marking client for the Plom online grading system</summary>
+  <summary xml:lang="hu">Osztályozó ügyfél a Plom online osztályozó rendszerhez</summary>
   <description>
     <p>
-      Plom is a system for the online marking of handwritten work.  It prepares
+      Plom is a system for large-scale marking by humans.  It prepares
       QR-coded test papers, collates scanned work, and coordinates a team of
       graders.  This is the graphical interface used for grading tests.
     </p>
+
+    <p xml:lang="hu">
+      A Plom az emberek által végzett nagyszabású osztályozási rendszer. QR-kódolt
+      tesztpapírokat készít, szkenneli a beolvasott munkákat, és koordinálja az
+      osztályosok csapatát. Ez az a grafikus felület, amelyet a tesztek
+      osztályozására használnak.
+    </p>
+
   </description>
 
   <screenshots>
@@ -56,6 +67,7 @@
   <developer_name>Andrew Rechnitzer, Colin B. Macdonald, and others</developer_name>
   <content_rating type="oars-1.0"/>
   <releases>
+    <release date="2021-10-13" version="0.7.2"/>
     <release date="2021-09-23" version="0.7.1"/>
     <release date="2021-09-04" version="0.7.0"/>
     <release date="2021-07-19" version="0.6.5"/>

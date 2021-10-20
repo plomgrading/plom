@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [Unreleased]
 
 ### Added
@@ -13,8 +12,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-* Various CI cleanups that should help external contributors.
+* Clients can tag unannotated questions.
+* Various fixes to auto reading of student IDs.
 
+
+## [0.7.2] - 2021-10-13
+
+### Added
+* Solutions can be attached to each question/version.
+  - client can view solution for the current question/version.
+  - solutions for individual students can be returned along with marked test via webpage
+
+
+### Changed
+* plom-scan and plom-hwscan can now list bundles.
+* Added a --no-scan option to plom-demo and plom-hwdemo so that fake-data created but not processed or uploaded.
+* More import and module improvements: one can now do `python -m plom.client` and `python -m plom.server`, and similarly for most other modules.
+
+### Fixed
+* Various CI cleanups that should help external contributors.
+* Fixed a crash in the page re-arranger dialog.
+* Various other fixes.
 
 
 ## [0.7.1] - 2021-09-23
@@ -528,7 +546,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.1...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.2...master
+[0.7.2]: https://gitlab.com/plom/plom/compare/v0.7.1...v0.7.2
 [0.7.1]: https://gitlab.com/plom/plom/compare/v0.7.0...v0.7.1
 [0.7.0]: https://gitlab.com/plom/plom/compare/v0.6.5...v0.7.0
 [0.6.5]: https://gitlab.com/plom/plom/compare/v0.6.4...v0.6.5

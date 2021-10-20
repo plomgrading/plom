@@ -5,31 +5,68 @@
 
 import logging
 
-from PyQt5.QtCore import QEvent, QRectF, QPointF
+from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
 from PyQt5.QtGui import (
     QBrush,
     QColor,
     QCursor,
+    QImage,
     QFont,
     QGuiApplication,
     QPainter,
     QPainterPath,
+    QPen,
     QPixmap,
     QTransform,
 )
 from PyQt5.QtWidgets import (
+    QGraphicsEllipseItem,
+    QGraphicsLineItem,
+    QGraphicsPathItem,
     QGraphicsPixmapItem,
+    QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsSceneDragDropEvent,
-    QUndoStack,
+    QGraphicsTextItem,
+    QGraphicsItemGroup,
     QMessageBox,
+    QUndoStack,
 )
+from PyQt5.QtCore import Qt
 
 from plom import AnnFontSizePts, ScenePixelHeight
 from plom.plom_exceptions import PlomInconsistentRubricsException
 
-# Import all the tool commands for undo/redo stack.
-from .tools import *
+from .tools import (
+    CrossItem,
+    DeleteItem,
+    DeltaItem,
+    ImageItem,
+    GhostComment,
+    GhostDelta,
+    GroupDeltaTextItem,
+    GhostText,
+    TextItem,
+    TickItem,
+)
+from .tools import (
+    CommandArrow,
+    CommandArrowDouble,
+    CommandBox,
+    CommandEllipse,
+    CommandImage,
+    CommandDelete,
+    CommandText,
+    CommandGroupDeltaText,
+    CommandLine,
+    CommandTick,
+    CommandQMark,
+    CommandCross,
+    CommandPen,
+    CommandHighlight,
+    CommandPenArrow,
+)
+
 
 log = logging.getLogger("pagescene")
 
@@ -142,7 +179,7 @@ class UnderlyingRect(QGraphicsRectItem):
     """
 
     def __init__(self, rect):
-        super(QGraphicsRectItem, self).__init__()
+        super().__init__()
         self.setPen(QPen(Qt.black, 2, style=Qt.DotLine))
         self.setBrush(QBrush(Qt.white))
         self.setRect(rect)
@@ -166,7 +203,7 @@ class UnderlyingImages(QGraphicsItemGroup):
                 every image is used and the list order determines
                 the order.  That is subject to change.
         """
-        super(QGraphicsItemGroup, self).__init__()
+        super().__init__()
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
@@ -230,6 +267,16 @@ mouseRelease = {
     "rubric": "mouseReleaseRubric",
     "text": "mouseReleaseText",
 }
+
+## things for nice rubric/text drag-box tool
+# work out how to draw line from current point
+# to nearby point on a given rectangle
+# also need a minimum size threshold for that box
+# in order to avoid drawing very very small boxes
+# by accident when just "clicking"
+# see #1435
+
+minimum_box_side_length = 24
 
 
 def shape_to_sample_points_on_boundary(a_rect):
@@ -569,9 +616,11 @@ class PageScene(QGraphicsScene):
         style = {
             "annot_color": c,
             "pen_width": 2,
-            "highlight_color": QColor(255, 255, 0, 64),  # TODO: 64 hardcoded elsewhere
+            # TODO: 64 hardcoded elsewhere
+            "highlight_color": QColor(255, 255, 0, 64),
             "highlight_width": 50,
-            "box_tint": QColor(255, 255, 0, 16),  # light highlight for backgrounds
+            # light highlight for backgrounds
+            "box_tint": QColor(255, 255, 0, 16),
         }
         self.ink = QPen(style["annot_color"], style["pen_width"])
         self.lightBrush = QBrush(style["box_tint"])
@@ -599,15 +648,13 @@ class PageScene(QGraphicsScene):
 
         self.mode = mode
         # if current mode is not rubric, make sure the ghostcomment is hidden
+
+        # To fix issues with changing mode mid-draw - eg #1540
+        # trigger this
+        self.stopMidDraw()
+
         if self.mode != "rubric":
             self.hideGhost()
-            # also check if mid-line draw and then delete the line item
-            if self.rubricFlag > 0:
-                self.removeItem(self.lineItem)
-                self.rubricFlag = 0
-                # also end the macro and then trigger an undo so box removed.
-                self.undoStack.endMacro()
-                self.undo()
 
         # if mode is "pan", allow the view to drag about, else turn it off
         if self.mode == "pan":
@@ -820,9 +867,8 @@ class PageScene(QGraphicsScene):
             # also if in box,line,pen,rubric,text - stop mid-draw
             if self.mode in ["box", "line", "pen", "rubric", "text"]:
                 self.stopMidDraw()
-
         else:
-            super(PageScene, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         """
@@ -947,7 +993,8 @@ class PageScene(QGraphicsScene):
             return  # intersection - so don't stamp anything.
 
         # check the rubricFlag
-        if isinstance(event, QGraphicsSceneDragDropEvent):  # is a rubric drag event.
+        # is a rubric drag event.
+        if isinstance(event, QGraphicsSceneDragDropEvent):
             pass  # no rectangle-drag-rubric, only rubric-stamp
         elif self.rubricFlag == 0:
             # check if drag event
@@ -1172,10 +1219,11 @@ class PageScene(QGraphicsScene):
             return
         elif self.textFlag == 1:
             self.removeItem(self.boxItem)
-            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            # check if rect has some area
+            # needs abs since rect is not normalised
             if (
-                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
-                > 24
+                abs(self.boxItem.rect().width()) > minimum_box_side_length
+                and abs(self.boxItem.rect().height()) > minimum_box_side_length
             ):
                 self.undoStack.beginMacro("Click-Drag composite object")
                 command = CommandBox(self, self.boxItem.rect())
@@ -1243,7 +1291,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.OpenHandCursor)
-        super(PageScene, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         # refresh view after moving objects
         # EXPERIMENTAL: recompute bounding box in case you move an item outside the pages
         # self.updateSceneRectangle()
@@ -1261,7 +1309,7 @@ class PageScene(QGraphicsScene):
 
         """
         self.views()[0].setCursor(Qt.OpenHandCursor)
-        super(PageScene, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
         self.views()[0].setZoomSelector()
 
     def mousePressImage(self, event):
@@ -1360,7 +1408,7 @@ class PageScene(QGraphicsScene):
             event.accept()
             return True
         else:
-            return super(PageScene, self).event(event)
+            return super().event(event)
 
     def _debug_printUndoStack(self):
         """ A helper method for debugging the undoStack."""
@@ -1542,17 +1590,19 @@ class PageScene(QGraphicsScene):
             self.removeItem(self.boxItem)
             # normalise the rectangle to have positive width/height
             nrect = self.boxItem.rect().normalized()
-            # check if rect has some perimeter (allow long/thin) - need abs - see #977
-            # don't need abs if normalised.
-            if nrect.width() + nrect.height() > 24:
+            # check if rect has some area - avoid tiny boxes
+            if (
+                nrect.width() > minimum_box_side_length
+                and nrect.height() > minimum_box_side_length
+            ):
                 command = CommandBox(self, nrect)
                 self.undoStack.push(command)
         else:
             self.removeItem(self.ellipseItem)
             # check if ellipse has some area (don't allow long/thin)
             if (
-                self.ellipseItem.rect().width() > 16
-                and self.ellipseItem.rect().height() > 16
+                self.ellipseItem.rect().width() > minimum_box_side_length
+                and self.ellipseItem.rect().height() > minimum_box_side_length
             ):
                 command = CommandEllipse(self, self.ellipseItem.rect())
                 self.undoStack.push(command)
@@ -1944,10 +1994,11 @@ class PageScene(QGraphicsScene):
             return
         elif self.rubricFlag == 1:
             self.removeItem(self.boxItem)
-            # check if rect has some perimeter (allow long/thin) - need abs - see #977
+            # check if rect has some area
+            # this needs abs - see #977 - since rectangle is not normalized
             if (
-                abs(self.boxItem.rect().width()) + abs(self.boxItem.rect().height())
-                > 24
+                abs(self.boxItem.rect().width()) > minimum_box_side_length
+                and abs(self.boxItem.rect().height()) > minimum_box_side_length
             ):
                 self.undoStack.beginMacro("Click-Drag composite object")
                 command = CommandBox(self, self.boxItem.rect())
@@ -1968,7 +2019,8 @@ class PageScene(QGraphicsScene):
                 log.debug(
                     "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
                 )
-                self.undoStack.push(command)  # push the delta onto the undo stack.
+                # push the delta onto the undo stack.
+                self.undoStack.push(command)
                 self.refreshStateAndScore()  # and now refresh the markingstate and score
                 self.rubricFlag = 0  # reset the rubric flag
                 return
@@ -2082,9 +2134,14 @@ class PageScene(QGraphicsScene):
         """
         for x in self.items():
             if getattr(x, "saveable", None):
-                if not isinstance(x, (TickItem, CrossItem, DeltaItem)):
-                    return False
-        return True
+                if isinstance(x, (TickItem, CrossItem)):
+                    continue
+                if isinstance(x, GroupDeltaTextItem):
+                    # check if this is a delta-rubric
+                    if x.kind == "delta":
+                        continue
+                return False  # otherwise
+        return True  # only tick,cross or delta-rubrics
 
     def itemWithinBounds(self, item):
         """Check if given item is within the margins or not."""
@@ -2215,7 +2272,8 @@ class PageScene(QGraphicsScene):
                 return False
             elif self.markingState == "neutral":  # score is None
                 return True
-            elif self.score + int(dn) > self.maxMark:  # we know score is pos-int here
+            # we know score is pos-int here
+            elif self.score + int(dn) > self.maxMark:
                 return False
             else:
                 return True
@@ -2323,6 +2381,7 @@ class PageScene(QGraphicsScene):
                     self.penFlag,
                     self.rubricFlag,
                     self.textFlag,
+                    self.zoomFlag,
                 ]
             )
         )
@@ -2367,3 +2426,7 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
             self.textFlag = 0
+        # check if mid-zoom-box draw:
+        if self.zoomFlag == 2:
+            self.removeItem(self.zoomBoxItem)
+            self.zoomFlag = 0

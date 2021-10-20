@@ -133,6 +133,8 @@ def run_id_reader(files_dict, rectangle):
     # keeps a list of testNumbers... the ith test in list has testNumber k (i != k?)
     # will need this for cost-matrix
     test_numbers = list(files_dict.keys())
+    # we may skip some tests if hard to extract the ID boxes
+    test_numbers_used = []
 
     if not is_model_present():
         download_or_train_model()
@@ -156,6 +158,10 @@ def run_id_reader(files_dict, rectangle):
     print("Computing cost matrix")
     costs = []
     for test in test_numbers:
+        if test not in probabilities:
+            print(f"Test {test} is excluded")
+            continue
+        test_numbers_used.append(test)
         row = []
         for student_ID in student_IDs:
             row.append(calc_log_likelihood(student_ID, probabilities[test], num_digits))
@@ -168,15 +174,18 @@ def run_id_reader(files_dict, rectangle):
     print("Going hungarian")
     row_IDs, column_IDs = solve_dense(costs)
 
+    prediction_pairs = []
+
     # now save the result
     with open(specdir / "predictionlist.csv", "w") as file_header:
         file_header.write("test, id\n")
         for r, c in zip(row_IDs, column_IDs):
-            # the get test-number of r-th from the test_numbers
-            test_number = test_numbers[r]
-            # print("{}, {}".format(test_number, student_IDs[c]))
+            # the get test-number of r-th from the test_numbers_used
+            # since we may have skipped a few tests with hard-to-read IDs
+            test_number = test_numbers_used[r]
             file_header.write("{}, {}\n".format(test_number, student_IDs[c]))
+            prediction_pairs.append((test_number, student_IDs[c]))
         file_header.close()
 
     print("Results saved in predictionlist.csv")
-    return
+    return prediction_pairs

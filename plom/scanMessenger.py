@@ -95,6 +95,37 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
+    def listBundles(self):
+        """Ask server for list of bundles in database.
+
+        returns:
+            list: a list of dict, each contains the `name`, `md5sum` and
+                `numberOfPages` for each bundle.
+        """
+
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/admin/bundle/list".format(self.server),
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
+                verify=False,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
     def sidToTest(self, student_id):
         """Ask server to match given student_id to a test-number.
 
@@ -501,26 +532,6 @@ class ScanMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/hwPagesUploaded".format(self.server),
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
-    def triggerUpdateAfterLUpload(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.session.put(
-                "https://{}/admin/loosePagesUploaded".format(self.server),
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

@@ -63,6 +63,18 @@ class UploadHandler:
         rval = self.server.createNewBundle(data["bundle"], data["md5sum"])
         return web.json_response(rval, status=200)  # all fine
 
+    async def listBundles(self, request):
+        """Returns a list of dicts of bundles in the database."""
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] in ["scanner", "manager"]:
+            return web.Response(status=401)
+        rval = self.server.listBundles()
+        return web.json_response(rval, status=200)  # all fine
+
     async def sidToTest(self, request):
         """Match given student_id to a test-number.
 
@@ -207,70 +219,6 @@ class UploadHandler:
         rmsg = self.server.addHWPage(
             param["sid"],
             param["question"],
-            param["order"],
-            param["fileName"],
-            image,
-            param["md5sum"],
-            param["bundle"],
-            param["bundle_order"],
-        )
-        # note 200 used here for errors too
-        return web.json_response(rmsg, status=200)
-
-    async def uploadLPage(self, request):
-        """A loose page is self-scanned, known student, but unknown question.
-
-        Typically the page is without QR codes.  The uploader knows what
-        student it belongs to but not what question.
-
-        DEPRECATED? Perhaps on its way to deprecation if HW Pages become
-        more general in the future.
-
-        Args:
-            request (aiohttp.web_request.Request)
-
-        Returns:
-            aiohttp.web_response.Response: JSON data directly from the
-                database call.
-
-        Note: this uses the `status=200` success return code for some
-        kinds of failures: it simply returns whatever data the DB gave
-        back as blob of json for the client to deal with.  Thus, this
-        API call is not recommended outside of Plom.
-        """
-        reader = MultipartReader.from_response(request)
-
-        part0 = await reader.next()  # should be parameters
-        if part0 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        param = await part0.json()
-
-        if not validate_required_fields(
-            param,
-            [
-                "user",
-                "token",
-                "sid",
-                "order",
-                "fileName",
-                "md5sum",
-                "bundle",
-                "bundle_order",
-            ],
-        ):
-            return web.Response(status=400)
-        if not self.server.validate(param["user"], param["token"]):
-            return web.Response(status=401)
-        if not param["user"] in ("manager", "scanner"):
-            return web.Response(status=401)
-
-        part1 = await reader.next()  # should be the image file
-        if part1 is None:  # weird error
-            return web.Response(status=406)  # should have sent 3 parts
-        image = await part1.read()
-        # file it away.
-        rmsg = self.server.addLPage(
-            param["sid"],
             param["order"],
             param["fileName"],
             image,
@@ -521,21 +469,6 @@ class UploadHandler:
             return web.Response(status=401)
 
         rval = self.server.getEXPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
-
-    async def getLPageImage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "test", "order"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getLPageImage(data["test"], data["order"])
         if rval[0]:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
@@ -795,22 +728,6 @@ class UploadHandler:
         update_count = self.server.processHWUploads()
         return web.json_response(update_count, status=200)
 
-    async def processLUploads(self, request):
-        """Trigger any updates that are appropriate after some uploads.
-
-        This is probably similar to :py:meth:`processTUploads`
-        """
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if data["user"] != "manager" and data["user"] != "scanner":
-            return web.Response(status=401)
-
-        update_count = self.server.processLUploads()
-        return web.json_response(update_count, status=200)
-
     async def processTUploads(self, request):
         """Trigger any updates that are appropriate after some uploads.
 
@@ -943,10 +860,10 @@ class UploadHandler:
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
         router.add_put("/admin/bundle", self.createNewBundle)
+        router.add_get("/admin/bundle/list", self.listBundles)
         router.add_get("/admin/sidToTest", self.sidToTest)
         router.add_put("/admin/testPages/{tpv}", self.uploadTestPage)
         router.add_put("/admin/hwPages", self.uploadHWPage)
-        router.add_put("/admin/lPages", self.uploadLPage)
         router.add_put("/admin/unknownPages", self.uploadUnknownPage)
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
@@ -955,7 +872,6 @@ class UploadHandler:
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedEXPage", self.getEXPageImage)
-        router.add_get("/admin/scannedLPage", self.getLPageImage)
         router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
@@ -973,7 +889,6 @@ class UploadHandler:
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
-        router.add_put("/admin/loosePagesUploaded", self.processLUploads)
         router.add_put("/admin/testPagesUploaded", self.processTUploads)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)

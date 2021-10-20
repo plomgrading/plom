@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -8,9 +8,16 @@
 from collections import defaultdict
 import os
 import csv
+import sys
 import tempfile
 
 import urllib3
+
+if sys.version_info >= (3, 7):
+    import importlib.resources as resources
+else:
+    import importlib_resources as resources
+
 from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
 from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
@@ -18,6 +25,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QCheckBox,
     QDialog,
+    QFileDialog,
     QGroupBox,
     QGridLayout,
     QGroupBox,
@@ -34,9 +42,12 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+import plom.client.icons
+
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
 from plom.client.origscanviewer import WholeTestView, GroupView
+from .imageview import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -53,6 +64,7 @@ from plom.plom_exceptions import (
     PlomOwnersLoggedInException,
     PlomTakenException,
     PlomNoMoreException,
+    PlomNoSolutionException,
 )
 from plom.plom_exceptions import PlomException
 from plom.messenger import ManagerMessenger
@@ -514,6 +526,7 @@ class Manager(QWidget):
         self.initProgressTab()
         self.initUserTab()
         self.initReviewTab()
+        self.initSolutionTab()
 
     def partial_parse_address(self):
         """If address has a port number in it, extract and move to the port box.
@@ -793,7 +806,11 @@ class Manager(QWidget):
         r = 0
         for u in unkList:
             it0 = QStandardItem(os.path.split(u)[1])
-            it0.setIcon(QIcon(QPixmap("./icons/manager_unknown.svg")))
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_unknown.svg")
+            )
+            it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
             it1.setTextAlignment(Qt.AlignCenter)
             it2 = QStandardItem("0")
@@ -832,21 +849,29 @@ class Manager(QWidget):
                 self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
                 self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
                 if uvw.action == "discard":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_discard.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_discard.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
                 elif uvw.action == "extra":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_extra.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_extra.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
                 elif uvw.action == "test":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_test.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_test.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
                 elif uvw.action == "homework":
-                    self.unknownModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_hw.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_hw.svg")
                     )
+                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
@@ -977,7 +1002,11 @@ class Manager(QWidget):
         for u in colDict.keys():
             it0 = QStandardItem(u)
             it1 = QStandardItem(os.path.split(u)[1])
-            it1.setIcon(QIcon(QPixmap("./icons/manager_collide.svg")))
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_collide.svg")
+            )
+            it1.setIcon(QIcon(pm))
             it2 = QStandardItem("?")
             it2.setTextAlignment(Qt.AlignCenter)
             it3 = QStandardItem("{}".format(colDict[u][0]))
@@ -1018,14 +1047,20 @@ class Manager(QWidget):
                 )
                 if cvw.exec_() == QDialog.Accepted:
                     if cvw.action == "original":
-                        self.collideModel.item(r, 1).setIcon(
-                            QIcon(QPixmap("./icons/manager_discard.svg"))
+                        pm = QPixmap()
+                        pm.loadFromData(
+                            resources.read_binary(
+                                plom.client.icons, "manager_discard.svg"
+                            )
                         )
+                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
                         self.collideModel.item(r, 2).setText("discard")
                     elif cvw.action == "collide":
-                        self.collideModel.item(r, 1).setIcon(
-                            QIcon(QPixmap("./icons/manager_test.svg"))
+                        pm = QPixmap()
+                        pm.loadFromData(
+                            resources.read_binary(plom.client.icons, "manager_test.svg")
                         )
+                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
                         self.collideModel.item(r, 2).setText("replace")
 
     def doCActions(self):
@@ -1073,12 +1108,17 @@ class Manager(QWidget):
 
     def refreshDList(self):
         self.discardModel.removeRows(0, self.discardModel.rowCount())
-        disList = self.msgr.getDiscardNames()  # list of pairs [filename, reason]
+        # list of pairs [filename, reason]
+        disList = self.msgr.getDiscardNames()
         r = 0
         for fname, reason in disList:
             it0 = QStandardItem(fname)
             it1 = QStandardItem(os.path.split(fname)[1])
-            it1.setIcon(QIcon(QPixmap("./icons/manager_none.svg")))
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_none.svg")
+            )
+            it1.setIcon(QIcon(pm))
             it2 = QStandardItem(reason)
             it3 = QStandardItem("none")
             it3.setTextAlignment(Qt.AlignCenter)
@@ -1101,14 +1141,18 @@ class Manager(QWidget):
             dvw = DiscardViewWindow(self, dh.name)
             if dvw.exec_() == QDialog.Accepted:
                 if dvw.action == "unknown":
-                    self.discardModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_move.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_move.svg")
                     )
+                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
                     self.discardModel.item(r, 3).setText("move")
                 elif dvw.action == "none":
-                    self.discardModel.item(r, 1).setIcon(
-                        QIcon(QPixmap("./icons/manager_none.svg"))
+                    pm = QPixmap()
+                    pm.loadFromData(
+                        resources.read_binary(plom.client.icons, "manager_none.svg")
                     )
+                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
                     self.discardModel.item(r, 3).setText("none")
 
     def doDActions(self):
@@ -1138,7 +1182,7 @@ class Manager(QWidget):
 
     def initOverallTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(
-            ["Test number", "Identified", "Questions Marked"]
+            ["Test number", "Scanned", "Identified", "Questions Marked"]
         )
         self.ui.overallTW.activated.connect(self.viewTestStatus)
         self.ui.overallTW.setSortingEnabled(True)
@@ -1160,21 +1204,33 @@ class Manager(QWidget):
         opDict = self.msgr.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
+        # each dict value is [Scanned, Identified, #Marked]
         r = 0
         for t in tk:
             self.ui.overallTW.insertRow(r)
             self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
+
             it = QTableWidgetItem("{}".format(opDict[t][0]))
             if opDict[t][0]:
                 it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been identified")
+                it.setToolTip("Has been scanned")
+            elif opDict[t][2] > 0:
+                it.setBackground(QBrush(Qt.red))
+                it.setToolTip("Has been (part-)marked but not completely scanned.")
+
             self.ui.overallTW.setItem(r, 1, it)
 
-            it = QTableWidgetItem(str(opDict[t][1]).rjust(2))
-            if opDict[t][1] == self.numberOfQuestions:
+            it = QTableWidgetItem("{}".format(opDict[t][1]))
+            if opDict[t][1]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 2, it)
+
+            it = QTableWidgetItem(str(opDict[t][2]).rjust(3))
+            if opDict[t][2] == self.numberOfQuestions:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 2, it)
+            self.ui.overallTW.setItem(r, 3, it)
             r += 1
 
     def initIDTab(self):
@@ -1519,6 +1575,97 @@ class Manager(QWidget):
                     self.msgr.IDreviewID(test)
 
     ##################
+    # Solution tab stuff
+    def initSolutionTab(self):
+        self.tempDirectory = tempfile.TemporaryDirectory(prefix="plom_manager_")
+        self.solnPath = self.tempDirectory.name
+        # set up the viewer
+        self.solnIV = ImageViewWidget()
+        self.ui.solnGBLayout.addWidget(self.solnIV)
+
+        self.ui.solnQSB.setMaximum(self.numberOfQuestions)
+        self.ui.solnQSB.valueChanged.connect(self.viewCurrentSolution)
+        self.ui.solnVSB.setMaximum(self.numberOfVersions)
+        self.ui.solnVSB.valueChanged.connect(self.viewCurrentSolution)
+
+        self.ui.solnDeleteB.clicked.connect(self.deleteCurrentSolution)
+        self.ui.solnViewB.clicked.connect(self.viewCurrentSolution)
+        self.ui.solnRefreshB.clicked.connect(self.refreshCurrentSolution)
+        self.ui.solnUploadB.clicked.connect(self.uploadSolution)
+
+    def refreshCurrentSolution(self):
+        try:
+            imgBytes = self.msgr.getSolutionImage(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            )
+        except PlomNoSolutionException:
+            self.solnIV.updateImage([])
+            return False
+        # save the image
+        solutionName = os.path.join(
+            self.solnPath,
+            "solution.{}.{}.png".format(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            ),
+        )
+        with open(solutionName, "wb+") as fh:
+            fh.write(imgBytes)
+        self.solnIV.updateImage(solutionName)
+        return True
+
+    def viewCurrentSolution(self):
+        solutionName = os.path.join(
+            self.solnPath,
+            "solution.{}.{}.png".format(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            ),
+        )
+        # check if file there already
+        if os.path.isfile(solutionName):
+            self.solnIV.updateImage(solutionName)
+        else:  # not there - so try to update it
+            self.refreshCurrentSolution()
+
+    def uploadSolution(self):
+        # currently only png
+        fname = QFileDialog.getOpenFileName(
+            self, "Get solution image", "./", "PNG files (*.png)"
+        )  # returns (name, type)
+        if fname[0] == "":  # user didn't select file
+            return
+        # check file is actually there
+        if not os.path.isfile(fname[0]):
+            return
+        # push file to server
+        self.msgr.putSolutionImage(
+            self.ui.solnQSB.value(), self.ui.solnVSB.value(), fname[0]
+        )
+        self.refreshCurrentSolution()
+
+    def deleteCurrentSolution(self):
+        if (
+            SimpleMessage(
+                "Are you sure that you want to delete solution to question {} version {}.".format(
+                    self.ui.solnQSB.value(), self.ui.solnVSB.value()
+                )
+            ).exec_()
+            == QMessageBox.Yes
+        ):
+            self.msgr.deleteSolutionImage(
+                self.ui.solnQSB.value(), self.ui.solnVSB.value()
+            )
+            solutionName = os.path.join(
+                self.solnPath,
+                "solution.{}.{}.png".format(
+                    self.ui.solnQSB.value(), self.ui.solnVSB.value()
+                ),
+            )
+            os.unlink(solutionName)
+            self.solnIV.updateImage([])
+        else:
+            return
+
+    ##################
     # User tab stuff
 
     def initUserTab(self):
@@ -1672,7 +1819,8 @@ class Manager(QWidget):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    uprog[u].append([q, v, n, qpu[0]])  # question, version, no marked
+                    # question, version, no marked
+                    uprog[u].append([q, v, n, qpu[0]])
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)

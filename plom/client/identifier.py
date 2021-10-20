@@ -429,7 +429,7 @@ class IDClient(QWidget):
             return
         # else try to grab it from server
         try:
-            imageList = self.msgr.ID_request_images(test)
+            imageList = self.msgr.request_ID_images(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
@@ -459,13 +459,14 @@ class IDClient(QWidget):
             psid = self.predictedTestToNumbers[tn]  # predicted student ID
             psnid = self.student_id_to_snid[psid]  # predicted SNID
             pname = self.snid_to_student_name[psnid]  # predicted student name
-            if pname == "":
-                self.ui.predictionBox.hide()
+            if pname == "":  # disable accept prediction button
+                self.ui.predButton.setEnabled(False)
             else:
-                self.ui.predictionBox.show()
+                self.ui.predButton.setEnabled(True)
                 self.ui.pSIDLabel.setText(psid)
                 self.ui.pNameLabel.setText(pname)
         else:
+            self.ui.predButton.setEnabled(False)
             self.ui.pSIDLabel.setText("")
             self.ui.pNameLabel.setText("")
         # now update the snid entry line-edit.

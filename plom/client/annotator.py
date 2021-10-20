@@ -8,7 +8,7 @@ __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
-
+from copy import deepcopy
 import json
 import logging
 import os
@@ -60,7 +60,7 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import OriginalScansViewer, RearrangementViewer
+from .origscanviewer import OriginalScansViewer, RearrangementViewer, SolutionViewer
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -126,6 +126,8 @@ class Annotator(QWidget):
         # a test view pop-up window - initially set to None for viewing whole paper
         self.testView = None
         self.testViewFiles = None
+        # a solution view pop-up window - initially set to None
+        self.solutionView = None
 
         # declares some instance vars
         self.cursorBox = None
@@ -243,6 +245,8 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addAction("Previous paper", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
+        m.addSeparator()
+        m.addAction("View solutions\tF2", self.viewSolutions)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         subm = m.addMenu("Tools")
@@ -673,8 +677,10 @@ class Annotator(QWidget):
             log.error(s)
             ErrorMessage(s).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
-        page_data = self.parentMarkerUI._full_pagedata[int(testNumber)]
-        page_data.copy()  # keep original readonly?
+        # do a deep copy of this list of dict - else hit #1690
+        # keep original readonly?
+        page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
+        #
         for x in image_md5_list:
             if x not in [p["md5"] for p in page_data]:
                 s = dedent(
@@ -1072,6 +1078,7 @@ class Annotator(QWidget):
             ("keyHelp", "?", self.keyPopUp),
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
+            ("viewSolutions", Qt.Key_F2, self.viewSolutions),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -1477,7 +1484,7 @@ class Annotator(QWidget):
         # warn if points where lost but insufficient annotations
         if (
             self.rubricWarn
-            and 0 < self.getScore() < self.maxMark
+            and (0 < self.getScore() < self.maxMark)
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
             msg = SimpleMessageCheckBox(
@@ -1622,6 +1629,16 @@ class Annotator(QWidget):
             None: modifies many instance vars.
         """
         log.debug("========CLOSE EVENT======: {}".format(self))
+
+        log.debug("Clean up any view-widows or solution-views")
+        # clean up after a testview
+        self.doneViewingPaper()
+        # clean up after a solution-view
+        if self.solutionView:
+            log.debug("Cleaning a solution-view")
+            self.solutionView.close()
+            self.solutionView = None
+
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
@@ -1640,10 +1657,9 @@ class Annotator(QWidget):
             if msg.exec_() == QMessageBox.No:
                 event.ignore()
                 return
+
         log.debug("emitting reject/cancel signal, discarding, and closing")
         self.annotator_done_reject.emit(self.tgvID)
-        # clean up after a testview
-        self.doneViewingPaper()
         event.accept()
 
     def get_nonrubric_text_from_page(self):
@@ -1851,3 +1867,17 @@ class Annotator(QWidget):
     def modifyRubric(self, key, updated_rubric):
         """Ask server to create a new rubric with data supplied"""
         return self.parentMarkerUI.modifyRubricOnServer(key, updated_rubric)
+
+    def viewSolutions(self):
+        solutionFile = self.parentMarkerUI.getSolutionImage()
+        if solutionFile is None:
+            ErrorMessage("No solution has been uploaded").exec_()
+            return
+
+        if self.solutionView is None:
+            self.solutionView = SolutionViewer(self, solutionFile)
+        self.solutionView.show()
+
+    def refreshSolutionImage(self):
+        # force a refresh
+        self.parentMarkerUI.refreshSolutionImage()

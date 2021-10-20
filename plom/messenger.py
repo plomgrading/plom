@@ -6,6 +6,11 @@
 Backend bits n bobs to talk to the server
 """
 
+from plom.managerMessenger import ManagerMessenger
+from plom.finishMessenger import FinishMessenger
+from plom.scanMessenger import ScanMessenger
+from plom.baseMessenger import BaseMessenger
+
 __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
@@ -25,6 +30,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomTakenException,
     PlomNoMoreException,
+    PlomNoSolutionException,
     PlomRangeException,
     PlomLatexException,
     PlomTaskChangedError,
@@ -777,3 +783,34 @@ class Messenger(BaseMessenger):
 
         finally:
             self.SRmutex.release()
+
+    def MgetSolutionImage(self, question, version):
+        self.SRmutex.acquire()
+        try:
+            response = self.session.get(
+                "https://{}/MK/solution".format(self.server),
+                verify=False,
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "question": question,
+                    "version": version,
+                },
+            )
+            response.raise_for_status()
+            if response.status_code == 204:
+                raise PlomNoSolutionException(
+                    "No solution for {}.{} uploaded".format(question, version)
+                ) from None
+
+            img = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            else:
+                raise PlomSeriousException(
+                    "Some other sort of error {}".format(e)
+                ) from None
+        finally:
+            self.SRmutex.release()
+        return img

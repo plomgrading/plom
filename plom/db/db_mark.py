@@ -10,7 +10,7 @@ import peewee as pw
 
 from plom.db.tables import plomdb
 from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
-from plom.db.tables import Image, Group, QGroup, LPage, Rubric, Test, TPage, User
+from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User
 
 
 log = logging.getLogger("DB")
@@ -299,8 +299,6 @@ def MtakeTaskFromClient(
             test_image_md5s.append(pref.image.md5sum)
         for pref in tref.expages:
             test_image_md5s.append(pref.image.md5sum)
-        for pref in tref.lpages:
-            test_image_md5s.append(pref.image.md5sum)
         # check image_id_list against this list
         for img_md5 in image_md5_list:
             if img_md5 not in test_image_md5s:
@@ -469,7 +467,7 @@ def MsetTag(self, user_name, task, tag):
             return False  # not your task - should not happen
         # grab the last annotation
         aref = qref.annotations[-1]
-        if aref.user != uref:
+        if aref.user != uref and aref.user.name != "HAL":
             return False  # not your annotation - should not happen
         # update tag
         aref.tags = tag
@@ -511,11 +509,12 @@ def MgetWholePaper(self, test_number, question):
         # return [False]
     for pref in aref.apages:
         current_image_orders[pref.image.id] = pref.order
-    # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
+    # give TPages (aside from ID pages), then HWPages, then EXPages
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
-        if p.group.group_type == "i":  # skip IDpages (but we'll include dnm pages)
+        # skip IDpages (but we'll include dnm pages)
+        if p.group.group_type == "i":
             continue
         val = [
             "t{}".format(p.page_number),
@@ -555,18 +554,6 @@ def MgetWholePaper(self, test_number, question):
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
-    # then give LPages
-    for p in tref.lpages.order_by(LPage.order):
-        pageData.append(
-            [
-                "l{}".format(p.order),
-                p.image.md5sum,
-                False,
-                current_image_orders.get(p.image.id),
-                p.image.id,
-            ]
-        )
-        pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
 
 

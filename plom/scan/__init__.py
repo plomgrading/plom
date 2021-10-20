@@ -18,9 +18,9 @@ from .checkScanStatus import get_number_of_questions
 from .checkScanStatus import check_and_print_scan_status
 from .hwSubmissionsCheck import print_who_submitted_what
 from .clearScannerLogin import clear_login
-
+from .listBundles import print_bundle_list
 from .frontend_scan import processScans, uploadImages
-from .frontend_hwscan import processHWScans, processLooseScans, processMissing
+from .frontend_hwscan import processHWScans, processMissing
 from .frontend_hwscan import processAllHWByQ
 
 # what you get from "from plom.scan import *"

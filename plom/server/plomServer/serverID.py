@@ -207,14 +207,21 @@ def IDreviewID(self, test_number):
     return self.DB.IDreviewID(test_number)
 
 
-# TODO: The use tensorflow model is the keyword to use for choosing the model.
-# BIG BIG TODO, ADD KEYWORDS TO SPECS AS SOON AS THE MODEL IS CONFIRMED.
-def IDrunPredictions(
-    self, rectangle, database_reference_number, ignore_stamp, use_tensorflow_model=False
-):
-    """Run the ML prediction model on the papers and saves the information.
+def IDgetImageList(self):
+    """Return the path to the ID page image for every paper
 
-    Log activity.
+    Args:
+        None
+
+    Returns:
+        dict: key=test number, value=path to the first id page image
+    """
+
+    return self.DB.IDgetImageByNumber(0)
+
+
+def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
+    """Run the ML prediction model on the papers and saves the information.
 
     Args:
         rectangle (list): A list of coordinates if the format of:
@@ -232,8 +239,6 @@ def IDrunPredictions(
                 timestamp of the last time prediction run.
             [True, True]: we started a new prediction run.
     """
-
-    # from plom.server.IDReader.idReader import runIDReader
     lock_file = specdir / "IDReader.lock"
     timestamp = specdir / "IDReader.timestamp"
     if os.path.isfile(lock_file):
@@ -265,12 +270,6 @@ def IDrunPredictions(
     # run the reader
     log.info("ID launch ID reader in background")
 
-    if use_tensorflow_model:
-        subprocess.Popen(
-            ["python3", "-m", "plom.server.IDReader_TF.runTheReader", lock_file]
-        )
-    else:
-        subprocess.Popen(
-            ["python3", "-m", "plom.server.IDReader_RF.runTheReader", lock_file]
-        )
+    # Yuck, should at least check its running, Issue #862
+    subprocess.Popen(["python3", "-m", "plom.server.run_the_predictor", lock_file])
     return [True, True]

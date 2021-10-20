@@ -132,8 +132,6 @@ Types of pages:
 
 * EXPage - an extra page - primarily for tests. Functionally similar to HWPages - they have an "order" but not a page number.
 
-* LPage - these are "loose pages" - these correspond to (say) student uploaded homework when all questions are lumped together into a single file. It knows know which student they belong to and (via some look-ups) they know which test-number. They do not know which question, nor do they know a page. Instead they know their order within the submission. **note** these were previously "XPage"
-
 * UnknownPage - these are the most free-form, they do not know anything other than the image and their order within the submitted file. This is still a work-in-progress after Andrew futzed with the database structure.
 
 * CollidingPage - these are included to handle the possibility that the user (somehow) has two pages trying to be the same test-page. The manager can then use the manager-client to decide which to keep. Simple scenarios =

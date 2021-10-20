@@ -3,13 +3,10 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
 Executable file frontend to the actual ID reader code.
-
-Note: Code in this file is very similar to runTheReader code for the Sklearn
-model.
 """
 
 __copyright__ = "Copyright (C) 2018-20120 Andrew Rechnitzer and others"
@@ -20,7 +17,9 @@ import json
 import os
 import sys
 
-from .idReader import run_id_reader
+# Older not-recently tested TensorFlow model
+# from .IDReader_TF.idReader import run_id_reader
+from .IDReader_RF.idReader import run_id_reader
 
 
 if __name__ == "__main__":

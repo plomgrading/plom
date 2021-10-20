@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -131,7 +131,7 @@ def main(server=None, pwd=None):
         print(f"Downloading to temp directory {tmpdir}")
 
         completedTests = msgr.RgetCompletionStatus()
-        # dict key = testnumber, then list id'd, tot'd, #q's marked
+        # dict key = testnumber, then list scanned, id'd, #q's marked
         identifiedTests = msgr.RgetIdentified()
         # dict key = testNumber, then pairs [sid, sname]
         maxMarks = msgr.MgetAllMax()
@@ -141,7 +141,11 @@ def main(server=None, pwd=None):
         coverpagelist = []
 
         for t in completedTests:
-            if completedTests[t][0] == True and completedTests[t][1] == num_questions:
+            if (
+                (completedTests[t][0] is True)
+                and (completedTests[t][1] is True)
+                and (completedTests[t][2] == num_questions)
+            ):
                 if identifiedTests[t][0] is not None:
                     dat1 = build_cover_page_data(msgr, tmpdir, t, maxMarks)
                     dat2 = download_page_images(
