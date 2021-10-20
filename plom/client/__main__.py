@@ -68,3 +68,97 @@ def sigint_handler(*args):
     msg.setDefaultButton(QMessageBox.No)
     if msg.exec_() == QMessageBox.Yes:
         QApplication.exit(42)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run the Plom client. No arguments = run as normal."
+    )
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + __version__
+    )
+    parser.add_argument(
+        "user",
+        type=str,
+        nargs="?",
+        help="Also checks the environment variable PLOM_USER.",
+    )
+    parser.add_argument(
+        "password",
+        type=str,
+        nargs="?",
+        help="Also checks the environment variable PLOM_PASSWORD.",
+    )
+    parser.add_argument(
+        "-s",
+        "--server",
+        metavar="SERVER[:PORT]",
+        action="store",
+        help="""
+            Which server to contact, port defaults to {}.
+            Also checks the environment variable {} if omitted.
+            """.format(
+            Default_Port, "PLOM_SERVER"
+        ),
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-i", "--identifier", action="store_true", help="Run the identifier"
+    )
+    group.add_argument(
+        "-m",
+        "--marker",
+        const="json",
+        nargs="?",
+        type=str,
+        help="Run the marker. Pass either -m n:k (to run on pagegroup n, version k) or -m (to run on whatever was used last time).",
+    )
+    args = parser.parse_args()
+
+    args.server = args.server or os.environ.get("PLOM_SERVER")
+    args.password = args.password or os.environ.get("PLOM_PASSWORD")
+    args.user = args.user or os.environ.get("PLOM_USER")
+
+    app = QApplication(sys.argv)
+    app.setStyle(QStyleFactory.create("Fusion"))
+
+    signal.signal(signal.SIGINT, sigint_handler)
+    add_popup_to_toplevel_exception_handler()
+
+    # create a small timer here, so that we can
+    # kill the app with ctrl-c.
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(1000)
+    # got this solution from
+    # https://machinekoder.com/how-to-not-shoot-yourself-in-the-foot-using-python-qt/
+
+    window = Chooser(app)
+    window.show()
+
+    if args.user:
+        window.ui.userLE.setText(args.user)
+    window.ui.passwordLE.setText(args.password)
+    if args.server:
+        window.setServer(args.server)
+
+    if args.identifier:
+        window.ui.identifyButton.animateClick()
+    if args.marker:
+        if args.marker != "json":
+            pg, v = args.marker.split(":")
+            try:
+                window.ui.pgSB.setValue(int(pg))
+                window.ui.vSB.setValue(int(v))
+            except ValueError:
+                print(
+                    "When you use -m, there should either be no argument, or an argument of the form n:k where n,k are integers."
+                )
+                sys.exit(43)
+
+        window.ui.markButton.animateClick()
+    sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
