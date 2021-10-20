@@ -10,7 +10,7 @@ from peewee import fn
 
 from plom.db.tables import plomdb
 from plom.db.tables import Bundle, IDGroup, Group, Image, QGroup, Test, User
-from plom.db.tables import APage, DNMPage, EXPage, HWPage, IDPage, LPage, TPage
+from plom.db.tables import APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
 from plom.db.tables import OAPage, OldAnnotation
 
@@ -291,66 +291,6 @@ def uploadHWPage(
             )
         )
         self.createNewHWPage(tref, qref, tmp_order, image_ref)
-    return [True]
-
-
-def createNewLPage(self, test_ref, order, image_ref):
-    # can be called by an upload, but also by move-misc-to-tpage
-    # create an Lpage
-    with plomdb.atomic():
-        lref = LPage.create(
-            test=test_ref,
-            order=order,
-            image=image_ref,
-        )
-        # this needs to be appended to each qgroup
-        for qref in test_ref.qgroups:
-            gref = qref.group
-            aref = qref.annotations[0]
-            # create annotationpage and link.
-            ap = APage.create(annotation=aref, image=image_ref, order=order)
-            # set the recent_upload flag for the group and the used flag for the test
-            gref.recent_upload = True
-            gref.save()
-        test_ref.used = True
-        test_ref.save()
-
-
-def uploadLPage(
-    self, sid, order, original_name, file_name, md5, bundle_name, bundle_order
-):
-    # first of all find the test corresponding to that sid.
-    iref = IDGroup.get_or_none(student_id=sid)
-    if iref is None:
-        return [False, "SID does not correspond to any test on file."]
-    tref = iref.test
-
-    lref = LPage.get_or_none(test=tref, order=order)
-    # the lref should be none - but could exist if uploading loose pages in two bundles
-    if lref is not None:
-        # we found a page with that order, so we need to put the uploaded page at the end.
-        lastOrder = LPage.select(fn.MAX(LPage.order)).where(LPage.test == tref).scalar()
-        order = lastOrder + 1
-    # we need the bundle.
-    bref = Bundle.get_or_none(name=bundle_name)
-    if bref is None:
-        return [False, "bundleError", f'Cannot find bundle "{bundle_name}"']
-
-    try:
-        image_ref = self.createNewImage(
-            original_name, file_name, md5, bref, bundle_order
-        )
-    except PlomBundleImageDuplicationException:
-        return [
-            False,
-            "bundle image duplication error",
-            "Image number {} from bundle {} uploaded previously".format(
-                bundle_order,
-                bundle_name,
-            ),
-        ]
-
-    self.createNewLPage(tref, order, image_ref)
     return [True]
 
 
@@ -656,7 +596,7 @@ def cleanQGroup(self, qref):
                 # delete old apages
                 for p in aref.apages:
                     p.delete_instance()
-                # now create new ones - tpages, then hwpage, then expages, finally any lpages
+                # now create new ones - tpages, then hwpage, then expages
                 # set the integrity_check string to a UUID
                 ord = 0
                 integrity_check = uuid.uuid4().hex
@@ -668,9 +608,6 @@ def cleanQGroup(self, qref):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
                 for p in qref.group.expages.order_by(EXPage.order):
-                    ord += 1
-                    APage.create(annotation=aref, image=p.image, order=ord)
-                for p in tref.lpages.order_by(LPage.order):
                     ord += 1
                     APage.create(annotation=aref, image=p.image, order=ord)
                 aref.integrity_check = integrity_check
@@ -715,7 +652,7 @@ def cleanQGroup(self, qref):
 
 
 def updateQGroup(self, qref):
-    # TODO = if loose / extra pages present in test, then test is not ready.
+    # TODO = if extra pages present in test, then test is not ready.
 
     # clean up the QGroup and its annotations
     self.cleanQGroup(qref)
@@ -837,8 +774,7 @@ def processUpdatedTests(self):
         int: how many groups updated.
 
     The recent_upload flag is set either for the whole test or for a given group.
-    If the whole test then we must update every group - this happens when lpages are uploaded.
-    If a group is flagged, then we update just that group - this happens when tpages or hwpages are uploaded.
+    When a group is flagged, then we update just that group - this happens when tpages or hwpages are uploaded.
 
     """
     update_count = 0
@@ -905,17 +841,6 @@ def removeAllScannedPages(self, test_number):
                 image=iref,
                 reason="Discarded scan of ex{}.{}.{}".format(
                     test_number, pref.group.qgroups[0].question, pref.order
-                ),
-            )
-            pref.delete_instance()
-        # remove all lpages
-        for pref in tref.lpages:
-            iref = pref.image
-            DiscardedPage.create(
-                image=iref,
-                reason="Discarded scan of l.{}.{}".format(
-                    test_number,
-                    pref.order,
                 ),
             )
             pref.delete_instance()

@@ -18,8 +18,6 @@ def make_base_directories():
     """
     archivedir.mkdir(exist_ok=True)
     Path("bundles").mkdir(exist_ok=True)
-    # deprecated
-    (Path("bundles") / "submittedLoose").mkdir(exist_ok=True)
 
 
 def make_bundle_dir(bundledir):
@@ -122,12 +120,6 @@ def archiveHWBundle(file_name, *, basedir=Path(".")):
     """Archive a hw-pages bundle pdf"""
     print(f"Archiving homework bundle {file_name}")
     _archiveBundle(file_name, basedir=basedir, subdir=Path("HW"))
-
-
-def archiveLBundle(file_name):
-    """Archive a loose-pages bundle pdf"""
-    print(f"Archiving loose-page bundle {file_name}")
-    _archiveBundle(file_name, subdir=Path("submittedLoose"))
 
 
 def archiveTBundle(file_name):

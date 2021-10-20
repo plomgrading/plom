@@ -112,12 +112,6 @@ class EXPage(BaseModel):
     image = pw.ForeignKeyField(Image, backref="expages")
 
 
-class LPage(BaseModel):  # a page that just knows its t. - a loose page
-    test = pw.ForeignKeyField(Test, backref="lpages")
-    order = pw.IntegerField(null=False)
-    image = pw.ForeignKeyField(Image, backref="lpages")
-
-
 # still needs work - maybe some bundle object with unique key.
 class UnknownPage(BaseModel):
     image = pw.ForeignKeyField(Image, backref="upages", null=True)
@@ -176,7 +170,8 @@ class OldAnnotation(BaseModel):
     user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
     aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
     edition = pw.IntegerField(null=True)
-    integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
+    # concat of md5sums of underlying apages
+    integrity_check = pw.CharField(null=True)
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
