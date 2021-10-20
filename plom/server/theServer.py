@@ -137,6 +137,7 @@ class Server:
         IDgetDoneTasks,
         IDgetImages,
         IDgetImageFromATest,
+        IDgetImageList,
         ID_get_donotmark_images,
         IDclaimThisTask,
         IDdidNotFinish,
