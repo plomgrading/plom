@@ -329,7 +329,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.session.get(
-                "https://{}/ID/imageList".format(self.server),
+                "https://{}/TMP/imageList".format(self.server),
                 json={"user": self.user, "token": self.token},
                 verify=False,
             )

@@ -560,8 +560,9 @@ class IDHandler:
         router.add_put("/ID/{papernum}", self.IdentifyPaper)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
-        router.add_get("/ID/imageList", self.IDgetImageList)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)
+        # This API needs hackery/removal the future.
+        router.add_get("/TMP/imageList", self.IDgetImageList)
