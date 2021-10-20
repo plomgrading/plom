@@ -145,16 +145,6 @@ def RgetIdentified(self):
     return idd_dict
 
 
-def get_min_mean_median_mode_max(numbers):
-    """Compute the min, mean, median, mode and max values from a list of numbers"""
-    from statistics import mean, median, mode
-
-    ln = len(numbers)
-    if ln == 0:
-        return None, None, None, None, None
-    return min(numbers), mean(numbers), median(numbers), mode(numbers), max(numbers)
-
-
 def RgetProgress(self, spec, q, v):
     """For the given question/version return a simple progress summary = a dict with keys
     [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken,
@@ -192,26 +182,36 @@ def RgetProgress(self, spec, q, v):
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))
-    if NMarked == 0:  # in case nothing done.
-        mtime = None
-    else:
-        mtime = SMTime / NMarked
 
     # this function returns Nones if mark_list is empty
-    mn, avg, med, mode, mx = get_min_mean_median_mode_max(mark_list)
+    if len(mark_list) == 0:
+        return {
+            "NScanned": NScanned,
+            "NMarked": NMarked,
+            "NRecent": NRecent,
+            "fullMark": FullMark,
+            "avgMTime": None,
+            "avgMark": None,
+            "minMark": None,
+            "medianMark": None,
+            "modeMark": None,
+            "maxMark": None,
+        }
+    else:
+        from statistics import mean, median, mode
 
-    return {
-        "NScanned": NScanned,
-        "NMarked": NMarked,
-        "NRecent": NRecent,
-        "fullMark": FullMark,
-        "avgMTime": mtime,
-        "avgMark": avg,
-        "minMark": mn,
-        "medianMark": med,
-        "modeMark": mode,
-        "maxMark": mx,
-    }
+        return {
+            "NScanned": NScanned,
+            "NMarked": NMarked,
+            "NRecent": NRecent,
+            "fullMark": FullMark,
+            "avgMTime": SMTime / NMarked,
+            "avgMark": mean(mark_list),
+            "minMark": min(mark_list),
+            "medianMark": median(mark_list),
+            "modeMark": mode(mark_list),
+            "maxMark": max(mark_list),
+        }
 
 
 def RgetMarkHistogram(self, q, v):
