@@ -147,17 +147,12 @@ def RgetIdentified(self):
 
 def get_min_mean_median_mode_max(numbers):
     """Compute the min, mean, median, mode and max values from a list of numbers"""
+    from statistics import mean, median, mode
+
     ln = len(numbers)
     if ln == 0:
         return None, None, None, None, None
-    avg = sum(numbers) / ln
-    numbers.sort()
-    if ln % 2 == 0:
-        med = numbers[ln // 2]
-    else:
-        med = (numbers[ln // 2] + numbers[ln // 2 + 1]) / 2
-    mode = max(set(numbers), key=numbers.count)
-    return min(numbers), avg, med, mode, max(numbers)
+    return min(numbers), mean(numbers), median(numbers), mode(numbers), max(numbers)
 
 
 def RgetProgress(self, spec, q, v):
