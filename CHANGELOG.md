@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Clients can tag unannotated questions.
+* Various fixes to auto reading of student IDs.
 
 
 ## [0.7.2] - 2021-10-13
