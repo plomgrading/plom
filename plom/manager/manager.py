@@ -306,6 +306,8 @@ class ProgressBox(QGroupBox):
         grid.addWidget(self.mtL)
         self.avgL = QLabel()
         grid.addWidget(self.avgL)
+        self.mmfL = QLabel()
+        grid.addWidget(self.mmfL)
 
         self.pb = QProgressBar()
         self.pb.setFormat("%v / %m")
@@ -334,8 +336,15 @@ class ProgressBox(QGroupBox):
             return
         if self.stats["NMarked"] > 0:
             self.avgL.setText(
-                "Average mark = {:0.2f} / {}".format(
-                    self.stats["avgMark"], self.stats["fullMark"]
+                "Mean : Median : Mode = {:0.2f} : {} : {}".format(
+                    self.stats["avgMark"],
+                    self.stats["medianMark"],
+                    self.stats["modeMark"],
+                )
+            )
+            self.mmfL.setText(
+                "Min : Max : Full = {} : {} : {}".format(
+                    self.stats["minMark"], self.stats["maxMark"], self.stats["fullMark"]
                 )
             )
             self.mtL.setText(
@@ -343,7 +352,10 @@ class ProgressBox(QGroupBox):
             )
             self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
         else:
-            self.avgL.setText("Average mark = N/A")
+            self.avgL.setText("Mean : Median : Mode  = N/A")
+            self.mmfL.setText(
+                "Min : Max : Full = N/A : N/A : {}".format(self.stats["fullMark"])
+            )
             self.mtL.setText("Avg marking time = N/A")
             self.lhL.setText("# Marked in last hour = N/A")
 
