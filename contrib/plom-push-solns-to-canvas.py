@@ -4,17 +4,9 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021 Colin B. Macdonald
 
-"""Upload reassembled Plom papers and grades to Canvas.
+"""Upload reassembled solutions to Canvas.
 
-Overview:
-
-  1. Finish grading
-  2. Run `plom-finish csv` and `plom-finish reassemble`.
-  3. Create `api_secrets.py` containing:
-     ```
-     my_key = "11224~AABBCCDDEEFF..."
-     ```
-  4. Run this script.
+TODO: this should be merged with plom-push-to-canvas.py
 """
 
 import argparse
@@ -195,6 +187,10 @@ if __name__ == "__main__":
     if not Path("reassembled").exists():
         raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
     print('  Found "reassembled/" directory.')
+    soln_dir = Path("solutions")
+    if not soln_dir.exists():
+        raise ValueError(f'Missing "soln_dir": run `plom-finish solutions`')
+    print(f'  Found "soln_dir" directory.')
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
@@ -230,14 +226,11 @@ if __name__ == "__main__":
     sis_id_to_marks = get_sis_id_to_marks()
     print("    done.")
 
-    if args.dry_run:
-        print("\n\nPushing grades and marked papers to Canvas [DRY-RUN]...")
-    else:
-        print("\n\nPushing grades and marked papers to Canvas...")
+    print("\n\nPushing grades to Canvas...")
     print("  --------------------------------------------------------------------")
     timeouts = []
-    for pdf in tqdm(Path("reassembled").glob("*.pdf")):
-        sis_id = pdf.stem.split("_")[1]
+    for pdf in tqdm(soln_dir.glob("*.pdf")):
+        sis_id = pdf.stem.split("_")[-1]
         assert len(sis_id) == 8
         assert set(sis_id) <= set(string.digits)
         sub, name = sis_id_to_sub_and_name[sis_id]
@@ -262,9 +255,6 @@ if __name__ == "__main__":
             except:  # Can get a `CanvasException` here from timeouts
                 timeouts += [(pdf, mark, name)]
 
-            # Push the grade change
-            sub.edit(submission={"posted_grade": mark})
-
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
     else:
@@ -273,11 +263,6 @@ if __name__ == "__main__":
     print(f"         filename       mark    (student name)")
     print("    --------------------------------------------")
     for (i, (pdf, mark, name)) in enumerate(timeouts):
-        if args.obfuscate:
-            print(
-                f"    {obfuscate_reassembled_pdfname(pdf.name)}  {mark}  ({obfuscate_student_name(name)})"
-            )
-        else:
-            print(f"    {pdf.name}  {mark}  ({name})")
+        print(f"    {pdf.name}  {mark}  ({name})")
     if not args.dry_run:
         print("  These should be uploaded manually.\n")
