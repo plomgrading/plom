@@ -111,7 +111,6 @@ class ScanMessenger(BaseMessenger):
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:

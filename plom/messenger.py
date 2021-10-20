@@ -789,7 +789,6 @@ class Messenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/MK/solution".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,

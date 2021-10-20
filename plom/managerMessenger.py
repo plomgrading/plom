@@ -1478,7 +1478,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/marked".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -1499,7 +1498,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/solutions".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -1520,7 +1518,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/MK/solution".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1568,7 +1565,6 @@ class ManagerMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1586,7 +1582,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.delete(
                 "https://{}/admin/solution".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,

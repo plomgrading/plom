@@ -200,7 +200,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/solutions".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -221,7 +220,6 @@ class FinishMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/MK/solution".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
