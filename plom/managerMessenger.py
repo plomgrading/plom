@@ -315,7 +315,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/TMP/imageList".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             # TODO: print(response.encoding) autodetected
