@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from plom import __version__
 from plom import Default_Port
 from plom.client import Chooser
-from plom.client.useful_classes import ErrorMessage
+from plom.client.useful_classes import ErrorMessage, WarningQuestion
 
 
 def add_popup_to_toplevel_exception_handler():
@@ -39,14 +39,16 @@ def add_popup_to_toplevel_exception_handler():
         else:
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {datetime.now()}\n\n")
-        ErrorMessage(
+        msg = ErrorMessage(
             """<p><b>Something unexpected has happened!</b>
             A partial error message is shown below.</p>
             <p>(You could consider filing an issue; if you do, please copy-paste
             the entire text under &ldquo;Show Details&rdquo;.)</p>""",
             info=abbrev,
             details="".join(lines),
-        ).exec_()
+        )
+        msg.setIcon(QMessageBox.Critical)
+        msg.exec_()
         # call the original hook after our dialog closes
         sys._excepthook(exctype, value, traceback)
         sys.exit(1)
@@ -62,16 +64,9 @@ def sigint_handler(*args):
     [1] https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
     """
     sys.stderr.write("\r")
-    if (
-        QMessageBox.question(
-            None,
-            "",
-            "Are you sure you want to force-quit?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        == QMessageBox.Yes
-    ):
+    msg = WarningQuestion("Caught interrupt signal!", "Do you want to force-quit?")
+    msg.setDefaultButton(QMessageBox.No)
+    if msg.exec_() == QMessageBox.Yes:
         QApplication.exit(42)
 
 

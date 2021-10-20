@@ -5,19 +5,21 @@
 
 from io import BytesIO
 import logging
-import ssl
+import os
 import threading
 
-import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
+import urllib3
 
 from plom import __version__, Plom_API_Version, Default_Port
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomAPIException,
+    PlomConnectionError,
     PlomExistingLoginException,
+    PlomSSLError,
     PlomTaskChangedError,
     PlomTaskDeletedError,
 )
@@ -27,10 +29,6 @@ log = logging.getLogger("messenger")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 class BaseMessenger:
     """Basic communication with a Plom Server.
@@ -39,10 +37,16 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port):
-        sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-        sslContext.check_hostname = False
-        # Server defaults
+    def __init__(self, s=None, port=Default_Port, verify=True):
+        """Initialize a new BaseMessenger.
+
+        Args:
+
+        Keyword Arguments:
+            verify (True/False/str): controls where SSL certs are
+                checked, see `requests` lib which ultimately receives
+                this.
+        """
         self.session = None
         self.user = None
         self.token = None
@@ -53,6 +57,14 @@ class BaseMessenger:
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
         # base = "https://{}:{}/".format(s, mp)
+        self.verify = verify
+        if not self.verify:
+            self._shutup_urllib3()
+
+    def _shutup_urllib3(self):
+        # If we use unverified ssl certificates we get lots of warnings,
+        # so put in this to hide them.
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
     def clone(cls, m):
@@ -61,12 +73,19 @@ class BaseMessenger:
         In particular, we have our own mutex.
         """
         log.debug("cloning a messeger, but building new session...")
-        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1])
+        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1], verify=m.verify)
         x.start()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
         x.token = m.token
         return x
+
+    def force_ssl_unverified(self):
+        """This connection (can be open) does not need to verify cert SSL going forward"""
+        self.verify = False
+        if self.session:
+            self.session.verify = False
+        self._shutup_urllib3()
 
     def whoami(self):
         return self.user
@@ -81,22 +100,30 @@ class BaseMessenger:
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+            self.session.verify = self.verify
+
         try:
-            response = self.session.get(
-                "https://{}/Version".format(self.server),
-                verify=False,
-            )
-            response.raise_for_status()
+            try:
+                response = self.session.get(f"https://{self.server}/Version")
+                response.raise_for_status()
+                return response.text
+            except requests.exceptions.SSLError as err:
+                if os.environ.get("PLOM_NO_SSL_VERIFY"):
+                    log.warning("Server SSL cert self-signed/invalid: skip via env var")
+                elif "dev" in __version__:
+                    log.warning(
+                        "Server SSL cert self-signed/invalid: skip b/c dev client"
+                    )
+                else:
+                    raise PlomSSLError(err) from None
+                self.force_ssl_unverified()
+                response = self.session.get(f"https://{self.server}/Version")
+                response.raise_for_status()
+                return response.text
         except requests.ConnectionError as err:
-            raise PlomBenignException(
-                "Cannot connect to server. Please check server details."
-            ) from None
+            raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
-            raise PlomBenignException(
-                "The URL format was invalid. Please try again."
-            ) from None
-        r = response.text
-        return r
+            raise PlomConnectionError(f"Invalid URL: {err}") from None
 
     def stop(self):
         """Stop the messenger"""
@@ -136,7 +163,6 @@ class BaseMessenger:
                     "api": Plom_API_Version,
                     "client_ver": __version__,
                 },
-                verify=False,
                 timeout=5,
             )
             # throw errors when response code != 200.
@@ -169,7 +195,6 @@ class BaseMessenger:
             response = self.session.delete(
                 "https://{}/authorisation".format(self.server),
                 json={"user": user, "password": pw},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -188,7 +213,6 @@ class BaseMessenger:
             response = self.session.delete(
                 "https://{}/users/{}".format(self.server, self.user),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -210,9 +234,7 @@ class BaseMessenger:
     def getInfoShortName(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/info/shortName".format(self.server), verify=False
-            )
+            response = self.session.get("https://{}/info/shortName".format(self.server))
             response.raise_for_status()
             shortName = response.text
         except requests.HTTPError as e:
@@ -237,10 +259,7 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/info/spec".format(self.server),
-                verify=False,
-            )
+            response = self.session.get("https://{}/info/spec".format(self.server))
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
@@ -269,7 +288,6 @@ class BaseMessenger:
             response = self.session.get(
                 "https://{}/ID/classlist".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -316,7 +334,6 @@ class BaseMessenger:
                     "token": self.token,
                     "rubric": new_rubric,
                 },
-                verify=False,
             )
             response.raise_for_status()
 
@@ -357,7 +374,6 @@ class BaseMessenger:
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -393,7 +409,6 @@ class BaseMessenger:
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -431,7 +446,6 @@ class BaseMessenger:
                     "token": self.token,
                     "rubric": new_rubric,
                 },
-                verify=False,
             )
             response.raise_for_status()
 
@@ -463,7 +477,6 @@ class BaseMessenger:
             response = self.session.get(
                 "https://{}/ID/images/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -503,7 +516,6 @@ class BaseMessenger:
             response = self.session.get(
                 f"https://{self.server}/ID/donotmark_images/{papernum}",
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -564,7 +576,6 @@ class BaseMessenger:
                     "token": self.token,
                     "integrity": integrity,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -619,7 +630,6 @@ class BaseMessenger:
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return BytesIO(response.content).getvalue()

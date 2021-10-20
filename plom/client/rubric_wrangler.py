@@ -418,7 +418,7 @@ class RubricWrangler(QDialog):
             store["tabs"].append(self.ST.STW.widget(p).getCurrentKeys())
         # TODO: this doesn't yet set the names: but they can't change in here anyway
         # for p in range(self.num_user_tabs):
-        #     log.warn(self.ST.STW.widget(p).shortname)
+        #     log.warning(self.ST.STW.widget(p).shortname)
         #     store["user_tab_names"].append(...)
         store["hidden"] = self.ST.STW.widget(self.num_user_tabs).getCurrentKeys()
         # anything not hidden is shown

@@ -34,11 +34,13 @@ from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
     PlomExistingLoginException,
+    PlomSSLError,
 )
 from plom.messenger import Messenger
 from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
-from .useful_classes import ErrorMessage, SimpleMessage, ClientSettingsDialog
+from .useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
+from .useful_classes import ClientSettingsDialog
 
 from plom.messenger import ManagerMessenger
 
@@ -192,12 +194,11 @@ class Chooser(QDialog):
         self.saveDetails()
 
         if user == "manager":
-            _ = """
-                <p>You are not allowed to mark or ID papers while logged-in
-                  as &ldquo;manager&rdquo;.</p>
-                <p>Would you instead like to run the Server Management tool?</p>
-            """
-            if SimpleMessage(_).exec_() == QMessageBox.No:
+            msg = SimpleQuestion(
+                "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
+                "Would you instead like to run the Server Management tool?",
+            )
+            if msg.exec_() == QMessageBox.No:
                 return
             which_subapp = "Manager"
             self.messenger = None
@@ -208,9 +209,24 @@ class Chooser(QDialog):
             else:
                 self.messenger = Messenger(server, mport)
         try:
-            self.messenger.start()
+            try:
+                self.messenger.start()
+            except PlomSSLError as e:
+                msg = WarningQuestion(
+                    "SSL error: cannot verify the identity of the server.",
+                    "Do you want to disable SSL certificate verification?  Not recommended.",
+                    details=f"{e}",
+                )
+                msg.setDefaultButton(QMessageBox.No)
+                if msg.exec_() == QMessageBox.No:
+                    self.messenger = None
+                    return
+                self.messenger.force_ssl_unverified()
+                self.messenger.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage(
+                "Could not connect to server:", info=f"{e}", info_preformatted=False
+            ).exec_()
             self.messenger = None
             return
 
@@ -225,23 +241,20 @@ class Chooser(QDialog):
             self.messenger = None
             return
         except PlomAuthenticationException as e:
-            # not PlomAuthenticationException(blah) has args [PlomAuthenticationException, "you are not authenticated, blah] - we only want the blah.
-            ErrorMessage("Could not authenticate: {}".format(e.args[-1])).exec_()
+            ErrorMessage(f"Could not authenticate: {e}").exec_()
             self.messenger = None
             return
         except PlomExistingLoginException:
-            if (
-                SimpleMessage(
-                    "You appear to be already logged in!\n\n"
-                    "  * Perhaps a previous session crashed?\n"
-                    "  * Do you have another client running,\n"
-                    "    e.g., on another computer?\n\n"
-                    "Should I force-logout the existing authorisation?"
-                    " (and then you can try to log in again)\n\n"
-                    "The other client will likely crash."
-                ).exec_()
-                == QMessageBox.Yes
-            ):
+            msg = WarningQuestion(
+                "You appear to be already logged in!\n\n"
+                "  * Perhaps a previous session crashed?\n"
+                "  * Do you have another client running,\n"
+                "    e.g., on another computer?\n\n"
+                "Should I force-logout the existing authorisation?"
+                " (and then you can try to log in again)\n\n"
+                "The other client will likely crash."
+            )
+            if msg.exec_() == QMessageBox.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
             self.messenger = None
             return
@@ -389,10 +402,26 @@ class Chooser(QDialog):
 
         if not self.messenger:
             self.messenger = Messenger(server, mport)
+
         try:
-            ver = self.messenger.start()
+            try:
+                ver = self.messenger.start()
+            except PlomSSLError as e:
+                msg = WarningQuestion(
+                    "SSL error: cannot verify the identity of the server.",
+                    "Do you want to disable SSL certificate verification?  Not recommended.",
+                    details=f"{e}",
+                )
+                msg.setDefaultButton(QMessageBox.No)
+                if msg.exec_() == QMessageBox.No:
+                    self.messenger = None
+                    return
+                self.messenger.force_ssl_unverified()
+                ver = self.messenger.start()
         except PlomBenignException as e:
-            ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
+            ErrorMessage(
+                "Could not connect to server:", info=f"{e}", info_preformatted=False
+            ).exec_()
             self.messenger = None
             return
         self.ui.infoLabel.setText(ver)

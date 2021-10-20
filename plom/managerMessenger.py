@@ -2,11 +2,10 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-from io import StringIO, BytesIO
-
 import hashlib
+from io import StringIO, BytesIO
 import json
-import urllib3
+
 import requests
 from requests_toolbelt import MultipartDecoder, MultipartEncoder
 
@@ -22,11 +21,6 @@ from plom.plom_exceptions import (
     PlomExistingDatabase,
 )
 from plom.baseMessenger import BaseMessenger
-
-
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 # TODO:
@@ -57,7 +51,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/populateDB".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -82,7 +75,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/pageVersionMap".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -104,7 +96,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/questionVersionMap".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -140,7 +131,6 @@ class ManagerMessenger(BaseMessenger):
                     "sid": studentID,
                     "sname": studentName,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -186,7 +176,6 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "classlist": classdict,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -208,7 +197,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/completionStatus".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -229,7 +217,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/status/{}".format(self.server, test),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -254,7 +241,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/scanned".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -280,7 +266,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/incomplete".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -307,7 +292,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/progress".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -331,7 +315,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/TMP/imageList".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             # TODO: print(response.encoding) autodetected
@@ -354,7 +337,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/predictions".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             # TODO: print(response.encoding) autodetected
@@ -381,7 +363,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.get(
                 "https://{}/ID/randomImage".format(self.server),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             imageList = []
@@ -414,7 +395,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/progress".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -440,7 +420,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/questionUserProgress".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -466,7 +445,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/markHistogram".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -492,7 +470,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/missingTestPage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -527,7 +504,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/missingHWQuestion".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -563,7 +539,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.delete(
                 "https://{}/admin/scannedPages".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -595,7 +570,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/unknownPageNames".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -620,7 +594,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/discardNames".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -642,7 +615,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/collidingPageNames".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -664,7 +636,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/scannedTPage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -694,7 +665,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/scannedHWPage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -724,7 +694,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/scannedEXPage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -754,7 +723,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/scannedLPage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -783,7 +751,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/unknownImage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -810,7 +777,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/discardImage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -837,7 +803,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/admin/collidingImage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -864,7 +829,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.delete(
                 "https://{}/admin/unknownImage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -890,7 +854,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.delete(
                 "https://{}/admin/collidingImage".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -922,7 +885,6 @@ class ManagerMessenger(BaseMessenger):
                     "test": testNumber,
                     "question": questionNumber,
                 },
-                verify=False,
             )
             response.raise_for_status()
             # response is [n, image1, image2,... image.n]
@@ -961,7 +923,6 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "test": testNumber,
                 },
-                verify=False,
             )
             response.raise_for_status()
             # response is [n, image1, image2,... image.n]
@@ -999,7 +960,6 @@ class ManagerMessenger(BaseMessenger):
                     "test": testNumber,
                     "page": pageNumber,
                 },
-                verify=False,
             )
             response.raise_for_status()
             # either ["scanned", version] or ["collision", version, image]
@@ -1038,7 +998,6 @@ class ManagerMessenger(BaseMessenger):
                     "page": page,
                     "rotation": theta,
                 },
-                verify=False,
             )
             response.raise_for_status()
             collisionTest = response.json()
@@ -1073,7 +1032,6 @@ class ManagerMessenger(BaseMessenger):
                     "question": question,
                     "rotation": theta,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1105,7 +1063,6 @@ class ManagerMessenger(BaseMessenger):
                     "question": question,
                     "rotation": theta,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1137,7 +1094,6 @@ class ManagerMessenger(BaseMessenger):
                     "page": page,
                     "version": version,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1161,7 +1117,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.put(
                 "https://{}/admin/discardToUnknown".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1187,7 +1142,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.delete(
                 "https://{}/ID/predictedID".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1212,7 +1166,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.post(
                 "https://{}/ID/predictedID".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1244,7 +1197,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/identified".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1269,7 +1221,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/userList".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1294,7 +1245,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/userDetails".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1319,7 +1269,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/markReview".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1347,7 +1296,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/idReview".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1373,7 +1321,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.delete(
                 "https://{}/authorisation/{}".format(self.server, someuser),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1392,7 +1339,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.put(
                 "https://{}/enableDisable/{}".format(self.server, someuser),
                 json={"user": self.user, "token": self.token, "enableFlag": enableFlag},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1411,7 +1357,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.post(
                 "https://{}/authorisation/{}".format(self.server, someuser),
                 json={"user": self.user, "token": self.token, "password": password},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1436,7 +1381,6 @@ class ManagerMessenger(BaseMessenger):
             response = self.session.patch(
                 "https://{}/MK/revert/{}".format(self.server, code),
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -1457,7 +1401,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.patch(
                 "https://{}/MK/review".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1489,7 +1432,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.patch(
                 "https://{}/ID/review".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1516,7 +1458,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/outToDo".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -1537,7 +1478,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/marked".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token, "q": q, "v": v},
             )
             response.raise_for_status()
@@ -1558,7 +1498,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/REP/solutions".format(self.server),
-                verify=False,
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -1579,7 +1518,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.get(
                 "https://{}/MK/solution".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
@@ -1627,7 +1565,6 @@ class ManagerMessenger(BaseMessenger):
                 json={"user": self.user, "token": self.token},
                 data=dat,
                 headers={"Content-Type": dat.content_type},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -1645,7 +1582,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.session.delete(
                 "https://{}/admin/solution".format(self.server),
-                verify=False,
                 json={
                     "user": self.user,
                     "token": self.token,
