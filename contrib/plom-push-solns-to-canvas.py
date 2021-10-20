@@ -4,17 +4,9 @@
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021 Colin B. Macdonald
 
-"""Upload reassembled Plom papers and grades to Canvas.
+"""Upload reassembled solutions to Canvas.
 
-Overview:
-
-  1. Finish grading
-  2. Run `plom-finish csv` and `plom-finish reassemble`.
-  3. Create `api_secrets.py` containing:
-     ```
-     my_key = "11224~AABBCCDDEEFF..."
-     ```
-  4. Run this script.
+TODO: this should be merged with plom-push-to-canvas.py
 """
 
 import argparse
@@ -263,9 +255,6 @@ if __name__ == "__main__":
             except:  # Can get a `CanvasException` here from timeouts
                 timeouts += [(pdf, mark, name)]
 
-            # Push the grade change
-            #sub.edit(submission={"posted_grade": mark})
-
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
     else:
@@ -274,11 +263,6 @@ if __name__ == "__main__":
     print(f"         filename       mark    (student name)")
     print("    --------------------------------------------")
     for (i, (pdf, mark, name)) in enumerate(timeouts):
-        if args.obfuscate:
-            print(
-                f"    {obfuscate_reassembled_pdfname(pdf.name)}  {mark}  ({obfuscate_student_name(name)})"
-            )
-        else:
-            print(f"    {pdf.name}  {mark}  ({name})")
+        print(f"    {pdf.name}  {mark}  ({name})")
     if not args.dry_run:
         print("  These should be uploaded manually.\n")

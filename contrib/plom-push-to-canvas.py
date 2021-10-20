@@ -258,7 +258,7 @@ if __name__ == "__main__":
             try:
                 # TODO: it has a return value, maybe we should look, assert etc?
                 sub.upload_comment(pdf)
-                time.sleep(random.uniform(2, 6))
+                time.sleep(random.uniform(1, 2))
             except:  # Can get a `CanvasException` here from timeouts
                 timeouts += [(pdf, mark, name)]
 
