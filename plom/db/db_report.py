@@ -145,9 +145,25 @@ def RgetIdentified(self):
     return idd_dict
 
 
+def get_min_mean_median_mode_max(numbers):
+    """Compute the min, mean, median, mode and max values from a list of numbers"""
+    ln = len(numbers)
+    if ln == 0:
+        return None, None, None, None, None
+    avg = sum(numbers) / ln
+    numbers.sort()
+    if ln % 2 == 0:
+        med = numbers[ln // 2]
+    else:
+        med = (numbers[ln // 2] + numbers[ln // 2 + 1]) / 2
+    mode = max(set(numbers), key=numbers.count)
+    return min(numbers), avg, med, mode, max(numbers)
+
+
 def RgetProgress(self, spec, q, v):
     """For the given question/version return a simple progress summary = a dict with keys
-    [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken] and their values
+    [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken,
+    medianMark, minMark, modeMark, maxMark] and their values
     numberRecent = number done in the last hour.
     """
     # set up a time-delta of 1 hour for calc of number done recently.
@@ -156,11 +172,12 @@ def RgetProgress(self, spec, q, v):
     NScanned = 0  # number scanned
     NMarked = 0  # number marked
     NRecent = 0  # number marked in the last hour
-    SMark = 0  # sum mark - for computing average
     SMTime = 0  # sum marking time - for computing average
     FullMark = int(
         spec["question"][str(q)]["mark"]
     )  # full mark for the given question/version
+
+    mark_list = []
 
     for qref in (
         QGroup.select()
@@ -171,34 +188,35 @@ def RgetProgress(self, spec, q, v):
             Group.scanned == True,
         )
     ):
-        # FullMark = qref.fullmark
         NScanned += 1
         if qref.marked == True:
             NMarked += 1
-            SMark += qref.annotations[-1].mark
+            mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
             if datetime.now() - qref.annotations[-1].time < one_hour:
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))
     if NMarked == 0:  # in case nothing done.
-        return {
-            "NScanned": NScanned,
-            "NMarked": NMarked,
-            "NRecent": NRecent,
-            "fullMark": FullMark,
-            "avgMark": None,
-            "avgMTime": None,
-        }
+        mtime = None
     else:
-        return {
-            "NScanned": NScanned,
-            "NMarked": NMarked,
-            "NRecent": NRecent,
-            "fullMark": FullMark,
-            "avgMark": SMark / NMarked,
-            "avgMTime": SMTime / NMarked,
-        }
+        mtime = SMTime / NMarked
+
+    # this function returns Nones if mark_list is empty
+    mn, avg, med, mode, mx = get_min_mean_median_mode_max(mark_list)
+
+    return {
+        "NScanned": NScanned,
+        "NMarked": NMarked,
+        "NRecent": NRecent,
+        "fullMark": FullMark,
+        "avgMTime": mtime,
+        "avgMark": avg,
+        "minMark": mn,
+        "medianMark": med,
+        "modeMark": mode,
+        "maxMark": mx,
+    }
 
 
 def RgetMarkHistogram(self, q, v):
