@@ -196,8 +196,8 @@ class ReportHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
         # A dictionary which includes info about the grading status:
-        # {exam number: [Test identifies, Total score calculated, number of marked pages], ...}
-        # {2: [True, True, 0], ...}
+        # {exam number: [Test scanned, Test identifies, Total score calculated, number of marked pages], ...}
+        # {1: [False, False, True, 2], 2: [True, True, True, 0], ...}
         return web.json_response(self.server.RgetCompletionStatus(), status=200)
 
     # @routes.get("/REP/outToDo")

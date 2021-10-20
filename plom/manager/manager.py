@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -1182,7 +1182,7 @@ class Manager(QWidget):
 
     def initOverallTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(
-            ["Test number", "Identified", "Questions Marked"]
+            ["Test number", "Scanned", "Identified", "Questions Marked"]
         )
         self.ui.overallTW.activated.connect(self.viewTestStatus)
         self.ui.overallTW.setSortingEnabled(True)
@@ -1204,21 +1204,33 @@ class Manager(QWidget):
         opDict = self.msgr.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
+        # each dict value is [Scanned, Identified, #Marked]
         r = 0
         for t in tk:
             self.ui.overallTW.insertRow(r)
             self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
+
             it = QTableWidgetItem("{}".format(opDict[t][0]))
             if opDict[t][0]:
                 it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been identified")
+                it.setToolTip("Has been scanned")
+            elif opDict[t][2] > 0:
+                it.setBackground(QBrush(Qt.red))
+                it.setToolTip("Has been (part-)marked but not completely scanned.")
+
             self.ui.overallTW.setItem(r, 1, it)
 
-            it = QTableWidgetItem(str(opDict[t][1]).rjust(2))
-            if opDict[t][1] == self.numberOfQuestions:
+            it = QTableWidgetItem("{}".format(opDict[t][1]))
+            if opDict[t][1]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 2, it)
+
+            it = QTableWidgetItem(str(opDict[t][2]).rjust(3))
+            if opDict[t][2] == self.numberOfQuestions:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 2, it)
+            self.ui.overallTW.setItem(r, 3, it)
             r += 1
 
     def initIDTab(self):

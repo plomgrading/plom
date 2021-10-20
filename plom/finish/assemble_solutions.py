@@ -148,8 +148,9 @@ def main(server=None, pwd=None):
         for t in completedTests:
             # check if the given test is ready for reassembly (and hence soln ready for assembly)
             if (
-                completedTests[t][0] == True
-                and completedTests[t][1] == numberOfQuestions
+                (completedTests[t][0] is True)
+                and (completedTests[t][1] is True)
+                and (completedTests[t][2] == numberOfQuestions)
             ):
                 # append args for this test to list
                 cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
