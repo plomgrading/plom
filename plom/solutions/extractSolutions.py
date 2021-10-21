@@ -126,8 +126,10 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
 
     # split sources pdf into page images
     for v in range(1, testSpec["numberOfVersions"] + 1):
-        processFileToBitmaps(source_path / f"solutions{v}.pdf", tmpdir)
-    # we now have images of the form solutionsv-p.pdf
+        # TODO: this function tells us the filenames, use that
+        ret = processFileToBitmaps(source_path / f"solutions{v}.pdf", tmpdir)
+        print("DEBUG")
+        print(ret)
 
     # time to combine things and save in solution_path
     solution_path.mkdir(exist_ok=True)
@@ -138,24 +140,29 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
             mxv = 1  # only do version 1 if 'fix'
         for v in range(1, mxv + 1):
             print(f"Processing solutions for Q{q} V{v}")
-            image_list = [
-                tmpdir / f"solutions{v}-{p}.png"
-                for p in solutionSpec["solution"][sq]["pages"]
-            ]
+            # TODO: Yuck need proper fix coordinating with filesnames from processFileToBitmaps
+            if mxv > 20:  # 20 approx correct
+                image_list = [
+                    tmpdir / f"solutions{v}-{p:02}.png"
+                    for p in solutionSpec["solution"][sq]["pages"]
+                ]
+            else:
+                image_list = [
+                    tmpdir / f"solutions{v}-{p}.png"
+                    for p in solutionSpec["solution"][sq]["pages"]
+                ]
             # check the image list - make sure they exist
             for fn in image_list:
                 print(fn)
-                if fn.is_file() is False:
-                    raise RuntimeError(f"Error - could not find solution image = {fn.name}")
-                    print(
-                        "Make sure the structure of your solution pdf matches your test pdf."
+                if not fn.is_file():
+                    print("Make sure structure of solution pdf matches your test pdf.")
+                    print(f"Leaving tmpdir {tmpdir} for debuging")
+                    raise RuntimeError(
+                        f"Error - could not find solution image = {fn.name}"
                     )
-                    #shutil.rmtree(tmpdir)
-                    return False
-            #
             destination = solution_path / f"solution.q{q}.v{v}.png"
             glueImages(image_list, destination)
 
-    #shutil.rmtree(tmpdir)
+    shutil.rmtree(tmpdir)
 
     return True
