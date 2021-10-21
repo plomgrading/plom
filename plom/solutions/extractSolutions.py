@@ -141,7 +141,7 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
         for v in range(1, mxv + 1):
             print(f"Processing solutions for Q{q} V{v}")
             # TODO: Yuck need proper fix coordinating with filesnames from processFileToBitmaps
-            if mxv > 20:  # 20 approx correct
+            if mxv >= 10:  # TODO: replace with proper fix or think about off-by-one
                 image_list = [
                     tmpdir / f"solutions{v}-{p:02}.png"
                     for p in solutionSpec["solution"][sq]["pages"]
