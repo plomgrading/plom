@@ -71,6 +71,9 @@ longerHelp = """
         [solution.3]
         pages = [5]
     "
+    Note that the page lists for a given solution need not be contiguous,
+    (or even ordered) - they just need to be lists of positive integers
+    between 1 and numberOfPages.
     You can then extract and upload your solutions using this spec via
        `plom-solutions extract --upload mySolutionSpec.toml`
 
