@@ -147,7 +147,8 @@ def RgetIdentified(self):
 
 def RgetProgress(self, spec, q, v):
     """For the given question/version return a simple progress summary = a dict with keys
-    [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken] and their values
+    [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken,
+    medianMark, minMark, modeMark, maxMark] and their values
     numberRecent = number done in the last hour.
     """
     # set up a time-delta of 1 hour for calc of number done recently.
@@ -156,11 +157,12 @@ def RgetProgress(self, spec, q, v):
     NScanned = 0  # number scanned
     NMarked = 0  # number marked
     NRecent = 0  # number marked in the last hour
-    SMark = 0  # sum mark - for computing average
     SMTime = 0  # sum marking time - for computing average
     FullMark = int(
         spec["question"][str(q)]["mark"]
     )  # full mark for the given question/version
+
+    mark_list = []
 
     for qref in (
         QGroup.select()
@@ -171,33 +173,44 @@ def RgetProgress(self, spec, q, v):
             Group.scanned == True,
         )
     ):
-        # FullMark = qref.fullmark
         NScanned += 1
         if qref.marked == True:
             NMarked += 1
-            SMark += qref.annotations[-1].mark
+            mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
             if datetime.now() - qref.annotations[-1].time < one_hour:
                 NRecent += 1
 
     log.debug("Sending progress summary for Q{}v{}".format(q, v))
-    if NMarked == 0:  # in case nothing done.
+
+    # this function returns Nones if mark_list is empty
+    if len(mark_list) == 0:
         return {
             "NScanned": NScanned,
             "NMarked": NMarked,
             "NRecent": NRecent,
             "fullMark": FullMark,
-            "avgMark": None,
             "avgMTime": None,
+            "avgMark": None,
+            "minMark": None,
+            "medianMark": None,
+            "modeMark": None,
+            "maxMark": None,
         }
     else:
+        from statistics import mean, median, mode
+
         return {
             "NScanned": NScanned,
             "NMarked": NMarked,
             "NRecent": NRecent,
             "fullMark": FullMark,
-            "avgMark": SMark / NMarked,
             "avgMTime": SMTime / NMarked,
+            "avgMark": mean(mark_list),
+            "minMark": min(mark_list),
+            "medianMark": median(mark_list),
+            "modeMark": mode(mark_list),
+            "maxMark": max(mark_list),
         }
 
 
