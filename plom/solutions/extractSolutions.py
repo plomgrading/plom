@@ -122,6 +122,7 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
 
     # create a tempdir for working
     tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+    print(f"temp dir is {tmpdir}")
 
     # split sources pdf into page images
     for v in range(1, testSpec["numberOfVersions"] + 1):
@@ -143,6 +144,7 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
             ]
             # check the image list - make sure they exist
             for fn in image_list:
+                print(fn)
                 if fn.is_file() is False:
                     print(f"Error - could not find solution image = {fn.name}")
                     print(
