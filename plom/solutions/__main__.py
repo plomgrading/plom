@@ -71,9 +71,6 @@ longerHelp = """
         [solution.3]
         pages = [5]
     "
-    Note that the page lists for a given solution need not be contiguous,
-    (or even ordered) - they just need to be lists of positive integers
-    between 1 and numberOfPages.
     You can then extract and upload your solutions using this spec via
        `plom-solutions extract --upload mySolutionSpec.toml`
 
@@ -117,7 +114,7 @@ def deleteSolutionImage(server, password, question, version):
         )
 
 
-def getSolutionImage(server, password, question, version):
+def getSolutionImageFromServer(server, password, question, version):
     img = getSolutionImage(question, version, server, password)
     if img is not None:
         with open("solution.{}.{}.png".format(question, version), "wb") as fh:
@@ -266,7 +263,7 @@ def main():
     if args.command == "upload":
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
     elif args.command == "get":
-        getSolutionImage(args.server, args.password, args.q, args.v)
+        getSolutionImageFromServer(args.server, args.password, args.q, args.v)
     elif args.command == "delete":
         deleteSolutionImage(args.server, args.password, args.q, args.v)
     elif args.command == "status":
