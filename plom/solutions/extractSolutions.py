@@ -146,16 +146,16 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
             for fn in image_list:
                 print(fn)
                 if fn.is_file() is False:
-                    print(f"Error - could not find solution image = {fn.name}")
+                    raise RuntimeError(f"Error - could not find solution image = {fn.name}")
                     print(
                         "Make sure the structure of your solution pdf matches your test pdf."
                     )
-                    shutil.rmtree(tmpdir)
+                    #shutil.rmtree(tmpdir)
                     return False
             #
             destination = solution_path / f"solution.q{q}.v{v}.png"
             glueImages(image_list, destination)
 
-    shutil.rmtree(tmpdir)
+    #shutil.rmtree(tmpdir)
 
     return True
