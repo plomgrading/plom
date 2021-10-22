@@ -126,10 +126,8 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
 
     # split sources pdf into page images
     for v in range(1, testSpec["numberOfVersions"] + 1):
-        # TODO: this function tells us the filenames, use that
-        ret = processFileToBitmaps(source_path / f"solutions{v}.pdf", tmpdir)
-        print("DEBUG")
-        print(ret)
+        # TODO: Issue #1744: this function returns the filenames...
+        processFileToBitmaps(source_path / f"solutions{v}.pdf", tmpdir)
 
     # time to combine things and save in solution_path
     solution_path.mkdir(exist_ok=True)
@@ -140,9 +138,12 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
             mxv = 1  # only do version 1 if 'fix'
         for v in range(1, mxv + 1):
             print(f"Processing solutions for Q{q} V{v}")
-            # TODO: Yuck need proper fix coordinating with filesnames from processFileToBitmaps
-            # TODO: replace with proper fix or think about off-by-one on that "10"
+            # TODO: Issue #1744: need proper fix coordinating with filenames
+            #       from processFileToBitmaps
+            if solutionSpec["numberOfPages"] >= 100:
+                raise NotImplementedError("Need proper fix for #1744")
             if solutionSpec["numberOfPages"] >= 10:
+                # 10 quite likely off by one
                 image_list = [
                     tmpdir / f"solutions{v}-{p:02}.png"
                     for p in solutionSpec["solution"][sq]["pages"]
@@ -154,10 +155,9 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
                 ]
             # check the image list - make sure they exist
             for fn in image_list:
-                print(fn)
                 if not fn.is_file():
                     print("Make sure structure of solution pdf matches your test pdf.")
-                    print(f"Leaving tmpdir {tmpdir} for debuging")
+                    print(f"Leaving tmpdir {tmpdir} in place for debugging")
                     raise RuntimeError(
                         f"Error - could not find solution image = {fn.name}"
                     )
