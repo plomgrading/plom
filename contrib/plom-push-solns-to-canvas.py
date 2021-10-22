@@ -235,10 +235,13 @@ if __name__ == "__main__":
         assert set(sis_id) <= set(string.digits)
         try:
             sub, name = sis_id_to_sub_and_name[sis_id]
+            student = sis_id_to_students[sis_id]
+            mark = sis_id_to_marks[sis_id]
         except KeyError:
-            print(f"No student # {sis_id} in Canvas: hopefully 1-1 w/ a prev error")
-        student = sis_id_to_students[sis_id]
-        mark = sis_id_to_marks[sis_id]
+            print(f"No student # {sis_id} in Canvas!")
+            print("  Hopefully this is 1-1 w/ a prev canvas id error")
+            print("  SKIPPING this paper and continuing")
+            continue
         assert sub.user_id == student.user_id
         # try:
         #     if sub.submission_comments:
