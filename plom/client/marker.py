@@ -2476,11 +2476,11 @@ class MarkerClient(QWidget):
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()
-        task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
+        task = f"q{tn:04}g{gn}"
         try:
             imageList = self.msgr.MrequestOriginalImages(task)
         except PlomNoMoreException:
-            msg = ErrorMessage("No image corresponding to task {}".format(task))
+            msg = ErrorMessage(f"No image corresponding to task {task}")
             msg.exec_()
             return
         ifilenames = []
@@ -2491,7 +2491,5 @@ class MarkerClient(QWidget):
             ifile.write(img)
             ifilenames.append(ifile.name)
         tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(
-            "Original ungraded image for question {} of test {}".format(gn, tn)
-        )
+        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
         tvw.exec_()
