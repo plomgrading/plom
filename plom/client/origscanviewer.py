@@ -994,6 +994,9 @@ class SolutionViewer(QWidget):
         self.closeButton.clicked.connect(self.closeWindow)
         self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
+        from pathlib import Path
+
+        self.setWindowTitle(f"Solutions - {Path(self.solutionFile).stem}")
 
         self.setMinimumSize(500, 500)
 
