@@ -240,9 +240,15 @@ if __name__ == "__main__":
         sis_id = pdf.stem.split("_")[1]
         assert len(sis_id) == 8
         assert set(sis_id) <= set(string.digits)
-        sub, name = sis_id_to_sub_and_name[sis_id]
-        student = sis_id_to_students[sis_id]
-        mark = sis_id_to_marks[sis_id]
+        try:
+            sub, name = sis_id_to_sub_and_name[sis_id]
+            student = sis_id_to_students[sis_id]
+            mark = sis_id_to_marks[sis_id]
+        except KeyError:
+            print(f"No student # {sis_id} in Canvas!")
+            print("  Hopefully this is 1-1 w/ a prev canvas id error")
+            print("  SKIPPING this paper and continuing")
+            continue
         assert sub.user_id == student.user_id
         # try:
         #     if sub.submission_comments:
