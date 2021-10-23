@@ -981,14 +981,12 @@ class MarkerClient(QWidget):
         self.backgroundUploader = None
 
         self.allowBackgroundOps = True
-        self.canViewAll = False
 
         # instance vars that get initialized later
         self.question = None
         self.version = None
         self.exam_spec = None
         self.ui = None
-        self.canViewAll = None
         self.msgr = None
 
     def setup(self, messenger, question, version, lastTime):
@@ -1008,7 +1006,6 @@ class MarkerClient(QWidget):
                  "question": question number
                  "version": version number
                  "fontsize"
-                 "POWERUSER"
                  "FOREGROUND"
                  "upDown": marking style (up vs down)
                  "LogLevel"
@@ -1096,10 +1093,6 @@ class MarkerClient(QWidget):
         rval = self.msgr.MgetUserRubricTabs(self.question)
         if rval[0]:
             self.annotatorSettings["rubricTabState"] = rval[1]
-
-        if lastTime.get("POWERUSER", False):
-            # if POWERUSER is set, disable warnings and allow viewing all
-            self.canViewAll = True
 
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
@@ -2478,25 +2471,16 @@ class MarkerClient(QWidget):
 
     def viewSpecificImage(self):
         """ shows the image.  """
-        if self.canViewAll:
-            tgs = SelectTestQuestion(self.exam_spec, self.question)
-            if tgs.exec_() == QDialog.Accepted:
-                tn = tgs.tsb.value()
-                gn = tgs.gsb.value()
-            else:
-                return
-        else:
-            tgs = SelectTestQuestion(self.exam_spec)
-            if tgs.exec_() == QDialog.Accepted:
-                tn = tgs.tsb.value()
-                gn = self.question
-            else:
-                return
-        task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
+        tgs = SelectTestQuestion(self.exam_spec, self.question)
+        if tgs.exec_() != QDialog.Accepted:
+            return
+        tn = tgs.tsb.value()
+        gn = tgs.gsb.value()
+        task = f"q{tn:04}g{gn}"
         try:
             imageList = self.msgr.MrequestOriginalImages(task)
         except PlomNoMoreException:
-            msg = ErrorMessage("No image corresponding to task {}".format(task))
+            msg = ErrorMessage(f"No image corresponding to task {task}")
             msg.exec_()
             return
         ifilenames = []
@@ -2507,7 +2491,5 @@ class MarkerClient(QWidget):
             ifile.write(img)
             ifilenames.append(ifile.name)
         tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(
-            "Original ungraded image for question {} of test {}".format(gn, tn)
-        )
+        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
         tvw.exec_()
