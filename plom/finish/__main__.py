@@ -86,6 +86,22 @@ def get_parser():
         """,
     )
     spAssemble.add_argument(
+        "testnum",
+        type=int,
+        nargs="?",
+        help="""
+            Which test number to reassemble or omit to reassemble all papers.
+        """,
+    )
+    spAssemble.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="""
+            If a file already exists, don't rebuild it.  Careful: does not
+            check if the file is out of date!  Thus turned off by default.
+        """,
+    )
+    spAssemble.add_argument(
         "--ided_only",
         action="store_true",
         help="""
@@ -189,7 +205,9 @@ def main():
         if args.ided_only:
             plom.finish.reassemble_ID_only.main(args.server, args.password)
         else:
-            plom.finish.reassemble_completed.main(args.server, args.password)
+            plom.finish.reassemble_completed.main(
+                args.testnum, args.server, args.password, args.skip_existing
+            )
     elif args.command == "solutions":
         plom.finish.assemble_solutions.main(args.server, args.password)
     elif args.command == "webpage":
