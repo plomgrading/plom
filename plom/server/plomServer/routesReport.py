@@ -189,15 +189,13 @@ class ReportHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/completionStatus.
 
         Returns:
-            aiohttp.web_response.Response: A response which includes a dictionary of the grading
-                status.
+            aiohttp.web_response.Response: a dictionary keyed by test
+                number (str),  The values are a 2-list:
+                    `[identified_or_not, number_of_questions_marked]`.
         """
 
         if not data["user"] == "manager":
             return web.Response(status=401)
-        # A dictionary which includes info about the grading status:
-        # {exam number: [Test identifies, Total score calculated, number of marked pages], ...}
-        # {2: [True, True, 0], ...}
         return web.json_response(self.server.RgetCompletionStatus(), status=200)
 
     # @routes.get("/REP/outToDo")
