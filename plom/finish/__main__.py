@@ -155,6 +155,15 @@ def get_parser():
             test.
         """,
     )
+    spSolution.add_argument(
+        "testnum",
+        type=int,
+        nargs="?",
+        help="""
+            Build a solution for this particular test, or omit to reassemble
+            solutions for all identified and marked papers.
+        """,
+    )
     spClear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
@@ -191,7 +200,7 @@ def main():
         else:
             plom.finish.reassemble_completed.main(args.server, args.password)
     elif args.command == "solutions":
-        plom.finish.assemble_solutions.main(args.server, args.password)
+        plom.finish.assemble_solutions.main(args.testnum, args.server, args.password)
     elif args.command == "webpage":
         plom.finish.coded_return.main(
             args.hex, args.digits, args.salt, args.server, args.solutions

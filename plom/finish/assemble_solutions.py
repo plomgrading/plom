@@ -96,7 +96,7 @@ def build_assemble_args(msgr, srcdir, short_name, outdir, t):
     return (outname, short_name, sid, covername, sfiles)
 
 
-def main(server=None, pwd=None):
+def main(testnum=None, server=None, pwd=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = FinishMessenger(s, port=p)
@@ -145,18 +145,35 @@ def main(server=None, pwd=None):
         solution_args = []
         # get data for cover pages
         cover_args = []
-        for t, completed in tqdm(completedTests.items()):
-            # check if the given test is ready for reassembly (and hence soln ready for assembly)
+
+        if testnum is not None:
+            t = str(testnum)
+            try:
+                completed = completedTests[t]
+            except KeyError:
+                raise ValueError(f"Paper {t} does not exist or otherwise not ready") from None
             if not completed[0]:
-                continue
+                raise ValueError(f"Paper {t} not identified, cannot reassemble")
             if completed[1] == numberOfQuestions:
-                # TODO: we may want a --all flag?  Don't need to be done marking
-                continue
+                print(f"Note: paper {t} not fully marked but building soln anyway")
             # append args for this test to list
             cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
             solution_args.append(
                 build_assemble_args(msgr, tmpdir, shortName, outdir, t)
             )
+        else:
+            for t, completed in tqdm(completedTests.items()):
+                # check if the given test is ready for reassembly (and hence soln ready for assembly)
+                if not completed[0]:
+                    continue
+                if completed[1] == numberOfQuestions:
+                    # TODO: we may want a --all flag?  Don't need to be done marking
+                    continue
+                # append args for this test to list
+                cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
+                solution_args.append(
+                    build_assemble_args(msgr, tmpdir, shortName, outdir, t)
+                )
     finally:
         msgr.closeUser()
         msgr.stop()
