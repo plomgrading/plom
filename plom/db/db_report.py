@@ -263,7 +263,9 @@ def RgetQuestionUserProgress(self, q, v):
     # build return list
     progress = [number_scanned]
     for user in user_counts:
-        progress.append([user, user_counts[user], user_times[user] / user_counts[user]])
+        progress.append(
+            [user, user_counts[user], round(user_times[user] / user_counts[user])]
+        )
     log.debug("Sending question/user progress for Q{}v{}".format(q, v))
     return progress
 

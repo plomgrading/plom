@@ -1850,9 +1850,7 @@ class Manager(QWidget):
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
-                    l1 = QTreeWidgetItem(
-                        ["", "", str(u), str(n).rjust(4), f"{round(t)}s"]
-                    )
+                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4), f"{t}s"])
                     l0.addChild(l1)
                     self.ui.QPUserTW.setItemWidget(l1, 5, pb)
                 self.ui.QPUserTW.addTopLevelItem(l0)
@@ -1869,7 +1867,7 @@ class Manager(QWidget):
                         str(qvn[0]).rjust(4),
                         str(qvn[1]).rjust(2),
                         str(n).rjust(4),
-                        f"{round(qvn[3])}s",
+                        f"{qvn[3]}s",
                     ]
                 )
                 l0.addChild(l1)
