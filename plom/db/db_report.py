@@ -244,8 +244,8 @@ def RgetQuestionUserProgress(self, q, v):
     """For the given q/v return the number of questions marked by each user (who marked something in this q/v - so no zeros).
     Return a dict of the form [ number_scanned, [user, nmarked, avgtime], [user, nmarked,avgtime], etc]
     """
-    user_counts = defaultdict()
-    user_times = defaultdict()
+    user_counts = defaultdict(int)
+    user_times = defaultdict(int)
     number_scanned = 0
     for qref in (
         QGroup.select()
