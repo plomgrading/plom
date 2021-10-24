@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 
+from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 
@@ -241,9 +242,10 @@ def RgetMarkHistogram(self, q, v):
 
 def RgetQuestionUserProgress(self, q, v):
     """For the given q/v return the number of questions marked by each user (who marked something in this q/v - so no zeros).
-    Return a list of the form [ number_scanned, [user, nmarked], [user, nmarked], etc]
+    Return a dict of the form [ number_scanned, [user, nmarked, avgtime], [user, nmarked,avgtime], etc]
     """
-    user_counts = {}
+    user_counts = defaultdict()
+    user_times = defaultdict()
     number_scanned = 0
     for qref in (
         QGroup.select()
@@ -256,13 +258,12 @@ def RgetQuestionUserProgress(self, q, v):
     ):
         number_scanned += 1
         if qref.marked == True:
-            if qref.user.name not in user_counts:
-                user_counts[qref.user.name] = 0
             user_counts[qref.user.name] += 1
+            user_times[qref.user.name] += qref.annotations[-1].marking_time
     # build return list
     progress = [number_scanned]
     for user in user_counts:
-        progress.append([user, user_counts[user]])
+        progress.append([user, user_counts[user], user_times[user] / user_counts[user]])
     log.debug("Sending question/user progress for Q{}v{}".format(q, v))
     return progress
 

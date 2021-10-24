@@ -1831,7 +1831,7 @@ class Manager(QWidget):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
                 for (u, n) in qpu[1:]:
-                    # question, version, no marked
+                    # question, version, no marked, avg time
                     uprog[u].append([q, v, n, qpu[0]])
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
