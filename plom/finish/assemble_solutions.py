@@ -151,7 +151,9 @@ def main(testnum=None, server=None, pwd=None):
             try:
                 completed = completedTests[t]
             except KeyError:
-                raise ValueError(f"Paper {t} does not exist or otherwise not ready") from None
+                raise ValueError(
+                    f"Paper {t} does not exist or otherwise not ready"
+                ) from None
             if not completed[0]:
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
             if completed[1] == numberOfQuestions:
@@ -166,7 +168,7 @@ def main(testnum=None, server=None, pwd=None):
                 # check if the given test is ready for reassembly (and hence soln ready for assembly)
                 if not completed[0]:
                     continue
-                if completed[1] == numberOfQuestions:
+                if completed[1] != numberOfQuestions:
                     # TODO: we may want a --all flag?  Don't need to be done marking
                     continue
                 # append args for this test to list
