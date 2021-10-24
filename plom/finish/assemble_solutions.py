@@ -145,17 +145,18 @@ def main(server=None, pwd=None):
         solution_args = []
         # get data for cover pages
         cover_args = []
-        for t in completedTests:
+        for t, completed in tqdm(completedTests.items()):
             # check if the given test is ready for reassembly (and hence soln ready for assembly)
-            if (
-                completedTests[t][0] == True
-                and completedTests[t][1] == numberOfQuestions
-            ):
-                # append args for this test to list
-                cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
-                solution_args.append(
-                    build_assemble_args(msgr, tmpdir, shortName, outdir, t)
-                )
+            if not completed[0]:
+                continue
+            if completed[1] == numberOfQuestions:
+                # TODO: we may want a --all flag?  Don't need to be done marking
+                continue
+            # append args for this test to list
+            cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
+            solution_args.append(
+                build_assemble_args(msgr, tmpdir, shortName, outdir, t)
+            )
     finally:
         msgr.closeUser()
         msgr.stop()
