@@ -1704,7 +1704,14 @@ class Manager(QWidget):
     def initProgressQUTabs(self):
         self.ui.QPUserTW.setColumnCount(5)
         self.ui.QPUserTW.setHeaderLabels(
-            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
+            [
+                "Question",
+                "Version",
+                "User",
+                "Number Marked",
+                "Avg time per task",
+                "Percentage of Q/V marked",
+            ]
         )
         # self.ui.QPUserTW.setSortingEnabled(True)
         self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1712,7 +1719,14 @@ class Manager(QWidget):
         # and the other tab
         self.ui.PUQTW.setColumnCount(5)
         self.ui.PUQTW.setHeaderLabels(
-            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
+            [
+                "User",
+                "Question",
+                "Version",
+                "Number Marked",
+                "Avg time per task",
+                "Percentage of Q/V marked",
+            ]
         )
         # self.ui.PUQTW.setSortingEnabled(True)
         self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1830,26 +1844,32 @@ class Manager(QWidget):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
-                for (u, n) in qpu[1:]:
-                    # question, version, no marked
-                    uprog[u].append([q, v, n, qpu[0]])
+                for (u, n, t) in qpu[1:]:
+                    # question, version, no marked, avg time
+                    uprog[u].append([q, v, n, t, qpu[0]])
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
-                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4)])
+                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4), f"{t}s"])
                     l0.addChild(l1)
-                    self.ui.QPUserTW.setItemWidget(l1, 4, pb)
+                    self.ui.QPUserTW.setItemWidget(l1, 5, pb)
                 self.ui.QPUserTW.addTopLevelItem(l0)
         # for TW2
         for u in uprog:
             l0 = QTreeWidgetItem([str(u)])
-            for qvn in uprog[u]:  # will be in q,v,n,ntot in qv order
+            for qvn in uprog[u]:  # will be in q,v,n,t, ntot in qv order
                 pb = QProgressBar()
-                pb.setMaximum(qvn[3])
+                pb.setMaximum(qvn[4])
                 pb.setValue(qvn[2])
                 l1 = QTreeWidgetItem(
-                    ["", str(qvn[0]).rjust(4), str(qvn[1]).rjust(2), str(n).rjust(4)]
+                    [
+                        "",
+                        str(qvn[0]).rjust(4),
+                        str(qvn[1]).rjust(2),
+                        str(n).rjust(4),
+                        f"{qvn[3]}s",
+                    ]
                 )
                 l0.addChild(l1)
-                self.ui.PUQTW.setItemWidget(l1, 4, pb)
+                self.ui.PUQTW.setItemWidget(l1, 5, pb)
             self.ui.PUQTW.addTopLevelItem(l0)
