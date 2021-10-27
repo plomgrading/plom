@@ -63,8 +63,8 @@ def RgetOriginalFiles(self, testNumber):
     return self.DB.RgetOriginalFiles(testNumber)
 
 
-def RgetMarkReview(self, filterQ, filterV, filterU):
-    return self.DB.RgetMarkReview(filterQ, filterV, filterU)
+def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
+    return self.DB.RgetMarkReview(filterQ, filterV, filterU, filterM)
 
 
 def RgetIDReview(self):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'qtCreatorFiles/ui_manager.ui'
+# Form implementation generated from reading ui file './qtCreatorFiles/ui_manager.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.4
 #
@@ -273,7 +273,7 @@ class Ui_Manager(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.markBucket = QtWidgets.QWidget()
-        self.markBucket.setGeometry(QtCore.QRect(0, 0, 968, 466))
+        self.markBucket.setGeometry(QtCore.QRect(0, 0, 63, 16))
         self.markBucket.setObjectName("markBucket")
         self.scrollArea.setWidget(self.markBucket)
         self.verticalLayout_5.addWidget(self.scrollArea)
@@ -486,6 +486,10 @@ class Ui_Manager(object):
         self.userCB.setObjectName("userCB")
         self.verticalLayout_17.addWidget(self.userCB)
         self.horizontalLayout_12.addLayout(self.verticalLayout_17)
+        self.markedOnlyCB = QtWidgets.QCheckBox(self.reviewMTab)
+        self.markedOnlyCB.setChecked(True)
+        self.markedOnlyCB.setObjectName("markedOnlyCB")
+        self.horizontalLayout_12.addWidget(self.markedOnlyCB)
         spacerItem15 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_12.addItem(spacerItem15)
         self.filterB = QtWidgets.QPushButton(self.reviewMTab)
@@ -643,7 +647,7 @@ class Ui_Manager(object):
 
         self.retranslateUi(Manager)
         self.tabWidget.setCurrentIndex(0)
-        self.scanTabW.setCurrentIndex(3)
+        self.scanTabW.setCurrentIndex(0)
         self.progressTabW.setCurrentIndex(0)
         self.tabWidget_4.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(0)
@@ -729,6 +733,7 @@ class Ui_Manager(object):
         self.label_6.setText(_translate("Manager", "Question"))
         self.label_7.setText(_translate("Manager", "Version"))
         self.label_8.setText(_translate("Manager", "Username"))
+        self.markedOnlyCB.setText(_translate("Manager", "Marked Only"))
         self.filterB.setText(_translate("Manager", "&Filter"))
         self.tabWidget_4.setTabText(self.tabWidget_4.indexOf(self.reviewMTab), _translate("Manager", "Review &Marking"))
         self.reviewIDTW.setSortingEnabled(True)
