@@ -621,8 +621,7 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         # Return paper to server with the code, ID, name.
         try:
-            # TODO - do we need this return value
-            msg = self.msgr.IDreturnIDdTask(code, sid, sname)
+            self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
             self.throwBenign(err)
             # If an error, revert the student and clear things.
