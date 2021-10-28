@@ -135,7 +135,7 @@ class Server:
         IDprogressCount,
         IDgetNextTask,
         IDgetDoneTasks,
-        IDgetImages,
+        IDgetImage,
         IDgetImageFromATest,
         IDgetImageList,
         ID_get_donotmark_images,

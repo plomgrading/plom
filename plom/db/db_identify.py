@@ -10,7 +10,7 @@ import peewee as pw
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 from plom.db.tables import plomdb
-from plom.db.tables import DNMGroup, DNMPage, Group, IDGroup, IDPage, Test, User
+from plom.db.tables import DNMPage, Group, IDGroup, Test, User
 
 
 log = logging.getLogger("DB")
@@ -24,7 +24,7 @@ log = logging.getLogger("DB")
 
 
 def IDcountAll(self):
-    """Count all tests in which ID pages are scanned."""
+    """Count all tests in which the ID page is scanned."""
     try:
         return (
             Group.select()
@@ -39,7 +39,7 @@ def IDcountAll(self):
 
 
 def IDcountIdentified(self):
-    """Count all tests in which ID pages are scanned and student has been identified."""
+    """Count all tests in which the ID page is scanned and student has been identified."""
     try:
         return (
             IDGroup.select()
@@ -67,7 +67,7 @@ def IDgetNextTask(self):
                 )
                 .get()
             )
-            # note - test need not be all scanned, just the ID pages.
+            # note - test need not be all scanned, just the ID page.
         except pw.DoesNotExist:
             log.info("Nothing left on ID to-do pile")
             return None
@@ -77,7 +77,7 @@ def IDgetNextTask(self):
 
 
 def IDgiveTaskToClient(self, user_name, test_number):
-    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image-list]."""
+    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image]."""
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
     with plomdb.atomic():
@@ -105,10 +105,8 @@ def IDgiveTaskToClient(self, user_name, test_number):
         uref.last_action = "Took ID task {}".format(test_number)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, page1, page2, etc]
-        rval = [True]
-        for p in iref.idpages.order_by(IDPage.order):
-            rval.append(p.image.file_name)
+        # return [true, page1]
+        rval = [True, iref.idpages[0].image.file_name]
 
         log.debug("Giving ID task {} to user {}".format(test_number, user_name))
         return rval
@@ -128,17 +126,15 @@ def IDgetDoneTasks(self, user_name):
     return idList
 
 
-def IDgetImages(self, user_name, test_number):
-    """Return ID page images of a paper.
+def IDgetImage(self, user_name, test_number):
+    """Return ID page image of a paper.
 
     args:
         user_name (str)
         test_number (int)
 
     Returns:
-        2-tuple: `(True, file_list)` where `file_list` is a possibly-empty
-            list of file names.  Otherwise, `(False, "NoTest")` or
-            `(False, "NoScanAndNotIDd")` or `(False, "NotOwner")`.
+        2-tuple: `(True, file)` or `(True, None)``. Otherwise, `(False, "NoTest")` or `(False, "NoScanAndNotIDd")` or `(False, "NotOwner")`.
     """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
@@ -154,18 +150,18 @@ def IDgetImages(self, user_name, test_number):
     # However, if the test has been identified, but ID group unscanned,
     # then this is okay (fixes #1629).
     # This is precisely what will happen when using plom for homework, there
-    # are no id-pages (so idgroup is unscanned), but the system automagically
+    # are no id-page (so idgroup is unscanned), but the system automagically
     # identifies the test.
     if iref.group.scanned is False and tref.identified is False:
         return (False, "NoScanAndNotIDd")
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
         return (False, "NotOwner")
-    file_list = []
-    for p in iref.idpages.order_by(IDPage.order):
-        file_list.append(p.image.file_name)
-    log.debug("Sending IDpages of test {} to user {}".format(test_number, user_name))
-    return (True, file_list)
+    log.debug("Sending IDpage of test {} to user {}".format(test_number, user_name))
+    if len(iref.idpages) == 0:
+        return (True, None)
+    else:
+        return (True, iref.idpages[0].image.file_name)
 
 
 def ID_get_donotmark_images(self, test_number):
@@ -198,33 +194,6 @@ def ID_get_donotmark_images(self, test_number):
         file_list.append(p.image.file_name)
     log.debug(f"Sending DNMpages of test {test_number}")
     return (True, file_list)
-
-
-def IDgetImageByNumber(self, image_number):
-    """
-    For every test, find the imageNumber'th page in the ID Pages and return the corresponding image filename. So gives returns a dictionary of testNumber -> filename.
-    """
-    rval = {}
-    uref = User.get(User.name == "HAL")
-    query = IDGroup.select()
-    for iref in query:
-        # we want to ignore pre-named papers - those are owned by HAL
-        # can improve this query.
-        if iref.user == uref:
-            continue
-        # for each iref, check that it is scanned and then grab page.
-        gref = iref.group
-        if not gref.scanned:
-            continue
-        # make a list of all the pages in the IDgroup
-        pages = []
-        for p in iref.idpages:
-            pages.append(p.image.file_name)
-        # grab the relevant page if it is in the list
-        if len(pages) > image_number:
-            rval[iref.test.test_number] = pages[image_number]
-        # otherwise we don't add that test to the dictionary.
-    return rval
 
 
 def IDdidNotFinish(self, user_name, test_number):
@@ -338,7 +307,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
 
 
 def IDgetImageFromATest(self):
-    """Returns ID images from the first unid'd test."""
+    """Returns ID image from the first unid'd test."""
     query = (  # look for scanned ID groups which are not IDd yet.
         IDGroup.select()
         .join(Group)
@@ -350,16 +319,12 @@ def IDgetImageFromATest(self):
         .limit(1)  # we only need 1.
     )
     if query.count() == 0:
-        log.info("No unIDd IDPages to sennd to manager")
+        log.info("No unIDd IDPage to send to manager")
         return [False]
-    log.info("Sending first unIDd IDPages to manager")
+    log.info("Sending first unIDd IDPage to manager")
 
     iref = query[0]
-    rval = [True]
-    for p in iref.idpages.order_by(IDPage.order):
-        rval.append(p.image.file_name)
-
-    return rval
+    return [True, iref.idpages[0].image.file_name]
 
 
 def IDreviewID(self, test_number):

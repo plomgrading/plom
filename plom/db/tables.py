@@ -129,6 +129,8 @@ class DiscardedPage(BaseModel):
 
 
 class IDPage(BaseModel):
+    # even though there is only one, for simplicity
+    # this is a many-to-one mapping by this backref
     idgroup = pw.ForeignKeyField(IDGroup, backref="idpages")
     image = pw.ForeignKeyField(Image, backref="idpages")
     order = pw.IntegerField(null=False)

@@ -443,20 +443,17 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def request_ID_images(self, code):
+    def request_ID_image(self, code):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                f"/ID/images/{code}",
+                f"/ID/image/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
             if response.status_code == 204:
                 return []  # 204 is empty list
-            return [
-                BytesIO(img.content).getvalue()
-                for img in MultipartDecoder.from_response(response).parts
-            ]
+            return [BytesIO(response.content).getvalue()]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -474,7 +471,7 @@ class BaseMessenger:
                         code
                     )
                 ) from None
-            raise PlomSeriousException(f"Some other sort of error {f}") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 

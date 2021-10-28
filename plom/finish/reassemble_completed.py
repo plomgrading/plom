@@ -72,7 +72,7 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
     Returns:
        tuple : (outname, short_name, sid, covername, page_filenames)
     """
-    id_image_blobs = msgr.request_ID_images(t)
+    id_image_blobs = msgr.request_ID_image(t)
     id_pages = []
     for i, obj in enumerate(id_image_blobs):
         filename = tmpdir / f"img_{int(t):04}_id{i:02}.png"

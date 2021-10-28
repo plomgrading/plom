@@ -55,7 +55,7 @@ def IDgetDoneTasks(self, username):
     return self.DB.IDgetDoneTasks(username)
 
 
-def IDgetImages(self, username, test_number):
+def IDgetImage(self, username, test_number):
     """Respond with a list of image paths the ID pages of a paper.
 
     Args:
@@ -65,7 +65,7 @@ def IDgetImages(self, username, test_number):
     Returns:
         2-tuple: True/False plus a list of the image paths or a short error code.
     """
-    return self.DB.IDgetImages(username, test_number)
+    return self.DB.IDgetImage(username, test_number)
 
 
 def ID_get_donotmark_images(self, paper_number):

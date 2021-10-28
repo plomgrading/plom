@@ -160,10 +160,10 @@ class IDHandler:
         # return the completed list
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
-    # @routes.get("/ID/images/{test}")
+    # @routes.get("/ID/image/{test}")
     @authenticate_by_token_required_fields(["user"])
-    def IDgetImages(self, data, request):
-        """Return the ID page images for a specified paper number.
+    def IDgetImage(self, data, request):
+        """Return the ID page image for a specified paper number.
 
         Responds with status 200/204/404/409/410.
 
@@ -189,7 +189,7 @@ class IDHandler:
         """
         test_number = request.match_info["test"]
 
-        status, output = self.server.IDgetImages(data["user"], test_number)
+        status, output = self.server.IDgetImage(data["user"], test_number)
 
         if not status:
             if output == "NotOwner":
@@ -202,18 +202,10 @@ class IDHandler:
                 raise web.HTTPNotFound(reason="No such paper")
 
         # if there are no such files return a success but with code 204 = no content.
-        if len(output) == 0:
+        if output is None:
             return web.Response(status=204)
-
-        with MultipartWriter("images") as writer:
-            for file_name in output:
-                try:
-                    writer.append(open(file_name, "rb"))
-                except OSError as e:  # file not found, permission, etc
-                    raise web.HTTPInternalServerError(
-                        reason=f"Problem reading image: {e}"
-                    )
-            return web.Response(body=writer, status=200)
+        else:
+            return web.FileResponse(output, status=200)
 
     # @routes.get("/ID/donotmark_images/{test}")
     @authenticate_by_token_required_fields([])
@@ -553,7 +545,7 @@ class IDHandler:
         router.add_put("/ID/classlist", self.IDputClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
-        router.add_get("/ID/images/{test}", self.IDgetImages)
+        router.add_get("/ID/image/{test}", self.IDgetImage)
         router.add_get("/ID/donotmark_images/{test}", self.ID_get_donotmark_images)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
