@@ -196,6 +196,32 @@ def ID_get_donotmark_images(self, test_number):
     return (True, file_list)
 
 
+def IDgetImagesOfUnIDd(self):
+    """
+    For every un-id'd test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+    """
+    rval = {}
+    uref = User.get(User.name == "HAL")
+    query = IDGroup.select()
+    for iref in query:
+        # we want to ignore pre-named papers - those are owned by HAL
+        # can improve this query.
+        if iref.user == uref:
+            continue
+        # for each iref, check that it is scanned and then grab page.
+        gref = iref.group
+        if not gref.scanned:
+            continue
+
+        # grab the relevant page if it is there
+        if len(iref.idpages) == 0:
+            # otherwise we don't add that test to the dictionary.
+            continue
+        else:
+            rval[iref.test.test_number] = iref.idpages[0].image.file_name
+    return rval
+
+
 def IDdidNotFinish(self, user_name, test_number):
     """When user logs off, any images they have still out should be put
     back on todo pile

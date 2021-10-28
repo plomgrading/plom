@@ -93,6 +93,9 @@ class BaseMessenger:
     def get(self, url, *args, **kwargs):
         return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
 
+    def post(self, url, *args, **kwargs):
+        return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
+
     def put(self, url, *args, **kwargs):
         return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
 
