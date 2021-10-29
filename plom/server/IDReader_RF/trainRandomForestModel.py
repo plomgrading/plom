@@ -5,6 +5,7 @@
 import gzip
 from pathlib import Path
 import pickle
+from warnings import warn
 
 import pandas as pd
 import sklearn
@@ -48,12 +49,8 @@ def train_model():
     # score = model.score(X_test, y_test)
     score = accuracy_score(testing_predictions, y_test)
     print("Model score is: ", str(score))
-    if score < 0.9:
-        print(
-            "<<<WARNING>>> Model score is too low. This might effect the student ID detections negatively."
-        )
-
-    return
+    if score < 0.95:
+        warn(f"Model score {score} is below 95. Consider rerunning to retrain.")
 
 
 if __name__ == "__main__":
