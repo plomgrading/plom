@@ -244,7 +244,7 @@ def compute_probabilities(
     """
 
     # load the model
-    filename = f"RF_ML_model_sklearn{sklearn.__version__}.sav.gz"
+    filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
     with gzip.open(Path("model_cache") / filename, "rb") as f:
         prediction_model = pickle.load(f)
 

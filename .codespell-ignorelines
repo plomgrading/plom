@@ -1,8 +1,2 @@
 # lines that codespell should ignore: whitespace matters!
 
-*.sav
-    files = ["RF_ML_model.sav.gz"]
-    with gzip.open(Path("model_cache") / "RF_ML_model.sav.gz", "rb") as f:
-    saved_model_fname = "model_cache/RF_ML_model.sav"
-          a.datas,
-             datas=[

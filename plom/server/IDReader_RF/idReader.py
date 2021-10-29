@@ -35,7 +35,7 @@ def is_model_present():
     """
 
     base_path = Path("model_cache")
-    files = [f"RF_ML_model_sklearn{sklearn.__version__}.sav.gz"]
+    files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
 
     for filename in files:
         if not (base_path / filename).is_file():
@@ -51,7 +51,7 @@ def download_model():
     """
     base_path = Path("model_cache")
     base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/main/plomBuzzword/"
-    files = [f"RF_ML_model_sklearn{sklearn.__version__}.sav.gz"]
+    files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
     for file_name in files:
         url = base_url + file_name
         print("Getting {} - ".format(file_name))

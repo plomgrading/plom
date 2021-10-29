@@ -37,7 +37,7 @@ def train_model():
     model = RandomForestClassifier()
     model.fit(X_train, y_train)
 
-    filename = f"RF_ML_model_sklearn{sklearn.__version__}.sav.gz"
+    filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
     with gzip.open(Path("model_cache") / filename, "wb") as f:
         pickle.dump(model, f)
 
