@@ -3,7 +3,6 @@
 # Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-from multiprocessing import Pool
 import os
 from pathlib import Path
 import shutil
@@ -18,59 +17,46 @@ from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
 
-def _parfcn(z):
-    """Parallel function used below, must be defined in root of module.
-
-    Args:
-        z (tuple): Arguments to reassemble and makeCover.
-    """
-    x, y = z
-    if x and y:
-        makeCover(*x)
-        reassemble(*y)
-
-
-def build_cover_page_data(msgr, tmpdir, t, maxMarks):
-    """Builds the information used to create cover pages.
+def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
+    """Download information and create a cover page.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path.str): where to save the coverpage.
         t (int): Test number.
         maxMarks (dict): Maxmarks per question str -> int.
 
     Returns:
-        tuple: (testnumber, sname, sid, tab) where `tab` is a table with
-            rows `[q_label, ver, mark, max_mark]`.
+        pathlib.Path: filename of the coverpage.
     """
     # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
     cpi = msgr.RgetCoverPageInfo(t)
     spec = msgr.get_spec()
     sid = cpi[0][0]
     sname = cpi[0][1]
-    # for each Q [q, v, mark, maxPossibleMark]
+    # for each Q [qlabel, ver, mark, maxPossibleMark]
     arg = []
     for qvm in cpi[1:]:
         question_label = get_question_label(spec, qvm[0])
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    return (int(t), sname, sid, arg, covername)
+    makeCover(int(t), sname, sid, arg, covername)
+    return covername
 
 
-def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid):
-    """Builds the information for reassembling the entire test.
+def download_page_images(msgr, tmpdir, num_questions, t, sid):
+    """Download the images for reassembling a particular paper.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
         tmpdir (pathlib.Path): directory to save the temp images.
-        outdir (pathlib.Path): directory for the reassembled papers.
-        short_name (str): name of the test without the student id.
         num_questions (int): number of questions.
         t (str/int): Test number.
         sid (str): student number.
 
     Returns:
-       tuple : (outname, short_name, sid, covername, page_filenames)
+       tuple: (id_page_files, marked_page_files, dnm_page_files)
     """
     id_image_blobs = msgr.request_ID_images(t)
     id_pages = []
@@ -94,13 +80,27 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
         dnm_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
-    testnumstr = str(t).zfill(4)
-    covername = tmpdir / "cover_{}.pdf".format(testnumstr)
+    return (id_pages, marked_pages, dnm_pages)
+
+
+def _reassemble_one_paper(
+    msgr, tmpdir, outdir, short_name, max_marks, num_questions, t, sid, skip
+):
+    """Reassemble a test paper."""
+    if sid is None:
+        # Note this is distinct from simply not yet ID'd
+        print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
+        return
     outname = outdir / f"{short_name}_{sid}.pdf"
-    return (outname, short_name, sid, covername, id_pages, marked_pages, dnm_pages)
+    if skip and outname.exists():
+        print(f"Skipping {outname}: already exists")
+        return
+    coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
+    file_lists = download_page_images(msgr, tmpdir, num_questions, t, sid)
+    reassemble(outname, short_name, sid, coverfile, *file_lists)
 
 
-def main(server=None, pwd=None):
+def start_messenger(server=None, pwd=None):
     if server and ":" in server:
         s, p = server.split(":")
         msgr = FinishMessenger(s, port=p)
@@ -119,61 +119,126 @@ def main(server=None, pwd=None):
             "In order to force-logout the existing authorisation run `plom-finish clear`."
         )
         raise
+    return msgr
 
+
+def reassemble_one_paper(
+    testnum, server=None, pwd=None, outdir=Path("reassembled"), skip=False
+):
+    """Reassemble a test paper.
+
+    Args:
+        testnum (int): which test number would be reassembled.
+        server (str)
+        pwd (str)
+
+    Keyword Args:
+        outdir (pathlib.Path/str): where to save the reassembled pdf file
+            Defaults to "reassembled/" in the current working directory.
+            It will be created if it does not exist.
+        skip_existing (bool): Default False, but if True, skip any pdf files
+            we already have (Careful: without checking for changes!)
+
+    Raises:
+        ValueError: does not exist, or not ready.
+    """
+    outdir = Path(outdir)
+    outdir.mkdir(exist_ok=True)
+    msgr = start_messenger(server, pwd)
     try:
-        shortName = msgr.getInfoShortName()
+        short_name = msgr.getInfoShortName()
         spec = msgr.get_spec()
         num_questions = spec["numberOfQuestions"]
-
-        outdir = Path("reassembled")
-        outdir.mkdir(exist_ok=True)
-        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-        print(f"Downloading to temp directory {tmpdir}")
+        max_marks = msgr.MgetAllMax()
 
         completedTests = msgr.RgetCompletionStatus()
-        # dict key = testnumber, then list id'd, tot'd, #q's marked
+        t = str(testnum)  # dicts keyed by strings
+        try:
+            completed = completedTests[t]
+        except KeyError:
+            raise ValueError(f"Paper {t} does not exist or is not marked") from None
+        if not completed[0]:
+            raise ValueError(f"Paper {t} is not completed: not identified")
+        if completed[1] != num_questions:
+            raise ValueError(f"Paper {t} is not complete: unmarked questions")
+
         identifiedTests = msgr.RgetIdentified()
-        # dict key = testNumber, then pairs [sid, sname]
-        maxMarks = msgr.MgetAllMax()
-
-        # get data for cover pages and reassembly
-        pagelists = []
-        coverpagelist = []
-
-        for t in completedTests:
-            if completedTests[t][0] == True and completedTests[t][1] == num_questions:
-                if identifiedTests[t][0] is not None:
-                    dat1 = build_cover_page_data(msgr, tmpdir, t, maxMarks)
-                    dat2 = download_page_images(
-                        msgr,
-                        tmpdir,
-                        outdir,
-                        shortName,
-                        num_questions,
-                        t,
-                        identifiedTests[t][0],
-                    )
-                    coverpagelist.append(dat1)
-                    pagelists.append(dat2)
-                else:
-                    print(">>WARNING<< Test {} has no ID".format(t))
+        # dict testNumber -> [sid, sname]
+        sid = identifiedTests[t][0]
+        # TODO: will a context manager delete content too? helpful here!
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        _reassemble_one_paper(
+            msgr,
+            tmpdir,
+            outdir,
+            short_name,
+            max_marks,
+            num_questions,
+            testnum,
+            sid,
+            skip,
+        )
+        shutil.rmtree(tmpdir)
     finally:
         msgr.closeUser()
         msgr.stop()
 
-    N = len(coverpagelist)
-    print("Reassembling {} papers...".format(N))
-    with Pool() as p:
-        r = list(
-            tqdm(
-                p.imap_unordered(_parfcn, list(zip(coverpagelist, pagelists))), total=N
-            )
-        )
-    # Serial
-    # for z in zip(coverpagelist, pagelists):
-    #    _parfcn(z)
-    shutil.rmtree(tmpdir)
+
+def reassemble_all_papers(
+    server=None, pwd=None, outdir=Path("reassembled"), skip=False
+):
+    """Reassemble all test papers.
+
+    Args:
+        server (str)
+        pwd (str)
+
+    Keyword Args:
+        outdir (pathlib.Path/str): where to save the reassembled pdf file
+            Defaults to "reassembled/" in the current working directory.
+            It will be created if it does not exist.
+        skip (bool): Default False, but if True, skip any pdf files
+            we already have (Careful: without checking for changes!)
+    """
+    outdir = Path(outdir)
+    outdir.mkdir(exist_ok=True)
+    msgr = start_messenger(server, pwd)
+    try:
+        short_name = msgr.getInfoShortName()
+        spec = msgr.get_spec()
+        num_questions = spec["numberOfQuestions"]
+        max_marks = msgr.MgetAllMax()
+
+        completedTests = msgr.RgetCompletionStatus()
+        # dict testnumber -> [id'd, #q's marked]
+        identifiedTests = msgr.RgetIdentified()
+        # dict testNumber -> [sid, sname]
+
+        tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
+        print(f"Downloading to temp directory {tmpdir}")
+
+        for t, completed in tqdm(completedTests.items()):
+            if completed[0] and completed[1] == num_questions:
+                sid = identifiedTests[t][0]
+                _reassemble_one_paper(
+                    msgr,
+                    tmpdir,
+                    outdir,
+                    short_name,
+                    max_marks,
+                    num_questions,
+                    t,
+                    sid,
+                    skip,
+                )
+        shutil.rmtree(tmpdir)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
 
 
-if __name__ == "__main__":
-    main()
+def main(testnum, server, password, skip):
+    if testnum == None:
+        reassemble_all_papers(server, password, skip=skip)
+    else:
+        reassemble_one_paper(testnum, server, password, skip=skip)
