@@ -1981,6 +1981,7 @@ class PageScene(QGraphicsScene):
             self.ghostItem,
             self.ghostItem.di,
             self.ghostItem.blurb,
+            self.underRect,
         ]:
             return
         elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
