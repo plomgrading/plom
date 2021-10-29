@@ -8,8 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* The question-version map can be passed into `plom-build` instead of building a random map.
 
 ### Changed
+* Image download and reassembly is now interleaved instead of pre-downloading all images.
+* Can reassemble just one paper or just one solution.
 
 ### Fixed
 * Ensure the margin box surrounding the page cannot be deleted.
