@@ -27,6 +27,8 @@ from .upload_classlist import upload_classlist, upload_demo_classlist
 from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
+from .version_map_from_csv import version_map_from_csv
+
 from .faketools import make_scribbles
 from .hwFaker import make_hw_scribbles
 
