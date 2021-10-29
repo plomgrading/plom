@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Ensure the margin box surrounding the page cannot be deleted.
 
 
-## [0.7.2] - 2021-10-23
+## [0.7.3] - 2021-10-23
 
 ### Changed
 * Marker -> View is now allowed to view any question, any paper.
