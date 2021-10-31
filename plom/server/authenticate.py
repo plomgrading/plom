@@ -73,18 +73,21 @@ class Authority:
         storageToken = hex(int(clientToken, 16) ^ self.mti)
         return [clientToken, storageToken]
 
-    def validate_token(self, clientToken, storageToken):
+    def validate_token(self, clientToken, stored_token):
         """Validates a given token against the storageToken.
 
         Arguments:
             clientToken (str): The token, a hex string provided by the
                 client.  This may be untrusted unsanitized input.
-            storageToken (str): The token we are checking against.
+            stored_token (str/None): The token we are checking against.
+                Can be None, e.g., when no token is stored.
 
         Returns:
             bool/None: True if validated, False/None otherwise.  False
-                indicates an invalid token.  None indicates a malformed
-                token.  This means `if validate_token(...):` works.
+                indicates an invalid (non-matching) token, including the
+                case when the stored token is None.  A return of None
+                indicates a malformed token.  This bool/None tristate
+                means `if validate_token(...):` works.
         """
         if not isinstance(clientToken, str):
             return None
@@ -95,7 +98,7 @@ class Authority:
             clientTokenInt = int(clientToken, 16)
         except ValueError:
             return None
-        if hex(clientTokenInt ^ self.mti) == storageToken:
+        if hex(clientTokenInt ^ self.mti) == stored_token:
             return True
         return False
 
