@@ -174,9 +174,9 @@ def setUserEnable(self, user, enableFlag):
 
 
 def createModifyUser(self, username, password):
-    # basic sanity check of username / password
-    if not self.authority.basic_user_password_check(username, password):
-        return [False, "Username/Password fails basic checks."]
+    r, msg = self.authority.basic_user_password_check(username, password)
+    if not r:
+        return [False, f"Username/Password fails basic checks: {msg}"]
     if username == "HAL":  # Don't mess with HAL
         return [False, "I'm sorry, Dave. I'm afraid I can't do that."]
     # hash the password

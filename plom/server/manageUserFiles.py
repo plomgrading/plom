@@ -16,7 +16,7 @@ else:
 
 import plom
 from plom.server import confdir
-
+from plom.server.authenticate import basic_user_password_check
 from plom.aliceBob import (
     simple_password,
     make_random_user_list,
@@ -94,22 +94,9 @@ def check_username_password_format(username_password_dict):
         boolean: also prints to screen as a side effect.
     """
     for username, password in username_password_dict.items():
-        if not (username.isalnum() and username[0].isalpha()):
-            print(
-                "Username '{}' is problematic: should be alphanumeric and starting with a letter.".format(
-                    username
-                )
-            )
-            return False
-        if len(password) < 4:
-            print(
-                "Password of '{}' is too short, should be at least 4 chars.".format(
-                    username
-                )
-            )
-            return False
-        if password == username:
-            print("Password of '{}' is too close to their username.".format(username))
+        r, msg = basic_user_password_check(username, password)
+        if not r:
+            print(f"Username '{username}': {msg}")
             return False
     return True
 

@@ -5,8 +5,34 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 import logging
-from passlib.context import CryptContext
 import uuid
+
+from passlib.context import CryptContext
+
+
+def basic_user_password_check(username, password):
+    """Sanity check for potential usernames and passwords.
+
+    Arguments:
+        username (str)
+        password (str)
+
+    Returns:
+        bool: True if valid, false otherwise.
+
+    This does only very basic checking of passwords: not too short
+    and not identically equal the username.  You may want additional
+    checks!
+    """
+    if len(username) < 3:
+        return False, "Username too short, should be at least 3 chars"
+    if not (username.isalnum() and username[0].isalpha()):
+        return False, "Username should be alphanumeric and start with a letter"
+    if len(password) < 4:
+        return False, "Password too short, should be at least 4 chars"
+    if password == username:
+        return False, f"Password is too close to the username"
+    return True, ""
 
 
 class Authority:
@@ -115,26 +141,7 @@ class Authority:
         return True
 
     def basic_user_password_check(self, username, password):
-        """Sanity check for potential usernames and passwords.
-
-        Arguments:
-            username (str)
-            password (str)
-
-        Returns:
-            bool: True if valid, false otherwise.
-
-        This does only very basic checking of passwords: not too short
-        and not identically equal the username.  You may want additional
-        checks!
-        """
-        if not (len(username) >= 3 and username.isalnum()):
-            return False
-        if len(password) < 4:
-            return False
-        if password == username:
-            return False
-        return True
+        return basic_user_password_check(username, password)
 
     def create_password_hash(self, password):
         """Creates a hash of a string password.
