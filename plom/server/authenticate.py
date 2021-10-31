@@ -115,20 +115,25 @@ class Authority:
         return True
 
     def basic_user_password_check(self, username, password):
-        """Sanity check for usernames and passwords.
+        """Sanity check for potential usernames and passwords.
 
         Arguments:
-            username {str} -- Given username.
-            password {str} -- Given password.
+            username (str)
+            password (str)
 
         Returns:
-            bool -- True if valid, false otherwise.
+            bool: True if valid, false otherwise.
+
+        This does only very basic checking of passwords: not too short
+        and not identically equal the username.  You may want additional
+        checks!
         """
         # username must be length 4 and alphanumeric
         if not (len(username) >= 4 and username.isalnum()):
             return False
-        # password must be length 4 and not contain username.
-        if (len(password) < 4) or (username in password):
+        if len(password) < 4:
+            return False
+        if password == username:
             return False
         return True
 
