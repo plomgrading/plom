@@ -103,10 +103,10 @@ class Authority:
         """Checks that a given string is a valid UUID.
 
         Arguments:
-            tau {str} -- String to check.
+            tau (str): string to check
 
         Returns:
-            bool -- True if a valid UUID, False otherwise.
+            bool: True if input is a valid universally unique identifier.
         """
         try:
             token = uuid.UUID(tau)
@@ -136,9 +136,9 @@ class Authority:
         """Creates a hash of a string password.
 
         Arguments:
-            password {str} -- Password to hash.
+            password (str)
 
         Returns:
-            hex -- Hashed password.
+            str: Hashed password.
         """
         return self.ctx.hash(password)
