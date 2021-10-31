@@ -35,6 +35,27 @@ def basic_user_password_check(username, password):
     return True, ""
 
 
+class SimpleAuthorityHasher:
+    """A dumbed down version of Authority, only can hash passwords.
+
+    Note some duplication of code here but at least its all in this one source file.
+    """
+
+    def __init__(self):
+        self.ctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+
+    def create_password_hash(self, password):
+        """Creates a hash of a string password.
+
+        Arguments:
+            password (str)
+
+        Returns:
+            str: Hashed password.
+        """
+        return self.ctx.hash(password)
+
+
 class Authority:
     """A class to do all our authentication - passwords and tokens."""
 

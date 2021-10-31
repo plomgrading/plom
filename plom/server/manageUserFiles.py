@@ -17,6 +17,7 @@ else:
 import plom
 from plom.server import confdir
 from plom.server.authenticate import basic_user_password_check
+from plom.server.authenticate import SimpleAuthorityHasher
 from plom.aliceBob import (
     simple_password,
     make_random_user_list,
@@ -24,13 +25,6 @@ from plom.aliceBob import (
 )
 
 
-# TODO - instead of running a cryptocontext here - move stuff into authenticate.py?
-# Stuff for hashing and verifying passwords
-from passlib.hash import pbkdf2_sha256
-from passlib.context import CryptContext
-
-# These parameters are used for processing and creating the user login info
-plomctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 list_of_required_users = ["manager", "scanner", "reviewer"]
 minimum_number_of_required_users = 4
 
@@ -73,9 +67,10 @@ def make_password_hashes(username_password_dict):
     Returns:
         dict: keys username (str) to value hashed password (str).
     """
+    hasher = SimpleAuthorityHasher()
     username_hash_dict = {}
-    for user in username_password_dict:
-        username_hash_dict[user] = plomctx.hash(username_password_dict[user])
+    for user, pwd in username_password_dict.items():
+        username_hash_dict[user] = hasher.create_password_hash(pwd)
     return username_hash_dict
 
 
