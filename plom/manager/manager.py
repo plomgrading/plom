@@ -147,6 +147,7 @@ class UserDialog(QDialog):
             return
 
         if self.pwLE.text() != self.pwLE2.text():
+            ErrorMessage("Passwords do not match").exec_()
             return
         self.name = self.userLE.text()
         self.password = self.pwLE.text()
