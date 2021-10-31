@@ -128,8 +128,7 @@ class Authority:
         and not identically equal the username.  You may want additional
         checks!
         """
-        # username must be length 4 and alphanumeric
-        if not (len(username) >= 4 and username.isalnum()):
+        if not (len(username) >= 3 and username.isalnum()):
             return False
         if len(password) < 4:
             return False
