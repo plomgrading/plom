@@ -95,7 +95,7 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
     outname = outdir / f"{short_name}_{sid}.pdf"
     # return id-page inside a list since then the 3 different page types
-    # are returned consistenly inside lists.
+    # are returned consistently inside lists.
     return (outname, short_name, sid, covername, [id_page], marked_pages, dnm_pages)
 
 
