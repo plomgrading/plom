@@ -14,12 +14,13 @@ Note: Code in this file is very similar to idReader code for the Tensorflow
 model.
 """
 
-from pathlib import Path
 import csv
+from pathlib import Path
 
 import requests
 from lapsolver import solve_dense
 import numpy as np
+import sklearn
 
 from plom import specdir
 from .predictStudentID import compute_probabilities
@@ -34,7 +35,7 @@ def is_model_present():
     """
 
     base_path = Path("model_cache")
-    files = ["RF_ML_model.sav.gz"]
+    files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
 
     for filename in files:
         if not (base_path / filename).is_file():
@@ -49,8 +50,8 @@ def download_model():
         boolean: True/False about if the model was successful.
     """
     base_path = Path("model_cache")
-    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/master/plomBuzzword/"
-    files = ["RF_ML_model.sav.gz"]
+    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/main/plomBuzzword/"
+    files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
     for file_name in files:
         url = base_url + file_name
         print("Getting {} - ".format(file_name))

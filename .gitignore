@@ -118,12 +118,11 @@ dmypy.json
 *~
 
 # ML model info
-*.sav
+*RF_ML_model*.gz
 *.pb
 *.index
 *.data-00000-of-00001
 model_cache/
-plomBuzzword/
 
 
 # mac detritus
