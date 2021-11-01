@@ -206,11 +206,12 @@ def MdidNotFinish(self, user_name, group_id):
         log.info("User {} did not mark task {}".format(user_name, group_id))
 
 
-def MgetOneImageFilename(self, user_name, task, image_id, md5):
+def MgetOneImageFilename(self, image_id, md5):
     """Get the filename of one image.
 
     Args:
-        TODO: drop user_name and task?
+        image_id: internal db ref number to image
+        md5: the md5sum of that image (as sanity check)
 
     Returns:
         list: [True, file_name] or [False, error_msg] where
@@ -220,16 +221,12 @@ def MgetOneImageFilename(self, user_name, task, image_id, md5):
     with plomdb.atomic():
         iref = Image.get_or_none(id=image_id)
         if iref is None:
-            log.warning(
-                "User {} asked for a non-existent image with id={}".format(
-                    user_name, image_id
-                )
-            )
+            log.warning("Asked for a non-existent image with id={}".format(image_id))
             return [False, "no such image"]
         if iref.md5sum != md5:
             log.warning(
-                "User {} asked for image id={} but supplied wrong md5sum".format(
-                    user_name, image_id
+                "Asked for image id={} but supplied wrong md5sum {} instead of {}".format(
+                    image_id, md5, iref.md5sum
                 )
             )
             return [False, "wrong md5sum"]

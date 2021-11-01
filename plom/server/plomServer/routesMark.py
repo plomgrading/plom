@@ -425,13 +425,10 @@ class MarkHandler:
                 a 404 response if no such image, or a 409 if wrong
                 md5sum saniity check was provided.
         """
-        task_code = request.match_info["task"]
         image_id = request.match_info["image_id"]
         md5sum = request.match_info["md5sum"]
 
-        r = self.server.DB.MgetOneImageFilename(
-            data["user"], task_code, image_id, md5sum
-        )
+        r = self.server.DB.MgetOneImageFilename(image_id, md5sum)
         if not r[0]:
             if r[1] == "no such image":
                 return web.Response(status=404)
@@ -717,7 +714,7 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
-        router.add_get("/MK/images/{task}/{image_id}/{md5sum}", self.MgetOneImage)
+        router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)

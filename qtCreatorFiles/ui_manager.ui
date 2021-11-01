@@ -254,7 +254,7 @@
           <enum>QTabWidget::North</enum>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="scanTab">
           <property name="enabled">
@@ -607,8 +607,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>968</width>
-                <height>466</height>
+                <width>63</width>
+                <height>16</height>
                </rect>
               </property>
              </widget>
@@ -1055,6 +1055,16 @@
                 <widget class="QComboBox" name="userCB"/>
                </item>
               </layout>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="markedOnlyCB">
+               <property name="text">
+                <string>Marked Only</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item>
               <spacer name="horizontalSpacer_11">

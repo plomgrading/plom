@@ -568,12 +568,10 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return ret
 
-    def MrequestOneImage(self, task_code, image_id, md5sum):
+    def MrequestOneImage(self, image_id, md5sum):
         """Download one image from server by its database id.
 
         args:
-            code (str): the task code such as "q1234g9".
-                TODO: consider removing code/`task` from URL.
             image_id (int): TODO: int/str?  The key into the server's
                 database of images.
             md5sum (str): the expected md5sum, just for sanity checks or
@@ -590,7 +588,7 @@ class Messenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                f"/MK/images/{task_code}/{image_id}/{md5sum}",
+                f"/MK/images/{image_id}/{md5sum}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

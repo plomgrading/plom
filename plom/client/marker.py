@@ -176,7 +176,7 @@ class BackgroundDownloader(QThread):
         for i, row in enumerate(src_img_data):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(task, row["id"], row["md5"])
+            im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
@@ -1322,7 +1322,7 @@ class MarkerClient(QWidget):
         # TODO: use server filename from server_path_filename
         for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
+            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
@@ -1466,7 +1466,7 @@ class MarkerClient(QWidget):
         for i, row in enumerate(src_img_data):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
+            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             with open(tmp, "wb+") as fh:
                 fh.write(im_bytes)
@@ -2292,9 +2292,9 @@ class MarkerClient(QWidget):
 
         return [pageData, viewFiles]
 
-    def downloadOneImage(self, task, image_id, md5):
+    def downloadOneImage(self, image_id, md5):
         """Download one image from server by its database id."""
-        return self.msgr.MrequestOneImage(task, image_id, md5)
+        return self.msgr.MrequestOneImage(image_id, md5)
 
     def doneWithWholePaperFiles(self, viewFiles):
         """ Unlinks files in viewFiles to os. """

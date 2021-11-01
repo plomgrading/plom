@@ -712,7 +712,7 @@ class Annotator(QWidget):
                 continue
             md5 = pg["md5"]
             image_id = pg["id"]
-            tmp = self.parentMarkerUI.downloadOneImage(self.tgvID, image_id, md5)
+            tmp = self.parentMarkerUI.downloadOneImage(image_id, md5)
             # TODO: wrong to put these in the paperdir (?)
             # Maybe Marker should be doing this downloading
             workdir = self.parentMarkerUI.workingDirectory
