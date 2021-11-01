@@ -20,21 +20,23 @@ def validate(self, user, token):
     Returns:
         bool
     """
-    # log.debug("Validating user {}.".format(user))
-    dbToken = self.DB.getUserToken(user)
+    # log.debug(f'Validating user "{user}"')
+    try:
+        dbToken = self.DB.getUserToken(user)
+    except ValueError as e:
+        log.warning(f'User "{user}" tried a token but we have no such user!')
+        return False
     if not dbToken:
-        log.warning('User "{}" tried a token but we have no such user!'.format(user))
+        log.info(f'User "{user}" tried a token but they are not logged in')
         return False
     r = self.authority.validate_token(token, dbToken)
     # gives None/False/True
     if r is None:
         log.warning(
-            'Malformed token from user "{}": client bug? malicious probing?'.format(
-                user
-            )
+            f'User "{user}" tried a malformed token: client bug? malicious probing?'
         )
     elif not r:
-        log.info('User "{}" tried to use a stale or invalid token'.format(user))
+        log.info(f'User "{user}" tried to use a stale or invalid token')
     return bool(r)
 
 
