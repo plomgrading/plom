@@ -1294,19 +1294,18 @@ class Manager(QWidget):
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
-            imageList = self.msgr.request_ID_image(test)
+            imageDat = self.msgr.request_ID_image(test)
         except PlomException as err:
             ErrorMessage(err).exec_()
             return
 
-        inames = []
+        if imageDat is None:
+            return
         with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.image".format(i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            IDViewWindow(self, inames, sid).exec_()
+            imageName = os.path.join(td, "id.0.image")
+            with open(imageName, "wb+") as fh:
+                fh.write(imageDat)
+            IDViewWindow(self, imageName, sid).exec_()
 
     def runPredictor(self, ignoreStamp=False):
         rmsg = self.msgr.IDrunPredictions(
@@ -1576,15 +1575,12 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        imageList = self.msgr.request_ID_image(test)
-        inames = []
+        imageDat = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.image".format(i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            rvw = ReviewViewWindow(self, inames, "ID pages")
+            imageName = os.path.join(td, "id.0.image")
+            with open(imageName, "wb+") as fh:
+                fh.write(imageDat)
+            rvw = ReviewViewWindow(self, imageName, "ID pages")
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.

@@ -59,7 +59,7 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, test, fnames=[], stat="unidentified", id="", name=""):
+    def __init__(self, test, fname=None, stat="unidentified", id="", name=""):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test number
@@ -69,8 +69,8 @@ class Paper:
         # no name or id-number yet.
         self.sname = name
         self.sid = id
-        # the list filenames of the images.
-        self.originalFiles = fnames
+        # the filename of the image.
+        self.originalFile = fname
 
     def setStatus(self, st):
         self.status = st
@@ -409,7 +409,7 @@ class IDClient(QWidget):
         idList = self.msgr.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fnames=[], stat="identified", id=x[1], name=x[2]),
+                Paper(x[0], fname=None, stat="identified", id=x[1], name=x[2]),
                 update=False,
             )
 
@@ -425,11 +425,11 @@ class IDClient(QWidget):
         # grab the selected tgv
         test = self.exM.paperList[r].test
         # check if we have a copy
-        if len(self.exM.paperList[r].originalFiles) > 0:
+        if self.exM.paperList[r].originalFile is not None:
             return
         # else try to grab it from server
         try:
-            imageList = self.msgr.request_ID_image(test)
+            imageDat = self.msgr.request_ID_image(test)
         except PlomSeriousException as e:
             self.throwSeriousError(e)
             return
@@ -438,21 +438,20 @@ class IDClient(QWidget):
             # self.exM.removePaper(r)
             return
 
-        # Image names = "i<testnumber>.<imagenumber>.<ext>"
-        inames = []
-        for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
-            inames.append(tmp)
-            with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
+        if imageDat is None:  # means no image
+            imageName = None
+        else:
+            imageName = os.path.join(self.workingDirectory, f"i{test}.0.image")
+            with open(imageName, "wb+") as fh:
+                fh.write(imageDat)
 
-        self.exM.paperList[r].originalFiles = inames
+        self.exM.paperList[r].originalFile = imageName
 
     def updateImage(self, r=0):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFiles)
+        self.testImg.updateImage(self.exM.paperList[r].originalFile)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
         if tn in self.predictedTestToNumbers:

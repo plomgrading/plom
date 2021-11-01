@@ -455,8 +455,8 @@ class BaseMessenger:
             )
             response.raise_for_status()
             if response.status_code == 204:
-                return []  # 204 is empty list
-            return [BytesIO(response.content).getvalue()]
+                return None  # 204 means no image
+            return BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
