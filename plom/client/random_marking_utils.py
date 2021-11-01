@@ -217,7 +217,7 @@ def do_random_marking_backend(question, version, *, messenger):
         ]
         with tempfile.TemporaryDirectory() as td:
             for i, r in enumerate(src_img_data):
-                obj = messenger.MrequestOneImage(task, r["id"], r["md5"])
+                obj = messenger.MrequestOneImage(r["id"], r["md5"])
                 tmp = os.path.join(td, f"{task}.{i}.image")
                 with open(tmp, "wb") as f:
                     f.write(obj)

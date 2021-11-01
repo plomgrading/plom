@@ -437,13 +437,16 @@ def RgetCoverPageInfo(self, test_number):
     return coverpage
 
 
-def RgetMarkReview(self, filterQ, filterV, filterU):
+def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
     """Return a list of all marked qgroups satisfying the filter conditions.
     Filter on question-number, version, and user-name.
     For each matching qgroup we return a tuple of
     [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
     """
-    query = QGroup.select().join(User).where(QGroup.marked == True)
+    if filterM is True:
+        query = QGroup.select().join(User).where(QGroup.marked == True)
+    else:
+        query = QGroup.select()
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
     if filterV != "*":
@@ -452,23 +455,38 @@ def RgetMarkReview(self, filterQ, filterV, filterU):
         query = query.where(User.name == filterU)
     filtered = []
     for qref in query:
-        filtered.append(
-            [
-                qref.test.test_number,
-                qref.question,
-                qref.version,
-                qref.annotations[-1].mark,
-                qref.user.name,
-                qref.annotations[-1].marking_time,
-                # CANNOT JSON DATETIMEFIELD.
-                qref.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
-            ]
-        )
+        if qref.marked == True:
+            filtered.append(
+                [
+                    qref.test.test_number,
+                    qref.question,
+                    qref.version,
+                    qref.annotations[-1].mark,
+                    qref.user.name,
+                    qref.annotations[-1].marking_time,
+                    # CANNOT JSON DATETIMEFIELD.
+                    qref.annotations[-1].time.strftime("%y:%m:%d-%H:%M:%S"),
+                ]
+            )
+        else:
+            filtered.append(
+                [
+                    qref.test.test_number,
+                    qref.question,
+                    qref.version,
+                    "n/a",  # mark
+                    "unmarked",  # username
+                    "n/a",  # marking time
+                    "n/a",  # when
+                ]
+            )
+
     log.debug(
         "Sending filtered mark-review data. filters (Q,V,U)={}.{}.{}".format(
             filterQ, filterV, filterU
         )
     )
+    log.warn(f"FILT = {filtered}")
     return filtered
 
 

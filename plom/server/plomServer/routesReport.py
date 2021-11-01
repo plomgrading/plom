@@ -348,7 +348,9 @@ class ReportHandler:
         return web.json_response(self.server.RgetUserDetails(), status=200)
 
     # @routes.get("/REP/markReview")
-    @authenticate_by_token_required_fields(["user", "filterQ", "filterV", "filterU"])
+    @authenticate_by_token_required_fields(
+        ["user", "filterQ", "filterV", "filterU", "filterM"]
+    )
     def RgetMarkReview(self, data, request):
         """Respond with a list of graded tasks that match the filter description.
 
@@ -367,7 +369,7 @@ class ReportHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
         rmsg = self.server.RgetMarkReview(
-            data["filterQ"], data["filterV"], data["filterU"]
+            data["filterQ"], data["filterV"], data["filterU"], data["filterM"]
         )
 
         # A list of lists including metadata information for the graded exams matching the filter with the format of:

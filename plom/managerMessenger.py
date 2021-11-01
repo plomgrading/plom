@@ -1089,7 +1089,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getMarkReview(self, filterQ, filterV, filterU):
+    def getMarkReview(self, filterQ, filterV, filterU, filterM=True):
         self.SRmutex.acquire()
         try:
             response = self.get(
@@ -1100,6 +1100,7 @@ class ManagerMessenger(BaseMessenger):
                     "filterQ": filterQ,
                     "filterV": filterV,
                     "filterU": filterU,
+                    "filterM": filterM,
                 },
             )
             response.raise_for_status()

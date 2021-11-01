@@ -1476,10 +1476,12 @@ class Manager(QWidget):
                 'Please set at least one of "Question", "Version", "User" to specific values.'
             ).exec_()
             return
+        markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
         mrList = self.msgr.getMarkReview(
             self.ui.questionCB.currentText(),
             self.ui.versionCB.currentText(),
             self.ui.userCB.currentText(),
+            markedOnly,
         )
 
         self.ui.reviewTW.clearContents()
@@ -1495,6 +1497,9 @@ class Manager(QWidget):
             if dat[4] == "reviewer":
                 for k in range(7):
                     self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.green))
+            if dat[3] == "n/a":
+                for k in range(7):
+                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.yellow))
             r += 1
 
     def reviewAnnotated(self):
@@ -1502,6 +1507,11 @@ class Manager(QWidget):
         if len(rvi) == 0:
             return
         r = rvi[0].row()
+        # no action if row is unmarked
+        # text in item is rjust(4)'d - so <space>n/a is the string
+        if self.ui.reviewTW.item(r, 3).text() == " n/a":
+            # TODO - in future fire up reviewer with original pages
+            return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
