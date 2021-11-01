@@ -202,7 +202,7 @@ class IDHandler:
                 raise web.HTTPNotFound(reason="No such paper")
 
         # if there are no such files return a success but with code 204 = no content.
-        if output is None:
+        if not output:
             return web.Response(status=204)
         else:
             return web.FileResponse(output, status=200)

@@ -333,7 +333,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
 
 
 def IDgetImageFromATest(self):
-    """Returns ID image from the first unid'd test."""
+    """Returns ID image from a randomly selected unid'd test."""
     query = (  # look for scanned ID groups which are not IDd yet.
         IDGroup.select()
         .join(Group)
@@ -342,6 +342,7 @@ def IDgetImageFromATest(self):
             Group.scanned == True,
             IDGroup.identified == False,
         )
+        .order_by(pw.fn.Random())
         .limit(1)  # we only need 1.
     )
     if query.count() == 0:
