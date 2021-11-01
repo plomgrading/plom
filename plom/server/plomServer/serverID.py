@@ -256,7 +256,7 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
 
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
-    test_image_dict = self.DB.IDgetImagesOfUnIDd()
+    test_image_dict = self.DB.IDgetImagesOfNotAutoIdentified()
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:

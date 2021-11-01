@@ -146,6 +146,24 @@ def RgetIdentified(self):
     return idd_dict
 
 
+def RgetNotAutoIdentified(self):
+    """
+    Return list of test numbers of scanned but unidentified tests.
+    See also IDgetImagesOfUnIDd
+    """
+    unidd_list = []
+    hal_ref = User.get(User.name == "HAL")
+    query = Group.select().where(Group.group_type == "i", Group.scanned == True)
+    for gref in query:
+        # there is always exactly one idgroup here.
+        # ignore those belonging to HAL - they are pre-id'd
+        if gref.idgroups[0].user == hal_ref:
+            continue
+        unidd_list.append(gref.test.test_number)
+    log.debug("Sending list of scanned but not auto-id'd tests")
+    return unidd_list
+
+
 def RgetProgress(self, spec, q, v):
     """For the given question/version return a simple progress summary = a dict with keys
     [numberScanned, numberMarked, numberRecent, avgMark, avgTimetaken,

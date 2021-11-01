@@ -196,23 +196,19 @@ def ID_get_donotmark_images(self, test_number):
     return (True, file_list)
 
 
-def IDgetImagesOfUnIDd(self):
+def IDgetImagesOfNotAutoIdentified(self):
     """
-    For every un-id'd test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
+    For every non-auto'd test, find the filename of its idpage. So gives returns a dictionary of testNumber -> filename.
     """
     rval = {}
     uref = User.get(User.name == "HAL")
-    query = IDGroup.select()
-    for iref in query:
+    query = Group.select().where(Group.group_type == "i", Group.scanned == True)
+    for gref in query:
+        iref = gref.idgroups[0]  # there is always exactly 1.
         # we want to ignore pre-named papers - those are owned by HAL
         # can improve this query.
         if iref.user == uref:
             continue
-        # for each iref, check that it is scanned and then grab page.
-        gref = iref.group
-        if not gref.scanned:
-            continue
-
         # grab the relevant page if it is there
         if len(iref.idpages) == 0:
             # otherwise we don't add that test to the dictionary.
