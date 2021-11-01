@@ -454,25 +454,6 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
-    @authenticate_by_token_required_fields(["user"])
-    def IDgetImageList(self, data, request):
-        """Get a list of paths to first ID page image for each test.
-
-        Responds with status 200/401.
-
-        Args:
-            data (dict): A dictionary having the user/token
-
-            request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
-
-        Returns:
-            aiohttp.web_response.Response: returns a dict with keys test-number, values paths.
-        """
-
-        if data["user"] != "manager":
-            return web.Response(status=401)
-        return web.json_response(self.server.IDgetImageList(), status=200)
-
     @authenticate_by_token_required_fields(
         ["user", "rectangle", "fileNumber", "ignoreStamp"]
     )
@@ -556,5 +537,3 @@ class IDHandler:
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)
-        # This API needs hackery/removal the future.
-        router.add_get("/TMP/imageList", self.IDgetImageList)

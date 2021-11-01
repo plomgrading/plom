@@ -193,7 +193,7 @@ class ReportHandler:
 
         if not data["user"] == "manager":
             return web.Response(status=401)
-        return web.json_response(self.server.RgetNotAutoidentified(), status=200)
+        return web.json_response(self.server.RgetNotAutoIdentified(), status=200)
 
     # @routes.get("/REP/completionStatus")
     @authenticate_by_token_required_fields(["user"])
