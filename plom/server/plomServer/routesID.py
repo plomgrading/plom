@@ -465,7 +465,7 @@ class IDHandler:
             request (aiohttp.web_request.Request): PUT /ID/put type request object.
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with a True or False indicating if predictions upload was successful.
+            aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
         """
         if data["user"] != "manager":
             return web.Response(status=401)

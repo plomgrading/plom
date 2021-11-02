@@ -209,9 +209,9 @@ def IDputPredictions(self, predictions, classlist, spec):
     """
 
     log.info("ID prediction list uploaded")
-    ids = {sid for sid, sname in classlist}
+    ids = {int(X["id"]) for X in classlist}
     for test, sid in predictions:
-        if sid not in ids:
+        if int(sid) not in ids:
             return [False, f"ID {sid} not in classlist"]
         if test < 0 or test > spec["numberToProduce"]:
             return [False, f"Test {test} outside range"]
@@ -220,12 +220,13 @@ def IDputPredictions(self, predictions, classlist, spec):
     try:
         with open(specdir / "predictionlist.csv", "w") as fh:
             fh.write("test, id\n")
-            for test, side in predictions:
+            for test, sid in predictions:
+                log.info(f"ID prediction writing {test}, {sid}")
                 fh.write("{}, {}\n".format(test, sid))
     except Exception as err:
         return [False, f"Some sort of file error - {err}"]
 
-    return [True]
+    return [True, "Prediction list saved successfully"]
 
 
 def IDreviewID(self, test_number):
