@@ -373,13 +373,10 @@ class IDClient(QWidget):
         self.close()
 
     def shutDown(self):
-        """Send the server a DNF (did not finish) message so it knows to
-        take anything that this user has out-for-id-ing and return it to
-        the todo pile. Then send a user-closing message so that the
-        authorisation token is removed. Then finally close.
+        """Send a user-closing message so that the authorisation token is removed.
+
         TODO: messenger needs to drop token here?
         """
-        self.DNF()
         try:
             self.msgr.closeUser()
         except PlomSeriousException as err:
@@ -387,22 +384,6 @@ class IDClient(QWidget):
 
         self.my_shutdown_signal.emit(1)
         self.close()
-
-    def DNF(self):
-        """Send the server a "did not finished" message for each paper
-        in the list that has not been ID'd. The server will put these back
-        onto the todo-pile.
-        """
-        # Go through each entry in the table - it not ID'd then send a DNF
-        # to the server.
-        rc = self.exM.rowCount()
-        for r in range(rc):
-            if self.exM.data(self.exM.index(r, 1)) != "identified":
-                # Tell user DNF, user, auth-token, and paper's code.
-                try:
-                    self.msgr.IDdidNotFinishTask(self.exM.data(self.exM.index(r, 0)))
-                except PlomSeriousException as err:
-                    self.throwSeriousError(err)
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers

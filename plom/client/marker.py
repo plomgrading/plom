@@ -2213,10 +2213,6 @@ class MarkerClient(QWidget):
                     self.backgroundUploader.terminate()
                     break
 
-        # When shutting down, first alert server of any images that were
-        # not marked - using 'DNF' (did not finish). Server will put
-        # those files back on the todo pile.
-        self.DNF()
         # now save the annotator rubric tab state to server
         self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
 
@@ -2229,31 +2225,6 @@ class MarkerClient(QWidget):
 
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         self.my_shutdown_signal.emit(2, [sidebarRight])
-
-    def DNF(self):
-        """
-        Marks files that are not finished as "did not finish."
-
-        Notes:
-            do this for everything, not just the proxy-model
-
-        Returns:
-            None
-
-        Raises:
-            PlomSeriousException if an error occurs in server.
-
-        """
-        for r in range(self.examModel.rowCount()):
-            if self.examModel.data(self.examModel.index(r, 1)) != "marked":
-                # Tell server the task of any paper that is not marked.
-                # server will put that back on the todo-pile.
-                try:
-                    self.msgr.MdidNotFinishTask(
-                        self.examModel.data(self.examModel.index(r, 0))
-                    )
-                except PlomSeriousException as err:
-                    self.throwSeriousError(err)
 
     def downloadWholePaper(self, testNumber):
         """
