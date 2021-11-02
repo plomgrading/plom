@@ -373,10 +373,8 @@ class IDClient(QWidget):
         self.close()
 
     def shutDown(self):
-        """Send the server a DNF (did not finish) message so it knows to
-        take anything that this user has out-for-id-ing and return it to
-        the todo pile. Then send a user-closing message so that the
-        authorisation token is removed. Then finally close.
+        """Send a user-closing message so that the authorisation token is removed.
+
         TODO: messenger needs to drop token here?
         """
         try:
