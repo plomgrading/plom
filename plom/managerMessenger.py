@@ -19,6 +19,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
     PlomRangeException,
     PlomExistingDatabase,
+    PlomOwnersLoggedInException,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -314,12 +315,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
-            if response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -976,6 +971,26 @@ class ManagerMessenger(BaseMessenger):
                 json={
                     "user": self.user,
                     "token": self.token,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def IDputPredictions(self, predictions):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                "/ID/predictions",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "predictions": predictions,
                 },
             )
             response.raise_for_status()

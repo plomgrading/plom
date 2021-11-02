@@ -193,6 +193,41 @@ def IDdeletePredictions(self):
     return [True]
 
 
+def IDputPredictions(self, predictions, classlist, spec):
+    """Save predictions in the server's prediction file.
+
+    Note - does sanity checks against the current classlist
+
+    Args:
+        predictions (list): A list of pairs of (testnumber, student id)
+        classlist (list): A list of pairs of (student id, student name)
+        spec (dict): The test specification
+
+    Returns:
+        list: first entry is True/False for success.  If False, second
+            entry is a string with an explanation.
+    """
+
+    log.info("ID prediction list uploaded")
+    ids = {sid for sid, sname in classlist}
+    for test, sid in predictions:
+        if sid not in ids:
+            return [False, f"ID {sid} not in classlist"]
+        if test < 0 or test > spec["numberToProduce"]:
+            return [False, f"Test {test} outside range"]
+
+    # now save the result
+    try:
+        with open(specdir / "predictionlist.csv", "w") as fh:
+            fh.write("test, id\n")
+            for test, side in predictions:
+                fh.write("{}, {}\n".format(test, sid))
+    except Exception as err:
+        return [False, f"Some sort of file error - {err}"]
+
+    return [True]
+
+
 def IDreviewID(self, test_number):
     """Handle manager GUI's review of an ID'd paper.
 

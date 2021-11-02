@@ -46,11 +46,11 @@ if __name__ == "__main__":
     )
 
     # now save the result
-    with open(specdir / "predictionlist.csv", "w") as file_header:
-        file_header.write("test, id\n")
+    with open(specdir / "predictionlist.csv", "w") as fh:
+        fh.write("test, id\n")
         for test_number, student_ID in prediction_pairs:
-            file_header.write("{}, {}\n".format(test_number, student_ID))
-        file_header.close()
+            fh.write("{}, {}\n".format(test_number, student_ID))
+
     print("Results saved in predictionlist.csv")
 
     os.unlink(lock_file)

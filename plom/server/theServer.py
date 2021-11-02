@@ -143,6 +143,7 @@ class Server:
         id_paper,
         ID_id_paper,
         IDdeletePredictions,
+        IDputPredictions,
         IDrunPredictions,
         IDreviewID,
     )
