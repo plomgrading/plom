@@ -38,16 +38,14 @@ class MarkHandler:
 
         if valid_question:
             return web.json_response(maximum_mark_response, status=200)
-        elif maximum_mark_response == "QE":  # Check if the question was out of range
-            # pg out of range
+        elif maximum_mark_response == "QE":
             return web.Response(
-                text="Question out of range - please check before trying again.",
+                text="Question out of range - please check and try again.",
                 status=416,
             )
-        elif maximum_mark_response == "VE":  # Check if the version was out of range
-            # version our of range
+        elif maximum_mark_response == "VE":
             return web.Response(
-                text="Version out of range - please check before trying again.",
+                text="Version out of range - please check and try again.",
                 status=416,
             )
 
