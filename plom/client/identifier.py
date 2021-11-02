@@ -237,7 +237,7 @@ class IDClient(QWidget):
 
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
-        self.ui.closeButton.clicked.connect(self.shutDown)
+        self.ui.closeButton.clicked.connect(self.close)
         self.ui.nextButton.clicked.connect(self.skipOnClick)
         self.ui.predButton.clicked.connect(self.acceptPrediction)
         self.ui.blankButton.clicked.connect(self.blankPaper)
@@ -372,18 +372,16 @@ class IDClient(QWidget):
         self.my_shutdown_signal.emit(1)
         self.close()
 
-    def shutDown(self):
-        """Send a user-closing message so that the authorisation token is removed.
-
-        TODO: messenger needs to drop token here?
-        """
+    def closeEvent(self, event):
+        log.debug("Something has triggered a shutdown event")
+        log.debug("Revoking login token")
         try:
             self.msgr.closeUser()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
-
         self.my_shutdown_signal.emit(1)
-        self.close()
+        event.accept()
+        log.debug("Identifier: goodbye!")
 
     def getAlreadyIDList(self):
         # Ask server for list of previously ID'd papers
