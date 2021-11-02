@@ -1053,11 +1053,8 @@ class MarkerClient(QWidget):
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
-        try:
-            self.loadMarkedList()  # Get list of papers already marked and add to table.
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        # Get list of papers already marked and add to table.
+        self.loadMarkedList()
 
         # Keep the original format around in case we need to change it
         self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
@@ -1287,9 +1284,6 @@ class MarkerClient(QWidget):
             # import sys
             # sys.exit(58)
             raise PlomSeriousException("Manager changed task") from ex
-        except PlomSeriousException as e:
-            self.throwSeriousError(e)
-            return False
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
