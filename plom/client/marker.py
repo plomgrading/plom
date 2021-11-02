@@ -2409,15 +2409,11 @@ class MarkerClient(QWidget):
             if len(txt) > 256:
                 log.warning("overly long tags truncated to 256 chars")
                 txt = txt[:256]
-            # send updated tag back to server.
             try:
                 self.msgr.MsetTag(task, txt)
             except PlomTakenException as err:
-                log.exception("exception when trying to set tag")
-                ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
-                return
-            except PlomSeriousException as err:
-                self.throwSeriousError(err)
+                log.warn("Could not set tag: %s", err)
+                ErrorMessage(f"Could not set tag:\n{err}").exec_()
                 return
             self.examModel.setTagsByTask(task, txt)
             # resize view too
