@@ -369,7 +369,8 @@ class IDClient(QWidget):
         self.ui.idEdit.setClearButtonEnabled(True)
 
     def shutDownError(self):
-        self.my_shutdown_signal.emit(1)
+        """Shuts down self due to error."""
+        log.error("Shutting down due to error")
         self.close()
 
     def closeEvent(self, event):

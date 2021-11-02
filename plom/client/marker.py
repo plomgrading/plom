@@ -2214,12 +2214,10 @@ class MarkerClient(QWidget):
 
     def shutDownError(self):
         """Shuts down self due to error."""
-        if (
-            getattr(self, "_annotator", None) is not None
-        ):  # try to shut down annotator too.
+        if getattr(self, "_annotator", None):
+            # try to shut down annotator too if we have one
             self._annotator.close()
-        log.error("shutting down")
-        self.my_shutdown_signal.emit(2, [])
+        log.error("Shutting down due to error")
         self.close()
 
     def downloadWholePaper(self, testNumber):
