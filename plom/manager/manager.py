@@ -436,17 +436,12 @@ class Manager(QWidget):
         self.parent.setFont(fnt)
 
     def login(self):
-        # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
-
-        if (not user.isalnum()) or (not user):
+        if not user:
             return
-        # check password at least 4 char long
         pwd = self.ui.passwordLE.text()
-        self.ui.passwordLE.setText(pwd)
-
-        if len(pwd) < 4:
+        if not pwd:
             return
 
         self.partial_parse_address()

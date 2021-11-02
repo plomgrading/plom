@@ -169,15 +169,12 @@ class Chooser(QDialog):
         logging.getLogger().setLevel(self.lastTime["LogLevel"].upper())
 
     def validate(self, which_subapp):
-        # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
-        if (not user.isalnum()) or (not user):
+        if not user:
             return
-        # Don't strip whitespace from passwords
         pwd = self.ui.passwordLE.text()
-        if len(pwd) < 4:
-            log.warning("Password too short")
+        if not pwd:
             return
 
         self.partial_parse_address()
@@ -188,7 +185,6 @@ class Chooser(QDialog):
             return
         mport = self.ui.mportSB.value()
 
-        # save those settings
         self.saveDetails()
 
         if user == "manager":
