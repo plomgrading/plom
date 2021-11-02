@@ -2184,9 +2184,36 @@ class MarkerClient(QWidget):
         return True
 
     def closeEvent(self, event):
-        log.debug("Something has triggered a shutdown even")
-        self.do_shutdown_tasks()
+        log.debug("Something has triggered a shutdown event")
+        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
+        N = self.get_upload_queue_length()
+        if N > 0:
+            # TODO: proper dialog, "wait (cancel close)", "force quit"
+            msg = SimpleMessage(
+                f"There are {N} papers uploading or queued.  Wait?  yes=wait, no=force quit"
+            )
+            if msg.exec_() == QMessageBox.Yes:
+                event.ignore()
+                return
+            # politely ask one more time
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.quit()
+            if not self.backgroundUploader.wait(50):
+                log.info("Background downloader did stop cleanly in 50ms, terminating")
+            # then nuke it from orbit
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.terminate()
+
+        log.debug("Revoking login token")
+        try:
+            self.msgr.closeUser()
+        except PlomSeriousException as err:
+            self.throwSeriousError(err)
+        sidebarRight = self.ui.sidebarRightCB.isChecked()
+        log.debug("Emitting Marker shutdown signal")
+        self.my_shutdown_signal.emit(2, [sidebarRight])
         event.accept()
+        log.debug("Marker: goodbye!")
 
     def shutDownError(self):
         """Shuts down self due to error."""
@@ -2197,37 +2224,6 @@ class MarkerClient(QWidget):
         log.error("shutting down")
         self.my_shutdown_signal.emit(2, [])
         self.close()
-
-    def do_shutdown_tasks(self):
-        """Shuts down self."""
-        log.debug("Marker shutdown from thread " + str(threading.get_ident()))
-        timeout = 1
-        while not self.wait_for_bguploader(timeout=timeout):
-            timeout = 5  # subsequent popups are less frequent
-            msg = SimpleMessage(
-                "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
-            )
-            if msg.exec_() == QMessageBox.No:
-                # politely ask one more time
-                self.backgroundUploader.quit()
-                time.sleep(0.1)
-                # then nuke it from orbit
-                if self.backgroundUploader.isRunning():
-                    self.backgroundUploader.terminate()
-                    break
-
-        # now save the annotator rubric tab state to server
-        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
-
-        # Then send a 'user closing' message - server will revoke
-        # authentication token.
-        try:
-            self.msgr.closeUser()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-
-        sidebarRight = self.ui.sidebarRightCB.isChecked()
-        self.my_shutdown_signal.emit(2, [sidebarRight])
 
     def downloadWholePaper(self, testNumber):
         """
