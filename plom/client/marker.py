@@ -2205,10 +2205,7 @@ class MarkerClient(QWidget):
                 self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
-        try:
-            self.msgr.closeUser()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+        self.msgr.closeUser()
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         log.debug("Emitting Marker shutdown signal")
         self.my_shutdown_signal.emit(2, [sidebarRight])

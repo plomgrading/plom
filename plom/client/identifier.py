@@ -375,10 +375,7 @@ class IDClient(QWidget):
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown event")
         log.debug("Revoking login token")
-        try:
-            self.msgr.closeUser()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+        self.msgr.closeUser()
         self.my_shutdown_signal.emit(1)
         event.accept()
         log.debug("Identifier: goodbye!")
