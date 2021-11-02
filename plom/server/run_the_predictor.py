@@ -13,13 +13,13 @@ __copyright__ = "Copyright (C) 2018-20120 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
+import csv
 import json
 import os
 import sys
 
-# Older not-recently tested TensorFlow model
-# from .IDReader_TF.idReader import run_id_reader
 from .IDReader_RF.idReader import run_id_reader
+from plom import specdir
 
 
 if __name__ == "__main__":
@@ -28,8 +28,29 @@ if __name__ == "__main__":
     if not os.path.isfile(lock_file):
         raise RuntimeError('Cannot acquire file "{}"'.format(lock_file))
 
+    # Put student numbers in list
+    print("Getting the classlist")
+    student_IDs = []
+    with open(specdir / "classlist.csv", newline="") as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=",")
+        next(csv_reader, None)  # skip the header
+        for row in csv_reader:
+            student_IDs.append(row[0])
+
     with open(lock_file) as fh:
         fileDictAndRect = json.load(fh)
-        run_id_reader(fileDictAndRect[0], fileDictAndRect[1])
+
+    print("Firing up the auto id reader.")
+    prediction_pairs = run_id_reader(
+        fileDictAndRect[0], fileDictAndRect[1], student_IDs
+    )
+
+    # now save the result
+    with open(specdir / "predictionlist.csv", "w") as file_header:
+        file_header.write("test, id\n")
+        for test_number, student_ID in prediction_pairs:
+            file_header.write("{}, {}\n".format(test_number, student_ID))
+        file_header.close()
+    print("Results saved in predictionlist.csv")
 
     os.unlink(lock_file)
