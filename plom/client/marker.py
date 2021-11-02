@@ -1036,11 +1036,8 @@ class MarkerClient(QWidget):
         self.version = version
 
         # Get the number of Tests, Pages, Questions and Versions
-        try:
-            self.exam_spec = self.msgr.get_spec()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err, rethrow=False)
-            return
+        # Note: if this fails UI is not yet in a useable state
+        self.exam_spec = self.msgr.get_spec()
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
@@ -1186,33 +1183,6 @@ class MarkerClient(QWidget):
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
-
-    def throwSeriousError(self, error, rethrow=True):
-        """
-        Logs an exception, pops up a dialog and shuts down.
-
-        Args:
-            error: the exception to be reraised
-            rethrow: True if the only way to solve this error is to crash
-                and shut down Plom. False if the exception can be handled in a
-                way other than crashing, in which case it will initiate
-                shutdown and not re-raise the exception (thus avoiding a crash)
-
-        Returns:
-            None
-
-        """
-        # automatically prints a stacktrace into the log!
-        log.exception("A serious error has been detected")
-        msg = 'A serious error has been thrown:\n"{}"'.format(error)
-        if rethrow:
-            msg += "\nProbably we will crash now..."
-        else:
-            msg += "\nShutting down Marker."
-        ErrorMessage(msg).exec_()
-        self.shutDownError()
-        if rethrow:
-            raise (error)
 
     def loadMarkedList(self):
         """
@@ -1363,10 +1333,8 @@ class MarkerClient(QWidget):
             try:
                 val, maxm = self.msgr.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
-                log.exception("Serious error detected while updating progress")
-                msg = 'A serious error happened while updating progress:\n"{}"'.format(
-                    err
-                )
+                log.exception("Serious error detected while updating progress: %s", err)
+                msg = f"A serious error happened while updating progress:\n{err}"
                 msg += "\nThis is not good: restart, report bug, etc."
                 ErrorMessage(msg).exec_()
                 return
@@ -1404,13 +1372,16 @@ class MarkerClient(QWidget):
             # TODO remove.
             if attempts > 5:
                 return
-            # ask server for task of next task
             try:
                 task = self.msgr.MaskNextTask(self.question, self.version)
                 if not task:
                     return False
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
+                log.exception("Unexpected error getting next task: %s", err)
+                ErrorMessage(
+                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                ).exec_()
+                raise
 
             try:
                 page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
@@ -2211,14 +2182,6 @@ class MarkerClient(QWidget):
         event.accept()
         log.debug("Marker: goodbye!")
 
-    def shutDownError(self):
-        """Shuts down self due to error."""
-        if getattr(self, "_annotator", None):
-            # try to shut down annotator too if we have one
-            self._annotator.close()
-        log.error("Shutting down due to error")
-        self.close()
-
     def downloadWholePaper(self, testNumber):
         """
 
@@ -2233,8 +2196,10 @@ class MarkerClient(QWidget):
                 testNumber, self.question
             )
         except PlomTakenException as err:
-            log.exception("Taken exception when downloading whole paper")
-            ErrorMessage("{}".format(err)).exec_()
+            log.exception("Taken exception while downloading whole paper %s", err)
+            ErrorMessage(
+                f"'Taken exception' while downloading whole paper:\n{err}"
+            ).exec_()
             return ([], [])  # TODO: what to return?
 
         viewFiles = []
