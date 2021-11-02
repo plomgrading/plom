@@ -209,6 +209,8 @@ class BackgroundUploader(QThread):
                 TODO: have caller do clone, for symmetry with downloader?
         """
         super().__init__()
+        self.q = None
+        self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
@@ -234,7 +236,9 @@ class BackgroundUploader(QThread):
         self.q.put(args)
 
     def queue_size(self):
-        """Return the (approx?) queue length, the number of papers waiting to upload."""
+        """Return the number of papers waiting or currently uploading."""
+        if self.is_upload_in_progress:
+            return self.q.qsize() + 1
         return self.q.qsize()
 
     def isEmpty(self):
@@ -243,9 +247,9 @@ class BackgroundUploader(QThread):
 
         Returns:
             True if the upload queue is empty, false otherwise.
-
         """
-        return self.q.empty()
+        # return self.q.empty()
+        return self.queue_size() == 0
 
     def run(self):
         """
@@ -256,7 +260,6 @@ class BackgroundUploader(QThread):
 
         Returns:
             None
-
         """
 
         def tryToUpload():
@@ -268,6 +271,7 @@ class BackgroundUploader(QThread):
                 data = self.q.get_nowait()
             except EmptyQueueException:
                 return
+            self.is_upload_in_progress = True
             code = data[0]  # TODO: remove so that queue needs no knowledge of args
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             upload(
@@ -277,6 +281,7 @@ class BackgroundUploader(QThread):
                 unknownFailCallback=self.uploadUnknownFail.emit,
                 successCallback=self.uploadSuccess.emit,
             )
+            self.is_upload_in_progress = False
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -2139,8 +2144,6 @@ class MarkerClient(QWidget):
                 Value might also be approximate.
         """
         if not self.backgroundUploader:
-            return 0
-        if self.backgroundUploader.isEmpty():
             return 0
         return self.backgroundUploader.queue_size()
 
