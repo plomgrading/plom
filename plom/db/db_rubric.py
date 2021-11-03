@@ -6,7 +6,7 @@ from datetime import datetime
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
-from plom.db.tables import Rubric, User
+from plom.db.tables import Rubric, User, Test, QGroup
 from plom.db.tables import plomdb
 
 
@@ -37,7 +37,7 @@ def McreateRubric(self, user_name, rubric):
     need_fields = ("kind", "delta", "text", "question")
     optional_fields = ("tags", "meta")
     if any(x not in rubric for x in need_fields):
-        return (False, "Must have all fields {}".format(need_field))
+        return (False, "Must have all fields {}".format(need_fields))
     for f in optional_fields:
         if f not in rubric:
             rubric = rubric.copy()  # in case caller uses reference
@@ -142,3 +142,48 @@ def MmodifyRubric(self, user_name, key, change):
         rref.tags = change["tags"]
         rref.save()
     return (True, key)
+
+
+def get_tests_using_given_rubric(key):
+    """Given the rubric key, find all the tests who latest annotations use that rubric."""
+    rref = Rubric.get_or_none(key=key)
+    test_list = []
+    if rref is None:
+        return (False, "noSuchRubric")
+    for arlink_ref in rref.arlinks:
+        aref = arlink_ref.annotation
+        # make sure the annotation is the latest one for
+        # that qgroup
+        qref = aref.qgroup
+        if aref == qref.annotations[-1]:
+            test_list.append(qref.test.test_number)
+    return (True, test_list)
+
+
+def get_rubrics_in_a_given_test(test_number):
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return (False, "noSuchTest")
+    rubric_dict = {}
+    for qref in tref.qgroups:
+        aref = qref.annotations[-1]
+        for arlink_ref in aref.arlinks:
+            key = arlink_ref.rubric.key
+            if key in rubric_dict:
+                rubric_dict[key] += 1
+            else:
+                rubric_dict[key] = 1
+    return (True, rubric_dict)
+
+
+def get_rubrics_by_question(question):
+    rubric_dict = {}
+    for qref in QGroup.select().where(QGroup.question == question):
+        aref = qref.annotations[-1]
+        for arlink_ref in aref.arlinks:
+            key = arlink_ref.rubric.key
+            if key in rubric_dict:
+                rubric_dict[key] += 1
+            else:
+                rubric_dict[key] = 1
+    return rubric_dict
