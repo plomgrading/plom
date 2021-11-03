@@ -274,6 +274,8 @@ class BackgroundUploader(QThread):
             self.is_upload_in_progress = True
             code = data[0]  # TODO: remove so that queue needs no knowledge of args
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
+            # For experimenting with slow uploads
+            # time.sleep(30)
             upload(
                 self._msgr,
                 *data,
@@ -2188,11 +2190,21 @@ class MarkerClient(QWidget):
         self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
         N = self.get_upload_queue_length()
         if N > 0:
-            # TODO: proper dialog, "wait (cancel close)", "force quit"
-            msg = SimpleMessage(
-                f"There are {N} papers uploading or queued.  Wait?  yes=wait, no=force quit"
-            )
-            if msg.exec_() == QMessageBox.Yes:
+            msg = QMessageBox()
+            s = "<p>There is 1 paper" if N == 1 else f"<p>There are {N} papers"
+            s += " uploading or queued for upload.</p>"
+            msg.setText(s)
+            s = "<p>You may want to cancel and wait a few seconds.</p>\n"
+            s += "<p>If you&apos;ve already tried that, then the upload "
+            s += "may have failed: you can quit, losing any non-uploaded "
+            s += "annotations.</p>"
+            msg.setInformativeText(s)
+            msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Discard)
+            msg.setDefaultButton(QMessageBox.Cancel)
+            button = msg.button(QMessageBox.Cancel)
+            button.setText("Wait (cancel close)")
+            msg.setIcon(QMessageBox.Warning)
+            if msg.exec_() == QMessageBox.Cancel:
                 event.ignore()
                 return
             # politely ask one more time
