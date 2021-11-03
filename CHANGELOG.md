@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Upload queue length was misreported, potentially losing the last upload on rapid quit.
+* Cleanup of client shutdown, hopefully fewer crashes in corner cases.
 
 
 ## [0.7.4] - 2021-10-28
