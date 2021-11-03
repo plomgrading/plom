@@ -62,3 +62,11 @@ def MsaveUserRubricPanes(self, username, question, rubricPanes):
     panefile = rubric_cfg_dir / "rubricPanes.{}.{}.json".format(username, question)
     with open(panefile, "w") as f:
         json.dump(rubricPanes, f)
+
+
+def RgetTestRubricMatrix(self):
+    return self.DB.Rget_test_rubric_count_matrix()
+
+
+def Rget_rubrics_by_question(self):
+    return self.DB.Rget_rubrics_by_question()

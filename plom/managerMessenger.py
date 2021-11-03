@@ -19,6 +19,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
     PlomRangeException,
     PlomExistingDatabase,
+    PlomOwnersLoggedInException,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -335,9 +336,7 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomNoMoreException("Cannot find ID image.") from None
             if response.status_code == 409:
                 raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
+                    "Another user has the image. This should not happen"
                 ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
@@ -1384,3 +1383,23 @@ class ManagerMessenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    ## =====
+    ## Rubric analysis stuff
+
+    def RgetTestRubricMatrix(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/REP/test_rubric_matrix",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()

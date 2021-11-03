@@ -207,4 +207,10 @@ class PlomDB:
         MrevertTask,
     )
 
-    from plom.db.db_rubric import McreateRubric, MgetRubrics, MmodifyRubric
+    from plom.db.db_rubric import (
+        McreateRubric,
+        MgetRubrics,
+        MmodifyRubric,
+        Rget_test_rubric_count_matrix,
+        Rget_rubrics_by_question,
+    )

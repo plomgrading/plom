@@ -273,6 +273,32 @@ class RubricHandler:
         self.server.MsaveUserRubricPanes(save_to_user, question, rubricConfig)
         return web.Response(status=200)
 
+    ## =====================
+    ## rubric analysis stuff
+
+    @authenticate_by_token_required_fields(["user"])
+    def RgetTestRubricMatrix(self, data, request):
+        """Respond with dict encoding test-rubric counts.
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /REP/test_rubric_adjacency.
+
+        Returns:
+            aiohttp.web_response.Response: A response including metadata encoding the test-rubric adjacency / count matrix.
+        """
+
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+        rmsg = self.server.RgetTestRubricMatrix()
+        # is a dict of the form {(test_number, rubric_key): count}
+
+        return web.json_response(rmsg, status=200)
+
+    ## =====================
+
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -285,3 +311,4 @@ class RubricHandler:
         router.add_patch("/MK/rubric/{key}", self.MmodifyRubric)
         router.add_get("/MK/user/{user}/{question}", self.MgetUserRubricPanes)
         router.add_put("/MK/user/{user}/{question}", self.MsaveUserRubricPanes)
+        router.add_get("/REP/test_rubric_adjacency", self.RgetTestRubricMatrix)
