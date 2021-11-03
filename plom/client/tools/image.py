@@ -35,7 +35,7 @@ from plom.client.tools.tool import CommandTool, DeleteObject
 
 
 class CommandImage(CommandTool):
-    """ A class for making image commands. """
+    """A class for making image commands."""
 
     def __init__(self, scene, pt, image, scale=1, border=True, data=None):
         """
@@ -186,7 +186,7 @@ class ImageItem(QGraphicsPixmapItem):
 
 
 class ImageSettingsDialog(QDialog):
-    """ Menu dialog for Image Settings. """
+    """Menu dialog for Image Settings."""
 
     NumGridRows = 2
     NumButtons = 3

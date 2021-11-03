@@ -683,11 +683,11 @@ class RearrangementViewer(QDialog):
         self.listB.reverseOrder()
 
     def rotateImages(self, angle=90):
-        """ Rotates the currently selected page by 90 degrees."""
+        """Rotates the currently selected page by 90 degrees."""
         self.listB.rotateSelectedImages(angle)
 
     def viewImage(self, fname):
-        """ Shows a larger view of the currently selected page."""
+        """Shows a larger view of the currently selected page."""
         ShowExamPage(self, fname)
 
     def doShuffle(self):

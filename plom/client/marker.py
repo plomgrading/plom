@@ -764,11 +764,11 @@ class MarkerExamModel(QStandardItemModel):
         self._setPaperDir(r, tdir)
 
     def deferPaper(self, task):
-        """ Sets the status for the task's paper to deferred. """
+        """Sets the status for the task's paper to deferred."""
         self.setStatusByTask(task, "deferred")
 
     def removePaper(self, task):
-        """ Removes the task's paper from self."""
+        """Removes the task's paper from self."""
         r = self._findTask(task)
         self.removeRow(r)
 
@@ -2244,7 +2244,7 @@ class MarkerClient(QWidget):
         return self.msgr.MrequestOneImage(image_id, md5)
 
     def doneWithWholePaperFiles(self, viewFiles):
-        """ Unlinks files in viewFiles to os. """
+        """Unlinks files in viewFiles to os."""
         for f in viewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
@@ -2385,7 +2385,7 @@ class MarkerClient(QWidget):
         return fragFile
 
     def tagTest(self):
-        """ Adds a tag to the current Test."""
+        """Adds a tag to the current Test."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
@@ -2415,7 +2415,7 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
-        """ Sets a filter tag. """
+        """Sets a filter tag."""
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         # check to see if invert-filter is checked
         if self.ui.filterInvCB.checkState() == Qt.Checked:
@@ -2424,7 +2424,7 @@ class MarkerClient(QWidget):
             self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        """ shows the image.  """
+        """shows the image."""
         tgs = SelectTestQuestion(self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
             return

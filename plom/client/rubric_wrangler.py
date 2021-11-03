@@ -46,7 +46,7 @@ def showRubricToUser(rubric):
 
 
 def deltaToInt(x):
-    """Since delta can just be a . """
+    """Since delta can just be a ."""
     if x == ".":
         return 0
     else:

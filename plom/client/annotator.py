@@ -812,7 +812,7 @@ class Annotator(QWidget):
             self.testView = None
 
     def keyPopUp(self):
-        """ Sets KeyPress shortcuts. """
+        """Sets KeyPress shortcuts."""
         kp = KeyHelp()
         # Pop it up.
         kp.exec_()
@@ -1170,7 +1170,7 @@ class Annotator(QWidget):
         self.ui.undoButton.animateClick()
 
     def undo(self):
-        """ Undoes the last action in the UI. """
+        """Undoes the last action in the UI."""
         if not self.scene:
             return
         self.scene.undo()
@@ -1179,18 +1179,18 @@ class Annotator(QWidget):
         self.ui.redoButton.animateClick()
 
     def redo(self):
-        """ Redoes the last action in the UI. """
+        """Redoes the last action in the UI."""
         if not self.scene:
             return
         self.scene.redo()
 
     # Simple mode change functions
     def boxMode(self):
-        """ Changes the tool to box. """
+        """Changes the tool to box."""
         self.setToolMode("box", self.cursorBox)
 
     def rubricMode(self):
-        """ Changes the tool to rubric."""
+        """Changes the tool to rubric."""
         if not self.scene:
             self.rubric_widget.nextRubric()
             return
@@ -1200,50 +1200,50 @@ class Annotator(QWidget):
             self.rubric_widget.reselectCurrentRubric()
 
     def crossMode(self):
-        """ Changes the tool to crossMode. """
+        """Changes the tool to crossMode."""
         self.setToolMode("cross", self.cursorCross)
 
     def toDeleteMode(self):
         self.ui.deleteButton.animateClick()
 
     def deleteMode(self):
-        """ Changes the tool to delete. """
+        """Changes the tool to delete."""
         self.setToolMode("delete", self.cursorDelete)
 
     def lineMode(self):
-        """ Changes the tool to the line button.  """
+        """Changes the tool to the line button."""
         self.setToolMode("line", self.cursorLine)
 
     def toMoveMode(self):
         self.ui.moveButton.animateClick()
 
     def moveMode(self):
-        """ Changes the tool to the move button. """
+        """Changes the tool to the move button."""
         self.setToolMode("move", Qt.OpenHandCursor)
 
     def panMode(self):
-        """ Changes the tool to the pan button. """
+        """Changes the tool to the pan button."""
         self.setToolMode("pan", Qt.OpenHandCursor)
         # The pan button also needs to change dragmode in the view
         self.view.setDragMode(1)
 
     def penMode(self):
-        """ Changes the tool to the pen button. """
+        """Changes the tool to the pen button."""
         self.setToolMode("pen", self.cursorPen)
 
     def textMode(self):
-        """ Changes the tool to the text button. """
+        """Changes the tool to the text button."""
         self.setToolMode("text", Qt.IBeamCursor)
 
     def tickMode(self):
-        """ Changes the tool to the tick button. """
+        """Changes the tool to the tick button."""
         self.setToolMode("tick", self.cursorTick)
 
     def toZoomMode(self):
         self.ui.zoomButton.animateClick()
 
     def zoomMode(self):
-        """ Changes the tool to the zoom button. """
+        """Changes the tool to the zoom button."""
         self.setToolMode("zoom", Qt.SizeFDiagCursor)
 
     def loadModeFromBefore(self, mode, aux=None):
@@ -1306,7 +1306,7 @@ class Annotator(QWidget):
             self.setToolMode("image", Qt.ClosedHandCursor, fileName)
 
     def setButtons(self):
-        """ Connects buttons to their corresponding functions. """
+        """Connects buttons to their corresponding functions."""
         # List of tool buttons, the corresponding modes and cursor shapes
         self.ui.boxButton.clicked.connect(self.boxMode)
         self.ui.crossButton.clicked.connect(self.crossMode)
@@ -1363,7 +1363,7 @@ class Annotator(QWidget):
             )
 
     def loadWindowSettings(self):
-        """ Loads the window settings. """
+        """Loads the window settings."""
         # load the window geometry, else maximise.
         if self.parentMarkerUI.annotatorSettings["geometry"] is not None:
             self.restoreGeometry(self.parentMarkerUI.annotatorSettings["geometry"])
