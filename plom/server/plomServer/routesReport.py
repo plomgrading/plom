@@ -156,7 +156,6 @@ class ReportHandler:
             self.server.RgetMarkHistogram(data["q"], data["v"]), status=200
         )
 
-    # @routes.get("/REP/progress")
     @authenticate_by_token_required_fields(["user"])
     def RgetIdentified(self, data, request):
         """Respond with a dictionary of identified papers
@@ -176,6 +175,25 @@ class ReportHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
         return web.json_response(self.server.RgetIdentified(), status=200)
+
+    @authenticate_by_token_required_fields(["user"])
+    def RgetNotAutoIdentified(self, data, request):
+        """Respond with a dictionary of scanned but not auto-id'd papers
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): GET /REP/unidentified request type.
+
+        Returns:
+            aiohttp.web_response.Response: A response object including a dictionary of scanned but not auto-id'd papers.
+
+        """
+
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+        return web.json_response(self.server.RgetNotAutoIdentified(), status=200)
 
     # @routes.get("/REP/completionStatus")
     @authenticate_by_token_required_fields(["user"])
@@ -401,30 +419,6 @@ class ReportHandler:
         # [Test number, User who ID'd the paper, Time of ID'ing, Student ID, Student name]
         return web.json_response(rmsg, status=200)
 
-    # @routes.get("/REP/totReview")
-    @authenticate_by_token_required_fields(["user"])
-    def RgetTotReview(self, data, request):
-        """Return information about papers which have total grades calculated.
-
-        Responds with status 200/401.
-
-        Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /REP/totReview.
-
-        Returns:
-            aiohttp.web_response.Response: A response including metadata about the totalled
-                papers.
-        """
-
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-        rmsg = self.server.RgetTotReview()
-
-        # Returns a list of lists with the format of:
-        # [Test number, User who did the totalling, Time of totalling, Total mark]
-        return web.json_response(rmsg, status=200)
-
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.
 
@@ -441,6 +435,7 @@ class ReportHandler:
         router.add_get("/REP/questionUserProgress", self.RgetQuestionUserProgress)
         router.add_get("/REP/markHistogram", self.RgetMarkHistogram)
         router.add_get("/REP/identified", self.RgetIdentified)
+        router.add_get("/REP/notautoid", self.RgetNotAutoIdentified)
         router.add_get("/REP/completionStatus", self.RgetCompletionStatus)
         router.add_get("/REP/outToDo", self.RgetOutToDo)
         router.add_get("/REP/status/{test}", self.RgetStatus)
@@ -451,4 +446,3 @@ class ReportHandler:
         router.add_get("/REP/userDetails", self.RgetUserDetails)
         router.add_get("/REP/markReview", self.RgetMarkReview)
         router.add_get("/REP/idReview", self.RgetIDReview)
-        router.add_get("/REP/totReview", self.RgetTotReview)

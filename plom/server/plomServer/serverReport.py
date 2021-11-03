@@ -39,6 +39,10 @@ def RgetIdentified(self):
     return self.DB.RgetIdentified()
 
 
+def RgetNotAutoIdentified(self):
+    return self.DB.RgetNotAutoIdentified()
+
+
 def RgetCompletionStatus(self):
     return self.DB.RgetCompletionStatus()
 

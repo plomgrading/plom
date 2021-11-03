@@ -22,9 +22,8 @@ numberToName = 10
 # how many questions to mark
 numberOfQuestions = 3
 
-# the id-pages - always taken from Version1
-[idPages]
-pages = [1]  # must contain at least 1 page and be contiguous
+# the id-page - always taken from Version1
+idPage = 1  # must be exactly 1 page 
 
 # pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
 [doNotMark]

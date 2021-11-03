@@ -126,7 +126,7 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
             status += " Error creating"
             ok = False
 
-        if db.createIDGroup(t, spec["idPages"]["pages"]):
+        if db.createIDGroup(t, [spec["idPage"]]):
             status += " ID"
         else:
             status += " Error creating idgroup"

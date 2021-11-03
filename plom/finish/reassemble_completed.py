@@ -72,13 +72,17 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
     Returns:
        tuple : (outname, short_name, sid, covername, page_filenames)
     """
-    id_image_blobs = msgr.request_ID_images(t)
-    id_pages = []
-    for i, obj in enumerate(id_image_blobs):
-        filename = tmpdir / f"img_{int(t):04}_id{i:02}.png"
-        id_pages.append(filename)
-        with open(filename, "wb") as f:
-            f.write(obj)
+    id_image_blob = msgr.request_ID_image(t)  # might be none - eg for hw.
+    if id_image_blob is not None:
+        id_page = tmpdir / f"img_{int(t):04}_id0.png"
+        with open(id_page, "wb") as f:
+            f.write(id_image_blob)
+        id_pages = [id_page]
+    else:
+        id_pages = []
+    # return id-page inside a list since then the 3 different page types
+    # are returned consistently inside lists.
+    # also - return an empty list if no ID-page - eg for hw.
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
@@ -97,6 +101,8 @@ def download_page_images(msgr, tmpdir, outdir, short_name, num_questions, t, sid
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
     outname = outdir / f"{short_name}_{sid}.pdf"
+    # return id-page inside a list since then the 3 different page types
+    # are returned consistently inside lists.
     return (outname, short_name, sid, covername, id_pages, marked_pages, dnm_pages)
 
 

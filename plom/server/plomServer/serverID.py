@@ -55,7 +55,7 @@ def IDgetDoneTasks(self, username):
     return self.DB.IDgetDoneTasks(username)
 
 
-def IDgetImages(self, username, test_number):
+def IDgetImage(self, username, test_number):
     """Respond with a list of image paths the ID pages of a paper.
 
     Args:
@@ -65,7 +65,7 @@ def IDgetImages(self, username, test_number):
     Returns:
         2-tuple: True/False plus a list of the image paths or a short error code.
     """
-    return self.DB.IDgetImages(username, test_number)
+    return self.DB.IDgetImage(username, test_number)
 
 
 def ID_get_donotmark_images(self, paper_number):
@@ -193,6 +193,42 @@ def IDdeletePredictions(self):
     return [True]
 
 
+def IDputPredictions(self, predictions, classlist, spec):
+    """Save predictions in the server's prediction file.
+
+    Note - does sanity checks against the current classlist
+
+    Args:
+        predictions (list): A list of pairs of (testnumber, student id)
+        classlist (list): A list of pairs of (student id, student name)
+        spec (dict): The test specification
+
+    Returns:
+        list: first entry is True/False for success.  If False, second
+            entry is a string with an explanation.
+    """
+
+    log.info("ID prediction list uploaded")
+    ids = {int(X["id"]) for X in classlist}
+    for test, sid in predictions:
+        if int(sid) not in ids:
+            return [False, f"ID {sid} not in classlist"]
+        if test < 0 or test > spec["numberToProduce"]:
+            return [False, f"Test {test} outside range"]
+
+    # now save the result
+    try:
+        with open(specdir / "predictionlist.csv", "w") as fh:
+            fh.write("test, id\n")
+            for test, sid in predictions:
+                log.info(f"ID prediction writing {test}, {sid}")
+                fh.write("{}, {}\n".format(test, sid))
+    except Exception as err:
+        return [False, f"Some sort of file error - {err}"]
+
+    return [True, "Prediction list saved successfully"]
+
+
 def IDreviewID(self, test_number):
     """Handle manager GUI's review of an ID'd paper.
 
@@ -205,19 +241,6 @@ def IDreviewID(self, test_number):
     """
 
     return self.DB.IDreviewID(test_number)
-
-
-def IDgetImageList(self):
-    """Return the path to the ID page image for every paper
-
-    Args:
-        None
-
-    Returns:
-        dict: key=test number, value=path to the first id page image
-    """
-
-    return self.DB.IDgetImageByNumber(0)
 
 
 def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
@@ -256,7 +279,7 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
 
     # get list of [test_number, image]
     log.info("ID get images for ID reader")
-    test_image_dict = self.DB.IDgetImageByNumber(database_reference_number)
+    test_image_dict = self.DB.IDgetImagesOfNotAutoIdentified()
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
