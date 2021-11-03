@@ -981,14 +981,12 @@ class MarkerClient(QWidget):
         self.backgroundUploader = None
 
         self.allowBackgroundOps = True
-        self.canViewAll = False
 
         # instance vars that get initialized later
         self.question = None
         self.version = None
         self.exam_spec = None
         self.ui = None
-        self.canViewAll = None
         self.msgr = None
 
     def setup(self, messenger, question, version, lastTime):
@@ -1008,7 +1006,6 @@ class MarkerClient(QWidget):
                  "question": question number
                  "version": version number
                  "fontsize"
-                 "POWERUSER"
                  "FOREGROUND"
                  "upDown": marking style (up vs down)
                  "LogLevel"
@@ -1041,7 +1038,10 @@ class MarkerClient(QWidget):
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
 
-        if not self.getMaxMark():  # indicates exception was caught
+        try:
+            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
+        except PlomRangeException as err:
+            ErrorMessage(str(err)).exec_()
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
@@ -1097,10 +1097,6 @@ class MarkerClient(QWidget):
         if rval[0]:
             self.annotatorSettings["rubricTabState"] = rval[1]
 
-        if lastTime.get("POWERUSER", False):
-            # if POWERUSER is set, disable warnings and allow viewing all
-            self.canViewAll = True
-
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
@@ -1135,8 +1131,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.hideColumn(7)
         self.ui.tableView.hideColumn(8)
         self.ui.tableView.hideColumn(9)
-        # TODO: temporarily shown for debugging
-        # self.ui.tableView.hideColumn(10)
+        self.ui.tableView.hideColumn(10)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
@@ -1164,25 +1159,6 @@ class MarkerClient(QWidget):
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.viewSpecificImage)
-
-    def getMaxMark(self):
-        """
-        Get the max-mark for the question from the server.
-
-        Returns
-            True if max score retrieved successfully, False otherwise
-        """
-        try:
-            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
-        except PlomRangeException as err:
-            log.error(err)
-            ErrorMessage(str(err)).exec_()
-            self.shutDownError()
-            return False
-        except PlomSeriousException as err:
-            self.throwSeriousError(err, rethrow=False)
-            return False
-        return True
 
     def resizeEvent(self, event):
         """
@@ -2221,10 +2197,6 @@ class MarkerClient(QWidget):
                     self.backgroundUploader.terminate()
                     break
 
-        # When shutting down, first alert server of any images that were
-        # not marked - using 'DNF' (did not finish). Server will put
-        # those files back on the todo pile.
-        self.DNF()
         # now save the annotator rubric tab state to server
         self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
 
@@ -2237,31 +2209,6 @@ class MarkerClient(QWidget):
 
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         self.my_shutdown_signal.emit(2, [sidebarRight])
-
-    def DNF(self):
-        """
-        Marks files that are not finished as "did not finish."
-
-        Notes:
-            do this for everything, not just the proxy-model
-
-        Returns:
-            None
-
-        Raises:
-            PlomSeriousException if an error occurs in server.
-
-        """
-        for r in range(self.examModel.rowCount()):
-            if self.examModel.data(self.examModel.index(r, 1)) != "marked":
-                # Tell server the task of any paper that is not marked.
-                # server will put that back on the todo-pile.
-                try:
-                    self.msgr.MdidNotFinishTask(
-                        self.examModel.data(self.examModel.index(r, 0))
-                    )
-                except PlomSeriousException as err:
-                    self.throwSeriousError(err)
 
     def downloadWholePaper(self, testNumber):
         """
@@ -2478,25 +2425,16 @@ class MarkerClient(QWidget):
 
     def viewSpecificImage(self):
         """ shows the image.  """
-        if self.canViewAll:
-            tgs = SelectTestQuestion(self.exam_spec, self.question)
-            if tgs.exec_() == QDialog.Accepted:
-                tn = tgs.tsb.value()
-                gn = tgs.gsb.value()
-            else:
-                return
-        else:
-            tgs = SelectTestQuestion(self.exam_spec)
-            if tgs.exec_() == QDialog.Accepted:
-                tn = tgs.tsb.value()
-                gn = self.question
-            else:
-                return
-        task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
+        tgs = SelectTestQuestion(self.exam_spec, self.question)
+        if tgs.exec_() != QDialog.Accepted:
+            return
+        tn = tgs.tsb.value()
+        gn = tgs.gsb.value()
+        task = f"q{tn:04}g{gn}"
         try:
             imageList = self.msgr.MrequestOriginalImages(task)
         except PlomNoMoreException:
-            msg = ErrorMessage("No image corresponding to task {}".format(task))
+            msg = ErrorMessage(f"No image corresponding to task {task}")
             msg.exec_()
             return
         ifilenames = []
@@ -2507,7 +2445,5 @@ class MarkerClient(QWidget):
             ifile.write(img)
             ifilenames.append(ifile.name)
         tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(
-            "Original ungraded image for question {} of test {}".format(gn, tn)
-        )
+        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
         tvw.exec_()

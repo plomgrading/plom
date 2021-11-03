@@ -12,8 +12,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+## [0.7.4] - 2021-10-28
+
+### Added
+* The question-version map can be passed into `plom-build` instead of building a random map.
+
+### Changed
+* Image download and reassembly is now interleaved instead of pre-downloading all images.
+* Can reassemble just one paper or just one solution.
+
+### Fixed
+* Ensure the margin box surrounding the page cannot be deleted.
+
+
+## [0.7.3] - 2021-10-23
+
+### Changed
+* Marker -> View is now allowed to view any question, any paper.
+
+### Fixed
 * Clients can tag unannotated questions.
 * Various fixes to auto reading of student IDs.
+* Various fixes in generating and posting solutions.
 
 
 ## [0.7.2] - 2021-10-13
@@ -546,7 +569,9 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.2...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.4...master
+[0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
+[0.7.3]: https://gitlab.com/plom/plom/compare/v0.7.2...v0.7.3
 [0.7.2]: https://gitlab.com/plom/plom/compare/v0.7.1...v0.7.2
 [0.7.1]: https://gitlab.com/plom/plom/compare/v0.7.0...v0.7.1
 [0.7.0]: https://gitlab.com/plom/plom/compare/v0.6.5...v0.7.0

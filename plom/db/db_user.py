@@ -111,15 +111,35 @@ def clearUserToken(self, uname):
 
 
 def getUserToken(self, uname):
-    """Return user's saved token or None if we have no such user."""
+    """Return user's saved token or None if logged out.
+
+    args:
+        uname (str): username.
+
+    returns:
+        str/None: user's token or None if use is not logged in.
+
+    raises:
+        ValueError: no such user.
+    """
     uref = User.get_or_none(name=uname)
     if uref is None:
-        return None
-    else:
-        return uref.token
+        raise ValueError("No such user")
+    return uref.token
 
 
 def userHasToken(self, uname):
+    """Return user's saved token or None if logged out.
+
+    args:
+        uname (str): username.
+
+    returns:
+        bool: True if the user has a token.
+
+    raises:
+        ValueError: no such user.
+    """
     if self.getUserToken(uname) is not None:
         return True
     else:

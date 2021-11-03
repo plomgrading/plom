@@ -2,19 +2,19 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
 Note: Code in this file is very similar to predictStudentID code for the
 Tensorflow model.
 """
 
-import pickle
 import gzip
 from pathlib import Path
+import pickle
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+import sklearn
 import cv2
 import imutils
 from imutils.perspective import four_point_transform
@@ -244,7 +244,8 @@ def compute_probabilities(
     """
 
     # load the model
-    with gzip.open(Path("model_cache") / "RF_ML_model.sav.gz", "rb") as f:
+    filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
+    with gzip.open(Path("model_cache") / filename, "rb") as f:
         prediction_model = pickle.load(f)
 
     # Dictionary of test numbers their digit-probabilities

@@ -1138,7 +1138,7 @@ class RubricWidget(QWidget):
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
         msg = SimpleMessage(
-            "<p>You did not create this message.</p>"
+            "<p>You did not create this rubric.</p>"
             "<p>To edit it, the system will make a copy that you can edit.</p>"
             "<p>Do you want to continue?</p>"
         )

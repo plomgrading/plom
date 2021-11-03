@@ -114,7 +114,7 @@ def deleteSolutionImage(server, password, question, version):
         )
 
 
-def getSolutionImage(server, password, question, version):
+def getSolutionImageFromServer(server, password, question, version):
     img = getSolutionImage(question, version, server, password)
     if img is not None:
         with open("solution.{}.{}.png".format(question, version), "wb") as fh:
@@ -263,7 +263,7 @@ def main():
     if args.command == "upload":
         uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
     elif args.command == "get":
-        getSolutionImage(args.server, args.password, args.q, args.v)
+        getSolutionImageFromServer(args.server, args.password, args.q, args.v)
     elif args.command == "delete":
         deleteSolutionImage(args.server, args.password, args.q, args.v)
     elif args.command == "status":
