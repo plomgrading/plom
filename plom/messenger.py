@@ -263,7 +263,8 @@ class Messenger(BaseMessenger):
         """Get the maximum mark for this question and version.
 
         Raises:
-            PlomRangeExeception: `question` or `ver` is out of range.
+            PlomRangeExeception: `question` or `ver` is out of range or
+                non-integer.
             PlomAuthenticationException:
             PlomSeriousException: something unexpected happened.
         """
@@ -281,6 +282,8 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            elif response.status_code == 400:
+                raise PlomRangeException(response.text) from None
             elif response.status_code == 416:
                 raise PlomRangeException(response.text) from None
             else:
