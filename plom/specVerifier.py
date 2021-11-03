@@ -113,7 +113,7 @@ class SpecVerifier:
     ... 'numberOfQuestions': 3,
     ... 'privateSeed': '1001378822317872',
     ... 'publicCode': '270385',
-    ... 'idPages': {'pages': [1]},
+    ... 'idPage': 1,
     ... 'doNotMark': {'pages': [2]},
     ... 'question': {
     ...     '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
@@ -132,7 +132,7 @@ class SpecVerifier:
       Number of tests to produce = 20
       Number of those to be printed with names = 10
       Number of pages = 6
-      IDpages = [1]
+      IDpage = 1
       Do not mark pages = [2]
       Number of questions to mark = 3
         Question.1: pages [3], selected as shuffle, worth 5 marks
@@ -317,7 +317,7 @@ class SpecVerifier:
                     self.numberToName
                 ),
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
-                "IDpages = {}".format(self.spec["idPages"]["pages"]),
+                "IDpage = {}".format(self.spec["idPage"]),
                 "Do not mark pages = {}".format(self.spec["doNotMark"]["pages"]),
                 "Number of questions to mark = {}".format(
                     self.spec["numberOfQuestions"]
@@ -369,7 +369,7 @@ class SpecVerifier:
         self.check_keys(print=prnt)
         self.check_name_and_production_numbers(print=prnt)
         lastPage = self.spec["numberOfPages"]
-        self.check_IDPages(lastPage, print=prnt)
+        self.check_IDPage(lastPage, print=prnt)
         self.check_doNotMark(lastPage, print=prnt)
         prnt("Checking question groups")
         for g in range(self.spec["numberOfQuestions"]):
@@ -446,7 +446,7 @@ class SpecVerifier:
             "numberToProduce",
             "numberToName",
             "numberOfQuestions",
-            "idPages",
+            "idPage",
             "doNotMark",
         ]:
             if x not in self.spec:
@@ -526,21 +526,19 @@ class SpecVerifier:
                 )
             )
 
-    def check_IDPages(self, lastPage, print=print):
-        print("Checking IDpages")
-        if "pages" not in self.spec["idPages"]:
-            raise ValueError('IDpages error - could not find "pages" key')
-        if not isContiguousListPosInt(self.spec["idPages"]["pages"], lastPage):
+    def check_IDPage(self, lastPage, print=print):
+        print("Checking IDpage")
+        if not (1 <= self.spec["idPage"] <= lastPage):
             raise ValueError(
-                'IDpages error - "pages" = {} should be a list of positive integers in range'.format(
-                    self.spec["idPages"]["pages"]
+                'IDpage error - "idPage" = {} should be a positive integer in range'.format(
+                    self.spec["idPage"]
                 )
             )
-        print("    IDpages is contiguous list of positive integers" + chk)
+        print("    IDpage is a positive integer" + chk)
         # check that page 1 is in there.
-        if self.spec["idPages"]["pages"][0] != 1:
+        if self.spec["idPage"] != 1:
             print(
-                "Warning - page 1 is not part if your ID pages - are you sure you want to do this?"
+                "Warning - page 1 is not your ID page - are you sure you want to do this?"
                 + warn_mark
             )
 
@@ -612,8 +610,7 @@ class SpecVerifier:
     def check_pages(self, print=print):
         print("Checking all pages used exactly once:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
-        for p in self.spec["idPages"]["pages"]:
-            pageUse[p] += 1
+        pageUse[self.spec["idPage"]] += 1
         for p in self.spec["doNotMark"]["pages"]:
             pageUse[p] += 1
         for g in range(self.spec["numberOfQuestions"]):

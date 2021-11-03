@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
@@ -160,10 +160,10 @@ class IDHandler:
         # return the completed list
         return web.json_response(self.server.IDgetDoneTasks(data["user"]), status=200)
 
-    # @routes.get("/ID/images/{test}")
+    # @routes.get("/ID/image/{test}")
     @authenticate_by_token_required_fields(["user"])
-    def IDgetImages(self, data, request):
-        """Return the ID page images for a specified paper number.
+    def IDgetImage(self, data, request):
+        """Return the ID page image for a specified paper number.
 
         Responds with status 200/204/404/409/410.
 
@@ -189,7 +189,7 @@ class IDHandler:
         """
         test_number = request.match_info["test"]
 
-        status, output = self.server.IDgetImages(data["user"], test_number)
+        status, output = self.server.IDgetImage(data["user"], test_number)
 
         if not status:
             if output == "NotOwner":
@@ -202,18 +202,10 @@ class IDHandler:
                 raise web.HTTPNotFound(reason="No such paper")
 
         # if there are no such files return a success but with code 204 = no content.
-        if len(output) == 0:
+        if not output:
             return web.Response(status=204)
-
-        with MultipartWriter("images") as writer:
-            for file_name in output:
-                try:
-                    writer.append(open(file_name, "rb"))
-                except OSError as e:  # file not found, permission, etc
-                    raise web.HTTPInternalServerError(
-                        reason=f"Problem reading image: {e}"
-                    )
-            return web.Response(body=writer, status=200)
+        else:
+            return web.FileResponse(output, status=200)
 
     # @routes.get("/ID/donotmark_images/{test}")
     @authenticate_by_token_required_fields([])
@@ -462,24 +454,35 @@ class IDHandler:
 
         return web.json_response(self.server.IDdeletePredictions(), status=200)
 
-    @authenticate_by_token_required_fields(["user"])
-    def IDgetImageList(self, data, request):
-        """Get a list of paths to first ID page image for each test.
+    @authenticate_by_token_required_fields(["user", "predictions"])
+    def IDputPredictions(self, data, request):
+        """Upload and save id-predictions (eg via machine learning)
 
         Responds with status 200/401.
 
         Args:
-            data (dict): A dictionary having the user/token
-
-            request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
+            data (dict): A (str:str) dictionary having keys `user`, `token` and `predictions`.
+            request (aiohttp.web_request.Request): PUT /ID/put type request object.
 
         Returns:
-            aiohttp.web_response.Response: returns a dict with keys test-number, values paths.
+            aiohttp.web_response.Response: Returns a response with a [True, message] or [False,message] indicating if predictions upload was successful.
         """
-
         if data["user"] != "manager":
             return web.Response(status=401)
-        return web.json_response(self.server.IDgetImageList(), status=200)
+
+        try:
+            with open(specdir / "classlist.csv") as f:
+                reader = csv.DictReader(f)
+                classlist = list(reader)
+        except FileNotFoundError:
+            raise web.HTTPNotFound(reason="classlist not found")
+
+        return web.json_response(
+            self.server.IDputPredictions(
+                data["predictions"], classlist, self.server.testSpec
+            ),
+            status=200,
+        )
 
     @authenticate_by_token_required_fields(
         ["user", "rectangle", "fileNumber", "ignoreStamp"]
@@ -552,17 +555,22 @@ class IDHandler:
         router.add_get("/ID/classlist", self.IDgetClasslist)
         router.add_put("/ID/classlist", self.IDputClasslist)
         router.add_get("/ID/predictions", self.IDgetPredictions)
+        router.add_put("/ID/predictions", self.IDputPredictions)
         router.add_get("/ID/tasks/complete", self.IDgetDoneTasks)
-        router.add_get("/ID/images/{test}", self.IDgetImages)
+        router.add_get("/ID/image/{test}", self.IDgetImage)
         router.add_get("/ID/donotmark_images/{test}", self.ID_get_donotmark_images)
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
-        router.add_put("/ID/{papernum}", self.IdentifyPaper)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)
-        # This API needs hackery/removal the future.
-        router.add_get("/TMP/imageList", self.IDgetImageList)
+        router.add_post("/ID/predictedID", self.IDrunPredictions)
+        # be careful with this one - since is such a general route
+        # put it last
+        router.add_put("/ID/{papernum}", self.IdentifyPaper)
+
+
+##

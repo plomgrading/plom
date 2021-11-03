@@ -19,6 +19,7 @@ from plom.plom_exceptions import (
     PlomNoSolutionException,
     PlomRangeException,
     PlomExistingDatabase,
+    PlomOwnersLoggedInException,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -272,25 +273,6 @@ class ManagerMessenger(BaseMessenger):
 
         return progress
 
-    def IDgetImageList(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/TMP/imageList",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            # TODO: print(response.encoding) autodetected
-            imageList = response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return imageList
-
     def IDrequestPredictions(self):
         self.SRmutex.acquire()
         try:
@@ -333,12 +315,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
-            if response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1006,6 +982,26 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def IDputPredictions(self, predictions):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                "/ID/predictions",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "predictions": predictions,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def IDrunPredictions(self, rectangle, fileNumber, ignoreTimeStamp):
         self.SRmutex.acquire()
         try:
@@ -1037,6 +1033,25 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.get(
                 "/REP/identified",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def getNotAutoIdentified(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/REP/notautoid",
                 json={
                     "user": self.user,
                     "token": self.token,
