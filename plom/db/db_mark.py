@@ -628,9 +628,11 @@ def MrevertTask(self, task):
             # make oapges
             for pref in aref.apages:
                 OAPage.create(old_annotation=oaref, order=pref.order, image=pref.image)
-            # now delete the apages and then the annotation-image and finally the annotation.
+            # now delete the apages, arlinks, and then the annotation-image and finally the annotation.
             for pref in aref.apages:
                 pref.delete_instance()
+            for arlink_ref in aref.arlinks:
+                arlink_ref.delete_instance()
             # delete the annotated image from table.
             aref.aimage.delete_instance()
             # finally delete the annotation itself.
