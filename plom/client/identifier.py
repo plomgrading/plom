@@ -220,20 +220,12 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         # Get the classlist from server for name/ID completion.
-        try:
-            self.getClassList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getClassList()
 
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
         # Get the predicted list from server for ID guesses.
-        try:
-            self.getPredictions()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getPredictions()
 
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
@@ -250,11 +242,7 @@ class IDClient(QWidget):
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         # Get list of papers already ID'd and add to table.
-        try:
-            self.getAlreadyIDList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getAlreadyIDList()
 
         # Connect the view **after** list updated.
         # Connect the table's model sel-changed to appropriate function.
@@ -467,10 +455,7 @@ class IDClient(QWidget):
 
     def updateProgress(self):
         # update progressbars
-        try:
-            v, m = self.msgr.IDprogressCount()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+        v, m = self.msgr.IDprogressCount()
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.idProgressBar.setFormat("No papers to identify")
@@ -500,8 +485,11 @@ class IDClient(QWidget):
                     ErrorMessage("No more tasks left on server.").exec_()
                     return False
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                return False
+                log.exception("Unexpected error getting next task: %s", err)
+                ErrorMessage(
+                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                ).exec_()
+                raise
 
             try:
                 imageList = self.msgr.IDclaimThisTask(test)
