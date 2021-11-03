@@ -209,6 +209,8 @@ class BackgroundUploader(QThread):
                 TODO: have caller do clone, for symmetry with downloader?
         """
         super().__init__()
+        self.q = None
+        self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
@@ -234,7 +236,9 @@ class BackgroundUploader(QThread):
         self.q.put(args)
 
     def queue_size(self):
-        """Return the (approx?) queue length, the number of papers waiting to upload."""
+        """Return the number of papers waiting or currently uploading."""
+        if self.is_upload_in_progress:
+            return self.q.qsize() + 1
         return self.q.qsize()
 
     def isEmpty(self):
@@ -243,9 +247,9 @@ class BackgroundUploader(QThread):
 
         Returns:
             True if the upload queue is empty, false otherwise.
-
         """
-        return self.q.empty()
+        # return self.q.empty()
+        return self.queue_size() == 0
 
     def run(self):
         """
@@ -256,7 +260,6 @@ class BackgroundUploader(QThread):
 
         Returns:
             None
-
         """
 
         def tryToUpload():
@@ -268,8 +271,11 @@ class BackgroundUploader(QThread):
                 data = self.q.get_nowait()
             except EmptyQueueException:
                 return
+            self.is_upload_in_progress = True
             code = data[0]  # TODO: remove so that queue needs no knowledge of args
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
+            # For experimenting with slow uploads
+            # time.sleep(30)
             upload(
                 self._msgr,
                 *data,
@@ -277,6 +283,7 @@ class BackgroundUploader(QThread):
                 unknownFailCallback=self.uploadUnknownFail.emit,
                 successCallback=self.uploadSuccess.emit,
             )
+            self.is_upload_in_progress = False
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -2124,8 +2131,6 @@ class MarkerClient(QWidget):
         """
         if not self.backgroundUploader:
             return 0
-        if self.backgroundUploader.isEmpty():
-            return 0
         return self.backgroundUploader.queue_size()
 
     def wait_for_bguploader(self, timeout=0):
@@ -2165,50 +2170,51 @@ class MarkerClient(QWidget):
         return True
 
     def closeEvent(self, event):
-        log.debug("Something has triggered a shutdown even")
-        self.do_shutdown_tasks()
+        log.debug("Something has triggered a shutdown event")
+        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
+        N = self.get_upload_queue_length()
+        if N > 0:
+            msg = QMessageBox()
+            s = "<p>There is 1 paper" if N == 1 else f"<p>There are {N} papers"
+            s += " uploading or queued for upload.</p>"
+            msg.setText(s)
+            s = "<p>You may want to cancel and wait a few seconds.</p>\n"
+            s += "<p>If you&apos;ve already tried that, then the upload "
+            s += "may have failed: you can quit, losing any non-uploaded "
+            s += "annotations.</p>"
+            msg.setInformativeText(s)
+            msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Discard)
+            msg.setDefaultButton(QMessageBox.Cancel)
+            button = msg.button(QMessageBox.Cancel)
+            button.setText("Wait (cancel close)")
+            msg.setIcon(QMessageBox.Warning)
+            if msg.exec_() == QMessageBox.Cancel:
+                event.ignore()
+                return
+            # politely ask one more time
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.quit()
+            if not self.backgroundUploader.wait(50):
+                log.info("Background downloader did stop cleanly in 50ms, terminating")
+            # then nuke it from orbit
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.terminate()
+
+        log.debug("Revoking login token")
+        self.msgr.closeUser()
+        sidebarRight = self.ui.sidebarRightCB.isChecked()
+        log.debug("Emitting Marker shutdown signal")
+        self.my_shutdown_signal.emit(2, [sidebarRight])
         event.accept()
+        log.debug("Marker: goodbye!")
 
     def shutDownError(self):
         """Shuts down self due to error."""
-        if (
-            getattr(self, "_annotator", None) is not None
-        ):  # try to shut down annotator too.
+        if getattr(self, "_annotator", None):
+            # try to shut down annotator too if we have one
             self._annotator.close()
-        log.error("shutting down")
-        self.my_shutdown_signal.emit(2, [])
+        log.error("Shutting down due to error")
         self.close()
-
-    def do_shutdown_tasks(self):
-        """Shuts down self."""
-        log.debug("Marker shutdown from thread " + str(threading.get_ident()))
-        timeout = 1
-        while not self.wait_for_bguploader(timeout=timeout):
-            timeout = 5  # subsequent popups are less frequent
-            msg = SimpleMessage(
-                "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
-            )
-            if msg.exec_() == QMessageBox.No:
-                # politely ask one more time
-                self.backgroundUploader.quit()
-                time.sleep(0.1)
-                # then nuke it from orbit
-                if self.backgroundUploader.isRunning():
-                    self.backgroundUploader.terminate()
-                    break
-
-        # now save the annotator rubric tab state to server
-        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
-
-        # Then send a 'user closing' message - server will revoke
-        # authentication token.
-        try:
-            self.msgr.closeUser()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-
-        sidebarRight = self.ui.sidebarRightCB.isChecked()
-        self.my_shutdown_signal.emit(2, [sidebarRight])
 
     def downloadWholePaper(self, testNumber):
         """
