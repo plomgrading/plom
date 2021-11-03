@@ -344,7 +344,7 @@ def IDgetImageFromATest(self):
     if query.count() == 0:
         log.info("No unIDd IDPage to send to manager")
         return [False]
-    log.info("Sending first unIDd IDPage to manager")
+    log.info("Sending random unIDd IDPage to manager")
 
     iref = query[0]
     return [True, iref.idpages[0].image.file_name]
