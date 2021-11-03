@@ -213,5 +213,5 @@ class PlomDB:
         MgetRubrics,
         MmodifyRubric,
         Rget_test_rubric_count_matrix,
-        Rget_rubrics_by_question,
+        Rget_rubric_counts,
     )

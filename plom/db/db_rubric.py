@@ -196,3 +196,36 @@ def Rget_test_rubric_count_matrix(self):
             for arlink_ref in aref.arlinks:
                 adjacency[tn][arlink_ref.rubric.key] += 1
     return adjacency
+
+
+def Rget_rubric_counts(self):
+    """Return dict of rubrics indexed by key containing min details and counts"""
+    rubric_info = {}
+    # note that the rubric-count in the rubric table is total number
+    # used in all annotations not just the latest annotation
+    # so we recompute the counts now.
+
+    # Go through rubrics adding them to the above with count=0
+    # and minimal info.
+    for rref in Rubric.select():
+        rubric_info[rref.key] = {
+            "id": rref.key,
+            "kind": rref.kind,
+            "delta": rref.delta,
+            "text": rref.text,
+            "count": 0,
+            "username": rref.user.name,
+            "question_number": rref.question,
+        }
+
+    # now go through all rubrics that **have** been used
+    # and increment the count
+    for qref in QGroup.select().where(QGroup.marked == True):
+        # grab latest annotation for each qgroup.
+        aref = qref.annotations[-1]
+        # go through the rubric links
+        for arlink_ref in aref.arlinks:
+            rref = arlink_ref.rubric
+            rubric_info[rref.key]["count"] += 1
+
+    return rubric_info

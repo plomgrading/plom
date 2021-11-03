@@ -297,6 +297,26 @@ class RubricHandler:
 
         return web.json_response(rmsg, status=200)
 
+    @authenticate_by_token_required_fields(["user"])
+    def RgetRubricCounts(self, data, request):
+        """Respond with dict encoding rubric counts and other minimal info.
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /REP/rubric.
+
+        Returns:
+            aiohttp.web_response.Response: A response including metadata encoding the rubric counts and min info.
+        """
+
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+        rmsg = self.server.RgetRubricCounts()
+
+        return web.json_response(rmsg, status=200)
+
     ## =====================
 
     def setUpRoutes(self, router):
@@ -312,6 +332,7 @@ class RubricHandler:
         router.add_get("/MK/user/{user}/{question}", self.MgetUserRubricPanes)
         router.add_put("/MK/user/{user}/{question}", self.MsaveUserRubricPanes)
         router.add_get("/REP/test_rubric_matrix", self.RgetTestRubricMatrix)
+        router.add_get("/REP/rubric", self.RgetRubricCounts)
 
 
 ##

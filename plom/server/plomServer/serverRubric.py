@@ -68,5 +68,5 @@ def RgetTestRubricMatrix(self):
     return self.DB.Rget_test_rubric_count_matrix()
 
 
-def Rget_rubrics_by_question(self):
-    return self.DB.Rget_rubrics_by_question()
+def RgetRubricCounts(self):
+    return self.DB.Rget_rubric_counts()
