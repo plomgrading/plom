@@ -95,11 +95,11 @@ class PageView(QGraphicsView):
             self.parent.changeCBZoom(0)
 
     def zoomIn(self):
-        """ Zooms in the paper 1.25 x """
+        """Zooms in the paper 1.25 x"""
         self._zoomHelper(1.25)
 
     def zoomOut(self):
-        """ Zooms out the paper 0.8 x """
+        """Zooms out the paper 0.8 x"""
         self._zoomHelper(0.8)
 
     def _zoomHelper(self, modifier):
