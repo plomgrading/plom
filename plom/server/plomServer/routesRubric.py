@@ -293,7 +293,7 @@ class RubricHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
         rmsg = self.server.RgetTestRubricMatrix()
-        # is a dict of the form {(test_number, rubric_key): count}
+        # is a dict of the form blah[test_number][rubric_key] =  count
 
         return web.json_response(rmsg, status=200)
 
@@ -311,4 +311,7 @@ class RubricHandler:
         router.add_patch("/MK/rubric/{key}", self.MmodifyRubric)
         router.add_get("/MK/user/{user}/{question}", self.MgetUserRubricPanes)
         router.add_put("/MK/user/{user}/{question}", self.MsaveUserRubricPanes)
-        router.add_get("/REP/test_rubric_adjacency", self.RgetTestRubricMatrix)
+        router.add_get("/REP/test_rubric_matrix", self.RgetTestRubricMatrix)
+
+
+##

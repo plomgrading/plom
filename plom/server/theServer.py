@@ -170,6 +170,7 @@ class Server:
         MmodifyRubric,
         MgetUserRubricPanes,
         MsaveUserRubricPanes,
+        RgetTestRubricMatrix,
     )
     from .plomServer.serverReport import (
         RgetUnusedTests,

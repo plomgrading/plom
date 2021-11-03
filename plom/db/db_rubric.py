@@ -145,7 +145,7 @@ def MmodifyRubric(self, user_name, key, change):
     return (True, key)
 
 
-def Rget_tests_using_given_rubric(key):
+def Rget_tests_using_given_rubric(self, key):
     """Given the rubric, return counts of the the number of times it is used in tests."""
     rref = Rubric.get_or_none(key=key)
     test_dict = defaultdict(int)
@@ -161,7 +161,7 @@ def Rget_tests_using_given_rubric(key):
     return (True, test_dict)
 
 
-def Rget_rubrics_in_a_given_test(test_number):
+def Rget_rubrics_in_a_given_test(self, test_number):
     """Return counts of number of times rubrics used in latest annotations of a given test (indep of question/version)"""
 
     tref = Test.get_or_none(test_number=test_number)
@@ -175,7 +175,7 @@ def Rget_rubrics_in_a_given_test(test_number):
     return (True, rubric_dict)
 
 
-def Rget_rubrics_by_question(question):
+def Rget_rubrics_by_question(self, question):
     """Return counts of number of times rubrics used in latest annotations of a given question (indep of version)"""
 
     rubric_dict = defaultdict
@@ -186,13 +186,13 @@ def Rget_rubrics_by_question(question):
     return rubric_dict
 
 
-def Rget_test_rubric_count_matrix():
+def Rget_test_rubric_count_matrix(self):
     """Return count matrix of rubric vs test_number"""
-    adjacency = defaultdict(int)
+    adjacency = defaultdict(lambda: defaultdict(int))
     for tref in Test.select():
         tn = tref.test_number
         for qref in tref.qgroups:
             aref = qref.annotations[-1]
             for arlink_ref in aref.arlinks:
-                defaultdict[(tn, arlink_ref.rubric.key)] += 1
+                adjacency[tn][arlink_ref.rubric.key] += 1
     return adjacency
