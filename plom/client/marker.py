@@ -1038,7 +1038,10 @@ class MarkerClient(QWidget):
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
 
-        if not self.getMaxMark():  # indicates exception was caught
+        try:
+            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
+        except PlomRangeException as err:
+            ErrorMessage(str(err)).exec_()
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
@@ -1156,25 +1159,6 @@ class MarkerClient(QWidget):
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.viewSpecificImage)
-
-    def getMaxMark(self):
-        """
-        Get the max-mark for the question from the server.
-
-        Returns
-            True if max score retrieved successfully, False otherwise
-        """
-        try:
-            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
-        except PlomRangeException as err:
-            log.error(err)
-            ErrorMessage(str(err)).exec_()
-            self.shutDownError()
-            return False
-        except PlomSeriousException as err:
-            self.throwSeriousError(err, rethrow=False)
-            return False
-        return True
 
     def resizeEvent(self, event):
         """

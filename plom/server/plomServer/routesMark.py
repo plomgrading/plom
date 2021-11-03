@@ -27,29 +27,28 @@ class MarkHandler:
             request (aiohttp.web_response.Response): GET /MK/maxMark request object.
 
         Returns:
-            aiohttp.web_response.Response: Response object which has the
-                maximum mark for the question.
+            aiohttp.web_response.Response: JSON with the maximum mark for
+                the question and version.  Or 416 if question/version values
+                out of range.  Or BadRequest (400) if question/version cannot
+                be converted to integers.
         """
-        question_number = data["q"]
-        test_version = data["v"]
-        valid_question, maximum_mark_response = self.server.MgetQuestionMax(
-            question_number, test_version
-        )
-
-        if valid_question:
-            return web.json_response(maximum_mark_response, status=200)
-        elif maximum_mark_response == "QE":  # Check if the question was out of range
-            # pg out of range
-            return web.Response(
-                text="Question out of range - please check before trying again.",
-                status=416,
+        question = data["q"]
+        version = data["v"]
+        try:
+            question = int(question)
+            version = int(version)
+        except (ValueError, TypeError):
+            raise web.HTTPBadRequest(reason="question and version must be integers")
+        if question < 1 or question > self.server.testSpec["numberOfQuestions"]:
+            raise web.HTTPRequestRangeNotSatisfiable(
+                reason="Question out of range - please check and try again.",
             )
-        elif maximum_mark_response == "VE":  # Check if the version was out of range
-            # version our of range
-            return web.Response(
-                text="Version out of range - please check before trying again.",
-                status=416,
+        if version < 1 or version > self.server.testSpec["numberOfVersions"]:
+            raise web.HTTPRequestRangeNotSatisfiable(
+                reason="Version out of range - please check and try again.",
             )
+        maxmark = self.server.testSpec["question"][str(question)]["mark"]
+        return web.json_response(maxmark, status=200)
 
     # @routes.get("/MK/progress")
     @authenticate_by_token_required_fields(["q", "v"])
