@@ -229,3 +229,37 @@ def Rget_rubric_counts(self):
             rubric_info[rref.key]["count"] += 1
 
     return rubric_info
+
+
+def Rget_rubric_details(self, key):
+    """Get a given rubric by its key, return its details and all the tests using that rubric."""
+    r = Rubric.get_or_none(Rubric.key == key)
+    if r is None:
+        return (False, "No such rubric.")
+    rubric_details = {
+        "id": r.key,
+        "kind": r.kind,
+        "delta": r.delta,
+        "text": r.text,
+        "tags": r.tags,
+        "meta": r.meta,
+        "count": r.count,
+        "created": r.creationTime.strftime("%y:%m:%d-%H:%M:%S"),
+        "modified": r.modificationTime.strftime("%y:%m:%d-%H:%M:%S"),
+        "username": r.user.name,
+        "question_number": r.question,
+        "test_list": [],
+    }
+    # now compute all tests using that rubric.
+    # find all the annotations
+    import logging
+
+    for arlink_ref in r.arlinks:
+        logging.warn(f"Looking at arlink = {arlink_ref}")
+        aref = arlink_ref.annotation
+        logging.warn(f"Looking at aref = {aref}")
+        # check if that annotation is the latests
+        qref = aref.qgroup
+        if aref == qref.annotations[-1]:
+            rubric_details["test_list"].append(qref.test.test_number)
+    return (True, rubric_details)

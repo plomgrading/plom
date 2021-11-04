@@ -70,3 +70,7 @@ def RgetTestRubricMatrix(self):
 
 def RgetRubricCounts(self):
     return self.DB.Rget_rubric_counts()
+
+
+def RgetRubricDetails(self, key):
+    return self.DB.Rget_rubric_details(key)

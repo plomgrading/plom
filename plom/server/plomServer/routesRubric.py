@@ -305,7 +305,7 @@ class RubricHandler:
 
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type GET /REP/rubric.
+            request (aiohttp.web_request.Request): Request of type GET /REP/rubric/counts.
 
         Returns:
             aiohttp.web_response.Response: A response including metadata encoding the rubric counts and min info.
@@ -316,6 +316,29 @@ class RubricHandler:
         rmsg = self.server.RgetRubricCounts()
 
         return web.json_response(rmsg, status=200)
+
+    @authenticate_by_token_required_fields(["user"])
+    def RgetRubricDetails(self, data, request):
+        """Respond with dict encoding rubric counts and other minimal info.
+
+        Responds with status 200/401/BadRequest.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /REP/rubric/key.
+
+        Returns:
+            aiohttp.web_response.Response: A response including metadata encoding the rubric details inc which tests use it.
+        """
+
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+        key = request.match_info["key"]
+        rmsg = self.server.RgetRubricDetails(key)
+        if rmsg[0]:
+            return web.json_response(rmsg[1], status=200)
+        else:
+            raise web.HTTPBadRequest(reason="no such rubric")
 
     ## =====================
 
@@ -332,7 +355,8 @@ class RubricHandler:
         router.add_get("/MK/user/{user}/{question}", self.MgetUserRubricPanes)
         router.add_put("/MK/user/{user}/{question}", self.MsaveUserRubricPanes)
         router.add_get("/REP/test_rubric_matrix", self.RgetTestRubricMatrix)
-        router.add_get("/REP/rubric", self.RgetRubricCounts)
+        router.add_get("/REP/rubric/counts", self.RgetRubricCounts)
+        router.add_get("/REP/rubric/{key}", self.RgetRubricDetails)
 
 
 ##
