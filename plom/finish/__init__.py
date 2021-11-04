@@ -8,17 +8,18 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 from plom import __version__
-
-CSVFilename = "marks.csv"
-
 from .clearLogin import clear_manager_login
-
-from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
-from .return_tools import make_canvas_gradefile
 from .utils import rand_integer_code, salted_int_hash_from_str
 from .utils import rand_hex, salted_hex_hash_from_str
 
-# TODO: expose the contents from __main__ here
 
+CSVFilename = "marks.csv"
+RubricListFilename = "rubric_list.json"
+TestRubricMatrixFilename = "test_rubric_matrix.json"
+
+from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
+from .return_tools import make_canvas_gradefile
+
+# TODO: expose the contents from __main__ here
 # TODO: what you get from "from plom.finish import *"
 # __all__ = ["clear_manager_login"]
