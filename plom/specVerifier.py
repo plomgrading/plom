@@ -70,6 +70,30 @@ def isPositiveInt(s):
         return False
 
 
+def isListPosInt(l, lastPage):
+    """Check given list is a list of pos-int, or string that can be converted to pos-ints, bounded below by 1 and above by lastPage. It need not be contiguous or ordered.
+
+    args:
+        l (list): a list of strings or ints
+        lastPage (int): no element of list can be greater.
+
+    returns:
+        Bool
+
+    """
+    # check it is a list
+    if type(l) is not list:
+        return False
+    # check each entry is 0<n<=lastPage
+    for n in l:
+        if not isPositiveInt(n):
+            return False
+        if n > lastPage:
+            return False
+    # all tests passed
+    return True
+
+
 def isContiguousListPosInt(l, lastPage):
     """Check given list is a contiguous list of pos-int, or string that can be converted to pos-ints, bounded below by 1 and above by lastPage.
 
@@ -673,13 +697,13 @@ def checkSolutionSpec(testSpec, solutionSpec):
         ):
             return (False, f"Pages for solution {q} must be a non-empty list")
         if (
-            isContiguousListPosInt(
+            isListPosInt(
                 solutionSpec["solution"][str(q)]["pages"], solutionSpec["numberOfPages"]
             )
             is False
         ):
             return (
                 False,
-                f"Pages for solution {q} are not a contiguous list in of positive integers between 1 and {solutionSpec['numberOfPages']}",
+                f"Pages for solution {q} are not a list in of positive integers between 1 and {solutionSpec['numberOfPages']}",
             )
     return (True, "All ok")

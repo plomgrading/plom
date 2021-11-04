@@ -135,11 +135,7 @@ class UserDialog(QDialog):
         self.pwLE2.setText(newpw)
 
     def validate(self):
-        """Check that password is at least 4 char long
-        and that the two passwords match.
-        If all good then accept
-        else clear the two password lineedits.
-        """
+        """Check username not in list and that passwords match."""
         # username not already in list
         # be careful, because pwd-change users same interface
         # make sure that we only do this check if the LE is enabled.
@@ -150,14 +146,8 @@ class UserDialog(QDialog):
             ).exec_()
             return
 
-        # username must be length 4 and alphanumeric
-        if not (len(self.userLE.text()) >= 4 and self.userLE.text().isalnum()):
-            return
-        # password must be length 4 and not contain username.
-        if (len(self.pwLE.text()) < 4) or (self.userLE.text() in self.pwLE.text()):
-            return
-        # passwords must agree
         if self.pwLE.text() != self.pwLE2.text():
+            ErrorMessage("Passwords do not match").exec_()
             return
         self.name = self.userLE.text()
         self.password = self.pwLE.text()
@@ -458,17 +448,12 @@ class Manager(QWidget):
         self.parent.setFont(fnt)
 
     def login(self):
-        # Check username is a reasonable string
         user = self.ui.userLE.text().strip()
         self.ui.userLE.setText(user)
-
-        if (not user.isalnum()) or (not user):
+        if not user:
             return
-        # check password at least 4 char long
         pwd = self.ui.passwordLE.text()
-        self.ui.passwordLE.setText(pwd)
-
-        if len(pwd) < 4:
+        if not pwd:
             return
 
         self.partial_parse_address()

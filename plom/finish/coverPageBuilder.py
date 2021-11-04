@@ -64,7 +64,7 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
     totalMark = 0
     maxPossible = 0
     for y in tab:
-        totalMark += y[2]
+        totalMark += y[2] if y[2] is not None else 0
         maxPossible += y[3]
         # Row of mark table with Group, Version, Mark, MaxPossibleMark
         g, v, m, x = y
@@ -75,7 +75,9 @@ def makeCover(test_num, sname, sid, tab, pdfname, solution=False):
             htmlText += f"<tr><td>{g}</td><td>{v}</td><td>{m}</td><td>{x}</td></tr>\n"
 
     # Final total mark out of maxPossible total mark.
-    if solution is False:
+    if solution:
+        htmlText += f"<tr><td>total</td><td>&middot;</td><td>{maxPossible}</td>\n"
+    else:
         htmlText += (
             "<tr><td>total</td><td>&middot;</td><td>{}</td><td>{}</td>\n".format(
                 totalMark, maxPossible

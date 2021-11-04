@@ -17,31 +17,6 @@ from plom.textools import texFragmentToPNG
 log = logging.getLogger("server")
 
 
-def MgetQuestionMax(self, question_number, version_number):
-    """Return the maximum score for the question.
-
-    Args:
-        question_number (int): Question number.
-        version_number (int): Version number.
-
-    Returns:
-        list: A list where the first element is a boolean operation
-            status response. The second element is either a string
-            indicating if question or version number is incorrect, or,
-            the maximum score for this question as an integer.
-    """
-
-    version_number = int(version_number)
-    question_number = int(question_number)
-    # check question /version in range.
-    if question_number < 1 or question_number > self.testSpec["numberOfQuestions"]:
-        return [False, "QE"]
-    if version_number < 1 or version_number > self.testSpec["numberOfVersions"]:
-        return [False, "VE"]
-    # Send back the max-mark for that question_number/version_number
-    return [True, self.testSpec["question"][str(question_number)]["mark"]]
-
-
 def MgetAllMax(self):
     """Get the maximum mark for each question in the exam.
 

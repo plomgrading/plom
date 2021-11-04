@@ -32,6 +32,7 @@ from plom.produce.demotools import buildDemoSourceFiles
 from plom.produce import upload_rubrics_from_file, download_rubrics_to_file
 from plom.produce import upload_demo_rubrics
 from plom.produce import clear_manager_login
+from plom.produce import version_map_from_csv
 
 
 def checkTomlExtension(fname):
@@ -171,6 +172,11 @@ def get_parser():
         description="""
             See "make" below, but here only the database is populated and
             no papers will be built.  You can then call "make" later.""",
+    )
+    spDB.add_argument(
+        "--from-file",
+        metavar="FILE",
+        help="Read the version map from FILE.  WORK-IN-PROGRESS!",
     )
     spDB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     spDB.add_argument("-w", "--password", type=str, help='for the "manager" user')
@@ -315,7 +321,11 @@ def main():
         upload_classlist(classlist, args.server, args.password)
 
     elif args.command == "make-db":
-        status = build_database(args.server, args.password)
+        if args.from_file is None:
+            status = build_database(args.server, args.password)
+        else:
+            qvmap = version_map_from_csv(args.from_file)
+            status = build_database(args.server, args.password, vermap=qvmap)
         print(status)
 
     elif args.command == "make":

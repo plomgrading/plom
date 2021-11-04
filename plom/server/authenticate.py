@@ -5,8 +5,55 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 import logging
-from passlib.context import CryptContext
 import uuid
+
+from passlib.context import CryptContext
+
+
+def basic_user_password_check(username, password):
+    """Sanity check for potential usernames and passwords.
+
+    Arguments:
+        username (str)
+        password (str)
+
+    Returns:
+        bool: True if valid, false otherwise.
+
+    This does only very basic checking of passwords: not too short
+    and not identically equal the username.  You may want additional
+    checks!
+    """
+    if len(username) < 3:
+        return False, "Username too short, should be at least 3 chars"
+    if not (username.isalnum() and username[0].isalpha()):
+        return False, "Username should be alphanumeric and start with a letter"
+    if len(password) < 4:
+        return False, "Password too short, should be at least 4 chars"
+    if password == username:
+        return False, f"Password is too close to the username"
+    return True, ""
+
+
+class SimpleAuthorityHasher:
+    """A dumbed down version of Authority, only can hash passwords.
+
+    Note some duplication of code here but at least its all in this one source file.
+    """
+
+    def __init__(self):
+        self.ctx = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+
+    def create_password_hash(self, password):
+        """Creates a hash of a string password.
+
+        Arguments:
+            password (str)
+
+        Returns:
+            str: Hashed password.
+        """
+        return self.ctx.hash(password)
 
 
 class Authority:
@@ -73,18 +120,21 @@ class Authority:
         storageToken = hex(int(clientToken, 16) ^ self.mti)
         return [clientToken, storageToken]
 
-    def validate_token(self, clientToken, storageToken):
+    def validate_token(self, clientToken, stored_token):
         """Validates a given token against the storageToken.
 
         Arguments:
             clientToken (str): The token, a hex string provided by the
                 client.  This may be untrusted unsanitized input.
-            storageToken (str): The token we are checking against.
+            stored_token (str/None): The token we are checking against.
+                Can be None, e.g., when no token is stored.
 
         Returns:
             bool/None: True if validated, False/None otherwise.  False
-                indicates an invalid token.  None indicates a malformed
-                token.  This means `if validate_token(...):` works.
+                indicates an invalid (non-matching) token, including the
+                case when the stored token is None.  A return of None
+                indicates a malformed token.  This bool/None tristate
+                means `if validate_token(...):` works.
         """
         if not isinstance(clientToken, str):
             return None
@@ -95,7 +145,7 @@ class Authority:
             clientTokenInt = int(clientToken, 16)
         except ValueError:
             return None
-        if hex(clientTokenInt ^ self.mti) == storageToken:
+        if hex(clientTokenInt ^ self.mti) == stored_token:
             return True
         return False
 
@@ -103,10 +153,10 @@ class Authority:
         """Checks that a given string is a valid UUID.
 
         Arguments:
-            tau {str} -- String to check.
+            tau (str): string to check
 
         Returns:
-            bool -- True if a valid UUID, False otherwise.
+            bool: True if input is a valid universally unique identifier.
         """
         try:
             token = uuid.UUID(tau)
@@ -115,30 +165,15 @@ class Authority:
         return True
 
     def basic_user_password_check(self, username, password):
-        """Sanity check for usernames and passwords.
-
-        Arguments:
-            username {str} -- Given username.
-            password {str} -- Given password.
-
-        Returns:
-            bool -- True if valid, false otherwise.
-        """
-        # username must be length 4 and alphanumeric
-        if not (len(username) >= 4 and username.isalnum()):
-            return False
-        # password must be length 4 and not contain username.
-        if (len(password) < 4) or (username in password):
-            return False
-        return True
+        return basic_user_password_check(username, password)
 
     def create_password_hash(self, password):
         """Creates a hash of a string password.
 
         Arguments:
-            password {str} -- Password to hash.
+            password (str)
 
         Returns:
-            hex -- Hashed password.
+            str: Hashed password.
         """
         return self.ctx.hash(password)

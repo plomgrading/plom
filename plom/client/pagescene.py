@@ -97,7 +97,7 @@ class ScoreBox(QGraphicsTextItem):
         font = QFont("Helvetica")
         # Note: PointSizeF seems effected by DPI on Windows (Issue #1071).
         # Strangely, it seems like setPixelSize gives reliable sizes!
-        font.setPixelSize(1.25 * fontsize)
+        font.setPixelSize(round(1.25 * fontsize))
         self.setFont(font)
         # Not editable.
         self.setTextInteractionFlags(Qt.NoTextInteraction)
@@ -591,13 +591,13 @@ class PageScene(QGraphicsScene):
         self.fontSize = self._scale * AnnFontSizePts
         # TODO: don't like this 1.25 hardcoded
         font = QFont("Helvetica")
-        font.setPixelSize(1.25 * self.fontSize)
+        font.setPixelSize(round(1.25 * self.fontSize))
         self.scoreBox.setFont(font)
         font = QFont("Helvetica")
-        font.setPixelSize(self.fontSize)
+        font.setPixelSize(round(self.fontSize))
         self.ghostItem.blurb.setFont(font)
         font = QFont("Helvetica")
-        font.setPixelSize(1.25 * self.fontSize)
+        font.setPixelSize(round(1.25 * self.fontSize))
         self.ghostItem.di.setFont(font)
         # TODO: position within dotted line, but breaks overall position
         # self.ghostItem.tweakPositions()
@@ -1342,7 +1342,7 @@ class PageScene(QGraphicsScene):
             msg.exec()
 
     def dragEnterEvent(self, e):
-        """ Handles drag/drop events. """
+        """Handles drag/drop events."""
         if e.mimeData().hasFormat("text/plain"):
             # User has dragged in plain text from somewhere
             e.acceptProposedAction()
@@ -1355,11 +1355,11 @@ class PageScene(QGraphicsScene):
             e.ignore()
 
     def dragMoveEvent(self, e):
-        """ Handles drag and move events."""
+        """Handles drag and move events."""
         e.acceptProposedAction()
 
     def dropEvent(self, e):
-        """ Handles drop events."""
+        """Handles drop events."""
         # all drop events should copy
         # - even if user is trying to remove rubric from rubric-list make sure is copy-action.
         e.setDropAction(Qt.CopyAction)
@@ -1411,7 +1411,7 @@ class PageScene(QGraphicsScene):
             return super().event(event)
 
     def _debug_printUndoStack(self):
-        """ A helper method for debugging the undoStack."""
+        """A helper method for debugging the undoStack."""
         c = self.undoStack.count()
         for k in range(c):
             print(k, self.undoStack.text(k))
@@ -1981,6 +1981,7 @@ class PageScene(QGraphicsScene):
             self.ghostItem,
             self.ghostItem.di,
             self.ghostItem.blurb,
+            self.underRect,
         ]:
             return
         elif isinstance(item, DeleteItem):  # don't try to delete the animated undo/redo
@@ -2086,14 +2087,14 @@ class PageScene(QGraphicsScene):
         self.deleteFlag = 0  # put flag back.
 
     def hasAnyCrosses(self):
-        """ Returns True if scene has any crosses, False otherwise. """
+        """Returns True if scene has any crosses, False otherwise."""
         for X in self.items():
             if isinstance(X, CrossItem):
                 return True
         return False
 
     def hasOnlyCrosses(self):
-        """ Returns True if scene has only crosses, False otherwise. """
+        """Returns True if scene has only crosses, False otherwise."""
         for X in self.items():
             if getattr(X, "saveable", None):
                 if not isinstance(X, CrossItem):
@@ -2111,14 +2112,14 @@ class PageScene(QGraphicsScene):
         return False
 
     def hasAnyTicks(self):
-        """ Returns True if scene has any ticks. False otherwise. """
+        """Returns True if scene has any ticks. False otherwise."""
         for X in self.items():
             if isinstance(X, TickItem):
                 return True
         return False
 
     def hasOnlyTicks(self):
-        """ Returns True if scene has only ticks, False otherwise. """
+        """Returns True if scene has only ticks, False otherwise."""
         for X in self.items():
             if getattr(X, "saveable", None):
                 if not isinstance(X, TickItem):
@@ -2188,11 +2189,11 @@ class PageScene(QGraphicsScene):
         self.ghostItem.changeComment(dlt, txt, legal)
 
     def exposeGhost(self):
-        """ Exposes the ghost object."""
+        """Exposes the ghost object."""
         self.ghostItem.setVisible(True)
 
     def hideGhost(self):
-        """ Hides the ghost object."""
+        """Hides the ghost object."""
         self.ghostItem.setVisible(False)
 
     def mouseMoveRubric(self, event):
@@ -2240,11 +2241,11 @@ class PageScene(QGraphicsScene):
         self.scoreBox.changeScore(self.score)
 
     def undo(self):
-        """ Undoes a given action."""
+        """Undoes a given action."""
         self.undoStack.undo()
 
     def redo(self):
-        """ Redoes a given action."""
+        """Redoes a given action."""
         self.undoStack.redo()
 
     def isLegalRubric(self, kind, dn):

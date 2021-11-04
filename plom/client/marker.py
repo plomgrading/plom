@@ -209,6 +209,8 @@ class BackgroundUploader(QThread):
                 TODO: have caller do clone, for symmetry with downloader?
         """
         super().__init__()
+        self.q = None
+        self.is_upload_in_progress = False
         self._msgr = Messenger.clone(msgr)
 
     def enqueueNewUpload(self, *args):
@@ -234,7 +236,9 @@ class BackgroundUploader(QThread):
         self.q.put(args)
 
     def queue_size(self):
-        """Return the (approx?) queue length, the number of papers waiting to upload."""
+        """Return the number of papers waiting or currently uploading."""
+        if self.is_upload_in_progress:
+            return self.q.qsize() + 1
         return self.q.qsize()
 
     def isEmpty(self):
@@ -243,9 +247,9 @@ class BackgroundUploader(QThread):
 
         Returns:
             True if the upload queue is empty, false otherwise.
-
         """
-        return self.q.empty()
+        # return self.q.empty()
+        return self.queue_size() == 0
 
     def run(self):
         """
@@ -256,7 +260,6 @@ class BackgroundUploader(QThread):
 
         Returns:
             None
-
         """
 
         def tryToUpload():
@@ -268,8 +271,11 @@ class BackgroundUploader(QThread):
                 data = self.q.get_nowait()
             except EmptyQueueException:
                 return
+            self.is_upload_in_progress = True
             code = data[0]  # TODO: remove so that queue needs no knowledge of args
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
+            # For experimenting with slow uploads
+            # time.sleep(30)
             upload(
                 self._msgr,
                 *data,
@@ -277,6 +283,7 @@ class BackgroundUploader(QThread):
                 unknownFailCallback=self.uploadUnknownFail.emit,
                 successCallback=self.uploadSuccess.emit,
             )
+            self.is_upload_in_progress = False
 
         self.q = queue.Queue()
         log.info("upQ thread: starting with new empty queue and starting timer")
@@ -764,11 +771,11 @@ class MarkerExamModel(QStandardItemModel):
         self._setPaperDir(r, tdir)
 
     def deferPaper(self, task):
-        """ Sets the status for the task's paper to deferred. """
+        """Sets the status for the task's paper to deferred."""
         self.setStatusByTask(task, "deferred")
 
     def removePaper(self, task):
-        """ Removes the task's paper from self."""
+        """Removes the task's paper from self."""
         r = self._findTask(task)
         self.removeRow(r)
 
@@ -981,14 +988,12 @@ class MarkerClient(QWidget):
         self.backgroundUploader = None
 
         self.allowBackgroundOps = True
-        self.canViewAll = False
 
         # instance vars that get initialized later
         self.question = None
         self.version = None
         self.exam_spec = None
         self.ui = None
-        self.canViewAll = None
         self.msgr = None
 
     def setup(self, messenger, question, version, lastTime):
@@ -1008,7 +1013,6 @@ class MarkerClient(QWidget):
                  "question": question number
                  "version": version number
                  "fontsize"
-                 "POWERUSER"
                  "FOREGROUND"
                  "upDown": marking style (up vs down)
                  "LogLevel"
@@ -1041,7 +1045,10 @@ class MarkerClient(QWidget):
         self.applyLastTimeOptions(lastTime)
         self.connectGuiButtons()
 
-        if not self.getMaxMark():  # indicates exception was caught
+        try:
+            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
+        except PlomRangeException as err:
+            ErrorMessage(str(err)).exec_()
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
@@ -1097,10 +1104,6 @@ class MarkerClient(QWidget):
         if rval[0]:
             self.annotatorSettings["rubricTabState"] = rval[1]
 
-        if lastTime.get("POWERUSER", False):
-            # if POWERUSER is set, disable warnings and allow viewing all
-            self.canViewAll = True
-
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
@@ -1135,8 +1138,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.hideColumn(7)
         self.ui.tableView.hideColumn(8)
         self.ui.tableView.hideColumn(9)
-        # TODO: temporarily shown for debugging
-        # self.ui.tableView.hideColumn(10)
+        self.ui.tableView.hideColumn(10)
 
         # Double-click or signal fires up the annotator window
         self.ui.tableView.doubleClicked.connect(self.annotateTest)
@@ -1164,25 +1166,6 @@ class MarkerClient(QWidget):
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
         self.ui.viewButton.clicked.connect(self.viewSpecificImage)
-
-    def getMaxMark(self):
-        """
-        Get the max-mark for the question from the server.
-
-        Returns
-            True if max score retrieved successfully, False otherwise
-        """
-        try:
-            self.maxMark = self.msgr.MgetMaxMark(self.question, self.version)
-        except PlomRangeException as err:
-            log.error(err)
-            ErrorMessage(str(err)).exec_()
-            self.shutDownError()
-            return False
-        except PlomSeriousException as err:
-            self.throwSeriousError(err, rethrow=False)
-            return False
-        return True
 
     def resizeEvent(self, event):
         """
@@ -2148,8 +2131,6 @@ class MarkerClient(QWidget):
         """
         if not self.backgroundUploader:
             return 0
-        if self.backgroundUploader.isEmpty():
-            return 0
         return self.backgroundUploader.queue_size()
 
     def wait_for_bguploader(self, timeout=0):
@@ -2189,79 +2170,51 @@ class MarkerClient(QWidget):
         return True
 
     def closeEvent(self, event):
-        log.debug("Something has triggered a shutdown even")
-        self.do_shutdown_tasks()
+        log.debug("Something has triggered a shutdown event")
+        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
+        N = self.get_upload_queue_length()
+        if N > 0:
+            msg = QMessageBox()
+            s = "<p>There is 1 paper" if N == 1 else f"<p>There are {N} papers"
+            s += " uploading or queued for upload.</p>"
+            msg.setText(s)
+            s = "<p>You may want to cancel and wait a few seconds.</p>\n"
+            s += "<p>If you&apos;ve already tried that, then the upload "
+            s += "may have failed: you can quit, losing any non-uploaded "
+            s += "annotations.</p>"
+            msg.setInformativeText(s)
+            msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Discard)
+            msg.setDefaultButton(QMessageBox.Cancel)
+            button = msg.button(QMessageBox.Cancel)
+            button.setText("Wait (cancel close)")
+            msg.setIcon(QMessageBox.Warning)
+            if msg.exec_() == QMessageBox.Cancel:
+                event.ignore()
+                return
+            # politely ask one more time
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.quit()
+            if not self.backgroundUploader.wait(50):
+                log.info("Background downloader did stop cleanly in 50ms, terminating")
+            # then nuke it from orbit
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.terminate()
+
+        log.debug("Revoking login token")
+        self.msgr.closeUser()
+        sidebarRight = self.ui.sidebarRightCB.isChecked()
+        log.debug("Emitting Marker shutdown signal")
+        self.my_shutdown_signal.emit(2, [sidebarRight])
         event.accept()
+        log.debug("Marker: goodbye!")
 
     def shutDownError(self):
         """Shuts down self due to error."""
-        if (
-            getattr(self, "_annotator", None) is not None
-        ):  # try to shut down annotator too.
+        if getattr(self, "_annotator", None):
+            # try to shut down annotator too if we have one
             self._annotator.close()
-        log.error("shutting down")
-        self.my_shutdown_signal.emit(2, [])
+        log.error("Shutting down due to error")
         self.close()
-
-    def do_shutdown_tasks(self):
-        """Shuts down self."""
-        log.debug("Marker shutdown from thread " + str(threading.get_ident()))
-        timeout = 1
-        while not self.wait_for_bguploader(timeout=timeout):
-            timeout = 5  # subsequent popups are less frequent
-            msg = SimpleMessage(
-                "Still waiting for uploader to finish.  Do you want to wait a bit longer?"
-            )
-            if msg.exec_() == QMessageBox.No:
-                # politely ask one more time
-                self.backgroundUploader.quit()
-                time.sleep(0.1)
-                # then nuke it from orbit
-                if self.backgroundUploader.isRunning():
-                    self.backgroundUploader.terminate()
-                    break
-
-        # When shutting down, first alert server of any images that were
-        # not marked - using 'DNF' (did not finish). Server will put
-        # those files back on the todo pile.
-        self.DNF()
-        # now save the annotator rubric tab state to server
-        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
-
-        # Then send a 'user closing' message - server will revoke
-        # authentication token.
-        try:
-            self.msgr.closeUser()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-
-        sidebarRight = self.ui.sidebarRightCB.isChecked()
-        self.my_shutdown_signal.emit(2, [sidebarRight])
-
-    def DNF(self):
-        """
-        Marks files that are not finished as "did not finish."
-
-        Notes:
-            do this for everything, not just the proxy-model
-
-        Returns:
-            None
-
-        Raises:
-            PlomSeriousException if an error occurs in server.
-
-        """
-        for r in range(self.examModel.rowCount()):
-            if self.examModel.data(self.examModel.index(r, 1)) != "marked":
-                # Tell server the task of any paper that is not marked.
-                # server will put that back on the todo-pile.
-                try:
-                    self.msgr.MdidNotFinishTask(
-                        self.examModel.data(self.examModel.index(r, 0))
-                    )
-                except PlomSeriousException as err:
-                    self.throwSeriousError(err)
 
     def downloadWholePaper(self, testNumber):
         """
@@ -2297,7 +2250,7 @@ class MarkerClient(QWidget):
         return self.msgr.MrequestOneImage(image_id, md5)
 
     def doneWithWholePaperFiles(self, viewFiles):
-        """ Unlinks files in viewFiles to os. """
+        """Unlinks files in viewFiles to os."""
         for f in viewFiles:
             if os.path.isfile(f):
                 os.unlink(f)
@@ -2438,7 +2391,7 @@ class MarkerClient(QWidget):
         return fragFile
 
     def tagTest(self):
-        """ Adds a tag to the current Test."""
+        """Adds a tag to the current Test."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
@@ -2468,7 +2421,7 @@ class MarkerClient(QWidget):
             self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
-        """ Sets a filter tag. """
+        """Sets a filter tag."""
         self.prxM.setFilterString(self.ui.filterLE.text().strip())
         # check to see if invert-filter is checked
         if self.ui.filterInvCB.checkState() == Qt.Checked:
@@ -2477,26 +2430,17 @@ class MarkerClient(QWidget):
             self.prxM.filterTags()
 
     def viewSpecificImage(self):
-        """ shows the image.  """
-        if self.canViewAll:
-            tgs = SelectTestQuestion(self.exam_spec, self.question)
-            if tgs.exec_() == QDialog.Accepted:
-                tn = tgs.tsb.value()
-                gn = tgs.gsb.value()
-            else:
-                return
-        else:
-            tgs = SelectTestQuestion(self.exam_spec)
-            if tgs.exec_() == QDialog.Accepted:
-                tn = tgs.tsb.value()
-                gn = self.question
-            else:
-                return
-        task = "q{}g{}".format(str(tn).zfill(4), int(self.question))
+        """shows the image."""
+        tgs = SelectTestQuestion(self.exam_spec, self.question)
+        if tgs.exec_() != QDialog.Accepted:
+            return
+        tn = tgs.tsb.value()
+        gn = tgs.gsb.value()
+        task = f"q{tn:04}g{gn}"
         try:
             imageList = self.msgr.MrequestOriginalImages(task)
         except PlomNoMoreException:
-            msg = ErrorMessage("No image corresponding to task {}".format(task))
+            msg = ErrorMessage(f"No image corresponding to task {task}")
             msg.exec_()
             return
         ifilenames = []
@@ -2507,7 +2451,5 @@ class MarkerClient(QWidget):
             ifile.write(img)
             ifilenames.append(ifile.name)
         tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(
-            "Original ungraded image for question {} of test {}".format(gn, tn)
-        )
+        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
         tvw.exec_()

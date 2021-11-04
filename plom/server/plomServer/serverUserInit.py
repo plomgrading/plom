@@ -20,21 +20,23 @@ def validate(self, user, token):
     Returns:
         bool
     """
-    # log.debug("Validating user {}.".format(user))
-    dbToken = self.DB.getUserToken(user)
+    # log.debug(f'Validating user "{user}"')
+    try:
+        dbToken = self.DB.getUserToken(user)
+    except ValueError as e:
+        log.warning(f'User "{user}" tried a token but we have no such user!')
+        return False
     if not dbToken:
-        log.warning('User "{}" tried a token but we have no such user!'.format(user))
+        log.info(f'User "{user}" tried a token but they are not logged in')
         return False
     r = self.authority.validate_token(token, dbToken)
     # gives None/False/True
     if r is None:
         log.warning(
-            'Malformed token from user "{}": client bug? malicious probing?'.format(
-                user
-            )
+            f'User "{user}" tried a malformed token: client bug? malicious probing?'
         )
     elif not r:
-        log.info('User "{}" tried to use a stale or invalid token'.format(user))
+        log.info(f'User "{user}" tried to use a stale or invalid token')
     return bool(r)
 
 
@@ -174,9 +176,9 @@ def setUserEnable(self, user, enableFlag):
 
 
 def createModifyUser(self, username, password):
-    # basic sanity check of username / password
-    if not self.authority.basic_user_password_check(username, password):
-        return [False, "Username/Password fails basic checks."]
+    r, msg = self.authority.basic_user_password_check(username, password)
+    if not r:
+        return [False, f"Username/Password fails basic checks: {msg}"]
     if username == "HAL":  # Don't mess with HAL
         return [False, "I'm sorry, Dave. I'm afraid I can't do that."]
     # hash the password

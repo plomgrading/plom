@@ -1,12 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2021 Colin B. Macdonald
 
+import gzip
+from pathlib import Path
+import pickle
+from warnings import warn
+
+import pandas as pd
+import sklearn
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
-import numpy as np
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-import pickle
 from sklearn.metrics import accuracy_score
 
 
@@ -33,26 +38,19 @@ def train_model():
     model = RandomForestClassifier()
     model.fit(X_train, y_train)
 
-    # Saving the model
-    saved_model_fname = "model_cache/RF_ML_model.sav"
-
-    pickle.dump(model, open(saved_model_fname, "wb"))
+    filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
+    with gzip.open(Path("model_cache") / filename, "wb") as f:
+        pickle.dump(model, f)
 
     # Now we are done, we will do a sanity check
-    loaded_model = pickle.load(open(saved_model_fname, "rb"))
-
+    with gzip.open(Path("model_cache") / filename, "rb") as f:
+        loaded_model = pickle.load(f)
     testing_predictions = loaded_model.predict(X_test)
-    score = model.score(X_test, y_test)
-
+    # score = model.score(X_test, y_test)
     score = accuracy_score(testing_predictions, y_test)
-
     print("Model score is: ", str(score))
-    if score < 0.9:
-        print(
-            "<<<WARNING>>> Model score is too low. This might effect the student ID detections negatively."
-        )
-
-    return
+    if score < 0.95:
+        warn(f"Model score {score} is below 95. Consider rerunning to retrain.")
 
 
 if __name__ == "__main__":
