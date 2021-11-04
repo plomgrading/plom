@@ -188,13 +188,13 @@ def Rget_rubrics_by_question(self, question):
 
 def Rget_test_rubric_count_matrix(self):
     """Return count matrix of rubric vs test_number"""
-    adjacency = defaultdict(lambda: defaultdict(int))
+    adjacency = defaultdict(list)
     for tref in Test.select():
         tn = tref.test_number
         for qref in tref.qgroups:
             aref = qref.annotations[-1]
             for arlink_ref in aref.arlinks:
-                adjacency[tn][arlink_ref.rubric.key] += 1
+                adjacency[tn].append(arlink_ref.rubric.key)
     return adjacency
 
 
