@@ -251,9 +251,9 @@ if __name__ == "__main__":
             continue
         assert sub.user_id == student.user_id
         if args.solutions:
-            soln_pdf = soln_dir / "{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
+            soln_pdf = soln_dir / f"{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
-                print("Student # {sis_id} has no solution!")
+                print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
                 soln_pdf = None
 
         # try:
