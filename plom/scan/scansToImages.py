@@ -78,7 +78,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         msgs = []
 
         # Any of these might indicate something more complicated than a scan
-        if p.getLinks():
+        if p.get_links():
             msgs.append("Has links")
             ok_extract = False
         if list(p.annots()):
@@ -88,7 +88,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             msgs.append("Has fillable forms")
             ok_extract = False
         # TODO: which is more expensive, this or getImageList?
-        if p.getText("text"):
+        if p.get_text("text"):
             msgs.append("Has text")
             ok_extract = False
 
