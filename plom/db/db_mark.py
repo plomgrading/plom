@@ -9,7 +9,7 @@ import logging
 import peewee as pw
 
 from plom.db.tables import plomdb
-from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
+from plom.db.tables import AImage, Annotation, APage, ARLink
 from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User
 
 
@@ -439,7 +439,15 @@ def MgetOriginalImages(self, task):
                 "MgetOriginalImages - task {} not completely scanned".format(task)
             )
             return [False, "Task {} is not completely scanned".format(task)]
-        aref = gref.qgroups[0].annotations[0]  # the original annotation pages
+        # get the first non-outdated annotation for the group
+        aref = (
+            gref.qgroups[0]
+            .annotations.where(Annotation.outdated == False)
+            .order_by(Annotation.edition)
+            .get()
+        )
+        # this is the earliest non-outdated annotation = the original
+
         # return [true, page1,..,page.n]
         rval = [True]
         for p in aref.apages.order_by(APage.order):
@@ -601,39 +609,20 @@ def MrevertTask(self, task):
         qref.time = datetime.now()
         qref.user = None
         qref.save()
-        rval = [True]  # keep list of files to delete.
-        # now move existing annotations to oldannotations
-        # set starting edition for oldannot to either 0 or whatever was last.
-        if len(qref.oldannotations) == 0:
-            ed = 0
-        else:
-            ed = qref.oldannotations[-1].edition
+    # now we need to set annotations to "outdated"
+    # first find the first not-outdated annotation - that is the "original" state
+    aref0 = (
+        gref.qgroups[0]
+        .annotations.where(Annotation.outdated == False)
+        .order_by(Annotation.edition)
+        .get()
+    )
+    # now set all subsequent annotations to outdated
+    for aref in gref.qgroups[0].annotations.where(
+        Annotation.outdated == False, Annotation.edition > aref0.edition
+    ):
+        aref.outdated = True
+        aref.save()
 
-        for aref in qref.annotations:
-            if aref.edition == 0:  # leave 0th annotation alone.
-                continue
-            ed += 1
-            # make new oldannot using data from aref
-            oaref = OldAnnotation.create(
-                qgroup=aref.qgroup,
-                user=aref.user,
-                aimage=aref.aimage,
-                edition=ed,
-                plom_file=aref.plom_file,
-                mark=aref.mark,
-                marking_time=aref.marking_time,
-                time=aref.time,
-                tags=aref.tags,
-            )
-            # make oapges
-            for pref in aref.apages:
-                OAPage.create(old_annotation=oaref, order=pref.order, image=pref.image)
-            # now delete the apages and then the annotation-image and finally the annotation.
-            for pref in aref.apages:
-                pref.delete_instance()
-            # delete the annotated image from table.
-            aref.aimage.delete_instance()
-            # finally delete the annotation itself.
-            aref.delete_instance()
     log.info(f"Reverted tq {task}")
     return [True]

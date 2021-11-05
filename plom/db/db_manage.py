@@ -4,8 +4,6 @@
 
 import logging
 
-from peewee import fn
-
 from plom.db.tables import plomdb
 from plom.db.tables import UnknownPage, DiscardedPage, CollidingPage
 from plom.db.tables import EXPage, HWPage, Image, QGroup, Test, TPage
@@ -206,7 +204,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     # now create the expage, delete upage
 
     with plomdb.atomic():
-        xref = EXPage.create(
+        EXPage.create(
             test=tref, group=qref.group, version=version, order=order, image=iref
         )
         uref.delete_instance()
@@ -241,7 +239,7 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
     qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:  # should not happen
         return [False, "Cannot find that question"]
-    version = qref.version  # we'll need the version
+    # version = qref.version  - we don't use the version below
     gref = qref.group  # and the parent group
     # find the last expage in that group - if there are expages
     if gref.hwpages.count() == 0:

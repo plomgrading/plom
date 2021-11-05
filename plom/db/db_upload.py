@@ -12,7 +12,6 @@ from plom.db.tables import plomdb
 from plom.db.tables import Bundle, IDGroup, Group, Image, QGroup, Test, User
 from plom.db.tables import APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
-from plom.db.tables import OAPage, OldAnnotation
 
 
 log = logging.getLogger("DB")
@@ -583,63 +582,32 @@ def updateIDGroup(self, iref):
 
 def cleanQGroup(self, qref):
     tref = qref.test
+    HAL_ref = User.get(name="HAL")
     with plomdb.atomic():
-        # update 0th annotation but move other annotations to oldannotations
-        # set starting edition for oldannot to either 0 or whatever was last.
-        if qref.oldannotations.count() == 0:
-            ed = 0
-        else:
-            ed = qref.oldannotations[-1].edition
-
+        # first set all annotations as outdated
         for aref in qref.annotations:
-            if aref.edition == 0:  # update 0th edition.
-                # delete old apages
-                for p in aref.apages:
-                    p.delete_instance()
-                # now create new ones - tpages, then hwpage, then expages
-                # set the integrity_check string to a UUID
-                ord = 0
-                integrity_check = uuid.uuid4().hex
-                for p in qref.group.tpages.order_by(TPage.page_number):
-                    if p.scanned:  # make sure the tpage is actually scanned.
-                        ord += 1
-                        APage.create(annotation=aref, image=p.image, order=ord)
-                for p in qref.group.hwpages.order_by(HWPage.order):
-                    ord += 1
-                    APage.create(annotation=aref, image=p.image, order=ord)
-                for p in qref.group.expages.order_by(EXPage.order):
-                    ord += 1
-                    APage.create(annotation=aref, image=p.image, order=ord)
-                aref.integrity_check = integrity_check
-                aref.save()
-            else:
-                ed += 1
-                # make new oldannot using data from aref
-                oaref = OldAnnotation.create(
-                    qgroup=aref.qgroup,
-                    user=aref.user,
-                    aimage=aref.aimage,
-                    edition=ed,
-                    plom_file=aref.plom_file,
-                    mark=aref.mark,
-                    marking_time=aref.marking_time,
-                    time=aref.time,
-                    tags=aref.tags,
-                    integrity_check=aref.integrity_check,
-                )
-                # make oapges
-                for pref in aref.apages:
-                    OAPage.create(
-                        old_annotation=oaref, order=pref.order, image=pref.image
-                    )
-                # now delete the apages and then the annotation-image and finally the annotation.
-                for pref in aref.apages:
-                    pref.delete_instance()
-                # delete the annotated image from table (if it exists).
-                if aref.aimage is not None:
-                    aref.aimage.delete_instance()
-                # finally delete the annotation itself.
-                aref.delete_instance()
+            aref.outdated = True
+            aref.save()
+        # now create a new latest annotation
+        new_ed = qref.annotations[-1].edition + 1
+        aref = Annotations.create(qgroup=qref, edition=new_ed, user=HAL_ref)
+        # now add in the pages
+        # now create new ones - tpages, then hwpage, then expages
+        # set the integrity_check string to a UUID
+        ord = 0
+        integrity_check = uuid.uuid4().hex
+        for p in qref.group.tpages.order_by(TPage.page_number):
+            if p.scanned:  # make sure the tpage is actually scanned.
+                ord += 1
+                APage.create(annotation=aref, image=p.image, order=ord)
+        for p in qref.group.hwpages.order_by(HWPage.order):
+            ord += 1
+            APage.create(annotation=aref, image=p.image, order=ord)
+        for p in qref.group.expages.order_by(EXPage.order):
+            ord += 1
+            APage.create(annotation=aref, image=p.image, order=ord)
+        aref.integrity_check = integrity_check
+        aref.save()
 
         qref.user = None
         qref.status = ""

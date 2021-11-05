@@ -153,6 +153,10 @@ class Annotation(BaseModel):
     aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
     integrity_check = pw.CharField(null=True)  # random uuid
+    # add this for when we update underlying pages of
+    # a test
+    outdated = pw.BooleanField(default=False)
+    #
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
@@ -164,27 +168,6 @@ class Annotation(BaseModel):
 class APage(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="apages")
     image = pw.ForeignKeyField(Image, backref="apages")
-    order = pw.IntegerField(null=False)
-
-
-class OldAnnotation(BaseModel):
-    qgroup = pw.ForeignKeyField(QGroup, backref="oldannotations")
-    user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
-    aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
-    edition = pw.IntegerField(null=True)
-    # concat of md5sums of underlying apages
-    integrity_check = pw.CharField(null=True)
-    # we need to order the annotations - want the latest.
-    plom_file = pw.CharField(null=True)
-    mark = pw.IntegerField(null=True)
-    marking_time = pw.IntegerField(null=True)
-    time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
-
-
-class OAPage(BaseModel):
-    old_annotation = pw.ForeignKeyField(OldAnnotation, backref="oapages")
-    image = pw.ForeignKeyField(Image, backref="oapages")
     order = pw.IntegerField(null=False)
 
 
