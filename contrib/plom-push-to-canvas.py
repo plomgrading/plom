@@ -147,14 +147,19 @@ parser.add_argument(
         Interactively prompt from a list if omitted.
     """,
 )
-# TODO: ain't want double negative
+parser.add_argument(
+    "--solutions",
+    action="store_true",
+    default=True,
+    help="""
+        Upload individualized solutions as well as reassembled papers
+        (default: on).
+    """,
+)
 parser.add_argument(
     "--no-solutions",
-    action="store_true",
-    help="""
-        Do not upload solutions.
-        (default: off, i.e., do upload).
-    """,
+    dest="solutions",
+    action="store_false",
 )
 
 
@@ -185,13 +190,11 @@ if __name__ == "__main__":
         raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
     print('  Found "reassembled/" directory.')
 
-    if args.no_solutions:
-        soln_dir = None
-    else:
+    if args.solutions:
         soln_dir = Path("solutions")
         if not soln_dir.exists():
-            raise ValueError(f'Missing "soln_dir": run `plom-finish solutions` or pass `--no-solutions` to omit')
-        print(f'  Found "soln_dir" directory.')
+            raise ValueError(f'Missing "{soln_dir}": run `plom-finish solutions` or pass `--no-solutions` to omit')
+        print(f'  Found "{soln_dir}" directory.')
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
@@ -247,10 +250,11 @@ if __name__ == "__main__":
             print("  SKIPPING this paper and continuing")
             continue
         assert sub.user_id == student.user_id
-        if not args.no_solutions:
+        if args.solutions:
             soln_pdf = soln_dir / "{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
             if not soln_pdf.exists():
                 print("Student # {sis_id} has no solution!")
+                soln_pdf = None
 
         # try:
         #     if sub.submission_comments:
@@ -262,28 +266,29 @@ if __name__ == "__main__":
         #     pass
         if args.dry_run:
             timeouts.append((pdf.name, sis_id, name))
-            if not args.no_solution:
+            if args.solutions and soln_pdf:
                 timeouts.append((soln_pdf.name, sis_id, name))
             timeouts.append((mark, sis_id, name))
             continue
 
+        # TODO: should look at the return values
+        # TODO: except CanvasException
         try:
-            # TODO: it has a return value, maybe we should look, assert etc?
             sub.upload_comment(pdf)
-            time.sleep(random.uniform(0.25, 0.5))
-        except:  # Can get a `CanvasException` here from timeouts
+        except:
             timeouts.append((pdf.name, sis_id, name))
-        if not args.no_solution:
+        time.sleep(random.uniform(0.25, 0.5))
+        if args.solutions and soln_pdf:
             try:
                 sub.upload_comment(soln_pdf)
-                time.sleep(random.uniform(0.25, 0.5))
-            except:  # Can get a `CanvasException` here from timeouts
+            except:
                 timeouts.append((soln_pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.25, 0.5))
         try:
             sub.edit(submission={"posted_grade": mark})
-            time.sleep(random.uniform(0.25, 0.5))
-        except:  # Can get a `CanvasException` here from timeouts?
+        except:
             timeouts.append((mark, sis_id, name))
+        time.sleep(random.uniform(0.25, 0.5))
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
@@ -295,4 +300,5 @@ if __name__ == "__main__":
     for thing, sis_id, name in timeouts:
         print(f"    {sis_id} {name} \t {thing}")
     if not args.dry_run:
-        print("  These should be uploaded manually.\n")
+        print("  These should be uploaded manually, or rerun with only")
+        print("  the failures placed in reassembled/")
