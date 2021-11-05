@@ -261,34 +261,39 @@ if __name__ == "__main__":
         #     print("no")
         #     pass
         if args.dry_run:
-            timeouts += [(pdf, mark, name)]
+            timeouts.append((pdf.name, sis_id, name))
             if not args.no_solution:
-                timeouts += [(soln_pdf, mark, name)]
+                timeouts.append((soln_pdf.name, sis_id, name))
+            timeouts.append((mark, sis_id, name))
         else:
             try:
                 # TODO: it has a return value, maybe we should look, assert etc?
                 sub.upload_comment(pdf)
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(0.25 0.5))
             except:  # Can get a `CanvasException` here from timeouts
-                timeouts += [(pdf, mark, name)]
+                timeouts.append((pdf.name, sis_id, name))
             if not args.no_solution:
                 try:
                     sub.upload_comment(soln_pdf)
-                    time.sleep(random.uniform(0.5, 1))
+                    time.sleep(random.uniform(0.25, 0.5))
                 except:  # Can get a `CanvasException` here from timeouts
-                    timeouts += [(soln_pdf, mark, name)]
+                    timeouts.append((soln_pdf.name, sis_id, name))
 
             # Push the grade change
-            sub.edit(submission={"posted_grade": mark})
+            try:
+                sub.edit(submission={"posted_grade": mark})
+                time.sleep(random.uniform(0.25, 0.5))
+            except:  # Can get a `CanvasException` here from timeouts?
+                timeouts.append((mark, sis_id, name))
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
     else:
         print(f"Done.  There were {len(timeouts)} timeouts:")
 
-    print(f"         filename       mark    (student name)")
+    print("    sis_id   student name     filename/mark")
     print("    --------------------------------------------")
-    for (i, (pdf, mark, name)) in enumerate(timeouts):
-        print(f"    {pdf.name}  {mark}  ({name})")
+    for thing, sis_id, name in timeouts:
+        print(f"    {sis_id} {name} \t {thing}")
     if not args.dry_run:
         print("  These should be uploaded manually.\n")
