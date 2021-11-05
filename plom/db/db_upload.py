@@ -584,15 +584,22 @@ def cleanQGroup(self, qref):
     tref = qref.test
     HAL_ref = User.get(name="HAL")
     with plomdb.atomic():
-        # first set all annotations as outdated
-        for aref in qref.annotations:
-            aref.outdated = True
-            aref.save()
-        # now create a new latest annotation
-        new_ed = qref.annotations[-1].edition + 1
-        aref = Annotation.create(qgroup=qref, edition=new_ed, user=HAL_ref)
-        # now add in the pages
-        # now create new ones - tpages, then hwpage, then expages
+        # if beyond 0th annotation then set all existing annotations as outdated
+        if len(qref.annotations) > 1:
+            for aref in qref.annotations:
+                aref.outdated = True
+                aref.save()
+            # now create a new latest annotation
+            new_ed = qref.annotations[-1].edition + 1
+            aref = Annotation.create(qgroup=qref, edition=new_ed, user=HAL_ref)
+        else:
+            # delete the pages from the 0th annotation
+            # re-use it as "latest"
+            aref = qref.annotations[0]
+            for p in aref.apages:
+                p.delete_instance()
+
+        # now add in the pages - tpages, then hwpage, then expages
         # set the integrity_check string to a UUID
         ord = 0
         integrity_check = uuid.uuid4().hex
@@ -607,6 +614,7 @@ def cleanQGroup(self, qref):
             ord += 1
             APage.create(annotation=aref, image=p.image, order=ord)
         aref.integrity_check = integrity_check
+        aref.outdated = False
         aref.save()
 
         qref.user = None
