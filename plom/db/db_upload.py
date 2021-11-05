@@ -10,7 +10,7 @@ from peewee import fn
 
 from plom.db.tables import plomdb
 from plom.db.tables import Bundle, IDGroup, Group, Image, QGroup, Test, User
-from plom.db.tables import APage, DNMPage, EXPage, HWPage, IDPage, TPage
+from plom.db.tables import Annotation, APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
 
 
@@ -590,7 +590,7 @@ def cleanQGroup(self, qref):
             aref.save()
         # now create a new latest annotation
         new_ed = qref.annotations[-1].edition + 1
-        aref = Annotations.create(qgroup=qref, edition=new_ed, user=HAL_ref)
+        aref = Annotation.create(qgroup=qref, edition=new_ed, user=HAL_ref)
         # now add in the pages
         # now create new ones - tpages, then hwpage, then expages
         # set the integrity_check string to a UUID

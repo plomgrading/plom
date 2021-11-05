@@ -46,10 +46,8 @@ class PlomDB:
                     ##
                     AImage,
                     Annotation,
-                    OldAnnotation,
                     ##
                     APage,
-                    OAPage,
                     IDPage,
                     DNMPage,
                     ##
