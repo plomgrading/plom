@@ -265,26 +265,25 @@ if __name__ == "__main__":
             if not args.no_solution:
                 timeouts.append((soln_pdf.name, sis_id, name))
             timeouts.append((mark, sis_id, name))
-        else:
-            try:
-                # TODO: it has a return value, maybe we should look, assert etc?
-                sub.upload_comment(pdf)
-                time.sleep(random.uniform(0.25 0.5))
-            except:  # Can get a `CanvasException` here from timeouts
-                timeouts.append((pdf.name, sis_id, name))
-            if not args.no_solution:
-                try:
-                    sub.upload_comment(soln_pdf)
-                    time.sleep(random.uniform(0.25, 0.5))
-                except:  # Can get a `CanvasException` here from timeouts
-                    timeouts.append((soln_pdf.name, sis_id, name))
+            continue
 
-            # Push the grade change
+        try:
+            # TODO: it has a return value, maybe we should look, assert etc?
+            sub.upload_comment(pdf)
+            time.sleep(random.uniform(0.25, 0.5))
+        except:  # Can get a `CanvasException` here from timeouts
+            timeouts.append((pdf.name, sis_id, name))
+        if not args.no_solution:
             try:
-                sub.edit(submission={"posted_grade": mark})
+                sub.upload_comment(soln_pdf)
                 time.sleep(random.uniform(0.25, 0.5))
-            except:  # Can get a `CanvasException` here from timeouts?
-                timeouts.append((mark, sis_id, name))
+            except:  # Can get a `CanvasException` here from timeouts
+                timeouts.append((soln_pdf.name, sis_id, name))
+        try:
+            sub.edit(submission={"posted_grade": mark})
+            time.sleep(random.uniform(0.25, 0.5))
+        except:  # Can get a `CanvasException` here from timeouts?
+            timeouts.append((mark, sis_id, name))
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
