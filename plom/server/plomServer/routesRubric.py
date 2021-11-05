@@ -287,7 +287,7 @@ class RubricHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/test_rubric_adjacency.
 
         Returns:
-            aiohttp.web_response.Response: A response including metadata encoding the test-rubric adjacency / count matrix.
+            aiohttp.web_response.Response: A response including metadata encoding the test-rubric adjacency / count matrix. The matrix is encoded as an adjacency list, ie. {testnumber: [rubric_id1, rubric_id2, ...]} where (test_n,rubric_k) means that rubric_k was used in test_n.
         """
 
         if not data["user"] == "manager":
@@ -308,7 +308,7 @@ class RubricHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/rubric/counts.
 
         Returns:
-            aiohttp.web_response.Response: A response including metadata encoding the rubric counts and min info.
+            aiohttp.web_response.Response: A response including metadata encoding the rubric counts and min info. Returns a list of rubrics, and for each rubric we give a dict listing its id, kind, question, delta, text, user who created it, and the count of how many tests it has been used in.
         """
 
         if not data["user"] == "manager":
@@ -328,7 +328,7 @@ class RubricHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/rubric/key.
 
         Returns:
-            aiohttp.web_response.Response: A response including metadata encoding the rubric details inc which tests use it.
+            aiohttp.web_response.Response: A response including metadata encoding the rubric details inc which tests use it. More precisely, we return a dict that gives the rurbrics id, kind, question, delta, text, who created it, tags, meta, count, creation and modification times, and a list of test numbers in which it was used.
         """
 
         if not data["user"] == "manager":

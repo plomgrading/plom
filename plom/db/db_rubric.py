@@ -262,4 +262,7 @@ def Rget_rubric_details(self, key):
         qref = aref.qgroup
         if aref == qref.annotations[-1]:
             rubric_details["test_list"].append(qref.test.test_number)
+    # recompute the count since the original actually counts how many
+    # annotations (current or not) it is used in - is an overcount.
+    rubric_details["count"] = len(rubric_details["test_list"])
     return (True, rubric_details)
