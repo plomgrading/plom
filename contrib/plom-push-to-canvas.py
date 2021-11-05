@@ -15,6 +15,14 @@ Overview:
      my_key = "11224~AABBCCDDEEFF..."
      ```
   4. Run this script.
+
+This script traverses the files in `reassembled/` directory
+and tries to upload them.  It takes the corresponding grades
+from `marks.csv`.  There can be grades in `marks.csv` for which
+there is no reassembled file in `reassembled/`: these are ignored.
+
+Solutions can also be uploaded.  Again, only solutions that
+correspond to an actual reassembled paper will be uploaded.
 """
 
 import argparse
@@ -167,6 +175,15 @@ parser.add_argument(
         (default: off).
     """,
 )
+# TODO: ain't want double negative
+parser.add_argument(
+    "--no-solutions",
+    action="store_true",
+    help="""
+        Do not upload solutions.
+        (default: off, i.e., do upload).
+    """,
+)
 
 
 if __name__ == "__main__":
@@ -195,6 +212,14 @@ if __name__ == "__main__":
     if not Path("reassembled").exists():
         raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
     print('  Found "reassembled/" directory.')
+
+    if args.no_solutions:
+        soln_dir = None
+    else:
+        soln_dir = Path("solutions")
+        if not soln_dir.exists():
+            raise ValueError(f'Missing "soln_dir": run `plom-finish solutions` or pass `--no-solutions` to omit')
+        print(f'  Found "soln_dir" directory.')
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
@@ -250,6 +275,11 @@ if __name__ == "__main__":
             print("  SKIPPING this paper and continuing")
             continue
         assert sub.user_id == student.user_id
+        if not args.no_solutions:
+            soln_pdf = soln_dir / "{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
+            if not soln_pdf.exists():
+                print("Student # {sis_id} has no solution!")
+
         # try:
         #     if sub.submission_comments:
         #         print(sub.submission_comments)
@@ -260,13 +290,21 @@ if __name__ == "__main__":
         #     pass
         if args.dry_run:
             timeouts += [(pdf, mark, name)]
+            if not args.no_solution:
+                timeouts += [(soln_pdf, mark, name)]
         else:
             try:
                 # TODO: it has a return value, maybe we should look, assert etc?
                 sub.upload_comment(pdf)
-                time.sleep(random.uniform(1, 2))
+                time.sleep(random.uniform(0.5, 1))
             except:  # Can get a `CanvasException` here from timeouts
                 timeouts += [(pdf, mark, name)]
+            if not args.no_solution:
+                try:
+                    sub.upload_comment(soln_pdf)
+                    time.sleep(random.uniform(0.5, 1))
+                except:  # Can get a `CanvasException` here from timeouts
+                    timeouts += [(soln_pdf, mark, name)]
 
             # Push the grade change
             sub.edit(submission={"posted_grade": mark})
