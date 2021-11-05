@@ -695,9 +695,12 @@ def cleanQGroup(self, qref):
                     OAPage.create(
                         old_annotation=oaref, order=pref.order, image=pref.image
                     )
-                # now delete the apages and then the annotation-image and finally the annotation.
+                # now delete the apages, arlinks, and then the annotation-image and finally the annotation.
                 for pref in aref.apages:
                     pref.delete_instance()
+                # any ar-links - see #1764
+                for arref in aref.arlinks:
+                    arref.delete_instance()
                 # delete the annotated image from table (if it exists).
                 if aref.aimage is not None:
                     aref.aimage.delete_instance()

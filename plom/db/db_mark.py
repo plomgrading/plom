@@ -515,7 +515,8 @@ def MgetWholePaper(self, test_number, question):
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
-        if p.group.group_type == "i":  # skip IDpages (but we'll include dnm pages)
+        # skip IDpages (but we'll include dnm pages)
+        if p.group.group_type == "i":
             continue
         val = [
             "t{}".format(p.page_number),
@@ -644,9 +645,12 @@ def MrevertTask(self, task):
             # make oapges
             for pref in aref.apages:
                 OAPage.create(old_annotation=oaref, order=pref.order, image=pref.image)
-            # now delete the apages and then the annotation-image and finally the annotation.
+            # now delete the apages, ar-links and then the annotation-image and finally the annotation.
             for pref in aref.apages:
                 pref.delete_instance()
+            # any ar-links - see #1764
+            for arref in aref.arlinks:
+                arref.delete_instance()
             # delete the annotated image from table.
             aref.aimage.delete_instance()
             # finally delete the annotation itself.
