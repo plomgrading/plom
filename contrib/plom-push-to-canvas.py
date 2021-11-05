@@ -98,26 +98,6 @@ def get_sis_id_to_marks():
     # return {str(k): int(v) for k,v in d.items()}
 
 
-def obfuscate_student_name(stud_name):
-    output = ""
-    pieces = stud_name.split(", ")
-    for substr in pieces:
-        head = substr[:2]
-        tail = substr[2:]
-        for char in string.ascii_letters + string.punctuation:
-            tail = tail.replace(char, "*")
-        output += head + tail + ", "
-    return output[:-2]  # remove final comma
-
-
-def obfuscate_reassembled_pdfname(pdfname):
-    """Censors the number in a string of form foo_12345678.pdf"""
-    prefix, postfix = pdfname.split("_")
-    sis_id, _ = postfix.split(".")  # We don't care about the "pdf"
-    sis_id = sis_id[0] + (len(sis_id) - 2) * "*" + sis_id[-1]
-    return f"{prefix}_{sis_id}.pdf"
-
-
 parser = argparse.ArgumentParser(
     description=__doc__.split("\n")[0],
     epilog="\n".join(__doc__.split("\n")[1:]),
@@ -165,14 +145,6 @@ parser.add_argument(
     help="""
         Specify a Canvas Assignment ID (an integer M).
         Interactively prompt from a list if omitted.
-    """,
-)
-parser.add_argument(
-    "--obfuscate",
-    action="store_true",
-    help="""
-        Obscure most of names and student numbers when printing to the screen
-        (default: off).
     """,
 )
 # TODO: ain't want double negative
@@ -317,11 +289,6 @@ if __name__ == "__main__":
     print(f"         filename       mark    (student name)")
     print("    --------------------------------------------")
     for (i, (pdf, mark, name)) in enumerate(timeouts):
-        if args.obfuscate:
-            print(
-                f"    {obfuscate_reassembled_pdfname(pdf.name)}  {mark}  ({obfuscate_student_name(name)})"
-            )
-        else:
-            print(f"    {pdf.name}  {mark}  ({name})")
+        print(f"    {pdf.name}  {mark}  ({name})")
     if not args.dry_run:
         print("  These should be uploaded manually.\n")
