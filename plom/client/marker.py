@@ -2170,6 +2170,14 @@ class MarkerClient(QWidget):
         return True
 
     def closeEvent(self, event):
+        if not hasattr(self, "_hack_double_close_event"):
+            self._hack_double_close_event = 0
+        self._hack_double_close_event += 1
+        if self._hack_double_close_event >= 2:
+            log.warn("Reentrant close event triggered: ignoring, see Issue #1248")
+            # TODO: I don't know whether to ignore or just return
+            event.ignore()
+            return
         log.debug("Something has triggered a shutdown event")
         self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
         N = self.get_upload_queue_length()
@@ -2190,6 +2198,7 @@ class MarkerClient(QWidget):
             msg.setIcon(QMessageBox.Warning)
             if msg.exec_() == QMessageBox.Cancel:
                 event.ignore()
+                self._hack_double_close_event -= 1
                 return
             # politely ask one more time
             if self.backgroundUploader.isRunning():
