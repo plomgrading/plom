@@ -153,11 +153,11 @@ def Rget_tests_using_given_rubric(self, key):
         return (False, "noSuchRubric")
     for arlink_ref in rref.arlinks:
         aref = arlink_ref.annotation
-        # make sure the annotation is the latest one for
-        # that qgroup
-        qref = aref.qgroup
-        if aref == qref.annotations[-1]:
-            test_dict[qref.test.test_number] += 1
+        # skip any outdated annotations
+        if aref.outdated is True:
+            continue
+        # otherwise append this test number.
+        test_dict[aref.qgroup.test.test_number] += 1
     return (True, test_dict)
 
 
@@ -170,6 +170,9 @@ def Rget_rubrics_in_a_given_test(self, test_number):
     rubric_dict = defaultdict(int)
     for qref in tref.qgroups:
         aref = qref.annotations[-1]
+        # skip if this annotation is outdated - this should not happen
+        if aref.outdated is True:
+            continue
         for arlink_ref in aref.arlinks:
             rubric_dict[arlink_ref.rubric.key] += 1
     return (True, rubric_dict)
@@ -181,6 +184,8 @@ def Rget_rubrics_by_question(self, question):
     rubric_dict = defaultdict
     for qref in QGroup.select().where(QGroup.question == question):
         aref = qref.annotations[-1]
+        if aref.outdated is True:  # this should not happen
+            continue
         for arlink_ref in aref.arlinks:
             defaultdict[arlink_ref.rubric.key] += 1
     return rubric_dict
@@ -193,6 +198,8 @@ def Rget_test_rubric_count_matrix(self):
         tn = tref.test_number
         for qref in tref.qgroups:
             aref = qref.annotations[-1]
+            if aref.outdated is True:  # this should not happen
+                continue
             for arlink_ref in aref.arlinks:
                 adjacency[tn].append(arlink_ref.rubric.key)
     return adjacency
@@ -223,6 +230,9 @@ def Rget_rubric_counts(self):
     for qref in QGroup.select().where(QGroup.marked == True):
         # grab latest annotation for each qgroup.
         aref = qref.annotations[-1]
+        # skip if this annotation is outdated - this should not happen
+        if aref.outdated is True:
+            continue
         # go through the rubric links
         for arlink_ref in aref.arlinks:
             rref = arlink_ref.rubric
@@ -258,10 +268,11 @@ def Rget_rubric_details(self, key):
         logging.warn(f"Looking at arlink = {arlink_ref}")
         aref = arlink_ref.annotation
         logging.warn(f"Looking at aref = {aref}")
-        # check if that annotation is the latests
-        qref = aref.qgroup
-        if aref == qref.annotations[-1]:
-            rubric_details["test_list"].append(qref.test.test_number)
+        # check if that annotation is the latest
+        if aref.outdated is True:
+            continue
+        # else append it.
+        rubric_details["test_list"].append(aref.qgroup.test.test_number)
     # recompute the count since the original actually counts how many
     # annotations (current or not) it is used in - is an overcount.
     rubric_details["count"] = len(rubric_details["test_list"])

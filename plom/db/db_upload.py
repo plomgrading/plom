@@ -70,9 +70,16 @@ def attachImageToTPage(self, test_ref, page_ref, image_ref):
             dnmp = DNMPage.create(
                 dnmgroup=dref, image=image_ref, order=page_ref.page_number
             )
-        else:  # is a question page - always add to annotation 0.
+        else:
+            # is a question page - always add to earliest valid annotation
             qref = gref.qgroups[0]
-            aref = qref.annotations[0]
+            # get the first non-outdated annotation for the group
+            aref = (
+                gref.qgroups[0]
+                .annotations.where(Annotation.outdated == False)
+                .order_by(Annotation.edition)
+                .get()
+            )
             ap = APage.create(
                 annotation=aref, image=image_ref, order=page_ref.page_number
             )
@@ -198,7 +205,13 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
     # create a HW page
     gref = qdata_ref.group
     with plomdb.atomic():
-        aref = qdata_ref.annotations[0]
+        # get the first non-outdated annotation for the group
+        aref = (
+            gref.qgroups[0]
+            .annotations.where(Annotation.outdated == False)
+            .order_by(Annotation.edition)
+            .get()
+        )
         # create image, hwpage, annotationpage and link.
         href = HWPage.create(
             test=test_ref,
