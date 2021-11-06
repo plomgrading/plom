@@ -310,6 +310,7 @@ def MtakeTaskFromClient(
             qgroup=qref,
             user=uref,
             edition=oldaref.edition + 1,
+            outdated=False,
             tags=tags,
             time=datetime.now(),
             integrity_check=oldaref.integrity_check,
