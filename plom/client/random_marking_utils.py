@@ -41,18 +41,18 @@ from plom.messenger import Messenger
 # comments which will be made into rubrics by pushing them to server and getting back keys
 # need different ones for each question
 negativeComments = [
-    (-1, "Careful"),
-    (-1, "Algebra"),
-    (-1, "Arithmetic"),
-    (-2, "Sign error"),
-    (-2, "Huh?"),
+    ("-1", "Careful"),
+    ("-1", "Algebra"),
+    ("-1", "Arithmetic"),
+    ("-2", "Sign error"),
+    ("-2", "Huh?"),
 ]
 positiveComments = [
-    (1, "Yes"),
-    (1, "Nice"),
-    (1, "Well done"),
-    (2, "Good"),
-    (2, "Clever approach"),
+    ("+1", "Yes"),
+    ("+1", "Nice"),
+    ("+1", "Well done"),
+    ("+2", "Good"),
+    ("+2", "Clever approach"),
 ]
 negativeRubrics = {}
 positiveRubrics = {}
