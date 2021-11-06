@@ -48,6 +48,7 @@ from PyQt5.QtWidgets import (
 
 from plom import get_question_label
 from plom.plom_exceptions import (
+    PlomAuthenticationException,
     PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
