@@ -15,6 +15,14 @@ Overview:
      my_key = "11224~AABBCCDDEEFF..."
      ```
   4. Run this script.
+
+This script traverses the files in `reassembled/` directory
+and tries to upload them.  It takes the corresponding grades
+from `marks.csv`.  There can be grades in `marks.csv` for which
+there is no reassembled file in `reassembled/`: these are ignored.
+
+Solutions can also be uploaded.  Again, only solutions that
+correspond to an actual reassembled paper will be uploaded.
 """
 
 import argparse
@@ -90,26 +98,6 @@ def get_sis_id_to_marks():
     # return {str(k): int(v) for k,v in d.items()}
 
 
-def obfuscate_student_name(stud_name):
-    output = ""
-    pieces = stud_name.split(", ")
-    for substr in pieces:
-        head = substr[:2]
-        tail = substr[2:]
-        for char in string.ascii_letters + string.punctuation:
-            tail = tail.replace(char, "*")
-        output += head + tail + ", "
-    return output[:-2]  # remove final comma
-
-
-def obfuscate_reassembled_pdfname(pdfname):
-    """Censors the number in a string of form foo_12345678.pdf"""
-    prefix, postfix = pdfname.split("_")
-    sis_id, _ = postfix.split(".")  # We don't care about the "pdf"
-    sis_id = sis_id[0] + (len(sis_id) - 2) * "*" + sis_id[-1]
-    return f"{prefix}_{sis_id}.pdf"
-
-
 parser = argparse.ArgumentParser(
     description=__doc__.split("\n")[0],
     epilog="\n".join(__doc__.split("\n")[1:]),
@@ -160,12 +148,18 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
-    "--obfuscate",
+    "--solutions",
     action="store_true",
+    default=True,
     help="""
-        Obscure most of names and student numbers when printing to the screen
-        (default: off).
+        Upload individualized solutions as well as reassembled papers
+        (default: on).
     """,
+)
+parser.add_argument(
+    "--no-solutions",
+    dest="solutions",
+    action="store_false",
 )
 
 
@@ -195,6 +189,12 @@ if __name__ == "__main__":
     if not Path("reassembled").exists():
         raise ValueError('Missing "reassembled/": run `plom-finish reassemble`')
     print('  Found "reassembled/" directory.')
+
+    if args.solutions:
+        soln_dir = Path("solutions")
+        if not soln_dir.exists():
+            raise ValueError(f'Missing "{soln_dir}": run `plom-finish solutions` or pass `--no-solutions` to omit')
+        print(f'  Found "{soln_dir}" directory.')
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
@@ -250,6 +250,12 @@ if __name__ == "__main__":
             print("  SKIPPING this paper and continuing")
             continue
         assert sub.user_id == student.user_id
+        if args.solutions:
+            soln_pdf = soln_dir / f"{pdf.stem.split('_')[0]}_solutions_{sis_id}.pdf"
+            if not soln_pdf.exists():
+                print(f"WARNING: Student #{sis_id} has no solutions: {soln_pdf}")
+                soln_pdf = None
+
         # try:
         #     if sub.submission_comments:
         #         print(sub.submission_comments)
@@ -259,31 +265,40 @@ if __name__ == "__main__":
         #     print("no")
         #     pass
         if args.dry_run:
-            timeouts += [(pdf, mark, name)]
-        else:
-            try:
-                # TODO: it has a return value, maybe we should look, assert etc?
-                sub.upload_comment(pdf)
-                time.sleep(random.uniform(1, 2))
-            except:  # Can get a `CanvasException` here from timeouts
-                timeouts += [(pdf, mark, name)]
+            timeouts.append((pdf.name, sis_id, name))
+            if args.solutions and soln_pdf:
+                timeouts.append((soln_pdf.name, sis_id, name))
+            timeouts.append((mark, sis_id, name))
+            continue
 
-            # Push the grade change
+        # TODO: should look at the return values
+        # TODO: except CanvasException
+        try:
+            sub.upload_comment(pdf)
+        except:
+            timeouts.append((pdf.name, sis_id, name))
+        time.sleep(random.uniform(0.25, 0.5))
+        if args.solutions and soln_pdf:
+            try:
+                sub.upload_comment(soln_pdf)
+            except:
+                timeouts.append((soln_pdf.name, sis_id, name))
+            time.sleep(random.uniform(0.25, 0.5))
+        try:
             sub.edit(submission={"posted_grade": mark})
+        except:
+            timeouts.append((mark, sis_id, name))
+        time.sleep(random.uniform(0.25, 0.5))
 
     if args.dry_run:
         print("Done with DRY-RUN.  The following data would have been uploaded:")
     else:
         print(f"Done.  There were {len(timeouts)} timeouts:")
 
-    print(f"         filename       mark    (student name)")
+    print("    sis_id   student name     filename/mark")
     print("    --------------------------------------------")
-    for (i, (pdf, mark, name)) in enumerate(timeouts):
-        if args.obfuscate:
-            print(
-                f"    {obfuscate_reassembled_pdfname(pdf.name)}  {mark}  ({obfuscate_student_name(name)})"
-            )
-        else:
-            print(f"    {pdf.name}  {mark}  ({name})")
+    for thing, sis_id, name in timeouts:
+        print(f"    {sis_id} {name} \t {thing}")
     if not args.dry_run:
-        print("  These should be uploaded manually.\n")
+        print("  These should be uploaded manually, or rerun with only")
+        print("  the failures placed in reassembled/")
