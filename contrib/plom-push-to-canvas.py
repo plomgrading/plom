@@ -193,7 +193,9 @@ if __name__ == "__main__":
     if args.solutions:
         soln_dir = Path("solutions")
         if not soln_dir.exists():
-            raise ValueError(f'Missing "{soln_dir}": run `plom-finish solutions` or pass `--no-solutions` to omit')
+            raise ValueError(
+                f'Missing "{soln_dir}": run `plom-finish solutions` or pass `--no-solutions` to omit'
+            )
         print(f'  Found "{soln_dir}" directory.')
 
     print("\nFetching data from canvas now...")

@@ -51,7 +51,7 @@ class UserInitHandler:
         Returns:
             aiohttp.web.Response: 200 for success, unless a user tries to
                 close another which is BadRequest (400) or user is already
-                logged out, or nonexistant, both of which will give an
+                logged out, or nonexistent, both of which will give an
                 Unauthorized (401).
         """
         # TODO: should manager be allowed to do this for anyone?
