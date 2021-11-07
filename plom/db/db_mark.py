@@ -242,7 +242,6 @@ def MtakeTaskFromClient(
     plom_fname,
     rubrics,
     marking_time,
-    tags,
     md5,
     integrity_check,
     image_md5_list,
@@ -310,7 +309,7 @@ def MtakeTaskFromClient(
             qgroup=qref,
             user=uref,
             edition=oldaref.edition + 1,
-            tags=tags,
+            tags=oldaref.tags,
             time=datetime.now(),
             integrity_check=oldaref.integrity_check,
         )
