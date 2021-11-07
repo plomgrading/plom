@@ -331,7 +331,7 @@ def remove_tag(self, username, task, tag):
             start with.  False is not such paper, permissions or other
             error.
     """
-    tags = self.DB.MgetTags(username, task)
+    tags = self.DB.MgetTags(task)
     if tags is None:
         return False
     tags = tags.split()
