@@ -306,7 +306,6 @@ def upload(
     question,
     ver,
     rubrics,
-    tags,
     integrity_check,
     image_md5_list,
     knownFailCallback=None,
@@ -325,7 +324,6 @@ def upload(
         mtime (int): the marking time (s) for this specific question.
         question (int or str): the question number
         ver (int or str): the version number
-        tags (str): any tags associated with this exam.
         integrity_check (str): the integrity_check string of the task.
         image_md5_list (list[str]): a list of image md5sums used.
         knownFailCallback: if we fail in a way that is reasonably expected,
@@ -362,7 +360,6 @@ def upload(
             ver,
             grade,
             mtime,
-            tags,
             aname,
             pname,
             rubrics,
@@ -1929,7 +1926,6 @@ class MarkerClient(QWidget):
         )
         # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask(task)
-        tags = self.examModel.getTagsByTask(task)
         # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
@@ -1943,7 +1939,6 @@ class MarkerClient(QWidget):
             self.question,
             self.version,
             rubrics,
-            tags,
             integrity_check,
             [x["md5"] for x in src_img_data],
         )
@@ -2400,7 +2395,6 @@ class MarkerClient(QWidget):
         # add it to the cache
         self.commentCache[txt] = fragFile
         return fragFile
-
 
     def manage_tags(self):
         """Manage the tags of the current task."""

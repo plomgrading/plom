@@ -139,7 +139,6 @@ def MreturnMarkedTask(
     plomdat,
     rubrics,
     time_spent_marking,
-    tags,
     annotated_image_md5,
     integrity_check,
     image_md5s,
@@ -157,11 +156,9 @@ def MreturnMarkedTask(
             editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (str): Tag assigned to the paper.
         annotated_image_md5 (str): MD5 hash of the annotated image.
         integrity_check (str): the integrity_check string for this task
         image_md5s (list[str]): list of image md5sums used.
-
 
     Returns:
         list: Respond with a list which includes:
@@ -211,7 +208,6 @@ def MreturnMarkedTask(
         plom_filename,
         rubrics,
         time_spent_marking,
-        tags,
         annotated_image_md5,
         integrity_check,
         image_md5s,
@@ -235,7 +231,7 @@ def MreturnMarkedTask(
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
 
-    self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
+    self.MrecordMark(username, mark, annotated_filename, time_spent_marking)
     # return ack with current counts.
     return [
         True,
@@ -246,7 +242,7 @@ def MreturnMarkedTask(
     ]
 
 
-def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
+def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
     """Saves the marked paper information as a backup, independent of the server
 
     Args:
@@ -254,18 +250,16 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
         mark (int): Question mark.
         annotated_filename (str): Name of the annotated image file.
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (str): Tag assigned to the paper.
     """
 
     with open("{}.txt".format(annotated_filename), "w") as file_header:
         file_header.write(
-            "{}\t{}\t{}\t{}\t{}\t{}".format(
+            "{}\t{}\t{}\t{}\t{}".format(
                 annotated_filename,
                 mark,
                 username,
                 datetime.now().strftime("%Y-%m-%d,%H:%M"),
                 time_spent_marking,
-                tags,
             )
         )
 
