@@ -46,9 +46,17 @@ class UserInitHandler:
     # @routes.delete("/users/{user}")
     @authenticate_by_token_required_fields(["user"])
     def closeUser(self, data, request):
+        """User self-indicates they are logging out, revoke token and tasks.
+
+        Returns:
+            aiohttp.web.Response: 200 for success, unless a user tries to
+                close another which is BadRequest (400) or user is already
+                logged out, or nonexistent, both of which will give an
+                Unauthorized (401).
+        """
         # TODO: should manager be allowed to do this for anyone?
         if data["user"] != request.match_info["user"]:
-            return web.Response(status=400)  # malformed request.
+            raise web.HTTPBadRequest(reason="You cannot close other users")
         self.server.closeUser(data["user"])
         return web.Response(status=200)
 

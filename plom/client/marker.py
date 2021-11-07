@@ -48,6 +48,7 @@ from PyQt5.QtWidgets import (
 
 from plom import get_question_label
 from plom.plom_exceptions import (
+    PlomAuthenticationException,
     PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
@@ -2171,7 +2172,11 @@ class MarkerClient(QWidget):
 
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown event")
-        self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
+        try:
+            self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
+        except PlomException as e:
+            log.warn(f"Tab-saving failed, buggy double-closeEvent #1248?: {e}")
+            pass
         N = self.get_upload_queue_length()
         if N > 0:
             msg = QMessageBox()
@@ -2201,7 +2206,11 @@ class MarkerClient(QWidget):
                 self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
-        self.msgr.closeUser()
+        try:
+            self.msgr.closeUser()
+        except PlomAuthenticationException:
+            log.warn("User tried to logout but was already logged out.")
+            pass
         sidebarRight = self.ui.sidebarRightCB.isChecked()
         log.debug("Emitting Marker shutdown signal")
         self.my_shutdown_signal.emit(2, [sidebarRight])
