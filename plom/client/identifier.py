@@ -254,9 +254,6 @@ class IDClient(QWidget):
         # Initially set to top-left corner of window
         self.msgGeometry = None
 
-    def throwBenign(self, err):
-        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
-
     def skipOnClick(self):
         """Skip the current, moving to the next or loading a new one"""
         index = self.ui.tableView.selectedIndexes()
@@ -387,7 +384,8 @@ class IDClient(QWidget):
         try:
             imageDat = self.msgr.request_ID_image(test)
         except PlomBenignException as e:
-            self.throwBenign(e)
+            log.error("Somewhat unexpected error getting image for %s: %s", test, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             # self.exM.removePaper(r)
             return
 
@@ -575,7 +573,8 @@ class IDClient(QWidget):
         try:
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.error("Somewhat unexpected error when returning %s: %s", code, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
@@ -715,7 +714,9 @@ class IDClient(QWidget):
         try:
             pageNames, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.error("Somewhat unexpected error when viewing %s: %s", testNumber, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
+            return
 
         viewFiles = []
         for iab in imagesAsBytes:
