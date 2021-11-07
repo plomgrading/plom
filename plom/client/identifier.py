@@ -254,15 +254,6 @@ class IDClient(QWidget):
         # Initially set to top-left corner of window
         self.msgGeometry = None
 
-    def throwSeriousError(self, err):
-        ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down identifier.'.format(
-                err
-            )
-        ).exec_()
-        self.shutDownError()
-        raise (err)
-
     def throwBenign(self, err):
         ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
 
@@ -395,9 +386,6 @@ class IDClient(QWidget):
         # else try to grab it from server
         try:
             imageDat = self.msgr.request_ID_image(test)
-        except PlomSeriousException as e:
-            self.throwSeriousError(e)
-            return
         except PlomBenignException as e:
             self.throwBenign(e)
             # self.exM.removePaper(r)
@@ -591,9 +579,6 @@ class IDClient(QWidget):
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
         # successful ID
         # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
