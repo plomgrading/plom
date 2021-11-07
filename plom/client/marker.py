@@ -2411,7 +2411,10 @@ class MarkerClient(QWidget):
         else:
             return
         task = self.prxM.getPrefix(pr)
+        self.manage_task_tags(task)
 
+    def manage_task_tags(self, task):
+        """Manage the tags of a task."""
         # TODO: maybe we'd like a list from the server but uncertain about cost
         all_local_tags = self.examModel.getAllTags()
 
@@ -2448,9 +2451,13 @@ class MarkerClient(QWidget):
                 self.msgr.remove_tag(task, tag)
                 tags = self.msgr.get_tags(task)
 
-        self.examModel.setTagsByTask(task, tags)
-        # resize view too
-        self.ui.tableView.resizeRowsToContents()
+        try:
+            self.examModel.setTagsByTask(task, tags)
+            self.ui.tableView.resizeColumnsToContents()
+            self.ui.tableView.resizeRowsToContents()
+        except ValueError:
+            # we might not the task for which we've have been managing tags
+            pass
 
     def setFilter(self):
         """Sets a filter tag."""
