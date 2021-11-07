@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file 'qtCreatorFiles/ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -180,7 +180,7 @@ class Ui_MarkerWindow(object):
         self.annButton.setText(_translate("MarkerWindow", "&Annotate && mark"))
         self.getNextButton.setText(_translate("MarkerWindow", "&Get next"))
         self.deferButton.setText(_translate("MarkerWindow", "Defer"))
-        self.tagButton.setText(_translate("MarkerWindow", "Tag"))
+        self.tagButton.setText(_translate("MarkerWindow", "&Tags"))
         self.viewButton.setText(_translate("MarkerWindow", "View"))
         self.filterButton.setText(_translate("MarkerWindow", "Filter"))
         self.filterInvCB.setText(_translate("MarkerWindow", "Inv"))
