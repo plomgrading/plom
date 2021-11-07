@@ -486,8 +486,8 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return ret
 
-    # todo - work out URLs for the various operations a little more nicely.
     def MsetTags(self, code, tags):
+        """Deprecated method for setting all tags at once."""
         self.SRmutex.acquire()
         try:
             response = self.patch(

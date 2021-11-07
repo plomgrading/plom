@@ -486,7 +486,7 @@ def MsetTags(self, user_name, task, tags):
         # update tag
         aref.tags = tags
         aref.save()
-        log.info(f'Task {task} had all tags set by user "{user_name}": "{tags}"')
+        log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tags}"')
         return True
 
 
