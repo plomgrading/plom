@@ -505,6 +505,40 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def add_tag(self, code, tag):
+        self.SRmutex.acquire()
+        try:
+            response = self.patch(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token, "tag": tag},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomTakenException(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def remove_tag(self, code, tag):
+        self.SRmutex.acquire()
+        try:
+            response = self.delete(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token, "tag": tag},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomTakenException(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()
         # note - added default value for questionNumber so that this works correctly

@@ -41,6 +41,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QActionGroup,
     QDialog,
+    QInputDialog,
     QWidget,
     QMenu,
     QMessageBox,
@@ -247,6 +248,7 @@ class Annotator(QWidget):
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
         m.addAction("View solutions\tF2", self.viewSolutions)
+        m.addAction("Tag paper...\tF3", self.tag_paper)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         subm = m.addMenu("Tools")
@@ -1080,6 +1082,7 @@ class Annotator(QWidget):
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
             ("viewSolutions", Qt.Key_F2, self.viewSolutions),
+            ("tag_paper", Qt.Key_F3, self.tag_paper),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -1878,6 +1881,14 @@ class Annotator(QWidget):
         if self.solutionView is None:
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
+
+    def tag_paper(self):
+        tag, ok = QInputDialog.getText(self, "Tag paper", "Enter a tag")
+        if not ok:
+            return
+        task = f"q{self.tgvID}"
+        log.debug('tagging paper "%s" with "%s"', task, tag)
+        self.parentMarkerUI.msgr.add_tag(task, tag)
 
     def refreshSolutionImage(self):
         # force a refresh
