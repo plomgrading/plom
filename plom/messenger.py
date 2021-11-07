@@ -505,6 +505,24 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def get_tags(self, code):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomTakenException(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def add_tag(self, code, tag):
         self.SRmutex.acquire()
         try:

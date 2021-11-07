@@ -486,7 +486,6 @@ class MarkHandler:
             aiohttp.web_response.Response: Empty status response indication is adding
                 the tag was successful.
         """
-
         task_code = request.match_info["task"]
         set_tag_success = self.server.MsetTags(data["user"], task_code, data["tags"])
 
@@ -494,6 +493,27 @@ class MarkHandler:
             return web.Response(status=200)
         else:
             return web.Response(status=409)  # Task does not belong to this user.
+
+    # @routes.get("/tags/{task}")
+    @authenticate_by_token_required_fields([])
+    def get_tags(self, data, request):
+        """List the tags for a task.
+
+        Args:
+            data (dict): user, token.
+
+        Returns:
+            aiohttp.web_response.json_response: list of strings, one for each
+                tag, or HTTPConflict (409) if user not permitted to get tags
+                for that paper.
+        """
+        task = request.match_info["task"]
+        tags = self.server.DB.MgetTags(task)
+        if tags is None:
+            # TODO: wrong thing?  not conflict, badrequest
+            raise web.HTTPConflict(reason=f"Not such task {task}")
+        tags = tags.split()
+        return web.json_response(tags)
 
     # @routes.patch("/tags/{task}")
     @authenticate_by_token_required_fields(["user", "tag"])
@@ -754,6 +774,7 @@ class MarkHandler:
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTags)
+        router.add_get("/tags/{task}", self.get_tags)
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
