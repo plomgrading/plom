@@ -173,7 +173,7 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="text">
-                <string>Tag</string>
+                <string>&amp;Tags</string>
                </property>
               </widget>
              </item>
