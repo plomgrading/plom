@@ -1036,7 +1036,7 @@ class MarkerClient(QWidget):
         self.version = version
 
         # Get the number of Tests, Pages, Questions and Versions
-        # Note: if this fails UI is not yet in a useable state
+        # Note: if this fails UI is not yet in a usable state
         self.exam_spec = self.msgr.get_spec()
 
         self.UIInitialization()
