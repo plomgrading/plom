@@ -861,33 +861,29 @@ class ProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, pos, index):
         """
-        Checks if a row fits the given filter.
+        Checks if a row matches the current filter.
 
         Notes:
             Overrides base method.
 
         Args:
-            pos (int): row desired.
+            pos (int): row being checked.
             index (any): unused.
 
         Returns:
-            True if filter accepts the row, False otherwise.
+            bool: True if filter accepts the row, False otherwise.
 
+        The filter string is first broken into words.  All of those words
+        must be in the tags of the row, in any order.  The `invert` flag
+        inverts that logic: at least one of the words must not be in the
+        tags.
         """
-        if (len(self.filterString) == 0) or (
-            self.filterString.casefold()
-            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
-        ):
-            # we'd return true here, unless INVERT, then false
-            if self.invert:
-                return False
-            else:
-                return True
-        else:  # we'd return false here, unless invert, then true
-            if self.invert:
-                return True
-            else:
-                return False
+        search_terms = self.filterString.casefold().split()
+        tags = self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+        all_search_terms_in_tags = all(x in tags for x in search_terms)
+        if self.invert:
+            return not all_search_terms_in_tags
+        return all_search_terms_in_tags
 
     def getPrefix(self, r):
         """
