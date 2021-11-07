@@ -5,11 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-### Changed
+## [0.7.5] - 2021-11-07
 
 ### Fixed
 * Upload queue length was misreported, potentially losing the last upload on rapid quit.
@@ -572,7 +568,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.4...master
+[0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5
 [0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
 [0.7.3]: https://gitlab.com/plom/plom/compare/v0.7.2...v0.7.3
 [0.7.2]: https://gitlab.com/plom/plom/compare/v0.7.1...v0.7.2
