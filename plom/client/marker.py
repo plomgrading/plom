@@ -41,6 +41,7 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QDialog,
+    QInputDialog,
     QMessageBox,
     QProgressDialog,
     QWidget,
@@ -1163,7 +1164,7 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
-        self.ui.tagButton.clicked.connect(self.tagTest)
+        self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
@@ -2400,35 +2401,55 @@ class MarkerClient(QWidget):
         self.commentCache[txt] = fragFile
         return fragFile
 
-    def tagTest(self):
-        """Adds a tag to the current Test."""
+
+    def manage_tags(self):
+        """Manage the tags of the current task."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
             return
         task = self.prxM.getPrefix(pr)
-        tagSet = self.examModel.getAllTags()
-        currentTag = self.examModel.getTagsByTask(task)
 
-        atb = AddTagBox(self, currentTag, list(tagSet))
-        if atb.exec_() == QDialog.Accepted:
-            txt = atb.TE.toPlainText().strip()
-            if len(txt) > 256:
-                log.warning("overly long tags truncated to 256 chars")
-                txt = txt[:256]
-            # send updated tag back to server.
-            try:
-                self.msgr.MsetTags(task, txt)
-            except PlomTakenException as err:
-                log.exception("exception when trying to set tag")
-                ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
-                return
-            except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                return
-            self.examModel.setTagsByTask(task, txt)
-            # resize view too
-            self.ui.tableView.resizeRowsToContents()
+        # TODO: maybe we'd like a list from the server but uncertain about cost
+        all_local_tags = self.examModel.getAllTags()
+        all_local_tags = set(y for x in all_local_tags for y in x.split())
+
+        tags = self.msgr.get_tags(task)
+
+        # TODO: improve with a nicer "tag management" dialog
+        # TODO: for now, just ask about adding and delete with two dialogs
+        # TODO: these current dialogs look horrible with many tags
+
+        def make_tags_html(tags):
+            if not tags:
+                return "<p>No current tags<p>"
+            msg = "&nbsp; ".join(f"<em>{x}</em>" for x in tags)
+            return f"<p>Current tags:</p>\n<center><big>{msg}</big></center>"
+
+        msg = make_tags_html(tags)
+        msg += "<p>Tag this paper with a new tag?</p>"
+        title = f"Add tag to {task}?"
+        choose_tags = all_local_tags.difference(tags)
+        tag, ok = QInputDialog.getItem(self, title, msg, choose_tags)
+        if ok and tag:
+            log.debug('tagging paper "%s" with "%s"', task, tag)
+            self.msgr.add_tag(task, tag)
+            tags = self.msgr.get_tags(task)
+
+        if tags:
+            msg = make_tags_html(tags)
+            msg += "<p>Choose one of these tags to remove:</p>"
+            tmp = tags.copy()
+            tmp.insert(0, "")
+            tag, ok = QInputDialog.getItem(self, f"Remove tag from {task}?", msg, tmp)
+            if ok and tag:
+                log.debug('Removing tag "%s" from "%s"', tag, task)
+                self.msgr.remove_tag(task, tag)
+                tags = self.msgr.get_tags(task)
+
+        self.examModel.setTagsByTask(task, " ".join(tags))
+        # resize view too
+        self.ui.tableView.resizeRowsToContents()
 
     def setFilter(self):
         """Sets a filter tag."""
