@@ -183,6 +183,14 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def closeUser(self):
+        """User self-indicates they are logging out, surrender token and tasks.
+
+        Raises:
+            PlomAuthenticationException: Ironically, the user must be
+                logged in to call this.  A second call will raise this.
+            PlomSeriousException: other problems such as trying to close
+                another user, other than yourself.
+        """
         self.SRmutex.acquire()
         try:
             response = self.session.delete(
