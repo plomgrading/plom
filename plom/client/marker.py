@@ -2418,7 +2418,7 @@ class MarkerClient(QWidget):
                 txt = txt[:256]
             # send updated tag back to server.
             try:
-                self.msgr.MsetTag(task, txt)
+                self.msgr.MsetTags(task, txt)
             except PlomTakenException as err:
                 log.exception("exception when trying to set tag")
                 ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()

@@ -487,7 +487,7 @@ class Messenger(BaseMessenger):
         return ret
 
     # todo - work out URLs for the various operations a little more nicely.
-    def MsetTag(self, code, tags):
+    def MsetTags(self, code, tags):
         self.SRmutex.acquire()
         try:
             response = self.patch(
