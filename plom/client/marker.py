@@ -672,20 +672,28 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, 1, st)
 
     def getTagsByTask(self, task):
-        """Return tags for task, (task(str) defined above.)"""
-        return self._getDataByTask(task, 4)
+        """Return a list of tags for task.
+
+        TODO: can we draw flat, but use list for storing?
+        """
+        return self._getDataByTask(task, 4).split()
 
     def setTagsByTask(self, task, tags):
-        """Set tags for task, (task (str) defined above.)"""
-        return self._setDataByTask(task, 4, tags)
+        """Set a list of tags for task.
+
+        Note: internally stored as flattened string.
+        """
+        return self._setDataByTask(task, 4, " ".join(tags))
 
     def getAllTags(self):
-        """Return all tags as a set."""
+        """Return all tags as a set over all rows of the table.
+
+        Note: internally stored as flattened string.
+        """
         tags = set()
         for r in range(self.rowCount()):
             v = self.data(self.index(r, 4))
-            if len(v) > 0:
-                tags.add(v)
+            tags.update(v.split())
         return tags
 
     def getMTimeByTask(self, task):
@@ -2406,7 +2414,6 @@ class MarkerClient(QWidget):
 
         # TODO: maybe we'd like a list from the server but uncertain about cost
         all_local_tags = self.examModel.getAllTags()
-        all_local_tags = set(y for x in all_local_tags for y in x.split())
 
         tags = self.msgr.get_tags(task)
 
@@ -2441,7 +2448,7 @@ class MarkerClient(QWidget):
                 self.msgr.remove_tag(task, tag)
                 tags = self.msgr.get_tags(task)
 
-        self.examModel.setTagsByTask(task, " ".join(tags))
+        self.examModel.setTagsByTask(task, tags)
         # resize view too
         self.ui.tableView.resizeRowsToContents()
 
