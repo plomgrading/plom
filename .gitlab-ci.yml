@@ -423,7 +423,7 @@ docs_sphinx:
   needs: ["docker-image"]
   image: $IM
   before_script:
-    - pip install sphinx sphinx_rtd_theme
+    - pip install myst-parser sphinx sphinx_rtd_theme
   script:
     - pushd doc
     - ls
