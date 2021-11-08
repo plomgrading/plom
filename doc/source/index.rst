@@ -20,12 +20,6 @@ Welcome to Plom's documentation!
 
 
 
-TODO: new sphinx deps
-=====================
-
-Fedora: `dnf install python3-myst-parser python3-sphinx python3-sphinx_rtd_theme`, others
-
-
 Indices and tables
 ==================
 
