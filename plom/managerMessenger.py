@@ -372,12 +372,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             elif response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
-            elif response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image for {}. This should not happen".format(
-                        code
-                    )
-                ) from None
             else:
                 raise PlomSeriousException(
                     "Some other sort of error {}".format(e)
