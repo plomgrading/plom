@@ -418,6 +418,27 @@ appstreamValid:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
 
 
+docs_sphinx:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - pip install sphinx sphinx_rtd_theme
+  script:
+    - pushd doc
+    - ls
+    - make html
+    - make singlehtml
+    - make linkcheck
+    - make latexpdf
+    - popd
+  artifacts:
+    paths:
+      - doc/build/latex/plom.pdf
+      - doc/build/html/
+    expire_in: 30 days
+
+
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
