@@ -207,7 +207,7 @@ class Messenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/ID/tasks/{code}",
+                f"/ID/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
