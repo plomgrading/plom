@@ -476,7 +476,7 @@ class Messenger(BaseMessenger):
             elif response.status_code == 406:
                 if response.text == "integrity_fail":
                     raise PlomConflict(
-                        "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                        "Integrity fail: can happen if manager altered task while you annotated"
                     ) from None
                 raise PlomSeriousException(response.text) from None
             elif response.status_code == 409:
