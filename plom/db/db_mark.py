@@ -252,6 +252,8 @@ def MtakeTaskFromClient(
     Update the annotation.
     Check to see if all questions for that test are marked and if so update the test's 'marked' flag.
     """
+    logging.warn("ARGH TAKING THINGS")
+
     uref = User.get(name=user_name)  # authenticated, so not-None
 
     with plomdb.atomic():
