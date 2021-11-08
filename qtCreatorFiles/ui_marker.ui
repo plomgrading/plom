@@ -117,6 +117,9 @@
             <property name="selectionBehavior">
              <enum>QAbstractItemView::SelectRows</enum>
             </property>
+            <property name="gridStyle">
+             <enum>Qt::DotLine</enum>
+            </property>
            </widget>
           </item>
           <item>
