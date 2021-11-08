@@ -35,6 +35,7 @@ from plom.plom_exceptions import (
     PlomLatexException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomTimeoutError,
 )
 
 log = logging.getLogger("messenger")
