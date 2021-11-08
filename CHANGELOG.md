@@ -12,8 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+## [0.7.5] - 2021-11-07
+
+### Fixed
 * Upload queue length was misreported, potentially losing the last upload on rapid quit.
 * Cleanup of client shutdown, hopefully fewer crashes in corner cases.
+* Some database cleanup when pages are added to already annotated papers.
+* Other minor fixes about admissible usernames and passwords.
 
 
 ## [0.7.4] - 2021-10-28
@@ -570,7 +578,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.4...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.5...master
+[0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5
 [0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
 [0.7.3]: https://gitlab.com/plom/plom/compare/v0.7.2...v0.7.3
 [0.7.2]: https://gitlab.com/plom/plom/compare/v0.7.1...v0.7.2

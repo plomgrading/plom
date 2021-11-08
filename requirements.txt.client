@@ -7,10 +7,10 @@
 # without any warranty.
 
 # These should be kept lock-step with `requirements.txt`
-PyQt5==5.15.4
+PyQt5==5.15.6
 PyQt5-sip==12.9.0
 appdirs==1.4.4
-importlib-resources==5.3.0
+importlib-resources==5.4.0
 passlib==1.7.4
 requests==2.26.0
 requests-toolbelt==0.9.1
