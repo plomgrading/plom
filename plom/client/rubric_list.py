@@ -137,10 +137,6 @@ class RubricTable(QTableWidget):
             QTableView {
                 border: none;
             }
-            QTableView::item {
-                border: none;
-                border-bottom: 1px solid palette(mid);
-            }
         """
         )
         # CSS cannot set relative fontsize
