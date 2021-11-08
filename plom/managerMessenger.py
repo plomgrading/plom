@@ -1174,7 +1174,7 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         if response.status_code == 201:
             return [True, "User created."]
-        elif response.status_code == 202:
+        if response.status_code == 202:
             return [True, "User password updated"]
         raise PlomSeriousException(f"Unexpected {response.status_code}") from None
 
@@ -1371,8 +1371,8 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             if response.status_code == 200:
                 return True
-            if response.status_code == 204:
-                return False
+            # if response.status_code == 204:
+            return False
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
