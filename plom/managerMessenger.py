@@ -14,13 +14,12 @@ from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
-    PlomTakenException,
+    PlomExistingDatabase,
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomOwnersLoggedInException,
     PlomRangeException,
-    PlomExistingDatabase,
-    PlomOwnersLoggedInException,
+    PlomTakenException,
 )
 from plom.baseMessenger import BaseMessenger
 
