@@ -252,8 +252,6 @@ def MtakeTaskFromClient(
     Update the annotation.
     Check to see if all questions for that test are marked and if so update the test's 'marked' flag.
     """
-    logging.warn("ARGH TAKING THINGS")
-
     uref = User.get(name=user_name)  # authenticated, so not-None
 
     with plomdb.atomic():
@@ -307,12 +305,6 @@ def MtakeTaskFromClient(
         for rid in rubrics:
             if Rubric.get_or_none(key=rid) is None:
                 return [False, "invalid_rubric"]
-
-        logging.warn("v" * 60)
-        logging.warn(f"UREF = {uref}")
-        logging.warn(f"QREF = {qref}")
-        logging.warn(f"OAREF = {oldaref}")
-        logging.warn("^" * 60)
 
         aref = Annotation.create(
             qgroup=qref,
