@@ -17,6 +17,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomNoMoreException,
     PlomNoSolutionException,
+    PlomOwnersLoggedInException,
     PlomRangeException,
     PlomExistingDatabase,
     PlomOwnersLoggedInException,
@@ -334,10 +335,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
-            if response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image. This should not happen"
-                ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
