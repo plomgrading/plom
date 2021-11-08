@@ -18,6 +18,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomNoMoreException,
     PlomNoSolutionException,
+    PlomOwnersLoggedInException,
     PlomRangeException,
     PlomExistingDatabase,
 )
