@@ -306,6 +306,12 @@ def MtakeTaskFromClient(
             if Rubric.get_or_none(key=rid) is None:
                 return [False, "invalid_rubric"]
 
+        logging.warn("v" * 60)
+        logging.warn(f"UREF = {uref}")
+        logging.warn(f"QREF = {qref}")
+        logging.warn(f"OAREF = {oldaref}")
+        logging.warn("^" * 60)
+
         aref = Annotation.create(
             qgroup=qref,
             user=uref,
