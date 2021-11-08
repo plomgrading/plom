@@ -55,11 +55,6 @@ from .rubric_wrangler import RubricWrangler
 
 log = logging.getLogger("annotr")
 
-
-# colours to indicate whether rubric is legal to paste or not.
-# TODO: how do:  QPalette().color(QPalette.Text), QPalette().color(QPalette.Dark)
-colour_legal = QBrush(QColor(0, 0, 0))
-colour_illegal = QBrush(QColor(128, 128, 128, 128))
 abs_suffix = " / N"
 abs_suffix_length = len(abs_suffix)
 
@@ -646,6 +641,8 @@ class RubricTable(QTableWidget):
         legal = isLegalRubric(
             mss, kind=self.item(r, 4).text(), delta=self.item(r, 2).text()
         )
+        colour_legal = self.palette().color(QPalette.Active, QPalette.Text)
+        colour_illegal = self.palette().color(QPalette.Disabled, QPalette.Text)
         if legal == 2:
             self.showRow(r)
             self.item(r, 2).setForeground(colour_legal)
