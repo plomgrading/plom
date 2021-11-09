@@ -6,15 +6,9 @@
 Backend bits n bobs to talk to the server
 """
 
-from plom.managerMessenger import ManagerMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.baseMessenger import BaseMessenger
-
 __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
 
 import json
 import hashlib
@@ -24,6 +18,10 @@ from io import StringIO, BytesIO
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
+from plom.baseMessenger import BaseMessenger
+from plom.scanMessenger import ScanMessenger
+from plom.finishMessenger import FinishMessenger
+from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -38,15 +36,11 @@ from plom.plom_exceptions import (
     PlomTimeoutError,
 )
 
+
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
-
-from plom.baseMessenger import BaseMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.managerMessenger import ManagerMessenger
 
 
 class Messenger(BaseMessenger):
