@@ -156,27 +156,6 @@ class RubricHandler:
         rubrics = self.server.MgetRubrics(question_number)
         return web.json_response(rubrics, status=200)
 
-    # @routes.put("/MK/rubric")
-    @authenticate_by_token_required_fields(["user", "rubric"])
-    def McreateRubric(self, data, request):
-        """Add new rubric to DB and respond with its key
-
-        Args:
-            data (dict): A dictionary including user/token and the new rubric to be created
-            request (aiohttp.web_request.Request): A request of type GET /MK/rubric.
-
-        Returns:
-            aiohttp.web_response.Response: either 200,newkey or 406 if sent rubric was incomplete
-        """
-        username = data["user"]
-        new_rubric = data["rubric"]
-
-        rval = self.server.McreateRubric(username, new_rubric)
-        if rval[0]:  # worked - so return key
-            return web.json_response(rval[1], status=200)
-        else:  # failed - rubric sent is incomplete
-            return web.Response(status=406)
-
     # @routes.patch("/MK/rubric/{key}")
     @authenticate_by_token_required_fields(["user", "rubric"])
     def MmodifyRubric(self, data, request):
