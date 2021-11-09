@@ -473,19 +473,19 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
+            if response.status_code == 406:
                 if response.text == "integrity_fail":
                     raise PlomConflict(
                         "Integrity fail: can happen if manager altered task while you annotated"
                     ) from None
                 raise PlomSeriousException(response.text) from None
-            elif response.status_code == 409:
+            if response.status_code == 409:
                 raise PlomTaskChangedError("Task ownership has changed.") from None
-            elif response.status_code == 410:
+            if response.status_code == 410:
                 raise PlomTaskDeletedError(
                     "No such task - it has been deleted from server."
                 ) from None
-            elif response.status_code == 400:
+            if response.status_code == 400:
                 raise PlomSeriousException(response.text) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
@@ -639,12 +639,11 @@ class Messenger(BaseMessenger):
             if response.status_code == 200:
                 paneConfig = response.json()
                 return [True, paneConfig]
-            elif response.status_code == 204:
+            if response.status_code == 204:
                 return [False]  # server has no data
-            else:
-                raise PlomSeriousException(
-                    "No other 20x response should come from server."
-                ) from None
+            raise PlomSeriousException(
+                "No other 20x response should come from server."
+            ) from None
 
         except requests.HTTPError as e:
             if response.status_code == 401:
