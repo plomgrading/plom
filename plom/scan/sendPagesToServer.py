@@ -3,15 +3,12 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 
 from collections import defaultdict
-from glob import glob
 import hashlib
 import json
-import os
 import shutil
 from pathlib import Path
 
 from plom.messenger import ScanMessenger
-from plom.misc_utils import working_directory
 from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
 
