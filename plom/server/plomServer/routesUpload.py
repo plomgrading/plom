@@ -861,29 +861,21 @@ class UploadHandler:
 
     ## Some more bundle things
 
-    async def getBundleFromImage(self, request):
+    @authenticate_by_token_required_fields(["user", "filename"])
+    def getBundleFromImage(self, data, request):
         """Returns the bundle that contains the given image."""
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "filename", "md5sum"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
+        if not data["user"] == "manager":
             return web.Response(status=401)
-        if not data["user"] != "manager":
-            return web.Response(status=401)
-        rval = self.server.getBundleFromImage(data["filename"], data["md5sum"])
+        rval = self.server.getBundleFromImage(data["filename"])
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
         else:  # no such bundle
             return web.Response(status=410)
 
-    async def getImagesInBundle(self, request):
+    @authenticate_by_token_required_fields(["user", "bundle"])
+    def getImagesInBundle(self, data, request):
         """Returns the bundle that contains the given image."""
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "bundle"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] != "manager":
+        if not data["user"] == "manager":
             return web.Response(status=401)
         rval = self.server.getImagesInBundle(data["bundle"])
         if rval[0]:
@@ -930,3 +922,7 @@ class UploadHandler:
         router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
         router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
         router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
+
+
+##
+##

@@ -331,11 +331,11 @@ def processTUploads(self):
 
 
 def getBundleFromImage(self, file_name):
-    return self.DB.getBundleFromImage(self, file_name)
+    return self.DB.getBundleFromImage(file_name)
 
 
 def getImagesInBundle(self, bundle_name):
-    return self.DB.getImagesInBundle(self, bundle_name)
+    return self.DB.getImagesInBundle(bundle_name)
 
 
 ##

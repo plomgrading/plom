@@ -1437,12 +1437,12 @@ class ManagerMessenger(BaseMessenger):
     ## =====
     ## Rubric analysis stuff
 
-    def getBundleFromImage(self, file_name):
+    def getBundleFromImage(self, filename):
         self.SRmutex.acquire()
         try:
             response = self.get(
                 f"/admin/bundleFromImage",
-                json={"user": self.user, "token": self.token, "file_name": file_name},
+                json={"user": self.user, "token": self.token, "filename": filename},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
