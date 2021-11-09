@@ -185,8 +185,6 @@ pylint:
   image: $IM
   before_script:
     - python3 -m pip install pylint
-    # does this help with lots of Qt failures?
-    - python3 -m pip install -U PyQt5
   script:
     - pylint --errors-only plom
   allow_failure: true

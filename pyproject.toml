@@ -7,3 +7,6 @@ line-length = 88
 target-version = ['py36']
 # this regexp is the default with the addition of "ui_*.py"
 exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/|ui_.+\.py'
+
+[tool.pylint.master]
+extension-pkg-allow-list = ["PyQt5"]
