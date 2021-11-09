@@ -178,11 +178,11 @@ def Rget_rubrics_in_a_given_test(self, test_number):
 def Rget_rubrics_by_question(self, question):
     """Return counts of number of times rubrics used in latest annotations of a given question (indep of version)"""
 
-    rubric_dict = defaultdict
+    rubric_dict = defaultdict(int)
     for qref in QGroup.select().where(QGroup.question == question):
         aref = qref.annotations[-1]
         for arlink_ref in aref.arlinks:
-            defaultdict[arlink_ref.rubric.key] += 1
+            rubric_dict[arlink_ref.rubric.key] += 1
     return rubric_dict
 
 
