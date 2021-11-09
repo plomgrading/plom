@@ -35,7 +35,7 @@ def createReplacementBundle(self):
     try:
         bref = Bundle.create(name="__replacements__system__")
     except pw.IntegrityError as e:
-        log.error("Create replacement page bundle = {}.{} error - {}".format(e))
+        log.error("Failed to create replacement page bundle - %s", e)
         return False
     return True
 
