@@ -37,6 +37,11 @@ possible_given_name_fields = [
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
 
 
+# Note: file is full of pandas warnings, which I think are false positives
+# pylint: disable=unsubscriptable-object
+# pylint: disable=unsupported-assignment-operation
+
+
 def clean_non_canvas_csv(csv_file_name):
     """Read the csv file and clean the csv file.
 

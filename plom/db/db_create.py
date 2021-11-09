@@ -119,6 +119,9 @@ def is_paper_database_populated(self):
 
 
 def nextqueue_position(self):
+    # TODO: probably this is a false positive but I get a pylint of:
+    # TODO: No value for argument 'database' in method call
+    # pylint: disable=no-value-for-parameter
     lastPos = Group.select(fn.MAX(Group.queue_position)).scalar()
     if lastPos is None:
         return 0

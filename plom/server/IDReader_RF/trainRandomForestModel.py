@@ -21,7 +21,7 @@ def train_model():
     # Fetch the MNIST data.
     mnist = fetch_openml("mnist_784")
 
-    # Retrieve the data and the labels
+    # pylint: disable=no-member
     images = pd.DataFrame(mnist.data)
     labels = pd.DataFrame(mnist.target)
 
