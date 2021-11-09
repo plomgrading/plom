@@ -630,9 +630,6 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = self.msgr.getEXPageImage(t, q, o)
-        elif pdetails[0] == "l":  # is an l-page = l.o
-            o = pdetails.split(".")[1]
-            vp = self.msgr.getLPageImage(t, o)
         else:
             return
 

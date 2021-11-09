@@ -269,42 +269,6 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadLPage(self, sid, order, f, md5sum, bundle, bundle_order):
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "fileName": f.name,
-                "sid": sid,
-                "order": order,
-                "md5sum": md5sum,
-                "bundle": bundle,
-                "bundle_order": bundle_order,
-            }
-            mime_type = mimetypes.guess_type(f.name)[0]
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "originalImage": (f.name, open(f, "rb"), mime_type),
-                }
-            )
-            response = self.put(
-                "/admin/lPages",
-                json={"user": self.user, "token": self.token},
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
     def uploadUnknownPage(self, f, order, md5sum, bundle, bundle_order):
         self.SRmutex.acquire()
         try:

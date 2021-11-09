@@ -609,30 +609,6 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getLPageImage(self, t, o):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/scannedLPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "order": o,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def getUnknownImage(self, fname):
         self.SRmutex.acquire()
         try:
