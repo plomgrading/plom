@@ -60,6 +60,7 @@ class PlomDB:
         log.info("Database initialised.")
         # check if HAL has been created
         if User.get_or_none(name="HAL") is None:
+            # pylint: disable=no-member
             User.create(
                 name="HAL",
                 password=None,
