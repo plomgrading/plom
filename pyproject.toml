@@ -10,3 +10,4 @@ exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|
 
 [tool.pylint.master]
 extension-pkg-allow-list = ["PyQt5"]
+generated-members = ["pandas"]
