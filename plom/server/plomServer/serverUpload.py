@@ -328,3 +328,14 @@ def processHWUploads(self):
 
 def processTUploads(self):
     return self.DB.processUpdatedTests()
+
+
+def getBundleFromImage(self, file_name):
+    return self.DB.getBundleFromImage(self, file_name)
+
+
+def getImagesInBundle(self, bundle_name):
+    return self.DB.getImagesInBundle(self, bundle_name)
+
+
+##

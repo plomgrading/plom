@@ -1433,3 +1433,44 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    ## =====
+    ## Rubric analysis stuff
+
+    def getBundleFromImage(self, file_name):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/admin/bundleFromImage",
+                json={"user": self.user, "token": self.token, "file_name": file_name},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that image.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getImagesInBundle(self, bundle_name):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/admin/imagesInBundle",
+                json={"user": self.user, "token": self.token, "bundle": bundle_name},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that bundle.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()

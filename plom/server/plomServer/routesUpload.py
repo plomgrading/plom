@@ -356,7 +356,8 @@ class UploadHandler:
             if rval[1] == "owners":
                 return web.json_response(rval[2], status=409)
             elif rval[1] == "present":
-                return web.Response(status=405)  # that question already has pages
+                # that question already has pages
+                return web.Response(status=405)
             else:
                 return web.Response(status=404)  # page not found at all
 
@@ -571,7 +572,8 @@ class UploadHandler:
         # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
         if rmsg[0]:
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))  # append "collision" or "scanned"
+                # append "collision" or "scanned"
+                mpwriter.append("{}".format(rmsg[1]))
                 mpwriter.append("{}".format(rmsg[2]))  # append "version"
                 if len(rmsg) == 4:  # append the image.
                     mpwriter.append(open(rmsg[3], "rb"))
@@ -857,6 +859,38 @@ class UploadHandler:
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
+    ## Some more bundle things
+
+    async def getBundleFromImage(self, request):
+        """Returns the bundle that contains the given image."""
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "filename", "md5sum"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] != "manager":
+            return web.Response(status=401)
+        rval = self.server.getBundleFromImage(data["filename"], data["md5sum"])
+        if rval[0]:
+            return web.json_response(rval[1], status=200)  # all fine
+        else:  # no such bundle
+            return web.Response(status=410)
+
+    async def getImagesInBundle(self, request):
+        """Returns the bundle that contains the given image."""
+        data = await request.json()
+        if not validate_required_fields(data, ["user", "token", "bundle"]):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] != "manager":
+            return web.Response(status=401)
+        rval = self.server.getImagesInBundle(data["bundle"])
+        if rval[0]:
+            return web.json_response(rval[1], status=200)  # all fine
+        else:  # no such bundle
+            return web.Response(status=410)
+
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
         router.add_put("/admin/bundle", self.createNewBundle)
@@ -894,3 +928,5 @@ class UploadHandler:
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
+        router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
+        router.add_get("/admin/imagesInBundle", self.getImagesInBundle)

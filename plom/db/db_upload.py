@@ -882,3 +882,35 @@ def listBundles(self):
             }
         )
     return bundle_info
+
+
+## Useful bundle associated functions
+
+
+def getBundleFromImage(self, file_name):
+    """
+    From the given filename get the bundle name the images is in.
+    Returns [False, message] or [True, bundle-name]
+    """
+    iref = Image.get_or_none(Image.file_name == file_name)
+    if iref is None:
+        return [False, "No image with that file name"]
+    return [True, iref.bundle.name]
+
+
+def getImagesInBundle(self, bundle_name):
+    """Get list of images in the given bundle.
+    Returns [False, message] or [True imagelist] where
+    image list is list of triples (filename, md5sum, bundle order)
+    """
+    bref = Bundle.get_or_none(Bundle.name == bundle_name)
+    if bref is None:
+        return [False, "No bundle with that name"]
+    images = []
+    for iref in bref.images:
+        images.append((iref.file_name, iref.md5sum, iref.bundle_order))
+    return [True, images]
+
+
+##
+##
