@@ -186,7 +186,7 @@ pylint:
   before_script:
     - python3 -m pip install pylint
   script:
-    - pylint --errors-only plom
+    - pylint plom
   allow_failure: true
 
 
