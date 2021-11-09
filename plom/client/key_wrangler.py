@@ -141,7 +141,7 @@ class SingleKeyEdit(QLineEdit):
 
 class KeyWrangler(QDialog):
     def __init__(self, currentKeys=None):
-        super(KeyWrangler, self).__init__()
+        super().__init__()
         if currentKeys is None:
             currentKeys = keys_sdf
         self.currentKeys = currentKeys
