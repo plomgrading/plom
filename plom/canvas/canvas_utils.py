@@ -281,7 +281,6 @@ def canvas_login(api_url=None, api_key=None):
         canvas = Canvas(api_url, api_key)
     else:
         # TODO: if exists
-        # pylint: disable=import-error
         from api_secrets import my_key as API_KEY
 
         # TODO: else prompt?  with a message of how to save?

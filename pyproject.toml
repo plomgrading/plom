@@ -17,4 +17,4 @@ errors-only = true
 disable = ["not-an-iterable"]
 output-format = "colorized"
 # we have some in-tree deprecated or to-move code that needs tensorflow
-ignored-modules = ["tensorflow"]
+ignored-modules = ["tensorflow", "api_secrets"]
