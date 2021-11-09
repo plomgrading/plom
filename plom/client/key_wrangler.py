@@ -143,6 +143,8 @@ class KeyWrangler(QDialog):
     def __init__(self, currentKeys=None):
         super().__init__()
         if currentKeys is None:
+            # TODO: keys_sdf is undefined here, disabling pylint error
+            # pylint: disable=undefined-variable
             currentKeys = keys_sdf
         self.currentKeys = currentKeys
         self.legalKeyCodes = [QKeySequence(c)[0] for c in stringOfLegalKeys]
