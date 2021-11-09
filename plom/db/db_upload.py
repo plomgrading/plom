@@ -913,6 +913,7 @@ def getImagesInBundle(self, bundle_name):
 
 
 def getPageFromBundle(self, bundle_name, bundle_order):
+    """Get the image at position bundle_order from bundle of given name"""
     bref = Bundle.get_or_none(Bundle.name == bundle_name)
     if bref is None:
         return [False]

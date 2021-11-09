@@ -874,7 +874,7 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields(["user", "bundle"])
     def getImagesInBundle(self, data, request):
-        """Returns the bundle that contains the given image."""
+        """Returns list of images inside the given bundle. Each image is returned as a triple of filename, md5sum and order inside the bundle."""
         if not data["user"] == "manager":
             return web.Response(status=401)
         rval = self.server.getImagesInBundle(data["bundle"])
@@ -884,6 +884,7 @@ class UploadHandler:
             return web.Response(status=410)
 
     async def getPageFromBundle(self, request):
+        """Get the image at position bundle_order from the bundle with the given name. This is used (for example) to examine neighbouring images inside a given bundle."""
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "bundle_name", "bundle_order"]
