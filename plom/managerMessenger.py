@@ -1411,13 +1411,13 @@ class ManagerMessenger(BaseMessenger):
         return response.json()
 
     ## =====
-    ## Rubric analysis stuff
+    ## Bundle image stuff
 
     def getBundleFromImage(self, filename):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                f"/admin/bundleFromImage",
+                "/admin/bundleFromImage",
                 json={"user": self.user, "token": self.token, "filename": filename},
             )
             response.raise_for_status()
@@ -1436,7 +1436,7 @@ class ManagerMessenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.get(
-                f"/admin/imagesInBundle",
+                "/admin/imagesInBundle",
                 json={"user": self.user, "token": self.token, "bundle": bundle_name},
             )
             response.raise_for_status()
@@ -1450,3 +1450,30 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    def getPageFromBundle(self, bundle_name, image_position):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/bundlePage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "bundle_name": bundle_name,
+                    "bundle_order": image_position,
+                },
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+            return image
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 404:
+                return None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+
+##

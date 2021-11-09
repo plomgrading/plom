@@ -883,6 +883,23 @@ class UploadHandler:
         else:  # no such bundle
             return web.Response(status=410)
 
+    async def getPageFromBundle(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "bundle_name", "bundle_order"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.getPageFromBundle(data["bundle_name"], data["bundle_order"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            return web.Response(status=404)
+
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
         router.add_put("/admin/bundle", self.createNewBundle)
@@ -922,6 +939,7 @@ class UploadHandler:
         router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
         router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
         router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
+        router.add_get("/admin/bundlePage", self.getPageFromBundle)
 
 
 ##

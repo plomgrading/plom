@@ -338,4 +338,10 @@ def getImagesInBundle(self, bundle_name):
     return self.DB.getImagesInBundle(bundle_name)
 
 
+def getPageFromBundle(self, bundle_name, bundle_order):
+    return self.DB.getPageFromBundle(bundle_name, bundle_order)
+
+
+##
+
 ##

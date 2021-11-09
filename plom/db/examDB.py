@@ -130,6 +130,7 @@ class PlomDB:
         listBundles,
         getImagesInBundle,
         getBundleFromImage,
+        getPageFromBundle,
     )
 
     from plom.db.db_manage import (

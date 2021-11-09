@@ -132,6 +132,7 @@ class Server:
         listBundles,
         getBundleFromImage,
         getImagesInBundle,
+        getPageFromBundle,
     )
     from .plomServer.serverID import (
         IDprogressCount,

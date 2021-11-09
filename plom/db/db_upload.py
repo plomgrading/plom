@@ -912,5 +912,16 @@ def getImagesInBundle(self, bundle_name):
     return [True, images]
 
 
+def getPageFromBundle(self, bundle_name, bundle_order):
+    bref = Bundle.get_or_none(Bundle.name == bundle_name)
+    if bref is None:
+        return [False]
+    iref = Image.get_or_none(Image.bundle == bref, Image.bundle_order == bundle_order)
+    if iref is None:
+        return [False]
+    else:
+        return [True, iref.file_name]
+
+
 ##
 ##
