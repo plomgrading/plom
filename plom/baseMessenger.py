@@ -194,9 +194,7 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
-                "Cannot connect to server\n {}\n Please check details before trying again.".format(
-                    self.server
-                )
+                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
             ) from None
         finally:
             self.SRmutex.release()
