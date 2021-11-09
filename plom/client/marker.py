@@ -996,6 +996,7 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.msgr = None
+        self._cachedProgressFormatStr = None
 
     def setup(self, messenger, question, version, lastTime):
         """Performs setup procedure for markerClient.
@@ -1060,7 +1061,7 @@ class MarkerClient(QWidget):
             return
 
         # Keep the original format around in case we need to change it
-        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
+        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
         self.updateProgress()  # Update counts
 
         # Connect the view **after** list updated.
@@ -1382,7 +1383,7 @@ class MarkerClient(QWidget):
             ErrorMessage("No papers to mark.").exec_()
         else:
             # Neither is quite right, instead, we cache on init
-            self.ui.mProgressBar.setFormat(self.ui._cachedProgressFormatStr)
+            self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 
