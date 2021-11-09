@@ -16,3 +16,5 @@ errors-only = true
 # TODO: lots of these in plom/db
 disable = ["not-an-iterable"]
 output-format = "colorized"
+# we have some in-tree deprecated or to-move code that needs tensorflow
+ignored-modules = ["tensorflow"]
