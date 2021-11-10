@@ -37,7 +37,7 @@ def McreateRubric(self, user_name, rubric):
     need_fields = ("kind", "delta", "text", "question")
     optional_fields = ("tags", "meta")
     if any(x not in rubric for x in need_fields):
-        return (False, "Must have all fields {}".format(need_field))
+        return (False, "Must have all fields {}".format(need_fields))
     for f in optional_fields:
         if f not in rubric:
             rubric = rubric.copy()  # in case caller uses reference
