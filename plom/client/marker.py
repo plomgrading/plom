@@ -64,7 +64,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from .annotator import Annotator
 from .examviewwindow import ExamViewWindow
-from .origscanviewer import GroupView, SelectTestQuestion
+from .origscanviewer import QuestionView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 
@@ -1170,7 +1170,7 @@ class MarkerClient(QWidget):
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.viewSpecificImage)
+        self.ui.viewButton.clicked.connect(self.view_testnum_question)
 
     def resizeEvent(self, event):
         """
@@ -2484,7 +2484,7 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def viewSpecificImage(self):
+    def view_testnum_question(self):
         """shows the image."""
         tgs = SelectTestQuestion(self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
@@ -2505,6 +2505,4 @@ class MarkerClient(QWidget):
             )
             ifile.write(img)
             ifilenames.append(ifile.name)
-        tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
-        tvw.exec_()
+        QuestionView(ifilenames, tn, gn, marker=self).exec_()
