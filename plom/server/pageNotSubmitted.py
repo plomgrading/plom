@@ -97,12 +97,7 @@ def build_test_page_substitute(
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
-    image.writePNG(
-        str(
-            out_dir
-            / "pns.{}.{}.{}.png".format(test_number, page_number, version_number)
-        )
-    )
+    image.save(out_dir / f"pns.{test_number}.{page_number}.{version_number}.png")
 
     return True
 
@@ -143,7 +138,7 @@ def build_homework_question_substitute(
     pdf[0].draw_rect(rect, color=[0, 0, 0])
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
-    image.writePNG(str(out_dir / "qns.{}.{}.png".format(student_id, question_number)))
+    image.save(out_dir / f"qns.{student_id}.{question_number}.png")
 
     return True
 
