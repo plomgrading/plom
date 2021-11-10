@@ -714,59 +714,6 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
-    async def processHWUploads(self, request):
-        """Trigger any updates that are appropriate after some uploads.
-
-        This is probably similar to :py:meth:`processTUploads`
-        """
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if data["user"] != "manager" and data["user"] != "scanner":
-            return web.Response(status=401)
-
-        update_count = self.server.processHWUploads()
-        return web.json_response(update_count, status=200)
-
-    async def processTUploads(self, request):
-        """Trigger any updates that are appropriate after some uploads.
-
-        If we upload a bunch of pages to the server, the server will
-        typically keep those in some sort of "staging" state where, for
-        example, they are not given to marking clients.  This is b/c it
-        will be distruptive to clients to have pages added to questions.
-        To "release" a these recent uploads, we make this API call.
-
-        Notes:
-          * its ok to upload to a bundle after calling this (worse case,
-            some client work will be invalidated or tagged to check).
-          * its ok to call this repeatedly.
-          * its not necessarily or useful to call this after uploading
-            Unknown Pages or Colliding Pages: those will need to be
-            dealt with in the Manager tool (e.g., added them to a
-            Paper) at which time similar triggers will occur.
-
-        Returns:
-            aiohttp.web.Response: with status code as below.
-
-        Status codes:
-            200 OK: action was taken, report number of Papers updated.
-            401 Unauthorized: invalid credientials.
-            403 Forbidden: only "manager"/"scanner" allowed to do this.
-        """
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if data["user"] != "manager" and data["user"] != "scanner":
-            return web.Response(status=403)
-
-        update_count = self.server.processTUploads()
-        return web.json_response(update_count, status=200)
-
     @authenticate_by_token_required_fields(["user", "version_map"])
     def populateExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database.

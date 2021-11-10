@@ -322,14 +322,6 @@ def replaceMissingHWQuestion(self, sid, test, question):
     return rval
 
 
-def processHWUploads(self):
-    return self.DB.processUpdatedTests()
-
-
-def processTUploads(self):
-    return self.DB.processUpdatedTests()
-
-
 def getBundleFromImage(self, file_name):
     return self.DB.getBundleFromImage(file_name)
 

@@ -103,8 +103,6 @@ class Server:
         sidToTest,
         addTestPage,
         addHWPage,
-        processHWUploads,
-        processTUploads,
         addUnknownPage,
         addCollidingPage,
         replaceMissingTestPage,
