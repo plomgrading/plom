@@ -529,26 +529,9 @@ def updateDNMGroup(self, dref):
     # all test pages scanned (or all unscanned), so set things ready to go.
     with plomdb.atomic():
         gref.scanned = True
-        gref.recent_upload = False
         gref.save()
-        log.info("DNMGroup of test {} is all scanned.".format(gref.test.test_number))
+        log.info(f"DNMGroup of test {gref.test.test_number} is all scanned.")
     return True
-
-
-def cleanIDGroup(self, iref):
-    tref = iref.test
-    with plomdb.atomic():
-        iref.status = ""
-        iref.user = None
-        iref.time = datetime.now()
-        iref.student_id = None
-        iref.student_name = None
-        iref.identified = False
-        iref.time = datetime.now()
-        iref.save()
-        tref.identified = False
-        tref.save()
-        log.info("IDGroup of test {} cleaned.".format(tref.test_number))
 
 
 def updateIDGroup(self, iref):
@@ -558,40 +541,39 @@ def updateIDGroup(self, iref):
     Note - this should only be triggered by a tpage upload.
     """
 
-    # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
-    if iref.user == User.get(name="HAL"):
-        auto_id = True
-    else:
-        auto_id = False
-        # clean the ID-task and set test-identified flag to false.
-        self.cleanIDGroup(iref)
-
     # grab associated parent group
     gref = iref.group
     # now check if all test-pages pesent - note none-present when a hw upload.
-    for p in gref.tpages:
-        if p.scanned is False:
-            return False  # not yet completely present.
+    # note - only a single tpage in idgroup
+    if gref.tpages[0].scanned is False:
+        return False  # not yet completely present - no updated needed.
 
     # all test ID pages present, and group cleaned, so set things ready to go.
     with plomdb.atomic():
+        # the group is now scanned
         gref.scanned = True
-        gref.recent_upload = False
         gref.save()
-        if auto_id is False:
-            iref.status = "todo"
-            iref.save()
-            log.info(
-                "IDGroup of test {} is ready to be identified.".format(
-                    gref.test.test_number
-                )
-            )
+        # we'll need a ref to the test
+        tref = iref.test
+        # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
+        if iref.user != User.get(name="HAL"):
+            log.info(f"IDGroup of test {tref.test_number} is present and already IDd.")
         else:
+            # need to clean it off and set it ready to do.
+            iref.status = "todo"
+            iref.user = None
+            iref.time = datetime.now()
+            iref.student_id = None
+            iref.student_name = None
+            iref.identified = False
+            iref.time = datetime.now()
+            iref.save()
+            tref.identified = False
+            tref.save()
             log.info(
-                "IDGroup of test {} is present and already IDd.".format(
-                    gref.test.test_number
-                )
+                f"IDGroup of test {tref.test_number} is updated and ready to be identified."
             )
+
     return True
 
 

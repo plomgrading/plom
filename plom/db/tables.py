@@ -43,8 +43,6 @@ class Test(BaseModel):
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)
     marked = pw.BooleanField(default=False)
-    # a recentUpload flag to see which tests to check after uploads
-    recent_upload = pw.BooleanField(default=False)
 
 
 class Group(BaseModel):
@@ -53,8 +51,6 @@ class Group(BaseModel):
     group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
-    # a recentUpload flag to see which groups to check after uploads
-    recent_upload = pw.BooleanField(default=False)
 
 
 class IDGroup(BaseModel):
