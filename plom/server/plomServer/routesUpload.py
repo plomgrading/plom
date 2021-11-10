@@ -894,8 +894,6 @@ class UploadHandler:
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
-        router.add_put("/admin/testPagesUploaded", self.processTUploads)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)

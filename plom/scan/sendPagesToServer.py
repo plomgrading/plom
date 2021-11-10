@@ -189,8 +189,7 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
     Skips pages-image with orders in the skip-list (i.e., the page
     number within the bundle.pdf)
 
-    Bundle must already be created.  We will upload the
-    files and then send a 'please trigger an update' message to the server.
+    Bundle must already be created and then upload files.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -221,12 +220,10 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
             files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
         TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
         # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
-
-        updates = msgr.triggerUpdateAfterTUpload()
     finally:
         msgr.closeUser()
         msgr.stop()
-    return [TUP, updates]
+    return TUP
 
 
 def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, password=None):
@@ -241,8 +238,7 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
         server (str/None)
         password (str/None)
 
-    Bundle must already be created.  We will upload the files and then
-    send a 'please trigger an update' message to the server.
+    Bundle must already be created.  We will upload the files.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -276,11 +272,10 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
             # TODO: this feels out a bit out of place?
             move_files_post_upload(bundledir, f, qr=False)
 
-        updates = msgr.triggerUpdateAfterHWUpload()
     finally:
         msgr.closeUser()
         msgr.stop()
-    return (SIDQ, updates)
+    return SIDQ
 
 
 def checkTestHasThatSID(student_id, server=None, password=None):
