@@ -6,15 +6,9 @@
 Backend bits n bobs to talk to the server
 """
 
-from plom.managerMessenger import ManagerMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.baseMessenger import BaseMessenger
-
 __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
 
 import json
 import hashlib
@@ -24,6 +18,10 @@ from io import StringIO, BytesIO
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
+from plom.baseMessenger import BaseMessenger
+from plom.scanMessenger import ScanMessenger
+from plom.finishMessenger import FinishMessenger
+from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -35,17 +33,14 @@ from plom.plom_exceptions import (
     PlomLatexException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomTimeoutError,
 )
+
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
-
-from plom.baseMessenger import BaseMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.managerMessenger import ManagerMessenger
 
 
 class Messenger(BaseMessenger):
@@ -206,7 +201,7 @@ class Messenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/ID/tasks/{code}",
+                f"/ID/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -472,19 +467,19 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
+            if response.status_code == 406:
                 if response.text == "integrity_fail":
                     raise PlomConflict(
-                        "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                        "Integrity fail: can happen if manager altered task while you annotated"
                     ) from None
                 raise PlomSeriousException(response.text) from None
-            elif response.status_code == 409:
+            if response.status_code == 409:
                 raise PlomTaskChangedError("Task ownership has changed.") from None
-            elif response.status_code == 410:
+            if response.status_code == 410:
                 raise PlomTaskDeletedError(
                     "No such task - it has been deleted from server."
                 ) from None
-            elif response.status_code == 400:
+            if response.status_code == 400:
                 raise PlomSeriousException(response.text) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
@@ -638,12 +633,11 @@ class Messenger(BaseMessenger):
             if response.status_code == 200:
                 paneConfig = response.json()
                 return [True, paneConfig]
-            elif response.status_code == 204:
+            if response.status_code == 204:
                 return [False]  # server has no data
-            else:
-                raise PlomSeriousException(
-                    "No other 20x response should come from server."
-                ) from None
+            raise PlomSeriousException(
+                "No other 20x response should come from server."
+            ) from None
 
         except requests.HTTPError as e:
             if response.status_code == 401:

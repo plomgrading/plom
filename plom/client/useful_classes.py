@@ -367,7 +367,7 @@ class ClientSettingsDialog(QDialog):
 
 class AddTagBox(QDialog):
     def __init__(self, parent, currentTag, tagList=[]):
-        super(QDialog, self).__init__()
+        super().__init__()
         self.parent = parent
         self.CB = QComboBox()
         self.TE = QTextEdit()

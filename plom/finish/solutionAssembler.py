@@ -39,7 +39,7 @@ def assemble(outname, shortName, sid, coverfile, img_list):
 
     exam = fitz.open()
     if coverfile:
-        exam.insertPDF(fitz.open(coverfile))
+        exam.insert_pdf(fitz.open(coverfile))
 
     for img_name in img_list:
         img_name = Path(img_name)
@@ -51,7 +51,7 @@ def assemble(outname, shortName, sid, coverfile, img_list):
             w, h = papersize_landscape
         else:
             w, h = papersize_portrait
-        pg = exam.newPage(width=w, height=h)
+        pg = exam.new_page(width=w, height=h)
         rec = fitz.Rect(margin, margin, w - margin, h - margin)
 
         # Make a jpeg in memory, and use that if its significantly smaller
@@ -68,7 +68,7 @@ def assemble(outname, shortName, sid, coverfile, img_list):
                 # TODO: can remove str() once minimum pymupdf is 1.18.9
                 pg.insert_image(rec, filename=str(img_name))
 
-    exam.setMetadata(
+    exam.set_metadata(
         {
             "title": "Solutions for {} {}".format(shortName, sid),
             "producer": "Plom {}".format(__version__),

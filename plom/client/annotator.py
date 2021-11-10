@@ -761,6 +761,7 @@ class Annotator(QWidget):
         rearrangeView.listB.clear()
         del rearrangeView
         if perm:
+            # pylint: disable=unsubscriptable-object
             md5_tmp = [x[0] for x in perm]
             if len(set(md5_tmp)) != len(md5_tmp):
                 s = dedent(

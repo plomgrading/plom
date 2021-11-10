@@ -124,7 +124,9 @@ class IDHandler:
             try:
                 writer.writerows(classlist)
             except ValueError as e:
-                raise web.HTTPBadReqest(f'Extra field in row "{row}". Error: "{e}"')
+                raise web.HTTPBadRequest(
+                    reason=f'Extra field in row "{row}". Error: "{e}"'
+                )
         return web.Response()
 
     # @routes.get("/ID/predictions")
@@ -398,7 +400,7 @@ class IDHandler:
 
         The bounding box indicated on this image will be later used to extract the
         student ids from the other papers.
-        Responds with status 200/404/410.
+        Responds with status 200/401/404/410.
         Logs activity.
 
         Args:

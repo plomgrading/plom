@@ -356,7 +356,8 @@ class UploadHandler:
             if rval[1] == "owners":
                 return web.json_response(rval[2], status=409)
             elif rval[1] == "present":
-                return web.Response(status=405)  # that question already has pages
+                # that question already has pages
+                return web.Response(status=405)
             else:
                 return web.Response(status=404)  # page not found at all
 
@@ -571,7 +572,8 @@ class UploadHandler:
         # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
         if rmsg[0]:
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))  # append "collision" or "scanned"
+                # append "collision" or "scanned"
+                mpwriter.append("{}".format(rmsg[1]))
                 mpwriter.append("{}".format(rmsg[2]))  # append "version"
                 if len(rmsg) == 4:  # append the image.
                     mpwriter.append(open(rmsg[3], "rb"))
@@ -857,6 +859,63 @@ class UploadHandler:
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
+    ## Some more bundle things
+
+    @authenticate_by_token_required_fields(["user", "filename"])
+    def getBundleFromImage(self, data, request):
+        """Returns the name of the bundle that contains the given image.
+
+        If DB can't find the file then returns HTTPGone error.
+        If not manager, then raise an HTTPUnauthorized error.
+        """
+        if not data["user"] == "manager":
+            return web.HTTPUnauthorized(reason="You are not manager")
+        rval = self.server.getBundleFromImage(data["filename"])
+        if rval[0]:
+            return web.json_response(rval[1], status=200)  # all fine
+        else:  # no such bundle
+            raise web.HTTPGone(reason="Cannot find bundle.")
+
+    @authenticate_by_token_required_fields(["user", "bundle"])
+    def getImagesInBundle(self, data, request):
+        """Returns list of images inside the given bundle. Each image is returned as a triple of (filename, md5sum and bundle_order). The list is ordered by the bundle_order.
+
+        If DB does not contain bundle of that name a 410-error returned.
+        If user is not manager or scanner then a HTTPUnauthorised error raised.
+        """
+        if not data["user"] in ("manager", "scanner"):
+            raise web.HTTPUnauthorized(
+                reason="only manager and scanner can access bundle info"
+            )
+        rval = self.server.getImagesInBundle(data["bundle"])
+        if rval[0]:
+            return web.json_response(rval[1], status=200)  # all fine
+        else:
+            raise web.HTTPGone(reason="Cannot find bundle.")
+
+    async def getPageFromBundle(self, request):
+        """Get the image at position bundle_order from the bundle with the given name. This is used (for example) to examine neighbouring images inside a given bundle.
+
+        If DB does not contain a bundle of that name or the bundle does not contain an image at that order then raise an HTTPGone error.
+        """
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "bundle_name", "bundle_order"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            raise web.HTTPUnauthorized(
+                reason="only manager can access images by bundle position."
+            )
+
+        rval = self.server.getPageFromBundle(data["bundle_name"], data["bundle_order"])
+        if rval[0]:
+            return web.FileResponse(rval[1], status=200)  # all fine
+        else:
+            raise web.HTTPGone(reason="Cannot find image or bundle.")
+
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
         router.add_put("/admin/bundle", self.createNewBundle)
@@ -894,3 +953,12 @@ class UploadHandler:
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
+        router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
+        router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
+        router.add_get("/admin/bundlePage", self.getPageFromBundle)
+
+
+##
+##
+##
+##

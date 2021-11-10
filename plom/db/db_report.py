@@ -544,3 +544,6 @@ def RgetUserFullProgress(self, user_name):
         .count(),
         QGroup.select().where(QGroup.user == uref, QGroup.marked == True).count(),
     ]
+
+
+###

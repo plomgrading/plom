@@ -112,11 +112,11 @@ body {
 }
 
 label {
-    font-weight: bold;
-    font-style: italic;
+	font-weight: bold;
+	font-style: italic;
 	font-size: medium;
-    width: 12em;
-    display: inline-block;
+	width: 12em;
+	display: inline-block;
 }
 
 button {

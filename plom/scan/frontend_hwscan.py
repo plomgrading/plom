@@ -16,7 +16,6 @@ which pages belong to which student, see :py:module:`frontend_scan`.
 
 import ast
 from collections import defaultdict
-import os
 from pathlib import Path
 
 import fitz

@@ -3,11 +3,14 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 from io import BytesIO
-import urllib3
 
 import requests
 
-from plom.plom_exceptions import PlomSeriousException, PlomAuthenticationException
+from plom.plom_exceptions import (
+    PlomSeriousException,
+    PlomAuthenticationException,
+    PlomNoSolutionException,
+)
 from plom.baseMessenger import BaseMessenger
 
 # TODO: how to do this in subclass?
