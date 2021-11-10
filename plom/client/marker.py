@@ -2409,8 +2409,21 @@ class MarkerClient(QWidget):
         task = self.prxM.getPrefix(pr)
         self.manage_task_tags(task)
 
-    def manage_task_tags(self, task):
-        """Manage the tags of a task."""
+    def manage_task_tags(self, task, parent=None):
+        """Manage the tags of a task.
+
+        args:
+            task (str): A string like "q0003g2" for paper 3 question 2.
+
+        keyword args:
+            parent (TODO/None): Which window should be dialog's parent?
+                If None, then use `self` (which is Marker) but if other
+                windows (such as Annotator or PageRearranger) are calling
+                this and if so they should pass themselves: that way they
+                would be the visual parents of this dialog.
+        """
+        if not parent:
+            parent = self
         # TODO: maybe we'd like a list from the server but uncertain about cost
         all_local_tags = self.examModel.getAllTags()
 
@@ -2430,7 +2443,7 @@ class MarkerClient(QWidget):
         msg += "<p>Tag this paper with a new tag?</p>"
         title = f"Add tag to {task}?"
         choose_tags = all_local_tags.difference(tags)
-        tag, ok = QInputDialog.getItem(self, title, msg, choose_tags)
+        tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
         if ok and tag:
             log.debug('tagging paper "%s" with "%s"', task, tag)
             self.msgr.add_tag(task, tag)
@@ -2441,7 +2454,7 @@ class MarkerClient(QWidget):
             msg += "<p>Choose one of these tags to remove:</p>"
             tmp = tags.copy()
             tmp.insert(0, "")
-            tag, ok = QInputDialog.getItem(self, f"Remove tag from {task}?", msg, tmp)
+            tag, ok = QInputDialog.getItem(parent, f"Remove tag from {task}?", msg, tmp)
             if ok and tag:
                 log.debug('Removing tag "%s" from "%s"', tag, task)
                 self.msgr.remove_tag(task, tag)
