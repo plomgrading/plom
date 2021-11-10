@@ -83,6 +83,8 @@ def attachImageToTPage(self, test_ref, page_ref, image_ref):
             ap = APage.create(
                 annotation=aref, image=image_ref, order=page_ref.page_number
             )
+            # note that this annotation will be outdated once
+            # cleanQGroup is called. See discussion on MR !1125
 
 
 def uploadTestPage(
