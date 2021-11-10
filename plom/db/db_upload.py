@@ -9,7 +9,7 @@ import uuid
 from peewee import fn
 
 from plom.db.tables import plomdb
-from plom.db.tables import Bundle, IDGroup, Group, Image, QGroup, Test, User
+from plom.db.tables import Bundle, IDGroup, Image, QGroup, Test, User
 from plom.db.tables import Annotation, APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
 
@@ -44,7 +44,7 @@ def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order
         )
 
 
-## - upload functions
+# - upload functions
 
 
 def attachImageToTPage(self, test_ref, page_ref, image_ref):
@@ -55,36 +55,6 @@ def attachImageToTPage(self, test_ref, page_ref, image_ref):
         page_ref.save()
         test_ref.used = True
         test_ref.save()
-        # also link the image to an QPage, DNMPage, or IDPage
-        # set the group as recently uploaded - use to trigger a "clean" later.
-        gref = page_ref.group
-        gref.recent_upload = True
-        gref.save()
-        if gref.group_type == "i":
-            iref = gref.idgroups[0]
-            idp = IDPage.create(
-                idgroup=iref, image=image_ref, order=page_ref.page_number
-            )
-        elif gref.group_type == "d":
-            dref = gref.dnmgroups[0]
-            dnmp = DNMPage.create(
-                dnmgroup=dref, image=image_ref, order=page_ref.page_number
-            )
-        else:
-            # is a question page - always add to earliest valid annotation
-            qref = gref.qgroups[0]
-            # get the first non-outdated annotation for the group
-            aref = (
-                gref.qgroups[0]
-                .annotations.where(Annotation.outdated == False)
-                .order_by(Annotation.edition)
-                .get()
-            )
-            ap = APage.create(
-                annotation=aref, image=image_ref, order=page_ref.page_number
-            )
-            # note that this annotation will be outdated once
-            # cleanQGroup is called. See discussion on MR !1125
 
 
 def uploadTestPage(
@@ -147,12 +117,14 @@ def uploadTestPage(
             ]
 
         self.attachImageToTPage(tref, pref, image_ref)
-
         log.info(
             "Uploaded image {} to tpv = {}.{}.{}".format(
                 original_name, test_number, page_number, version
             )
         )
+        # now update the test after this change
+        self.updateTestAfterChange(tref)
+        # All done!
         return [
             True,
             "success",
@@ -177,7 +149,7 @@ def replaceMissingTestPage(
 
     bref = Bundle.get_or_none(name="__replacements__system__")
     if bref is None:
-        return [False, "bundleError", f'Cannot find bundle "replacements"']
+        return [False, "bundleError", 'Cannot find bundle "replacements"']
 
     # find max bundle_order within that bundle
     bundle_order = 0
@@ -215,17 +187,14 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
             .get()
         )
         # create image, hwpage, annotationpage and link.
-        href = HWPage.create(
+        HWPage.create(
             test=test_ref,
             group=gref,
             order=order,
             image=image_ref,
             version=qdata_ref.version,
         )
-        ap = APage.create(annotation=aref, image=image_ref, order=order)
-        # set the recent_upload flag for the group and the used flag for the test
-        gref.recent_upload = True
-        gref.save()
+        APage.create(annotation=aref, image=image_ref, order=order)
         test_ref.used = True
         test_ref.save()
 
@@ -422,7 +391,7 @@ def uploadUnknownPage(
                     bundle_name,
                 ),
             ]
-        uref = UnknownPage.create(image=iref, order=order)
+        UnknownPage.create(image=iref, order=order)
 
     log.info("Uploaded image {} as unknown".format(original_name))
     return [True, "success", "Page saved in UnknownPage list"]
@@ -511,19 +480,29 @@ def uploadCollidingPage(
     ]
 
 
-## clean up after uploads
+# update groups and test after changes
 
 
 def updateDNMGroup(self, dref):
-    """Check all pages present in dnm group and set scanned flag accordingly.
+    """Recreate the DNM pages of dnm-group, and check if all present.
+    Set scanned flag accordingly.
     Since homework does not upload DNM pages, only check testpages.
     Will fail if some, but not all, pages scanned.
     Note - a DNM group can be empty.
     """
-    gref = dref.group  # find the group-parent of the dnmgroup
+    # get the parent-group of the dnm-group
+    gref = dref.group
+    # first remove any old dnmpages
+    for pref in dref.dnmpages:
+        pref.delete_instance()
+    # now rebuild them, keeping track of which are scanned or not
+    # only have to check tpages - not hw or extra pages.
     scan_list = []
-    for p in gref.tpages:
-        scan_list.append(p.scanned)
+    for pref in gref.tpages:
+        scan_list.append(pref.scanned)
+        if pref.scanned:
+            DNMPage.create(dnmgroup=dref, image=pref.image, order=pref.page_number)
+
     if True in scan_list and False in scan_list:  # some scanned, but not all.
         return False
     # all test pages scanned (or all unscanned), so set things ready to go.
@@ -534,18 +513,26 @@ def updateDNMGroup(self, dref):
     return True
 
 
-def updateIDGroup(self, iref):
+def updateIDGroup(self, idref):
     """Update the ID task when new pages uploaded to IDGroup.
+    Recreate the IDpages and check if all scanned.
     If group is all scanned then the associated ID-task should be set to "todo".
     Note - be careful when group was auto-IDd (which happens when the associated user = HAL) - then we don't change anything.
     Note - this should only be triggered by a tpage upload.
     """
 
     # grab associated parent group
-    gref = iref.group
-    # now check if all test-pages pesent - note none-present when a hw upload.
-    # note - only a single tpage in idgroup
-    if gref.tpages[0].scanned is False:
+    gref = idref.group
+    # first remove any old dnmpages - there is at most one.
+    for pref in idref.idpages:
+        pref.delete_instance()
+    # now rebuild them, keeping track of which are scanned or not
+    # only have to check tpages - not hw or extra pages.
+    # note - there is exactly one
+    pref = gref.tpages[0]
+    if pref.scanned:
+        IDPage.create(idgroup=idref, image=pref.image, order=pref.page_number)
+    else:
         return False  # not yet completely present - no updated needed.
 
     # all test ID pages present, and group cleaned, so set things ready to go.
@@ -554,20 +541,20 @@ def updateIDGroup(self, iref):
         gref.scanned = True
         gref.save()
         # we'll need a ref to the test
-        tref = iref.test
+        tref = idref.test
         # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
-        if iref.user != User.get(name="HAL"):
+        if idref.user != User.get(name="HAL"):
             log.info(f"IDGroup of test {tref.test_number} is present and already IDd.")
         else:
             # need to clean it off and set it ready to do.
-            iref.status = "todo"
-            iref.user = None
-            iref.time = datetime.now()
-            iref.student_id = None
-            iref.student_name = None
-            iref.identified = False
-            iref.time = datetime.now()
-            iref.save()
+            idref.status = "todo"
+            idref.user = None
+            idref.time = datetime.now()
+            idref.student_id = None
+            idref.student_name = None
+            idref.identified = False
+            idref.time = datetime.now()
+            idref.save()
             tref.identified = False
             tref.save()
             log.info(
@@ -632,8 +619,7 @@ def buildUpToDateAnnotation(self, qref):
 
 
 def updateQGroup(self, qref):
-    """A new page has been uploaded to the test, so we have to update the question-group and its annotations."""
-
+    """A new page has been uploaded to the test, so we have to update the question-group and its annotations. Older annotations are not out-of-date and get flagged as such."""
     # first set old annotations as out-of-date and,
     # create a new up-to-date annotation, and
     # set parent test/qgroup as unmarked with status blank.
@@ -678,7 +664,7 @@ def updateQGroup(self, qref):
     return True
 
 
-def updateGroupAfterUpload(self, gref):
+def updateGroupAfterChange(self, gref):
     """Check the type of the group and update accordingly.
     return success/failure of that update.
     """
@@ -725,61 +711,23 @@ def checkTestScanned(self, tref):
                     )
                 )
                 return False
-
     return True
 
 
-def updateTestAfterUpload(self, tref):
-    update_count = 0
-    # check each group in the test
-    for gref in tref.groups:
-        if self.updateGroupAfterUpload(gref):
-            update_count += 1
+def updateTestAfterChange(self, tref):
+    """The given test has changed (page upload/delete) and so its groups need to be updated."""
 
-    # now make sure the whole thing is scanned.
+    # update each group in the test
+    for gref in tref.groups:
+        self.updateGroupAfterChange(gref)
+
+        # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
         # set the test as scanned
         with plomdb.atomic():
             tref.scanned = True
-            # test is also all cleaned up, so can remove this.
-            tref.recent_upload = False
             log.info("Test {} is scanned".format(tref.test_number))
             tref.save()
-
-    return update_count
-
-
-def processUpdatedTests(self):
-    """Update the groups of tests in response to new uploads.
-
-    Returns:
-        int: how many groups updated.
-
-    The recent_upload flag is set either for the whole test or for a given group.
-    When a group is flagged, then we update just that group - this happens when tpages or hwpages are uploaded.
-
-    """
-    update_count = 0
-    # process whole tests first
-    for tref in Test.select().where(Test.recent_upload == True):
-        update_count += self.updateTestAfterUpload(tref)
-
-    # make a dict of tests that need checking for ready-status
-    tests_to_update = {}
-    # then process groups
-    for gref in Group.select().where(Group.recent_upload == True):
-        if self.updateGroupAfterUpload(gref):
-            update_count += 1
-            tests_to_update[gref.test] = 1
-    for tref in tests_to_update:
-        if self.checkTestScanned(tref):
-            # set the test as scanned
-            with plomdb.atomic():
-                tref.scanned = True
-                log.info("Test {} is scanned".format(tref.test_number))
-                tref.save()
-
-    return update_count
 
 
 def removeAllScannedPages(self, test_number):
@@ -835,11 +783,11 @@ def removeAllScannedPages(self, test_number):
         tref.scanned = False
         tref.used = False
         tref.save()
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True, "Test {} wiped clean".format(test_number)]
 
 
-### some bundle related stuff
+# some bundle related stuff
 def listBundles(self):
     """Returns a list of bundles in the database
 
