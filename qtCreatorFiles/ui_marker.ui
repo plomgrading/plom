@@ -163,7 +163,7 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="text">
-                <string>Defer</string>
+                <string>&amp;Defer</string>
                </property>
               </widget>
              </item>
@@ -180,7 +180,7 @@
              <item row="1" column="2">
               <widget class="QPushButton" name="viewButton">
                <property name="text">
-                <string>View</string>
+                <string>&amp;View</string>
                </property>
               </widget>
              </item>
