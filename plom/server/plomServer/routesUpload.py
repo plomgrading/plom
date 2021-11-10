@@ -863,28 +863,41 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields(["user", "filename"])
     def getBundleFromImage(self, data, request):
-        """Returns the bundle that contains the given image."""
+        """Returns the name of the bundle that contains the given image.
+
+        If DB can't find the file then returns HTTPGone error.
+        If not manager, then raise an HTTPUnauthorized error.
+        """
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            return web.HTTPUnauthorized(reason="You are not manager")
         rval = self.server.getBundleFromImage(data["filename"])
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
         else:  # no such bundle
-            return web.Response(status=410)
+            raise web.HTTPGone(reason="Cannot find bundle.")
 
     @authenticate_by_token_required_fields(["user", "bundle"])
     def getImagesInBundle(self, data, request):
-        """Returns list of images inside the given bundle. Each image is returned as a triple of filename, md5sum and order inside the bundle."""
-        if not data["user"] == "manager":
-            return web.Response(status=401)
+        """Returns list of images inside the given bundle. Each image is returned as a triple of (filename, md5sum and bundle_order). The list is ordered by the bundle_order.
+
+        If DB does not contain bundle of that name a 410-error returned.
+        If user is not manager or scanner then a HTTPUnauthorised error raised.
+        """
+        if not data["user"] in ("manager", "scanner"):
+            raise web.HTTPUnauthorized(
+                reason="only manager and scanner can access bundle info"
+            )
         rval = self.server.getImagesInBundle(data["bundle"])
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
-        else:  # no such bundle
-            return web.Response(status=410)
+        else:
+            raise web.HTTPGone(reason="Cannot find bundle.")
 
     async def getPageFromBundle(self, request):
-        """Get the image at position bundle_order from the bundle with the given name. This is used (for example) to examine neighbouring images inside a given bundle."""
+        """Get the image at position bundle_order from the bundle with the given name. This is used (for example) to examine neighbouring images inside a given bundle.
+
+        If DB does not contain a bundle of that name or the bundle does not contain an image at that order then raise an HTTPGone error.
+        """
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "bundle_name", "bundle_order"]
@@ -893,13 +906,15 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPUnauthorized(
+                reason="only manager can access images by bundle position."
+            )
 
         rval = self.server.getPageFromBundle(data["bundle_name"], data["bundle_order"])
         if rval[0]:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
-            return web.Response(status=404)
+            raise web.HTTPGone(reason="Cannot find image or bundle.")
 
     def setUpRoutes(self, router):
         router.add_get("/admin/bundle", self.doesBundleExist)
@@ -943,5 +958,7 @@ class UploadHandler:
         router.add_get("/admin/bundlePage", self.getPageFromBundle)
 
 
+##
+##
 ##
 ##
