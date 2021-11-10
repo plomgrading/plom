@@ -200,7 +200,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
         outname = dest / (basename + ".png")
-        pix.writeImage(outname)
+        pix.save(outname)
         files.append(outname)
     assert len(files) == len(doc), "Expected one image per page"
     return files

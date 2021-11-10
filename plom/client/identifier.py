@@ -341,7 +341,7 @@ class IDClient(QWidget):
         # also tweak size of "accept prediction" button font
         self.ui.predButton.setFont(fnt)
         # make the SID larger still.
-        fnt.setPointSize(fnt.pointSize() * 1.5)
+        fnt.setPointSizeF(fnt.pointSize() * 1.5)
         self.ui.pSIDLabel.setFont(fnt)
         # And if no predictions then hide that box
         if len(self.predictedTestToNumbers) == 0:
