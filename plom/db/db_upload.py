@@ -577,11 +577,18 @@ def updateIDGroup(self, iref):
     return True
 
 
-def cleanQGroup(self, qref):
+def buildUpToDateAnnotation(self, qref):
+    """The pages under the given qgroup have changed, so the old annotations need to be flagged as outdated, and a new up-to-date annotation needs to be instantiated. This also sets the parent qgroup and test as unmarked, and the qgroup status as "" - ie not ready to go.
+
+    If only the zeroth annotation present, then the question is untouched. In that case, recycle the zeroth annotation rather than replacing it. Do this so that when we do initial upload we don't create new annotations on each uploaded page.
+    """
+
     tref = qref.test
     HAL_ref = User.get(name="HAL")
+    # first flag older annotations as outdated
+    # and then create a new annotation or
+    # recycle if only zeroth annotation present - question untouched.
     with plomdb.atomic():
-        # if beyond 0th annotation then set all existing annotations as outdated
         if len(qref.annotations) > 1:
             for aref in qref.annotations:
                 aref.outdated = True
@@ -589,17 +596,15 @@ def cleanQGroup(self, qref):
             # now create a new latest annotation
             new_ed = qref.annotations[-1].edition + 1
             aref = Annotation.create(qgroup=qref, edition=new_ed, user=HAL_ref)
-        else:
-            # delete the pages from the 0th annotation
-            # re-use it as "latest"
+        else:  # only zeroth annotation is present - recycle it.
             aref = qref.annotations[0]
-            for p in aref.apages:
-                p.delete_instance()
+            # clean off its old pages
+            for pref in aref.apages:
+                aref.delete_instance()
+            # we'll replace them in a moment.
 
-        # now add in the pages - tpages, then hwpage, then expages
-        # set the integrity_check string to a UUID
+        # Add the relevant pages to the new annotation
         ord = 0
-        integrity_check = uuid.uuid4().hex
         for p in qref.group.tpages.order_by(TPage.page_number):
             if p.scanned:  # make sure the tpage is actually scanned.
                 ord += 1
@@ -610,27 +615,32 @@ def cleanQGroup(self, qref):
         for p in qref.group.expages.order_by(EXPage.order):
             ord += 1
             APage.create(annotation=aref, image=p.image, order=ord)
-        aref.integrity_check = integrity_check
-        aref.outdated = False
+        # set the integrity_check string to a UUID
+        aref.integrity_check = uuid.uuid4().hex
         aref.save()
-
+        # now set the parent group and test as unmarked, with status as blank
         qref.user = None
-        qref.status = ""
         qref.marked = False
+        qref.status = ""
         qref.save()
         tref.marked = False
         tref.save()
 
-    log.info("QGroup {} of test {} cleaned".format(qref.question, tref.test_number))
+    log.info(
+        f"Old annotations for qgroup {qref.question} for test {tref.test_number} are now oudated and a new annotation has been created."
+    )
 
 
 def updateQGroup(self, qref):
-    # TODO = if extra pages present in test, then test is not ready.
+    """A new page has been uploaded to the test, so we have to update the question-group and its annotations."""
 
-    # clean up the QGroup and its annotations
-    self.cleanQGroup(qref)
-
+    # first set old annotations as out-of-date and,
+    # create a new up-to-date annotation, and
+    # set parent test/qgroup as unmarked with status blank.
+    self.buildUpToDateAnnotation(qref)
+    # now check if the group is ready by looking at pages.
     gref = qref.group
+    # TODO = if extra pages present in test, then test is not ready.
 
     # when some but not all TPages present - not ready
     # when 0 pages present - not ready
@@ -657,10 +667,9 @@ def updateQGroup(self, qref):
     # If we get here - we are ready to go.
     with plomdb.atomic():
         gref.scanned = True
-        gref.recent_upload = False
+        gref.save()
         qref.status = "todo"
         qref.save()
-        gref.save()
         log.info(
             "QGroup {} of test {} is ready to be marked.".format(
                 qref.question, qref.test.test_number
