@@ -2416,7 +2416,7 @@ class MarkerClient(QWidget):
             task (str): A string like "q0003g2" for paper 3 question 2.
 
         keyword args:
-            parent (TODO/None): Which window should be dialog's parent?
+            parent (Window/None): Which window should be dialog's parent?
                 If None, then use `self` (which is Marker) but if other
                 windows (such as Annotator or PageRearranger) are calling
                 this and if so they should pass themselves: that way they
@@ -2429,8 +2429,7 @@ class MarkerClient(QWidget):
 
         tags = self.msgr.get_tags(task)
 
-        # TODO: improve with a nicer "tag management" dialog
-        # TODO: for now, just ask about adding and delete with two dialogs
+        # TODO: improve with a nicer "tag management" dialog: Issue #1773.
         # TODO: these current dialogs look horrible with many tags
 
         def make_tags_html(tags):
