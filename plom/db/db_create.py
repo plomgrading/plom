@@ -271,6 +271,7 @@ def createQGroup(self, t, q, v, pages):
         try:
             uref = User.get(name="HAL")
             Annotation.create(qgroup=qref, edition=0, user=uref)
+            log.warn(f"Created annotation for qgroup {gid} - {len(qref.annotations)}")
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create Annotation  of question {} error - {}.".format(

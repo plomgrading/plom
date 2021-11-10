@@ -170,7 +170,7 @@ def replaceMissingTestPage(
     )
     if rval[0]:  # success - so trigger an update.
         tref = Test.get(test_number=test_number)
-        self.updateTestAfterUpload(tref)
+        self.updateTestAfterChange(tref)
     return rval
 
 
@@ -352,7 +352,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     # create the associated HW page
     self.createNewHWPage(tref, qref, order, image_ref)
     # and do an update.
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
 
     return [True]
 
@@ -575,7 +575,9 @@ def buildUpToDateAnnotation(self, qref):
     # first flag older annotations as outdated
     # and then create a new annotation or
     # recycle if only zeroth annotation present - question untouched.
+    # and - of course, be careful if there are no annotations yet (eg on build)
     with plomdb.atomic():
+        log.warn(f"HERE - annot length = {qref.group.gid} - {len(qref.annotations)}")
         if len(qref.annotations) > 1:
             for aref in qref.annotations:
                 aref.outdated = True
@@ -587,7 +589,7 @@ def buildUpToDateAnnotation(self, qref):
             aref = qref.annotations[0]
             # clean off its old pages
             for pref in aref.apages:
-                aref.delete_instance()
+                pref.delete_instance()
             # we'll replace them in a moment.
 
         # Add the relevant pages to the new annotation

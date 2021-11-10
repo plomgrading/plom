@@ -215,7 +215,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
                 file_name, order, question, test_number
             )
         )
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True]
 
 
@@ -261,7 +261,7 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
             file_name, order, question, test_number
         )
     )
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True]
 
 
@@ -480,5 +480,5 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
         )
     )
     # trigger an update since underlying image changed.
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True]
