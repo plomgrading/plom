@@ -882,6 +882,29 @@ class GroupView(QDialog):
         self.close()
 
 
+class QuestionView(GroupView):
+    def __init__(self, fnames, testnum, questnum, ver=None, marker=None):
+        super().__init__(fnames)
+        s = f"Original ungraded images for test {testnum:04} question {questnum}"
+        if ver:
+            s += f" (ver {ver})"
+        self.setWindowTitle(s)
+        self.tgv = (testnum, questnum, ver)
+        self.marker = marker
+        tagButton = QPushButton("&Tags")
+        tagButton.clicked.connect(self.tags)
+        grid = self.layout()
+        # add new button to bottom right
+        grid.addWidget(tagButton, grid.rowCount() - 1, grid.columnCount() - 2)
+        self.show()
+
+    def tags(self):
+        """If we have a marker parent then use it to manage tags"""
+        if self.marker:
+            task = f"q{self.tgv[0]:04}g{self.tgv[1]}"
+            self.marker.manage_task_tags(task, parent=self)
+
+
 class WholeTestView(QDialog):
     def __init__(self, fnames):
         super().__init__()
