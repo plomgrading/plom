@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'qtCreatorFiles/ui_marker.ui'
+# Form implementation generated from reading ui file './qtCreatorFiles/ui_marker.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
