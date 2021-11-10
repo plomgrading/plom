@@ -869,21 +869,11 @@ class GroupView(QDialog):
         grid = QGridLayout()
         self.testImg = ExamViewWindow(fnames)
         closeButton = QPushButton("&Close")
-        maxNormButton = QPushButton("Max/Norm")
         grid.addWidget(self.testImg, 1, 1, 6, 6)
-        grid.addWidget(closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
+        grid.addWidget(closeButton, 7, 6)
         self.setLayout(grid)
         closeButton.clicked.connect(self.closeWindow)
-        maxNormButton.clicked.connect(self.swapMaxNorm)
         self.show()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def closeEvent(self, event):
         self.closeWindow()
