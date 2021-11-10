@@ -25,6 +25,7 @@ from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomConflict,
     PlomTakenException,
     PlomNoMoreException,
@@ -534,6 +535,8 @@ class Messenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
                 raise PlomTakenException(response.reason)
+            if response.status_code == 406:
+                raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -551,6 +554,8 @@ class Messenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
                 raise PlomTakenException(response.reason)
+            if response.status_code == 406:
+                raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

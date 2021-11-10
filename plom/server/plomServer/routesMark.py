@@ -526,9 +526,14 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: 200 on success or
                 HTTPConflict (409) if user not allowed to tag this paper.
+                HTTPNotAcceptable (406) if tag is not admissible, such
+                as containing invalid characters (namely spaces!)
         """
         task = request.match_info["task"]
-        if not self.server.add_tag(data["user"], task, data["tag"]):
+        tag = data["tag"].strip()
+        if any(c.isspace() for c in tag):
+            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
+        if not self.server.add_tag(data["user"], task, tag):
             raise web.HTTPConflict(reason=f"User not allowed to add tag to task {task}")
         return web.Response(status=200)
 
@@ -545,9 +550,14 @@ class MarkHandler:
         Returns:
             aiohttp.web_response.Response: 200 on success or
                 HTTPConflict (409) if user not allowed to tag this paper.
+                HTTPNotAcceptable (406) if tag is not admissible, such
+                as containing invalid characters (namely spaces!)
         """
         task = request.match_info["task"]
-        if not self.server.remove_tag(data["user"], task, data["tag"]):
+        tag = data["tag"].strip()
+        if any(c.isspace() for c in tag):
+            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
+        if not self.server.remove_tag(data["user"], task, tag):
             raise web.HTTPConflict(reason=f"User not allowed to remove tag from {task}")
         return web.Response(status=200)
 

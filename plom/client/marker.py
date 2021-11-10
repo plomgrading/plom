@@ -50,6 +50,7 @@ from PyQt5.QtWidgets import (
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
@@ -2445,7 +2446,11 @@ class MarkerClient(QWidget):
         tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
         if ok and tag:
             log.debug('tagging paper "%s" with "%s"', task, tag)
-            self.msgr.add_tag(task, tag)
+            try:
+                self.msgr.add_tag(task, tag)
+            except PlomBadTagError as e:
+                ErrorMessage(f"Tag not acceptable: {e}").exec_()
+
             tags = self.msgr.get_tags(task)
 
         if tags:
@@ -2456,7 +2461,10 @@ class MarkerClient(QWidget):
             tag, ok = QInputDialog.getItem(parent, f"Remove tag from {task}?", msg, tmp)
             if ok and tag:
                 log.debug('Removing tag "%s" from "%s"', tag, task)
-                self.msgr.remove_tag(task, tag)
+                try:
+                    self.msgr.remove_tag(task, tag)
+                except PlomBadTagError as e:
+                    ErrorMessage(f"Tag not acceptable: {e}").exec_()
                 tags = self.msgr.get_tags(task)
 
         try:
