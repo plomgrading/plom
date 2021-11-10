@@ -124,7 +124,9 @@ class IDHandler:
             try:
                 writer.writerows(classlist)
             except ValueError as e:
-                raise web.HTTPBadReqest(f'Extra field in row "{row}". Error: "{e}"')
+                raise web.HTTPBadRequest(
+                    reason=f'Extra field in row "{row}". Error: "{e}"'
+                )
         return web.Response()
 
     # @routes.get("/ID/predictions")

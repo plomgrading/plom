@@ -35,7 +35,7 @@ def createReplacementBundle(self):
     try:
         bref = Bundle.create(name="__replacements__system__")
     except pw.IntegrityError as e:
-        log.error("Create replacement page bundle = {}.{} error - {}".format(e))
+        log.error("Failed to create replacement page bundle - %s", e)
         return False
     return True
 
@@ -119,7 +119,7 @@ def is_paper_database_populated(self):
 
 
 def nextqueue_position(self):
-    lastPos = Group.select(fn.MAX(Group.queue_position)).scalar()
+    lastPos = Group.select(fn.MAX(Group.queue_position)).scalar(plomdb)
     if lastPos is None:
         return 0
     return lastPos + 1

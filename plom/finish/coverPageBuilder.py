@@ -5,7 +5,6 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Liam Yih
 
-import sys
 from weasyprint import HTML, CSS
 
 

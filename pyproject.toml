@@ -7,3 +7,14 @@ line-length = 88
 target-version = ['py36']
 # this regexp is the default with the addition of "ui_*.py"
 exclude = '/(\.eggs|\.git|\.hg|\.mypy _cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/|ui_.+\.py'
+
+[tool.pylint.master]
+extension-pkg-allow-list = ["PyQt5"]
+generated-members = ["pandas"]
+# order matters: need errors-only before disable
+errors-only = true
+# TODO: lots of these in plom/db
+disable = ["not-an-iterable"]
+output-format = "colorized"
+# we have some in-tree deprecated or to-move code that needs tensorflow
+ignored-modules = ["tensorflow", "api_secrets"]
