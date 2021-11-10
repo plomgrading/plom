@@ -757,7 +757,7 @@ class ShowExamPage(QDialog):
             fname (str): file name
 
         """
-        super(ShowExamPage, self).__init__()
+        super().__init__()
         self.setParent(parent)
         self.setWindowFlags(Qt.Dialog)
         grid = QGridLayout()
@@ -857,18 +857,17 @@ class OriginalScansViewer(QWidget):
 
 class GroupView(QDialog):
     def __init__(self, fnames):
-        super(GroupView, self).__init__()
+        super().__init__()
         grid = QGridLayout()
         self.testImg = ExamViewWindow(fnames)
-        self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("Max/Norm")
+        closeButton = QPushButton("&Close")
+        maxNormButton = QPushButton("Max/Norm")
         grid.addWidget(self.testImg, 1, 1, 6, 6)
-        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(closeButton, 7, 7)
         grid.addWidget(self.maxNormButton, 1, 7)
         self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
-
+        closeButton.clicked.connect(self.closeWindow)
+        maxNormButton.clicked.connect(self.swapMaxNorm)
         self.show()
 
     def swapMaxNorm(self):
@@ -887,7 +886,7 @@ class GroupView(QDialog):
 
 class WholeTestView(QDialog):
     def __init__(self, fnames):
-        super(WholeTestView, self).__init__()
+        super().__init__()
         self.pageList = fnames
         self.numberOfPages = len(fnames)
         grid = QGridLayout()
@@ -948,7 +947,7 @@ class WholeTestView(QDialog):
 
 class SelectTestQuestion(QDialog):
     def __init__(self, info, gn=None):
-        super(SelectTestQuestion, self).__init__()
+        super().__init__()
         self.setModal(True)
         self.setWindowTitle("View another test")
         self.iL = QLabel("From which test do you wish to view the current question?")
@@ -978,7 +977,7 @@ class SelectTestQuestion(QDialog):
 
 class SolutionViewer(QWidget):
     def __init__(self, parent, fname):
-        super(SolutionViewer, self).__init__()
+        super().__init__()
         self.parent = parent
         self.solutionFile = fname
         grid = QGridLayout()
