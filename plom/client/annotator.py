@@ -1883,12 +1883,8 @@ class Annotator(QWidget):
         self.solutionView.show()
 
     def tag_paper(self):
-        tag, ok = QInputDialog.getText(self, "Tag paper", "Enter a tag")
-        if not ok:
-            return
         task = f"q{self.tgvID}"
-        log.debug('tagging paper "%s" with "%s"', task, tag)
-        self.parentMarkerUI.msgr.add_tag(task, tag)
+        self.parentMarkerUI.manage_task_tags(task, parent=self)
 
     def refreshSolutionImage(self):
         # force a refresh
