@@ -94,7 +94,26 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
 def _reassemble_one_paper(
     msgr, tmpdir, outdir, short_name, max_marks, num_questions, t, sid, skip
 ):
-    """Reassemble a test paper."""
+    """Reassemble a test paper.
+
+    Args:
+        msgr (FinishMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path/str): The directory where we will download
+            the annotated images for each question.
+            We will also build cover pages there.
+        outdir (pathlib.Path/str): where to build the reassembled pdf.
+        short_name (str): the name of this exam, a form appropriate for
+            a filename prefix, e.g., "math107mt1".
+        max_marks (dict): the maximum mark for each question, keyed by the
+            question number, which seems to be a string.
+        t (int): Test number.
+        sid (str/None): The student number as a string.  Maybe `None` which
+            means that student has no ID (?)  Currently we just skip these.
+        skip (bool): whether to skip existing pdf files.
+
+    Returns:
+        None
+    """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
         print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")

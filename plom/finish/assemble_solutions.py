@@ -24,32 +24,26 @@ def checkAllSolutionsPresent(solutionList):
     return True
 
 
-def todo_build_assemble_args(msgr, srcdir, short_name, outdir, t):
-    """Builds the information for assembling the solutions.
+def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip):
+    """Assemble a solution for one particular paper.
 
     Args:
         msgr (FinishMessenger): Messenger object that talks to the server.
-        srcdir (str): The directory we downloaded solns img to. Is also
-            where cover page pdfs are stored
-        short_name (str): name of the test without the student id.
-        outdir (str): The directory we are putting the cover page in.
+        tmpdir (pathlib.Path/str): The directory where we downloaded solns
+            images.  We will also build cover pages there.
+        outdir (pathlib.Path/str): where to build the solution pdf.
+        short_name (str): the name of this exam, a form appropriate for
+            a filename prefix, e.g., "math107mt1".
+        max_marks (dict): the maximum mark for each question, keyed by the
+            question number, which seems to be a string.
         t (int): Test number.
+        sid (str/None): The student number as a string.  Maybe `None` which
+            means that student has no ID (?)  Currently we just skip these.
+        skip (bool): whether to skip existing pdf files.
 
     Returns:
-        list: appropriate solution files for this solution set.
+        None
     """
-    info = msgr.RgetCoverPageInfo(t)
-    # info is list of [[sid, sname], [q,v,m], [q,v,m]]
-    sid = info[0][0]
-    # make soln-file-List
-    sfiles = []
-    for X in info[1:]:
-        sfiles.append(Path(srcdir) / f"solution.{X[0]}.{X[1]}.png")
-    return sfiles
-
-
-def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip):
-    """Assemble a solution."""
     if sid is None:
         # Note this is distinct from simply not yet ID'd
         print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
@@ -59,8 +53,13 @@ def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip
         print(f"Skipping {outname}: already exists")
         return
     coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
-    sfiles = todo_build_assemble_args(msgr, tmpdir, short_name, outdir, t)
-    assemble(outname, short_name, sid, coverfile, sfiles)
+
+    info = msgr.RgetCoverPageInfo(t)
+    # info is list of [[sid, sname], [q,v,m], [q,v,m]]
+    soln_files = []
+    for X in info[1:]:
+        soln_files.append(Path(tmpdir) / f"solution.{X[0]}.{X[1]}.png")
+    assemble(outname, short_name, sid, coverfile, soln_files)
 
 
 def main(testnum=None, server=None, pwd=None):
