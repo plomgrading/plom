@@ -917,31 +917,21 @@ class WholeTestView(QDialog):
         self.pageTabs = QTabWidget()
         self.tabs = {}
         self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("&Max/Norm")
         self.pButton = QPushButton("&Previous")
         self.nButton = QPushButton("&Next")
         grid.addWidget(self.pageTabs, 1, 1, 6, 6)
         grid.addWidget(self.pButton, 7, 1)
         grid.addWidget(self.nButton, 7, 2)
-        grid.addWidget(self.closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
+        grid.addWidget(self.closeButton, 7, 6)
         self.setLayout(grid)
         self.pButton.clicked.connect(self.previousTab)
         self.nButton.clicked.connect(self.nextTab)
         self.closeButton.clicked.connect(self.closeWindow)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
 
         self.setMinimumSize(500, 500)
 
         self.show()
         self.buildTabs()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def closeEvent(self, event):
         self.closeWindow()
