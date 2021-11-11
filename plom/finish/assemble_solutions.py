@@ -111,7 +111,7 @@ def main(testnum=None, server=None, pwd=None):
             raise RuntimeError("Problems getting solution images.")
         print("All solutions present.")
         print(f"Downloading solution images to temp directory {tmpdir}")
-        for X in solutionList:
+        for X in tqdm(solutionList):
             # triples [q,v,md5]
             img = msgr.getSolutionImage(X[0], X[1])
             filename = tmpdir / f"solution.{X[0]}.{X[1]}.png"
