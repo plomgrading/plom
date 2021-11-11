@@ -545,7 +545,7 @@ def updateIDGroup(self, idref):
         # we'll need a ref to the test
         tref = idref.test
         # if IDGroup belongs to HAL then don't mess with it - was auto IDd.
-        if idref.user != User.get(name="HAL"):
+        if idref.user == User.get(name="HAL"):
             log.info(f"IDGroup of test {tref.test_number} is present and already IDd.")
         else:
             # need to clean it off and set it ready to do.
