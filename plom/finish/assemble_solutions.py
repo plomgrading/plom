@@ -98,7 +98,7 @@ def main(testnum=None, server=None, pwd=None):
                 raise ValueError(f"Paper {t} not scanned, cannot reassemble")
             if not completed[1]:
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
-            if completed[2] == numberOfQuestions:
+            if completed[2] != numberOfQuestions:
                 print(f"Note: paper {t} not fully marked but building soln anyway")
             _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, False)
         else:
