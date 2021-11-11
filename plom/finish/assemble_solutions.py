@@ -163,7 +163,7 @@ def main(testnum=None, server=None, pwd=None):
 
     N = len(solution_args)
     print("Assembling {} solutions...".format(N))
-    with Pool() as p:
+    with Pool(4) as p:
         r = list(
             tqdm(
                 p.imap_unordered(_parfcn, list(zip(cover_args, solution_args))), total=N
