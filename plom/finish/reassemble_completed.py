@@ -16,7 +16,7 @@ from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
 
-def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
+def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     """Download information and create a cover page.
 
     Args:
@@ -24,6 +24,9 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
         tmpdir (pathlib.Path.str): where to save the coverpage.
         t (int): Test number.
         maxMarks (dict): Maxmarks per question str -> int.
+
+    Keyword Args:
+        solution (bool): build coverpage for solutions.
 
     Returns:
         pathlib.Path: filename of the coverpage.
@@ -40,7 +43,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    makeCover(int(t), sname, sid, arg, covername)
+    makeCover(int(t), sname, sid, arg, covername, solution=solution)
     return covername
 
 

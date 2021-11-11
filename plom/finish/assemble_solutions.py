@@ -12,22 +12,7 @@ from tqdm import tqdm
 from plom import get_question_label
 from plom.finish import start_messenger
 from plom.finish.solutionAssembler import assemble
-from plom.finish.coverPageBuilder import makeCover
-
-
-numberOfQuestions = 0
-
-
-def _parfcn(z):
-    """Parallel function used below, must be defined in root of module.
-
-    Args:
-        z (tuple): Arguments to assemble and makeSolnCover.
-    """
-    x, y = z
-    if x and y:
-        makeCover(*x, solution=True)
-        assemble(*y)
+from plom.finish.reassemble_completed import download_data_build_cover_page
 
 
 def checkAllSolutionsPresent(solutionList):
@@ -39,34 +24,7 @@ def checkAllSolutionsPresent(solutionList):
     return True
 
 
-def build_soln_cover_data(msgr, tmpdir, t, maxMarks):
-    """Builds the information used to create solution cover pages.
-
-    Args:
-        msgr (FinishMessenger): Messenger object that talks to the server.
-        t (int): Test number.
-        maxMarks (dict): Maxmarks per question str -> int.
-
-    Returns:
-        tuple: (testnumber, sname, sid, tab) where `tab` is a table with
-            rows `[q_label, ver, mark, max_mark]`.
-    """
-    # should be [ [sid, sname], [q,v,m], [q,v,m] etc]
-    cpi = msgr.RgetCoverPageInfo(t)
-    spec = msgr.get_spec()
-    sid = cpi[0][0]
-    sname = cpi[0][1]
-    # for each Q [q, v, mark, maxPossibleMark]
-    arg = []
-    for qvm in cpi[1:]:
-        question_label = get_question_label(spec, qvm[0])
-        arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
-    testnumstr = str(t).zfill(4)
-    covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    return (int(t), sname, sid, arg, covername)
-
-
-def build_assemble_args(msgr, srcdir, short_name, outdir, t):
+def todo_build_assemble_args(msgr, srcdir, short_name, outdir, t):
     """Builds the information for assembling the solutions.
 
     Args:
@@ -78,7 +36,7 @@ def build_assemble_args(msgr, srcdir, short_name, outdir, t):
         t (int): Test number.
 
     Returns:
-       tuple : (outname, short_name, sid, covername, rnames)
+        list: appropriate solution files for this solution set.
     """
     info = msgr.RgetCoverPageInfo(t)
     # info is list of [[sid, sname], [q,v,m], [q,v,m]]
@@ -87,12 +45,18 @@ def build_assemble_args(msgr, srcdir, short_name, outdir, t):
     sfiles = []
     for X in info[1:]:
         sfiles.append(Path(srcdir) / f"solution.{X[0]}.{X[1]}.png")
+    return sfiles
 
-    outdir = Path(outdir)
+
+def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, skip):
+    """Assemble a solution."""
     outname = outdir / f"{short_name}_solutions_{sid}.pdf"
-    testnumstr = str(t).zfill(4)
-    covername = srcdir / f"cover_{testnumstr}.pdf"
-    return (outname, short_name, sid, covername, sfiles)
+    if skip and outname.exists():
+        print(f"Skipping {outname}: already exists")
+        return
+    coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
+    sfiles = todo_build_assemble_args(msgr, tmpdir, short_name, outdir, t)
+    assemble(outname, short_name, sid, coverfile, sfiles)
 
 
 def main(testnum=None, server=None, pwd=None):
@@ -121,10 +85,6 @@ def main(testnum=None, server=None, pwd=None):
         # dict key = testnumber, then list id'd, #q's marked
         completedTests = msgr.RgetCompletionStatus()
         maxMarks = msgr.MgetAllMax()
-        # arg-list for assemble solutions
-        solution_args = []
-        # get data for cover pages
-        cover_args = []
 
         if testnum is not None:
             t = str(testnum)
@@ -140,13 +100,10 @@ def main(testnum=None, server=None, pwd=None):
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
             if completed[2] == numberOfQuestions:
                 print(f"Note: paper {t} not fully marked but building soln anyway")
-            # append args for this test to list
-            cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
-            solution_args.append(
-                build_assemble_args(msgr, tmpdir, shortName, outdir, t)
-            )
+            _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, False)
         else:
-            print(f"Building arguments for UP TO {len(completedTests)} solutions...")
+            print(f"Building UP TO {len(completedTests)} solutions...")
+            N = 0
             for t, completed in tqdm(completedTests.items()):
                 # check if the given test is scanned and identified
                 if not (completed[0] and completed[1]):
@@ -154,30 +111,11 @@ def main(testnum=None, server=None, pwd=None):
                 # Maybe someone wants only the finished papers?
                 # if completed[2] != numberOfQuestions:
                 #     continue
-                # append args for this test to list
-                cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
-                solution_args.append(
-                    build_assemble_args(msgr, tmpdir, shortName, outdir, t)
-                )
+                _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, False)
+                N += 1
+            print(f"Assembled {N} solutions from papers scanning and ID'd")
     finally:
         msgr.closeUser()
         msgr.stop()
 
-    N = len(solution_args)
-    print("Assembling {} solutions...".format(N))
-    with Pool(4) as p:
-        r = list(
-            tqdm(
-                p.imap_unordered(_parfcn, list(zip(cover_args, solution_args))), total=N
-            )
-        )
-
-    # Serial
-    # for z in zip(cover_args, solution_args)
-    #    _parfcn(z)
-
     shutil.rmtree(tmpdir)
-
-
-if __name__ == "__main__":
-    main()
