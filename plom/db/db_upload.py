@@ -274,6 +274,8 @@ def uploadHWPage(
             )
         )
         self.createNewHWPage(tref, qref, tmp_order, image_ref)
+        # now update the test after this change
+        self.updateTestAfterChange(tref)
     return [True]
 
 
