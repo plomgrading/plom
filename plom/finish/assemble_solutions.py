@@ -105,13 +105,12 @@ def main(testnum=None, server=None, pwd=None):
         outdir = Path("solutions")
         outdir.mkdir(exist_ok=True)
         tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-        print(f"Downloading to temp directory {tmpdir}")
 
         solutionList = msgr.getSolutionStatus()
         if not checkAllSolutionsPresent(solutionList):
             raise RuntimeError("Problems getting solution images.")
         print("All solutions present.")
-        print("Downloading solution images to temp directory {}".format(tmpdir))
+        print(f"Downloading solution images to temp directory {tmpdir}")
         for X in solutionList:
             # triples [q,v,md5]
             img = msgr.getSolutionImage(X[0], X[1])
