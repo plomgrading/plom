@@ -33,7 +33,6 @@ from PyQt5.QtWidgets import (
 )
 
 from .examviewwindow import ExamViewWindow
-from .uiFiles.ui_test_view import Ui_TestView
 from .useful_classes import ErrorMessage, SimpleMessage
 
 
@@ -805,64 +804,6 @@ class ShowExamPage(QDialog):
         self.close()
 
 
-class OriginalScansViewer(QWidget):
-    def __init__(self, parent, testNumber, pageData, pages):
-        super().__init__()
-        self.parent = parent
-        self.testNumber = testNumber
-        self.numberOfPages = len(pages)
-        self.pageList = pages
-        # note pagedata  triples [name, image-ref, true/false]
-        self.pageNames = [x[0] for x in pageData]
-        self.ui = Ui_TestView()
-        self.ui.setupUi(self)
-        self.connectButtons()
-        self.tabs = {}
-        self.buildTabs()
-        self.setWindowTitle("Original scans of test {}".format(self.testNumber))
-        self.show()
-
-    def connectButtons(self):
-        self.ui.prevGroupButton.clicked.connect(self.previousTab)
-        self.ui.nextGroupButton.clicked.connect(self.nextTab)
-        self.ui.closeButton.clicked.connect(self.closeWindow)
-        self.ui.maxNormButton.clicked.connect(self.swapMaxNorm)
-
-    def buildTabs(self):
-        for k in range(0, self.numberOfPages):
-            self.tabs[k] = ExamViewWindow(self.pageList[k], compact=False)
-            self.ui.groupViewTabWidget.addTab(
-                self.tabs[k], "Page {}".format(self.pageNames[k])
-            )
-
-    def nextTab(self):
-        t = self.ui.groupViewTabWidget.currentIndex() + 1
-        if t >= self.ui.groupViewTabWidget.count():
-            t = 0
-        self.ui.groupViewTabWidget.setCurrentIndex(t)
-        self.tabs[t].resetView()
-
-    def previousTab(self):
-        t = self.ui.groupViewTabWidget.currentIndex() - 1
-        if t < 0:
-            t = self.ui.groupViewTabWidget.count() - 1
-        self.ui.groupViewTabWidget.setCurrentIndex(t)
-        self.tabs[t].resetView()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
-
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
-
-
 class GroupView(QDialog):
     def __init__(self, fnames):
         super().__init__()
@@ -909,8 +850,9 @@ class QuestionView(GroupView):
 
 
 class WholeTestView(QDialog):
-    def __init__(self, fnames):
+    def __init__(self, testnum, filenames, labels=None):
         super().__init__()
+        self.setWindowTitle(f"Original scans of test {testnum}")
         self.pageTabs = QTabWidget()
         closeButton = QPushButton("&Close")
         prevButton = QPushButton("&Previous")
@@ -926,11 +868,13 @@ class WholeTestView(QDialog):
         closeButton.clicked.connect(self.closeWindow)
         self.pageTabs.currentChanged.connect(self.tabSelected)
         self.setMinimumSize(500, 500)
-        self.show()
-        for k, f in enumerate(fnames):
+        if not labels:
+            labels = [f"{k + 1}" for k in range(len(filenames))]
+        for f, label in zip(filenames, labels):
             # Tab doesn't seem to have padding so compact=False
             tab = ExamViewWindow(f, compact=False)
-            self.pageTabs.addTab(tab, f"{k + 1}")
+            self.pageTabs.addTab(tab, label)
+        self.show()
 
     def closeEvent(self, event):
         self.closeWindow()

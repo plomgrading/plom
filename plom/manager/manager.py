@@ -940,7 +940,7 @@ class Manager(QWidget):
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            tv = WholeTestView(inames)
+            tv = WholeTestView(testNumber, inames)
             tv.exec_()
 
     def viewQuestion(self, testNumber, questionNumber):

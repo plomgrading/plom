@@ -61,7 +61,7 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import OriginalScansViewer, RearrangementViewer, SolutionViewer
+from .origscanviewer import RearrangementViewer, SolutionViewer, WholeTestView
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -623,7 +623,7 @@ class Annotator(QWidget):
 
     def viewWholePaper(self):
         """
-        Changes view layout to show entire paper.
+        Popup a dialog showing the entire paper.
 
         If paper has not been opened, downloads it by it's tgvID and shows.
 
@@ -643,9 +643,8 @@ class Annotator(QWidget):
 
         # if we haven't built a testview, built it now
         if self.testView is None:
-            self.testView = OriginalScansViewer(
-                self, testNumber, self.pageData, self.testViewFiles
-            )
+            labels = [x[0] for x in self.pageData]
+            self.testView = WholeTestView(testNumber, self.testViewFiles, labels)
         self.testView.show()
         return
 

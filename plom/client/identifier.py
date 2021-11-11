@@ -740,17 +740,18 @@ class IDClient(QWidget):
             return
         testNumber = self.exM.data(index[0])
         try:
-            pageNames, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
+            pageData, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             self.throwBenign(err)
 
+        labels = [x[0] for x in pageData]
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(delete=False).name
             viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
                 fh.write(iab)
-        WholeTestView(viewFiles).exec_()
+        WholeTestView(testNumber, viewFiles, labels).exec_()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing
