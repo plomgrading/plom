@@ -872,7 +872,7 @@ class WholeTestView(QDialog):
             labels = [f"{k + 1}" for k in range(len(filenames))]
         for f, label in zip(filenames, labels):
             # Tab doesn't seem to have padding so compact=False
-            tab = ExamViewWindow(f, compact=False)
+            tab = ExamViewWindow([f], compact=False)
             self.pageTabs.addTab(tab, label)
         self.show()
 

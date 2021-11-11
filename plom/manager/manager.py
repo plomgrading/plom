@@ -6,8 +6,9 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-import os
 import csv
+import os
+from pathlib import Path
 import sys
 import tempfile
 
@@ -936,12 +937,11 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            tv = WholeTestView(testNumber, inames)
-            tv.exec_()
+            WholeTestView(testNumber, inames).exec_()
 
     def viewQuestion(self, testNumber, questionNumber):
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)
@@ -950,12 +950,11 @@ class Manager(QWidget):
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
-            qv = GroupView(inames)
-            qv.exec_()
+            GroupView(inames).exec_()
 
     def checkTPage(self, testNumber, pageNumber):
         cp = self.msgr.checkTPage(testNumber, pageNumber)

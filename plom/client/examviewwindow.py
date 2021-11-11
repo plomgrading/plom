@@ -115,7 +115,7 @@ class ExamView(QGraphicsView):
         if fnames is not None:
             x = 0
             for (n, fn) in enumerate(fnames):
-                pix = QPixmap(fn)
+                pix = QPixmap(str(fn))
                 self.images[n] = QGraphicsPixmapItem(pix)
                 self.images[n].setTransformationMode(Qt.SmoothTransformation)
                 self.images[n].setPos(x, 0)
