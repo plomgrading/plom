@@ -17,6 +17,9 @@ CSVFilename = "marks.csv"
 RubricListFilename = "rubric_list.json"
 TestRubricMatrixFilename = "test_rubric_matrix.json"
 
+from .start_messenger import start_messenger
+from .clearLogin import clear_manager_login
+
 from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile
 
