@@ -782,11 +782,11 @@ def removeAllScannedPages(self, test_number):
         for gref in tref.groups:
             gref.scanned = False
             gref.save()
-        # finally - set this flag to trigger an update.
-        tref.recent_upload = True
+        # finally - clean off the scanned and used flags
         tref.scanned = False
         tref.used = False
         tref.save()
+    # update all the groups.
     self.updateTestAfterChange(tref)
     return [True, "Test {} wiped clean".format(test_number)]
 

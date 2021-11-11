@@ -208,8 +208,6 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
             test=tref, group=qref.group, version=version, order=order, image=iref
         )
         uref.delete_instance()
-        gref.recent_upload = True
-        gref.save()
         log.info(
             "Moving unknown page {} to extra page {} of question {} of test {}".format(
                 file_name, order, question, test_number
@@ -471,8 +469,6 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
         )
         pref.image = iref
         pref.save()
-        gref.recent_upload = True
-        gref.save()
         cref.delete_instance()
     log.info(
         "Collision {} replacing tpv {}.{}.{}".format(
