@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super(ActionTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.rb = QPushButton("Review")
@@ -48,7 +48,7 @@ class ActionTab(QWidget):
 
 class ReviewTab(QWidget):
     def __init__(self, parent):
-        super(ReviewTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.rb = QPushButton("Click to confirm review")
@@ -75,7 +75,7 @@ class ReviewViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, quidto="question"):
-        QWidget.__init__(self)
+        super().__init__()
         self.parent = parent
         self.quidto = quidto
 
@@ -155,7 +155,7 @@ class ReviewView(QGraphicsView):
     """
 
     def __init__(self, fnames):
-        QGraphicsView.__init__(self)
+        super().__init__()
         self.initUI(fnames)
 
     def initUI(self, fnames):

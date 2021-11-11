@@ -31,7 +31,7 @@ class SelectRectangleWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames):
-        QWidget.__init__(self)
+        super().__init__()
         self.parent = parent
 
         if type(fnames) == list:
@@ -132,7 +132,7 @@ class IDView(QGraphicsView):
     """
 
     def __init__(self, parent, fnames):
-        QGraphicsView.__init__(self)
+        super().__init__()
         self.parent = parent
         self.initUI(fnames)
 
@@ -235,7 +235,7 @@ class IDViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, sid):
-        QWidget.__init__(self)
+        super().__init__()
         self.parent = parent
         self.sid = sid
 

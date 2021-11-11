@@ -22,7 +22,7 @@ class ImageViewWidget(QWidget):
     """Simple view window for pageimages"""
 
     def __init__(self, fnames=None):
-        QWidget.__init__(self)
+        super().__init__()
         if isinstance(fnames, str):
             fnames = [fnames]
         self.initUI(fnames)

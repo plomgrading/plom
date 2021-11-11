@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super(ActionTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.db = QPushButton("Discard Page")
@@ -59,7 +59,7 @@ class ActionTab(QWidget):
 
 class DiscardTab(QWidget):
     def __init__(self, parent):
-        super(DiscardTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.db = QPushButton("Click to confirm discard")
@@ -83,7 +83,7 @@ class DiscardTab(QWidget):
 
 class ExtraTab(QWidget):
     def __init__(self, parent, maxT, maxQ):
-        super(ExtraTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
@@ -132,7 +132,7 @@ class ExtraTab(QWidget):
 
 class HWTab(QWidget):
     def __init__(self, parent, maxQ, iDict):
-        super(HWTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
@@ -210,7 +210,7 @@ class HWTab(QWidget):
 
 class TestTab(QWidget):
     def __init__(self, parent, maxT, maxP):
-        super(TestTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
@@ -328,7 +328,7 @@ class UnknownViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, tpq, iDict):
-        QWidget.__init__(self)
+        super().__init__()
         self.parent = parent
         self.numberOfTests = tpq[0]
         self.numberOfPages = tpq[1]

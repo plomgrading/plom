@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super(ActionTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.ub = QPushButton("Move to unknown pages")
@@ -48,7 +48,7 @@ class ActionTab(QWidget):
 
 class UnknownTab(QWidget):
     def __init__(self, parent):
-        super(UnknownTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.ub = QPushButton("Click to confirm move to unknown")
@@ -75,7 +75,7 @@ class DiscardViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames):
-        QWidget.__init__(self)
+        super().__init__()
         self.parent = parent
 
         if type(fnames) == list:

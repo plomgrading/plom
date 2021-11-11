@@ -28,7 +28,7 @@ from plom.client.examviewwindow import ExamViewWindow
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super(ActionTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.ob = QPushButton("Keep original page (left)")
@@ -61,7 +61,7 @@ class ActionTab(QWidget):
 
 class OriginalTab(QWidget):
     def __init__(self, parent):
-        super(OriginalTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.kb = QPushButton("Click to confirm keep original")
@@ -88,7 +88,7 @@ class OriginalTab(QWidget):
 
 class CollideTab(QWidget):
     def __init__(self, parent):
-        super(CollideTab, self).__init__()
+        super().__init__()
         self.parent = parent
         vb = QVBoxLayout()
         self.kb = QPushButton("Click to confirm replace")
@@ -117,7 +117,7 @@ class CollideViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, onames, fnames, test, page):
-        QWidget.__init__(self)
+        super().__init__()
         self.parent = parent
         self.test = test
         self.page = page
