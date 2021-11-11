@@ -48,8 +48,12 @@ def todo_build_assemble_args(msgr, srcdir, short_name, outdir, t):
     return sfiles
 
 
-def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, skip):
+def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip):
     """Assemble a solution."""
+    if sid is None:
+        # Note this is distinct from simply not yet ID'd
+        print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
+        return
     outname = outdir / f"{short_name}_solutions_{sid}.pdf"
     if skip and outname.exists():
         print(f"Skipping {outname}: already exists")
@@ -82,8 +86,10 @@ def main(testnum=None, server=None, pwd=None):
             with open(filename, "wb") as f:
                 f.write(img)
 
-        # dict key = testnumber, then list id'd, #q's marked
         completedTests = msgr.RgetCompletionStatus()
+        # dict testnumber -> [scanned, id'd, #q's marked]
+        identifiedTests = msgr.RgetIdentified()
+        # dict testNumber -> [sid, sname]
         maxMarks = msgr.MgetAllMax()
 
         if testnum is not None:
@@ -100,7 +106,8 @@ def main(testnum=None, server=None, pwd=None):
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
             if completed[2] != numberOfQuestions:
                 print(f"Note: paper {t} not fully marked but building soln anyway")
-            _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, False)
+            sid = identifiedTests[t][0]
+            _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False)
         else:
             print(f"Building UP TO {len(completedTests)} solutions...")
             N = 0
@@ -111,7 +118,10 @@ def main(testnum=None, server=None, pwd=None):
                 # Maybe someone wants only the finished papers?
                 # if completed[2] != numberOfQuestions:
                 #     continue
-                _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, False)
+                sid = identifiedTests[t][0]
+                _assemble_one_soln(
+                    msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False
+                )
                 N += 1
             print(f"Assembled {N} solutions from papers scanning and ID'd")
     finally:
