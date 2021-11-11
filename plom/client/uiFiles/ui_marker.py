@@ -162,7 +162,6 @@ class Ui_MarkerWindow(object):
         self.paperBox.setSizePolicy(sizePolicy)
         self.paperBox.setObjectName("paperBox")
         self.gridLayout_6 = QtWidgets.QGridLayout(self.paperBox)
-        self.gridLayout_6.setContentsMargins(0, 0, 0, 0)
         self.gridLayout_6.setObjectName("gridLayout_6")
         self.horizontalLayout.addWidget(self.splitter)
 

@@ -21,7 +21,7 @@ from plom.client.backGrid import BackGrid
 class ExamViewWindow(QWidget):
     """Simple view window for pageimages"""
 
-    def __init__(self, fnames=None, has_reset_button=True):
+    def __init__(self, fnames=None, has_reset_button=True, compact=True):
         super().__init__()
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
@@ -34,6 +34,8 @@ class ExamViewWindow(QWidget):
             # return won't click the button by default
             resetB.setAutoDefault(False)
         grid = QGridLayout()
+        if compact:
+            grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view, 1, 1, 10, 4)
         if has_reset_button:
             grid.addWidget(resetB, 20, 1)
