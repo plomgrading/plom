@@ -1072,7 +1072,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
 
         self.requestNext()  # Get a question to mark from the server
-        self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
+        self.testImg.resetView()  # reset the view so whole exam shown.
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         log.debug("Marker main thread: " + str(threading.get_ident()))
@@ -1189,7 +1189,7 @@ class MarkerClient(QWidget):
 
         """
         if hasattr(self, "testImg"):
-            self.testImg.resetB.animateClick()
+            self.testImg.resetView()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)

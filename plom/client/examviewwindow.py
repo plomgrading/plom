@@ -21,21 +21,22 @@ from plom.client.backGrid import BackGrid
 class ExamViewWindow(QWidget):
     """Simple view window for pageimages"""
 
-    def __init__(self, fnames=None):
+    def __init__(self, fnames=None, has_reset_button=True):
         super().__init__()
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
         # Render nicely
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # reset view button passes to the examview.
-        self.resetB = QPushButton("&reset view")
-        self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.resetB.setAutoDefault(False)  # return won't click the button by default.
-        # Layout simply
+        if has_reset_button:
+            resetB = QPushButton("&reset view")
+            resetB.clicked.connect(self.resetView)
+            # return won't click the button by default
+            resetB.setAutoDefault(False)
         grid = QGridLayout()
         grid.addWidget(self.view, 1, 1, 10, 4)
-        grid.addWidget(self.resetB, 20, 1)
+        if has_reset_button:
+            grid.addWidget(resetB, 20, 1)
         self.setLayout(grid)
         self.show()
         # Store the current exam view as a qtransform
@@ -58,6 +59,9 @@ class ExamViewWindow(QWidget):
 
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
+        self.view.resetView()
+
+    def resetView(self):
         self.view.resetView()
 
     def forceRedrawOrSomeBullshit(self):
