@@ -10,8 +10,7 @@ import tempfile
 
 from tqdm import tqdm
 
-from plom.messenger import FinishMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish import start_messenger
 from plom.finish.examReassembler import reassemble
 
 
@@ -53,25 +52,7 @@ def download_page_images(msgr, tmpdir, outdir, short_name, t, sid):
 
 
 def main(server=None, pwd=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
-    else:
-        msgr = FinishMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another finishing-script or manager-client running,\n"
-            "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorization run `plom-finish clear`."
-        )
-        raise
-
+    msgr = start_messenger(server, pwd)
     try:
         shortName = msgr.getInfoShortName()
 
