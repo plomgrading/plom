@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom import ScenePixelHeight
+from plom.client.examviewwindow import ExamView
 
 
 class ImageViewWidget(QWidget):
@@ -23,12 +24,7 @@ class ImageViewWidget(QWidget):
 
     def __init__(self, fnames=None):
         super().__init__()
-        if isinstance(fnames, str):
-            fnames = [fnames]
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
-        # Grab an examview widget (QGraphicsView)
+        # self.view = ExamView(fnames)
         self.view = ImageView(fnames)
         # Render nicely
         self.view.setRenderHint(QPainter.Antialiasing, True)
@@ -54,11 +50,7 @@ class ImageViewWidget(QWidget):
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        # update the image
-        if type(fnames) == list:
-            self.view.updateImage(fnames)
-        else:
-            self.view.updateImage([fnames])
+        self.view.updateImages(fnames)
 
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
@@ -90,10 +82,7 @@ class ImageView(QGraphicsView):
     """
 
     def __init__(self, fnames):
-        QGraphicsView.__init__(self)
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
+        super().__init__()
         # set background
         self.setStyleSheet("background: transparent")
         self.setRenderHint(QPainter.Antialiasing, True)
@@ -104,10 +93,12 @@ class ImageView(QGraphicsView):
         self.images = {}
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImage(fnames)
+        self.updateImages(fnames)
 
-    def updateImage(self, fnames):
+    def updateImages(self, fnames):
         """Update the image with that from filename"""
+        if isinstance(fnames, str):
+            fnames = [fnames]
         for n in self.images:
             self.imageGItem.removeFromGroup(self.images[n])
             self.images[n].setVisible(False)

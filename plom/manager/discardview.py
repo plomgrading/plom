@@ -3,23 +3,17 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QGuiApplication, QPainter, QPixmap
+from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (
     QDialog,
-    QFrame,
-    QFormLayout,
-    QGraphicsPixmapItem,
-    QGraphicsItemGroup,
-    QGraphicsScene,
-    QGraphicsView,
     QGridLayout,
-    QLabel,
     QPushButton,
-    QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
+
+from plom.client.examviewwindow import ExamView
 
 
 class ActionTab(QWidget):
@@ -77,15 +71,8 @@ class DiscardViewWindow(QDialog):
     def __init__(self, parent, fnames):
         super().__init__()
         self.parent = parent
-
-        if type(fnames) == list:
-            self.initUI(fnames)
-        else:
-            self.initUI([fnames])
         self.action = "none"
-
-    def initUI(self, fnames):
-        self.view = DiscardView(fnames)
+        self.view = ExamView(fnames, dark_background=True)
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
         self.optionTW = QTabWidget()
@@ -123,12 +110,7 @@ class DiscardViewWindow(QDialog):
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        # update the image
-        if type(fnames) == list:
-            self.view.updateImage(fnames)
-        else:
-            self.view.updateImage([fnames])
-
+        self.view.updateImages(fnames)
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
@@ -146,66 +128,3 @@ class DiscardViewWindow(QDialog):
             self.setWindowState(Qt.WindowMaximized)
         else:
             self.setWindowState(Qt.WindowNoState)
-
-
-class DiscardView(QGraphicsView):
-    """Simple extension of QGraphicsView
-    - containing an image and click-to-zoom/unzoom
-    """
-
-    def __init__(self, fnames):
-        QGraphicsView.__init__(self)
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
-        # Make QGraphicsScene
-        self.scene = QGraphicsScene()
-        # TODO = handle different image sizes.
-        self.images = {}
-        self.imageGItem = QGraphicsItemGroup()
-        self.scene.addItem(self.imageGItem)
-        self.updateImage(fnames)
-        self.setBackgroundBrush(QBrush(Qt.darkCyan))
-
-    def updateImage(self, fnames):
-        """Update the image with that from filename"""
-        for n in self.images:
-            self.imageGItem.removeFromGroup(self.images[n])
-            self.images[n].setVisible(False)
-        if fnames is not None:
-            x = 0
-            n = 0
-            for fn in fnames:
-                self.images[n] = QGraphicsPixmapItem(QPixmap(fn))
-                self.images[n].setTransformationMode(Qt.SmoothTransformation)
-                self.images[n].setPos(x, 0)
-                self.images[n].setVisible(True)
-                self.scene.addItem(self.images[n])
-                x += self.images[n].boundingRect().width() + 10
-                self.imageGItem.addToGroup(self.images[n])
-                n += 1
-
-        # Set sensible sizes and put into the view, and fit view to the image.
-        br = self.imageGItem.boundingRect()
-        self.scene.setSceneRect(
-            0,
-            0,
-            max(1000, br.width()),
-            max(1000, br.height()),
-        )
-        self.setScene(self.scene)
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
-
-    def mouseReleaseEvent(self, event):
-        """Left/right click to zoom in and out"""
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            self.scale(0.8, 0.8)
-        else:
-            self.scale(1.25, 1.25)
-        self.centerOn(event.pos())
-
-    def resetView(self):
-        """Reset the view to its reasonable initial state."""
-        self.fitInView(self.imageGItem, Qt.KeepAspectRatio)

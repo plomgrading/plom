@@ -134,16 +134,12 @@ class IDView(QGraphicsView):
     def __init__(self, parent, fnames):
         super().__init__()
         self.parent = parent
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
-        # Make QGraphicsScene
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
         self.images = {}
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImage(fnames)
+        self.updateImages(fnames)
         self.setBackgroundBrush(QBrush(Qt.darkCyan))
         self.parent.tool = "zoom"
 
@@ -154,8 +150,10 @@ class IDView(QGraphicsView):
         self.boxItem.setPen(QPen(Qt.darkCyan, 1))
         self.boxItem.setBrush(QBrush(QColor(0, 255, 0, 64)))
 
-    def updateImage(self, fnames):
+    def updateImages(self, fnames):
         """Update the image with that from filename"""
+        if isinstance(fnames, str):
+            fnames = [fnames]
         for n in self.images:
             self.imageGItem.removeFromGroup(self.images[n])
             self.images[n].setVisible(False)
@@ -284,12 +282,7 @@ class IDViewWindow(QDialog):
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        # update the image
-        if type(fnames) == list:
-            self.view.updateImage(fnames)
-        else:
-            self.view.updateImage([fnames])
-
+        self.view.updateImages(fnames)
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)

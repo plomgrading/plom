@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
+from PyQt5.QtGui import QGuiApplication, QBrush, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -23,11 +23,6 @@ class ExamViewWindow(QWidget):
 
     def __init__(self, fnames=None):
         super().__init__()
-        if isinstance(fnames, str):
-            fnames = [fnames]
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
         # Render nicely
@@ -54,11 +49,7 @@ class ExamViewWindow(QWidget):
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        # update the image
-        if type(fnames) == list:
-            self.view.updateImage(fnames)
-        else:
-            self.view.updateImage([fnames])
+        self.view.updateImages(fnames)
 
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
@@ -87,26 +78,31 @@ class ExamView(QGraphicsView):
     - containing an image and click-to-zoom/unzoom
     """
 
-    def __init__(self, fnames):
+    def __init__(self, fnames, dark_background=False):
         super().__init__()
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
         # set background
-        self.setStyleSheet("background: transparent")
-        self.setBackgroundBrush(BackGrid())
+        if dark_background:
+            self.setBackgroundBrush(QBrush(Qt.darkCyan))
+        else:
+            self.setStyleSheet("background: transparent")
+            self.setBackgroundBrush(BackGrid())
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # Make QGraphicsScene
         self.scene = QGraphicsScene()
-        # TODO = handle different image sizes.
         self.images = {}
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImage(fnames)
+        self.updateImages(fnames)
 
-    def updateImage(self, fnames):
-        """Update the image with that from filename"""
+    def updateImages(self, fnames):
+        """Update the images new ones from filenames
+
+        Args:
+            fnames (None/str/list): a list of `pathlib.Path` or `str` of
+                image filenames.  Can also be a str, for a single image.
+        """
+        if isinstance(fnames, str):
+            fnames = [fnames]
         for n in self.images:
             self.imageGItem.removeFromGroup(self.images[n])
             self.images[n].setVisible(False)
@@ -122,7 +118,7 @@ class ExamView(QGraphicsView):
                 self.images[n].setScale(sf)
                 self.scene.addItem(self.images[n])
                 # x += self.images[n].boundingRect().width() + 10
-                # TODO: why did this have + 10 but the scene did not?
+                # TODO: some tools (amanager?) had + 10 (maybe with darkbg?)
                 x += sf * (pix.width() - 1.0)
                 # TODO: don't floor here if units of scene are large!
                 x = int(x)
@@ -152,3 +148,7 @@ class ExamView(QGraphicsView):
     def resetView(self):
         """Reset the view to its reasonable initial state."""
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+
+    def rotateImage(self, dTheta):
+        self.rotate(dTheta)
+        self.resetView()
