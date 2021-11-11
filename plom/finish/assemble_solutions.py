@@ -144,6 +144,7 @@ def main(testnum=None, server=None, pwd=None):
                 build_assemble_args(msgr, tmpdir, shortName, outdir, t)
             )
         else:
+            print(f"Building arguments for UP TO {len(completedTests)} solutions...")
             for t, completed in tqdm(completedTests.items()):
                 # check if the given test is ready for reassembly (and hence soln ready for assembly)
                 if not completed[0]:
