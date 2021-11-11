@@ -11,8 +11,7 @@ import tempfile
 from tqdm import tqdm
 
 from plom import get_question_label
-from plom.messenger import FinishMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish import start_messenger
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
@@ -98,28 +97,6 @@ def _reassemble_one_paper(
     coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
     file_lists = download_page_images(msgr, tmpdir, num_questions, t, sid)
     reassemble(outname, short_name, sid, coverfile, *file_lists)
-
-
-def start_messenger(server=None, pwd=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
-    else:
-        msgr = FinishMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another finishing-script or manager-client running,\n"
-            "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
-        )
-        raise
-    return msgr
 
 
 def reassemble_one_paper(
