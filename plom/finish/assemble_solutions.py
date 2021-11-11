@@ -136,7 +136,7 @@ def main(testnum=None, server=None, pwd=None):
                 ) from None
             if not completed[0]:
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
-            if completed[1] == numberOfQuestions:
+            if completed[1] != numberOfQuestions:
                 print(f"Note: paper {t} not fully marked but building soln anyway")
             # append args for this test to list
             cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
