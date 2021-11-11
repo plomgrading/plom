@@ -830,7 +830,7 @@ class OriginalScansViewer(QWidget):
 
     def buildTabs(self):
         for k in range(0, self.numberOfPages):
-            self.tabs[k] = ExamViewWindow(self.pageList[k])
+            self.tabs[k] = ExamViewWindow(self.pageList[k], compact=False)
             self.ui.groupViewTabWidget.addTab(
                 self.tabs[k], "Page {}".format(self.pageNames[k])
             )
@@ -840,14 +840,14 @@ class OriginalScansViewer(QWidget):
         if t >= self.ui.groupViewTabWidget.count():
             t = 0
         self.ui.groupViewTabWidget.setCurrentIndex(t)
-        self.tabs[t].forceRedrawOrSomeBullshit()
+        self.tabs[t].resetView()
 
     def previousTab(self):
         t = self.ui.groupViewTabWidget.currentIndex() - 1
         if t < 0:
             t = self.ui.groupViewTabWidget.count() - 1
         self.ui.groupViewTabWidget.setCurrentIndex(t)
-        self.tabs[t].forceRedrawOrSomeBullshit()
+        self.tabs[t].resetView()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
@@ -911,27 +911,26 @@ class QuestionView(GroupView):
 class WholeTestView(QDialog):
     def __init__(self, fnames):
         super().__init__()
-        self.pageList = fnames
-        self.numberOfPages = len(fnames)
-        grid = QGridLayout()
         self.pageTabs = QTabWidget()
-        self.tabs = {}
-        self.closeButton = QPushButton("&Close")
-        self.pButton = QPushButton("&Previous")
-        self.nButton = QPushButton("&Next")
+        closeButton = QPushButton("&Close")
+        prevButton = QPushButton("&Previous")
+        nextButton = QPushButton("&Next")
+        grid = QGridLayout()
         grid.addWidget(self.pageTabs, 1, 1, 6, 6)
-        grid.addWidget(self.pButton, 7, 1)
-        grid.addWidget(self.nButton, 7, 2)
-        grid.addWidget(self.closeButton, 7, 6)
+        grid.addWidget(prevButton, 7, 1)
+        grid.addWidget(nextButton, 7, 2)
+        grid.addWidget(closeButton, 7, 6)
         self.setLayout(grid)
-        self.pButton.clicked.connect(self.previousTab)
-        self.nButton.clicked.connect(self.nextTab)
-        self.closeButton.clicked.connect(self.closeWindow)
-
+        prevButton.clicked.connect(self.previousTab)
+        nextButton.clicked.connect(self.nextTab)
+        closeButton.clicked.connect(self.closeWindow)
+        self.pageTabs.currentChanged.connect(self.tabSelected)
         self.setMinimumSize(500, 500)
-
         self.show()
-        self.buildTabs()
+        for k, f in enumerate(fnames):
+            # Tab doesn't seem to have padding so compact=False
+            tab = ExamViewWindow(f, compact=False)
+            self.pageTabs.addTab(tab, f"{k + 1}")
 
     def closeEvent(self, event):
         self.closeWindow()
@@ -939,24 +938,22 @@ class WholeTestView(QDialog):
     def closeWindow(self):
         self.close()
 
+    def tabSelected(self, index):
+        """Resize on change tab."""
+        if index >= 0:
+            self.pageTabs.currentWidget().resetView()
+
     def nextTab(self):
         t = self.pageTabs.currentIndex() + 1
         if t >= self.pageTabs.count():
             t = 0
         self.pageTabs.setCurrentIndex(t)
-        self.tabs[t].forceRedrawOrSomeBullshit()
 
     def previousTab(self):
         t = self.pageTabs.currentIndex() - 1
         if t < 0:
             t = self.pageTabs.count() - 1
         self.pageTabs.setCurrentIndex(t)
-        self.tabs[t].forceRedrawOrSomeBullshit()
-
-    def buildTabs(self):
-        for k in range(0, self.numberOfPages):
-            self.tabs[k] = ExamViewWindow(self.pageList[k])
-            self.pageTabs.addTab(self.tabs[k], "{}".format(k + 1))
 
 
 class SelectTestQuestion(QDialog):
