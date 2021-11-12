@@ -124,9 +124,6 @@ class Annotator(QWidget):
         self.markWarn = True
         self.rubricWarn = True
 
-        # a test view pop-up window - initially set to None for viewing whole paper
-        self.testView = None
-        self.testViewFiles = None
         # a solution view pop-up window - initially set to None
         self.solutionView = None
 
@@ -358,10 +355,6 @@ class Annotator(QWidget):
         del self.scene
         self.scene = None
 
-        # clean up after a testview
-        self.doneViewingPaper()
-        self.testView = None
-        self.testViewFiles = None
         self.tgvID = None
         self.testName = None
         self.setWindowTitle("Annotator")
@@ -634,21 +627,13 @@ class Annotator(QWidget):
         """
         if not self.tgvID:
             return
-        # grab the files if needed.
-        testNumber = self.tgvID[:4]
-        if self.testViewFiles is None:
-            log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            (
-                self.pageData,
-                self.testViewFiles,
-            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
-
-        # if we haven't built a testview, built it now
-        if self.testView is None:
-            labels = [x[0] for x in self.pageData]
-            self.testView = WholeTestView(testNumber, self.testViewFiles, labels)
-        self.testView.show()
-        return
+        testnum = self.tgvID[:4]
+        log.debug("wholePage: downloading files for testnum %s", testnum)
+        page_data, files = self.parentMarkerUI.downloadWholePaper(testnum)
+        labels = [x[0] for x in page_data]
+        WholeTestView(testnum, files, labels).exec_()
+        for f in files:
+            f.unlink()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -794,26 +779,6 @@ class Annotator(QWidget):
             os.unlink(f)
         self.setEnabled(True)
         return
-
-    def doneViewingPaper(self):
-        """
-        Performs end tasks to close the Paper and view next.
-
-        Notes:
-            Called when user is done with testViewFiles.
-            Adds the action to log.debug and informs self.parentMarkerUI.
-
-        Returns:
-            None: Modifies self.testView
-        """
-        if self.testViewFiles:
-            log.debug("wholePage: done with viewFiles {}".format(self.testViewFiles))
-            # could just delete them here but maybe Marker wants to cache
-            self.parentMarkerUI.doneWithWholePaperFiles(self.testViewFiles)
-            self.testViewFiles = None
-        if self.testView:
-            self.testView.close()
-            self.testView = None
 
     def keyPopUp(self):
         """Sets KeyPress shortcuts."""
@@ -1635,10 +1600,7 @@ class Annotator(QWidget):
         """
         log.debug("========CLOSE EVENT======: {}".format(self))
 
-        log.debug("Clean up any view-widows or solution-views")
-        # clean up after a testview
-        self.doneViewingPaper()
-        # clean up after a solution-view
+        log.debug("Clean up any lingering solution-views etc")
         if self.solutionView:
             log.debug("Cleaning a solution-view")
             self.solutionView.close()

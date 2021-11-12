@@ -2234,7 +2234,9 @@ class MarkerClient(QWidget):
             testNumber (int): the test number.
 
         Returns:
-            (tuple) containing pageData and viewFiles
+            tuple: containing pageData and viewFiles.  You are responsible
+                for deleting the files when done with them, in particular
+                these may include duplicate images.
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
