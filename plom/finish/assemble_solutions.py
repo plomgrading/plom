@@ -10,8 +10,7 @@ import tempfile
 from tqdm import tqdm
 
 from plom import get_question_label
-from plom.messenger import FinishMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish import start_messenger
 from plom.finish.solutionAssembler import assemble
 from plom.finish.coverPageBuilder import makeCover
 
@@ -97,25 +96,7 @@ def build_assemble_args(msgr, srcdir, short_name, outdir, t):
 
 
 def main(testnum=None, server=None, pwd=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
-    else:
-        msgr = FinishMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another finishing-script or manager-client running,\n"
-            "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
-        )
-        raise
-
+    msgr = start_messenger(server, pwd)
     try:
         shortName = msgr.getInfoShortName()
         spec = msgr.get_spec()
@@ -124,14 +105,13 @@ def main(testnum=None, server=None, pwd=None):
         outdir = Path("solutions")
         outdir.mkdir(exist_ok=True)
         tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-        print(f"Downloading to temp directory {tmpdir}")
 
         solutionList = msgr.getSolutionStatus()
         if not checkAllSolutionsPresent(solutionList):
             raise RuntimeError("Problems getting solution images.")
         print("All solutions present.")
-        print("Downloading solution images to temp directory {}".format(tmpdir))
-        for X in solutionList:
+        print(f"Downloading solution images to temp directory {tmpdir}")
+        for X in tqdm(solutionList):
             # triples [q,v,md5]
             img = msgr.getSolutionImage(X[0], X[1])
             filename = tmpdir / f"solution.{X[0]}.{X[1]}.png"
@@ -156,7 +136,7 @@ def main(testnum=None, server=None, pwd=None):
                 ) from None
             if not completed[0]:
                 raise ValueError(f"Paper {t} not identified, cannot reassemble")
-            if completed[1] == numberOfQuestions:
+            if completed[1] != numberOfQuestions:
                 print(f"Note: paper {t} not fully marked but building soln anyway")
             # append args for this test to list
             cover_args.append(build_soln_cover_data(msgr, tmpdir, t, maxMarks))
@@ -164,6 +144,7 @@ def main(testnum=None, server=None, pwd=None):
                 build_assemble_args(msgr, tmpdir, shortName, outdir, t)
             )
         else:
+            print(f"Building arguments for UP TO {len(completedTests)} solutions...")
             for t, completed in tqdm(completedTests.items()):
                 # check if the given test is ready for reassembly (and hence soln ready for assembly)
                 if not completed[0]:
@@ -182,7 +163,7 @@ def main(testnum=None, server=None, pwd=None):
 
     N = len(solution_args)
     print("Assembling {} solutions...".format(N))
-    with Pool() as p:
+    with Pool(4) as p:
         r = list(
             tqdm(
                 p.imap_unordered(_parfcn, list(zip(cover_args, solution_args))), total=N

@@ -11,7 +11,8 @@ from plom import __version__
 
 CSVFilename = "marks.csv"
 
-from .clearLogin import clear_manager_login
+from .start_messenger import start_messenger
+from .clear_manager_login import clear_manager_login
 
 from .return_tools import canvas_csv_add_return_codes, canvas_csv_check_pdf
 from .return_tools import make_canvas_gradefile

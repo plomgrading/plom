@@ -32,13 +32,9 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             final page.
 
     return:
-        bool: True if successful or False if PDF file already exists.
-            Note: no attempt is made to check if its correct; merely
-            that it exists.
+        None
     """
     outname = Path(outname)
-    if outname.exists():
-        return False
 
     exam = fitz.open()
     if coverfile:
@@ -107,4 +103,3 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     )
 
     exam.save(outname, deflate=True)
-    return True
