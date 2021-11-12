@@ -2245,7 +2245,7 @@ class MarkerClient(QWidget):
         except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
-            return ([], [])  # TODO: what to return?
+            return ([], [])
 
         viewFiles = []
         for iab in imagesAsBytes:

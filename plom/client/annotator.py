@@ -630,6 +630,8 @@ class Annotator(QWidget):
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
         page_data, files = self.parentMarkerUI.downloadWholePaper(testnum)
+        if not files:
+            return
         labels = [x[0] for x in page_data]
         WholeTestView(testnum, files, labels).exec_()
         for f in files:

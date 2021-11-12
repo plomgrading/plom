@@ -743,6 +743,7 @@ class IDClient(QWidget):
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             self.throwBenign(err)
+            return
 
         labels = [x[0] for x in pageData]
         viewFiles = []
