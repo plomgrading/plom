@@ -752,7 +752,7 @@ class IDClient(QWidget):
             viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
                 fh.write(iab)
-        WholeTestView(testNumber, viewFiles, labels).exec_()
+        WholeTestView(testNumber, viewFiles, labels, parent=self).exec_()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing

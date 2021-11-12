@@ -633,7 +633,7 @@ class Annotator(QWidget):
         if not files:
             return
         labels = [x[0] for x in page_data]
-        WholeTestView(testnum, files, labels).exec_()
+        WholeTestView(testnum, files, labels, parent=self).exec_()
         for f in files:
             f.unlink()
 

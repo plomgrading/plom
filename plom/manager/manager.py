@@ -941,7 +941,7 @@ class Manager(QWidget):
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            WholeTestView(testNumber, inames).exec_()
+            WholeTestView(testNumber, inames, parent=self).exec_()
 
     def viewQuestion(self, testNumber, questionNumber):
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)

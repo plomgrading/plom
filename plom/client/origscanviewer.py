@@ -848,8 +848,8 @@ class QuestionView(GroupView):
 
 
 class WholeTestView(QDialog):
-    def __init__(self, testnum, filenames, labels=None):
-        super().__init__()
+    def __init__(self, testnum, filenames, labels=None, parent=None):
+        super().__init__(parent)
         self.setWindowTitle(f"Original scans of test {testnum}")
         self.pageTabs = QTabWidget()
         closeButton = QPushButton("&Close")
