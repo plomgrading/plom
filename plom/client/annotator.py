@@ -625,10 +625,12 @@ class Annotator(QWidget):
         """
         Popup a dialog showing the entire paper.
 
-        If paper has not been opened, downloads it by it's tgvID and shows.
+        TODO: this has significant duplication with RearrangePages.  Currently
+        this one does it own downloads (even though Marker may already have the
+        pages.
 
         Returns:
-            None: modifies self.testView
+            None
         """
         if not self.tgvID:
             return

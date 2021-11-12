@@ -817,7 +817,6 @@ class GroupView(QDialog):
         self.setLayout(grid)
         resetB.clicked.connect(self.testImg.resetView)
         closeButton.clicked.connect(self.close)
-        self.show()
 
     def closeEvent(self, event):
         self.closeWindow()
@@ -840,7 +839,6 @@ class QuestionView(GroupView):
         grid = self.layout()
         # add new button to bottom right
         grid.addWidget(tagButton, grid.rowCount() - 1, grid.columnCount() - 2)
-        self.show()
 
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
@@ -874,7 +872,6 @@ class WholeTestView(QDialog):
             # Tab doesn't seem to have padding so compact=False
             tab = ExamViewWindow([f], compact=False)
             self.pageTabs.addTab(tab, label)
-        self.show()
 
     def closeEvent(self, event):
         self.closeWindow()

@@ -2228,7 +2228,7 @@ class MarkerClient(QWidget):
         self.close()
 
     def downloadWholePaper(self, testNumber):
-        """
+        """Legacy method, yet another way of getting images.
 
         Args:
             testNumber (int): the test number.
@@ -2250,11 +2250,11 @@ class MarkerClient(QWidget):
             tfn = tempfile.NamedTemporaryFile(
                 dir=self.workingDirectory, suffix=".image", delete=False
             ).name
-            viewFiles.append(tfn)
+            viewFiles.append(Path(tfn))
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageData, viewFiles]
+        return (pageData, viewFiles)
 
     def downloadOneImage(self, image_id, md5):
         """Download one image from server by its database id."""
