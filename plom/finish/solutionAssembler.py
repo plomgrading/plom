@@ -29,13 +29,9 @@ def assemble(outname, shortName, sid, coverfile, img_list):
             per page.
 
     return:
-        bool: True if successful or False if PDF file already exists.
-            Note: no attempt is made to check if its correct; merely
-            that it exists.
+        None
     """
     outname = Path(outname)
-    if outname.exists():
-        return False
 
     exam = fitz.open()
     if coverfile:
@@ -76,4 +72,3 @@ def assemble(outname, shortName, sid, coverfile, img_list):
     )
 
     exam.save(outname, deflate=True)
-    return True
