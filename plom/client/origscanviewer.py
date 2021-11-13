@@ -847,12 +847,13 @@ class QuestionViewDialog(GroupView):
             s += f" (ver {ver})"
         self.setWindowTitle(s)
         self.tgv = (testnum, questnum, ver)
-        self.marker = marker
-        tagButton = QPushButton("&Tags")
-        tagButton.clicked.connect(self.tags)
         grid = self.layout()
-        # add new button to bottom right
-        grid.addWidget(tagButton, grid.rowCount() - 1, grid.columnCount() - 2)
+        if marker:
+            self.marker = marker
+            tagButton = QPushButton("&Tags")
+            tagButton.clicked.connect(self.tags)
+            # add new button to bottom right
+            grid.addWidget(tagButton, grid.rowCount() - 1, grid.columnCount() - 2)
 
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
