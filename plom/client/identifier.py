@@ -44,7 +44,7 @@ from plom import isValidStudentNumber
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
-from .examviewwindow import ExamViewWindow
+from .examviewwindow import ImageViewWidget
 from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
@@ -216,7 +216,7 @@ class IDClient(QWidget):
         self.ui.tableView.setModel(self.exM)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
-        self.testImg = ExamViewWindow()
+        self.testImg = ImageViewWidget()
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         # Get the classlist from server for name/ID completion.

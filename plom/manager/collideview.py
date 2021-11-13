@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from plom.client.examviewwindow import ExamViewWindow
+from plom.client.examviewwindow import ImageViewWidget
 
 
 class ActionTab(QWidget):
@@ -126,8 +126,8 @@ class CollideViewWindow(QDialog):
         self.action = ""
 
     def initUI(self, onames, fnames):
-        self.viewO = ExamViewWindow(onames)
-        self.viewC = ExamViewWindow(fnames)
+        self.viewO = ImageViewWidget(onames)
+        self.viewC = ImageViewWidget(fnames)
 
         self.cancelB = QPushButton("&cancel")
         self.maxNormB = QPushButton("&max/norm")

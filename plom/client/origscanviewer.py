@@ -32,7 +32,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
 )
 
-from .examviewwindow import ExamViewWindow
+from .examviewwindow import ImageViewWidget
 from .useful_classes import ErrorMessage, SimpleMessage
 
 
@@ -765,7 +765,7 @@ class ShowExamPage(QDialog):
         self.setParent(parent)
         self.setWindowFlags(Qt.Dialog)
         grid = QGridLayout()
-        self.testImg = ExamViewWindow(fname)
+        self.testImg = ImageViewWidget(fname)
         self.closeButton = QPushButton("&Close")
         grid.addWidget(self.testImg, 1, 1, 6, 6)
         grid.addWidget(self.closeButton, 7, 7)
@@ -808,7 +808,7 @@ class GroupView(QDialog):
     def __init__(self, fnames):
         super().__init__()
         grid = QGridLayout()
-        self.testImg = ExamViewWindow(fnames, has_reset_button=False)
+        self.testImg = ImageViewWidget(fnames, has_reset_button=False)
         closeButton = QPushButton("&Close")
         resetB = QPushButton("&reset view")
         grid.addWidget(self.testImg, 1, 1, 1, 8)
@@ -870,7 +870,7 @@ class WholeTestView(QDialog):
             labels = [f"{k + 1}" for k in range(len(filenames))]
         for f, label in zip(filenames, labels):
             # Tab doesn't seem to have padding so compact=False
-            tab = ExamViewWindow([f], compact=False)
+            tab = ImageViewWidget([f], compact=False)
             self.pageTabs.addTab(tab, label)
 
     def closeEvent(self, event):
@@ -933,7 +933,7 @@ class SolutionViewer(QWidget):
         self.parent = parent
         self.solutionFile = fname
         grid = QGridLayout()
-        self.sv = ExamViewWindow(self.solutionFile)
+        self.sv = ImageViewWidget(self.solutionFile)
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
         self.maxNormButton = QPushButton("&Max/Norm")

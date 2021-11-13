@@ -18,8 +18,8 @@ from plom import ScenePixelHeight
 from plom.client.backGrid import BackGrid
 
 
-class ExamViewWindow(QWidget):
-    """Simple view window for pageimages"""
+class ImageViewWidget(QWidget):
+    """Simple view widget for pageimages to be embedded in other windows."""
 
     def __init__(self, fnames=None, has_reset_button=True, compact=True):
         super().__init__()

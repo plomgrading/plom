@@ -63,7 +63,7 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .examviewwindow import ExamViewWindow
+from .examviewwindow import ImageViewWidget
 from .origscanviewer import QuestionView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
@@ -981,9 +981,8 @@ class MarkerClient(QWidget):
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
-        self.testImg = (
-            ExamViewWindow()
-        )  # A view window for the papers so user can zoom in as needed.
+        # A view window for the papers so user can zoom in as needed.
+        self.testImg = ImageViewWidget()
         self.annotatorSettings = defaultdict(
             lambda: None
         )  # settings variable for annotator settings (initially None)
