@@ -982,7 +982,7 @@ class MarkerClient(QWidget):
         )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
         # A view window for the papers so user can zoom in as needed.
-        self.testImg = ImageViewWidget()
+        self.testImg = ImageViewWidget(self)
         self.annotatorSettings = defaultdict(
             lambda: None
         )  # settings variable for annotator settings (initially None)

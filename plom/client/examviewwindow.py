@@ -21,8 +21,8 @@ from plom.client.backGrid import BackGrid
 class ImageViewWidget(QWidget):
     """Simple view widget for pageimages to be embedded in other windows."""
 
-    def __init__(self, fnames=None, has_reset_button=True, compact=True):
-        super().__init__()
+    def __init__(self, parent, fnames=None, has_reset_button=True, compact=True):
+        super().__init__(parent)
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
         # Render nicely

@@ -126,8 +126,8 @@ class CollideViewWindow(QDialog):
         self.action = ""
 
     def initUI(self, onames, fnames):
-        self.viewO = ImageViewWidget(onames)
-        self.viewC = ImageViewWidget(fnames)
+        self.viewO = ImageViewWidget(self, onames)
+        self.viewC = ImageViewWidget(self, fnames)
 
         self.cancelB = QPushButton("&cancel")
         self.maxNormB = QPushButton("&max/norm")

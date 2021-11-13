@@ -1579,7 +1579,7 @@ class Manager(QWidget):
         self.tempDirectory = tempfile.TemporaryDirectory(prefix="plom_manager_")
         self.solnPath = self.tempDirectory.name
         # set up the viewer
-        self.solnIV = ImageViewWidget()
+        self.solnIV = ImageViewWidget(self)
         self.ui.solnGBLayout.addWidget(self.solnIV)
 
         self.ui.solnQSB.setMaximum(self.numberOfQuestions)
