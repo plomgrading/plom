@@ -280,13 +280,11 @@ class UnknownViewWindow(QDialog):
         self.rotatePlusB = QPushButton("rotate +90")
         self.rotateMinusB = QPushButton("rotate -90")
         self.cancelB = QPushButton("&cancel")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
         self.resetB.clicked.connect(lambda: self.view.resetView())
         self.rotatePlusB.clicked.connect(self.rotatePlus)
         self.rotateMinusB.clicked.connect(self.rotateMinus)
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
 
         self.resetB.setAutoDefault(False)  # return won't click the button by default.
         self.rotatePlusB.setAutoDefault(False)
@@ -294,13 +292,12 @@ class UnknownViewWindow(QDialog):
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.view, 1, 1, 10, 6)
-        grid.addWidget(self.optionTW, 2, 17, 8, 4)
-        grid.addWidget(self.resetB, 20, 1)
-        grid.addWidget(self.rotatePlusB, 20, 2)
-        grid.addWidget(self.rotateMinusB, 20, 3)
-        grid.addWidget(self.cancelB, 20, 20)
-        grid.addWidget(self.maxNormB, 1, 20)
+        grid.addWidget(self.view, 1, 1, 10, 10)
+        grid.addWidget(self.optionTW, 1, 11, 10, -1)
+        grid.addWidget(self.resetB, 11, 1)
+        grid.addWidget(self.rotatePlusB, 11, 2)
+        grid.addWidget(self.rotateMinusB, 11, 3)
+        grid.addWidget(self.cancelB, 11, 20)
         self.setLayout(grid)
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
@@ -344,13 +341,6 @@ class UnknownViewWindow(QDialog):
         if self.theta == -90:
             self.theta = 270
         self.view.rotateImage(-90)
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def viewQuestion(self, testNumber, questionNumber):
         self.parent().viewQuestion(testNumber, questionNumber, parent=self)
