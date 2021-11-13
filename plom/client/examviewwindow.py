@@ -95,7 +95,6 @@ class ExamView(QGraphicsView):
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         self.scene = QGraphicsScene()
-        self.images = {}
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
         self.updateImages(fnames)
@@ -109,28 +108,31 @@ class ExamView(QGraphicsView):
         """
         if isinstance(fnames, str):
             fnames = [fnames]
-        for n in self.images:
-            self.imageGItem.removeFromGroup(self.images[n])
-            self.images[n].setVisible(False)
+        for img in self.imageGItem.childItems():
+            self.imageGItem.removeFromGroup(img)
+            img.setVisible(False)  # why?
+            self.scene.removeItem(img)
+        img = None
+
         if fnames is not None:
             x = 0
             for (n, fn) in enumerate(fnames):
                 pix = QPixmap(str(fn))
-                self.images[n] = QGraphicsPixmapItem(pix)
-                self.images[n].setTransformationMode(Qt.SmoothTransformation)
-                self.images[n].setPos(x, 0)
-                self.images[n].setVisible(True)
+                pixmap = QGraphicsPixmapItem(pix)
+                pixmap.setTransformationMode(Qt.SmoothTransformation)
+                pixmap.setPos(x, 0)
+                pixmap.setVisible(True)
                 sf = float(ScenePixelHeight) / float(pix.height())
-                self.images[n].setScale(sf)
-                self.scene.addItem(self.images[n])
-                # x += self.images[n].boundingRect().width() + 10
-                # TODO: some tools (amanager?) had + 10 (maybe with darkbg?)
+                pixmap.setScale(sf)
+                self.scene.addItem(pixmap)
+                self.imageGItem.addToGroup(pixmap)
+                # x += pixmap.boundingRect().width() + 10
+                # TODO: some tools (manager?) had + 10 (maybe with darkbg?)
                 x += sf * (pix.width() - 1.0)
                 # TODO: don't floor here if units of scene are large!
                 x = int(x)
-                self.imageGItem.addToGroup(self.images[n])
 
-        # Set sensible sizes and put into the view, and fit view to the image.
+        # Set sensible sizes and put into the view, and fit view to the image
         br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
             0,
