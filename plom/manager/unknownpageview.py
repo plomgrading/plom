@@ -322,16 +322,16 @@ class UnknownViewWindow(QDialog):
         self.view.verticalScrollBar().setValue(self.dy)
 
     def initTabs(self):
-        self.t0 = ActionTab(self)
-        self.t1 = ExtraTab(self, self.numberOfTests, self.numberOfQuestions)
-        self.t2 = TestTab(self, self.numberOfTests, self.numberOfPages)
-        self.t3 = HWTab(self, self.numberOfQuestions, self.iDict)
-        self.t4 = DiscardTab(self)
-        self.optionTW.addTab(self.t0, "Actions")
-        self.optionTW.addTab(self.t1, "Extra Page")
-        self.optionTW.addTab(self.t2, "Test Page")
-        self.optionTW.addTab(self.t3, "Homework Page")
-        self.optionTW.addTab(self.t4, "Discard")
+        t0 = ActionTab(self)
+        t1 = ExtraTab(self, self.numberOfTests, self.numberOfQuestions)
+        t2 = TestTab(self, self.numberOfTests, self.numberOfPages)
+        t3 = HWTab(self, self.numberOfQuestions, self.iDict)
+        t4 = DiscardTab(self)
+        self.optionTW.addTab(t0, "Actions")
+        self.optionTW.addTab(t1, "Extra Page")
+        self.optionTW.addTab(t2, "Test Page")
+        self.optionTW.addTab(t3, "Homework Page")
+        self.optionTW.addTab(t4, "Discard")
 
     def rotatePlus(self):
         self.theta += 90
