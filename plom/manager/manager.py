@@ -638,7 +638,7 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
-            GroupView([fh.name]).exec_()
+            GroupView(self, [fh.name]).exec_()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -930,10 +930,12 @@ class Manager(QWidget):
                 # )
         self.refreshUList()
 
-    def viewWholeTest(self, testNumber):
+    def viewWholeTest(self, testNumber, parent=None):
         vt = self.msgr.getTestImages(testNumber)
         if vt is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
@@ -941,12 +943,14 @@ class Manager(QWidget):
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            WholeTestView(testNumber, inames, parent=self).exec_()
+            WholeTestView(testNumber, inames, parent=parent).exec_()
 
-    def viewQuestion(self, testNumber, questionNumber):
+    def viewQuestion(self, testNumber, questionNumber, parent=None):
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)
         if vq is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
@@ -954,12 +958,15 @@ class Manager(QWidget):
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
-            GroupView(inames).exec_()
+            GroupView(parent, inames).exec_()
 
-    def checkTPage(self, testNumber, pageNumber):
+    def checkTPage(self, testNumber, pageNumber, parent=None):
+        if parent is None:
+            parent = self
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] == None:
+            # TODO: ErrorMesage does not support parenting
             ErrorMessage(
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
@@ -973,7 +980,7 @@ class Manager(QWidget):
                     pageNumber, testNumber
                 )
             ).exec_()
-            GroupView([fh.name]).exec_()
+            GroupView(parent, [fh.name]).exec_()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)

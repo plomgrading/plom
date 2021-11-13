@@ -805,8 +805,8 @@ class ShowExamPage(QDialog):
 
 
 class GroupView(QDialog):
-    def __init__(self, fnames):
-        super().__init__()
+    def __init__(self, parent, fnames):
+        super().__init__(parent)
         grid = QGridLayout()
         self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
         closeButton = QPushButton("&Close")
@@ -825,9 +825,23 @@ class GroupView(QDialog):
         self.close()
 
 
-class QuestionView(GroupView):
-    def __init__(self, fnames, testnum, questnum, ver=None, marker=None):
-        super().__init__(fnames)
+class QuestionViewDialog(GroupView):
+    """View the raw scans from a particular question, optionally with tagging.
+
+    Args:
+        parent: the parent of this dialog
+        fnames (list): the files to use for viewing, `str` or `pathlib.Path`.
+            We don't claim the files: caller should manage them and delete
+            when done.
+        testnum (int): which test/paper number is this
+        questnum (int): which question number.  TODO: probably should
+            support question label.
+        ver (int/None): if we know the version, we can display it.
+        marker (None/plom.client.Marker): used to talk to the server for
+            tagging.
+    """
+    def __init__(self, parent, fnames, testnum, questnum, ver=None, marker=None):
+        super().__init__(parent, fnames)
         s = f"Original ungraded images for test {testnum:04} question {questnum}"
         if ver:
             s += f" (ver {ver})"

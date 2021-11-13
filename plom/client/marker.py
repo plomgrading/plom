@@ -64,7 +64,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from .annotator import Annotator
 from .examviewwindow import ImageViewWidget
-from .origscanviewer import QuestionView, SelectTestQuestion
+from .origscanviewer import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 
@@ -2508,4 +2508,4 @@ class MarkerClient(QWidget):
             ifilenames.append(ifile.name)
         qvmap = self.msgr.getGlobalQuestionVersionMap()
         ver = qvmap[tn][gn]
-        QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
+        QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()

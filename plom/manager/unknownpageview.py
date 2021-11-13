@@ -24,8 +24,8 @@ from plom.client.examviewwindow import ExamView
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.db = QPushButton("Discard Page")
         self.eb = QPushButton("Extra Page")
@@ -43,22 +43,22 @@ class ActionTab(QWidget):
         self.tb.clicked.connect(self.test)
 
     def discard(self):
-        self.parent.optionTW.setCurrentIndex(4)
+        self._parent.optionTW.setCurrentIndex(4)
 
     def extra(self):
-        self.parent.optionTW.setCurrentIndex(1)
+        self._parent.optionTW.setCurrentIndex(1)
 
     def test(self):
-        self.parent.optionTW.setCurrentIndex(2)
+        self._parent.optionTW.setCurrentIndex(2)
 
     def homework(self):
-        self.parent.optionTW.setCurrentIndex(3)
+        self._parent.optionTW.setCurrentIndex(3)
 
 
 class DiscardTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.db = QPushButton("Click to confirm discard")
         self.ob = QPushButton("Return to other options")
@@ -72,17 +72,17 @@ class DiscardTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def discard(self):
-        self.parent.action = "discard"
-        self.parent.accept()
+        self._parent.action = "discard"
+        self._parent.accept()
 
     def other(self):
-        self.parent.optionTW.setCurrentIndex(0)
+        self._parent.optionTW.setCurrentIndex(0)
 
 
 class ExtraTab(QWidget):
     def __init__(self, parent, maxT, maxQ):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
         self.frm = QFrame()
@@ -113,25 +113,25 @@ class ExtraTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def confirm(self):
-        self.parent.action = "extra"
-        self.parent.test = self.tsb.value()
-        self.parent.pq = self.qsb.value()
-        self.parent.accept()
+        self._parent.action = "extra"
+        self._parent.test = self.tsb.value()
+        self._parent.pq = self.qsb.value()
+        self._parent.accept()
 
     def viewQuestion(self):
-        self.parent.viewQuestion(self.tsb.value(), self.qsb.value())
+        self._parent.viewQuestion(self.tsb.value(), self.qsb.value())
 
     def viewWholeTest(self):
-        self.parent.viewWholeTest(self.tsb.value())
+        self._parent.viewWholeTest(self.tsb.value())
 
     def other(self):
-        self.parent.optionTW.setCurrentIndex(0)
+        self._parent.optionTW.setCurrentIndex(0)
 
 
 class HWTab(QWidget):
     def __init__(self, parent, maxQ, iDict):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
         self.frm = QFrame()
@@ -184,32 +184,32 @@ class HWTab(QWidget):
     def confirm(self):
         if self.testl.text() == "":
             return
-        self.parent.action = "homework"
-        self.parent.sid = self.sidle.text()
-        self.parent.pq = self.qsb.value()
-        self.parent.test = int(self.testl.text())
-        self.parent.accept()
+        self._parent.action = "homework"
+        self._parent.sid = self.sidle.text()
+        self._parent.pq = self.qsb.value()
+        self._parent.test = int(self.testl.text())
+        self._parent.accept()
 
     def viewQuestion(self):
         if self.testl.text() == "":
             return
         else:
-            self.parent.viewQuestion(int(self.testl.text()), self.qsb.value())
+            self._parent.viewQuestion(int(self.testl.text()), self.qsb.value())
 
     def viewWholeTest(self):
         if self.testl.text() == "":
             return
         else:
-            self.parent.viewWholeTest(int(self.testl.text()))
+            self._parent.viewWholeTest(int(self.testl.text()))
 
     def other(self):
-        self.parent.optionTW.setCurrentIndex(0)
+        self._parent.optionTW.setCurrentIndex(0)
 
 
 class TestTab(QWidget):
     def __init__(self, parent, maxT, maxP):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         fl = QFormLayout()
         self.frm = QFrame()
@@ -240,27 +240,26 @@ class TestTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def confirm(self):
-        self.parent.action = "test"
-        self.parent.test = self.tsb.value()
-        self.parent.pq = self.psb.value()
-        self.parent.accept()
+        self._parent.action = "test"
+        self._parent.test = self.tsb.value()
+        self._parent.pq = self.psb.value()
+        self._parent.accept()
 
     def checkTPage(self):
-        self.parent.checkTPage(self.tsb.value(), self.psb.value())
+        self._parent.checkTPage(self.tsb.value(), self.psb.value())
 
     def viewWholeTest(self):
-        self.parent.viewWholeTest(self.tsb.value())
+        self._parent.viewWholeTest(self.tsb.value())
 
     def other(self):
-        self.parent.optionTW.setCurrentIndex(0)
+        self._parent.optionTW.setCurrentIndex(0)
 
 
 class UnknownViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, tpq, iDict):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.numberOfTests = tpq[0]
         self.numberOfPages = tpq[1]
         self.numberOfQuestions = tpq[2]
@@ -303,7 +302,6 @@ class UnknownViewWindow(QDialog):
         grid.addWidget(self.cancelB, 20, 20)
         grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
@@ -355,10 +353,10 @@ class UnknownViewWindow(QDialog):
             self.setWindowState(Qt.WindowNoState)
 
     def viewQuestion(self, testNumber, questionNumber):
-        self.parent.viewQuestion(testNumber, questionNumber)
+        self.parent().viewQuestion(testNumber, questionNumber, parent=self)
 
     def viewWholeTest(self, testNumber):
-        self.parent.viewWholeTest(testNumber)
+        self.parent().viewWholeTest(testNumber, parent=self)
 
     def checkTPage(self, testNumber, pageNumber):
-        self.parent.checkTPage(testNumber, pageNumber)
+        self.parent().checkTPage(testNumber, pageNumber, parent=self)
