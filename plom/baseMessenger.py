@@ -365,8 +365,6 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                if response.status_code == 409:
-                    raise PlomTakenException(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_tags(self, code):
@@ -399,7 +397,7 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
-                raise PlomTakenException(response.reason)
+                raise PlomTakenException(response.reason) from None
             if response.status_code == 406:
                 raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
@@ -418,7 +416,7 @@ class BaseMessenger:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
-                raise PlomTakenException(response.reason)
+                raise PlomTakenException(response.reason) from None
             if response.status_code == 406:
                 raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
