@@ -468,20 +468,14 @@ def MsetTags(self, user_name, task, tags):
 
     TODO: scary that its the last annotation: maybe client should be telling us which one?
     """
-
-    uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # should not happen
+        if gref is None:
             log.error("MsetTags - task {} not known".format(task))
             return False
         qref = gref.qgroups[0]
-        if qref.user != uref:
-            return False  # not your task - should not happen
         # grab the last annotation
         aref = qref.annotations[-1]
-        if aref.user != uref and aref.user.name != "HAL":
-            return False  # not your annotation - should not happen
         # update tag
         aref.tags = tags
         aref.save()
