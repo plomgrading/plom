@@ -110,7 +110,6 @@ class ExamView(QGraphicsView):
             fnames = [fnames]
         for img in self.imageGItem.childItems():
             self.imageGItem.removeFromGroup(img)
-            img.setVisible(False)  # why?
             self.scene.removeItem(img)
         img = None
 
