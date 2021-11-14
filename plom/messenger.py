@@ -504,6 +504,27 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def get_all_tags(self):
+        """All the tags currently in use and their frequencies.
+
+        Returns:
+            dict: keys are tags and values are usage counts.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/tags",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 409:
+                    raise PlomTakenException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def get_tags(self, code):
         self.SRmutex.acquire()
         try:
@@ -517,7 +538,7 @@ class Messenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
-                raise PlomTakenException(response.reason)
+                raise PlomTakenException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
