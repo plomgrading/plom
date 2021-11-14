@@ -88,24 +88,6 @@ class ManagerMessenger(BaseMessenger):
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
-    def getGlobalQuestionVersionMap(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/questionVersionMap",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        # JSON casts dict keys to str, force back to ints
-        return undo_json_packing_of_version_map(response.json())
-
     # TODO: copy pasted from Messenger.IDreturnIDdTask: can we dedupe?
     def id_paper(self, code, studentID, studentName):
         """Identify a paper directly, not as part of a IDing task.

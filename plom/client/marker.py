@@ -2505,4 +2505,6 @@ class MarkerClient(QWidget):
             )
             ifile.write(img)
             ifilenames.append(ifile.name)
-        QuestionView(ifilenames, tn, gn, marker=self).exec_()
+        qvmap = self.msgr.getQuestionVersionMap(tn)
+        ver = qvmap[gn]
+        QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
