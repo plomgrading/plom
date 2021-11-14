@@ -274,6 +274,23 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
+    def getQuestionVersionMap(self, papernum):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/admin/questionVersionMap/{papernum}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        # JSON casts dict keys to str, force back to ints
+        return {int(q): v for q, v in response.json().items()}
+
     def getGlobalQuestionVersionMap(self):
         self.SRmutex.acquire()
         try:
