@@ -40,7 +40,6 @@ class ImageViewWidget(QWidget):
         if has_reset_button:
             grid.addWidget(resetB, 20, 1)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()

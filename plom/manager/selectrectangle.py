@@ -75,7 +75,6 @@ class SelectRectangleWindow(QDialog):
         grid.addWidget(self.cancelB, 20, 20)
         grid.addWidget(self.acceptB, 19, 20)
         self.setLayout(grid)
-        self.show()
 
         self.rectB.animateClick()
 
@@ -248,7 +247,6 @@ class IDViewWindow(QDialog):
         grid.addWidget(self.view, 2, 1, 10, -1)
         grid.addWidget(self.acceptB, 19, 20)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()

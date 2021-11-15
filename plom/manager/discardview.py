@@ -27,7 +27,6 @@ class ActionTab(QWidget):
         vb.addWidget(self.nb)
         vb.addStretch(0)
         self.setLayout(vb)
-        self.show()
         self.ub.clicked.connect(self.unknown)
         self.nb.clicked.connect(self.noaction)
 
@@ -51,7 +50,6 @@ class UnknownTab(QWidget):
         vb.addStretch(0)
         vb.addWidget(self.ob)
         self.setLayout(vb)
-        self.show()
         self.ub.clicked.connect(self.unknown)
         self.ob.clicked.connect(self.other)
 
@@ -91,7 +89,6 @@ class DiscardViewWindow(QDialog):
         grid.addWidget(self.resetB, 11, 1)
         grid.addWidget(self.cancelB, 11, 20)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()

@@ -27,7 +27,6 @@ class ActionTab(QWidget):
         vb.addWidget(self.cb)
         vb.addWidget(self.vwtb)
         self.setLayout(vb)
-        self.show()
         self.ob.clicked.connect(self.originalPage)
         self.cb.clicked.connect(self.collidingPage)
         self.vwtb.clicked.connect(self.test)
@@ -60,7 +59,6 @@ class OriginalTab(QWidget):
         vb.addStretch(0)
         vb.addWidget(self.ob)
         self.setLayout(vb)
-        self.show()
         self.kb.clicked.connect(self.keepOriginal)
         self.ob.clicked.connect(self.other)
 
@@ -87,7 +85,6 @@ class CollideTab(QWidget):
         vb.addStretch(0)
         vb.addWidget(self.ob)
         self.setLayout(vb)
-        self.show()
         self.kb.clicked.connect(self.keepCollide)
         self.ob.clicked.connect(self.other)
 
@@ -146,7 +143,6 @@ class CollideViewWindow(QDialog):
         hb.setStretchFactor(self.collideGB, 1)
         hb.addWidget(self.pane)
         self.setLayout(hb)
-        self.show()
 
     def initTabs(self):
         t0 = ActionTab(self)
