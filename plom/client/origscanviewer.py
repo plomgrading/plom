@@ -692,7 +692,7 @@ class RearrangementViewer(QDialog):
 
     def viewImage(self, fname):
         """Shows a larger view of the currently selected page."""
-        ShowExamPage(self, fname)
+        GroupView(self, [fname], bigger=True).exec_()
 
     def doShuffle(self):
         """
@@ -748,64 +748,8 @@ class RearrangementViewer(QDialog):
                 lstViewI.selectionModel().clearSelection()
 
 
-class ShowExamPage(QDialog):
-    """
-    Shows an expanded view of the Exam.
-    """
-
-    def __init__(self, parent, fname):
-        """
-        Initialize new exam page
-        Args:
-            parent (RearrangementViewer): Parent.
-            fname (str): file name
-
-        """
-        super().__init__()
-        self.setParent(parent)
-        self.setWindowFlags(Qt.Dialog)
-        grid = QGridLayout()
-        self.testImg = ImageViewWidget(self, fname)
-        self.closeButton = QPushButton("&Close")
-        grid.addWidget(self.testImg, 1, 1, 6, 6)
-        grid.addWidget(self.closeButton, 7, 7)
-        self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
-        self.resize(
-            QSize(
-                int(self.parent().width() * 2 / 3),
-                int(self.parent().height() * 7 / 8),
-            )
-        )
-        self.testImg.forceRedrawOrSomeBullshit()
-        self.show()
-
-    def closeEvent(self, event):
-        """
-        Closes the window.
-
-        Args:
-            event (QEvent): the event of closing the window.
-
-        Returns:
-            None.
-
-        """
-        self.closeWindow()
-
-    def closeWindow(self):
-        """
-        Closes the window.
-
-        Returns:
-            None
-
-        """
-        self.close()
-
-
 class GroupView(QDialog):
-    def __init__(self, parent, fnames):
+    def __init__(self, parent, fnames, bigger=False):
         super().__init__(parent)
         grid = QGridLayout()
         self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
@@ -815,8 +759,19 @@ class GroupView(QDialog):
         grid.addWidget(closeButton, 2, 8)
         grid.addWidget(resetB, 2, 1)
         self.setLayout(grid)
+        if bigger:
+            self.resize(
+                QSize(
+                    int(self.parent().width() * 2 / 3),
+                    int(self.parent().height() * 7 / 8),
+                )
+            )
         resetB.clicked.connect(self.testImg.resetView)
         closeButton.clicked.connect(self.close)
+        if bigger:
+            # TODO: seems needed for Ctrl-R double-click popup
+            self.testImg.resetView()
+            self.testImg.forceRedrawOrSomeBullshit()
 
     def closeEvent(self, event):
         self.closeWindow()
