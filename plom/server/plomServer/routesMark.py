@@ -497,7 +497,7 @@ class MarkHandler:
 
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
-    def get_tags(self, data, request):
+    def get_tags_of_task(self, data, request):
         """List the tags for a task.
 
         Args:
@@ -507,7 +507,7 @@ class MarkHandler:
             aiohttp.web_response.json_response: list of strings, one for each tag key.
         """
         task = request.match_info["task"]
-        tag_list = self.server.DB.MgetTags(task)
+        tag_list = self.server.DB.MgetTagsOfTask(task)
         return web.json_response(tag_list)
 
     # @routes.patch("/tags/{task}")
@@ -550,6 +550,22 @@ class MarkHandler:
         if not self.server.remove_tag(data["user"], task, tag_key):
             raise web.HTTPGone(reason=f"No such tag")
         return web.Response(status=200)
+
+    # @routes.get("/all_tags")
+    @authenticate_by_token_required_fields(["user"])
+    def get_all_tags(self, data, request):
+        """Get list of all tags in system.
+
+        Respond with status 200.
+
+        Args:
+            data (dict): user, token.
+
+        Returns:
+            aiohttp.web_response.Response: 200 with list of tags each encoded as (key, text)
+        """
+        tag_list = self.server.MgetAllTags()
+        return web.json_response(tag_list)
 
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
@@ -772,9 +788,10 @@ class MarkHandler:
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_patch("/MK/tags/{task}", self.MsetTags)
-        router.add_get("/tags/{task}", self.get_tags)
+        router.add_get("/tags/{task}", self.get_tags_of_task)
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
+        router.add_get("/all_tags", self.get_all_tags)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_get("/annotations/{number}/{question}", self.get_annotations_latest)

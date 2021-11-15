@@ -55,6 +55,8 @@ class PlomDB:
                     ##
                     Rubric,
                     ARLink,
+                    Tag,
+                    QTLink,
                 ]
             )
         log.info("Database initialised.")
@@ -208,6 +210,8 @@ class PlomDB:
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
+        MgetAllTags,
+        McheckTagExists,
     )
 
     from plom.db.db_rubric import (

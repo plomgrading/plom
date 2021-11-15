@@ -275,7 +275,8 @@ class BackgroundUploader(QThread):
             except EmptyQueueException:
                 return
             self.is_upload_in_progress = True
-            code = data[0]  # TODO: remove so that queue needs no knowledge of args
+            # TODO: remove so that queue needs no knowledge of args
+            code = data[0]
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             # For experimenting with slow uploads
             # time.sleep(30)
@@ -423,7 +424,8 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.src_img_data = src_img_data
-        self.annotatedFile = ""  # The filename for the (future) annotated image
+        # The filename for the (future) annotated image
+        self.annotatedFile = ""
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
         self.tags = tags
@@ -686,7 +688,7 @@ class MarkerExamModel(QStandardItemModel):
         """
         return self._setDataByTask(task, 4, " ".join(tags))
 
-    def getAllTags(self):
+    def get_all_tags(self):
         """Return all tags as a set over all rows of the table.
 
         Note: internally stored as flattened string.
@@ -972,7 +974,8 @@ class MarkerClient(QWidget):
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
 
-        self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
+        # For viewing the whole paper we'll need these two lists.
+        self.viewFiles = []
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
         # Note: specific to this question
@@ -1057,8 +1060,13 @@ class MarkerClient(QWidget):
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
+        # get all the tag (key, text) pairs
+        self.tag_dict = {}
+        self.rebuild_tag_list()
+
         try:
-            self.loadMarkedList()  # Get list of papers already marked and add to table.
+            # Get list of papers already marked and add to table.
+            self.loadMarkedList()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
@@ -1072,7 +1080,8 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
 
         self.requestNext()  # Get a question to mark from the server
-        self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
+        # reset the view so whole exam shown.
+        self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         log.debug("Marker main thread: " + str(threading.get_ident()))
@@ -1220,6 +1229,11 @@ class MarkerClient(QWidget):
         self.shutDownError()
         if rethrow:
             raise (error)
+
+    def rebuild_tag_list(self):
+        tag_list = self.msgr.get_all_tags()
+        for (ky, txt) in tag_list:
+            self.tag_dict[ky] = txt
 
     def loadMarkedList(self):
         """
@@ -1423,7 +1437,9 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
+                page_metadata, tag_key_list, integrity_check = self.msgr.MclaimThisTask(
+                    task
+                )
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1434,11 +1450,6 @@ class MarkerClient(QWidget):
         for r in full_pagedata:
             r["local_filename"] = None
         self._full_pagedata[num] = full_pagedata
-        # print("=" * 80)
-        # print(task)
-        # print("\n".join([str(x) for x in full_pagedata]))
-        # print("\n".join([str(x) for x in page_metadata]))
-        # print("=" * 80)
 
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
@@ -1462,6 +1473,11 @@ class MarkerClient(QWidget):
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
+
+        # translate tag-keys into tag-text
+        tag_texts = [self.tag_dict[tag_key] for tag_key in tag_key_list]
+        # and from that into a single text field
+        tags = " ".join(tag_texts)
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -2426,7 +2442,7 @@ class MarkerClient(QWidget):
         if not parent:
             parent = self
         # TODO: maybe we'd like a list from the server but uncertain about cost
-        all_local_tags = self.examModel.getAllTags()
+        all_local_tags = self.examModel.get_all_tags()
 
         tags = self.msgr.get_tags(task)
 

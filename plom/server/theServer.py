@@ -161,6 +161,8 @@ class Server:
         MsetTags,
         add_tag,
         remove_tag,
+        MgetTagsOfTask,
+        MgetAllTags,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,

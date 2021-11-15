@@ -19,6 +19,7 @@ from plom.db.tables import (
 )
 from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User, Tag, QTLink
 
+from plom.comment_utils import generate_new_comment_ID
 
 log = logging.getLogger("DB")
 
@@ -670,3 +671,49 @@ def MrevertTask(self, task):
             aref.delete_instance()
     log.info(f"Reverted tq {task}")
     return [True]
+
+
+# ===== tag stuff
+
+
+def McreateTag(self, user_name, tag_text):
+    """Create a new tag entry in the DB
+
+    Args:
+        user_name (str): name of user creating the rubric element
+        tag_text (str): the text of the tag
+
+    Returns:
+        tuple: `(True, key)` or `(False, err_msg)` where `key` is the
+            key for the new tag.  Can fail if missing fields.
+    """
+    uref = User.get(name=user_name)  # authenticated, so not-None
+    with plomdb.atomic():
+        # build unique key while holding atomic access
+        # use a 10digit key to distinguish from rubrics
+        key = generate_new_comment_ID(10)
+        while Tag.get_or_none(key=key) is not None:
+            key = generate_new_comment_ID(10)
+        Tag.create(key=key, user=uref, creationTime=datetime.now(), text=tag_text)
+    return (True, key)
+
+
+def MgetAllTags(self):
+    """Return a list of all tags - each tag is pair (key, text)"""
+    # return all the tags
+    tag_list = []
+    for tref in Tag.select():
+        tag_list.append((tref.key, tref.text))
+    return tag_list
+
+
+def McheckTagExists(self, tag_key):
+    """Check that the given tag_key in the database"""
+    if Tag.get_or_none(key=tag_key) is None:
+        return False
+    else:
+        return True
+
+
+##
+##

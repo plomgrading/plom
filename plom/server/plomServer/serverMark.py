@@ -269,6 +269,18 @@ def MgetOriginalImages(self, task):
     return self.DB.MgetOriginalImages(task)
 
 
+def MgetAllTags(self):
+    return self.DB.MgetAllTags()
+
+
+def MgetTagsOfTask(self, task):
+    return self.DB.MgetTagsOfTask(task)
+
+
+def McheckTagExists(self, tag_key):
+    return self.DB.McheckTagExists(tag_key)
+
+
 def MsetTags(self, username, task_code, tag_list):
     """Assign a tag string to a paper.
 
