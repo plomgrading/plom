@@ -15,12 +15,11 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QLabel,
     QPushButton,
-    QTabWidget,
-    QWidget,
 )
 
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage
+from plom.client.examviewwindow import ExamView
 
 
 class SelectRectangleWindow(QDialog):
@@ -39,16 +38,9 @@ class SelectRectangleWindow(QDialog):
 
     def initUI(self, fnames):
         self.setWindowTitle("Select ID Rectangle")
-        self.vTW = QTabWidget()
-        self.views = {}
-        v = 0
-        for fn in fnames:
-            self.views[v] = IDView(self, [fn])
-            self.views[v].setRenderHint(QPainter.HighQualityAntialiasing)
-            self.vTW.addTab(self.views[v], "{}".format(v + 1))
-            v += 1
+        self.view = IDView(self, fnames)
+        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
-        # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
         self.zoomB = QPushButton("zoom tool")
         self.rectB = QPushButton("rectangle")
@@ -58,7 +50,7 @@ class SelectRectangleWindow(QDialog):
 
         self.cancelB.clicked.connect(self.reject)
         self.acceptB.clicked.connect(self.check_and_accept_rect)
-        # self.resetB.clicked.connect(lambda: self.view.resetView())
+        self.resetB.clicked.connect(self.view.resetView)
         self.zoomB.clicked.connect(self.zoomTool)
         self.rectB.clicked.connect(self.rectTool)
         self.delRectB.clicked.connect(self.deleteRect)
@@ -67,7 +59,7 @@ class SelectRectangleWindow(QDialog):
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.vTW, 1, 1, 10, 6)
+        grid.addWidget(self.view, 1, 1, 10, 6)
         grid.addWidget(self.zoomB, 6, 20)
         grid.addWidget(self.rectB, 5, 20)
         grid.addWidget(self.delRectB, 7, 20)
@@ -106,8 +98,7 @@ class SelectRectangleWindow(QDialog):
         self.tool = "rect"
 
     def deleteRect(self):
-        cv = self.vTW.currentIndex()
-        self.views[cv].deleteRect()
+        self.view.deleteRect()
 
 
 class IDView(QGraphicsView):
@@ -196,7 +187,8 @@ class IDView(QGraphicsView):
         if self.boxFlag:
             self.boxFlag = False
             self.parent.rectangle = self.boxItem.rect()
-            self.parent.whichFile = self.parent.vTW.currentIndex()
+            # legacy: left over from multiple id pages?
+            self.parent.whichFile = 0
             return
 
         """Left/right click to zoom in and out"""
@@ -219,16 +211,13 @@ class IDViewWindow(QDialog):
     def __init__(self, parent, fnames, sid):
         super().__init__(parent)
         self.sid = sid
-
-        if not type(fnames) == list:
-            fnames = [fnames]
-
-        self.view = IDView(self, fnames)
+        self.view = ExamView(fnames, dark_background=True)
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
         # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
+        self.resetB.clicked.connect(self.view.resetView)
 
         self.acceptB = QPushButton("&close")
 
@@ -245,6 +234,7 @@ class IDViewWindow(QDialog):
         grid = QGridLayout()
         grid.addWidget(self.idL, 1, 1, 1, -1)
         grid.addWidget(self.view, 2, 1, 10, -1)
+        grid.addWidget(self.resetB, 19, 1)
         grid.addWidget(self.acceptB, 19, 20)
         self.setLayout(grid)
         # Store the current exam view as a qtransform
