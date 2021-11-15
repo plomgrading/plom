@@ -200,10 +200,22 @@ class Rubric(BaseModel):
     count = pw.IntegerField(null=False, default=0)
     creationTime = pw.DateTimeField(null=False)
     modificationTime = pw.DateTimeField(null=False)
-    tags = pw.CharField(default="")
     meta = pw.CharField(default="")
 
 
 class ARLink(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="arlinks")
     rubric = pw.ForeignKeyField(Rubric, backref="arlinks")
+
+
+class Tag(BaseModel):
+    # unique key - user-generated have 12 digits
+    key = pw.CharField(unique=True, null=False)
+    text = pw.CharField(null=False)
+    creationTime = pw.DateTimeField(null=False)
+    user = pw.ForeignKeyField(User, backref="tags", null=False)
+
+
+class QTLink(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="qtlinks")
+    tag = pw.ForeignKeyField(Tag, backref="qtlinks")

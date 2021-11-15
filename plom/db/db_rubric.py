@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
-from plom.db.tables import Rubric, User, Test, QGroup
+from plom.db.tables import Rubric, User, Test, QGroup, Tag
 from plom.db.tables import plomdb
 
 
@@ -255,3 +255,37 @@ def Rget_rubric_details(self, key):
     # annotations (current or not) it is used in - is an overcount.
     rubric_details["count"] = len(rubric_details["test_list"])
     return (True, rubric_details)
+
+
+# ===== tag stuff
+
+
+def McreateTag(self, user_name, tag_text):
+    """Create a new tag entry in the DB
+
+    Args:
+        user_name (str): name of user creating the rubric element
+        tag_text (str): the text of the tag
+
+    Returns:
+        tuple: `(True, key)` or `(False, err_msg)` where `key` is the
+            key for the new tag.  Can fail if missing fields.
+    """
+    uref = User.get(name=user_name)  # authenticated, so not-None
+    with plomdb.atomic():
+        # build unique key while holding atomic access
+        # use a 10digit key to distinguish from rubrics
+        key = generate_new_comment_ID(10)
+        while Tag.get_or_none(key=key) is not None:
+            key = generate_new_comment_ID(10)
+        Tag.create(key=key, user=uref, creationTime=datetime.now(), text=tag_text)
+    return (True, key)
+
+
+def MgetAllTags(self):
+    """Return a list of all tags - each tag is pair (key, text)"""
+    # return all the tags
+    tag_list = []
+    for tref in Tag.select():
+        tag_list.append({"key": tref.key, "text": tref.text})
+    return tag_list
