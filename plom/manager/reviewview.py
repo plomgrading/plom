@@ -17,8 +17,8 @@ from plom.client.examviewwindow import ExamView
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.rb = QPushButton("Review")
         self.nb = QPushButton("No action")
@@ -32,17 +32,17 @@ class ActionTab(QWidget):
         self.nb.clicked.connect(self.noaction)
 
     def review(self):
-        self.parent.optionTW.setCurrentIndex(1)
+        self._parent.optionTW.setCurrentIndex(1)
 
     def noaction(self):
-        self.parent.action = "none"
-        self.parent.accept()
+        self._parent.action = "none"
+        self._parent.accept()
 
 
 class ReviewTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.rb = QPushButton("Click to confirm review")
         self.ob = QPushButton("Return to other options")
@@ -56,20 +56,19 @@ class ReviewTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def review(self):
-        self.parent.action = "review"
-        self.parent.accept()
+        self._parent.action = "review"
+        self._parent.accept()
 
     def other(self):
-        self.parent.action = "none"
-        self.parent.optionTW.setCurrentIndex(0)
+        self._parent.action = "none"
+        self._parent.optionTW.setCurrentIndex(0)
 
 
 class ReviewViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, quidto="question"):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.quidto = quidto
         self.action = "none"
         self.view = ExamView(fnames, dark_background=True)

@@ -17,8 +17,8 @@ from plom.client.examviewwindow import ImageViewWidget
 
 class ActionTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.ob = QPushButton("Keep original page (left)")
         self.cb = QPushButton("Keep colliding page (right)")
@@ -33,25 +33,25 @@ class ActionTab(QWidget):
         self.vwtb.clicked.connect(self.test)
 
     def originalPage(self):
-        self.parent.optionTW.setCurrentIndex(1)
-        self.parent.collideGB.setEnabled(False)
-        self.parent.collideGB.setStyleSheet("background: red")
-        self.parent.originalGB.setStyleSheet("background: green")
+        self._parent.optionTW.setCurrentIndex(1)
+        self._parent.collideGB.setEnabled(False)
+        self._parent.collideGB.setStyleSheet("background: red")
+        self._parent.originalGB.setStyleSheet("background: green")
 
     def collidingPage(self):
-        self.parent.optionTW.setCurrentIndex(2)
-        self.parent.originalGB.setEnabled(False)
-        self.parent.collideGB.setStyleSheet("background: green")
-        self.parent.originalGB.setStyleSheet("background: red")
+        self._parent.optionTW.setCurrentIndex(2)
+        self._parent.originalGB.setEnabled(False)
+        self._parent.collideGB.setStyleSheet("background: green")
+        self._parent.originalGB.setStyleSheet("background: red")
 
     def test(self):
-        self.parent.viewWholeTest()
+        self._parent.viewWholeTest()
 
 
 class OriginalTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.kb = QPushButton("Click to confirm keep original")
         self.ob = QPushButton("Return to other options")
@@ -65,20 +65,20 @@ class OriginalTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def keepOriginal(self):
-        self.parent.action = "original"
-        self.parent.accept()
+        self._parent.action = "original"
+        self._parent.accept()
 
     def other(self):
-        self.parent.optionTW.setCurrentIndex(0)
-        self.parent.collideGB.setEnabled(True)
-        self.parent.collideGB.setStyleSheet("")
-        self.parent.originalGB.setStyleSheet("")
+        self._parent.optionTW.setCurrentIndex(0)
+        self._parent.collideGB.setEnabled(True)
+        self._parent.collideGB.setStyleSheet("")
+        self._parent.originalGB.setStyleSheet("")
 
 
 class CollideTab(QWidget):
     def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         vb = QVBoxLayout()
         self.kb = QPushButton("Click to confirm replace")
         self.ob = QPushButton("Return to other options")
@@ -92,22 +92,21 @@ class CollideTab(QWidget):
         self.ob.clicked.connect(self.other)
 
     def keepCollide(self):
-        self.parent.action = "collide"
-        self.parent.accept()
+        self._parent.action = "collide"
+        self._parent.accept()
 
     def other(self):
-        self.parent.optionTW.setCurrentIndex(0)
-        self.parent.originalGB.setEnabled(True)
-        self.parent.collideGB.setStyleSheet("")
-        self.parent.originalGB.setStyleSheet("")
+        self._parent.optionTW.setCurrentIndex(0)
+        self._parent.originalGB.setEnabled(True)
+        self._parent.collideGB.setStyleSheet("")
+        self._parent.originalGB.setStyleSheet("")
 
 
 class CollideViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, onames, fnames, test, page):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.test = test
         self.page = page
 
@@ -158,4 +157,4 @@ class CollideViewWindow(QDialog):
         self.optionTW.addTab(t2, "Keep collide")
 
     def viewWholeTest(self):
-        self.parent.viewWholeTest(self.test)
+        self.parent().viewWholeTest(self.test, parent=self)

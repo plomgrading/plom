@@ -27,8 +27,7 @@ class SelectRectangleWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
 
         if type(fnames) == list:
             self.initUI(fnames)
@@ -219,8 +218,7 @@ class IDViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, sid):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.sid = sid
 
         if not type(fnames) == list:
