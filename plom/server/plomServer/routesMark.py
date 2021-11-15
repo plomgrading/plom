@@ -507,6 +507,7 @@ class MarkHandler:
             aiohttp.web_response.json_response: list of strings, one for each
                 tag.
         """
+        # TODO: Andrew may want this split out to serverMark.py
         alltags = {}
         for papernum in range(1, self.server.testSpec["numberToProduce"] + 1):
             for q in range(1, self.server.testSpec["numberOfQuestions"] + 1):
