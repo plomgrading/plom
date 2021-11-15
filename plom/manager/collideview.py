@@ -1,24 +1,13 @@
-__author__ = "Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2020 Andrew Rechnitzer"
-__credits__ = ["Andrew Rechnitzer", "Colin Macdonald", "Elvis Cai", "Matt Coles"]
-__license__ = "AGPLv3"
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2020-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QBrush, QGuiApplication, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QDialog,
-    QFrame,
-    QFormLayout,
-    QGraphicsPixmapItem,
-    QGraphicsItemGroup,
-    QGraphicsScene,
-    QGraphicsView,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
-    QLabel,
     QPushButton,
-    QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -164,12 +153,12 @@ class CollideViewWindow(QDialog):
         self.show()
 
     def initTabs(self):
-        self.t0 = ActionTab(self)
-        self.t1 = OriginalTab(self)
-        self.t2 = CollideTab(self)
-        self.optionTW.addTab(self.t0, "Actions")
-        self.optionTW.addTab(self.t1, "Keep original")
-        self.optionTW.addTab(self.t2, "Keep collide")
+        t0 = ActionTab(self)
+        t1 = OriginalTab(self)
+        t2 = CollideTab(self)
+        self.optionTW.addTab(t0, "Actions")
+        self.optionTW.addTab(t1, "Keep original")
+        self.optionTW.addTab(t2, "Keep collide")
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""

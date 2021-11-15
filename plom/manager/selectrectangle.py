@@ -7,8 +7,6 @@ from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QDialog,
-    QFrame,
-    QFormLayout,
     QGraphicsRectItem,
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -17,9 +15,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QLabel,
     QPushButton,
-    QSpinBox,
     QTabWidget,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -237,12 +233,9 @@ class IDViewWindow(QDialog):
         self.parent = parent
         self.sid = sid
 
-        if type(fnames) == list:
-            self.initUI(fnames)
-        else:
-            self.initUI([fnames])
+        if not type(fnames) == list:
+            fnames = [fnames]
 
-    def initUI(self, fnames):
         self.view = IDView(self, fnames)
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)

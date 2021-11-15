@@ -2,7 +2,6 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (
     QDialog,
@@ -118,10 +117,10 @@ class ReviewViewWindow(QDialog):
         self.view.verticalScrollBar().setValue(self.dy)
 
     def initTabs(self):
-        self.t0 = ActionTab(self)
-        self.t1 = ReviewTab(self)
-        self.optionTW.addTab(self.t0, "Actions")
-        self.optionTW.addTab(self.t1, "Review {}".format(self.quidto))
+        t0 = ActionTab(self)
+        t1 = ReviewTab(self)
+        self.optionTW.addTab(t0, "Actions")
+        self.optionTW.addTab(t1, "Review {}".format(self.quidto))
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
