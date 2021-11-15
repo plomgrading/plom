@@ -56,12 +56,10 @@ class SelectRectangleWindow(QDialog):
         self.delRectB = QPushButton("delete rectangle")
         self.acceptB = QPushButton("&accept")
         self.cancelB = QPushButton("&cancel")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
         self.acceptB.clicked.connect(self.check_and_accept_rect)
         # self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
         self.zoomB.clicked.connect(self.zoomTool)
         self.rectB.clicked.connect(self.rectTool)
         self.delRectB.clicked.connect(self.deleteRect)
@@ -77,7 +75,6 @@ class SelectRectangleWindow(QDialog):
         grid.addWidget(self.resetB, 20, 1)
         grid.addWidget(self.cancelB, 20, 20)
         grid.addWidget(self.acceptB, 19, 20)
-        grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
         self.show()
 
@@ -91,13 +88,6 @@ class SelectRectangleWindow(QDialog):
             pass
         else:
             self.accept()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def zoomTool(self):
         self.zoomB.setStyleSheet(
@@ -244,11 +234,9 @@ class IDViewWindow(QDialog):
         self.resetB = QPushButton("reset view")
 
         self.acceptB = QPushButton("&close")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.acceptB.clicked.connect(self.accept)
 
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
         self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
         self.idL = QLabel("ID: {}".format(self.sid))
@@ -258,10 +246,9 @@ class IDViewWindow(QDialog):
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.idL, 1, 1, 1, 6)
-        grid.addWidget(self.view, 2, 1, 10, 6)
+        grid.addWidget(self.idL, 1, 1, 1, -1)
+        grid.addWidget(self.view, 2, 1, 10, -1)
         grid.addWidget(self.acceptB, 19, 20)
-        grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
         self.show()
         # Store the current exam view as a qtransform
@@ -280,10 +267,3 @@ class IDViewWindow(QDialog):
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
         self.view.verticalScrollBar().setValue(self.dy)
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)

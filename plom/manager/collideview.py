@@ -119,10 +119,8 @@ class CollideViewWindow(QDialog):
         self.viewC = ImageViewWidget(self, fnames)
 
         self.cancelB = QPushButton("&cancel")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
 
         self.originalGB = QGroupBox("Original")
         self.collideGB = QGroupBox("Collision")
@@ -137,7 +135,6 @@ class CollideViewWindow(QDialog):
         self.collideGB.setLayout(cb)
 
         grid = QGridLayout()
-        grid.addWidget(self.maxNormB, 1, 4)
         grid.addWidget(self.cancelB, 10, 4)
         grid.addWidget(self.optionTW, 2, 1, 8, 4)
         self.pane = QWidget()
@@ -159,13 +156,6 @@ class CollideViewWindow(QDialog):
         self.optionTW.addTab(t0, "Actions")
         self.optionTW.addTab(t1, "Keep original")
         self.optionTW.addTab(t2, "Keep collide")
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def viewWholeTest(self):
         self.parent.viewWholeTest(self.test)

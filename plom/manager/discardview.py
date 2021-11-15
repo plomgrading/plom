@@ -79,21 +79,18 @@ class DiscardViewWindow(QDialog):
         # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
         self.cancelB = QPushButton("&cancel")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
         self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
 
         self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.view, 1, 1, 10, 6)
-        grid.addWidget(self.optionTW, 2, 17, 8, 4)
-        grid.addWidget(self.resetB, 20, 1)
-        grid.addWidget(self.cancelB, 20, 20)
-        grid.addWidget(self.maxNormB, 1, 20)
+        grid.addWidget(self.view, 1, 1, 10, 10)
+        grid.addWidget(self.optionTW, 1, 11, 10, -1)
+        grid.addWidget(self.resetB, 11, 1)
+        grid.addWidget(self.cancelB, 11, 20)
         self.setLayout(grid)
         self.show()
         # Store the current exam view as a qtransform
@@ -120,10 +117,3 @@ class DiscardViewWindow(QDialog):
         t1 = UnknownTab(self)
         self.optionTW.addTab(t0, "Actions")
         self.optionTW.addTab(t1, "Move Page")
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
