@@ -840,6 +840,7 @@ class QuestionViewDialog(GroupView):
         marker (None/plom.client.Marker): used to talk to the server for
             tagging.
     """
+
     def __init__(self, parent, fnames, testnum, questnum, ver=None, marker=None):
         super().__init__(parent, fnames)
         s = f"Original ungraded images for test {testnum:04} question {questnum}"
