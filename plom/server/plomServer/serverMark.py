@@ -290,7 +290,6 @@ def add_tag(self, username, task, tag):
     Args:
         username (str): User who is assigning tag to the paper.
             TODO: currently not recorded but likely we want to record this.
-            TODO: currently users can only tag their own tasks: relax!
         task (str): Code string for the task (paper).
         tag (str): Tag to assign to the paper.
 
@@ -308,7 +307,6 @@ def add_tag(self, username, task, tag):
     else:
         tags.append(tag)
     tags = " ".join(tags)
-    # TODO: currently user must be owner: drop this artificial restriction
     return self.DB.MsetTags(username, task, tags)
 
 
