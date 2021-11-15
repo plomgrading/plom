@@ -158,7 +158,6 @@ class Annotation(BaseModel):
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
 
 
 class APage(BaseModel):
@@ -179,7 +178,6 @@ class OldAnnotation(BaseModel):
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
 
 
 class OAPage(BaseModel):
@@ -209,7 +207,7 @@ class ARLink(BaseModel):
 
 
 class Tag(BaseModel):
-    # unique key - user-generated have 12 digits
+    # unique key - user-generated have 10 digits
     key = pw.CharField(unique=True, null=False)
     text = pw.CharField(null=False)
     creationTime = pw.DateTimeField(null=False)

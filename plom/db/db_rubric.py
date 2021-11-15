@@ -289,3 +289,11 @@ def MgetAllTags(self):
     for tref in Tag.select():
         tag_list.append({"key": tref.key, "text": tref.text})
     return tag_list
+
+
+def McheckTagExists(self, tag_key):
+    """Check that the given tag_key in the database"""
+    if Tag.get_or_none(key=tag_key) is None:
+        return False
+    else:
+        return True

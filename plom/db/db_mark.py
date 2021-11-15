@@ -9,8 +9,15 @@ import logging
 import peewee as pw
 
 from plom.db.tables import plomdb
-from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
-from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User
+from plom.db.tables import (
+    AImage,
+    Annotation,
+    APage,
+    ARLink,
+    OAPage,
+    OldAnnotation,
+)
+from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User, Tag, QTLink
 
 
 log = logging.getLogger("DB")
@@ -57,7 +64,7 @@ def McountMarked(self, q, v):
 
 def MgetDoneTasks(self, user_name, q, v):
     """When a marker-client logs on they request a list of papers they have already marked.
-    Send back the list of [group-ids, mark, marking_time, tags] for each paper.
+    Send back the list of [group-ids, mark, marking_time, [list_of_tag_keys] ] for each paper.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
@@ -69,13 +76,15 @@ def MgetDoneTasks(self, user_name, q, v):
     )
     mark_list = []
     for qref in query:  # grab that questionData object
+        # get the tag keys for that qgroup
+        tag_list = [qtref.tag.key for qtref in qref.qtlinks]
         aref = qref.annotations[-1]  # grab the last annotation
         mark_list.append(
             [
                 qref.group.gid,
                 aref.mark,
                 aref.marking_time,
-                aref.tags,
+                tag_list,
                 aref.integrity_check,
             ]
         )
@@ -117,7 +126,7 @@ def MgiveTaskToClient(self, user_name, group_id):
     Return:
         list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
             Otherwise, the list is
-                `[True, metadata, tags, integrity_check]`
+                `[True, metadata, [list of tag keys], integrity_check]`
             where each row of `metadata` consists of
                 `[DB_id, md5_sum, server_filename]`
             Note: `server_filename` is implementation-dependent, could change
@@ -151,6 +160,8 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.user = uref
         qref.time = datetime.now()
         qref.save()
+        # get tag_list
+        tag_list = [qtref.tag.key for qtref in qref.qtlinks]
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
@@ -172,7 +183,7 @@ def MgiveTaskToClient(self, user_name, group_id):
                 group_id, user_name, aref.integrity_check
             )
         )
-        return [True, image_metadata, aref.tags, aref.integrity_check]
+        return [True, image_metadata, tag_list, aref.integrity_check]
 
 
 def MdidNotFinish(self, user_name, group_id):
@@ -309,7 +320,6 @@ def MtakeTaskFromClient(
             qgroup=qref,
             user=uref,
             edition=oldaref.edition + 1,
-            tags=oldaref.tags,
             time=datetime.now(),
             integrity_check=oldaref.integrity_check,
         )
@@ -446,7 +456,7 @@ def MgetOriginalImages(self, task):
         return rval
 
 
-def MgetTags(self, task):
+def MgetTagsOfTask(self, task):
     """Get tags on last annotation of given task.
 
     Returns:
@@ -458,15 +468,15 @@ def MgetTags(self, task):
         log.error("MgetTags - task {} not known".format(task))
         return None
     qref = gref.qgroups[0]
-    # grab the last annotation
-    aref = qref.annotations[-1]
-    return aref.tags
+
+    return [qtref.tag.key for qtref in qref.qtlinks]
 
 
-def MsetTags(self, user_name, task, tags):
-    """Set tags on last annotation of given task.
+def MsetTags(self, user_name, task, tag_list):
+    """Set tags on last annotation of given task. Adds all new tags and removes any existing tags that are not in tag_list.
 
-    TODO: scary that its the last annotation: maybe client should be telling us which one?
+
+    Tag_list is a list of tag keys.
     """
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
@@ -474,13 +484,24 @@ def MsetTags(self, user_name, task, tags):
             log.error("MsetTags - task {} not known".format(task))
             return False
         qref = gref.qgroups[0]
-        # grab the last annotation
-        aref = qref.annotations[-1]
-        # update tag
-        aref.tags = tags
-        aref.save()
-        log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tags}"')
-        return True
+        # existing keys
+        existing_tags = [qtref.key for qtref in qref.qtlinks]
+        # add in new tags
+        for tg in tag_list:
+            if tg not in existing_tags:
+                tgref = Tag.get_or_none(key=tg)  # get ref to the tag
+                if tgref is None:
+                    # server checks keys earlier, so this should not happen.
+                    continue
+                qtref = QTLink.create(tag=tgref, qgroup=qref)
+        # now remove old tags
+        for qtref in qref.qtlinks:
+            # server checks this, so should not happen.
+            if qtref.key not in tag_list:
+                qtref.delete_instance()
+        # all done!
+        log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tag_list}"')
+    return True
 
 
 def MgetWholePaper(self, test_number, question):
@@ -633,7 +654,6 @@ def MrevertTask(self, task):
                 mark=aref.mark,
                 marking_time=aref.marking_time,
                 time=aref.time,
-                tags=aref.tags,
             )
             # make oapges
             for pref in aref.apages:

@@ -203,7 +203,7 @@ class PlomDB:
         Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,
-        MgetTags,
+        MgetTagsOfTask,
         MsetTags,
         MgetWholePaper,
         MreviewQuestion,
