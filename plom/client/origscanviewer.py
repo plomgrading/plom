@@ -50,7 +50,7 @@ class SourceList(QListWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent = parent
+        self._parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
@@ -120,7 +120,7 @@ class SourceList(QListWidget):
                 ci.setHidden(False)
 
     def viewImage(self, qi):
-        self.parent.viewImage(self.item_files[qi.text()])
+        self._parent.viewImage(self.item_files[qi.text()])
 
 
 class SinkList(QListWidget):
@@ -133,7 +133,7 @@ class SinkList(QListWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent = parent
+        self._parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setFlow(QListView.LeftToRight)
         self.setAcceptDrops(False)
@@ -225,7 +225,7 @@ class SinkList(QListWidget):
             ci = self.item(i.row())
             name = ci.text()
             self.rotateItemBy(name, angle)
-        self.parent.update()
+        self._parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
         self.setFlow(QListView.LeftToRight)
 
@@ -278,7 +278,7 @@ class SinkList(QListWidget):
         # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
-        self.parent.viewImage(self.item_files[qi.text()])
+        self._parent.viewImage(self.item_files[qi.text()])
 
     def getNameList(self):
         nList = []
@@ -291,8 +291,7 @@ class RearrangementViewer(QDialog):
     def __init__(
         self, parent, testNumber, current_pages, page_data, need_to_confirm=False
     ):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.testNumber = testNumber
         self.need_to_confirm = need_to_confirm
         self._setupUI()
@@ -457,8 +456,8 @@ class RearrangementViewer(QDialog):
         self.setLayout(vb0)
         self.resize(
             QSize(
-                int(self.parent.width() * 7 / 8),
-                int(self.parent.height() * 9 / 10),
+                int(self.parent().width() * 7 / 8),
+                int(self.parent().height() * 11 / 12),
             )
         )
 
@@ -763,7 +762,7 @@ class GroupView(QDialog):
             self.resize(
                 QSize(
                     int(self.parent().width() * 2 / 3),
-                    int(self.parent().height() * 7 / 8),
+                    int(self.parent().height() * 11 / 12),
                 )
             )
         resetB.clicked.connect(self.testImg.resetView)
