@@ -165,7 +165,9 @@ class PageView(QGraphicsView):
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         ratio = tempPaperWindow.height() / self.scene().height() * 0.98
         self.scale(ratio, ratio)
-        self.centerOn(self.paperWindow.center())
+        # Issue #1768: at least initially we should start at the left of the page
+        # self.centerOn(self.paperWindow.center())
+        self.centerOn(self.paperWindow.left(), self.paperWindow.center().y())
         if update:
             self.parent.changeCBZoom(3)
 
@@ -188,7 +190,9 @@ class PageView(QGraphicsView):
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         rat = tempPaperWindow.width() / self.scene().width() * 0.98
         self.scale(rat, rat)
-        self.centerOn(self.paperWindow.center())
+        # Issue #1768: at least initially we should start at the top of the page
+        # self.centerOn(self.paperWindow.center())
+        self.centerOn(self.paperWindow.center().x(), self.paperWindow.top())
         if update:
             self.parent.changeCBZoom(2)
 

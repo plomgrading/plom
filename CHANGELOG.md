@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client: fit-to-width and fit-to-height pan to the top and left respectively.
 
 ### Fixed
-
+* Tweaks and fixes about reassembly and solution assembly.
+* Client: better dark theme support, other tweaks.
+* Other minor fixes, including potential crashes caught by `pylint`.
 
 
 ## [0.7.5] - 2021-11-07
