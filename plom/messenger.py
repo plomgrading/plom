@@ -330,7 +330,7 @@ class Messenger(BaseMessenger):
             code (str): a task code such as `"q0123g2"`.
 
         returns:
-            list: Consisting of image_metadata, tags, integrity_check.
+            list: Consisting of image_metadata, [list of tag keys], integrity_check.
         """
 
         self.SRmutex.acquire()
@@ -485,21 +485,21 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return ret
 
-    def MsetTags(self, code, tags):
+    def MsetTags(self, code, tag_list):
         """Deprecated method for setting all tags at once."""
         self.SRmutex.acquire()
         try:
             response = self.patch(
                 f"/MK/tags/{code}",
-                json={"user": self.user, "token": self.token, "tags": tags},
+                json={"user": self.user, "token": self.token, "tag_list": tag_list},
             )
             response.raise_for_status()
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException("Task taken by another user.") from None
+            if response.status_code == 410:
+                raise PlomBadTagError("Problem with tag keys.") from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -516,45 +516,39 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
-    def add_tag(self, code, tag):
+    def add_tag(self, code, tag_key):
         self.SRmutex.acquire()
         try:
             response = self.patch(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag": tag},
+                json={"user": self.user, "token": self.token, "tag_key": tag_key},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException(response.reason)
-            if response.status_code == 406:
+            if response.status_code == 410:
                 raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
-    def remove_tag(self, code, tag):
+    def remove_tag(self, code, tag_key):
         self.SRmutex.acquire()
         try:
             response = self.delete(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag": tag},
+                json={"user": self.user, "token": self.token, "tag": tag_key},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException(response.reason)
-            if response.status_code == 406:
+            if response.status_code == 410:
                 raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:

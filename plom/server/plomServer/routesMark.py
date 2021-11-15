@@ -86,7 +86,7 @@ class MarkHandler:
             aiohttp.web_response.Response: A response object including a
                 list of lists with the already processed questions. The
                 list involves the question string, question mark, time
-                spent grading and tag string.
+                spent grading and list of tag-keys.
         """
         # return the completed list
         return web.json_response(
@@ -160,7 +160,7 @@ class MarkHandler:
 
         task_code = request.match_info["task"]
         # returns either
-        #   [True, image_metadata, tags, integrity_check]
+        #   [True, image_metadata, [tag key list], integrity_check]
         #   [False]
         retvals = self.server.MclaimThisTask(data["user"], task_code)
 
@@ -469,14 +469,14 @@ class MarkHandler:
         return web.Response(body=multipart_writer, status=200)
 
     # @routes.patch("/MK/tags/{task}")
-    @authenticate_by_token_required_fields(["user", "tags"])
+    @authenticate_by_token_required_fields(["user", "tag_list"])
     def MsetTags(self, data, request):
         """Set tag for a task.
 
-        Respond with status 200/409.
+        Respond with status 200/410.
 
         Args:
-            data (dict): A dictionary having the user/token in addition to the tag string.
+            data (dict): A dictionary having the user/token in addition to the list of tag keys.
                 Request object also includes the task code.
             request (aiohttp.web_request.Request): PATCH /MK/tags/`task_code` type request.
 
@@ -485,12 +485,15 @@ class MarkHandler:
                 the tag was successful.
         """
         task_code = request.match_info["task"]
-        set_tag_success = self.server.MsetTags(data["user"], task_code, data["tags"])
+        set_tag_success = self.server.MsetTags(
+            data["user"], task_code, data["tag_list"]
+        )
 
         if set_tag_success:
             return web.Response(status=200)
         else:
-            return web.Response(status=409)  # Task does not belong to this user.
+            # Failure = invalid Keys
+            raise web.HTTPGone(reason="No tag with that key.")
 
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
@@ -501,64 +504,51 @@ class MarkHandler:
             data (dict): user, token.
 
         Returns:
-            aiohttp.web_response.json_response: list of strings, one for each
-                tag, or HTTPConflict (409) if user not permitted to get tags
-                for that paper.
+            aiohttp.web_response.json_response: list of strings, one for each tag key.
         """
         task = request.match_info["task"]
-        tags = self.server.DB.MgetTags(task)
-        if tags is None:
-            # TODO: wrong thing?  not conflict, badrequest
-            raise web.HTTPConflict(reason=f"Not such task {task}")
-        tags = tags.split()
-        return web.json_response(tags)
+        tag_list = self.server.DB.MgetTags(task)
+        return web.json_response(tag_list)
 
     # @routes.patch("/tags/{task}")
-    @authenticate_by_token_required_fields(["user", "tag"])
+    @authenticate_by_token_required_fields(["user", "tag_key"])
     def add_tag(self, data, request):
         """Add a tag for a task.
 
-        Respond with status 200/409.
+        Respond with status 200/410.
 
         Args:
-            data (dict): user, token and the tag (str).
+            data (dict): user, token and the key for the given tag (str).
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
-                HTTPConflict (409) if user not allowed to tag this paper.
-                HTTPNotAcceptable (406) if tag is not admissible, such
-                as containing invalid characters (namely spaces!)
+                HTTPGone (410) if there is no such tag.
         """
         task = request.match_info["task"]
-        tag = data["tag"].strip()
-        if any(c.isspace() for c in tag):
-            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
+        tag_key = data["tag_key"]
         if not self.server.add_tag(data["user"], task, tag):
-            raise web.HTTPConflict(reason=f"User not allowed to add tag to task {task}")
+            raise web.HTTPGone(reason="No tag with that key.")
         return web.Response(status=200)
 
     # @routes.delete("/tags/{task}")
-    @authenticate_by_token_required_fields(["user", "tag"])
+    @authenticate_by_token_required_fields(["user", "tag_key"])
     def remove_tag(self, data, request):
         """Remove a tag from a task.
 
-        Respond with status 200/409.
+        Respond with status 200/410.
 
         Args:
-            data (dict): user, token and the tag (str).
+            data (dict): user, token and the key of the tag (str).
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
-                HTTPConflict (409) if user not allowed to tag this paper.
-                HTTPNotAcceptable (406) if tag is not admissible, such
-                as containing invalid characters (namely spaces!)
+                HTTPGone (410) if no such tag.
         """
         task = request.match_info["task"]
-        tag = data["tag"].strip()
-        if any(c.isspace() for c in tag):
-            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
-        if not self.server.remove_tag(data["user"], task, tag):
-            raise web.HTTPConflict(reason=f"User not allowed to remove tag from {task}")
+        tag_key = data["tag_key"].strip()
+
+        if not self.server.remove_tag(data["user"], task, tag_key):
+            raise web.HTTPGone(reason=f"No such tag")
         return web.Response(status=200)
 
     # @routes.get("/MK/whole/{number}")
