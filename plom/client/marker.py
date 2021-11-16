@@ -2447,9 +2447,10 @@ class MarkerClient(QWidget):
         """
         if not parent:
             parent = self
-        # TODO: maybe we'd like a list from the server but uncertain about cost
-        all_local_tags = self.examModel.get_all_tags()
 
+        # first refresh the tag dictionaries
+        self.rebuild_tag_dictionaries()
+        # get the tags for this task on the server
         tag_keys = self.msgr.get_tags(task)
         tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
 
