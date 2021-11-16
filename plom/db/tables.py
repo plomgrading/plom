@@ -198,6 +198,7 @@ class Rubric(BaseModel):
     count = pw.IntegerField(null=False, default=0)
     creationTime = pw.DateTimeField(null=False)
     modificationTime = pw.DateTimeField(null=False)
+    tags = pw.CharField(default="")
     meta = pw.CharField(default="")
 
 

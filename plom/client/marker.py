@@ -92,7 +92,7 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(str, list, list, str, str)
+    downloadSuccess = pyqtSignal(str, list, list, list, str)
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -150,7 +150,9 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(task)
+                page_metadata, tag_keys, integrity_check = self._msgr.MclaimThisTask(
+                    task
+                )
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -189,7 +191,7 @@ class BackgroundDownloader(QThread):
                     r["local_filename"] = tmp
 
         self.downloadSuccess.emit(
-            task, src_img_data, full_pagedata, tags, integrity_check
+            task, src_img_data, full_pagedata, tag_keys, integrity_check
         )
         self.quit()
 
@@ -1534,7 +1536,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, full_pagedata, tags, integrity_check
+        self, task, src_img_data, full_pagedata, tag_keys, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1544,7 +1546,7 @@ class MarkerClient(QWidget):
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
             full_pagedata (list): temporary hacks to merge with above?
-            tags (str): tags for the TGV.
+            tag_keys (list[str]): list of keys for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
@@ -1552,6 +1554,8 @@ class MarkerClient(QWidget):
         """
         num = int(task[1:5])
         self._full_pagedata[num] = full_pagedata
+        # convert tag keys to tag text
+        tags = " ".join([self.tag_k2t[tag_key] for tag_key in tag_keys])
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -2484,15 +2488,16 @@ class MarkerClient(QWidget):
             rtd = RemoveTagDialog(self, task, tag_texts)
             if rtd.exec() == QDialog.Accepted:
                 tag_text = rtd.CB.currentText()
-                try:
-                    # get tag key from its text
-                    tag_key = self.tag_t2k[tag_text]
+                if len(tag_text) > 0:
+                    try:
+                        # get tag key from its text
+                        tag_key = self.tag_t2k[tag_text]
 
-                    self.msgr.remove_single_tag(task, tag_key)
-                except PlomBadTagError as e:
-                    ErrorMessage(f"Tag not acceptable: {e}").exec_()
-                tag_keys = self.msgr.get_tags(task)
-                tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
+                        self.msgr.remove_single_tag(task, tag_key)
+                    except PlomBadTagError as e:
+                        ErrorMessage(f"Tag not acceptable: {e}").exec_()
+                    tag_keys = self.msgr.get_tags(task)
+                    tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
 
         try:
             self.examModel.setTagsByTask(task, tag_texts)
@@ -2537,5 +2542,7 @@ class MarkerClient(QWidget):
         QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
 
 
+##
+##
 ##
 ##

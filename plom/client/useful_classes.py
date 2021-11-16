@@ -389,6 +389,7 @@ class AddTagDialog(QDialog):
         self.CB.setEditable(True)
         self.CB.addItem("")
         self.CB.addItems(tag_choices)
+
         lay.addWidget(self.CB)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -414,6 +415,7 @@ class RemoveTagDialog(QDialog):
         lay.addWidget(QLabel("<p>Choose tag to remove or click cancel.</p>"))
 
         self.CB = QComboBox()
+        self.CB.addItem("")
         self.CB.addItems(current_tags)
         lay.addWidget(self.CB)
 
