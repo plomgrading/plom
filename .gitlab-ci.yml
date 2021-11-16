@@ -744,7 +744,7 @@ binary_upload:
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
     - echo "$URL4  $LINKNAME4" >> release_desc.md
-    - ehco "This next one needs to be generated and uploaded manually:" >> release_desc.md
+    - echo "This next one needs to be generated and uploaded manually:" >> release_desc.md
     - echo "$URL5  $LINKNAME5" >> release_desc.md
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
