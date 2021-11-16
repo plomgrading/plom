@@ -405,7 +405,7 @@ class BaseMessenger:
         try:
             response = self.delete(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag": tag_key},
+                json={"user": self.user, "token": self.token, "tag_key": tag_key},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -421,7 +421,7 @@ class BaseMessenger:
         self.SRmutex.acquire()
         try:
             response = self.get(
-                f"/all_tags",
+                f"/tags",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

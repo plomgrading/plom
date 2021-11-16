@@ -365,36 +365,62 @@ class ClientSettingsDialog(QDialog):
         )
 
 
-class AddTagBox(QDialog):
-    def __init__(self, parent, currentTag, tagList=[]):
+class AddTagDialog(QDialog):
+    def __init__(self, parent, task, current_tags, tag_choices=[]):
         super().__init__()
         self.parent = parent
-        self.CB = QComboBox()
-        self.TE = QTextEdit()
+        self.setWindowTitle(f"Add tag to task {task}?")
 
-        flay = QFormLayout()
-        flay.addRow("Enter tag\n(max 256 char)", self.TE)
-        flay.addRow("Choose tag", self.CB)
+        lay = QVBoxLayout()
+        if len(current_tags) == 0:
+            lay.addWidget(QLabel("<p>No current tags</p>"))
+        else:
+            tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in current_tags)
+            msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"
+            lay.addWidget(QLabel(msg))
+
+        lay.addWidget(
+            QLabel("<p>Choose tag to add or edit text to create a new one.</p>")
+        )
+
+        lay.addWidget(QLabel("<p>Click cancel to skip this dialog.</p>"))
+
+        self.CB = QComboBox()
+        self.CB.setEditable(True)
+        self.CB.addItem("")
+        self.CB.addItems(tag_choices)
+        lay.addWidget(self.CB)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-
-        vlay = QVBoxLayout()
-        vlay.addLayout(flay)
-        vlay.addWidget(buttons)
-        self.setLayout(vlay)
-
-        # set up widgets
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        self.CB.addItem("")
-        self.CB.addItems(tagList)
-        # Set up TE and CB so that when CB changed, text is updated
-        self.CB.currentTextChanged.connect(self.changedCB)
-        # If supplied with current text/delta then set them
-        if currentTag is not None:
-            self.TE.clear()
-            self.TE.insertPlainText(currentTag)
 
-    def changedCB(self):
-        self.TE.clear()
-        self.TE.insertPlainText(self.CB.currentText())
+        lay.addWidget(buttons)
+
+        self.setLayout(lay)
+
+
+class RemoveTagDialog(QDialog):
+    def __init__(self, parent, task, current_tags):
+        super().__init__()
+        self.parent = parent
+        self.setWindowTitle(f"Choose tag to remove from task {task}?")
+
+        lay = QVBoxLayout()
+        tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in current_tags)
+        msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"
+        lay.addWidget(QLabel(msg))
+
+        lay.addWidget(QLabel("<p>Choose tag to remove or click cancel.</p>"))
+
+        self.CB = QComboBox()
+        self.CB.addItems(current_tags)
+        lay.addWidget(self.CB)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+
+        lay.addWidget(buttons)
+
+        self.setLayout(lay)

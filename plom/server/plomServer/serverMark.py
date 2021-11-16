@@ -347,7 +347,7 @@ def remove_tag(self, username, task, tag_key):
         log.warn(f'tag with key "{tag_key}" does not exist')
         return False
     # get existing tag keys
-    tag_list = self.DB.MgetTags(task)
+    tag_list = self.DB.MgetTagsOfTask(task)
     if tag_key not in tag_list:
         return False
     # remove that single key

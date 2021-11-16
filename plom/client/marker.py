@@ -66,7 +66,7 @@ from .annotator import Annotator
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import QuestionView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from .useful_classes import AddTagDialog, ErrorMessage, RemoveTagDialog, SimpleMessage
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -2452,60 +2452,38 @@ class MarkerClient(QWidget):
         self.rebuild_tag_dictionaries()
         # get the tags for this task on the server
         tag_keys = self.msgr.get_tags(task)
+        # convert those keys to their text
         tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
+        # possible new tags = tags in dict that are not in tag_keys
+        tag_choices = [self.tag_k2t[tk] for tk in self.tag_k2t if tk not in tag_keys]
 
-        # TODO: improve with a nicer "tag management" dialog: Issue #1773.
-        # TODO: these current dialogs look horrible with many tags
+        atd = AddTagDialog(self, task, tag_texts, tag_choices=tag_choices)
+        if atd.exec() == QDialog.Accepted:
+            tag_text = atd.CB.currentText()
+            if len(tag_text) > 0:
+                try:
+                    if tag_text in tag_texts:  # existing tag - get its key
+                        tag_key = self.tag_t2k[tag_text]
+                    else:  # create a new key
+                        tag_key = self.msgr.create_new_tag(tag_text)
+                        # add it to marker's tag-dicts
+                        self.tag_k2t[tag_key] = tag_text
+                        self.tag_t2k[tag_text] = tag_key
+                    # add the new tag to the task
+                    log.debug('tagging paper "%s" with "%s"', task, tag_text)
+                    self.msgr.add_single_tag(task, tag_key)
 
-        def make_tags_html(tags):
-            if not tags:
-                return "<p>No current tags<p>"
-            msg = "&nbsp; ".join(f"<em>{x}</em>" for x in tags)
-            return f"<p>Current tags:</p>\n<center><big>{msg}</big></center>"
+                except PlomBadTagError as e:
+                    ErrorMessage(f"Tag not acceptable: {e}").exec_()
 
-        msg = make_tags_html(tag_texts)
-        msg += "<p>Tag this paper with a new tag?</p>"
-        title = f"Add tag to {task}?"
-        # <<<<<<< HEAD
-        #         choose_tags = all_local_tags.difference(tag_texts)
-        #         tag_text, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
-        #         if ok and tag_text:
-        #             log.debug('tagging paper "%s" with "%s"', task, tag_text)
-        # =======
-        # don't show choices of tags that are already in use
-        choose_tags = [x for x in all_tags if x not in tags]
-        tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
-        if ok and tag:
-            log.debug('tagging paper "%s" with "%s"', task, tag)
-        # >>>>>>> better_tags
-        if ok and tag:
-            try:
-                if tag_text in tag_texts:  # existing tag - get its key
-                    tag_key = self.tag_t2k[tag_text]
-                else:  # create a new key
-                    tag_key = self.msgr.create_new_tag(tag_text)
-                    # add it to marker's tag-dicts
-                    self.tag_k2t[tag_key] = tag_text
-                    self.tag_t2k[tag_text] = tag_key
-                # add the new tag to the task
-                self.msgr.add_single_tag(task, tag_key)
-            except PlomBadTagError as e:
-                ErrorMessage(f"Tag not acceptable: {e}").exec_()
-
-            tag_keys = self.msgr.get_tags(task)
-
+        # get the tag keys again
+        tag_keys = self.msgr.get_tags(task)
         if tag_keys:
             tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
 
-            msg = make_tags_html(tag_texts)
-            msg += "<p>Choose one of these tags to remove:</p>"
-            tmp = tag_texts.copy()
-            tmp.insert(0, "")
-            tag_text, ok = QInputDialog.getItem(
-                parent, f"Remove tag from {task}?", msg, tmp
-            )
-            if ok and tag_text:
-                log.debug('Removing tag "%s" from "%s"', tag_text, task)
+            rtd = RemoveTagDialog(self, task, tag_texts)
+            if rtd.exec() == QDialog.Accepted:
+                tag_text = rtd.CB.currentText()
                 try:
                     # get tag key from its text
                     tag_key = self.tag_t2k[tag_text]
