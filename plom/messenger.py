@@ -520,7 +520,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def add_tag(self, code, tag_key):
+    def add_single_tag(self, code, tag_key):
         self.SRmutex.acquire()
         try:
             response = self.patch(
@@ -537,7 +537,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def remove_tag(self, code, tag_key):
+    def remove_single_tag(self, code, tag_key):
         self.SRmutex.acquire()
         try:
             response = self.delete(

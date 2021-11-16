@@ -720,41 +720,4 @@ def McheckTagExists(self, tag_key):
         return True
 
 
-HERE NEED SOMETHING LIKE THIS FUNCTION
-ADD / REMOVE SINGLE TAG
-#
-# def MaddSingleTag(self, user_name, task, tag_key):
-#     """Set tag on given task """
-#     with plomdb.atomic():
-#         gref = Group.get_or_none(Group.gid == task)
-#         if gref is None:
-#             log.error("MsetTags - task {} not known".format(task))
-#             return False
-#         qref = gref.qgroups[0]
-#         # get a ref to the tag
-#         tgref = Tag.get_or_none(key=tg)  # get ref to the tag
-#         if tgref is None:
-#             # server checks keys earlier, so this should not happen.
-#             log.warning("Trying to add a tag with unknown key.")
-#             return False
-#         # check if tag already applied
-#         if tgref in qtref
-#         # existing keys
-#         existing_tags = [qtref.tag.key for qtref in qref.qtlinks]
-#         if tag_key in existing_tags:
-#             return False
-#
-#         log.info(f"Added tag {tag_key} to task {task}")
-#         qtref = QTLink.create(tag=tgref, qgroup=qref)
-#         # now remove old tags
-#         for qtref in qref.qtlinks:
-#             # server checks this, so should not happen.
-#             if qtref.tag.key not in tag_list:
-#                 log.warning(f"removing link to tag {qtref.tag.text}")
-#                 qtref.delete_instance()
-#         # all done!
-#         log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tag_list}"')
-#     return True
-
-##
 ##

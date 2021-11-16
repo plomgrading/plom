@@ -2478,7 +2478,7 @@ class MarkerClient(QWidget):
                     self.tag_k2t[tag_key] = tag_text
                     self.tag_t2k[tag_text] = tag_key
                 # add the new tag to the task
-                self.msgr.add_tag(task, tag_key)
+                self.msgr.add_single_tag(task, tag_key)
             except PlomBadTagError as e:
                 ErrorMessage(f"Tag not acceptable: {e}").exec_()
 
@@ -2500,7 +2500,7 @@ class MarkerClient(QWidget):
                     # get tag key from its text
                     tag_key = self.tag_t2k[tag_text]
 
-                    self.msgr.remove_tag(task, tag_key)
+                    self.msgr.remove_single_tag(task, tag_key)
                 except PlomBadTagError as e:
                     ErrorMessage(f"Tag not acceptable: {e}").exec_()
                 tag_keys = self.msgr.get_tags(task)

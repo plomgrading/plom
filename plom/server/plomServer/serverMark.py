@@ -323,8 +323,10 @@ def add_tag(self, username, task, tag_key):
         log.warn(f'task "{task}" already had tag "{tag_key}"')
         return True
 
+    tag_list.append(tag_key)
+
     log.warn(f'assigning tag "{tag_key}" to task "{task}"')
-    return self.DB.MsetTags(username, task, [tag_key])
+    return self.DB.MsetTags(username, task, tag_list)
 
 
 def remove_tag(self, username, task, tag_key):
