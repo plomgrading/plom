@@ -163,6 +163,7 @@ class Server:
         remove_tag,
         MgetTagsOfTask,
         MgetAllTags,
+        McreateNewTag,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,

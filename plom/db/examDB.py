@@ -212,6 +212,7 @@ class PlomDB:
         MrevertTask,
         MgetAllTags,
         McheckTagExists,
+        McreateNewTag,
     )
 
     from plom.db.db_rubric import (

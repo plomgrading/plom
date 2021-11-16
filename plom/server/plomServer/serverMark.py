@@ -281,6 +281,10 @@ def McheckTagExists(self, tag_key):
     return self.DB.McheckTagExists(tag_key)
 
 
+def McreateNewTag(self, username, tag_text):
+    return self.DB.McreateNewTag(username, tag_text)
+
+
 def MsetTags(self, username, task_code, tag_list):
     """Assign a tag string to a paper.
 

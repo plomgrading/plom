@@ -1061,8 +1061,9 @@ class MarkerClient(QWidget):
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         # get all the tag (key, text) pairs
-        self.tag_dict = {}
-        self.rebuild_tag_list()
+        self.tag_t2k = {}  # text to key
+        self.tag_k2t = {}  # key to text
+        self.rebuild_tag_dictionaries()
 
         try:
             # Get list of papers already marked and add to table.
@@ -1230,10 +1231,11 @@ class MarkerClient(QWidget):
         if rethrow:
             raise (error)
 
-    def rebuild_tag_list(self):
+    def rebuild_tag_dictionaries(self):
         tag_list = self.msgr.get_all_tags()
         for (ky, txt) in tag_list:
-            self.tag_dict[ky] = txt
+            self.tag_k2t[ky] = txt
+            self.tag_t2k[txt] = ky
 
     def loadMarkedList(self):
         """
@@ -1247,6 +1249,10 @@ class MarkerClient(QWidget):
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
+            # translate tag-keys into tag-texts and into a string
+            tag_texts = [self.tag_k2t[tag_key] for tag_key in x[3]]
+            tags = " ".join(tag_texts)
+
             self.examModel.addPaper(
                 ExamQuestion(
                     x[0],
@@ -1254,7 +1260,7 @@ class MarkerClient(QWidget):
                     stat="marked",
                     mrk=x[1],
                     mtime=x[2],
-                    tags=x[3],
+                    tags=tags,
                     integrity_check=x[4],
                 )
             )
@@ -1475,7 +1481,7 @@ class MarkerClient(QWidget):
                     r["local_filename"] = tmp
 
         # translate tag-keys into tag-text
-        tag_texts = [self.tag_dict[tag_key] for tag_key in tag_key_list]
+        tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_key_list]
         # and from that into a single text field
         tags = " ".join(tag_texts)
 
@@ -2444,7 +2450,8 @@ class MarkerClient(QWidget):
         # TODO: maybe we'd like a list from the server but uncertain about cost
         all_local_tags = self.examModel.get_all_tags()
 
-        tags = self.msgr.get_tags(task)
+        tag_keys = self.msgr.get_tags(task)
+        tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
 
         # TODO: improve with a nicer "tag management" dialog: Issue #1773.
         # TODO: these current dialogs look horrible with many tags
@@ -2455,36 +2462,52 @@ class MarkerClient(QWidget):
             msg = "&nbsp; ".join(f"<em>{x}</em>" for x in tags)
             return f"<p>Current tags:</p>\n<center><big>{msg}</big></center>"
 
-        msg = make_tags_html(tags)
+        msg = make_tags_html(tag_texts)
         msg += "<p>Tag this paper with a new tag?</p>"
         title = f"Add tag to {task}?"
-        choose_tags = all_local_tags.difference(tags)
-        tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
-        if ok and tag:
-            log.debug('tagging paper "%s" with "%s"', task, tag)
+        choose_tags = all_local_tags.difference(tag_texts)
+        tag_text, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
+        if ok and tag_text:
+            log.debug('tagging paper "%s" with "%s"', task, tag_text)
             try:
-                self.msgr.add_tag(task, tag)
+                if tag_text in tag_texts:  # existing tag - get its key
+                    tag_key = self.tag_t2k[tag_text]
+                else:  # create a new key
+                    tag_key = self.msgr.create_new_tag(tag_text)
+                    # add it to marker's tag-dicts
+                    self.tag_k2t[tag_key] = tag_text
+                    self.tag_t2k[tag_text] = tag_key
+                # add the new tag to the task
+                self.msgr.add_tag(task, tag_key)
             except PlomBadTagError as e:
                 ErrorMessage(f"Tag not acceptable: {e}").exec_()
 
-            tags = self.msgr.get_tags(task)
+            tag_keys = self.msgr.get_tags(task)
 
-        if tags:
-            msg = make_tags_html(tags)
+        if tag_keys:
+            tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
+
+            msg = make_tags_html(tag_texts)
             msg += "<p>Choose one of these tags to remove:</p>"
-            tmp = tags.copy()
+            tmp = tag_texts.copy()
             tmp.insert(0, "")
-            tag, ok = QInputDialog.getItem(parent, f"Remove tag from {task}?", msg, tmp)
-            if ok and tag:
-                log.debug('Removing tag "%s" from "%s"', tag, task)
+            tag_text, ok = QInputDialog.getItem(
+                parent, f"Remove tag from {task}?", msg, tmp
+            )
+            if ok and tag_text:
+                log.debug('Removing tag "%s" from "%s"', tag_text, task)
                 try:
-                    self.msgr.remove_tag(task, tag)
+                    # get tag key from its text
+                    tag_key = self.tag_t2k[tag_text]
+
+                    self.msgr.remove_tag(task, tag_key)
                 except PlomBadTagError as e:
                     ErrorMessage(f"Tag not acceptable: {e}").exec_()
-                tags = self.msgr.get_tags(task)
+                tag_keys = self.msgr.get_tags(task)
+                tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
 
         try:
-            self.examModel.setTagsByTask(task, tags)
+            self.examModel.setTagsByTask(task, tag_texts)
             self.ui.tableView.resizeColumnsToContents()
             self.ui.tableView.resizeRowsToContents()
         except ValueError:
@@ -2524,3 +2547,7 @@ class MarkerClient(QWidget):
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
+
+
+##
+##

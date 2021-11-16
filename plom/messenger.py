@@ -570,6 +570,24 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def create_new_tag(self, tag_text):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                f"/new_tag",
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 406:
+                raise PlomBadTagError("Tag not alpha-numeric") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()
         # note - added default value for questionNumber so that this works correctly

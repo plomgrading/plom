@@ -526,7 +526,7 @@ class MarkHandler:
         """
         task = request.match_info["task"]
         tag_key = data["tag_key"]
-        if not self.server.add_tag(data["user"], task, tag):
+        if not self.server.add_tag(data["user"], task, tag_key):
             raise web.HTTPGone(reason="No tag with that key.")
         return web.Response(status=200)
 
@@ -566,6 +566,25 @@ class MarkHandler:
         """
         tag_list = self.server.MgetAllTags()
         return web.json_response(tag_list)
+
+    # @routes.get("/all_tags")
+    @authenticate_by_token_required_fields(["user", "tag_text"])
+    def create_new_tag(self, data, request):
+        """Get list of all tags in system.
+
+        Respond with status 200/406.
+
+        Args:
+            data (dict): user, token, tag_text.
+
+        Returns:
+            aiohttp.web_response.Response: 200 with key for new tag or HTTPNotAcceptable if tag text is not alpha-numeric.
+        """
+        success, tag_key = self.server.McreateNewTag(data["user"], data["tag_text"])
+        if success:
+            return web.json_response(tag_key)
+        else:
+            raise request.HTTPNotAcceptable(reason="Tag is not alpha-numeric")
 
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
@@ -792,6 +811,7 @@ class MarkHandler:
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_get("/all_tags", self.get_all_tags)
+        router.add_put("/new_tag", self.create_new_tag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_get("/annotations/{number}/{question}", self.get_annotations_latest)

@@ -486,7 +486,7 @@ def MsetTags(self, user_name, task, tag_list):
             return False
         qref = gref.qgroups[0]
         # existing keys
-        existing_tags = [qtref.key for qtref in qref.qtlinks]
+        existing_tags = [qtref.tag.key for qtref in qref.qtlinks]
         # add in new tags
         for tg in tag_list:
             if tg not in existing_tags:
@@ -494,11 +494,13 @@ def MsetTags(self, user_name, task, tag_list):
                 if tgref is None:
                     # server checks keys earlier, so this should not happen.
                     continue
+                log.warning(f"adding link to tag {tgref.text}")
                 qtref = QTLink.create(tag=tgref, qgroup=qref)
         # now remove old tags
         for qtref in qref.qtlinks:
             # server checks this, so should not happen.
-            if qtref.key not in tag_list:
+            if qtref.tag.key not in tag_list:
+                log.warning(f"removing link to tag {qtref.tag.text}")
                 qtref.delete_instance()
         # all done!
         log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tag_list}"')
@@ -676,7 +678,7 @@ def MrevertTask(self, task):
 # ===== tag stuff
 
 
-def McreateTag(self, user_name, tag_text):
+def McreateNewTag(self, user_name, tag_text):
     """Create a new tag entry in the DB
 
     Args:
@@ -685,8 +687,11 @@ def McreateTag(self, user_name, tag_text):
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
-            key for the new tag.  Can fail if missing fields.
+            key for the new tag.  Can fail if tag text is not alphanum.
     """
+    if tag_text.isalnum() is False:
+        return (False, "Not alpha-numeric")
+
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
         # build unique key while holding atomic access
@@ -714,6 +719,42 @@ def McheckTagExists(self, tag_key):
     else:
         return True
 
+
+HERE NEED SOMETHING LIKE THIS FUNCTION
+ADD / REMOVE SINGLE TAG
+#
+# def MaddSingleTag(self, user_name, task, tag_key):
+#     """Set tag on given task """
+#     with plomdb.atomic():
+#         gref = Group.get_or_none(Group.gid == task)
+#         if gref is None:
+#             log.error("MsetTags - task {} not known".format(task))
+#             return False
+#         qref = gref.qgroups[0]
+#         # get a ref to the tag
+#         tgref = Tag.get_or_none(key=tg)  # get ref to the tag
+#         if tgref is None:
+#             # server checks keys earlier, so this should not happen.
+#             log.warning("Trying to add a tag with unknown key.")
+#             return False
+#         # check if tag already applied
+#         if tgref in qtref
+#         # existing keys
+#         existing_tags = [qtref.tag.key for qtref in qref.qtlinks]
+#         if tag_key in existing_tags:
+#             return False
+#
+#         log.info(f"Added tag {tag_key} to task {task}")
+#         qtref = QTLink.create(tag=tgref, qgroup=qref)
+#         # now remove old tags
+#         for qtref in qref.qtlinks:
+#             # server checks this, so should not happen.
+#             if qtref.tag.key not in tag_list:
+#                 log.warning(f"removing link to tag {qtref.tag.text}")
+#                 qtref.delete_instance()
+#         # all done!
+#         log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tag_list}"')
+#     return True
 
 ##
 ##
