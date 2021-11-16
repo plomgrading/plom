@@ -65,7 +65,7 @@ def McountMarked(self, q, v):
 
 def MgetDoneTasks(self, user_name, q, v):
     """When a marker-client logs on they request a list of papers they have already marked.
-    Send back the list of [group-ids, mark, marking_time, [list_of_tag_keys] ] for each paper.
+    Send back the list of [group-ids, mark, marking_time, [list_of_tag_texts] ] for each paper.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
@@ -77,8 +77,8 @@ def MgetDoneTasks(self, user_name, q, v):
     )
     mark_list = []
     for qref in query:  # grab that questionData object
-        # get the tag keys for that qgroup
-        tag_list = [qtref.tag.key for qtref in qref.qtlinks]
+        # get the tag texts for that qgroup
+        tag_list = [qtref.tag.text for qtref in qref.qtlinks]
         aref = qref.annotations[-1]  # grab the last annotation
         mark_list.append(
             [
@@ -127,7 +127,7 @@ def MgiveTaskToClient(self, user_name, group_id):
     Return:
         list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
             Otherwise, the list is
-                `[True, metadata, [list of tag keys], integrity_check]`
+                `[True, metadata, [list of tag texts], integrity_check]`
             where each row of `metadata` consists of
                 `[DB_id, md5_sum, server_filename]`
             Note: `server_filename` is implementation-dependent, could change
@@ -162,7 +162,7 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.time = datetime.now()
         qref.save()
         # get tag_list
-        tag_list = [qtref.tag.key for qtref in qref.qtlinks]
+        tag_list = [qtref.tag.text for qtref in qref.qtlinks]
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
@@ -470,14 +470,14 @@ def MgetTagsOfTask(self, task):
         return None
     qref = gref.qgroups[0]
 
-    return [qtref.tag.key for qtref in qref.qtlinks]
+    return [qtref.tag.text for qtref in qref.qtlinks]
 
 
 def MsetTags(self, user_name, task, tag_list):
     """Set tags on last annotation of given task. Adds all new tags and removes any existing tags that are not in tag_list.
 
 
-    Tag_list is a list of tag keys.
+    Tag_list is a list of tag texts.
     """
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
@@ -486,11 +486,11 @@ def MsetTags(self, user_name, task, tag_list):
             return False
         qref = gref.qgroups[0]
         # existing keys
-        existing_tags = [qtref.tag.key for qtref in qref.qtlinks]
+        existing_tags = [qtref.tag.text for qtref in qref.qtlinks]
         # add in new tags
         for tg in tag_list:
             if tg not in existing_tags:
-                tgref = Tag.get_or_none(key=tg)  # get ref to the tag
+                tgref = Tag.get_or_none(text=tg)  # get ref to the tag
                 if tgref is None:
                     # server checks keys earlier, so this should not happen.
                     continue
@@ -499,7 +499,7 @@ def MsetTags(self, user_name, task, tag_list):
         # now remove old tags
         for qtref in qref.qtlinks:
             # server checks this, so should not happen.
-            if qtref.tag.key not in tag_list:
+            if qtref.tag.text not in tag_list:
                 log.warning(f"removing link to tag {qtref.tag.text}")
                 qtref.delete_instance()
         # all done!
@@ -682,15 +682,18 @@ def McreateNewTag(self, user_name, tag_text):
     """Create a new tag entry in the DB
 
     Args:
-        user_name (str): name of user creating the rubric element
+        user_name (str): name of user creating the tag
         tag_text (str): the text of the tag
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
-            key for the new tag.  Can fail if tag text is not alphanum.
+            key for the new tag.  Can fail if tag text is not alphanum, or if tag already exists.
     """
     if tag_text.isalnum() is False:
         return (False, "Not alpha-numeric")
+
+    if Tag.get_or_none(text=tag_text) is not None:
+        return (False, "Tag already exists")
 
     uref = User.get(name=user_name)  # authenticated, so not-None
     with plomdb.atomic():
@@ -712,9 +715,17 @@ def MgetAllTags(self):
     return tag_list
 
 
-def McheckTagExists(self, tag_key):
+def McheckTagKeyExists(self, tag_key):
     """Check that the given tag_key in the database"""
     if Tag.get_or_none(key=tag_key) is None:
+        return False
+    else:
+        return True
+
+
+def McheckTagTextExists(self, tag_text):
+    """Check that the given tag_text in the database"""
+    if Tag.get_or_none(text=tag_text) is None:
         return False
     else:
         return True

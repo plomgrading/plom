@@ -62,7 +62,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
 
     Returns:
         list: Respond with a list of done tasks, each list includes
-            [question_code string, maximum_mark, question_grade, [list of tag_keys] ].
+            [question_code string, maximum_mark, question_grade, [list of tag_texts] ].
     """
 
     version_number = int(version_number)
@@ -277,8 +277,12 @@ def MgetTagsOfTask(self, task):
     return self.DB.MgetTagsOfTask(task)
 
 
-def McheckTagExists(self, tag_key):
-    return self.DB.McheckTagExists(tag_key)
+def McheckTagKeyExists(self, tag_key):
+    return self.DB.McheckTagKeyExists(tag_key)
+
+
+def McheckTagTextExists(self, tag_text):
+    return self.DB.McheckTagTextExists(tag_text)
 
 
 def McreateNewTag(self, username, tag_text):
@@ -291,7 +295,7 @@ def MsetTags(self, username, task_code, tag_list):
     Args:
         username (str): User who assigned tag to the paper.
         task_code (str): Code string for the task.
-        tag_list (str): List of tag keys assigned to the paper.
+        tag_list (str): List of tag texts assigned to the paper.
 
     Returns:
         bool: True or False indicating if tag was set in database successfully.
@@ -300,58 +304,58 @@ def MsetTags(self, username, task_code, tag_list):
     return self.DB.MsetTags(username, task_code, tag_list)
 
 
-def add_tag(self, username, task, tag_key):
+def add_tag(self, username, task, tag_text):
     """Assign a tag to a paper.
 
     Args:
         username (str): User who is assigning tag to the paper.
             TODO: currently not recorded but likely we want to record this.
         task (str): Code string for the task (paper).
-        tag_key (str): Key of tag to assign to the paper.
+        tag_text (str): Text of tag to assign to the paper.
 
     Returns:
         bool: True if tag was set in database successfully if the tag
             was already set.  False if no such paper or other error.
     """
     # do sanity check of the tag-key
-    if self.DB.McheckTagExists(tag_key) is False:
-        log.warn(f'tag with key "{tag_key}" does not exist')
+    if self.DB.McheckTagTextExists(tag_text) is False:
+        log.warn(f'tag with text "{tag_text}" does not exist')
         return False
     # check if tag already in list for that question
     tag_list = self.DB.MgetTagsOfTask(task)
-    if tag_key in tag_list:
-        log.warn(f'task "{task}" already had tag "{tag_key}"')
+    if tag_text in tag_list:
+        log.warn(f'task "{task}" already had tag "{tag_text}"')
         return True
 
-    tag_list.append(tag_key)
+    tag_list.append(tag_text)
 
-    log.warn(f'assigning tag "{tag_key}" to task "{task}"')
+    log.warn(f'assigning tag "{tag_text}" to task "{task}"')
     return self.DB.MsetTags(username, task, tag_list)
 
 
-def remove_tag(self, username, task, tag_key):
+def remove_tag(self, username, task, tag_text):
     """Remove a tag from a paper.
 
     Args:
         username (str): User who wants to remove tag.
         task (str): Code string for the task (paper).
-        tag_key (str): Key of tag to remove.
+        tag_text (str): Text of tag to remove.
 
     Returns:
         bool: True if the tag was removed, or if it was not present to
             start with.  False is not such paper, permissions or other
             error.
     """
-    # do sanity check of the tag-key
-    if self.DB.McheckTagExists(tag_key) is False:
-        log.warn(f'tag with key "{tag_key}" does not exist')
+    # do sanity check of the tag-text
+    if self.DB.McheckTagTextExists(tag_text) is False:
+        log.warn(f'tag "{tag_text}" does not exist')
         return False
-    # get existing tag keys
+    # get existing tag texts
     tag_list = self.DB.MgetTagsOfTask(task)
-    if tag_key not in tag_list:
+    if tag_text not in tag_list:
         return False
     # remove that single key
-    tag_list.remove(tag_key)
+    tag_list.remove(tag_text)
     # set the tags again.
     return self.DB.MsetTags(username, task, tag_list)
 

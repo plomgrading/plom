@@ -150,7 +150,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                page_metadata, tag_keys, integrity_check = self._msgr.MclaimThisTask(
+                page_metadata, tag_texts, integrity_check = self._msgr.MclaimThisTask(
                     task
                 )
                 break
@@ -191,7 +191,7 @@ class BackgroundDownloader(QThread):
                     r["local_filename"] = tmp
 
         self.downloadSuccess.emit(
-            task, src_img_data, full_pagedata, tag_keys, integrity_check
+            task, src_img_data, full_pagedata, tag_texts, integrity_check
         )
         self.quit()
 
@@ -1062,10 +1062,9 @@ class MarkerClient(QWidget):
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
-        # get all the tag (key, text) pairs
-        self.tag_t2k = {}  # text to key
-        self.tag_k2t = {}  # key to text
-        self.rebuild_tag_dictionaries()
+        # get all the tag texts
+        self.tag_texts = []
+        self.rebuild_tag_list()
 
         try:
             # Get list of papers already marked and add to table.
@@ -1233,11 +1232,8 @@ class MarkerClient(QWidget):
         if rethrow:
             raise (error)
 
-    def rebuild_tag_dictionaries(self):
-        tag_list = self.msgr.get_all_tags()
-        for (ky, txt) in tag_list:
-            self.tag_k2t[ky] = txt
-            self.tag_t2k[txt] = ky
+    def rebuild_tag_list(self):
+        self.tag_list = self.msgr.get_all_tags()
 
     def loadMarkedList(self):
         """
@@ -1251,8 +1247,8 @@ class MarkerClient(QWidget):
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
-            # translate tag-keys into tag-texts and into a string
-            tag_texts = [self.tag_k2t[tag_key] for tag_key in x[3]]
+            # concat tag texts into a single string
+            tag_texts = x[3]
             tags = " ".join(tag_texts)
 
             self.examModel.addPaper(
@@ -1445,7 +1441,7 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                page_metadata, tag_key_list, integrity_check = self.msgr.MclaimThisTask(
+                page_metadata, tag_texts, integrity_check = self.msgr.MclaimThisTask(
                     task
                 )
                 break
@@ -1482,9 +1478,7 @@ class MarkerClient(QWidget):
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
 
-        # translate tag-keys into tag-text
-        tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_key_list]
-        # and from that into a single text field
+        # concat tag texts into a single text field
         tags = " ".join(tag_texts)
 
         self.examModel.addPaper(
@@ -1536,7 +1530,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, full_pagedata, tag_keys, integrity_check
+        self, task, src_img_data, full_pagedata, tag_texts, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1546,7 +1540,7 @@ class MarkerClient(QWidget):
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
             full_pagedata (list): temporary hacks to merge with above?
-            tag_keys (list[str]): list of keys for tags for the TGV.
+            tag_texts (list[str]): list of texts for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
@@ -1554,8 +1548,8 @@ class MarkerClient(QWidget):
         """
         num = int(task[1:5])
         self._full_pagedata[num] = full_pagedata
-        # convert tag keys to tag text
-        tags = " ".join([self.tag_k2t[tag_key] for tag_key in tag_keys])
+        # concat tag texts into a single string
+        tags = " ".join(tag_texts)
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -2452,52 +2446,44 @@ class MarkerClient(QWidget):
         if not parent:
             parent = self
 
-        # first refresh the tag dictionaries
-        self.rebuild_tag_dictionaries()
-        # get the tags for this task on the server
-        tag_keys = self.msgr.get_tags(task)
-        # convert those keys to their text
-        tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
+        # first refresh the tag list
+        self.rebuild_tag_list()
+        # get the tags texts for this task on the server
+        current_tags = self.msgr.get_tags(task)
+        tag_string = " ".join(current_tags)
         # possible new tags = tags in dict that are not in tag_keys
-        tag_choices = [self.tag_k2t[tk] for tk in self.tag_k2t if tk not in tag_keys]
+        tag_choices = [X for X in self.tag_list if X not in current_tags]
 
-        atd = AddTagDialog(self, task, tag_texts, tag_choices=tag_choices)
+        atd = AddTagDialog(self, task, tag_string, tag_choices=tag_choices)
         if atd.exec() == QDialog.Accepted:
-            tag_text = atd.CB.currentText()
-            if len(tag_text) > 0:
+            new_tag = atd.CB.currentText()
+            if len(new_tag) == 0:
+                pass  # user is not adding a tag
+            elif new_tag in current_tags:
+                pass  # already have that tag
+            # an actual new tag for this task (though it may exist already)
+            else:
                 try:
-                    if tag_text in tag_texts:  # existing tag - get its key
-                        tag_key = self.tag_t2k[tag_text]
-                    else:  # create a new key
-                        tag_key = self.msgr.create_new_tag(tag_text)
-                        # add it to marker's tag-dicts
-                        self.tag_k2t[tag_key] = tag_text
-                        self.tag_t2k[tag_text] = tag_key
-                    # add the new tag to the task
-                    log.debug('tagging paper "%s" with "%s"', task, tag_text)
-                    self.msgr.add_single_tag(task, tag_key)
-
+                    self.msgr.add_single_tag(task, new_tag)
+                    log.debug('tagging paper "%s" with "%s"', task, new_tag)
                 except PlomBadTagError as e:
                     ErrorMessage(f"Tag not acceptable: {e}").exec_()
 
-        # get the tag keys again
-        tag_keys = self.msgr.get_tags(task)
-        if tag_keys:
-            tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
-
+        # refresh tag texts again
+        tag_texts = self.msgr.get_tags(task)
+        if tag_texts:
             rtd = RemoveTagDialog(self, task, tag_texts)
             if rtd.exec() == QDialog.Accepted:
                 tag_text = rtd.CB.currentText()
-                if len(tag_text) > 0:
+                if len(tag_text) == 0:
+                    pass
+                else:
                     try:
-                        # get tag key from its text
-                        tag_key = self.tag_t2k[tag_text]
-
-                        self.msgr.remove_single_tag(task, tag_key)
+                        self.msgr.remove_single_tag(task, tag_text)
                     except PlomBadTagError as e:
-                        ErrorMessage(f"Tag not acceptable: {e}").exec_()
-                    tag_keys = self.msgr.get_tags(task)
-                    tag_texts = [self.tag_k2t[tag_key] for tag_key in tag_keys]
+                        ErrorMessage(f"Problem removing tag: {e}").exec_()
+                    # refresh the tag texts from server
+                    tag_texts = self.msgr.get_tags(task)
 
         try:
             self.examModel.setTagsByTask(task, tag_texts)
@@ -2519,6 +2505,32 @@ class MarkerClient(QWidget):
     def view_testnum_question(self):
         """shows the image."""
         tgs = SelectTestQuestion(self.exam_spec, self.question)
+        if tgs.exec_() != QDialog.Accepted:
+            return
+        tn = tgs.tsb.value()
+        gn = tgs.gsb.value()
+        task = f"q{tn:04}g{gn}"
+        try:
+            imageList = self.msgr.MrequestOriginalImages(task)
+        except PlomNoMoreException:
+            msg = ErrorMessage(f"No image corresponding to task {task}")
+            msg.exec_()
+            return
+        ifilenames = []
+        for img in imageList:
+            ifile = tempfile.NamedTemporaryFile(
+                dir=self.workingDirectory, suffix=".image", delete=False
+            )
+            ifile.write(img)
+            ifilenames.append(ifile.name)
+        qvmap = self.msgr.getQuestionVersionMap(tn)
+        ver = qvmap[gn]
+        QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
+
+        ##
+        ##
+        ##
+        ##
         if tgs.exec_() != QDialog.Accepted:
             return
         tn = tgs.tsb.value()

@@ -383,12 +383,12 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def add_single_tag(self, code, tag_key):
+    def add_single_tag(self, code, tag_text):
         self.SRmutex.acquire()
         try:
             response = self.patch(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag_key": tag_key},
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -400,12 +400,12 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def remove_single_tag(self, code, tag_key):
+    def remove_single_tag(self, code, tag_text):
         self.SRmutex.acquire()
         try:
             response = self.delete(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag_key": tag_key},
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
             )
             response.raise_for_status()
         except requests.HTTPError as e:

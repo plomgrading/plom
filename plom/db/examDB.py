@@ -214,7 +214,8 @@ class PlomDB:
         MreviewQuestion,
         MrevertTask,
         MgetAllTags,
-        McheckTagExists,
+        McheckTagKeyExists,
+        McheckTagTextExists,
         McreateNewTag,
     )
 
