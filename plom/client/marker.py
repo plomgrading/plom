@@ -2425,8 +2425,11 @@ class MarkerClient(QWidget):
         """
         if not parent:
             parent = self
+        all_tags = sorted(self.examModel.getAllTags())
         # TODO: maybe we'd like a list from the server but uncertain about cost
-        all_local_tags = self.examModel.getAllTags()
+        # all_tags = self.msgr.get_all_tags()
+        # # sort primarily descending by count and secondarily alphabetical tag
+        # all_tags = sorted(all_tags, key=lambda x: (-all_tags.get(x), x))
 
         tags = self.msgr.get_tags(task)
 
@@ -2442,7 +2445,8 @@ class MarkerClient(QWidget):
         msg = make_tags_html(tags)
         msg += "<p>Tag this paper with a new tag?</p>"
         title = f"Add tag to {task}?"
-        choose_tags = all_local_tags.difference(tags)
+        # don't show choices of tags that are already in use
+        choose_tags = [x for x in all_tags if x not in tags]
         tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
         if ok and tag:
             log.debug('tagging paper "%s" with "%s"', task, tag)

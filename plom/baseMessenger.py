@@ -19,8 +19,10 @@ from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomAPIException,
     PlomConnectionError,
+    PlomBadTagError,
     PlomExistingLoginException,
     PlomSSLError,
+    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
 )
@@ -342,6 +344,81 @@ class BaseMessenger:
                 raise PlomAuthenticationException() from None
             if response.status_code == 404:
                 raise PlomBenignException("Server cannot find the class list") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def get_all_tags(self):
+        """All the tags currently in use and their frequencies.
+
+        Returns:
+            dict: keys are tags and values are usage counts.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/tags",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_tags(self, code):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomTakenException(response.reason) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def add_tag(self, code, tag):
+        self.SRmutex.acquire()
+        try:
+            response = self.patch(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token, "tag": tag},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomTakenException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomBadTagError(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def remove_tag(self, code, tag):
+        self.SRmutex.acquire()
+        try:
+            response = self.delete(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token, "tag": tag},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomTakenException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
