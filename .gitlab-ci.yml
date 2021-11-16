@@ -714,15 +714,18 @@ binary_upload:
     - export LINKNAME1="Compiled client for GNU/Linux (compiled on Ubuntu 18.04)"
     - export LINKNAME2="Compiled client for GNU/Linux (compiled on CentOS 7)"
     - export LINKNAME3="Compiled client for Windows"
-    - export LINKNAME4="Compiled client for macOS (for macOS 11)"
+    - export LINKNAME4="Compiled client for macOS (for macOS ≥ 11)"
+    - export LINKNAME5="Compiled client for macOS (for macOS ≥ 10.13.6)"
     - export FILENAME1="PlomClient-$VER-linux-ubuntu1804.bin"
     - export FILENAME2="PlomClient-$VER-linux-centos7.bin"
     - export FILENAME3="PlomClient-$VER.exe"
     - export FILENAME4="PlomClient-$VER-macos11.zip"
+    - export FILENAME5="PlomClient-$VER-macos10.zip"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
     - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME3"
     - export URL4="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME4"
+    - export URL5="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME5"
     # actually do the uploads
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME1 "$URL1"
@@ -741,6 +744,8 @@ binary_upload:
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
     - echo "$URL4  $LINKNAME4" >> release_desc.md
+    - ehco "This next one needs to be generated and uploaded manually:" >> release_desc.md
+    - echo "$URL5  $LINKNAME5" >> release_desc.md
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
     - echo "" >> release_desc.md
@@ -1003,7 +1008,7 @@ macos1013_client:
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
-  - export ZIPNAME=PlomClient-$VER-macos.zip
+  - export ZIPNAME=PlomClient-$VER-macos10.zip
   - pushd dist
   - ls
   - ls -sklR PlomClient-$VER.app
