@@ -11,13 +11,12 @@ import tempfile
 from tqdm import tqdm
 
 from plom import get_question_label
-from plom.messenger import FinishMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish import start_messenger
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
 
-def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
+def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     """Download information and create a cover page.
 
     Args:
@@ -25,6 +24,9 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
         tmpdir (pathlib.Path.str): where to save the coverpage.
         t (int): Test number.
         maxMarks (dict): Maxmarks per question str -> int.
+
+    Keyword Args:
+        solution (bool): build coverpage for solutions.
 
     Returns:
         pathlib.Path: filename of the coverpage.
@@ -41,7 +43,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    makeCover(int(t), sname, sid, arg, covername)
+    makeCover(int(t), sname, sid, arg, covername, solution=solution)
     return covername
 
 
@@ -92,7 +94,26 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
 def _reassemble_one_paper(
     msgr, tmpdir, outdir, short_name, max_marks, num_questions, t, sid, skip
 ):
-    """Reassemble a test paper."""
+    """Reassemble a test paper.
+
+    Args:
+        msgr (FinishMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path/str): The directory where we will download
+            the annotated images for each question.
+            We will also build cover pages there.
+        outdir (pathlib.Path/str): where to build the reassembled pdf.
+        short_name (str): the name of this exam, a form appropriate for
+            a filename prefix, e.g., "math107mt1".
+        max_marks (dict): the maximum mark for each question, keyed by the
+            question number, which seems to be a string.
+        t (int): Test number.
+        sid (str/None): The student number as a string.  Maybe `None` which
+            means that student has no ID (?)  Currently we just skip these.
+        skip (bool): whether to skip existing pdf files.
+
+    Returns:
+        None
+    """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
         print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
@@ -104,28 +125,6 @@ def _reassemble_one_paper(
     coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
     file_lists = download_page_images(msgr, tmpdir, num_questions, t, sid)
     reassemble(outname, short_name, sid, coverfile, *file_lists)
-
-
-def start_messenger(server=None, pwd=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
-    else:
-        msgr = FinishMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another finishing-script or manager-client running,\n"
-            "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorisation run `plom-finish clear`."
-        )
-        raise
-    return msgr
 
 
 def reassemble_one_paper(

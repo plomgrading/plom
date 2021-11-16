@@ -591,30 +591,6 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getLPageImage(self, t, o):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/scannedLPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "order": o,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def getUnknownImage(self, fname):
         self.SRmutex.acquire()
         try:
@@ -1415,3 +1391,71 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    ## =====
+    ## Bundle image stuff
+
+    def getBundleFromImage(self, filename):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/bundleFromImage",
+                json={"user": self.user, "token": self.token, "filename": filename},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that image.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getImagesInBundle(self, bundle_name):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/imagesInBundle",
+                json={"user": self.user, "token": self.token, "bundle": bundle_name},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that bundle.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getPageFromBundle(self, bundle_name, image_position):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/bundlePage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "bundle_name": bundle_name,
+                    "bundle_order": image_position,
+                },
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+            return image
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that image / bundle.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+
+##

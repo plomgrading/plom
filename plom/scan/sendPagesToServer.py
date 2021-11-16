@@ -64,7 +64,7 @@ def move_files_post_upload(bundle, f, qr=True):
         f (pathlib.Path): a filename, possibly with a path.
         qr (bool): There should also be a file same as `f` but
             with a ".qr" appended.  Move it too.  Note that TPages
-            will have a qr file, while HWPages and LPages do not.
+            will have a qr file, while HWPages do not.
     """
     shutil.move(f, bundle / "uploads/sentPages" / f.name)
     if qr:
@@ -181,54 +181,6 @@ def extractJIDO(fileName):  # get just ID, Order
     n = int(resplut[1])
 
     return (sid, n)
-
-
-def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
-    """Send the hw-page images of one bundle to the server.
-
-    Args:
-        msgr (Messenger): an open authenticated communication mechanism.
-        files (list of pathlib.Path): the page images to upload.
-        bundle_name (str): the name of the bundle we are sending.
-        student_id (int): the id of the student whose hw is being uploaded
-        question (int): the question being uploaded
-        skip_list (list of int): the bundle-orders of pages already in
-            the system and so can be skipped.
-
-    Returns:
-        defaultdict: TODO document this.
-
-    After each image is uploaded we move it to various places in the
-    bundle's "uploads" subdirectory.
-    """
-    # keep track of which SID uploaded.
-    JSID = {}
-    for fname in fileList:
-        fname = Path(fname)
-        print(f'Upload "Loose" page image {fname}')
-        sid, n = extractJIDO(fname.name)
-        bundle_order = n
-        if bundle_order in skip_list:
-            print(
-                "Image {} with bundle_order {} already uploaded. Skipping.".format(
-                    fname, bundle_order
-                )
-            )
-            continue
-        if str(sid) != str(student_id):  # careful with type casting
-            print("Problem with file {} - skipping".format(fname))
-            continue
-
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadLPage(sid, n, fname, md5, bundle_name, bundle_order)
-        if not rmsg[0]:
-            raise RuntimeError(
-                "Unsuccessful Loose upload, with server returning:\n{}".format(rmsg[1:])
-            )
-        move_files_post_upload(Path("./"), fname, qr=False)
-        # be careful of workingdir.
-        JSID[sid] = True
-    return JSID
 
 
 def uploadTPages(bundleDir, skip_list, server=None, password=None):
