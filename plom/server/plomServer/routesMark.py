@@ -495,6 +495,35 @@ class MarkHandler:
             # Failure = invalid Keys
             raise web.HTTPGone(reason="No tag with that key.")
 
+    # @routes.get("/tags")
+    @authenticate_by_token_required_fields([])
+    def get_global_tags(self, data, request):
+        """List all the tags currently in use.
+
+        Caution: current implementation might be rather slow: suggest not calling
+        this too often until tags are improved in the DB.
+
+        Args:
+            data (dict): user, token.
+
+        Returns:
+            aiohttp.web_response.json_response: list of strings, one for each
+                tag.
+        """
+        # TODO: Andrew may want this split out to serverMark.py
+        alltags = {}
+        for papernum in range(1, self.server.testSpec["numberToProduce"] + 1):
+            for q in range(1, self.server.testSpec["numberOfQuestions"] + 1):
+                task = f"q{papernum:04}g{q}"
+                tagstr = self.server.DB.MgetTags(task)
+                if tagstr is None:
+                    raise web.HTTPServerError(
+                        reason=f"Unexpected problem reading tags from {task}"
+                    )
+                for k in tagstr.split():
+                    alltags[k] = alltags.get(k, 0) + 1
+        return web.json_response(alltags)
+
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
     def get_tags_of_task(self, data, request):
@@ -810,7 +839,7 @@ class MarkHandler:
         router.add_get("/tags/{task}", self.get_tags_of_task)
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
-        router.add_get("/all_tags", self.get_all_tags)
+        router.add_get("/tags", self.get_all_tags)
         router.add_put("/new_tag", self.create_new_tag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)

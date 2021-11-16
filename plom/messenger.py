@@ -25,7 +25,6 @@ from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
-    PlomBadTagError,
     PlomConflict,
     PlomTakenException,
     PlomNoMoreException,
@@ -500,90 +499,6 @@ class Messenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 410:
                 raise PlomBadTagError("Problem with tag keys.") from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def get_tags(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def add_single_tag(self, code, tag_key):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag_key": tag_key},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 410:
-                raise PlomBadTagError(response.reason)
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def remove_single_tag(self, code, tag_key):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag": tag_key},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 410:
-                raise PlomBadTagError(response.reason)
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def get_all_tags(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/all_tags",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def create_new_tag(self, tag_text):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                f"/new_tag",
-                json={"user": self.user, "token": self.token, "tag_text": tag_text},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 406:
-                raise PlomBadTagError("Tag not alpha-numeric") from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

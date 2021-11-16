@@ -2466,10 +2466,19 @@ class MarkerClient(QWidget):
         msg = make_tags_html(tag_texts)
         msg += "<p>Tag this paper with a new tag?</p>"
         title = f"Add tag to {task}?"
-        choose_tags = all_local_tags.difference(tag_texts)
-        tag_text, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
-        if ok and tag_text:
-            log.debug('tagging paper "%s" with "%s"', task, tag_text)
+        # <<<<<<< HEAD
+        #         choose_tags = all_local_tags.difference(tag_texts)
+        #         tag_text, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
+        #         if ok and tag_text:
+        #             log.debug('tagging paper "%s" with "%s"', task, tag_text)
+        # =======
+        # don't show choices of tags that are already in use
+        choose_tags = [x for x in all_tags if x not in tags]
+        tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
+        if ok and tag:
+            log.debug('tagging paper "%s" with "%s"', task, tag)
+        # >>>>>>> better_tags
+        if ok and tag:
             try:
                 if tag_text in tag_texts:  # existing tag - get its key
                     tag_key = self.tag_t2k[tag_text]
