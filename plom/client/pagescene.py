@@ -332,7 +332,9 @@ class PageScene(QGraphicsScene):
         Initialize a new PageScene.
 
         Args:
-            parent (SceneParent): the parent of the scene.
+            parent (Annotator): the parent of the scene.  Currently
+                this *must* be an Annotator, because we call various
+                functions from that Annotator.
             src_img_data (list[dict]): metadata for the underlying
                 source images.  Each dict has (at least) keys for
                `filename` and `orientation`.
@@ -342,7 +344,6 @@ class PageScene(QGraphicsScene):
                 example a string like "Q7", or `None` if not relevant.
         """
         super().__init__(parent)
-        self.parent = parent
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.saveName = saveName
@@ -446,9 +447,9 @@ class PageScene(QGraphicsScene):
         # the scorebox
         self.scoreBox.changeScore(self.score)
         # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent.rubric_widget.changeMark(self.score, self.markingState)
+        self.parent().rubric_widget.changeMark(self.score, self.markingState)
         # also update the marklabel in the annotator - same text as scorebox
-        self.parent.refreshDisplayedMark(self.score)
+        self.parent().refreshDisplayedMark(self.score)
 
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":
@@ -662,7 +663,7 @@ class PageScene(QGraphicsScene):
         else:
             self.views()[0].setDragMode(0)
         # update the modelabels
-        self.parent.setModeLabels(self.mode)
+        self.parent().setModeLabels(self.mode)
 
     def get_nonrubric_text_from_page(self):
         """
@@ -847,11 +848,11 @@ class PageScene(QGraphicsScene):
         """
 
         variableCursors = {
-            "cross": [self.parent.cursorTick, self.parent.cursorQMark],
-            "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
-            "tick": [self.parent.cursorCross, self.parent.cursorQMark],
-            "box": [self.parent.cursorEllipse, self.parent.cursorBox],
-            "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
+            "cross": [self.parent().cursorTick, self.parent().cursorQMark],
+            "line": [self.parent().cursorArrow, self.parent().cursorDoubleArrow],
+            "tick": [self.parent().cursorCross, self.parent().cursorQMark],
+            "box": [self.parent().cursorEllipse, self.parent().cursorBox],
+            "pen": [self.parent().cursorHighlight, self.parent().cursorDoubleArrow],
         }
 
         if self.mode in variableCursors:
@@ -882,11 +883,11 @@ class PageScene(QGraphicsScene):
 
         """
         variableCursorRelease = {
-            "cross": self.parent.cursorCross,
-            "line": self.parent.cursorLine,
-            "tick": self.parent.cursorTick,
-            "box": self.parent.cursorBox,
-            "pen": self.parent.cursorPen,
+            "cross": self.parent().cursorCross,
+            "line": self.parent().cursorLine,
+            "tick": self.parent().cursorTick,
+            "box": self.parent().cursorBox,
+            "pen": self.parent().cursorPen,
         }
         if self.mode in variableCursorRelease:
             if self.views()[0].cursor() == variableCursorRelease.get(self.mode):
@@ -1330,9 +1331,9 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
             self.tempImagePath = None
             # set the mode back to move
-            self.parent.moveMode()
+            self.parent().moveMode()
 
-            msg = QMessageBox()
+            msg = QMessageBox(self.parent())
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
@@ -1385,7 +1386,7 @@ class PageScene(QGraphicsScene):
 
     def latexAFragment(self, *args, **kwargs):
         """Latex a fragment of text."""
-        return self.parent.latexAFragment(*args, **kwargs)
+        return self.parent().latexAFragment(*args, **kwargs)
 
     def event(self, event):
         """
