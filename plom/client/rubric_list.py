@@ -108,8 +108,8 @@ def isLegalRubric(mss, kind, delta):
 
 class RubricTable(QTableWidget):
     def __init__(self, parent, shortname=None, sort=False, tabType=None):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         self.tabType = tabType  # to help set menu
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -162,7 +162,7 @@ class RubricTable(QTableWidget):
         self.shortname = newname
         # TODO: assumes parent is TabWidget, can we do with signals/slots?
         # More like "If anybody cares, I just changed my name!"
-        self.parent.update_tab_names()
+        self._parent.update_tab_names()
 
     def is_user_tab(self):
         return self.tabType is None
@@ -192,7 +192,7 @@ class RubricTable(QTableWidget):
     def tabContextMenuEvent(self, event):
         menu = QMenu(self)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self.parent.add_new_tab())
+        a.triggered.connect(lambda: self._parent.add_new_tab())
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -220,7 +220,7 @@ class RubricTable(QTableWidget):
 
         def edit_func_factory(t, k):
             def edit_func():
-                t.parent.edit_rubric(k)
+                t._parent.edit_rubric(k)
 
             return edit_func
 
@@ -231,7 +231,7 @@ class RubricTable(QTableWidget):
             menu.addAction(a)
             menu.addSeparator()
 
-            for tab in self.parent.user_tabs:
+            for tab in self._parent.user_tabs:
                 if tab == self:
                     continue
                 a = QAction(f"Move to tab {tab.shortname}", self)
@@ -249,7 +249,7 @@ class RubricTable(QTableWidget):
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self.parent.add_new_tab())
+        a.triggered.connect(lambda: self._parent.add_new_tab())
         menu.addAction(a)
         a = QAction("Remove this tab...", self)
 
@@ -262,10 +262,10 @@ class RubricTable(QTableWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            for n in range(self.parent.RTW.count()):
-                tab = self.parent.RTW.widget(n)
+            for n in range(self._parent.RTW.count()):
+                tab = self._parent.RTW.widget(n)
                 if tab == self:
-                    self.parent.RTW.removeTab(n)
+                    self._parent.RTW.removeTab(n)
             self.clear()
             self.deleteLater()
 
@@ -291,7 +291,7 @@ class RubricTable(QTableWidget):
 
         def edit_func_factory(t, k):
             def edit_func():
-                t.parent.edit_rubric(k)
+                t._parent.edit_rubric(k)
 
             return edit_func
 
@@ -303,8 +303,8 @@ class RubricTable(QTableWidget):
             menu.addSeparator()
 
             # TODO: walk in another order for moveable tabs?
-            # [self.parent.RTW.widget(n) for n in range(1, 5)]
-            for tab in self.parent.user_tabs:
+            # [self._parent.RTW.widget(n) for n in range(1, 5)]
+            for tab in self._parent.user_tabs:
                 a = QAction(f"Add to tab {tab.shortname}", self)
                 a.triggered.connect(add_func_factory(tab, key))
                 menu.addAction(a)
@@ -318,7 +318,7 @@ class RubricTable(QTableWidget):
         menu.addAction(renameTabAction)
         renameTabAction.triggered.connect(self.rename_current_tab)
         a = QAction("Add new tab", self)
-        a.triggered.connect(lambda: self.parent.add_new_tab())
+        a.triggered.connect(lambda: self._parent.add_new_tab())
         menu.addAction(a)
         menu.popup(QCursor.pos())
         event.accept()
@@ -352,7 +352,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         key = self.item(row, 0).text()
-        self.parent.hideRubricByKey(key)
+        self._parent.hideRubricByKey(key)
         self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
@@ -362,7 +362,7 @@ class RubricTable(QTableWidget):
         if row is None:
             return
         key = self.item(row, 0).text()
-        self.parent.unhideRubricByKey(key)
+        self._parent.unhideRubricByKey(key)
         self.removeRow(row)
         self.selectRubricByVisibleRow(0)
         self.handleClick()
@@ -391,7 +391,7 @@ class RubricTable(QTableWidget):
     def rename_current_tab(self):
         # this is really a method for the current tab, not current row
         # TODO: perhaps this method is in the wrong place
-        curtab_widget = self.parent.RTW.currentWidget()
+        curtab_widget = self._parent.RTW.currentWidget()
         if not curtab_widget:
             return
         curname = curtab_widget.shortname
@@ -420,7 +420,7 @@ class RubricTable(QTableWidget):
             what happens on invalid key?
         """
         # TODO: hmmm, should be dict?
-        (rubric,) = [x for x in self.parent.rubrics if x["id"] == key]
+        (rubric,) = [x for x in self._parent.rubrics if x["id"] == key]
         self.appendNewRubric(rubric)
 
     def appendNewRubric(self, rubric):
@@ -442,7 +442,7 @@ class RubricTable(QTableWidget):
         # set row header
         self.setVerticalHeaderItem(rc, QTableWidgetItem("{}".format(rc + 1)))
         # set the legality
-        self.colourLegalRubric(rc, self.parent.mss)
+        self.colourLegalRubric(rc, self._parent.mss)
         # set a tooltip over delta that tells user the type of rubric
         self.item(rc, 2).setToolTip("{}-rubric".format(rubric["kind"]))
         # set a tooltip that contains tags and meta info when someone hovers over text
@@ -607,7 +607,7 @@ class RubricTable(QTableWidget):
         if self.item(r, 4).text() == "absolute":
             delta = self.item(r, 2).text()[:-abs_suffix_length]
 
-        self.parent.rubricSignal.emit(  # send delta, text, rubricID, kind
+        self._parent.rubricSignal.emit(  # send delta, text, rubricID, kind
             [
                 delta,
                 self.item(r, 3).text(),
@@ -654,7 +654,7 @@ class RubricTable(QTableWidget):
     def editRow(self, tableIndex):
         r = tableIndex.row()
         rubricKey = self.item(r, 0).text()
-        self.parent.edit_rubric(rubricKey)
+        self._parent.edit_rubric(rubricKey)
 
     def updateRubric(self, new_rubric, mss):
         for r in range(self.rowCount()):
@@ -682,9 +682,9 @@ class RubricWidget(QWidget):
     rubricSignal = pyqtSignal(list)  # pass the rubric's [key, delta, text, kind]
 
     def __init__(self, parent):
-        super().__init__()
+        super().__init__(parent)
         self.question_number = None
-        self.parent = parent
+        self._parent = parent
         self.username = parent.username
         self.rubrics = []
         self.maxMark = None
@@ -822,9 +822,9 @@ class RubricWidget(QWidget):
     def refreshRubrics(self):
         """Get rubrics from server and if non-trivial then repopulate"""
         old_rubrics = self.rubrics
-        self.rubrics = self.parent.getRubricsFromServer()
+        self.rubrics = self._parent.getRubricsFromServer()
         self.setRubricTabsFromState(self.get_tab_rubric_lists())
-        self.parent.saveTabStateToServer(self.get_tab_rubric_lists())
+        self._parent.saveTabStateToServer(self.get_tab_rubric_lists())
         msg = "<p>\N{Check Mark} Your tabs have been synced to the server.</p>\n"
         diff = set(d["id"] for d in self.rubrics) - set(d["id"] for d in old_rubrics)
         if not diff:
@@ -869,7 +869,7 @@ class RubricWidget(QWidget):
             self.rubrics,
             self.get_tab_rubric_lists(),
             self.username,
-            annotator_size=self.parent.size(),
+            annotator_size=self._parent.size(),
         )
         if wr.exec_() != QDialog.Accepted:
             return
@@ -881,7 +881,7 @@ class RubricWidget(QWidget):
 
         Note: must be called after annotator knows its tgv etc, so
         maybe difficult to call from __init__.  TODO: a possible
-        refactor would have the caller (which is probably `parent`)
+        refactor would have the caller (which is probably `_parent`)
         get the server rubrics list and pass in as an argument.
 
         args:
@@ -889,7 +889,7 @@ class RubricWidget(QWidget):
                 the user's tabs, or None.  If None then initialize with
                 some empty tabs.
         """
-        self.rubrics = self.parent.getRubricsFromServer()
+        self.rubrics = self._parent.getRubricsFromServer()
         if not user_tab_state:
             # no user-state: start with single empty tab
             self.add_new_tab()
@@ -1099,7 +1099,7 @@ class RubricWidget(QWidget):
         Returns:
             list: strings for each text on page that is not inside a rubric
         """
-        return self.parent.get_nonrubric_text_from_page()
+        return self._parent.get_nonrubric_text_from_page()
 
     def unhideRubricByKey(self, key):
         index = [x["id"] for x in self.rubrics].index(key)
@@ -1162,7 +1162,7 @@ class RubricWidget(QWidget):
             self.maxMark,
             reapable,
             com,
-            annotator_size=self.parent.size(),
+            annotator_size=self._parent.size(),
         )
         if arb.exec_() != QDialog.Accepted:  # ARB does some simple validation
             return
@@ -1190,7 +1190,7 @@ class RubricWidget(QWidget):
 
         if edit:
             new_rubric["id"] = rubricID
-            rv = self.parent.modifyRubric(rubricID, new_rubric)
+            rv = self._parent.modifyRubric(rubricID, new_rubric)
             # update the rubric in the current internal rubric list
             # make sure that keys match.
             assert self.rubrics[index]["id"] == new_rubric["id"]
@@ -1199,7 +1199,7 @@ class RubricWidget(QWidget):
             # update the rubric in all lists
             self.updateRubricInLists(new_rubric)
         else:
-            rv = self.parent.createNewRubric(new_rubric)
+            rv = self._parent.createNewRubric(new_rubric)
             # check was updated/created successfully
             if not rv[0]:  # some sort of creation problem
                 return
