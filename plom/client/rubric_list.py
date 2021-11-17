@@ -866,6 +866,7 @@ class RubricWidget(QWidget):
 
     def wrangleRubricsInteractively(self):
         wr = RubricWrangler(
+            self,
             self.rubrics,
             self.get_tab_rubric_lists(),
             self.username,
@@ -1158,6 +1159,7 @@ class RubricWidget(QWidget):
             return
         reapable = self.get_nonrubric_text_from_page()
         arb = AddRubricBox(
+            self,
             self.username,
             self.maxMark,
             reapable,
@@ -1260,10 +1262,11 @@ class SignedSB(QSpinBox):
 
 
 class AddRubricBox(QDialog):
-    def __init__(self, username, maxMark, lst, com=None, annotator_size=None):
+    def __init__(self, parent, username, maxMark, lst, com=None, annotator_size=None):
         """Initialize a new dialog to edit/create a comment.
 
         Args:
+            parent (QWidget): the parent window.
             username (str)
             maxMark (int)
             lst (list): these are used to "harvest" plain 'ol text
@@ -1272,7 +1275,7 @@ class AddRubricBox(QDialog):
                 Otherwise, this has the current comment data.
             annotator_size (QSize/None): size of the parent annotator
         """
-        super().__init__()
+        super().__init__(parent)
 
         if com:
             self.setWindowTitle("Modify rubric")
