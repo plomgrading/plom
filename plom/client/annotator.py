@@ -988,7 +988,7 @@ class Annotator(QWidget):
             getattr(self, name + "SC").setKey(keys[name])
 
     def setKeyBindings(self):
-        kw = KeyWrangler(self.keyBindings)
+        kw = KeyWrangler(self, self.keyBindings)
         if kw.exec_() == QDialog.Accepted:
             self.changeMainShortCuts(kw.getKeyBindings())
 
