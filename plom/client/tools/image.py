@@ -53,7 +53,7 @@ class CommandImage(CommandTool):
         super().__init__(scene)
         self.width = image.width()
         if data is None:
-            toMidpoint = QPoint(-image.width() / 2, -image.height() / 2)
+            toMidpoint = QPoint(int(-image.width() / 2), int(-image.height() / 2))
             self.midPt = pt + toMidpoint
         else:
             self.midPt = pt
