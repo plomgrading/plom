@@ -158,7 +158,9 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(self.lastTime, logdir, cfgfile, tempfile.gettempdir())
+        d = ClientSettingsDialog(
+            self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
+        )
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()

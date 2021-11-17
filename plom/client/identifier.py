@@ -695,7 +695,7 @@ class IDClient(QWidget):
                 return
             self.msgPosition = msg.pos()
             # Otherwise get an id and name from the user (and the okay)
-            snidbox = SNIDBox(self.ui.idEdit.text())
+            snidbox = SNIDBox(self, self.ui.idEdit.text())
             if snidbox.exec_() != QDialog.Accepted:
                 return
             sid = snidbox.sid.strip()

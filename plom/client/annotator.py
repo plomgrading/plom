@@ -1805,7 +1805,7 @@ class Annotator(QWidget):
             return
 
         self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox().exec_()
+        nabValue = NoAnswerBox(self).exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
             self.scene.undo()
