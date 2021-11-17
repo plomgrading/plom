@@ -11,13 +11,10 @@ import logging
 from pathlib import Path
 from textwrap import shorten
 
-from PyQt5.QtCore import Qt, QSize, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import (
-    QBrush,
-    QColor,
     QPalette,
     QCursor,
-    QDropEvent,
 )
 from PyQt5.QtWidgets import (
     QAbstractItemView,
@@ -40,7 +37,6 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QStackedWidget,
     QTabWidget,
-    QTableView,
     QTableWidget,
     QTableWidgetItem,
     QTextEdit,
