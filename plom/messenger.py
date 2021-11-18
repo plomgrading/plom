@@ -484,25 +484,6 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
         return ret
 
-    def MsetTags(self, code, tag_list):
-        """Deprecated method for setting all tags at once."""
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/MK/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag_list": tag_list},
-            )
-            response.raise_for_status()
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 410:
-                raise PlomBadTagError("Problem with tag keys.") from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()
         # note - added default value for questionNumber so that this works correctly

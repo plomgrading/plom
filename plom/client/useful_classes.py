@@ -373,7 +373,7 @@ class AddTagDialog(QDialog):
 
         lay = QVBoxLayout()
         if len(current_tags) == 0:
-            lay.addWidget(QLabel("<p>No current tags</p>"))
+            lay.addWidget(QLabel("<p><b>No current tags</b></p>"))
         else:
             tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in current_tags)
             msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"

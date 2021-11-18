@@ -1233,7 +1233,8 @@ class MarkerClient(QWidget):
             raise (error)
 
     def rebuild_tag_list(self):
-        self.tag_list = self.msgr.get_all_tags()
+        # get all tags return list of pairs (tag_key, tag_text)
+        self.tag_list = [X[1] for X in self.msgr.get_all_tags()]
 
     def loadMarkedList(self):
         """
@@ -2450,11 +2451,9 @@ class MarkerClient(QWidget):
         self.rebuild_tag_list()
         # get the tags texts for this task on the server
         current_tags = self.msgr.get_tags(task)
-        tag_string = " ".join(current_tags)
         # possible new tags = tags in dict that are not in tag_keys
         tag_choices = [X for X in self.tag_list if X not in current_tags]
-
-        atd = AddTagDialog(self, task, tag_string, tag_choices=tag_choices)
+        atd = AddTagDialog(self, task, current_tags, tag_choices=tag_choices)
         if atd.exec() == QDialog.Accepted:
             new_tag = atd.CB.currentText()
             if len(new_tag) == 0:
@@ -2470,9 +2469,9 @@ class MarkerClient(QWidget):
                     ErrorMessage(f"Tag not acceptable: {e}").exec_()
 
         # refresh tag texts again
-        tag_texts = self.msgr.get_tags(task)
-        if tag_texts:
-            rtd = RemoveTagDialog(self, task, tag_texts)
+        current_tags = self.msgr.get_tags(task)
+        if current_tags:
+            rtd = RemoveTagDialog(self, task, current_tags)
             if rtd.exec() == QDialog.Accepted:
                 tag_text = rtd.CB.currentText()
                 if len(tag_text) == 0:
@@ -2482,11 +2481,11 @@ class MarkerClient(QWidget):
                         self.msgr.remove_single_tag(task, tag_text)
                     except PlomBadTagError as e:
                         ErrorMessage(f"Problem removing tag: {e}").exec_()
-                    # refresh the tag texts from server
-                    tag_texts = self.msgr.get_tags(task)
+                    # refresh the current tags from server
+                    current_tags = self.msgr.get_tags(task)
 
         try:
-            self.examModel.setTagsByTask(task, tag_texts)
+            self.examModel.setTagsByTask(task, current_tags)
             self.ui.tableView.resizeColumnsToContents()
             self.ui.tableView.resizeRowsToContents()
         except ValueError:

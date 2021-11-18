@@ -468,35 +468,8 @@ class MarkHandler:
                 multipart_writer.append(open(file_nam, "rb"))
         return web.Response(body=multipart_writer, status=200)
 
-    # @routes.patch("/MK/tags/{task}")
-    @authenticate_by_token_required_fields(["user", "tag_list"])
-    def MsetTags(self, data, request):
-        """Set tag for a task.
-
-        Respond with status 200/410.
-
-        Args:
-            data (dict): A dictionary having the user/token in addition to the list of tag texts.
-                Request object also includes the task code.
-            request (aiohttp.web_request.Request): PATCH /MK/tags/`task_code` type request.
-
-        Returns:
-            aiohttp.web_response.Response: Empty status response indication is adding
-                the tag was successful.
-        """
-        task_code = request.match_info["task"]
-        set_tag_success = self.server.MsetTags(
-            data["user"], task_code, data["tag_list"]
-        )
-
-        if set_tag_success:
-            return web.Response(status=200)
-        else:
-            # Failure = invalid tag text
-            # TODO - other failure modes (tag already exists?)
-            raise web.HTTPGone(reason="No tag with that text.")
-
     # @routes.get("/tags/{task}")
+
     @authenticate_by_token_required_fields([])
     def get_tags_of_task(self, data, request):
         """List the tags for a task.
@@ -548,7 +521,7 @@ class MarkHandler:
         task = request.match_info["task"]
         tag_text = data["tag_text"].strip()
 
-        if not self.server.remove_tag(data["user"], task, tag_text):
+        if not self.server.remove_tag(task, tag_text):
             raise web.HTTPGone(reason=f"No such tag")
         return web.Response(status=200)
 
@@ -807,7 +780,6 @@ class MarkHandler:
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
-        router.add_patch("/MK/tags/{task}", self.MsetTags)
         router.add_get("/tags", self.get_all_tags)
         router.add_get("/tags/{task}", self.get_tags_of_task)
         router.add_patch("/tags/{task}", self.add_tag)

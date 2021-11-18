@@ -218,3 +218,4 @@ class Tag(BaseModel):
 class QTLink(BaseModel):
     qgroup = pw.ForeignKeyField(QGroup, backref="qtlinks")
     tag = pw.ForeignKeyField(Tag, backref="qtlinks")
+    user = pw.ForeignKeyField(User, backref="qtlinks", null=False)

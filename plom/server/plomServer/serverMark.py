@@ -289,21 +289,6 @@ def McreateNewTag(self, username, tag_text):
     return self.DB.McreateNewTag(username, tag_text)
 
 
-def MsetTags(self, username, task_code, tag_list):
-    """Assign a tag string to a paper.
-
-    Args:
-        username (str): User who assigned tag to the paper.
-        task_code (str): Code string for the task.
-        tag_list (str): List of tag texts assigned to the paper.
-
-    Returns:
-        bool: True or False indicating if tag was set in database successfully.
-    """
-
-    return self.DB.MsetTags(username, task_code, tag_list)
-
-
 def add_tag(self, username, task, tag_text):
     """Assign a tag to a paper.
 
@@ -317,23 +302,15 @@ def add_tag(self, username, task, tag_text):
         bool: True if tag was set in database successfully if the tag
             was already set.  False if no such paper or other error.
     """
-    # do sanity check of the tag-key
+    # do sanity check of the tag-text
     if self.DB.McheckTagTextExists(tag_text) is False:
-        log.warn(f'tag with text "{tag_text}" does not exist')
-        return False
-    # check if tag already in list for that question
-    tag_list = self.DB.MgetTagsOfTask(task)
-    if tag_text in tag_list:
-        log.warn(f'task "{task}" already had tag "{tag_text}"')
-        return True
+        log.warn(f'tag with text "{tag_text}" does not exist - creating it now.')
+        self.DB.McreateNewTag(username, tag_text)
 
-    tag_list.append(tag_text)
-
-    log.warn(f'assigning tag "{tag_text}" to task "{task}"')
-    return self.DB.MsetTags(username, task, tag_list)
+    return self.DB.MaddExistingTag(username, task, tag_text)
 
 
-def remove_tag(self, username, task, tag_text):
+def remove_tag(self, task, tag_text):
     """Remove a tag from a paper.
 
     Args:
@@ -350,14 +327,8 @@ def remove_tag(self, username, task, tag_text):
     if self.DB.McheckTagTextExists(tag_text) is False:
         log.warn(f'tag "{tag_text}" does not exist')
         return False
-    # get existing tag texts
-    tag_list = self.DB.MgetTagsOfTask(task)
-    if tag_text not in tag_list:
-        return False
-    # remove that single key
-    tag_list.remove(tag_text)
-    # set the tags again.
-    return self.DB.MsetTags(username, task, tag_list)
+
+    return self.DB.MremoveExistingTag(task, tag_text)
 
 
 def MgetWholePaper(self, test_number, question_number):

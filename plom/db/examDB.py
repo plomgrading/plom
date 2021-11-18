@@ -208,8 +208,6 @@ class PlomDB:
         Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,
-        MgetTagsOfTask,
-        MsetTags,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
@@ -217,6 +215,9 @@ class PlomDB:
         McheckTagKeyExists,
         McheckTagTextExists,
         McreateNewTag,
+        MgetTagsOfTask,
+        MaddExistingTag,
+        MremoveExistingTag,
     )
 
     from plom.db.db_rubric import (

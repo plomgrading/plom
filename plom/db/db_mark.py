@@ -457,56 +457,6 @@ def MgetOriginalImages(self, task):
         return rval
 
 
-def MgetTagsOfTask(self, task):
-    """Get tags on last annotation of given task.
-
-    Returns:
-        str/None: If no such task, return None.
-    """
-
-    gref = Group.get_or_none(Group.gid == task)
-    if gref is None:
-        log.error("MgetTags - task {} not known".format(task))
-        return None
-    qref = gref.qgroups[0]
-
-    return [qtref.tag.text for qtref in qref.qtlinks]
-
-
-def MsetTags(self, user_name, task, tag_list):
-    """Set tags on last annotation of given task. Adds all new tags and removes any existing tags that are not in tag_list.
-
-
-    Tag_list is a list of tag texts.
-    """
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == task)
-        if gref is None:
-            log.error("MsetTags - task {} not known".format(task))
-            return False
-        qref = gref.qgroups[0]
-        # existing keys
-        existing_tags = [qtref.tag.text for qtref in qref.qtlinks]
-        # add in new tags
-        for tg in tag_list:
-            if tg not in existing_tags:
-                tgref = Tag.get_or_none(text=tg)  # get ref to the tag
-                if tgref is None:
-                    # server checks keys earlier, so this should not happen.
-                    continue
-                log.warning(f"adding link to tag {tgref.text}")
-                qtref = QTLink.create(tag=tgref, qgroup=qref)
-        # now remove old tags
-        for qtref in qref.qtlinks:
-            # server checks this, so should not happen.
-            if qtref.tag.text not in tag_list:
-                log.warning(f"removing link to tag {qtref.tag.text}")
-                qtref.delete_instance()
-        # all done!
-        log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tag_list}"')
-    return True
-
-
 def MgetWholePaper(self, test_number, question):
     """Send page images of whole paper back to user, highlighting which belong to the given question. Do not show ID pages."""
 
@@ -731,4 +681,71 @@ def McheckTagTextExists(self, tag_text):
         return True
 
 
+def MgetTagsOfTask(self, task):
+    """Get tags on given task.
+
+    Returns:
+        str/None: If no such task, return None.
+    """
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MgetTags - task {} not known".format(task))
+        return None
+    qref = gref.qgroups[0]
+
+    return [qtref.tag.text for qtref in qref.qtlinks]
+
+
+def MaddExistingTag(self, username, task, tag_text):
+    """Add an existing tag to the task"""
+    uref = User.get(name=username)  # authenticated, so not-None
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MaddExistingTag - task {} not known".format(task))
+        return False
+    # get the question-group and the tag
+    qref = gref.qgroups[0]
+    tgref = Tag.get(text=tag_text)
+    if tgref is None:
+        # server existance of tag before, so this should not happen.
+        log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        return False
+    qtref = QTLink.get_or_none(qgroup=qref, tag=tgref)
+    # check if task is already tagged
+    if qtref is not None:
+        log.warn(f"MaddExistingTag - task {task} is already tagged with {tag_text}.")
+        return False
+    else:
+        QTLink.create(tag=tgref, qgroup=qref, user=uref)
+        log.info(f"MaddExistingTag - tag {tag_text} added to task {task}.")
+        return True
+
+
+def MremoveExistingTag(self, task, tag_text):
+    """Remove an existing tag to the task"""
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MremoveExistingTag - task {} not known".format(task))
+        return False
+    # get the question-group and the tag
+    qref = gref.qgroups[0]
+    tgref = Tag.get(text=tag_text)
+    if tgref is None:
+        # server existance of tag before, so this should not happen.
+        log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        return False
+    qtref = QTLink.get_or_none(qgroup=qref, tag=tgref)
+    # check if task is already tagged
+    if qtref is not None:
+        qtref.delete_instance()
+        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
+        return True
+    else:
+        log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
+        return False
+
+
+##
 ##
