@@ -633,15 +633,12 @@ def McreateNewTag(self, user_name, tag_text):
 
     Args:
         user_name (str): name of user creating the tag
-        tag_text (str): the text of the tag
+        tag_text (str): the text of the tag - already validated by system
 
     Returns:
         tuple: `(True, key)` or `(False, err_msg)` where `key` is the
             key for the new tag.  Can fail if tag text is not alphanum, or if tag already exists.
     """
-    if tag_text.isalnum() is False:
-        return (False, "Not alpha-numeric")
-
     if Tag.get_or_none(text=tag_text) is not None:
         return (False, "Tag already exists")
 
@@ -747,5 +744,4 @@ def MremoveExistingTag(self, task, tag_text):
         return False
 
 
-##
 ##

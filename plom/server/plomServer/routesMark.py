@@ -489,17 +489,22 @@ class MarkHandler:
     def add_tag(self, data, request):
         """Add a tag for a task.
 
-        Respond with status 200/410.
+        Respond with status 200/406/410.
 
         Args:
             data (dict): user, token and the text for the given tag (str).
 
         Returns:
             aiohttp.web_response.Response: 200 on success or
-                HTTPGone (410) if there is no such tag.
+                HTTPNotAcceptable (406) if tag is invalid
+                HTTPGone (410) if cannot find task
+
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"]
+        if self.server.checkTagTextValid(tag_text) is False:
+            raise web.HTTPNotAcceptable(reason="Text contains disallowed characters.")
+
         if not self.server.add_tag(data["user"], task, tag_text):
             raise web.HTTPGone(reason="No tag with that text.")
         return web.Response(status=200)
@@ -546,19 +551,22 @@ class MarkHandler:
     def create_new_tag(self, data, request):
         """Get list of all tags in system.
 
-        Respond with status 200/406.
+        Respond with status 200/406/409.
 
         Args:
             data (dict): user, token, tag_text.
 
         Returns:
-            aiohttp.web_response.Response: 200 with key for new tag or HTTPNotAcceptable if tag text is not alpha-numeric.
+            aiohttp.web_response.Response: 200 with key for new tag or HTTPNotAcceptable if tag text is not acceptable or
+            HTTPConflict if tag already in system.
         """
+        if self.server.checkTagTextValid(data["tag_text"]) is False:
+            raise web.HTTPNotAcceptable(reason="Text contains disallowed characters")
         success, tag_key = self.server.McreateNewTag(data["user"], data["tag_text"])
         if success:
             return web.json_response(tag_key)
         else:
-            raise request.HTTPNotAcceptable(reason="Tag is not alpha-numeric")
+            raise request.HTTPConflict(reason="Tag already in system")
 
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])

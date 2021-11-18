@@ -394,7 +394,7 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 410:
+            if response.status_code in [406, 410]:
                 raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
@@ -445,8 +445,8 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 406:
-                raise PlomBadTagError("Tag not alpha-numeric") from None
+            if response.status_code in [406, 409]:
+                raise PlomBadTagError(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

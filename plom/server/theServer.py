@@ -161,6 +161,7 @@ class Server:
         MrecordMark,
         MreturnMarkedTask,
         MgetOriginalImages,
+        checkTagTextValid,
         add_tag,
         remove_tag,
         MgetTagsOfTask,
