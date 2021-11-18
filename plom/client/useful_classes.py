@@ -17,10 +17,12 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QStackedLayout,
     QTableView,
     QTextEdit,
     QToolButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from plom import isValidStudentNumber
@@ -365,64 +367,120 @@ class ClientSettingsDialog(QDialog):
         )
 
 
-class AddTagDialog(QDialog):
+class AddRemoveTagDialog(QDialog):
     def __init__(self, parent, task, current_tags, tag_choices=[]):
         super().__init__()
         self.parent = parent
-        self.setWindowTitle(f"Add tag to task {task}?")
+        self.current_tags = current_tags
+        self.tag_choices = tag_choices
+        self.task = task
 
+        self.choiceW = QWidget()
+        self.addW = QWidget()
+        self.removeW = QWidget()
+
+        self.mode = None
+
+        self.CBadd = QComboBox()
+        self.CBadd.setEditable(True)
+        self.CBadd.addItem("")
+        self.CBadd.addItems(tag_choices)
+
+        self.CBremove = QComboBox()
+        self.CBremove.addItem("")
+        self.CBremove.addItems(current_tags)
+
+        self.set_choose_layout()
+        self.set_add_layout()
+        self.set_remove_layout()
+
+        self.stack = QStackedLayout()
+        self.stack.addWidget(self.choiceW)
+        self.stack.addWidget(self.addW)
+        self.stack.addWidget(self.removeW)
+        self.setLayout(self.stack)
+
+        self.choose_pane()
+
+    def choose_pane(self):
+        self.setWindowTitle(f"Choose tag to add or remove tags from {self.task}?")
+        self.mode = "choose"
+        self.stack.setCurrentIndex(0)
+
+    def add_pane(self):
+        self.setWindowTitle(f"Add tag to task {self.task}?")
+        self.mode = "add"
+        self.stack.setCurrentIndex(1)
+
+    def remove_pane(self):
+        self.setWindowTitle(f"Remove tag from task {self.task}?")
+        self.mode = "remove"
+        self.stack.setCurrentIndex(2)
+
+    def set_choose_layout(self):
         lay = QVBoxLayout()
-        if len(current_tags) == 0:
+        tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in self.current_tags)
+        msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"
+        lay.addWidget(QLabel(msg))
+        lay.addWidget(QLabel("<p>Choose add or remove tags"))
+
+        addButton = QPushButton("Add tag")
+        addButton.clicked.connect(self.add_pane)
+        removeButton = QPushButton("Remove tag")
+        removeButton.clicked.connect(self.remove_pane)
+        lay.addWidget(addButton)
+        lay.addWidget(removeButton)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        buttons.rejected.connect(self.reject)
+        lay.addWidget(buttons)
+
+        self.choiceW.setLayout(lay)
+
+    def set_add_layout(self):
+        lay = QVBoxLayout()
+        if len(self.current_tags) == 0:
             lay.addWidget(QLabel("<p><b>No current tags</b></p>"))
         else:
-            tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in current_tags)
+            tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in self.current_tags)
             msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"
             lay.addWidget(QLabel(msg))
 
         lay.addWidget(
             QLabel("<p>Choose tag to add or edit text to create a new one.</p>")
         )
-
-        lay.addWidget(QLabel("<p>Click cancel to skip this dialog.</p>"))
-
-        self.CB = QComboBox()
-        self.CB.setEditable(True)
-        self.CB.addItem("")
-        self.CB.addItems(tag_choices)
-
-        lay.addWidget(self.CB)
+        lay.addWidget(self.CBadd)
+        back = QPushButton("back")
+        back.clicked.connect(self.choose_pane)
+        lay.addWidget(back)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-
         lay.addWidget(buttons)
 
-        self.setLayout(lay)
+        self.addW.setLayout(lay)
 
-
-class RemoveTagDialog(QDialog):
-    def __init__(self, parent, task, current_tags):
-        super().__init__()
-        self.parent = parent
-        self.setWindowTitle(f"Choose tag to remove from task {task}?")
-
+    def set_remove_layout(self):
         lay = QVBoxLayout()
-        tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in current_tags)
-        msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"
-        lay.addWidget(QLabel(msg))
+        if len(self.current_tags) == 0:
+            lay.addWidget(QLabel("<p><b>No current tags</b></p>"))
+            buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+            buttons.rejected.connect(self.reject)
+        else:
+            tagtxt = "&nbsp; ".join(f"<em>{x}</em>" for x in self.current_tags)
+            msg = f"<p>Current tags:</p>\n<center><big>{tagtxt}</big></center>"
+            lay.addWidget(QLabel(msg))
+            lay.addWidget(QLabel("<p>Choose tag to remove.</p>"))
+            lay.addWidget(self.CBremove)
+            buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            buttons.accepted.connect(self.accept)
+            buttons.rejected.connect(self.reject)
 
-        lay.addWidget(QLabel("<p>Choose tag to remove or click cancel.</p>"))
-
-        self.CB = QComboBox()
-        self.CB.addItem("")
-        self.CB.addItems(current_tags)
-        lay.addWidget(self.CB)
-
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
+        back = QPushButton("back")
+        back.clicked.connect(self.choose_pane)
+        lay.addWidget(back)
 
         lay.addWidget(buttons)
 
-        self.setLayout(lay)
+        self.removeW.setLayout(lay)

@@ -66,7 +66,11 @@ from .annotator import Annotator
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import QuestionView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import AddTagDialog, ErrorMessage, RemoveTagDialog, SimpleMessage
+from .useful_classes import (
+    AddRemoveTagDialog,
+    ErrorMessage,
+    SimpleMessage,
+)
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -2453,27 +2457,24 @@ class MarkerClient(QWidget):
         current_tags = self.msgr.get_tags(task)
         # possible new tags = tags in dict that are not in tag_keys
         tag_choices = [X for X in self.tag_list if X not in current_tags]
-        atd = AddTagDialog(self, task, current_tags, tag_choices=tag_choices)
-        if atd.exec() == QDialog.Accepted:
-            new_tag = atd.CB.currentText()
-            if len(new_tag) == 0:
-                pass  # user is not adding a tag
-            elif new_tag in current_tags:
-                pass  # already have that tag
-            # an actual new tag for this task (though it may exist already)
-            else:
-                try:
-                    self.msgr.add_single_tag(task, new_tag)
-                    log.debug('tagging paper "%s" with "%s"', task, new_tag)
-                except PlomBadTagError as e:
-                    ErrorMessage(f"Tag not acceptable: {e}").exec_()
 
-        # refresh tag texts again
-        current_tags = self.msgr.get_tags(task)
-        if current_tags:
-            rtd = RemoveTagDialog(self, task, current_tags)
-            if rtd.exec() == QDialog.Accepted:
-                tag_text = rtd.CB.currentText()
+        artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
+        if artd.exec() == QDialog.Accepted:
+            if artd.mode == "add":
+                new_tag = artd.CBadd.currentText()
+                if len(new_tag) == 0:
+                    pass  # user is not adding a tag
+                elif new_tag in current_tags:
+                    pass  # already have that tag
+                # an actual new tag for this task (though it may exist already)
+                else:
+                    try:
+                        self.msgr.add_single_tag(task, new_tag)
+                        log.debug('tagging paper "%s" with "%s"', task, new_tag)
+                    except PlomBadTagError as e:
+                        ErrorMessage(f"Tag not acceptable: {e}").exec_()
+            elif artd.mode == "remove":
+                tag_text = artd.CBremove.currentText()
                 if len(tag_text) == 0:
                     pass
                 else:
@@ -2481,16 +2482,18 @@ class MarkerClient(QWidget):
                         self.msgr.remove_single_tag(task, tag_text)
                     except PlomBadTagError as e:
                         ErrorMessage(f"Problem removing tag: {e}").exec_()
-                    # refresh the current tags from server
-                    current_tags = self.msgr.get_tags(task)
-
-        try:
-            self.examModel.setTagsByTask(task, current_tags)
-            self.ui.tableView.resizeColumnsToContents()
-            self.ui.tableView.resizeRowsToContents()
-        except ValueError:
-            # we might not the task for which we've have been managing tags
-            pass
+            else:
+                # do nothing - shouldn't arrive here.
+                pass
+            # refresh the tags
+            current_tags = self.msgr.get_tags(task)
+            try:
+                self.examModel.setTagsByTask(task, current_tags)
+                self.ui.tableView.resizeColumnsToContents()
+                self.ui.tableView.resizeRowsToContents()
+            except ValueError:
+                # we might not the task for which we've have been managing tags
+                pass
 
     def setFilter(self):
         """Sets a filter tag."""
