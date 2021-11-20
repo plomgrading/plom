@@ -1066,10 +1066,6 @@ class MarkerClient(QWidget):
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
-        # get all the tag texts
-        self.tag_texts = []
-        self.rebuild_tag_list()
-
         try:
             # Get list of papers already marked and add to table.
             self.loadMarkedList()
@@ -1235,10 +1231,6 @@ class MarkerClient(QWidget):
         self.shutDownError()
         if rethrow:
             raise (error)
-
-    def rebuild_tag_list(self):
-        # get all tags return list of pairs (tag_key, tag_text)
-        self.tag_list = [X[1] for X in self.msgr.get_all_tags()]
 
     def loadMarkedList(self):
         """
@@ -2451,12 +2443,9 @@ class MarkerClient(QWidget):
         if not parent:
             parent = self
 
-        # first refresh the tag list
-        self.rebuild_tag_list()
-        # get the tags texts for this task on the server
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
         current_tags = self.msgr.get_tags(task)
-        # possible new tags = tags in dict that are not in tag_keys
-        tag_choices = [X for X in self.tag_list if X not in current_tags]
+        tag_choices = [X for X in all_tags if X not in current_tags]
 
         artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
         if artd.exec() == QDialog.Accepted:
