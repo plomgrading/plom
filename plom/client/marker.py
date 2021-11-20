@@ -2425,9 +2425,9 @@ class MarkerClient(QWidget):
         tag_choices = [X for X in all_tags if X not in current_tags]
 
         artd = AddRemoveTagDialog(self, task, current_tags, tag_choices=tag_choices)
-        if artd.exec() == QDialog.Accepted:
-            if artd.mode == "add":
-                new_tag = artd.CBadd.currentText()
+        if artd.exec_() == QDialog.Accepted:
+            cmd, new_tag = artd.return_values
+            if cmd == "add":
                 if len(new_tag) == 0:
                     pass  # user is not adding a tag
                 elif new_tag in current_tags:
@@ -2439,15 +2439,11 @@ class MarkerClient(QWidget):
                         log.debug('tagging paper "%s" with "%s"', task, new_tag)
                     except PlomBadTagError as e:
                         ErrorMessage(f"Tag not acceptable: {e}").exec_()
-            elif artd.mode == "remove":
-                tag_text = artd.CBremove.currentText()
-                if len(tag_text) == 0:
-                    pass
-                else:
-                    try:
-                        self.msgr.remove_single_tag(task, tag_text)
-                    except PlomBadTagError as e:
-                        ErrorMessage(f"Problem removing tag: {e}").exec_()
+            elif cmd == "remove":
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    ErrorMessage(f"Problem removing tag: {e}").exec_()
             else:
                 # do nothing - shouldn't arrive here.
                 pass
