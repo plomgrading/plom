@@ -24,7 +24,9 @@ def checkAllSolutionsPresent(solutionList):
     return True
 
 
-def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip):
+def _assemble_one_soln(
+    msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip, watermark=False
+):
     """Assemble a solution for one particular paper.
 
     Args:
@@ -40,6 +42,7 @@ def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip
         sid (str/None): The student number as a string.  Maybe `None` which
             means that student has no ID (?)  Currently we just skip these.
         skip (bool): whether to skip existing pdf files.
+        watermark (bool): whether to watermark solns with student-id.
 
     Returns:
         None
@@ -59,10 +62,10 @@ def _assemble_one_soln(msgr, tmpdir, outdir, short_name, max_marks, t, sid, skip
     soln_files = []
     for X in info[1:]:
         soln_files.append(Path(tmpdir) / f"solution.{X[0]}.{X[1]}.png")
-    assemble(outname, short_name, sid, coverfile, soln_files)
+    assemble(outname, short_name, sid, coverfile, soln_files, watermark)
 
 
-def main(testnum=None, server=None, pwd=None):
+def main(testnum=None, server=None, pwd=None, watermark=False):
     msgr = start_messenger(server, pwd)
     try:
         shortName = msgr.getInfoShortName()
@@ -106,7 +109,9 @@ def main(testnum=None, server=None, pwd=None):
             if completed[2] != numberOfQuestions:
                 print(f"Note: paper {t} not fully marked but building soln anyway")
             sid = identifiedTests[t][0]
-            _assemble_one_soln(msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False)
+            _assemble_one_soln(
+                msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False, watermark
+            )
         else:
             print(f"Building UP TO {len(completedTests)} solutions...")
             N = 0
@@ -119,7 +124,7 @@ def main(testnum=None, server=None, pwd=None):
                 #     continue
                 sid = identifiedTests[t][0]
                 _assemble_one_soln(
-                    msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False
+                    msgr, tmpdir, outdir, shortName, maxMarks, t, sid, False, watermark
                 )
                 N += 1
             print(f"Assembled {N} solutions from papers scanning and ID'd")

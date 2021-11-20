@@ -17,7 +17,7 @@ papersize_landscape = (792, 612)
 margin = 10
 
 
-def assemble(outname, shortName, sid, coverfile, img_list):
+def assemble(outname, shortName, sid, coverfile, img_list, watermark=False):
     """Assemble a pdf from the solution images.
 
     args:
@@ -27,6 +27,7 @@ def assemble(outname, shortName, sid, coverfile, img_list):
         sid (str): Student ID, to be written into metadata.
         img_list (list): list of str or Path images to be inserted one
             per page.
+        watermark (bool): whether to watermark soln pages with student id.
 
     return:
         None
@@ -63,6 +64,24 @@ def assemble(outname, shortName, sid, coverfile, img_list):
             else:
                 # TODO: can remove str() once minimum pymupdf is 1.18.9
                 pg.insert_image(rec, filename=str(img_name))
+            # add a watermark of the student-id in rect at bottom of page
+        if watermark:
+            wm_rect = fitz.Rect(margin, h - margin - 24, margin + 200, h - margin)
+            text = f"produced for {sid}"
+            excess = pg.insert_textbox(
+                wm_rect,
+                text,
+                fontsize=18,
+                color=[0, 0, 0],
+                fontname="Helvetica",
+                fontfile=None,
+                align=1,
+                stroke_opacity=0.33,
+                fill_opacity=0.33,
+                overlay=True,
+            )
+            assert excess > 0, "Text didn't fit: is SID label too long?"
+            pg.draw_rect(wm_rect, color=[0, 0, 0], stroke_opacity=0.25)
 
     exam.set_metadata(
         {

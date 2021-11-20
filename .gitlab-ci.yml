@@ -285,7 +285,7 @@ hwdemoserver:
     - B=`ls reassembled/ | wc -l`    # How many files?
     - echo $B
     - bash -c "[[ $B == $A ]]"
-    - plom-finish solutions
+    - plom-finish solutions --mark
     - B=`ls solutions/ | wc -l`    # How many files?
     - echo $B
     - bash -c "[[ $B == $A ]]"
@@ -362,7 +362,7 @@ fullworkflow:
     - plom-finish reassemble -w 1234
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
-    - plom-finish solutions -w 1234
+    - plom-finish solutions -w 1234 --mark
     - A=`ls solutions/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
