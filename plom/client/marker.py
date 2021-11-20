@@ -154,9 +154,7 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                page_metadata, tag_texts, integrity_check = self._msgr.MclaimThisTask(
-                    task
-                )
+                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -195,7 +193,7 @@ class BackgroundDownloader(QThread):
                     r["local_filename"] = tmp
 
         self.downloadSuccess.emit(
-            task, src_img_data, full_pagedata, tag_texts, integrity_check
+            task, src_img_data, full_pagedata, tags, integrity_check
         )
         self.quit()
 
@@ -405,7 +403,7 @@ class ExamQuestion:
         stat="untouched",
         mrk="-1",
         mtime="0",
-        tags="",
+        tags=[],
         integrity_check="",
     ):
         """
@@ -417,7 +415,8 @@ class ExamQuestion:
             stat (str): test status.
             mrk (int): the mark of the question.
             mtime (int): marking time spent on that page in seconds.
-            tags (str): Tags corresponding to the exam.
+            tags (list): Tags corresponding to the exam.  We will flatten to
+                a space-separaed string.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
             src_img_metadata (list[dict]): a list of dicts of md5sums,
                 filenames and other metadata of the images for the test
@@ -434,7 +433,7 @@ class ExamQuestion:
         self.annotatedFile = ""
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
-        self.tags = tags
+        self.tags = " ".join(tags)
         self.integrity_check = integrity_check
 
 
@@ -1233,10 +1232,6 @@ class MarkerClient(QWidget):
         markedList = self.msgr.MrequestDoneTasks(self.question, self.version)
         for x in markedList:
             # TODO: might not the "markedList" have some other statuses?
-            # concat tag texts into a single string
-            tag_texts = x[3]
-            tags = " ".join(tag_texts)
-
             self.examModel.addPaper(
                 ExamQuestion(
                     x[0],
@@ -1244,7 +1239,7 @@ class MarkerClient(QWidget):
                     stat="marked",
                     mrk=x[1],
                     mtime=x[2],
-                    tags=tags,
+                    tags=x[3],
                     integrity_check=x[4],
                 )
             )
@@ -1427,9 +1422,7 @@ class MarkerClient(QWidget):
                 self.throwSeriousError(err)
 
             try:
-                page_metadata, tag_texts, integrity_check = self.msgr.MclaimThisTask(
-                    task
-                )
+                page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1463,9 +1456,6 @@ class MarkerClient(QWidget):
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
-
-        # concat tag texts into a single text field
-        tags = " ".join(tag_texts)
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1516,7 +1506,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, full_pagedata, tag_texts, integrity_check
+        self, task, src_img_data, full_pagedata, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1526,7 +1516,7 @@ class MarkerClient(QWidget):
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
             full_pagedata (list): temporary hacks to merge with above?
-            tag_texts (list[str]): list of texts for tags for the TGV.
+            tags (list[str]): list of texts for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
@@ -1534,8 +1524,6 @@ class MarkerClient(QWidget):
         """
         num = int(task[1:5])
         self._full_pagedata[num] = full_pagedata
-        # concat tag texts into a single string
-        tags = " ".join(tag_texts)
         self.examModel.addPaper(
             ExamQuestion(
                 task,
