@@ -694,17 +694,6 @@ class MarkerExamModel(QStandardItemModel):
         """
         return self._setDataByTask(task, 4, " ".join(tags))
 
-    def get_all_tags(self):
-        """Return all tags as a set over all rows of the table.
-
-        Note: internally stored as flattened string.
-        """
-        tags = set()
-        for r in range(self.rowCount()):
-            v = self.data(self.index(r, 4))
-            tags.update(v.split())
-        return tags
-
     def getMTimeByTask(self, task):
         """Return total marking time (s) for task, (task(str), return (int).)"""
         return int(self._getDataByTask(task, 3))
