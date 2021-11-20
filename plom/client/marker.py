@@ -2492,7 +2492,7 @@ class MarkerClient(QWidget):
                 self.ui.tableView.resizeColumnsToContents()
                 self.ui.tableView.resizeRowsToContents()
             except ValueError:
-                # we might not the task for which we've have been managing tags
+                # we might not own the task for which we've have been managing tags
                 pass
 
     def setFilter(self):
