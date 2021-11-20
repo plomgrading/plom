@@ -2528,35 +2528,3 @@ class MarkerClient(QWidget):
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
-
-        ##
-        ##
-        ##
-        ##
-        if tgs.exec_() != QDialog.Accepted:
-            return
-        tn = tgs.tsb.value()
-        gn = tgs.gsb.value()
-        task = f"q{tn:04}g{gn}"
-        try:
-            imageList = self.msgr.MrequestOriginalImages(task)
-        except PlomNoMoreException:
-            msg = ErrorMessage(f"No image corresponding to task {task}")
-            msg.exec_()
-            return
-        ifilenames = []
-        for img in imageList:
-            ifile = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".image", delete=False
-            )
-            ifile.write(img)
-            ifilenames.append(ifile.name)
-        qvmap = self.msgr.getQuestionVersionMap(tn)
-        ver = qvmap[gn]
-        QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
-
-
-##
-##
-##
-##
