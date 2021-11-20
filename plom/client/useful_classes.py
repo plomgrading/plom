@@ -380,6 +380,7 @@ class AddRemoveTagDialog(QDialog):
     Note this dialog does not actually change the tag: the caller needs to
     do that.
     """
+
     def __init__(self, parent, task, current_tags, tag_choices=[]):
         super().__init__(parent)
 
