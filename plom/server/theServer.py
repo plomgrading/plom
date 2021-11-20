@@ -130,6 +130,9 @@ class Server:
         collidingToTestPage,
         discardToUnknown,
         listBundles,
+        getBundleFromImage,
+        getImagesInBundle,
+        getPageFromBundle,
     )
     from .plomServer.serverID import (
         IDprogressCount,

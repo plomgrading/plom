@@ -6,8 +6,7 @@
 import csv
 
 from plom import get_question_label
-from plom.messenger import FinishMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.finish import start_messenger
 from plom.finish import CSVFilename
 
 
@@ -80,25 +79,7 @@ def writeSpreadsheet(spreadSheetDict, labels):
 
 
 def main(server=None, password=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = FinishMessenger(s, port=p)
-    else:
-        msgr = FinishMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another finishing-script or manager-client running,\n"
-            "    e.g., on another computer?\n\n"
-            "In order to force-logout the existing authorization run `plom-finish clear`."
-        )
-        raise
-
+    msgr = start_messenger(server, password)
     try:
         spec = msgr.get_spec()
         numberOfQuestions = spec["numberOfQuestions"]
