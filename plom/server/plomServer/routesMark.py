@@ -506,7 +506,7 @@ class MarkHandler:
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters.")
 
         if not self.server.add_tag(data["user"], task, tag_text):
-            raise web.HTTPGone(reason="No tag with that text.")
+            raise web.HTTPGone(reason="No such task.")
         return web.Response(status=200)
 
     # @routes.delete("/tags/{task}")
