@@ -706,7 +706,7 @@ def MaddExistingTag(self, username, task, tag_text):
     qref = gref.qgroups[0]
     tgref = Tag.get(text=tag_text)
     if tgref is None:
-        # server existance of tag before, so this should not happen.
+        # server existence of tag before, so this should not happen.
         log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
         return False
     qtref = QTLink.get_or_none(qgroup=qref, tag=tgref)
@@ -730,7 +730,7 @@ def MremoveExistingTag(self, task, tag_text):
     qref = gref.qgroups[0]
     tgref = Tag.get(text=tag_text)
     if tgref is None:
-        # server existance of tag before, so this should not happen.
+        # server existence of tag before, so this should not happen.
         log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
         return False
     qtref = QTLink.get_or_none(qgroup=qref, tag=tgref)
