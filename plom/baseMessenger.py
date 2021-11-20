@@ -417,22 +417,6 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def get_all_tags(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/tags",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def create_new_tag(self, tag_text):
         self.SRmutex.acquire()
         try:
