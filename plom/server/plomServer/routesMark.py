@@ -502,7 +502,7 @@ class MarkHandler:
         """
         task = request.match_info["task"]
         tag_text = data["tag_text"]
-        if self.server.checkTagTextValid(tag_text) is False:
+        if not self.server.checkTagTextValid(tag_text):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters.")
 
         if not self.server.add_tag(data["user"], task, tag_text):
@@ -560,7 +560,7 @@ class MarkHandler:
             aiohttp.web_response.Response: 200 with key for new tag or HTTPNotAcceptable if tag text is not acceptable or
             HTTPConflict if tag already in system.
         """
-        if self.server.checkTagTextValid(data["tag_text"]) is False:
+        if not self.server.checkTagTextValid(data["tag_text"]):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters")
         success, tag_key = self.server.McreateNewTag(data["user"], data["tag_text"])
         if success:
