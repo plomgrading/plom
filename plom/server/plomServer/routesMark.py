@@ -557,8 +557,9 @@ class MarkHandler:
             data (dict): user, token, tag_text.
 
         Returns:
-            aiohttp.web_response.Response: 200 with key for new tag or HTTPNotAcceptable if tag text is not acceptable or
-            HTTPConflict if tag already in system.
+            aiohttp.web_response.Response: 200 with key for new tag or
+                HTTPNotAcceptable if tag text is not acceptable or
+                HTTPConflict if tag already in system.
         """
         if not self.server.checkTagTextValid(data["tag_text"]):
             raise web.HTTPNotAcceptable(reason="Text contains disallowed characters")
