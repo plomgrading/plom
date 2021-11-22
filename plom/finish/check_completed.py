@@ -3,6 +3,7 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Forest Kobayashi
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.finish import start_messenger
@@ -11,9 +12,9 @@ from plom.finish import start_messenger
 def proc_everything(comps, numberOfQuestions):
     scannedList = []
     idList = []
-    mList = [0 for j in range(numberOfQuestions + 1)]
-    histList = [[] for j in range(numberOfQuestions + 1)]
-    cList = []
+    mList = [0 for j in range(numberOfQuestions + 1)]  # marked
+    histList = [[] for j in range(numberOfQuestions + 1)]  # test numbers
+    cList = []  # completed
     partMarked = []
     # each comps item = [Scanned, IDed, #Marked]
     for t, v in comps.items():
@@ -95,11 +96,13 @@ def main(server=None, password=None):
     msgr = start_messenger(server, password)
     try:
         spec = msgr.get_spec()
+        classlist = msgr.IDrequestClasslist()
         max_papers = spec["numberToProduce"]
         numberOfQuestions = spec["numberOfQuestions"]
         completions = msgr.RgetCompletionStatus()
         outToDo = msgr.RgetOutToDo()
         dangling = msgr.RgetDanglingPages()
+        pns_to_ids = msgr.RgetSpreadsheet()  # paper numbers to identifiers
     finally:
         msgr.closeUser()
         msgr.stop()
@@ -111,6 +114,43 @@ def main(server=None, password=None):
     )
     numberComplete = len(cList)
     print("{} complete of {} scanned".format(numberComplete, numScanned))
+
+    students_from_cl = {(sdict["id"], sdict["studentName"]) for sdict in classlist}
+    students_from_db = {
+        (
+            pns_to_ids[papernum]["sid"],
+            pns_to_ids[papernum]["sname"],
+        )
+        for papernum in pns_to_ids
+    }
+
+    cl_not_db = students_from_cl - students_from_db
+    db_not_cl = students_from_db - students_from_cl
+    db_not_cl_tests = {  # This is needlessly bad
+        (pns_to_ids[papernum]["sid"], pns_to_ids[papernum]["sname"]): papernum
+        for papernum in pns_to_ids
+        if (pns_to_ids[papernum]["sid"], pns_to_ids[papernum]["sname"]) in db_not_cl
+    }
+
+    # these print statements should be padded with spaces to make
+    # columns align
+    if cl_not_db:
+        print(
+            f"There were {len(cl_not_db)} students listed in `classlist.csv` Who do not seem to have submissions in the plom database."
+        )
+        # silly hack for getting some "pretty" printing
+        [print(f"ID: {sid}    Name: {sname}") for (sid, sname) in cl_not_db]
+
+    if db_not_cl:
+        print(
+            f"There were {len(db_not_cl)} students present in the plom database who do not seem to be listed in `classlist.csv`."
+        )
+        [
+            print(
+                f"Test no.: {db_not_cl_tests[stud]}    ID: {stud[0]}    Name: {stud[1]}"
+            )
+            for stud in db_not_cl
+        ]
 
     print_still_out(outToDo)
     print_dangling(dangling)
