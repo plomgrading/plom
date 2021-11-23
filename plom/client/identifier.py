@@ -419,7 +419,7 @@ class IDClient(QWidget):
             imageName = None
         else:
             imageName = os.path.join(self.workingDirectory, f"i{test}.0.image")
-            with open(imageName, "wb+") as fh:
+            with open(imageName, "wb") as fh:
                 fh.write(imageDat)
 
         self.exM.paperList[r].originalFile = imageName
@@ -514,7 +514,7 @@ class IDClient(QWidget):
         for i in range(len(imageList)):
             tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
             inames.append(tmp)
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(imageList[i])
 
         # Add the paper [code, filename, etc] to the list

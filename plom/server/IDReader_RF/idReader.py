@@ -59,7 +59,7 @@ def download_model():
         if response.status_code != 200:
             print("\tError getting file {}.".format(file_name))
             return False
-        with open(base_path / file_name, "wb+") as file_header:
+        with open(base_path / file_name, "wb") as file_header:
             file_header.write(response.content)
         print("\tDone Saving")
     return True

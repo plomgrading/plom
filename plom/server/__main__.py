@@ -98,7 +98,7 @@ def processUsers(userFile, demo, auto, numbered):
         )
         # grab required users and regular users
         lst = build_canned_users(auto, numbered)
-        with open(rawfile, "w+") as fh:
+        with open(rawfile, "w") as fh:
             writer = csv.writer(fh, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerow(["user", "password"])
             for row in lst:
