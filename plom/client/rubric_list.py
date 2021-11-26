@@ -44,7 +44,6 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from plom.comment_utils import comments_apply_default_fields
 from plom.misc_utils import next_in_longest_subsequence
 from .useful_classes import ErrorMessage, SimpleMessage
 from .rubric_wrangler import RubricWrangler
