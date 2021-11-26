@@ -279,8 +279,8 @@ class TestStatus(QDialog):
 
 class ProgressBox(QGroupBox):
     def __init__(self, parent, qu, v, stats):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         self.question = qu
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
@@ -351,7 +351,7 @@ class ProgressBox(QGroupBox):
             self.lhL.setText("# Marked in last hour = N/A")
 
     def viewHist(self):
-        self.parent.viewMarkHistogram(self.question, self.version)
+        self._parent.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
