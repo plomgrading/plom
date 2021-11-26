@@ -33,9 +33,10 @@ def assemble(outname, shortName, sid, coverfile, img_list):
     """
     outname = Path(outname)
 
-    exam = fitz.open()
     if coverfile:
-        exam.insertPDF(fitz.open(coverfile))
+        exam = fitz.open(coverfile)
+    else:
+        exam = fitz.open()
 
     for img_name in img_list:
         img_name = Path(img_name)
@@ -72,3 +73,5 @@ def assemble(outname, shortName, sid, coverfile, img_list):
     )
 
     exam.save(outname, deflate=True)
+    # https://gitlab.com/plom/plom/-/issues/1777
+    exam.close()

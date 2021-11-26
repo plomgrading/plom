@@ -36,9 +36,10 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     """
     outname = Path(outname)
 
-    exam = fitz.open()
     if coverfile:
-        exam.insertPDF(fitz.open(coverfile))
+        exam = fitz.open(coverfile)
+    else:
+        exam = fitz.open()
 
     for img_name in [*id_images, *marked_pages]:
         img_name = Path(img_name)
@@ -103,3 +104,5 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     )
 
     exam.save(outname, deflate=True)
+    # https://gitlab.com/plom/plom/-/issues/1777
+    exam.close()
