@@ -136,11 +136,11 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
         # TODO: could do `with fitz.open(file_name) as pdf_document:`
         pdf_document = fitz.open(file_name)
-        front_page = pdf_document[0]
 
         # First we input the student names
         if file_name not in named_papers_paths:  # can draw on front page
             # insert digit images into rectangles - some hackery required to get correct positions.
+            front_page = pdf_document[0]
             width = 28
             border = 8
             for digit_index in range(student_number_length):
@@ -169,6 +169,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 align=0,
             )
             assert excess > 0
+            del front_page
 
         # Write some random answers on the pages
         for page_index, pdf_page in enumerate(pdf_document):
