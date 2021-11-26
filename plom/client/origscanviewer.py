@@ -456,7 +456,12 @@ class RearrangementViewer(QDialog):
             b.setCursor(Qt.ArrowCursor)
 
         self.setLayout(vb0)
-        self.resize(QSize(self.parent.width() * 7 / 8, self.parent.height() * 9 / 10))
+        self.resize(
+            QSize(
+                int(self.parent.width() * 7 / 8),
+                int(self.parent.height() * 9 / 10),
+            )
+        )
 
         self.closeB.clicked.connect(self.close)
         self.sLeftB.clicked.connect(self.shuffleLeft)
@@ -768,7 +773,10 @@ class ShowExamPage(QDialog):
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
         self.resize(
-            QSize(self.parent().width() * 2 / 3, self.parent().height() * 7 / 8)
+            QSize(
+                int(self.parent().width() * 2 / 3),
+                int(self.parent().height() * 7 / 8),
+            )
         )
         self.testImg.forceRedrawOrSomeBullshit()
         self.show()
