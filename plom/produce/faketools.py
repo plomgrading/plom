@@ -320,8 +320,10 @@ def splitFakeFile(out_file_path):
     doc1.save(newPDFName + "1.pdf")
     doc2.save(newPDFName + "2.pdf")
     doc3.save(newPDFName + "3.pdf")
-
-    os.unlink(out_file_path)
+    doc1.close()
+    doc2.close()
+    doc3.close()
+    originalPDF.close()
 
 
 def download_classlist(server=None, password=None):
@@ -382,6 +384,7 @@ def make_scribbles(server, password, basedir=Path(".")):
         make_garbage_pages(out_file_path)
         make_colliding_pages(_paperdir, out_file_path)
         splitFakeFile(out_file_path)
+        os.unlink(out_file_path)
 
 
 def main():
