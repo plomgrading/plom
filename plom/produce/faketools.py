@@ -198,6 +198,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
         # We then add the pdfs into the document collection
         all_pdf_documents.insert_pdf(pdf_document)
+        pdf_document.close()
 
         # For a comprehensive test, we will add some extrapages with low probability
         if random.random() < extra_page_probability:
@@ -222,6 +223,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             )
 
     all_pdf_documents.save(out_file_path)
+    all_pdf_documents.close()
     print('Assembled in "{}"'.format(out_file_path))
 
 
@@ -247,6 +249,7 @@ def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
     all_pdf_documents.saveIncr()
+    all_pdf_documents.close()
 
 
 def make_colliding_pages(paper_dir_path, outfile):
@@ -282,6 +285,7 @@ def make_colliding_pages(paper_dir_path, outfile):
             to_page=test_length - 1,
             start_at=colliding_page_index,
         )
+        pdf_document.close()
         excess = all_pdf_documents[colliding_page_index].insert_textbox(
             fitz.Rect(100, 100, 500, 500),
             "I was dropped on the floor and rescanned.",
@@ -294,6 +298,7 @@ def make_colliding_pages(paper_dir_path, outfile):
         assert excess > 0
 
     all_pdf_documents.saveIncr()
+    all_pdf_documents.close()
 
 
 def splitFakeFile(out_file_path):
