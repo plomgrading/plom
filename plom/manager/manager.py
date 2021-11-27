@@ -356,12 +356,12 @@ class ProgressBox(QGroupBox):
 
 class Manager(QWidget):
     def __init__(
-        self, parent, *, server=None, user=None, password=None, manager_msgr=None
+        self, Qapp, *, server=None, user=None, password=None, manager_msgr=None
     ):
         """Start a new Plom Manager window.
 
         Args:
-            parent: A QApplication (I think).
+            Qapp (QApplication):
 
         Keyword Args:
             manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
@@ -374,7 +374,7 @@ class Manager(QWidget):
         """
         self.APIVersion = Plom_API_Version
         super().__init__()
-        self.parent = parent
+        self.Qapp = Qapp
         self.msgr = manager_msgr
         print(
             "Plom Manager Client {} (communicates with api {})".format(
@@ -444,9 +444,9 @@ class Manager(QWidget):
         self.ui.mportSB.setValue(int(p))
 
     def setFont(self, n):
-        fnt = self.parent.font()
+        fnt = self.Qapp.font()
         fnt.setPointSize(n)
-        self.parent.setFont(fnt)
+        self.Qapp.setFont(fnt)
 
     def login(self):
         user = self.ui.userLE.text().strip()
