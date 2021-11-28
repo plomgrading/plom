@@ -32,7 +32,7 @@ class CommandEllipse(CommandTool):
 
 
 class EllipseItem(QGraphicsEllipseItem):
-    def __init__(self, rect, style, parent=None):
+    def __init__(self, rect, style):
         super().__init__()
         self.saveable = True
         self.rect = rect
