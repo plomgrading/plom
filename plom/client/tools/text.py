@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt, QPointF, QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QFont, QImage, QPen, QColor, QBrush
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem, QGraphicsTextItem
 
+from plom.client.tools import log
 from plom.client.tools.tool import CommandTool, DeleteObject
 
 
@@ -55,7 +56,11 @@ class CommandText(CommandTool):
     def __init__(self, scene, pt, text):
         super().__init__(scene)
         self.blurb = TextItem(
-            pt, text, scene, fontsize=scene.fontSize, color=scene.style["annot_color"]
+            pt,
+            text,
+            fontsize=scene.fontSize,
+            color=scene.style["annot_color"],
+            _texmaker=scene,
         )
         self.do = DeleteObject(self.blurb.shape(), fill=True)
         self.setText("Text")
@@ -106,14 +111,17 @@ class TextItem(QGraphicsTextItem):
     The TextItem is built with no text-field interaction (editor) disabled.
     Call `enable_interactive()` to enable it: if you also want the editor
     to open right away, call `setFocus()`.
+
+    `_texmaker` is a workaround: we don't have a scene yet but some callers
+    (GDTI!) will expect us to render tex immediately.  If so they will need
+    to give us PageScene here.
+    TODO: try to remove this with some future refactor?
     """
 
-    def __init__(self, pt, text, parent, fontsize=10, color=Qt.red):
+    def __init__(self, pt, text, fontsize=10, color=Qt.red, _texmaker=None):
         super().__init__()
         self.saveable = True
-        # TODO: really this is PageScene or Marker: someone who can TeX for us
-        # TODO: its different from e.g., BoxItem (where parent is the animator)
-        self.parent = parent
+        self._texmaker = _texmaker
         self.setDefaultTextColor(color)
         self.setPlainText(text)
         font = QFont("Helvetica")
@@ -217,9 +225,18 @@ class TextItem(QGraphicsTextItem):
                 + "\\color{annot}\n"
                 + texIt
             )
-        fragfilename = self.parent.latexAFragment(
-            texIt, quiet=False, cache_invalid_tryagain=True
-        )
+        # In theory this can be self.scene() like elsewhere but it seems
+        # this gets called before we have a scene (e.g., from Rubric GDTI)
+        # so we awkwardly pass the scene around as `._texmaker`.
+        if not self.scene():
+            log.warn("TextItem needs to tex but does not yet have a scene, probably came form rubric placement?")
+            fragfilename = self._texmaker.latexAFragment(
+                texIt, quiet=False, cache_invalid_tryagain=True
+            )
+        else:
+            fragfilename = self.scene().latexAFragment(
+                texIt, quiet=False, cache_invalid_tryagain=True
+            )
         if fragfilename:
             self._tex_src_cache = src
             self.setPlainText("")

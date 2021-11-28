@@ -32,7 +32,7 @@ class CommandGroupDeltaText(CommandTool):
             text,
             rid,
             kind,
-            scene=scene,
+            _scene=scene,
             style=scene.style,
             fontsize=scene.fontSize,
         )
@@ -78,7 +78,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
     someone about building LaTeX... can we refactor that somehow?
     """
 
-    def __init__(self, pt, delta, text, rid, kind, scene, style, fontsize):
+    def __init__(self, pt, delta, text, rid, kind, *, _scene, style, fontsize):
         super().__init__()
         self.pt = pt
         self.style = style
@@ -87,7 +87,7 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
-            pt, text, scene, fontsize=fontsize, color=style["annot_color"]
+            pt, text, fontsize=fontsize, color=style["annot_color"], _texmaker=_scene,
         )
         # set style
         self.restyle(style)
