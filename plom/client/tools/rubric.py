@@ -87,7 +87,11 @@ class GroupDeltaTextItem(QGraphicsItemGroup):
         # centre under click
         self.di = DeltaItem(pt, delta, style=style, fontsize=fontsize)
         self.blurb = TextItem(
-            pt, text, fontsize=fontsize, color=style["annot_color"], _texmaker=_scene,
+            pt,
+            text,
+            fontsize=fontsize,
+            color=style["annot_color"],
+            _texmaker=_scene,
         )
         # set style
         self.restyle(style)

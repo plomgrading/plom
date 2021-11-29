@@ -229,7 +229,9 @@ class TextItem(QGraphicsTextItem):
         # this gets called before we have a scene (e.g., from Rubric GDTI)
         # so we awkwardly pass the scene around as `._texmaker`.
         if not self.scene():
-            log.warn("TextItem needs to tex but does not yet have a scene, probably came form rubric placement?")
+            log.warn(
+                "TextItem needs to tex but does not yet have a scene, probably came from rubric placement?"
+            )
             fragfilename = self._texmaker.latexAFragment(
                 texIt, quiet=False, cache_invalid_tryagain=True
             )
