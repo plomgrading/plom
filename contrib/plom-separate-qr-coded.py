@@ -82,7 +82,7 @@ for pn in blank_pages:
 blank_out.save(blanks_file)
 blank_out.close()
 
-unexpected_qrd_pages = list(filter(lambda x: (x-1) % 2, qrd_pages))
+unexpected_qrd_pages = list(filter(lambda x: (x - 1) % 2, qrd_pages))
 unexpected_blank_pages = list(filter(lambda x: x % 2, blank_pages))
 
 print(f"The original file had {inp.page_count} pages")
@@ -93,7 +93,9 @@ print(
     f"All pages with qr-codes are now in {qrd_file} - these can be processed as usual."
 )
 
-print(f"A total of {len(problematic_qrd_pages)} possibly problematic pages with qr-codes: {problematic_qrd_pages}")
+print(
+    f"A total of {len(problematic_qrd_pages)} possibly problematic pages with qr-codes: {problematic_qrd_pages}"
+)
 
 print(f"We found a total of {len(blank_pages)} pages without qr-codes.")
 print(f"Pages without qr-codes are in {blanks_file} - these must be examined by hand.")
