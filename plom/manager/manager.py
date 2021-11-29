@@ -1256,7 +1256,7 @@ class Manager(QWidget):
             for i in range(len(imageList)):
                 tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
-                with open(tmp, "wb+") as fh:
+                with open(tmp, "wb") as fh:
                     fh.write(imageList[i])
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
@@ -1285,7 +1285,7 @@ class Manager(QWidget):
             return
         with tempfile.TemporaryDirectory() as td:
             imageName = os.path.join(td, "id.0.image")
-            with open(imageName, "wb+") as fh:
+            with open(imageName, "wb") as fh:
                 fh.write(imageDat)
             IDViewWindow(self, imageName, sid).exec_()
 
@@ -1560,7 +1560,7 @@ class Manager(QWidget):
         imageDat = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
             imageName = os.path.join(td, "id.0.image")
-            with open(imageName, "wb+") as fh:
+            with open(imageName, "wb") as fh:
                 fh.write(imageDat)
             rvw = ReviewViewWindow(self, imageName, "ID pages")
             if rvw.exec() == QDialog.Accepted:
@@ -1608,7 +1608,7 @@ class Manager(QWidget):
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
             ),
         )
-        with open(solutionName, "wb+") as fh:
+        with open(solutionName, "wb") as fh:
             fh.write(imgBytes)
         self.solnIV.updateImage(solutionName)
         return True

@@ -179,7 +179,7 @@ class BackgroundDownloader(QThread):
             # try-except? how does this fail?
             im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1308,7 +1308,7 @@ class MarkerClient(QWidget):
         for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1322,7 +1322,7 @@ class MarkerClient(QWidget):
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
         pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
-        with open(aname, "wb+") as fh:
+        with open(aname, "wb") as fh:
             fh.write(annotated_image)
         with open(pname, "w") as f:
             json.dump(plomdata, f, indent="  ")
@@ -1453,7 +1453,7 @@ class MarkerClient(QWidget):
             # try-except? how does this fail?
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1823,7 +1823,7 @@ class MarkerClient(QWidget):
         )
         try:
             im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
-            with open(soln, "wb+") as fh:
+            with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
         except PlomNoSolutionException as err:
@@ -2394,7 +2394,7 @@ class MarkerClient(QWidget):
         fragFile = tempfile.NamedTemporaryFile(
             dir=self.workingDirectory, suffix=".png", delete=False
         ).name
-        with open(fragFile, "wb+") as fh:
+        with open(fragFile, "wb") as fh:
             fh.write(fragment)
         # add it to the cache
         self.commentCache[txt] = fragFile
