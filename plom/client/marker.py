@@ -1833,10 +1833,7 @@ class MarkerClient(QWidget):
     def getTabStateFromServer(self):
         """Download the state from the server."""
         log.info("Pulling user's rubric tab configuration from server")
-        rval = self.msgr.MgetUserRubricTabs(self.question)
-        if rval[0]:
-            return rval[1]
-        return None
+        return self.msgr.MgetUserRubricTabs(self.question)
 
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
