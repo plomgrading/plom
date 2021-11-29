@@ -1630,6 +1630,8 @@ class Annotator(QWidget):
             self.solutionView.close()
             self.solutionView = None
 
+        self.saveTabStateToServer(self.rubric_widget.get_tab_rubric_lists())
+
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
         force = getattr(self, "_priv_force_close", False)
