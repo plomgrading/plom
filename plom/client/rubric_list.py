@@ -890,10 +890,13 @@ class RubricWidget(QWidget):
 
         args:
             wranglerState (dict/None): a representation of the state of
-                the user's tabs, or None.  If None then initialize with
-                some empty tabs.
+                the user's tabs, or None.  If None then pull from server.
+                If server also has none, initialize with some empty tabs.
+                Note: currently caller always passes None.
         """
         self.rubrics = self.parent.getRubricsFromServer()
+        if not user_tab_state:
+            user_tab_state = self.parent.getTabStateFromServer()
         if not user_tab_state:
             # no user-state: start with single empty tab
             self.add_new_tab()
