@@ -2196,14 +2196,14 @@ class MarkerClient(QWidget):
             if msg.exec_() == QMessageBox.Cancel:
                 event.ignore()
                 return
-            # politely ask one more time
-            if self.backgroundUploader.isRunning():
-                self.backgroundUploader.quit()
-            if not self.backgroundUploader.wait(50):
-                log.info("Background downloader did stop cleanly in 50ms, terminating")
-            # then nuke it from orbit
-            if self.backgroundUploader.isRunning():
-                self.backgroundUploader.terminate()
+        # politely ask one more time
+        if self.backgroundUploader.isRunning():
+            self.backgroundUploader.quit()
+        if not self.backgroundUploader.wait(50):
+            log.info("Background downloader did stop cleanly in 50ms, terminating")
+        # then nuke it from orbit
+        if self.backgroundUploader.isRunning():
+            self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
         try:
