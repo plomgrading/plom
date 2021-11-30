@@ -220,20 +220,12 @@ class IDClient(QWidget):
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         # Get the classlist from server for name/ID completion.
-        try:
-            self.getClassList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getClassList()
 
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
         # Get the predicted list from server for ID guesses.
-        try:
-            self.getPredictions()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getPredictions()
 
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
@@ -250,11 +242,7 @@ class IDClient(QWidget):
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         # Get list of papers already ID'd and add to table.
-        try:
-            self.getAlreadyIDList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getAlreadyIDList()
 
         # Connect the view **after** list updated.
         # Connect the table's model sel-changed to appropriate function.
@@ -265,18 +253,6 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
-
-    def throwSeriousError(self, err):
-        ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down identifier.'.format(
-                err
-            )
-        ).exec_()
-        self.shutDownError()
-        raise (err)
-
-    def throwBenign(self, err):
-        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
 
     def skipOnClick(self):
         """Skip the current, moving to the next or loading a new one"""
@@ -407,11 +383,9 @@ class IDClient(QWidget):
         # else try to grab it from server
         try:
             imageDat = self.msgr.request_ID_image(test)
-        except PlomSeriousException as e:
-            self.throwSeriousError(e)
-            return
         except PlomBenignException as e:
-            self.throwBenign(e)
+            log.error("Somewhat unexpected error getting image for %s: %s", test, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             # self.exM.removePaper(r)
             return
 
@@ -467,10 +441,7 @@ class IDClient(QWidget):
 
     def updateProgress(self):
         # update progressbars
-        try:
-            v, m = self.msgr.IDprogressCount()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+        v, m = self.msgr.IDprogressCount()
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.idProgressBar.setFormat("No papers to identify")
@@ -500,8 +471,11 @@ class IDClient(QWidget):
                     ErrorMessage("No more tasks left on server.").exec_()
                     return False
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                return False
+                log.exception("Unexpected error getting next task: %s", err)
+                ErrorMessage(
+                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                ).exec_()
+                raise
 
             try:
                 imageList = self.msgr.IDclaimThisTask(test)
@@ -599,13 +573,11 @@ class IDClient(QWidget):
         try:
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.error("Somewhat unexpected error when returning %s: %s", code, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
         # successful ID
         # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
@@ -742,7 +714,8 @@ class IDClient(QWidget):
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.error("Somewhat unexpected error when viewing %s: %s", testNumber, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             return
 
         labels = [x[0] for x in pageData]
