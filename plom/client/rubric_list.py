@@ -892,7 +892,7 @@ class RubricWidget(QWidget):
         """
         self.rubrics = self._parent.getRubricsFromServer()
         if not user_tab_state:
-            user_tab_state = self.parent.getTabStateFromServer()
+            user_tab_state = self._parent.getTabStateFromServer()
         if not user_tab_state:
             # no user-state: start with single empty tab
             self.add_new_tab()
