@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Solutions - can now optionally watermark solutions with the SID.
+* SSL verification enabled by default for releases.
 
 ### Changed
+* Tags have been overhauled, with bug fixes and improved functionality
+* Annotator can tag papers directly.
+* Deprecated "LoosePages" have been removed.
+* Tests have exactly one ID page (before they could have more than one).
+* Misc plom-manager improvements.
 
 ### Fixed
-
+* Potential memory leaks in Annotator, Manager, and dialogs.
+* A large number of modal dialog fixes.
+* Other misc changes.
 
 
 ## [Unreleased]
