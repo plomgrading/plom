@@ -66,7 +66,11 @@ from .annotator import Annotator
 from .examviewwindow import ExamViewWindow
 from .origscanviewer import QuestionView, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from .useful_classes import (
+    AddRemoveTagDialog,
+    ErrorMessage,
+    SimpleMessage,
+)
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -92,7 +96,7 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(str, list, list, str, str)
+    downloadSuccess = pyqtSignal(str, list, list, list, str)
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -275,7 +279,8 @@ class BackgroundUploader(QThread):
             except EmptyQueueException:
                 return
             self.is_upload_in_progress = True
-            code = data[0]  # TODO: remove so that queue needs no knowledge of args
+            # TODO: remove so that queue needs no knowledge of args
+            code = data[0]
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             # For experimenting with slow uploads
             # time.sleep(30)
@@ -398,7 +403,7 @@ class ExamQuestion:
         stat="untouched",
         mrk="-1",
         mtime="0",
-        tags="",
+        tags=[],
         integrity_check="",
     ):
         """
@@ -410,7 +415,8 @@ class ExamQuestion:
             stat (str): test status.
             mrk (int): the mark of the question.
             mtime (int): marking time spent on that page in seconds.
-            tags (str): Tags corresponding to the exam.
+            tags (list): Tags corresponding to the exam.  We will flatten to
+                a space-separaed string.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
             src_img_metadata (list[dict]): a list of dicts of md5sums,
                 filenames and other metadata of the images for the test
@@ -423,10 +429,11 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.src_img_data = src_img_data
-        self.annotatedFile = ""  # The filename for the (future) annotated image
+        # The filename for the (future) annotated image
+        self.annotatedFile = ""
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
-        self.tags = tags
+        self.tags = " ".join(tags)
         self.integrity_check = integrity_check
 
 
@@ -685,17 +692,6 @@ class MarkerExamModel(QStandardItemModel):
         Note: internally stored as flattened string.
         """
         return self._setDataByTask(task, 4, " ".join(tags))
-
-    def getAllTags(self):
-        """Return all tags as a set over all rows of the table.
-
-        Note: internally stored as flattened string.
-        """
-        tags = set()
-        for r in range(self.rowCount()):
-            v = self.data(self.index(r, 4))
-            tags.update(v.split())
-        return tags
 
     def getMTimeByTask(self, task):
         """Return total marking time (s) for task, (task(str), return (int).)"""
@@ -972,7 +968,8 @@ class MarkerClient(QWidget):
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
 
-        self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
+        # For viewing the whole paper we'll need these two lists.
+        self.viewFiles = []
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
         # Note: specific to this question
@@ -1058,7 +1055,8 @@ class MarkerClient(QWidget):
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
         try:
-            self.loadMarkedList()  # Get list of papers already marked and add to table.
+            # Get list of papers already marked and add to table.
+            self.loadMarkedList()
         except PlomSeriousException as err:
             self.throwSeriousError(err)
             return
@@ -1072,7 +1070,8 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
 
         self.requestNext()  # Get a question to mark from the server
-        self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
+        # reset the view so whole exam shown.
+        self.testImg.resetB.animateClick()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         log.debug("Marker main thread: " + str(threading.get_ident()))
@@ -1434,11 +1433,6 @@ class MarkerClient(QWidget):
         for r in full_pagedata:
             r["local_filename"] = None
         self._full_pagedata[num] = full_pagedata
-        # print("=" * 80)
-        # print(task)
-        # print("\n".join([str(x) for x in full_pagedata]))
-        # print("\n".join([str(x) for x in page_metadata]))
-        # print("=" * 80)
 
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
@@ -1522,7 +1516,7 @@ class MarkerClient(QWidget):
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
             full_pagedata (list): temporary hacks to merge with above?
-            tags (str): tags for the TGV.
+            tags (list[str]): list of texts for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
@@ -2425,59 +2419,43 @@ class MarkerClient(QWidget):
         """
         if not parent:
             parent = self
-        all_tags = sorted(self.examModel.getAllTags())
-        # TODO: maybe we'd like a list from the server but uncertain about cost
-        # all_tags = self.msgr.get_all_tags()
-        # # sort primarily descending by count and secondarily alphabetical tag
-        # all_tags = sorted(all_tags, key=lambda x: (-all_tags.get(x), x))
 
-        tags = self.msgr.get_tags(task)
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        current_tags = self.msgr.get_tags(task)
+        tag_choices = [X for X in all_tags if X not in current_tags]
 
-        # TODO: improve with a nicer "tag management" dialog: Issue #1773.
-        # TODO: these current dialogs look horrible with many tags
-
-        def make_tags_html(tags):
-            if not tags:
-                return "<p>No current tags<p>"
-            msg = "&nbsp; ".join(f"<em>{x}</em>" for x in tags)
-            return f"<p>Current tags:</p>\n<center><big>{msg}</big></center>"
-
-        msg = make_tags_html(tags)
-        msg += "<p>Tag this paper with a new tag?</p>"
-        title = f"Add tag to {task}?"
-        # don't show choices of tags that are already in use
-        choose_tags = [x for x in all_tags if x not in tags]
-        tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
-        if ok and tag:
-            log.debug('tagging paper "%s" with "%s"', task, tag)
-            try:
-                self.msgr.add_tag(task, tag)
-            except PlomBadTagError as e:
-                ErrorMessage(f"Tag not acceptable: {e}").exec_()
-
-            tags = self.msgr.get_tags(task)
-
-        if tags:
-            msg = make_tags_html(tags)
-            msg += "<p>Choose one of these tags to remove:</p>"
-            tmp = tags.copy()
-            tmp.insert(0, "")
-            tag, ok = QInputDialog.getItem(parent, f"Remove tag from {task}?", msg, tmp)
-            if ok and tag:
-                log.debug('Removing tag "%s" from "%s"', tag, task)
+        artd = AddRemoveTagDialog(parent, task, current_tags, tag_choices=tag_choices)
+        if artd.exec_() == QDialog.Accepted:
+            cmd, new_tag = artd.return_values
+            if cmd == "add":
+                if len(new_tag) == 0:
+                    pass  # user is not adding a tag
+                elif new_tag in current_tags:
+                    pass  # already have that tag
+                # an actual new tag for this task (though it may exist already)
+                else:
+                    try:
+                        self.msgr.add_single_tag(task, new_tag)
+                        log.debug('tagging paper "%s" with "%s"', task, new_tag)
+                    except PlomBadTagError as e:
+                        ErrorMessage(f"Tag not acceptable: {e}").exec_()
+            elif cmd == "remove":
                 try:
-                    self.msgr.remove_tag(task, tag)
+                    self.msgr.remove_single_tag(task, new_tag)
                 except PlomBadTagError as e:
-                    ErrorMessage(f"Tag not acceptable: {e}").exec_()
-                tags = self.msgr.get_tags(task)
-
-        try:
-            self.examModel.setTagsByTask(task, tags)
-            self.ui.tableView.resizeColumnsToContents()
-            self.ui.tableView.resizeRowsToContents()
-        except ValueError:
-            # we might not the task for which we've have been managing tags
-            pass
+                    ErrorMessage(f"Problem removing tag: {e}").exec_()
+            else:
+                # do nothing - shouldn't arrive here.
+                pass
+            # refresh the tags
+            current_tags = self.msgr.get_tags(task)
+            try:
+                self.examModel.setTagsByTask(task, current_tags)
+                self.ui.tableView.resizeColumnsToContents()
+                self.ui.tableView.resizeRowsToContents()
+            except ValueError:
+                # we might not own the task for which we've have been managing tags
+                pass
 
     def setFilter(self):
         """Sets a filter tag."""

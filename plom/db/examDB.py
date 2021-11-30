@@ -55,6 +55,8 @@ class PlomDB:
                     ##
                     Rubric,
                     ARLink,
+                    Tag,
+                    QuestionTagLink,
                 ]
             )
         log.info("Database initialised.")
@@ -206,11 +208,16 @@ class PlomDB:
         Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,
-        MgetTags,
-        MsetTags,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
+        MgetAllTags,
+        McheckTagKeyExists,
+        McheckTagTextExists,
+        McreateNewTag,
+        MgetTagsOfTask,
+        MaddExistingTag,
+        MremoveExistingTag,
     )
 
     from plom.db.db_rubric import (

@@ -379,46 +379,58 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
-    def add_tag(self, code, tag):
+    def add_single_tag(self, code, tag_text):
         self.SRmutex.acquire()
         try:
             response = self.patch(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag": tag},
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException(response.reason) from None
-            if response.status_code == 406:
+            if response.status_code in [406, 410]:
                 raise PlomBadTagError(response.reason)
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
-    def remove_tag(self, code, tag):
+    def remove_single_tag(self, code, tag_text):
         self.SRmutex.acquire()
         try:
             response = self.delete(
                 f"/tags/{code}",
-                json={"user": self.user, "token": self.token, "tag": tag},
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException(response.reason) from None
-            if response.status_code == 406:
+            if response.status_code == 410:
                 raise PlomBadTagError(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def create_new_tag(self, tag_text):
+        self.SRmutex.acquire()
+        try:
+            response = self.patch(
+                f"/tags",
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code in [406, 409]:
+                raise PlomBadTagError(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

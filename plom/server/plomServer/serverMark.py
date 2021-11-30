@@ -62,7 +62,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
 
     Returns:
         list: Respond with a list of done tasks, each list includes
-            [question_code string, maximum_mark, question_grade, question_tag string].
+            [question_code string, maximum_mark, question_grade, [list of tag_texts] ].
     """
 
     version_number = int(version_number)
@@ -269,72 +269,79 @@ def MgetOriginalImages(self, task):
     return self.DB.MgetOriginalImages(task)
 
 
-def MsetTags(self, username, task_code, tags):
-    """Assign a tag string to a paper.
-
-    Args:
-        username (str): User who assigned tag to the paper.
-        task_code (str): Code string for the task.
-        tags (str): Tag assigned to the paper.
-
-    Returns:
-        bool: True or False indicating if tag was set in database successfully.
-    """
-
-    return self.DB.MsetTags(username, task_code, tags)
+# ==== tag stuff
 
 
-def add_tag(self, username, task, tag):
+def checkTagTextValid(self, tag_text):
+    # put tag-text validity test in here.
+    # what else is reasonable here.
+    allow_list = ["_", "-", "+", ":", ";"]
+    if all(c.isalnum() or c in allow_list for c in tag_text):
+        return True
+    else:
+        return False
+
+
+def MgetAllTags(self):
+    return self.DB.MgetAllTags()
+
+
+def MgetTagsOfTask(self, task):
+    return self.DB.MgetTagsOfTask(task)
+
+
+def McheckTagKeyExists(self, tag_key):
+    return self.DB.McheckTagKeyExists(tag_key)
+
+
+def McheckTagTextExists(self, tag_text):
+    return self.DB.McheckTagTextExists(tag_text)
+
+
+def McreateNewTag(self, username, tag_text):
+    return self.DB.McreateNewTag(username, tag_text)
+
+
+def add_tag(self, username, task, tag_text):
     """Assign a tag to a paper.
 
     Args:
         username (str): User who is assigning tag to the paper.
             TODO: currently not recorded but likely we want to record this.
         task (str): Code string for the task (paper).
-        tag (str): Tag to assign to the paper.
+        tag_text (str): Text of tag to assign to the paper.
 
     Returns:
         bool: True if tag was set in database successfully if the tag
             was already set.  False if no such paper or other error.
     """
-    tags = self.DB.MgetTags(task)
-    if tags is None:
-        return False
-    tags = tags.split()
-    if tag in tags:
-        # TODO maybe client would like to know too?
-        log.warn(f'task "{task}" already had tag "{tag}"')
-    else:
-        tags.append(tag)
-    tags = " ".join(tags)
-    return self.DB.MsetTags(username, task, tags)
+    # do sanity check of the tag-text
+    if self.DB.McheckTagTextExists(tag_text) is False:
+        log.warn(f'tag with text "{tag_text}" does not exist - creating it now.')
+        self.DB.McreateNewTag(username, tag_text)
+
+    return self.DB.MaddExistingTag(username, task, tag_text)
 
 
-def remove_tag(self, username, task, tag):
+def remove_tag(self, task, tag_text):
     """Remove a tag from a paper.
 
     Args:
         username (str): User who wants to remove tag.
         task (str): Code string for the task (paper).
-        tag (str): Tag to remove.
+        tag_text (str): Text of tag to remove.
 
     Returns:
         bool: True if the tag was removed, or if it was not present to
             start with.  False is not such paper, permissions or other
             error.
     """
-    tags = self.DB.MgetTags(task)
-    if tags is None:
+    # do sanity check of the tag-text
+    if self.DB.McheckTagTextExists(tag_text) is False:
+        log.warn(f'tag "{tag_text}" does not exist')
         return False
-    tags = tags.split()
-    if tag in tags:
-        log.warn(f'"{username}" removed tag "{tag}" from "{task}"')
-        tags.remove(tag)
-    else:
-        # TODO maybe client would like to know too?
-        log.warn(f'"{username}" tried removing nonexistent tag "{tag}" from "{task}"')
-    tags = " ".join(tags)
-    return self.DB.MsetTags(username, task, tags)
+
+    return self.DB.MremoveExistingTag(task, tag_text)
 
 
 def MgetWholePaper(self, test_number, question_number):

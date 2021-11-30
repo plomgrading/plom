@@ -329,7 +329,7 @@ class Messenger(BaseMessenger):
             code (str): a task code such as `"q0123g2"`.
 
         returns:
-            list: Consisting of image_metadata, tags, integrity_check.
+            list: Consisting of image_metadata, [list of tag keys], integrity_check.
         """
 
         self.SRmutex.acquire()
@@ -483,25 +483,6 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
         return ret
-
-    def MsetTags(self, code, tags):
-        """Deprecated method for setting all tags at once."""
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/MK/tags/{code}",
-                json={"user": self.user, "token": self.token, "tags": tags},
-            )
-            response.raise_for_status()
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException("Task taken by another user.") from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()

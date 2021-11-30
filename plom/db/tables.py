@@ -158,7 +158,6 @@ class Annotation(BaseModel):
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
 
 
 class APage(BaseModel):
@@ -179,7 +178,6 @@ class OldAnnotation(BaseModel):
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
 
 
 class OAPage(BaseModel):
@@ -207,3 +205,17 @@ class Rubric(BaseModel):
 class ARLink(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="arlinks")
     rubric = pw.ForeignKeyField(Rubric, backref="arlinks")
+
+
+class Tag(BaseModel):
+    # unique key - user-generated have 10 digits
+    key = pw.CharField(unique=True, null=False)
+    text = pw.CharField(null=False)
+    creationTime = pw.DateTimeField(null=False)
+    user = pw.ForeignKeyField(User, backref="tags", null=False)
+
+
+class QuestionTagLink(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="questiontaglinks")
+    tag = pw.ForeignKeyField(Tag, backref="questiontaglinks")
+    user = pw.ForeignKeyField(User, backref="questiontaglinks", null=False)
