@@ -41,6 +41,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QActionGroup,
     QDialog,
+    QInputDialog,
     QWidget,
     QMenu,
     QMessageBox,
@@ -60,7 +61,7 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import OriginalScansViewer, RearrangementViewer, SolutionViewer
+from .origscanviewer import RearrangementViewer, SolutionViewer, WholeTestView
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -123,9 +124,6 @@ class Annotator(QWidget):
         self.markWarn = True
         self.rubricWarn = True
 
-        # a test view pop-up window - initially set to None for viewing whole paper
-        self.testView = None
-        self.testViewFiles = None
         # a solution view pop-up window - initially set to None
         self.solutionView = None
 
@@ -247,6 +245,7 @@ class Annotator(QWidget):
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
         m.addAction("View solutions\tF2", self.viewSolutions)
+        m.addAction("Tag paper...\tF3", self.tag_paper)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         subm = m.addMenu("Tools")
@@ -356,10 +355,6 @@ class Annotator(QWidget):
         del self.scene
         self.scene = None
 
-        # clean up after a testview
-        self.doneViewingPaper()
-        self.testView = None
-        self.testViewFiles = None
         self.tgvID = None
         self.testName = None
         self.setWindowTitle("Annotator")
@@ -621,31 +616,26 @@ class Annotator(QWidget):
 
     def viewWholePaper(self):
         """
-        Changes view layout to show entire paper.
+        Popup a dialog showing the entire paper.
 
-        If paper has not been opened, downloads it by it's tgvID and shows.
+        TODO: this has significant duplication with RearrangePages.  Currently
+        this one does it own downloads (even though Marker may already have the
+        pages.
 
         Returns:
-            None: modifies self.testView
+            None
         """
         if not self.tgvID:
             return
-        # grab the files if needed.
-        testNumber = self.tgvID[:4]
-        if self.testViewFiles is None:
-            log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            (
-                self.pageData,
-                self.testViewFiles,
-            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
-
-        # if we haven't built a testview, built it now
-        if self.testView is None:
-            self.testView = OriginalScansViewer(
-                self, testNumber, self.pageData, self.testViewFiles
-            )
-        self.testView.show()
-        return
+        testnum = self.tgvID[:4]
+        log.debug("wholePage: downloading files for testnum %s", testnum)
+        page_data, files = self.parentMarkerUI.downloadWholePaper(testnum)
+        if not files:
+            return
+        labels = [x[0] for x in page_data]
+        WholeTestView(testnum, files, labels, parent=self).exec_()
+        for f in files:
+            f.unlink()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -791,26 +781,6 @@ class Annotator(QWidget):
             os.unlink(f)
         self.setEnabled(True)
         return
-
-    def doneViewingPaper(self):
-        """
-        Performs end tasks to close the Paper and view next.
-
-        Notes:
-            Called when user is done with testViewFiles.
-            Adds the action to log.debug and informs self.parentMarkerUI.
-
-        Returns:
-            None: Modifies self.testView
-        """
-        if self.testViewFiles:
-            log.debug("wholePage: done with viewFiles {}".format(self.testViewFiles))
-            # could just delete them here but maybe Marker wants to cache
-            self.parentMarkerUI.doneWithWholePaperFiles(self.testViewFiles)
-            self.testViewFiles = None
-        if self.testView:
-            self.testView.close()
-            self.testView = None
 
     def keyPopUp(self):
         """Sets KeyPress shortcuts."""
@@ -1080,6 +1050,7 @@ class Annotator(QWidget):
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
             ("viewSolutions", Qt.Key_F2, self.viewSolutions),
+            ("tag_paper", Qt.Key_F3, self.tag_paper),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -1631,10 +1602,7 @@ class Annotator(QWidget):
         """
         log.debug("========CLOSE EVENT======: {}".format(self))
 
-        log.debug("Clean up any view-widows or solution-views")
-        # clean up after a testview
-        self.doneViewingPaper()
-        # clean up after a solution-view
+        log.debug("Clean up any lingering solution-views etc")
         if self.solutionView:
             log.debug("Cleaning a solution-view")
             self.solutionView.close()
@@ -1878,6 +1846,10 @@ class Annotator(QWidget):
         if self.solutionView is None:
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
+
+    def tag_paper(self):
+        task = f"q{self.tgvID}"
+        self.parentMarkerUI.manage_task_tags(task, parent=self)
 
     def refreshSolutionImage(self):
         # force a refresh

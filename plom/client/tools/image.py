@@ -43,7 +43,7 @@ class CommandImage(CommandTool):
 
         Args:
             scene (PageScene): the scene the image is being inserted into.
-            pt (QPoint): the point of the top left corner of the image.
+            pt (QPointF): the point of the top left corner of the image.
             image (QImage): the image being added to the scene.
             scale (float): the scaling value, <1 decreases size, >1 increases.
             border (bool): True if the image has a border, false otherwise.
@@ -53,7 +53,7 @@ class CommandImage(CommandTool):
         super().__init__(scene)
         self.width = image.width()
         if data is None:
-            toMidpoint = QPoint(-image.width() / 2, -image.height() / 2)
+            toMidpoint = QPointF(-image.width() / 2, -image.height() / 2)
             self.midPt = pt + toMidpoint
         else:
             self.midPt = pt

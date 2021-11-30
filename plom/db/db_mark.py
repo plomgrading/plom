@@ -242,7 +242,6 @@ def MtakeTaskFromClient(
     plom_fname,
     rubrics,
     marking_time,
-    tags,
     md5,
     integrity_check,
     image_md5_list,
@@ -311,8 +310,8 @@ def MtakeTaskFromClient(
             user=uref,
             edition=oldaref.edition + 1,
             outdated=False,
-            tags=tags,
             time=datetime.now(),
+            tags=oldaref.tags,
             integrity_check=oldaref.integrity_check,
         )
         # create apages from the image_ref_list.
@@ -456,8 +455,25 @@ def MgetOriginalImages(self, task):
         return rval
 
 
-def MsetTag(self, user_name, task, tag):
-    """Set tag on last annotation of given task.
+def MgetTags(self, task):
+    """Get tags on last annotation of given task.
+
+    Returns:
+        str/None: If no such task, return None.
+    """
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MgetTags - task {} not known".format(task))
+        return None
+    qref = gref.qgroups[0]
+    # grab the last annotation
+    aref = qref.annotations[-1]
+    return aref.tags
+
+
+def MsetTags(self, user_name, task, tags):
+    """Set tags on last annotation of given task.
 
     TODO: scary that its the last annotation: maybe client should be telling us which one?
     """
@@ -466,7 +482,7 @@ def MsetTag(self, user_name, task, tag):
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:  # should not happen
-            log.error("MsetTag -  task {} not known".format(task))
+            log.error("MsetTags - task {} not known".format(task))
             return False
         qref = gref.qgroups[0]
         if qref.user != uref:
@@ -476,9 +492,9 @@ def MsetTag(self, user_name, task, tag):
         if aref.user != uref and aref.user.name != "HAL":
             return False  # not your annotation - should not happen
         # update tag
-        aref.tags = tag
+        aref.tags = tags
         aref.save()
-        log.info('Task {} tagged by user "{}": "{}"'.format(task, user_name, tag))
+        log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tags}"')
         return True
 
 

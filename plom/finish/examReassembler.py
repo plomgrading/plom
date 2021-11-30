@@ -32,17 +32,14 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             final page.
 
     return:
-        bool: True if successful or False if PDF file already exists.
-            Note: no attempt is made to check if its correct; merely
-            that it exists.
+        None
     """
     outname = Path(outname)
-    if outname.exists():
-        return False
 
-    exam = fitz.open()
     if coverfile:
-        exam.insert_pdf(fitz.open(coverfile))
+        exam = fitz.open(coverfile)
+    else:
+        exam = fitz.open()
 
     for img_name in [*id_images, *marked_pages]:
         img_name = Path(img_name)
@@ -107,4 +104,5 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     )
 
     exam.save(outname, deflate=True)
-    return True
+    # https://gitlab.com/plom/plom/-/issues/1777
+    exam.close()

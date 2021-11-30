@@ -229,7 +229,6 @@ class MarkHandler:
                 "score",
                 "rubrics",
                 "mtime",
-                "tags",
                 "md5sum",
                 "integrity_check",
                 "image_md5s",
@@ -267,7 +266,6 @@ class MarkHandler:
             plomfile,
             rubrics,
             int(task_metadata["mtime"]),
-            task_metadata["tags"],
             task_metadata["md5sum"],
             task_metadata["integrity_check"],
             task_metadata["image_md5s"],
@@ -472,7 +470,7 @@ class MarkHandler:
 
     # @routes.patch("/MK/tags/{task}")
     @authenticate_by_token_required_fields(["user", "tags"])
-    def MsetTag(self, data, request):
+    def MsetTags(self, data, request):
         """Set tag for a task.
 
         Respond with status 200/409.
@@ -486,14 +484,82 @@ class MarkHandler:
             aiohttp.web_response.Response: Empty status response indication is adding
                 the tag was successful.
         """
-
         task_code = request.match_info["task"]
-        set_tag_success = self.server.MsetTag(data["user"], task_code, data["tags"])
+        set_tag_success = self.server.MsetTags(data["user"], task_code, data["tags"])
 
         if set_tag_success:
             return web.Response(status=200)
         else:
             return web.Response(status=409)  # Task does not belong to this user.
+
+    # @routes.get("/tags/{task}")
+    @authenticate_by_token_required_fields([])
+    def get_tags(self, data, request):
+        """List the tags for a task.
+
+        Args:
+            data (dict): user, token.
+
+        Returns:
+            aiohttp.web_response.json_response: list of strings, one for each
+                tag, or HTTPConflict (409) if user not permitted to get tags
+                for that paper.
+        """
+        task = request.match_info["task"]
+        tags = self.server.DB.MgetTags(task)
+        if tags is None:
+            # TODO: wrong thing?  not conflict, badrequest
+            raise web.HTTPConflict(reason=f"Not such task {task}")
+        tags = tags.split()
+        return web.json_response(tags)
+
+    # @routes.patch("/tags/{task}")
+    @authenticate_by_token_required_fields(["user", "tag"])
+    def add_tag(self, data, request):
+        """Add a tag for a task.
+
+        Respond with status 200/409.
+
+        Args:
+            data (dict): user, token and the tag (str).
+
+        Returns:
+            aiohttp.web_response.Response: 200 on success or
+                HTTPConflict (409) if user not allowed to tag this paper.
+                HTTPNotAcceptable (406) if tag is not admissible, such
+                as containing invalid characters (namely spaces!)
+        """
+        task = request.match_info["task"]
+        tag = data["tag"].strip()
+        if any(c.isspace() for c in tag):
+            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
+        if not self.server.add_tag(data["user"], task, tag):
+            raise web.HTTPConflict(reason=f"User not allowed to add tag to task {task}")
+        return web.Response(status=200)
+
+    # @routes.delete("/tags/{task}")
+    @authenticate_by_token_required_fields(["user", "tag"])
+    def remove_tag(self, data, request):
+        """Remove a tag from a task.
+
+        Respond with status 200/409.
+
+        Args:
+            data (dict): user, token and the tag (str).
+
+        Returns:
+            aiohttp.web_response.Response: 200 on success or
+                HTTPConflict (409) if user not allowed to tag this paper.
+                HTTPNotAcceptable (406) if tag is not admissible, such
+                as containing invalid characters (namely spaces!)
+        """
+        task = request.match_info["task"]
+        tag = data["tag"].strip()
+        if any(c.isspace() for c in tag):
+            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
+        if not self.server.remove_tag(data["user"], task, tag):
+            raise web.HTTPConflict(reason=f"User not allowed to remove tag from {task}")
+        return web.Response(status=200)
 
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
@@ -715,7 +781,10 @@ class MarkHandler:
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
-        router.add_patch("/MK/tags/{task}", self.MsetTag)
+        router.add_patch("/MK/tags/{task}", self.MsetTags)
+        router.add_get("/tags/{task}", self.get_tags)
+        router.add_patch("/tags/{task}", self.add_tag)
+        router.add_delete("/tags/{task}", self.remove_tag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_get("/annotations/{number}/{question}", self.get_annotations_latest)

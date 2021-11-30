@@ -13,6 +13,7 @@ from requests_toolbelt import MultipartDecoder
 import urllib3
 
 from plom import __version__, Plom_API_Version, Default_Port
+from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
@@ -272,6 +273,24 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def getGlobalQuestionVersionMap(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/questionVersionMap",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        # JSON casts dict keys to str, force back to ints
+        return undo_json_packing_of_version_map(response.json())
 
     def IDrequestClasslist(self):
         """Ask server for the classlist.

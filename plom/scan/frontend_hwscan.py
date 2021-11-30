@@ -173,7 +173,8 @@ def processHWScans(
     )
 
     N = get_number_of_questions(server, password)
-    num_pages = len(fitz.open(pdf_fname))
+    with fitz.open(pdf_fname) as pdf:
+        num_pages = len(pdf)
     questions = canonicalize_question_list(questions, pages=num_pages, numquestions=N)
 
     test_number = checkTestHasThatSID(student_id, server, password)

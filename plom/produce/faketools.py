@@ -136,11 +136,11 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
         # TODO: could do `with fitz.open(file_name) as pdf_document:`
         pdf_document = fitz.open(file_name)
-        front_page = pdf_document[0]
 
         # First we input the student names
         if file_name not in named_papers_paths:  # can draw on front page
             # insert digit images into rectangles - some hackery required to get correct positions.
+            front_page = pdf_document[0]
             width = 28
             border = 8
             for digit_index in range(student_number_length):
@@ -169,6 +169,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 align=0,
             )
             assert excess > 0
+            del front_page
 
         # Write some random answers on the pages
         for page_index, pdf_page in enumerate(pdf_document):
@@ -197,6 +198,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
         # We then add the pdfs into the document collection
         all_pdf_documents.insert_pdf(pdf_document)
+        pdf_document.close()
 
         # For a comprehensive test, we will add some extrapages with low probability
         if random.random() < extra_page_probability:
@@ -221,6 +223,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             )
 
     all_pdf_documents.save(out_file_path)
+    all_pdf_documents.close()
     print('Assembled in "{}"'.format(out_file_path))
 
 
@@ -246,6 +249,7 @@ def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
     all_pdf_documents.saveIncr()
+    all_pdf_documents.close()
 
 
 def make_colliding_pages(paper_dir_path, outfile):
@@ -281,6 +285,7 @@ def make_colliding_pages(paper_dir_path, outfile):
             to_page=test_length - 1,
             start_at=colliding_page_index,
         )
+        pdf_document.close()
         excess = all_pdf_documents[colliding_page_index].insert_textbox(
             fitz.Rect(100, 100, 500, 500),
             "I was dropped on the floor and rescanned.",
@@ -293,6 +298,7 @@ def make_colliding_pages(paper_dir_path, outfile):
         assert excess > 0
 
     all_pdf_documents.saveIncr()
+    all_pdf_documents.close()
 
 
 def splitFakeFile(out_file_path):
@@ -314,8 +320,10 @@ def splitFakeFile(out_file_path):
     doc1.save(newPDFName + "1.pdf")
     doc2.save(newPDFName + "2.pdf")
     doc3.save(newPDFName + "3.pdf")
-
-    os.unlink(out_file_path)
+    doc1.close()
+    doc2.close()
+    doc3.close()
+    originalPDF.close()
 
 
 def download_classlist(server=None, password=None):
@@ -376,6 +384,7 @@ def make_scribbles(server, password, basedir=Path(".")):
         make_garbage_pages(out_file_path)
         make_colliding_pages(_paperdir, out_file_path)
         splitFakeFile(out_file_path)
+        os.unlink(out_file_path)
 
 
 def main():
