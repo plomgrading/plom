@@ -8,9 +8,8 @@ Note: Code in this file is very similar to test_IDreader code for the
 Tensorflow model.
 """
 
-import os
-
-from .idReader import is_model_present, calc_log_likelihood, download_or_train_model
+from .idReader import calc_log_likelihood
+from .idReader import is_model_present, download_model, download_or_train_model
 from ...misc_utils import working_directory
 
 
@@ -41,6 +40,8 @@ def test_log_likelihood():
 def test_download_or_train_model(tmpdir):
     with working_directory(tmpdir):
         assert not is_model_present()
-        download_or_train_model()
+        assert download_model()
         # check correct files are present
+        assert is_model_present()
+        download_or_train_model()
         assert is_model_present()

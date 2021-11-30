@@ -397,12 +397,11 @@ appstreamValid:
 
 # get latest pip deps, doesn't use docker, closer to user install
 # allowed to fail (some pip stuff might be new) but we want to know
-# TODO: pip stuff not working on fedora:35
 # TODO: `dnf install python3-opencv`, and `sed` out the setup.py dep
 fedora_build:
   stage: build
   needs: []
-  image: fedora:34
+  image: fedora:35
   allow_failure: true
   before_script:
     - dnf install -y ImageMagick openssl zbar gcc gcc-c++ cmake
