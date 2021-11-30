@@ -719,20 +719,20 @@ class RubricWidget(QWidget):
         self.addB = QPushButton("Add")
         self.filtB = QPushButton("Arrange/Filter")
         self.hideB = QPushButton("Shown/Hidden")
-        self.otherB = QToolButton()
-        # self.otherB.setText("\N{Rightwards Harpoon Over Leftwards Harpoon}")
-        self.otherB.setText("Sync")
-        self.otherB.setToolTip("Synchronise rubrics")
+        self.syncB = QToolButton()
+        # self.syncB.setText("\N{Rightwards Harpoon Over Leftwards Harpoon}")
+        self.syncB.setText("Sync")
+        self.syncB.setToolTip("Synchronise rubrics")
         grid.addWidget(self.addB, 3, 1)
         grid.addWidget(self.filtB, 3, 2)
         grid.addWidget(self.hideB, 3, 3)
-        grid.addWidget(self.otherB, 3, 4)
+        grid.addWidget(self.syncB, 3, 4)
         grid.setSpacing(0)
         self.setLayout(grid)
         # connect the buttons to functions.
         self.addB.clicked.connect(self.add_new_rubric)
         self.filtB.clicked.connect(self.wrangleRubricsInteractively)
-        self.otherB.clicked.connect(self.refreshRubrics)
+        self.syncB.clicked.connect(self.refreshRubrics)
         self.hideB.clicked.connect(self.toggleShowHide)
 
     def toggleShowHide(self):
@@ -742,7 +742,7 @@ class RubricWidget(QWidget):
             # disable a few buttons
             self.addB.setEnabled(False)
             self.filtB.setEnabled(False)
-            self.otherB.setEnabled(False)
+            self.syncB.setEnabled(False)
             # reselect the current rubric
             self.tabHide.handleClick()
         else:
@@ -751,7 +751,7 @@ class RubricWidget(QWidget):
             # enable buttons
             self.addB.setEnabled(True)
             self.filtB.setEnabled(True)
-            self.otherB.setEnabled(True)
+            self.syncB.setEnabled(True)
             # reselect the current rubric
             self.handleClick()
 
@@ -886,10 +886,13 @@ class RubricWidget(QWidget):
 
         args:
             wranglerState (dict/None): a representation of the state of
-                the user's tabs, or None.  If None then initialize with
-                some empty tabs.
+                the user's tabs, or None.  If None then pull from server.
+                If server also has none, initialize with some empty tabs.
+                Note: currently caller always passes None.
         """
         self.rubrics = self._parent.getRubricsFromServer()
+        if not user_tab_state:
+            user_tab_state = self.parent.getTabStateFromServer()
         if not user_tab_state:
             # no user-state: start with single empty tab
             self.add_new_tab()

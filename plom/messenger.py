@@ -595,8 +595,9 @@ class Messenger(BaseMessenger):
             PlomSeriousException
 
         Returns:
-            tuple: First element is bool for success.  If True, second
-                element is a dict of information about user's tabs.
+            dict/None: a dict of information about user's tabs for that
+                question or `None` if server has no saved tabs for that
+                user/question pair.
         """
         self.SRmutex.acquire()
         try:
@@ -611,13 +612,13 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
 
             if response.status_code == 200:
-                paneConfig = response.json()
-                return [True, paneConfig]
-            if response.status_code == 204:
-                return [False]  # server has no data
-            raise PlomSeriousException(
-                "No other 20x response should come from server."
-            ) from None
+                return response.json()
+            elif response.status_code == 204:
+                return None
+            else:
+                raise PlomSeriousException(
+                    "No other 20x response expected from server."
+                ) from None
 
         except requests.HTTPError as e:
             if response.status_code == 401:

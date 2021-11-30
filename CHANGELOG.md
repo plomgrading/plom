@@ -13,7 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+* Client: save user tabs on manual sync and on annotator close.
 * Workarounds for high memory use during reassembly and solution assembly.
+* Correctly stop background uploader thread on Marker close.
 
 
 ## [0.7.7] - 2021-11-15

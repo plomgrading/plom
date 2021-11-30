@@ -1098,12 +1098,6 @@ class MarkerClient(QWidget):
         self.annotatorSettings["commentWarnings"] = lastTime.get("CommentWarnings")
         self.annotatorSettings["markWarnings"] = lastTime.get("MarkWarnings")
 
-        # load in the rubric tab settings
-        log.info("Loading user's rubric tab configuration")
-        rval = self.msgr.MgetUserRubricTabs(self.question)
-        if rval[0]:
-            self.annotatorSettings["rubricTabState"] = rval[1]
-
         if lastTime.get("FOREGROUND", False):
             self.allowBackgroundOps = False
 
@@ -1830,6 +1824,11 @@ class MarkerClient(QWidget):
         log.info("Saving user's rubric tab configuration to server")
         self.msgr.MsaveUserRubricTabs(self.question, tab_state)
 
+    def getTabStateFromServer(self):
+        """Download the state from the server."""
+        log.info("Pulling user's rubric tab configuration from server")
+        return self.msgr.MgetUserRubricTabs(self.question)
+
     # when Annotator done, we come back to one of these callbackAnnDone* fcns
     @pyqtSlot(str)
     def callbackAnnDoneCancel(self, task):
@@ -2164,11 +2163,6 @@ class MarkerClient(QWidget):
 
     def closeEvent(self, event):
         log.debug("Something has triggered a shutdown event")
-        try:
-            self.saveTabStateToServer(self.annotatorSettings["rubricTabState"])
-        except PlomException as e:
-            log.warn(f"Tab-saving failed, buggy double-closeEvent #1248?: {e}")
-            pass
         N = self.get_upload_queue_length()
         if N > 0:
             msg = QMessageBox()
@@ -2188,14 +2182,14 @@ class MarkerClient(QWidget):
             if msg.exec_() == QMessageBox.Cancel:
                 event.ignore()
                 return
-            # politely ask one more time
-            if self.backgroundUploader.isRunning():
-                self.backgroundUploader.quit()
-            if not self.backgroundUploader.wait(50):
-                log.info("Background downloader did stop cleanly in 50ms, terminating")
-            # then nuke it from orbit
-            if self.backgroundUploader.isRunning():
-                self.backgroundUploader.terminate()
+        # politely ask one more time
+        if self.backgroundUploader.isRunning():
+            self.backgroundUploader.quit()
+        if not self.backgroundUploader.wait(50):
+            log.info("Background downloader did stop cleanly in 50ms, terminating")
+        # then nuke it from orbit
+        if self.backgroundUploader.isRunning():
+            self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
         try:
