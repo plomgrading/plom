@@ -2447,8 +2447,10 @@ class MarkerClient(QWidget):
             else:
                 # do nothing - shouldn't arrive here.
                 pass
+
             # refresh the tags
             current_tags = self.msgr.get_tags(task)
+
             try:
                 self.examModel.setTagsByTask(task, current_tags)
                 self.ui.tableView.resizeColumnsToContents()

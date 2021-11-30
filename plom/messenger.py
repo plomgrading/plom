@@ -330,7 +330,7 @@ class Messenger(BaseMessenger):
             code (str): a task code such as `"q0123g2"`.
 
         returns:
-            list: Consisting of image_metadata, [list of tag keys], integrity_check.
+            list: Consisting of image_metadata, [list of tags], integrity_check.
         """
 
         self.SRmutex.acquire()
