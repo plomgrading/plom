@@ -751,7 +751,7 @@ class GroupView(QDialog):
     def __init__(self, parent, fnames, bigger=False):
         super().__init__(parent)
         grid = QGridLayout()
-        self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)p
+        self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
         closeButton = QPushButton("&Close")
         resetB = QPushButton("&reset view")
         grid.addWidget(self.testImg, 1, 1, 1, 8)
@@ -777,22 +777,6 @@ class GroupView(QDialog):
 
     def closeWindow(self):
         self.close()
-
-
-class GroupView(QDialog):
-    def __init__(self, fnames):
-        super().__init__()
-        grid = QGridLayout()
-        self.testImg = ExamViewWindow(fnames)
-        closeButton = QPushButton("&Close")
-        grid.addWidget(self.testImg, 1, 1, 6, 6)
-        grid.addWidget(closeButton, 7, 6)
-        self.setLayout(grid)
-        closeButton.clicked.connect(self.closeWindow)
-        self.show()
-
-    def closeEvent(self, event):
-        self.closeWindow()
 
 
 class QuestionViewDialog(GroupView):

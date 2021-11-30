@@ -589,54 +589,6 @@ class MarkHandler:
         tags = tags.split()
         return web.json_response(tags)
 
-    # @routes.patch("/tags/{task}")
-    @authenticate_by_token_required_fields(["user", "tag"])
-    def add_tag(self, data, request):
-        """Add a tag for a task.
-
-        Respond with status 200/409.
-
-        Args:
-            data (dict): user, token and the tag (str).
-
-        Returns:
-            aiohttp.web_response.Response: 200 on success or
-                HTTPConflict (409) if user not allowed to tag this paper.
-                HTTPNotAcceptable (406) if tag is not admissible, such
-                as containing invalid characters (namely spaces!)
-        """
-        task = request.match_info["task"]
-        tag = data["tag"].strip()
-        if any(c.isspace() for c in tag):
-            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
-        if not self.server.add_tag(data["user"], task, tag):
-            raise web.HTTPConflict(reason=f"User not allowed to add tag to task {task}")
-        return web.Response(status=200)
-
-    # @routes.delete("/tags/{task}")
-    @authenticate_by_token_required_fields(["user", "tag"])
-    def remove_tag(self, data, request):
-        """Remove a tag from a task.
-
-        Respond with status 200/409.
-
-        Args:
-            data (dict): user, token and the tag (str).
-
-        Returns:
-            aiohttp.web_response.Response: 200 on success or
-                HTTPConflict (409) if user not allowed to tag this paper.
-                HTTPNotAcceptable (406) if tag is not admissible, such
-                as containing invalid characters (namely spaces!)
-        """
-        task = request.match_info["task"]
-        tag = data["tag"].strip()
-        if any(c.isspace() for c in tag):
-            raise web.HTTPNotAcceptable(reason="Tag must not contain spaces")
-        if not self.server.remove_tag(data["user"], task, tag):
-            raise web.HTTPConflict(reason=f"User not allowed to remove tag from {task}")
-        return web.Response(status=200)
-
     # @routes.get("/MK/whole/{number}")
     @authenticate_by_token_required_fields([])
     def MgetWholePaper(self, data, request):
