@@ -9,9 +9,27 @@ import logging
 import peewee as pw
 
 from plom.db.tables import plomdb
-from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
-from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User
+from plom.db.tables import (
+    AImage,
+    Annotation,
+    APage,
+    ARLink,
+    OAPage,
+    OldAnnotation,
+)
+from plom.db.tables import (
+    Image,
+    Group,
+    QGroup,
+    Rubric,
+    Test,
+    TPage,
+    User,
+    Tag,
+    QuestionTagLink,
+)
 
+from plom.comment_utils import generate_new_comment_ID
 
 log = logging.getLogger("DB")
 
@@ -57,7 +75,7 @@ def McountMarked(self, q, v):
 
 def MgetDoneTasks(self, user_name, q, v):
     """When a marker-client logs on they request a list of papers they have already marked.
-    Send back the list of [group-ids, mark, marking_time, tags] for each paper.
+    Send back the list of [group-ids, mark, marking_time, [list_of_tag_texts] ] for each paper.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
@@ -69,13 +87,15 @@ def MgetDoneTasks(self, user_name, q, v):
     )
     mark_list = []
     for qref in query:  # grab that questionData object
+        # get the tag texts for that qgroup
+        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
         aref = qref.annotations[-1]  # grab the last annotation
         mark_list.append(
             [
                 qref.group.gid,
                 aref.mark,
                 aref.marking_time,
-                aref.tags,
+                tag_list,
                 aref.integrity_check,
             ]
         )
@@ -117,7 +137,7 @@ def MgiveTaskToClient(self, user_name, group_id):
     Return:
         list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
             Otherwise, the list is
-                `[True, metadata, tags, integrity_check]`
+                `[True, metadata, [list of tag texts], integrity_check]`
             where each row of `metadata` consists of
                 `[DB_id, md5_sum, server_filename]`
             Note: `server_filename` is implementation-dependent, could change
@@ -151,6 +171,8 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.user = uref
         qref.time = datetime.now()
         qref.save()
+        # get tag_list
+        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
@@ -172,7 +194,7 @@ def MgiveTaskToClient(self, user_name, group_id):
                 group_id, user_name, aref.integrity_check
             )
         )
-        return [True, image_metadata, aref.tags, aref.integrity_check]
+        return [True, image_metadata, tag_list, aref.integrity_check]
 
 
 def MdidNotFinish(self, user_name, group_id):
@@ -309,7 +331,6 @@ def MtakeTaskFromClient(
             qgroup=qref,
             user=uref,
             edition=oldaref.edition + 1,
-            tags=oldaref.tags,
             time=datetime.now(),
             integrity_check=oldaref.integrity_check,
         )
@@ -444,49 +465,6 @@ def MgetOriginalImages(self, task):
         for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
         return rval
-
-
-def MgetTags(self, task):
-    """Get tags on last annotation of given task.
-
-    Returns:
-        str/None: If no such task, return None.
-    """
-
-    gref = Group.get_or_none(Group.gid == task)
-    if gref is None:
-        log.error("MgetTags - task {} not known".format(task))
-        return None
-    qref = gref.qgroups[0]
-    # grab the last annotation
-    aref = qref.annotations[-1]
-    return aref.tags
-
-
-def MsetTags(self, user_name, task, tags):
-    """Set tags on last annotation of given task.
-
-    TODO: scary that its the last annotation: maybe client should be telling us which one?
-    """
-
-    uref = User.get(name=user_name)  # authenticated, so not-None
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # should not happen
-            log.error("MsetTags - task {} not known".format(task))
-            return False
-        qref = gref.qgroups[0]
-        if qref.user != uref:
-            return False  # not your task - should not happen
-        # grab the last annotation
-        aref = qref.annotations[-1]
-        if aref.user != uref and aref.user.name != "HAL":
-            return False  # not your annotation - should not happen
-        # update tag
-        aref.tags = tags
-        aref.save()
-        log.info(f'Task {task} tags adjusted by "{user_name}"; now "{tags}"')
-        return True
 
 
 def MgetWholePaper(self, test_number, question):
@@ -639,7 +617,6 @@ def MrevertTask(self, task):
                 mark=aref.mark,
                 marking_time=aref.marking_time,
                 time=aref.time,
-                tags=aref.tags,
             )
             # make oapges
             for pref in aref.apages:
@@ -656,3 +633,134 @@ def MrevertTask(self, task):
             aref.delete_instance()
     log.info(f"Reverted tq {task}")
     return [True]
+
+
+# ===== tag stuff
+
+
+def McreateNewTag(self, user_name, tag_text):
+    """Create a new tag entry in the DB
+
+    Args:
+        user_name (str): name of user creating the tag
+        tag_text (str): the text of the tag - already validated by system
+
+    Returns:
+        tuple: `(True, key)` or `(False, err_msg)` where `key` is the
+            key for the new tag.  Can fail if tag text is not alphanum, or if tag already exists.
+    """
+    if Tag.get_or_none(text=tag_text) is not None:
+        return (False, "Tag already exists")
+
+    uref = User.get(name=user_name)  # authenticated, so not-None
+    with plomdb.atomic():
+        # build unique key while holding atomic access
+        # use a 10digit key to distinguish from rubrics
+        key = generate_new_comment_ID(10)
+        while Tag.get_or_none(key=key) is not None:
+            key = generate_new_comment_ID(10)
+        Tag.create(key=key, user=uref, creationTime=datetime.now(), text=tag_text)
+    return (True, key)
+
+
+def MgetAllTags(self):
+    """Return a list of all tags - each tag is pair (key, text)"""
+    # return all the tags
+    tag_list = []
+    for tref in Tag.select():
+        tag_list.append((tref.key, tref.text))
+    return tag_list
+
+
+def McheckTagKeyExists(self, tag_key):
+    """Check that the given tag_key in the database"""
+    if Tag.get_or_none(key=tag_key) is None:
+        return False
+    else:
+        return True
+
+
+def McheckTagTextExists(self, tag_text):
+    """Check that the given tag_text in the database"""
+    if Tag.get_or_none(text=tag_text) is None:
+        return False
+    else:
+        return True
+
+
+def MgetTagsOfTask(self, task):
+    """Get tags on given task.
+
+    Returns:
+        str/None: If no such task, return None.
+    """
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MgetTags - task {} not known".format(task))
+        return None
+    qref = gref.qgroups[0]
+
+    return [qtref.tag.text for qtref in qref.questiontaglinks]
+
+
+def MaddExistingTag(self, username, task, tag_text):
+    """Add an existing tag to the task"""
+    uref = User.get(name=username)  # authenticated, so not-None
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MaddExistingTag - task {} not known".format(task))
+        return False
+    # get the question-group and the tag
+    qref = gref.qgroups[0]
+    tgref = Tag.get(text=tag_text)
+    if tgref is None:
+        # server existence of tag before, so this should not happen.
+        log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        return False
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
+    # check if task is already tagged
+    if qtref is not None:
+        log.warn(f"MaddExistingTag - task {task} is already tagged with {tag_text}.")
+        return False
+    else:
+        QuestionTagLink.create(tag=tgref, qgroup=qref, user=uref)
+        log.info(f"MaddExistingTag - tag {tag_text} added to task {task}.")
+        return True
+
+
+def MremoveExistingTag(self, task, tag_text):
+    """Remove an existing tag to the task"""
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MremoveExistingTag - task {} not known".format(task))
+        return False
+    # get the question-group and the tag
+    qref = gref.qgroups[0]
+    tgref = Tag.get(text=tag_text)
+    if tgref is None:
+        # server existence of tag before, so this should not happen.
+        log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        return False
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
+    # check if task is already tagged
+    if qtref is not None:
+        qtref.delete_instance()
+        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
+        return True
+    else:
+        log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
+        return False
+
+    ##
+    if qtref is not None:
+        qtref.delete_instance()
+        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
+        return True
+    else:
+        log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
+        return False
+
+
+##
