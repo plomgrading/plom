@@ -234,7 +234,6 @@ def do_random_marking_backend(question, version, *, messenger):
                 version,
                 score,
                 random.randint(1, 20),
-                "",
                 aFile,
                 plomFile,
                 rubrics,

@@ -44,7 +44,7 @@ from plom import isValidStudentNumber
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
-from .examviewwindow import ExamViewWindow
+from .examviewwindow import ImageViewWidget
 from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
@@ -216,7 +216,7 @@ class IDClient(QWidget):
         self.ui.tableView.setModel(self.exM)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
-        self.testImg = ExamViewWindow()
+        self.testImg = ImageViewWidget(self)
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         # Get the classlist from server for name/ID completion.
@@ -317,7 +317,7 @@ class IDClient(QWidget):
         # also tweak size of "accept prediction" button font
         self.ui.predButton.setFont(fnt)
         # make the SID larger still.
-        fnt.setPointSize(fnt.pointSize() * 1.5)
+        fnt.setPointSizeF(fnt.pointSize() * 1.5)
         self.ui.pSIDLabel.setFont(fnt)
         # And if no predictions then hide that box
         if len(self.predictedTestToNumbers) == 0:
@@ -393,7 +393,7 @@ class IDClient(QWidget):
             imageName = None
         else:
             imageName = os.path.join(self.workingDirectory, f"i{test}.0.image")
-            with open(imageName, "wb+") as fh:
+            with open(imageName, "wb") as fh:
                 fh.write(imageDat)
 
         self.exM.paperList[r].originalFile = imageName
@@ -488,7 +488,7 @@ class IDClient(QWidget):
         for i in range(len(imageList)):
             tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
             inames.append(tmp)
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(imageList[i])
 
         # Add the paper [code, filename, etc] to the list
@@ -667,7 +667,7 @@ class IDClient(QWidget):
                 return
             self.msgPosition = msg.pos()
             # Otherwise get an id and name from the user (and the okay)
-            snidbox = SNIDBox(self.ui.idEdit.text())
+            snidbox = SNIDBox(self, self.ui.idEdit.text())
             if snidbox.exec_() != QDialog.Accepted:
                 return
             sid = snidbox.sid.strip()
@@ -712,19 +712,20 @@ class IDClient(QWidget):
             return
         testNumber = self.exM.data(index[0])
         try:
-            pageNames, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
+            pageData, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             log.error("Somewhat unexpected error when viewing %s: %s", testNumber, err)
             ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             return
 
+        labels = [x[0] for x in pageData]
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(delete=False).name
             viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
                 fh.write(iab)
-        WholeTestView(viewFiles).exec_()
+        WholeTestView(testNumber, viewFiles, labels, parent=self).exec_()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing

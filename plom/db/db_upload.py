@@ -882,3 +882,48 @@ def listBundles(self):
             }
         )
     return bundle_info
+
+
+## Bundle associated functions
+
+
+def getBundleFromImage(self, file_name):
+    """
+    From the given filename get the bundle name the image is in.
+    Returns [False, message] or [True, bundle-name]
+    """
+    iref = Image.get_or_none(Image.file_name == file_name)
+    if iref is None:
+        return [False, "No image with that file name"]
+    return [True, iref.bundle.name]
+
+
+def getImagesInBundle(self, bundle_name):
+    """Get list of images in the given bundle.
+    Returns [False, message] or [True imagelist] where
+    imagelist is list of triples (filename, md5sum, bundle order)
+    ordered by bundle_order.
+    """
+    bref = Bundle.get_or_none(Bundle.name == bundle_name)
+    if bref is None:
+        return [False, "No bundle with that name"]
+    images = []
+    for iref in bref.images.order_by(Image.bundle_order):
+        images.append((iref.file_name, iref.md5sum, iref.bundle_order))
+    return [True, images]
+
+
+def getPageFromBundle(self, bundle_name, bundle_order):
+    """Get the image at position bundle_order from bundle of given name"""
+    bref = Bundle.get_or_none(Bundle.name == bundle_name)
+    if bref is None:
+        return [False]
+    iref = Image.get_or_none(Image.bundle == bref, Image.bundle_order == bundle_order)
+    if iref is None:
+        return [False]
+    else:
+        return [True, iref.file_name]
+
+
+##
+##

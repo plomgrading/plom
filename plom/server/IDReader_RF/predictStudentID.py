@@ -15,7 +15,7 @@ import pickle
 
 import numpy as np
 import sklearn
-import cv2
+from cv2 import cv2
 import imutils
 from imutils.perspective import four_point_transform
 

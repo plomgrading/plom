@@ -55,11 +55,14 @@ class PlomDB:
                     ##
                     Rubric,
                     ARLink,
+                    Tag,
+                    QuestionTagLink,
                 ]
             )
         log.info("Database initialised.")
         # check if HAL has been created
         if User.get_or_none(name="HAL") is None:
+            # pylint: disable=no-member
             User.create(
                 name="HAL",
                 password=None,
@@ -128,6 +131,9 @@ class PlomDB:
         replaceMissingTestPage,
         removeAllScannedPages,
         listBundles,
+        getImagesInBundle,
+        getBundleFromImage,
+        getPageFromBundle,
     )
 
     from plom.db.db_manage import (
@@ -202,10 +208,16 @@ class PlomDB:
         Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,
-        MsetTag,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
+        MgetAllTags,
+        McheckTagKeyExists,
+        McheckTagTextExists,
+        McreateNewTag,
+        MgetTagsOfTask,
+        MaddExistingTag,
+        MremoveExistingTag,
     )
 
     from plom.db.db_rubric import (

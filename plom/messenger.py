@@ -6,15 +6,9 @@
 Backend bits n bobs to talk to the server
 """
 
-from plom.managerMessenger import ManagerMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.baseMessenger import BaseMessenger
-
 __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
-
 
 import json
 import hashlib
@@ -24,9 +18,14 @@ from io import StringIO, BytesIO
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
 
+from plom.baseMessenger import BaseMessenger
+from plom.scanMessenger import ScanMessenger
+from plom.finishMessenger import FinishMessenger
+from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomConflict,
     PlomTakenException,
     PlomNoMoreException,
@@ -35,17 +34,14 @@ from plom.plom_exceptions import (
     PlomLatexException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomTimeoutError,
 )
+
 
 log = logging.getLogger("messenger")
 # requests_log = logging.getLogger("urllib3")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
-
-from plom.baseMessenger import BaseMessenger
-from plom.scanMessenger import ScanMessenger
-from plom.finishMessenger import FinishMessenger
-from plom.managerMessenger import ManagerMessenger
 
 
 class Messenger(BaseMessenger):
@@ -206,7 +202,7 @@ class Messenger(BaseMessenger):
         self.SRmutex.acquire()
         try:
             response = self.delete(
-                "/ID/tasks/{code}",
+                f"/ID/tasks/{code}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -334,7 +330,7 @@ class Messenger(BaseMessenger):
             code (str): a task code such as `"q0123g2"`.
 
         returns:
-            list: Consisting of image_metadata, tags, integrity_check.
+            list: Consisting of image_metadata, [list of tags], integrity_check.
         """
 
         self.SRmutex.acquire()
@@ -409,7 +405,6 @@ class Messenger(BaseMessenger):
         ver,
         score,
         mtime,
-        tags,
         annotated_img,
         plomfile,
         rubrics,
@@ -438,7 +433,6 @@ class Messenger(BaseMessenger):
             "ver": str(ver),
             "score": str(score),
             "mtime": str(mtime),
-            "tags": tags,
             "rubrics": rubrics,
             "md5sum": hashlib.md5(open(annotated_img, "rb").read()).hexdigest(),
             "integrity_check": integrity_check,
@@ -472,43 +466,24 @@ class Messenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
+            if response.status_code == 406:
                 if response.text == "integrity_fail":
                     raise PlomConflict(
-                        "Integrity check failed. This can happen if manager has altered the task while you are annotating it."
+                        "Integrity fail: can happen if manager altered task while you annotated"
                     ) from None
                 raise PlomSeriousException(response.text) from None
-            elif response.status_code == 409:
+            if response.status_code == 409:
                 raise PlomTaskChangedError("Task ownership has changed.") from None
-            elif response.status_code == 410:
+            if response.status_code == 410:
                 raise PlomTaskDeletedError(
                     "No such task - it has been deleted from server."
                 ) from None
-            elif response.status_code == 400:
+            if response.status_code == 400:
                 raise PlomSeriousException(response.text) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
         return ret
-
-    # todo - work out URLs for the various operations a little more nicely.
-    def MsetTag(self, code, tags):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/MK/tags/{code}",
-                json={"user": self.user, "token": self.token, "tags": tags},
-            )
-            response.raise_for_status()
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 409:
-                raise PlomTakenException("Task taken by another user.") from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()
@@ -620,8 +595,9 @@ class Messenger(BaseMessenger):
             PlomSeriousException
 
         Returns:
-            tuple: First element is bool for success.  If True, second
-                element is a dict of information about user's tabs.
+            dict/None: a dict of information about user's tabs for that
+                question or `None` if server has no saved tabs for that
+                user/question pair.
         """
         self.SRmutex.acquire()
         try:
@@ -636,13 +612,12 @@ class Messenger(BaseMessenger):
             response.raise_for_status()
 
             if response.status_code == 200:
-                paneConfig = response.json()
-                return [True, paneConfig]
+                return response.json()
             elif response.status_code == 204:
-                return [False]  # server has no data
+                return None
             else:
                 raise PlomSeriousException(
-                    "No other 20x response should come from server."
+                    "No other 20x response expected from server."
                 ) from None
 
         except requests.HTTPError as e:

@@ -20,6 +20,7 @@ def teardown_module(module):
 
 
 class Test:
+    # pylint: disable=no-member
     def test_its_alive(self):
         assert self.demo.process_is_running()
 

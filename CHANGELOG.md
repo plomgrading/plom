@@ -8,11 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Solutions - can now optionally watermark solutions with the SID.
+* SSL verification enabled by default for releases.
+
+### Changed
+* Tags have been overhauled, with bug fixes and improved functionality
+* Annotator can tag papers directly.
+* Deprecated "LoosePages" have been removed.
+* Tests have exactly one ID page (before they could have more than one).
+* Misc plom-manager improvements.
+
+### Fixed
+* Potential memory leaks in Annotator, Manager, and dialogs.
+* A large number of modal dialog fixes.
+* Other misc changes.
+
+
+## [Unreleased]
+
+### Added
 
 ### Changed
 
 ### Fixed
+* Client: save user tabs on manual sync and on annotator close.
+* Workarounds for high memory use during reassembly and solution assembly.
+* Correctly stop background uploader thread on Marker close.
 
+
+## [0.7.7] - 2021-11-15
+
+### Changed
+* Client: fit-to-width and fit-to-height pan to the top and left respectively.
+
+### Fixed
+* Tweaks and fixes about reassembly and solution assembly.
+* Client: better dark theme support, other tweaks.
+* Other minor fixes, including potential crashes caught by `pylint`.
 
 
 ## [0.7.5] - 2021-11-07
@@ -578,7 +610,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.5...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.7...main
+[0.7.7]: https://gitlab.com/plom/plom/compare/v0.7.5...v0.7.7
 [0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5
 [0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
 [0.7.3]: https://gitlab.com/plom/plom/compare/v0.7.2...v0.7.3

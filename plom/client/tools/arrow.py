@@ -25,7 +25,7 @@ class CommandArrow(CommandLine):
 
 # TODO: LineItem is a QGraphicsLineItem, so cannot inherit (?)
 class ArrowItem(QGraphicsPathItem):
-    def __init__(self, pti, ptf, style, parent=None):
+    def __init__(self, pti, ptf, style):
         """Creates an arrow from pti to ptf.
         Some manipulations required to draw the arrow head.
         """

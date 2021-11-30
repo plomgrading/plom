@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
-from plom.db.tables import Rubric, User, Test, QGroup
+from plom.db.tables import Rubric, User, Test, QGroup, Tag
 from plom.db.tables import plomdb
 
 
@@ -173,17 +173,6 @@ def Rget_rubrics_in_a_given_test(self, test_number):
         for arlink_ref in aref.arlinks:
             rubric_dict[arlink_ref.rubric.key] += 1
     return (True, rubric_dict)
-
-
-def Rget_rubrics_by_question(self, question):
-    """Return counts of number of times rubrics used in latest annotations of a given question (indep of version)"""
-
-    rubric_dict = defaultdict
-    for qref in QGroup.select().where(QGroup.question == question):
-        aref = qref.annotations[-1]
-        for arlink_ref in aref.arlinks:
-            defaultdict[arlink_ref.rubric.key] += 1
-    return rubric_dict
 
 
 def Rget_test_rubric_count_matrix(self):

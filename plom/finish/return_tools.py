@@ -55,6 +55,7 @@ def import_canvas_csv(canvas_fromfile):
         ),
         axis=1,
     )
+    # pylint: disable=unsubscriptable-object
     df = df[isbad == False]
     # reset the Pandas-added index column to 0 for first row
     df = df.reset_index(drop=True)
@@ -188,6 +189,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
     assert all(
         [c in df.columns for c in cols]
     ), "CSV file missing columns?  We need:\n  " + str(cols)
+    # pylint: disable=unsubscriptable-object
     df = df[cols]
 
     # TODO: rewrite using apply

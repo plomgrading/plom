@@ -25,7 +25,7 @@ import subprocess
 
 import numpy as np
 import tensorflow as tf
-import cv2
+from cv2 import cv2
 
 # pair (x_train, y_train), (x_test, y_test) from mnist dataset
 mnist = tf.keras.datasets.mnist.load_data()

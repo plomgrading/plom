@@ -33,7 +33,7 @@ class CommandQMark(CommandTool):
 
 
 class QMarkItem(QGraphicsPathItem):
-    def __init__(self, pt, style, parent=None):
+    def __init__(self, pt, style):
         super().__init__()
         self.saveable = True
         self.pt = pt

@@ -41,6 +41,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QActionGroup,
     QDialog,
+    QInputDialog,
     QWidget,
     QMenu,
     QMessageBox,
@@ -60,7 +61,7 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import OriginalScansViewer, RearrangementViewer, SolutionViewer
+from .origscanviewer import RearrangementViewer, SolutionViewer, WholeTestView
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -123,9 +124,6 @@ class Annotator(QWidget):
         self.markWarn = True
         self.rubricWarn = True
 
-        # a test view pop-up window - initially set to None for viewing whole paper
-        self.testView = None
-        self.testViewFiles = None
         # a solution view pop-up window - initially set to None
         self.solutionView = None
 
@@ -195,11 +193,7 @@ class Annotator(QWidget):
         if initialData:
             self.loadNewTGV(*initialData)
 
-        # since we now know question etc, we can now fire up initial rubrics
-        # we may have pre-existing user-tab state
-        self.rubric_widget.setInitialRubrics(
-            self.parentMarkerUI.annotatorSettings["rubricTabState"]
-        )
+        self.rubric_widget.setInitialRubrics()
 
         # Grab window settings from parent
         self.loadWindowSettings()
@@ -247,6 +241,7 @@ class Annotator(QWidget):
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
         m.addAction("View solutions\tF2", self.viewSolutions)
+        m.addAction("Tag paper...\tF3", self.tag_paper)
         m.addSeparator()
         m.addAction("Adjust pages\tCtrl-r", self.rearrangePages)
         subm = m.addMenu("Tools")
@@ -356,10 +351,6 @@ class Annotator(QWidget):
         del self.scene
         self.scene = None
 
-        # clean up after a testview
-        self.doneViewingPaper()
-        self.testView = None
-        self.testViewFiles = None
         self.tgvID = None
         self.testName = None
         self.setWindowTitle("Annotator")
@@ -621,31 +612,26 @@ class Annotator(QWidget):
 
     def viewWholePaper(self):
         """
-        Changes view layout to show entire paper.
+        Popup a dialog showing the entire paper.
 
-        If paper has not been opened, downloads it by it's tgvID and shows.
+        TODO: this has significant duplication with RearrangePages.  Currently
+        this one does it own downloads (even though Marker may already have the
+        pages.
 
         Returns:
-            None: modifies self.testView
+            None
         """
         if not self.tgvID:
             return
-        # grab the files if needed.
-        testNumber = self.tgvID[:4]
-        if self.testViewFiles is None:
-            log.debug("wholePage: downloading files for testnum {}".format(testNumber))
-            (
-                self.pageData,
-                self.testViewFiles,
-            ) = self.parentMarkerUI.downloadWholePaper(testNumber)
-
-        # if we haven't built a testview, built it now
-        if self.testView is None:
-            self.testView = OriginalScansViewer(
-                self, testNumber, self.pageData, self.testViewFiles
-            )
-        self.testView.show()
-        return
+        testnum = self.tgvID[:4]
+        log.debug("wholePage: downloading files for testnum %s", testnum)
+        page_data, files = self.parentMarkerUI.downloadWholePaper(testnum)
+        if not files:
+            return
+        labels = [x[0] for x in page_data]
+        WholeTestView(testnum, files, labels, parent=self).exec_()
+        for f in files:
+            f.unlink()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -761,6 +747,7 @@ class Annotator(QWidget):
         rearrangeView.listB.clear()
         del rearrangeView
         if perm:
+            # pylint: disable=unsubscriptable-object
             md5_tmp = [x[0] for x in perm]
             if len(set(md5_tmp)) != len(md5_tmp):
                 s = dedent(
@@ -790,26 +777,6 @@ class Annotator(QWidget):
             os.unlink(f)
         self.setEnabled(True)
         return
-
-    def doneViewingPaper(self):
-        """
-        Performs end tasks to close the Paper and view next.
-
-        Notes:
-            Called when user is done with testViewFiles.
-            Adds the action to log.debug and informs self.parentMarkerUI.
-
-        Returns:
-            None: Modifies self.testView
-        """
-        if self.testViewFiles:
-            log.debug("wholePage: done with viewFiles {}".format(self.testViewFiles))
-            # could just delete them here but maybe Marker wants to cache
-            self.parentMarkerUI.doneWithWholePaperFiles(self.testViewFiles)
-            self.testViewFiles = None
-        if self.testView:
-            self.testView.close()
-            self.testView = None
 
     def keyPopUp(self):
         """Sets KeyPress shortcuts."""
@@ -1017,7 +984,7 @@ class Annotator(QWidget):
             getattr(self, name + "SC").setKey(keys[name])
 
     def setKeyBindings(self):
-        kw = KeyWrangler(self.keyBindings)
+        kw = KeyWrangler(self, self.keyBindings)
         if kw.exec_() == QDialog.Accepted:
             self.changeMainShortCuts(kw.getKeyBindings())
 
@@ -1079,6 +1046,7 @@ class Annotator(QWidget):
             ("toggle", Qt.Key_Home, self.toggleTools),
             ("viewWhole", Qt.Key_F1, self.viewWholePaper),
             ("viewSolutions", Qt.Key_F2, self.viewSolutions),
+            ("tag_paper", Qt.Key_F3, self.tag_paper),
             ("hamburger", Qt.Key_F10, self.ui.hamMenuButton.animateClick),
         ]
         for (name, key, command) in minorShortCuts:
@@ -1438,11 +1406,6 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
-        # Marker will keep the tab state: which rubrics user has hidden, in tabs etc
-        self.parentMarkerUI.annotatorSettings[
-            "rubricTabState"
-        ] = self.rubric_widget.get_tab_rubric_lists()
-
     def saveAnnotations(self):
         """
         Try to save the annotations and signal Marker to upload them.
@@ -1630,14 +1593,13 @@ class Annotator(QWidget):
         """
         log.debug("========CLOSE EVENT======: {}".format(self))
 
-        log.debug("Clean up any view-widows or solution-views")
-        # clean up after a testview
-        self.doneViewingPaper()
-        # clean up after a solution-view
+        log.debug("Clean up any lingering solution-views etc")
         if self.solutionView:
             log.debug("Cleaning a solution-view")
             self.solutionView.close()
             self.solutionView = None
+
+        self.saveTabStateToServer(self.rubric_widget.get_tab_rubric_lists())
 
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
@@ -1836,7 +1798,7 @@ class Annotator(QWidget):
             return
 
         self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox().exec_()
+        nabValue = NoAnswerBox(self).exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
             self.scene.undo()
@@ -1855,6 +1817,10 @@ class Annotator(QWidget):
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
         self.parentMarkerUI.saveTabStateToServer(tab_state)
+
+    def getTabStateFromServer(self):
+        """Have Marker download the tab state from the server."""
+        return self.parentMarkerUI.getTabStateFromServer()
 
     def refreshRubrics(self):
         """ask the rubric widget to refresh rubrics"""
@@ -1877,6 +1843,10 @@ class Annotator(QWidget):
         if self.solutionView is None:
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
+
+    def tag_paper(self):
+        task = f"q{self.tgvID}"
+        self.parentMarkerUI.manage_task_tags(task, parent=self)
 
     def refreshSolutionImage(self):
         # force a refresh

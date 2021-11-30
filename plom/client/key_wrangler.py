@@ -103,8 +103,7 @@ key_layouts = {
 
 class SingleKeyEdit(QLineEdit):
     def __init__(self, parent, currentKey=None, legal=None):
-        super(SingleKeyEdit, self).__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.setAlignment(Qt.AlignHCenter)
         self.legal = legal
         if currentKey:
@@ -140,10 +139,10 @@ class SingleKeyEdit(QLineEdit):
 
 
 class KeyWrangler(QDialog):
-    def __init__(self, currentKeys=None):
-        super(KeyWrangler, self).__init__()
+    def __init__(self, parent, currentKeys=None):
+        super().__init__(parent)
         if currentKeys is None:
-            currentKeys = keys_sdf
+            currentKeys = key_layouts["sdf"]
         self.currentKeys = currentKeys
         self.legalKeyCodes = [QKeySequence(c)[0] for c in stringOfLegalKeys]
         self.actions = the_actions

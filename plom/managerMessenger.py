@@ -14,12 +14,12 @@ from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
-    PlomTakenException,
+    PlomExistingDatabase,
     PlomNoMoreException,
     PlomNoSolutionException,
-    PlomRangeException,
-    PlomExistingDatabase,
     PlomOwnersLoggedInException,
+    PlomRangeException,
+    PlomTakenException,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -75,24 +75,6 @@ class ManagerMessenger(BaseMessenger):
         try:
             response = self.get(
                 "/admin/pageVersionMap",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        # JSON casts dict keys to str, force back to ints
-        return undo_json_packing_of_version_map(response.json())
-
-    def getGlobalQuestionVersionMap(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/questionVersionMap",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
@@ -334,10 +316,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 410:
                 raise PlomNoMoreException("Cannot find ID image.") from None
-            if response.status_code == 409:
-                raise PlomSeriousException(
-                    "Another user has the image. This should not happen"
-                ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -598,30 +576,6 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "test": t,
                     "question": q,
-                    "order": o,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def getLPageImage(self, t, o):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/scannedLPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
                     "order": o,
                 },
             )
@@ -1178,7 +1132,7 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         if response.status_code == 201:
             return [True, "User created."]
-        elif response.status_code == 202:
+        if response.status_code == 202:
             return [True, "User password updated"]
         raise PlomSeriousException(f"Unexpected {response.status_code}") from None
 
@@ -1375,8 +1329,8 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             if response.status_code == 200:
                 return True
-            if response.status_code == 204:
-                return False
+            # if response.status_code == 204:
+            return False
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -1437,3 +1391,71 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
+
+    ## =====
+    ## Bundle image stuff
+
+    def getBundleFromImage(self, filename):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/bundleFromImage",
+                json={"user": self.user, "token": self.token, "filename": filename},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that image.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getImagesInBundle(self, bundle_name):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/imagesInBundle",
+                json={"user": self.user, "token": self.token, "bundle": bundle_name},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that bundle.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        return response.json()
+
+    def getPageFromBundle(self, bundle_name, image_position):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/bundlePage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "bundle_name": bundle_name,
+                    "bundle_order": image_position,
+                },
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+            return image
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomNoMoreException("Cannot find that image / bundle.") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+
+##

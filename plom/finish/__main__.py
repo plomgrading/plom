@@ -173,6 +173,14 @@ def get_parser():
         """,
     )
     spSolution.add_argument(
+        "-m",
+        "--mark",
+        action="store_true",
+        help="""
+            Watermark the solutions with the student number.
+        """,
+    )
+    spSolution.add_argument(
         "testnum",
         type=int,
         nargs="?",
@@ -226,7 +234,9 @@ def main():
                 args.testnum, args.server, args.password, args.skip_existing
             )
     elif args.command == "solutions":
-        plom.finish.assemble_solutions.main(args.testnum, args.server, args.password)
+        plom.finish.assemble_solutions.main(
+            args.testnum, args.server, args.password, watermark=args.mark
+        )
     elif args.command == "webpage":
         plom.finish.coded_return.main(
             args.hex, args.digits, args.salt, args.server, args.solutions

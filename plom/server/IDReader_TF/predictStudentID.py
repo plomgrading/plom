@@ -12,7 +12,7 @@ See:
 https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 """
 
-import cv2
+from cv2 import cv2
 import imutils
 from imutils.perspective import four_point_transform
 import numpy as np

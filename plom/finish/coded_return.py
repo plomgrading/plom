@@ -114,7 +114,7 @@ def main(use_hex, digits, salt=None, server=None, solutions=False):
     if salt:
         print('Salt string "{}" can reproduce these return codes'.format(salt))
     else:
-        print("These return codes will be random and non-reproducible".format(salt))
+        print("These return codes will be random and non-reproducible")
     sns = csv_add_return_codes(
         CSVFilename, "return_codes.csv", "StudentID", use_hex, digits, salt
     )

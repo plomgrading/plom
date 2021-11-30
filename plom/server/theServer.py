@@ -130,6 +130,9 @@ class Server:
         collidingToTestPage,
         discardToUnknown,
         listBundles,
+        getBundleFromImage,
+        getImagesInBundle,
+        getPageFromBundle,
     )
     from .plomServer.serverID import (
         IDprogressCount,
@@ -158,7 +161,12 @@ class Server:
         MrecordMark,
         MreturnMarkedTask,
         MgetOriginalImages,
-        MsetTag,
+        checkTagTextValid,
+        add_tag,
+        remove_tag,
+        MgetTagsOfTask,
+        MgetAllTags,
+        McreateNewTag,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,

@@ -60,7 +60,7 @@ def test_pdf_extract_img_ridiculous_ratios(tmpdir):
         processFileToBitmaps(f, tmp_path)
 
 
-def test_pdf_extract_error_not_pdf(tmpdir):
+def test_pdf_extract_error_no_file(tmpdir):
     tmp_path = Path(tmpdir)
     with raises(RuntimeError):
         processFileToBitmaps(tmp_path / "no_such_file.pdf", tmp_path)

@@ -63,6 +63,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     doc = fitz.open(file_name)
 
     if not doc.is_pdf:
+        doc.close()
         raise TypeError("This does not appear to be a PDF file")
     if doc.is_repaired:
         warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
@@ -157,6 +158,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 W = MAXWIDTH
                 H = W / aspect
                 if H < 100:
+                    # TODO: use a context manager for doc to avoid this
+                    doc.close()
                     raise ValueError("Scanned a strip too wide and thin?")
         else:
             if W < MINWIDTH:
@@ -166,6 +169,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                     H = MAXHEIGHT
                     W = H * aspect
                     if W < 100:
+                        # TODO: use a context manager for doc to avoid this
+                        doc.close()
                         raise ValueError("Scanned a long strip of thin paper?")
 
         # fitz uses ceil (not round) so decrease a little bit
@@ -200,9 +205,10 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         # TODO: experiment with jpg: generate both and see which is smaller?
         # (But be careful about "dim mult of 16" thing above.)
         outname = dest / (basename + ".png")
-        pix.writeImage(outname)
+        pix.save(outname)
         files.append(outname)
     assert len(files) == len(doc), "Expected one image per page"
+    doc.close()
     return files
 
 

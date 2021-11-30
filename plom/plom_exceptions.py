@@ -55,6 +55,10 @@ class PlomRangeException(PlomBenignException):
     pass
 
 
+class PlomBadTagError(PlomBenignException):
+    pass
+
+
 class PlomExistingDatabase(PlomBenignException):
     """The database has already been populated."""
 
