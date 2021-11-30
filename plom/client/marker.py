@@ -967,8 +967,6 @@ class MarkerClient(QWidget):
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
 
-        # For viewing the whole paper we'll need these two lists.
-        self.viewFiles = []
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
         # Note: specific to this question
