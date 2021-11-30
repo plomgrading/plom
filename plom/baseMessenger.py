@@ -420,8 +420,8 @@ class BaseMessenger:
     def create_new_tag(self, tag_text):
         self.SRmutex.acquire()
         try:
-            response = self.put(
-                f"/new_tag",
+            response = self.patch(
+                f"/tags",
                 json={"user": self.user, "token": self.token, "tag_text": tag_text},
             )
             response.raise_for_status()

@@ -56,7 +56,7 @@ class PlomDB:
                     Rubric,
                     ARLink,
                     Tag,
-                    QTLink,
+                    QuestionTagLink,
                 ]
             )
         log.info("Database initialised.")

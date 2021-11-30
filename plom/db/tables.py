@@ -215,7 +215,7 @@ class Tag(BaseModel):
     user = pw.ForeignKeyField(User, backref="tags", null=False)
 
 
-class QTLink(BaseModel):
-    qgroup = pw.ForeignKeyField(QGroup, backref="qtlinks")
-    tag = pw.ForeignKeyField(Tag, backref="qtlinks")
-    user = pw.ForeignKeyField(User, backref="qtlinks", null=False)
+class QuestionTagLink(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="questiontaglinks")
+    tag = pw.ForeignKeyField(Tag, backref="questiontaglinks")
+    user = pw.ForeignKeyField(User, backref="questiontaglinks", null=False)

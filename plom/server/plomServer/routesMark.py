@@ -546,7 +546,7 @@ class MarkHandler:
         tag_list = self.server.MgetAllTags()
         return web.json_response(tag_list)
 
-    # @routes.get("/all_tags")
+    # @routes.patch("/tags")
     @authenticate_by_token_required_fields(["user", "tag_text"])
     def create_new_tag(self, data, request):
         """Get list of all tags in system.
@@ -793,7 +793,7 @@ class MarkHandler:
         router.add_get("/tags/{task}", self.get_tags_of_task)
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
-        router.add_put("/new_tag", self.create_new_tag)
+        router.add_patch("/tags", self.create_new_tag)
         router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_get("/annotations/{number}/{question}", self.get_annotations_latest)

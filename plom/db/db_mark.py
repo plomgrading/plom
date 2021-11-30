@@ -17,7 +17,17 @@ from plom.db.tables import (
     OAPage,
     OldAnnotation,
 )
-from plom.db.tables import Image, Group, QGroup, Rubric, Test, TPage, User, Tag, QTLink
+from plom.db.tables import (
+    Image,
+    Group,
+    QGroup,
+    Rubric,
+    Test,
+    TPage,
+    User,
+    Tag,
+    QuestionTagLink,
+)
 
 from plom.comment_utils import generate_new_comment_ID
 
@@ -78,7 +88,7 @@ def MgetDoneTasks(self, user_name, q, v):
     mark_list = []
     for qref in query:  # grab that questionData object
         # get the tag texts for that qgroup
-        tag_list = [qtref.tag.text for qtref in qref.qtlinks]
+        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
         aref = qref.annotations[-1]  # grab the last annotation
         mark_list.append(
             [
@@ -162,7 +172,7 @@ def MgiveTaskToClient(self, user_name, group_id):
         qref.time = datetime.now()
         qref.save()
         # get tag_list
-        tag_list = [qtref.tag.text for qtref in qref.qtlinks]
+        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
@@ -691,7 +701,7 @@ def MgetTagsOfTask(self, task):
         return None
     qref = gref.qgroups[0]
 
-    return [qtref.tag.text for qtref in qref.qtlinks]
+    return [qtref.tag.text for qtref in qref.questiontaglinks]
 
 
 def MaddExistingTag(self, username, task, tag_text):
@@ -709,13 +719,13 @@ def MaddExistingTag(self, username, task, tag_text):
         # server existence of tag before, so this should not happen.
         log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
         return False
-    qtref = QTLink.get_or_none(qgroup=qref, tag=tgref)
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
     # check if task is already tagged
     if qtref is not None:
         log.warn(f"MaddExistingTag - task {task} is already tagged with {tag_text}.")
         return False
     else:
-        QTLink.create(tag=tgref, qgroup=qref, user=uref)
+        QuestionTagLink.create(tag=tgref, qgroup=qref, user=uref)
         log.info(f"MaddExistingTag - tag {tag_text} added to task {task}.")
         return True
 
@@ -733,8 +743,17 @@ def MremoveExistingTag(self, task, tag_text):
         # server existence of tag before, so this should not happen.
         log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
         return False
-    qtref = QTLink.get_or_none(qgroup=qref, tag=tgref)
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
     # check if task is already tagged
+    if qtref is not None:
+        qtref.delete_instance()
+        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
+        return True
+    else:
+        log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
+        return False
+
+    ##
     if qtref is not None:
         qtref.delete_instance()
         log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
