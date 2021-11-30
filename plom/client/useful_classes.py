@@ -122,8 +122,8 @@ class SimpleTableView(QTableView):
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
-    def __init__(self, parent=None):
-        super(SimpleTableView, self).__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         # User can sort, cannot edit, selects by rows.
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -155,8 +155,8 @@ class SimpleToolButton(QToolButton):
 
 
 class NoAnswerBox(QDialog):
-    def __init__(self):
-        super(NoAnswerBox, self).__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.setWindowTitle("Is this answer blank?")
         self.yesNextB = QPushButton("Yes and &Next")
         self.yesDoneB = QPushButton("&Yes")
@@ -183,8 +183,7 @@ class NoAnswerBox(QDialog):
 
 class BlankIDBox(QDialog):
     def __init__(self, parent, testNumber):
-        super(BlankIDBox, self).__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.testNumber = testNumber
         self.setWindowTitle("What is blank on test/paper {}?".format(testNumber))
         grid = QGridLayout()
@@ -213,8 +212,8 @@ class BlankIDBox(QDialog):
 
 
 class SNIDBox(QDialog):
-    def __init__(self, id_name_text):
-        super(SNIDBox, self).__init__()
+    def __init__(self, parent, id_name_text):
+        super().__init__(parent)
         self.sidLE = QLineEdit()
         self.snameLE = QLineEdit()
         self.guessInput(id_name_text)
@@ -264,9 +263,8 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
-    def __init__(self, s, logdir, cfgfile, tmpdir):
-        super().__init__()
-        # self.parent = parent
+    def __init__(self, parent, s, logdir, cfgfile, tmpdir):
+        super().__init__(parent)
         self.setWindowTitle("Plom client options")
 
         flay = QFormLayout()

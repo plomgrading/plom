@@ -63,8 +63,8 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .examviewwindow import ExamViewWindow
-from .origscanviewer import QuestionView, SelectTestQuestion
+from .examviewwindow import ImageViewWidget
+from .origscanviewer import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import (
     AddRemoveTagDialog,
@@ -185,7 +185,7 @@ class BackgroundDownloader(QThread):
             # try-except? how does this fail?
             im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -688,7 +688,6 @@ class MarkerExamModel(QStandardItemModel):
 
     def setTagsByTask(self, task, tags):
         """Set a list of tags for task.
-
         Note: internally stored as flattened string.
         """
         return self._setDataByTask(task, 4, " ".join(tags))
@@ -978,9 +977,8 @@ class MarkerClient(QWidget):
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
-        self.testImg = (
-            ExamViewWindow()
-        )  # A view window for the papers so user can zoom in as needed.
+        # A view window for the papers so user can zoom in as needed.
+        self.testImg = ImageViewWidget(self)
         self.annotatorSettings = defaultdict(
             lambda: None
         )  # settings variable for annotator settings (initially None)
@@ -1071,7 +1069,7 @@ class MarkerClient(QWidget):
 
         self.requestNext()  # Get a question to mark from the server
         # reset the view so whole exam shown.
-        self.testImg.resetB.animateClick()
+        self.testImg.resetView()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         log.debug("Marker main thread: " + str(threading.get_ident()))
@@ -1188,7 +1186,7 @@ class MarkerClient(QWidget):
 
         """
         if hasattr(self, "testImg"):
-            self.testImg.resetB.animateClick()
+            self.testImg.resetView()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
@@ -1310,7 +1308,7 @@ class MarkerClient(QWidget):
         for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1324,7 +1322,7 @@ class MarkerClient(QWidget):
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
         pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
-        with open(aname, "wb+") as fh:
+        with open(aname, "wb") as fh:
             fh.write(annotated_image)
         with open(pname, "w") as f:
             json.dump(plomdata, f, indent="  ")
@@ -1450,7 +1448,7 @@ class MarkerClient(QWidget):
             # try-except? how does this fail?
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1820,7 +1818,7 @@ class MarkerClient(QWidget):
         )
         try:
             im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
-            with open(soln, "wb+") as fh:
+            with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
         except PlomNoSolutionException as err:
@@ -2222,13 +2220,15 @@ class MarkerClient(QWidget):
         self.close()
 
     def downloadWholePaper(self, testNumber):
-        """
+        """Legacy method, yet another way of getting images.
 
         Args:
             testNumber (int): the test number.
 
         Returns:
-            (tuple) containing pageData and viewFiles
+            tuple: containing pageData and viewFiles.  You are responsible
+                for deleting the files when done with them, in particular
+                these may include duplicate images.
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
@@ -2237,18 +2237,18 @@ class MarkerClient(QWidget):
         except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
-            return ([], [])  # TODO: what to return?
+            return ([], [])
 
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(
                 dir=self.workingDirectory, suffix=".image", delete=False
             ).name
-            viewFiles.append(tfn)
+            viewFiles.append(Path(tfn))
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageData, viewFiles]
+        return (pageData, viewFiles)
 
     def downloadOneImage(self, image_id, md5):
         """Download one image from server by its database id."""
@@ -2389,7 +2389,7 @@ class MarkerClient(QWidget):
         fragFile = tempfile.NamedTemporaryFile(
             dir=self.workingDirectory, suffix=".png", delete=False
         ).name
-        with open(fragFile, "wb+") as fh:
+        with open(fragFile, "wb") as fh:
             fh.write(fragment)
         # add it to the cache
         self.commentCache[txt] = fragFile
@@ -2489,4 +2489,4 @@ class MarkerClient(QWidget):
             ifilenames.append(ifile.name)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        QuestionView(ifilenames, tn, gn, ver=ver, marker=self).exec_()
+        QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()

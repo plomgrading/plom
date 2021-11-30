@@ -6,8 +6,9 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-import os
 import csv
+import os
+from pathlib import Path
 import sys
 import tempfile
 
@@ -47,7 +48,7 @@ import plom.client.icons
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
 from plom.client.origscanviewer import WholeTestView, GroupView
-from .imageview import ImageViewWidget
+from plom.client.examviewwindow import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -278,8 +279,8 @@ class TestStatus(QDialog):
 
 class ProgressBox(QGroupBox):
     def __init__(self, parent, qu, v, stats):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         self.question = qu
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
@@ -350,17 +351,17 @@ class ProgressBox(QGroupBox):
             self.lhL.setText("# Marked in last hour = N/A")
 
     def viewHist(self):
-        self.parent.viewMarkHistogram(self.question, self.version)
+        self._parent.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
     def __init__(
-        self, parent, *, server=None, user=None, password=None, manager_msgr=None
+        self, Qapp, *, server=None, user=None, password=None, manager_msgr=None
     ):
         """Start a new Plom Manager window.
 
         Args:
-            parent: A QApplication (I think).
+            Qapp (QApplication):
 
         Keyword Args:
             manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
@@ -373,7 +374,7 @@ class Manager(QWidget):
         """
         self.APIVersion = Plom_API_Version
         super().__init__()
-        self.parent = parent
+        self.Qapp = Qapp
         self.msgr = manager_msgr
         print(
             "Plom Manager Client {} (communicates with api {})".format(
@@ -443,9 +444,9 @@ class Manager(QWidget):
         self.ui.mportSB.setValue(int(p))
 
     def setFont(self, n):
-        fnt = self.parent.font()
+        fnt = self.Qapp.font()
         fnt.setPointSize(n)
-        self.parent.setFont(fnt)
+        self.Qapp.setFont(fnt)
 
     def login(self):
         user = self.ui.userLE.text().strip()
@@ -637,7 +638,7 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
-            GroupView([fh.name]).exec_()
+            GroupView(self, [fh.name]).exec_()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -929,38 +930,43 @@ class Manager(QWidget):
                 # )
         self.refreshUList()
 
-    def viewWholeTest(self, testNumber):
+    def viewWholeTest(self, testNumber, parent=None):
         vt = self.msgr.getTestImages(testNumber)
         if vt is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            tv = WholeTestView(inames)
-            tv.exec_()
+            WholeTestView(testNumber, inames, parent=parent).exec_()
 
-    def viewQuestion(self, testNumber, questionNumber):
+    def viewQuestion(self, testNumber, questionNumber, parent=None):
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)
         if vq is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
-            qv = GroupView(inames)
-            qv.exec_()
+            GroupView(parent, inames).exec_()
 
-    def checkTPage(self, testNumber, pageNumber):
+    def checkTPage(self, testNumber, pageNumber, parent=None):
+        if parent is None:
+            parent = self
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] == None:
+            # TODO: ErrorMesage does not support parenting
             ErrorMessage(
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
@@ -974,7 +980,7 @@ class Manager(QWidget):
                     pageNumber, testNumber
                 )
             ).exec_()
-            GroupView([fh.name]).exec_()
+            GroupView(parent, [fh.name]).exec_()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
@@ -1256,7 +1262,7 @@ class Manager(QWidget):
             for i in range(len(imageList)):
                 tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
-                with open(tmp, "wb+") as fh:
+                with open(tmp, "wb") as fh:
                     fh.write(imageList[i])
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
@@ -1285,7 +1291,7 @@ class Manager(QWidget):
             return
         with tempfile.TemporaryDirectory() as td:
             imageName = os.path.join(td, "id.0.image")
-            with open(imageName, "wb+") as fh:
+            with open(imageName, "wb") as fh:
                 fh.write(imageDat)
             IDViewWindow(self, imageName, sid).exec_()
 
@@ -1560,7 +1566,7 @@ class Manager(QWidget):
         imageDat = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
             imageName = os.path.join(td, "id.0.image")
-            with open(imageName, "wb+") as fh:
+            with open(imageName, "wb") as fh:
                 fh.write(imageDat)
             rvw = ReviewViewWindow(self, imageName, "ID pages")
             if rvw.exec() == QDialog.Accepted:
@@ -1580,7 +1586,7 @@ class Manager(QWidget):
         self.tempDirectory = tempfile.TemporaryDirectory(prefix="plom_manager_")
         self.solnPath = self.tempDirectory.name
         # set up the viewer
-        self.solnIV = ImageViewWidget()
+        self.solnIV = ImageViewWidget(self)
         self.ui.solnGBLayout.addWidget(self.solnIV)
 
         self.ui.solnQSB.setMaximum(self.numberOfQuestions)
@@ -1608,7 +1614,7 @@ class Manager(QWidget):
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
             ),
         )
-        with open(solutionName, "wb+") as fh:
+        with open(solutionName, "wb") as fh:
             fh.write(imgBytes)
         self.solnIV.updateImage(solutionName)
         return True

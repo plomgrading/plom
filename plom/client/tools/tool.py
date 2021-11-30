@@ -41,7 +41,7 @@ class CommandTool(QUndoCommand):
 class DeleteObject(QGraphicsObject):
     def __init__(self, shape, fill=False):
         super().__init__()
-        self.item = DeleteItem(shape, fill=fill, parent=self)
+        self.item = DeleteItem(shape, fill=fill)
         self.anim_thick = QPropertyAnimation(self, b"thickness")
         self.anim_thick.setDuration(200)
 
@@ -71,7 +71,7 @@ class DeleteObject(QGraphicsObject):
 
 
 class DeleteItem(QGraphicsPathItem):
-    def __init__(self, shape, fill=False, parent=None):
+    def __init__(self, shape, fill=False):
         super().__init__()
         self.saveable = False
         self.initialShape = shape

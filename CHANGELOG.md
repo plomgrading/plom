@@ -8,11 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Solutions - can now optionally watermark solutions with the SID.
 
 ### Changed
 
 ### Fixed
+* Workarounds for high memory use during reassembly and solution assembly.
 
+
+## [0.7.7] - 2021-11-15
+
+### Changed
+* Client: fit-to-width and fit-to-height pan to the top and left respectively.
+
+### Fixed
+* Tweaks and fixes about reassembly and solution assembly.
+* Client: better dark theme support, other tweaks.
+* Other minor fixes, including potential crashes caught by `pylint`.
 
 
 ## [0.7.5] - 2021-11-07
@@ -579,6 +591,7 @@ This is the first release of Plom, PaperLess Open Marking.
 
 
 [Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.5...master
+[0.7.7]: https://gitlab.com/plom/plom/compare/v0.7.5...v0.7.7
 [0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5
 [0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
 [0.7.3]: https://gitlab.com/plom/plom/compare/v0.7.2...v0.7.3

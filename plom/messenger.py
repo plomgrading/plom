@@ -25,6 +25,7 @@ from plom.managerMessenger import ManagerMessenger
 from plom.plom_exceptions import PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomConflict,
     PlomTakenException,
     PlomNoMoreException,

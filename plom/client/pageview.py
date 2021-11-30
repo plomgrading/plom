@@ -22,12 +22,13 @@ class PageView(QGraphicsView):
         Initializes a new pageView object.
 
         Args:
-            parent (Annotator): The Annotator creating the pageview
+            parent (Annotator): The Annotator creating the pageview.
+                Must have various zoom-related functions available.
             username (str): The username of the marker
 
         """
         super().__init__(parent)
-        self.parent = parent
+        self._annotr = parent
         # Set scrollbars
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -71,9 +72,7 @@ class PageView(QGraphicsView):
         Args:
             event (QEvent) - the event to be resized.
         """
-
-        # re-zoom
-        self.parent.zoomCBChanged()
+        self._annotr.zoomCBChanged()
         # then any other stuff needed by parent class
         super().resizeEvent(event)
 
@@ -92,7 +91,7 @@ class PageView(QGraphicsView):
             self.viewport().contentsRect()
         ).boundingRect()
         if update:
-            self.parent.changeCBZoom(0)
+            self._annotr.changeCBZoom(0)
 
     def zoomIn(self):
         """Zooms in the paper 1.25 x"""
@@ -117,9 +116,9 @@ class PageView(QGraphicsView):
             None
         """
 
-        if self.parent.isZoomFitWidth():
+        if self._annotr.isZoomFitWidth():
             self.zoomFitHeight(True)
-        elif self.parent.isZoomFitHeight():
+        elif self._annotr.isZoomFitHeight():
             self.zoomFitWidth(True)
         else:
             self.zoomFitWidth(True)
@@ -147,7 +146,7 @@ class PageView(QGraphicsView):
         else:
             self.zoomFitWidth(False)
         if update:
-            self.parent.changeCBZoom(1)
+            self._annotr.changeCBZoom(1)
 
     def zoomFitHeight(self, update=True):
         """
@@ -165,9 +164,11 @@ class PageView(QGraphicsView):
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         ratio = tempPaperWindow.height() / self.scene().height() * 0.98
         self.scale(ratio, ratio)
-        self.centerOn(self.paperWindow.center())
+        # Issue #1768: at least initially we should start at the left of the page
+        # self.centerOn(self.paperWindow.center())
+        self.centerOn(self.paperWindow.left(), self.paperWindow.center().y())
         if update:
-            self.parent.changeCBZoom(3)
+            self._annotr.changeCBZoom(3)
 
     def zoomFitWidth(self, update=True):
         """
@@ -188,9 +189,11 @@ class PageView(QGraphicsView):
         tempPaperWindow = self.mapToScene(self.viewport().contentsRect()).boundingRect()
         rat = tempPaperWindow.width() / self.scene().width() * 0.98
         self.scale(rat, rat)
-        self.centerOn(self.paperWindow.center())
+        # Issue #1768: at least initially we should start at the top of the page
+        # self.centerOn(self.paperWindow.center())
+        self.centerOn(self.paperWindow.center().x(), self.paperWindow.top())
         if update:
-            self.parent.changeCBZoom(2)
+            self._annotr.changeCBZoom(2)
 
     def zoomToScale(self, scale):
         """
@@ -223,7 +226,7 @@ class PageView(QGraphicsView):
 
         """
         self.fitInView(self.paperWindow, Qt.KeepAspectRatio)
-        self.parent.changeCBZoom(0)
+        self._annotr.changeCBZoom(0)
 
     def initializeZoom(self, initRect):
         """
