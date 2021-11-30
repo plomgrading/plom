@@ -384,8 +384,8 @@ class IDClient(QWidget):
         try:
             imageDat = self.msgr.request_ID_image(test)
         except PlomBenignException as e:
-            log.error("Somewhat unexpected error getting image for %s: %s", test, err)
-            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
+            log.error("Somewhat unexpected error getting image for %s: %s", test, e)
+            ErrorMessage(f'Unexpected but benign exception:\n"{e}"').exec_()
             # self.exM.removePaper(r)
             return
 
