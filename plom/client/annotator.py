@@ -988,7 +988,7 @@ class Annotator(QWidget):
             getattr(self, name + "SC").setKey(keys[name])
 
     def setKeyBindings(self):
-        kw = KeyWrangler(self.keyBindings)
+        kw = KeyWrangler(self, self.keyBindings)
         if kw.exec_() == QDialog.Accepted:
             self.changeMainShortCuts(kw.getKeyBindings())
 
@@ -1805,7 +1805,7 @@ class Annotator(QWidget):
             return
 
         self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox().exec_()
+        nabValue = NoAnswerBox(self).exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
             self.scene.undo()
