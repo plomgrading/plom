@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Solutions - can now optionally watermark solutions with the SID.
 
 ### Changed
 
