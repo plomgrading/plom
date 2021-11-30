@@ -98,6 +98,7 @@ def build_test_page_substitute(
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
     image.save(out_dir / f"pns.{test_number}.{page_number}.{version_number}.png")
+    pdf.close()
 
     return True
 
@@ -139,6 +140,7 @@ def build_homework_question_substitute(
 
     image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
     image.save(out_dir / f"qns.{student_id}.{question_number}.png")
+    pdf.close()
 
     return True
 

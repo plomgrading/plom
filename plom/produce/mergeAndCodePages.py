@@ -100,18 +100,17 @@ def create_exam_and_insert_QR(
         fitz.Document: PDF document.
     """
     # A (int : fitz.fitz.Document) dictionary that has the page document/path from each source based on page version
-    version_paths_for_pages = {}
-    for version_index in range(1, versions + 1):
-        version_paths_for_pages[version_index] = fitz.open(
-            "sourceVersions/version{}.pdf".format(version_index)
-        )
+    pdf_version = {}
+    for ver in range(1, versions + 1):
+        pdf_version[ver] = fitz.open(f"sourceVersions/version{ver}.pdf")
 
     exam = fitz.open()
     # Insert the relevant page-versions into this pdf.
+    # TODO: use question-version map instead and insert multiple pages at a time!
     for page_index in range(1, length + 1):
         # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
         exam.insert_pdf(
-            version_paths_for_pages[page_versions[page_index]],
+            pdf_version[page_versions[page_index]],
             from_page=page_index - 1,
             to_page=page_index - 1,
             start_at=-1,
@@ -204,6 +203,8 @@ def create_exam_and_insert_QR(
         exam[page_index].draw_rect(BL, color=[0, 0, 0], width=0.5)
         exam[page_index].draw_rect(BR, color=[0, 0, 0], width=0.5)
 
+    for ver, pdf in pdf_version.items():
+        pdf.close()
     return exam
 
 
@@ -403,3 +404,4 @@ def make_PDF(
     # Also worth noting that this will automatically overwrite any files
     # in the same directory that have the same name.
     exam.save(save_name, garbage=4, deflate=True, clean=True)
+    exam.close()

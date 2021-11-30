@@ -12,7 +12,7 @@
 PyQt5==5.15.6
 PyQt5-sip==12.9.0
 
-aiohttp==3.8.0
+aiohttp==3.8.1
 appdirs==1.4.4
 canvasapi==2.2.0
 file-magic==0.4.0
