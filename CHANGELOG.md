@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+
+
+
+## [Unreleased]
+
+### Added
+
+### Changed
+
+### Fixed
 * Client: save user tabs on manual sync and on annotator close.
 * Workarounds for high memory use during reassembly and solution assembly.
 * Correctly stop background uploader thread on Marker close.
@@ -592,7 +602,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.5...master
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.7...main
 [0.7.7]: https://gitlab.com/plom/plom/compare/v0.7.5...v0.7.7
 [0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5
 [0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
