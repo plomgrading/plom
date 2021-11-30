@@ -857,8 +857,8 @@ macos11_client:
   image: macos-11-xcode-12
   tags:
   - shared-macos-amd64
-  except:
-  - external_pull_requests
+  rules:
+  - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
   - sw_vers
