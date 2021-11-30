@@ -41,6 +41,7 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QDialog,
+    QInputDialog,
     QMessageBox,
     QProgressDialog,
     QWidget,
@@ -49,6 +50,7 @@ from PyQt5.QtWidgets import (
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
@@ -61,8 +63,8 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .examviewwindow import ExamViewWindow
-from .origscanviewer import GroupView, SelectTestQuestion
+from .examviewwindow import ImageViewWidget
+from .origscanviewer import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
 
@@ -305,7 +307,6 @@ def upload(
     question,
     ver,
     rubrics,
-    tags,
     integrity_check,
     image_md5_list,
     knownFailCallback=None,
@@ -324,7 +325,6 @@ def upload(
         mtime (int): the marking time (s) for this specific question.
         question (int or str): the question number
         ver (int or str): the version number
-        tags (str): any tags associated with this exam.
         integrity_check (str): the integrity_check string of the task.
         image_md5_list (list[str]): a list of image md5sums used.
         knownFailCallback: if we fail in a way that is reasonably expected,
@@ -361,7 +361,6 @@ def upload(
             ver,
             grade,
             mtime,
-            tags,
             aname,
             pname,
             rubrics,
@@ -674,20 +673,28 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, 1, st)
 
     def getTagsByTask(self, task):
-        """Return tags for task, (task(str) defined above.)"""
-        return self._getDataByTask(task, 4)
+        """Return a list of tags for task.
+
+        TODO: can we draw flat, but use list for storing?
+        """
+        return self._getDataByTask(task, 4).split()
 
     def setTagsByTask(self, task, tags):
-        """Set tags for task, (task (str) defined above.)"""
-        return self._setDataByTask(task, 4, tags)
+        """Set a list of tags for task.
+
+        Note: internally stored as flattened string.
+        """
+        return self._setDataByTask(task, 4, " ".join(tags))
 
     def getAllTags(self):
-        """Return all tags as a set."""
+        """Return all tags as a set over all rows of the table.
+
+        Note: internally stored as flattened string.
+        """
         tags = set()
         for r in range(self.rowCount()):
             v = self.data(self.index(r, 4))
-            if len(v) > 0:
-                tags.add(v)
+            tags.update(v.split())
         return tags
 
     def getMTimeByTask(self, task):
@@ -855,33 +862,29 @@ class ProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, pos, index):
         """
-        Checks if a row fits the given filter.
+        Checks if a row matches the current filter.
 
         Notes:
             Overrides base method.
 
         Args:
-            pos (int): row desired.
+            pos (int): row being checked.
             index (any): unused.
 
         Returns:
-            True if filter accepts the row, False otherwise.
+            bool: True if filter accepts the row, False otherwise.
 
+        The filter string is first broken into words.  All of those words
+        must be in the tags of the row, in any order.  The `invert` flag
+        inverts that logic: at least one of the words must not be in the
+        tags.
         """
-        if (len(self.filterString) == 0) or (
-            self.filterString.casefold()
-            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
-        ):
-            # we'd return true here, unless INVERT, then false
-            if self.invert:
-                return False
-            else:
-                return True
-        else:  # we'd return false here, unless invert, then true
-            if self.invert:
-                return True
-            else:
-                return False
+        search_terms = self.filterString.casefold().split()
+        tags = self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+        all_search_terms_in_tags = all(x in tags for x in search_terms)
+        if self.invert:
+            return not all_search_terms_in_tags
+        return all_search_terms_in_tags
 
     def getPrefix(self, r):
         """
@@ -978,9 +981,8 @@ class MarkerClient(QWidget):
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
-        self.testImg = (
-            ExamViewWindow()
-        )  # A view window for the papers so user can zoom in as needed.
+        # A view window for the papers so user can zoom in as needed.
+        self.testImg = ImageViewWidget(self)
         self.annotatorSettings = defaultdict(
             lambda: None
         )  # settings variable for annotator settings (initially None)
@@ -1069,7 +1071,7 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
 
         self.requestNext()  # Get a question to mark from the server
-        self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
+        self.testImg.resetView()  # reset the view so whole exam shown.
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         log.debug("Marker main thread: " + str(threading.get_ident()))
@@ -1163,11 +1165,11 @@ class MarkerClient(QWidget):
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
-        self.ui.tagButton.clicked.connect(self.tagTest)
+        self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.viewSpecificImage)
+        self.ui.viewButton.clicked.connect(self.view_testnum_question)
 
     def resizeEvent(self, event):
         """
@@ -1186,7 +1188,7 @@ class MarkerClient(QWidget):
 
         """
         if hasattr(self, "testImg"):
-            self.testImg.resetB.animateClick()
+            self.testImg.resetView()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
@@ -1928,7 +1930,6 @@ class MarkerClient(QWidget):
         )
         # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask(task)
-        tags = self.examModel.getTagsByTask(task)
         # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
@@ -1942,7 +1943,6 @@ class MarkerClient(QWidget):
             self.question,
             self.version,
             rubrics,
-            tags,
             integrity_check,
             [x["md5"] for x in src_img_data],
         )
@@ -2227,13 +2227,15 @@ class MarkerClient(QWidget):
         self.close()
 
     def downloadWholePaper(self, testNumber):
-        """
+        """Legacy method, yet another way of getting images.
 
         Args:
             testNumber (int): the test number.
 
         Returns:
-            (tuple) containing pageData and viewFiles
+            tuple: containing pageData and viewFiles.  You are responsible
+                for deleting the files when done with them, in particular
+                these may include duplicate images.
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
@@ -2242,18 +2244,18 @@ class MarkerClient(QWidget):
         except PlomTakenException as err:
             log.exception("Taken exception when downloading whole paper")
             ErrorMessage("{}".format(err)).exec_()
-            return ([], [])  # TODO: what to return?
+            return ([], [])
 
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(
                 dir=self.workingDirectory, suffix=".image", delete=False
             ).name
-            viewFiles.append(tfn)
+            viewFiles.append(Path(tfn))
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageData, viewFiles]
+        return (pageData, viewFiles)
 
     def downloadOneImage(self, image_id, md5):
         """Download one image from server by its database id."""
@@ -2400,35 +2402,79 @@ class MarkerClient(QWidget):
         self.commentCache[txt] = fragFile
         return fragFile
 
-    def tagTest(self):
-        """Adds a tag to the current Test."""
+    def manage_tags(self):
+        """Manage the tags of the current task."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
             return
         task = self.prxM.getPrefix(pr)
-        tagSet = self.examModel.getAllTags()
-        currentTag = self.examModel.getTagsByTask(task)
+        self.manage_task_tags(task)
 
-        atb = AddTagBox(self, currentTag, list(tagSet))
-        if atb.exec_() == QDialog.Accepted:
-            txt = atb.TE.toPlainText().strip()
-            if len(txt) > 256:
-                log.warning("overly long tags truncated to 256 chars")
-                txt = txt[:256]
-            # send updated tag back to server.
+    def manage_task_tags(self, task, parent=None):
+        """Manage the tags of a task.
+
+        args:
+            task (str): A string like "q0003g2" for paper 3 question 2.
+
+        keyword args:
+            parent (Window/None): Which window should be dialog's parent?
+                If None, then use `self` (which is Marker) but if other
+                windows (such as Annotator or PageRearranger) are calling
+                this and if so they should pass themselves: that way they
+                would be the visual parents of this dialog.
+        """
+        if not parent:
+            parent = self
+        # TODO: maybe we'd like a list from the server but uncertain about cost
+        all_local_tags = self.examModel.getAllTags()
+
+        tags = self.msgr.get_tags(task)
+
+        # TODO: improve with a nicer "tag management" dialog: Issue #1773.
+        # TODO: these current dialogs look horrible with many tags
+
+        def make_tags_html(tags):
+            if not tags:
+                return "<p>No current tags<p>"
+            msg = "&nbsp; ".join(f"<em>{x}</em>" for x in tags)
+            return f"<p>Current tags:</p>\n<center><big>{msg}</big></center>"
+
+        msg = make_tags_html(tags)
+        msg += "<p>Tag this paper with a new tag?</p>"
+        title = f"Add tag to {task}?"
+        choose_tags = all_local_tags.difference(tags)
+        tag, ok = QInputDialog.getItem(parent, title, msg, choose_tags)
+        if ok and tag:
+            log.debug('tagging paper "%s" with "%s"', task, tag)
             try:
-                self.msgr.MsetTag(task, txt)
-            except PlomTakenException as err:
-                log.exception("exception when trying to set tag")
-                ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
-                return
-            except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                return
-            self.examModel.setTagsByTask(task, txt)
-            # resize view too
+                self.msgr.add_tag(task, tag)
+            except PlomBadTagError as e:
+                ErrorMessage(f"Tag not acceptable: {e}").exec_()
+
+            tags = self.msgr.get_tags(task)
+
+        if tags:
+            msg = make_tags_html(tags)
+            msg += "<p>Choose one of these tags to remove:</p>"
+            tmp = tags.copy()
+            tmp.insert(0, "")
+            tag, ok = QInputDialog.getItem(parent, f"Remove tag from {task}?", msg, tmp)
+            if ok and tag:
+                log.debug('Removing tag "%s" from "%s"', tag, task)
+                try:
+                    self.msgr.remove_tag(task, tag)
+                except PlomBadTagError as e:
+                    ErrorMessage(f"Tag not acceptable: {e}").exec_()
+                tags = self.msgr.get_tags(task)
+
+        try:
+            self.examModel.setTagsByTask(task, tags)
+            self.ui.tableView.resizeColumnsToContents()
             self.ui.tableView.resizeRowsToContents()
+        except ValueError:
+            # we might not the task for which we've have been managing tags
+            pass
 
     def setFilter(self):
         """Sets a filter tag."""
@@ -2439,7 +2485,7 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def viewSpecificImage(self):
+    def view_testnum_question(self):
         """shows the image."""
         tgs = SelectTestQuestion(self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
@@ -2460,6 +2506,6 @@ class MarkerClient(QWidget):
             )
             ifile.write(img)
             ifilenames.append(ifile.name)
-        tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
-        tvw.exec_()
+        qvmap = self.msgr.getGlobalQuestionVersionMap()
+        ver = qvmap[tn][gn]
+        QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()

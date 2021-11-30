@@ -7,8 +7,6 @@ from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
 from PyQt5.QtWidgets import (
     QDialog,
-    QFrame,
-    QFormLayout,
     QGraphicsRectItem,
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -17,22 +15,18 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QLabel,
     QPushButton,
-    QSpinBox,
-    QTabWidget,
-    QVBoxLayout,
-    QWidget,
 )
 
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage
+from plom.client.examviewwindow import ExamView
 
 
 class SelectRectangleWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames):
-        QWidget.__init__(self)
-        self.parent = parent
+        super().__init__(parent)
 
         if type(fnames) == list:
             self.initUI(fnames)
@@ -44,28 +38,19 @@ class SelectRectangleWindow(QDialog):
 
     def initUI(self, fnames):
         self.setWindowTitle("Select ID Rectangle")
-        self.vTW = QTabWidget()
-        self.views = {}
-        v = 0
-        for fn in fnames:
-            self.views[v] = IDView(self, [fn])
-            self.views[v].setRenderHint(QPainter.HighQualityAntialiasing)
-            self.vTW.addTab(self.views[v], "{}".format(v + 1))
-            v += 1
+        self.view = IDView(self, fnames)
+        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
-        # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
         self.zoomB = QPushButton("zoom tool")
         self.rectB = QPushButton("rectangle")
         self.delRectB = QPushButton("delete rectangle")
         self.acceptB = QPushButton("&accept")
         self.cancelB = QPushButton("&cancel")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.cancelB.clicked.connect(self.reject)
         self.acceptB.clicked.connect(self.check_and_accept_rect)
-        # self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
+        self.resetB.clicked.connect(self.view.resetView)
         self.zoomB.clicked.connect(self.zoomTool)
         self.rectB.clicked.connect(self.rectTool)
         self.delRectB.clicked.connect(self.deleteRect)
@@ -74,16 +59,14 @@ class SelectRectangleWindow(QDialog):
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.vTW, 1, 1, 10, 6)
+        grid.addWidget(self.view, 1, 1, 10, 6)
         grid.addWidget(self.zoomB, 6, 20)
         grid.addWidget(self.rectB, 5, 20)
         grid.addWidget(self.delRectB, 7, 20)
         grid.addWidget(self.resetB, 20, 1)
         grid.addWidget(self.cancelB, 20, 20)
         grid.addWidget(self.acceptB, 19, 20)
-        grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
-        self.show()
 
         self.rectB.animateClick()
 
@@ -95,13 +78,6 @@ class SelectRectangleWindow(QDialog):
             pass
         else:
             self.accept()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def zoomTool(self):
         self.zoomB.setStyleSheet(
@@ -122,8 +98,7 @@ class SelectRectangleWindow(QDialog):
         self.tool = "rect"
 
     def deleteRect(self):
-        cv = self.vTW.currentIndex()
-        self.views[cv].deleteRect()
+        self.view.deleteRect()
 
 
 class IDView(QGraphicsView):
@@ -132,18 +107,14 @@ class IDView(QGraphicsView):
     """
 
     def __init__(self, parent, fnames):
-        QGraphicsView.__init__(self)
+        super().__init__()
         self.parent = parent
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
-        # Make QGraphicsScene
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
         self.images = {}
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImage(fnames)
+        self.updateImages(fnames)
         self.setBackgroundBrush(QBrush(Qt.darkCyan))
         self.parent.tool = "zoom"
 
@@ -154,8 +125,10 @@ class IDView(QGraphicsView):
         self.boxItem.setPen(QPen(Qt.darkCyan, 1))
         self.boxItem.setBrush(QBrush(QColor(0, 255, 0, 64)))
 
-    def updateImage(self, fnames):
+    def updateImages(self, fnames):
         """Update the image with that from filename"""
+        if isinstance(fnames, str):
+            fnames = [fnames]
         for n in self.images:
             self.imageGItem.removeFromGroup(self.images[n])
             self.images[n].setVisible(False)
@@ -214,7 +187,8 @@ class IDView(QGraphicsView):
         if self.boxFlag:
             self.boxFlag = False
             self.parent.rectangle = self.boxItem.rect()
-            self.parent.whichFile = self.parent.vTW.currentIndex()
+            # legacy: left over from multiple id pages?
+            self.parent.whichFile = 0
             return
 
         """Left/right click to zoom in and out"""
@@ -235,29 +209,20 @@ class IDViewWindow(QDialog):
     """Simple view window for pageimages"""
 
     def __init__(self, parent, fnames, sid):
-        QWidget.__init__(self)
-        self.parent = parent
+        super().__init__(parent)
         self.sid = sid
-
-        if type(fnames) == list:
-            self.initUI(fnames)
-        else:
-            self.initUI([fnames])
-
-    def initUI(self, fnames):
-        self.view = IDView(self, fnames)
+        self.view = ExamView(fnames, dark_background=True)
         # Render nicely
         self.view.setRenderHint(QPainter.HighQualityAntialiasing)
 
         # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
+        self.resetB.clicked.connect(self.view.resetView)
 
         self.acceptB = QPushButton("&close")
-        self.maxNormB = QPushButton("&max/norm")
 
         self.acceptB.clicked.connect(self.accept)
 
-        self.maxNormB.clicked.connect(self.swapMaxNorm)
         self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
         self.idL = QLabel("ID: {}".format(self.sid))
@@ -267,12 +232,11 @@ class IDViewWindow(QDialog):
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.idL, 1, 1, 1, 6)
-        grid.addWidget(self.view, 2, 1, 10, 6)
+        grid.addWidget(self.idL, 1, 1, 1, -1)
+        grid.addWidget(self.view, 2, 1, 10, -1)
+        grid.addWidget(self.resetB, 19, 1)
         grid.addWidget(self.acceptB, 19, 20)
-        grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
@@ -284,20 +248,8 @@ class IDViewWindow(QDialog):
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        # update the image
-        if type(fnames) == list:
-            self.view.updateImage(fnames)
-        else:
-            self.view.updateImage([fnames])
-
+        self.view.updateImages(fnames)
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
         self.view.verticalScrollBar().setValue(self.dy)
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)

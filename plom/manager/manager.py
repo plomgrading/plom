@@ -6,8 +6,9 @@
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-import os
 import csv
+import os
+from pathlib import Path
 import sys
 import tempfile
 
@@ -47,7 +48,7 @@ import plom.client.icons
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
 from plom.client.origscanviewer import WholeTestView, GroupView
-from .imageview import ImageViewWidget
+from plom.client.examviewwindow import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -637,7 +638,7 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
-            GroupView([fh.name]).exec_()
+            GroupView(self, [fh.name]).exec_()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -929,38 +930,43 @@ class Manager(QWidget):
                 # )
         self.refreshUList()
 
-    def viewWholeTest(self, testNumber):
+    def viewWholeTest(self, testNumber, parent=None):
         vt = self.msgr.getTestImages(testNumber)
         if vt is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            tv = WholeTestView(inames)
-            tv.exec_()
+            WholeTestView(testNumber, inames, parent=parent).exec_()
 
-    def viewQuestion(self, testNumber, questionNumber):
+    def viewQuestion(self, testNumber, questionNumber, parent=None):
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)
         if vq is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
-            qv = GroupView(inames)
-            qv.exec_()
+            GroupView(parent, inames).exec_()
 
-    def checkTPage(self, testNumber, pageNumber):
+    def checkTPage(self, testNumber, pageNumber, parent=None):
+        if parent is None:
+            parent = self
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] == None:
+            # TODO: ErrorMesage does not support parenting
             ErrorMessage(
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
@@ -974,7 +980,7 @@ class Manager(QWidget):
                     pageNumber, testNumber
                 )
             ).exec_()
-            GroupView([fh.name]).exec_()
+            GroupView(parent, [fh.name]).exec_()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
@@ -1580,7 +1586,7 @@ class Manager(QWidget):
         self.tempDirectory = tempfile.TemporaryDirectory(prefix="plom_manager_")
         self.solnPath = self.tempDirectory.name
         # set up the viewer
-        self.solnIV = ImageViewWidget()
+        self.solnIV = ImageViewWidget(self)
         self.ui.solnGBLayout.addWidget(self.solnIV)
 
         self.ui.solnQSB.setMaximum(self.numberOfQuestions)

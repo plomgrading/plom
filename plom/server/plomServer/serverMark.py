@@ -139,7 +139,6 @@ def MreturnMarkedTask(
     plomdat,
     rubrics,
     time_spent_marking,
-    tags,
     annotated_image_md5,
     integrity_check,
     image_md5s,
@@ -157,11 +156,9 @@ def MreturnMarkedTask(
             editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (str): Tag assigned to the paper.
         annotated_image_md5 (str): MD5 hash of the annotated image.
         integrity_check (str): the integrity_check string for this task
         image_md5s (list[str]): list of image md5sums used.
-
 
     Returns:
         list: Respond with a list which includes:
@@ -211,7 +208,6 @@ def MreturnMarkedTask(
         plom_filename,
         rubrics,
         time_spent_marking,
-        tags,
         annotated_image_md5,
         integrity_check,
         image_md5s,
@@ -235,7 +231,7 @@ def MreturnMarkedTask(
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
 
-    self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
+    self.MrecordMark(username, mark, annotated_filename, time_spent_marking)
     # return ack with current counts.
     return [
         True,
@@ -246,7 +242,7 @@ def MreturnMarkedTask(
     ]
 
 
-def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
+def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
     """Saves the marked paper information as a backup, independent of the server
 
     Args:
@@ -254,18 +250,16 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
         mark (int): Question mark.
         annotated_filename (str): Name of the annotated image file.
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (str): Tag assigned to the paper.
     """
 
     with open("{}.txt".format(annotated_filename), "w") as file_header:
         file_header.write(
-            "{}\t{}\t{}\t{}\t{}\t{}".format(
+            "{}\t{}\t{}\t{}\t{}".format(
                 annotated_filename,
                 mark,
                 username,
                 datetime.now().strftime("%Y-%m-%d,%H:%M"),
                 time_spent_marking,
-                tags,
             )
         )
 
@@ -275,7 +269,7 @@ def MgetOriginalImages(self, task):
     return self.DB.MgetOriginalImages(task)
 
 
-def MsetTag(self, username, task_code, tag):
+def MsetTags(self, username, task_code, tags):
     """Assign a tag string to a paper.
 
     Args:
@@ -287,7 +281,62 @@ def MsetTag(self, username, task_code, tag):
         bool: True or False indicating if tag was set in database successfully.
     """
 
-    return self.DB.MsetTag(username, task_code, tag)
+    return self.DB.MsetTags(username, task_code, tags)
+
+
+def add_tag(self, username, task, tag):
+    """Assign a tag to a paper.
+
+    Args:
+        username (str): User who is assigning tag to the paper.
+            TODO: currently not recorded but likely we want to record this.
+            TODO: currently users can only tag their own tasks: relax!
+        task (str): Code string for the task (paper).
+        tag (str): Tag to assign to the paper.
+
+    Returns:
+        bool: True if tag was set in database successfully if the tag
+            was already set.  False if no such paper or other error.
+    """
+    tags = self.DB.MgetTags(task)
+    if tags is None:
+        return False
+    tags = tags.split()
+    if tag in tags:
+        # TODO maybe client would like to know too?
+        log.warn(f'task "{task}" already had tag "{tag}"')
+    else:
+        tags.append(tag)
+    tags = " ".join(tags)
+    # TODO: currently user must be owner: drop this artificial restriction
+    return self.DB.MsetTags(username, task, tags)
+
+
+def remove_tag(self, username, task, tag):
+    """Remove a tag from a paper.
+
+    Args:
+        username (str): User who wants to remove tag.
+        task (str): Code string for the task (paper).
+        tag (str): Tag to remove.
+
+    Returns:
+        bool: True if the tag was removed, or if it was not present to
+            start with.  False is not such paper, permissions or other
+            error.
+    """
+    tags = self.DB.MgetTags(task)
+    if tags is None:
+        return False
+    tags = tags.split()
+    if tag in tags:
+        log.warn(f'"{username}" removed tag "{tag}" from "{task}"')
+        tags.remove(tag)
+    else:
+        # TODO maybe client would like to know too?
+        log.warn(f'"{username}" tried removing nonexistent tag "{tag}" from "{task}"')
+    tags = " ".join(tags)
+    return self.DB.MsetTags(username, task, tags)
 
 
 def MgetWholePaper(self, test_number, question_number):

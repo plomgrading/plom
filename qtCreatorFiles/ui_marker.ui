@@ -163,7 +163,7 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="text">
-                <string>Defer</string>
+                <string>&amp;Defer</string>
                </property>
               </widget>
              </item>
@@ -173,14 +173,14 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="text">
-                <string>Tag</string>
+                <string>&amp;Tags</string>
                </property>
               </widget>
              </item>
              <item row="1" column="2">
               <widget class="QPushButton" name="viewButton">
                <property name="text">
-                <string>View</string>
+                <string>&amp;View</string>
                </property>
               </widget>
              </item>
@@ -345,20 +345,7 @@
       <property name="title">
        <string>Current paper</string>
       </property>
-      <layout class="QGridLayout" name="gridLayout_6">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-      </layout>
+      <layout class="QGridLayout" name="gridLayout_6"/>
      </widget>
     </widget>
    </item>
