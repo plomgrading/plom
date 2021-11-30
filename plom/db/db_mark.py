@@ -242,7 +242,6 @@ def MtakeTaskFromClient(
     plom_fname,
     rubrics,
     marking_time,
-    new_tags,
     md5,
     integrity_check,
     image_md5_list,
@@ -311,8 +310,8 @@ def MtakeTaskFromClient(
             user=uref,
             edition=oldaref.edition + 1,
             outdated=False,
-            tags=new_tags,
             time=datetime.now(),
+            tags=oldaref.tags,
             integrity_check=oldaref.integrity_check,
         )
         # create apages from the image_ref_list.
