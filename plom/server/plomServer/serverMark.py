@@ -327,7 +327,6 @@ def remove_tag(self, task, tag_text):
     """Remove a tag from a paper.
 
     Args:
-        username (str): User who wants to remove tag.
         task (str): Code string for the task (paper).
         tag_text (str): Text of tag to remove.
 
