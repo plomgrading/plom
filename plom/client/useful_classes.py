@@ -409,9 +409,9 @@ class AddRemoveTagDialog(QDialog):
                 row.addWidget(QLabel(f"<big><em>{tag}</em></big>"))
                 b = QToolButton()
                 b.setText("\N{Erase To The Left}")
-                b.setToolTip(f'Remove tag "{tag}"')
                 # b.setText("\N{Cross Mark}")
                 # b.setText("\N{Multiplication Sign}")
+                b.setToolTip(f'Remove tag "{tag}"')
                 b.clicked.connect(remove_func_factory(b, tag))
                 row.addWidget(b)
                 row.addItem(
