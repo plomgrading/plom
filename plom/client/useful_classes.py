@@ -399,13 +399,12 @@ class AddRemoveTagDialog(QDialog):
             flay.addRow(QLabel("<p><b>No current tags</b></p>"))
         else:
             flay.addRow(QLabel("Current tags:"))
+            flay.addItem(
+                QSpacerItem(20, 4, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            )
             for tag in current_tags:
                 row = QHBoxLayout()
-                row.addItem(
-                    QSpacerItem(
-                        64, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum
-                    )
-                )
+                row.addItem(QSpacerItem(48, 1))
                 row.addWidget(QLabel(f"<big><em>{tag}</em></big>"))
                 b = QToolButton()
                 b.setText("\N{Erase To The Left}")
@@ -416,7 +415,7 @@ class AddRemoveTagDialog(QDialog):
                 row.addWidget(b)
                 row.addItem(
                     QSpacerItem(
-                        32, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum
+                        48, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum
                     )
                 )
                 flay.addRow(row)
