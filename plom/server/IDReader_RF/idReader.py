@@ -50,6 +50,8 @@ def download_model():
         boolean: True/False about if the model was successful.
     """
     base_path = Path("model_cache")
+    base_path.mkdir(exist_ok=True)
+
     base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/main/plomBuzzword/"
     files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
     for file_name in files:
@@ -68,7 +70,6 @@ def download_model():
 def download_or_train_model():
     """Download the ID detection model if possible, if not, train it."""
 
-    # make a directory into which to save things
     base_path = Path("model_cache")
     base_path.mkdir(exist_ok=True)
 
