@@ -349,7 +349,6 @@ class IDHandler:
         elif what == 403:
             raise web.HTTPForbidden(reason=msg)
         else:
-            # catch all that should not happen.
             raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.put("/ID/{papernum}")
@@ -376,7 +375,6 @@ class IDHandler:
         elif what == 404:
             raise web.HTTPNotFound(reason=msg)
         else:
-            # catch all that should not happen.
             raise web.HTTPInternalServerError(reason=msg)
 
     # @routes.delete("/ID/tasks/{task}")
