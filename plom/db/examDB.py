@@ -103,6 +103,7 @@ class PlomDB:
         getPageVersions,
         getQuestionVersions,
         id_paper,
+        remove_id_from_paper,
         createNoAnswerRubric,
     )
 
