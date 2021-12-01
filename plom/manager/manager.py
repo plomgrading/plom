@@ -1307,11 +1307,17 @@ class Manager(QWidget):
         # if idi:
         #     test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         #     sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+
         test, ok = QInputDialog.getText(self, "Unidentify a paper", "Un-ID which paper")
         if not ok or not test:
             return
+        iDict = self.msgr.getIdentified()
         msg = f"Do you want to reset the ID of test number {test}?"
-        msg += "\n\nTODO: show current ID information here!"
+        if test in iDict:
+            sid, sname = iDict[test]
+            msg += f"\n\nCurrently is {sid}: {sname}"
+        else:
+            msg += "\n\nCan't find current ID - is likely not ID'd yet."
         if SimpleMessage(msg).exec_() == QMessageBox.No:
             return
         # self.msgr.id_paper(test, "", "")
