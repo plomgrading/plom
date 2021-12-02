@@ -724,12 +724,18 @@ def updateTestAfterChange(self, tref):
     for gref in tref.groups:
         self.updateGroupAfterChange(gref)
 
-        # now make sure the whole thing is scanned.
+    # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
         # set the test as scanned
         with plomdb.atomic():
             tref.scanned = True
             log.info("Test {} is scanned".format(tref.test_number))
+            tref.save()
+    else:
+        # set the test as unscanned
+        with plomdb.atomic():
+            tref.scanned = False
+            log.info("Test {} is not completely scanned".format(tref.test_number))
             tref.save()
 
 
@@ -770,6 +776,10 @@ def removeSinglePage(self, test_number, page_name):
         pref.image = None
         pref.scanned = False
         pref.save()
+        # set the parent group to unscanned
+        gref = pref.group
+        gref.scanned = False
+        gref.save()
 
     elif splut[0] == "h":
         q = int(splut[1])
@@ -792,6 +802,10 @@ def removeSinglePage(self, test_number, page_name):
         )
         # now delete that hwpage
         pref.delete_instance()
+        # set the parent group to unscanned
+        gref = pref.group
+        gref.scanned = False
+        gref.save()
 
     elif splut[0] == "e":
         q = int(splut[1])
@@ -814,6 +828,10 @@ def removeSinglePage(self, test_number, page_name):
         )
         # now delete that hwpage
         pref.delete_instance()
+        # set the parent group to unscanned
+        gref = pref.group
+        gref.scanned = False
+        gref.save()
 
     self.updateTestAfterChange(tref)
     log.info(f"Removed page {page_name} of test {test_number} and updated test.")
