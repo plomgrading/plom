@@ -13,8 +13,15 @@
 
 # Issue #1654: This stops multiple pipelines on merge-requests from forks
 # But it seems to prevent forks from running their own CI jobs pre-MR
-include:
-  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+# include:
+#   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
 
 image: docker:20.10.8
 
