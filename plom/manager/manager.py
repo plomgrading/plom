@@ -30,6 +30,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -396,6 +397,7 @@ class Manager(QWidget):
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
         self.ui.refreshIDPredictionsB.clicked.connect(self.getPredictions)
+        self.ui.unidB.clicked.connect(self.un_id_paper)
 
         self.ui.refreshRevB.clicked.connect(self.refreshRev)
         self.ui.refreshUserB.clicked.connect(self.refreshUserList)
@@ -1298,6 +1300,28 @@ class Manager(QWidget):
                 return
             else:
                 self.runPredictor(ignoreStamp=True)
+
+    def un_id_paper(self):
+        # should we populate "test" from the list view?
+        # idi = self.ui.predictionTW.selectedIndexes()
+        # if idi:
+        #     test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
+        #     sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
+
+        test, ok = QInputDialog.getText(self, "Unidentify a paper", "Un-ID which paper")
+        if not ok or not test:
+            return
+        iDict = self.msgr.getIdentified()
+        msg = f"Do you want to reset the ID of test number {test}?"
+        if test in iDict:
+            sid, sname = iDict[test]
+            msg += f"\n\nCurrently is {sid}: {sname}"
+        else:
+            msg += "\n\nCan't find current ID - is likely not ID'd yet."
+        if SimpleMessage(msg).exec_() == QMessageBox.No:
+            return
+        # self.msgr.id_paper(test, "", "")
+        self.msgr.un_id_paper(test)
 
     def getPredictions(self):
         csvfile = self.msgr.IDrequestPredictions()

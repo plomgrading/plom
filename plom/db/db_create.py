@@ -369,6 +369,46 @@ def id_paper(self, paper_num, user_name, sid, sname):
     return True, None, None
 
 
+def remove_id_from_paper(self, paper_num):
+    """Remove association between student name and id and a paper.
+
+    This returns the paper to the ones that need to be ID'd.
+
+    Args:
+        paper_num (int)
+
+    Returns:
+        bool
+    """
+    with plomdb.atomic():
+        tref = Test.get_or_none(Test.test_number == paper_num)
+        if tref is None:
+            log.error("Could not unID paper %s b/c paper not found", paper_num)
+            return False
+        iref = tref.idgroups[0]
+        if iref.status == "done":
+            log.info(
+                'Paper %s being unID\'d: currently ID by %s as "%s" "%s"',
+                paper_num,
+                iref.user.name,
+                censorID(iref.student_id),
+                censorName(iref.student_name),
+            )
+        # Note if you put a uref here, Identifier cannot get them again
+        iref.user = None
+        iref.status = "todo"
+        iref.student_id = None
+        iref.student_name = None
+        iref.identified = False
+        iref.time = datetime.now()
+        iref.save()
+        tref.identified = False
+        tref.save()
+        log.info("Paper %s unID'd", paper_num)
+
+    return True
+
+
 ### Create some default rubrics
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
