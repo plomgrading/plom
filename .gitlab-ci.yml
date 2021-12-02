@@ -11,6 +11,9 @@
 
 # This the CI configuration for Plom
 
+include:
+  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+
 image: docker:20.10.8
 
 services:
