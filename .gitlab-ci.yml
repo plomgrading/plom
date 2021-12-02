@@ -320,43 +320,46 @@ fullworkflow:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
-    - plom-solutions extract solutionSpec.toml -w 1234
-    - plom-solutions extract --upload  -w 1234
+    - export PLOM_USER=user0
+    - export PLOM_PASSWORD=0123
+    - export PLOM_MANAGER_PASSWORD=1234
+    - export PLOM_SCAN_PASSWORD=4567
+    - plom-build class --demo
+    - plom-build make
+    - plom-solutions extract solutionSpec.toml
+    - plom-solutions extract --upload
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.produce.faketools
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
-    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
+    - plom-scan process fake_scribbled_exams1.pdf
+    - plom-scan upload -u fake_scribbled_exams1.pdf
     # TODO: I removed some -c lines here...
-    - plom-scan status -w 4567
-    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
-    - plom-scan status -w 4567
-    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
-    - plom-scan status -w 4567
+    - plom-scan status
+    - plom-scan process fake_scribbled_exams2.pdf
+    - plom-scan upload -u fake_scribbled_exams2.pdf
+    - plom-scan status
+    - plom-scan process fake_scribbled_exams3.pdf
+    - plom-scan upload -u fake_scribbled_exams3.pdf
+    - plom-scan status
     ## not supposed to be done yet:
-    - if (plom-finish status -w 1234); then false; else true; fi
+    - if (plom-finish status); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
     - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
-    - plom-finish status -w 1234
-    - plom-finish csv -w 1234
+    - plom-finish status
+    - plom-finish csv
     - A=`cat marks.csv  | wc -l`      # How many lines?
     - echo $A
     - A="$((A-1))"
     - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
     - file marks.csv
     - file marks.csv | grep text
-    - plom-finish reassemble -w 1234
+    - plom-finish reassemble
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
-    - plom-finish solutions -w 1234
+    - plom-finish solutions
     - A=`ls solutions/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
