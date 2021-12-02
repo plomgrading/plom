@@ -694,7 +694,7 @@ class Ui_Manager(object):
         self.loginButton.setText(_translate("Manager", "&Login"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.loginTab), _translate("Manager", "Login"))
         self.groupBox.setTitle(_translate("Manager", "Completely scanned papers"))
-        self.removePagesB.setText(_translate("Manager", "Remove All Scanned Pages from Test"))
+        self.removePagesB.setText(_translate("Manager", "Remove Scanned Page(s) from Test"))
         self.groupBox_3.setTitle(_translate("Manager", "Incomplete papers"))
         self.subsPageB.setText(_translate("Manager", "Substitute missing page / question with blank"))
         self.scanTabW.setTabText(self.scanTabW.indexOf(self.scanTab), _translate("Manager", "&Scan Status"))
