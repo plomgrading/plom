@@ -283,6 +283,10 @@ def removeAllScannedPages(self, test_number):
     return self.DB.removeAllScannedPages(test_number)
 
 
+def removeSinglePage(self, test_number, page_name):
+    return self.DB.removeSinglePage(test_number, page_name)
+
+
 def collidingToTestPage(self, file_name, test, page, version):
     return self.DB.moveCollidingToTPage(file_name, test, page, version)
 
@@ -333,7 +337,5 @@ def getImagesInBundle(self, bundle_name):
 def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
 
-
-##
 
 ##

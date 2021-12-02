@@ -677,29 +677,42 @@ class Manager(QWidget):
             return
         # if selected not a top-level item (ie a test) - return
         if pvi[0].childCount() == 0:
-            ErrorMessage(
-                "Select the test from the left-most column. Cannot remove individual pages."
-            ).exec_()
-            return
-        test_number = int(pvi[0].text(0))  # grab test number
-
-        msg = SimpleMessage(
-            "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
-                test_number
+            test_number = int(pvi[0].parent().text(0))
+            page_name = pvi[0].text(1)
+            msg = SimpleMessage(
+                f"Will the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
             )
-        )
-        if msg.exec_() == QMessageBox.No:
-            return
+            if msg.exec_() == QMessageBox.No:
+                return
+            else:
+                try:
+                    rval = self.msgr.removeSinglePage(test_number, page_name)
+                    ErrorMessage("{}".format(rval)).exec_()
+                except PlomOwnersLoggedInException as err:
+                    ErrorMessage(
+                        "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                            err.args[-1]
+                        )
+                    ).exec_()
         else:
-            try:
-                rval = self.msgr.removeAllScannedPages(test_number)
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+            test_number = int(pvi[0].text(0))  # grab test number
+            msg = SimpleMessage(
+                "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
+                    test_number
+                )
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            else:
+                try:
+                    rval = self.msgr.removeAllScannedPages(test_number)
+                    ErrorMessage("{}".format(rval)).exec_()
+                except PlomOwnersLoggedInException as err:
+                    ErrorMessage(
+                        "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                            err.args[-1]
+                        )
+                    ).exec_()
         self.refreshSList()
 
     def substituteTestPage(self, test_number, page_number, version):

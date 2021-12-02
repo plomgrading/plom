@@ -108,6 +108,7 @@ class Server:
         replaceMissingTestPage,
         replaceMissingHWQuestion,
         removeAllScannedPages,
+        removeSinglePage,
         getUnknownPageNames,
         getDiscardNames,
         getCollidingPageNames,

@@ -124,6 +124,7 @@ class PlomDB:
         replaceMissingHWQuestion,
         replaceMissingTestPage,
         removeAllScannedPages,
+        removeSinglePage,
         listBundles,
         getImagesInBundle,
         getBundleFromImage,

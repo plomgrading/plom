@@ -439,6 +439,33 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def removeSinglePage(self, test_number, page_name):
+        self.SRmutex.acquire()
+        try:
+            response = self.delete(
+                "/admin/singlePage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": test_number,
+                    "page_name": page_name,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 410:
+                raise PlomSeriousException(
+                    "Server could not find the page - this should not happen!"
+                ) from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def removeAllScannedPages(self, test_number):
         self.SRmutex.acquire()
         try:

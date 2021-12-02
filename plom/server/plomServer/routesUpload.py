@@ -6,8 +6,8 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import undo_json_packing_of_version_map
-from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log_request, log
+from .routeutils import authenticate_by_token_required_fields
+from .routeutils import validate_required_fields, log_request
 
 
 class UploadHandler:
@@ -293,7 +293,7 @@ class UploadHandler:
             return web.Response(status=401)
 
         # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
+        # code = request.match_info["tpv"]
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
@@ -387,6 +387,29 @@ class UploadHandler:
                 return web.json_response(rval[2], status=409)
             else:
                 return web.Response(status=404)  # page not found at all
+
+    async def removeSinglePage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data,
+            ["user", "token", "test", "page_name"],
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.removeSinglePage(data["test"], data["page_name"])
+        if rval[0]:
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            if rval[1] == "unknown":  # [False, "unknown"]
+                raise web.HTTPGone(reason="Cannot find that page.")
+            else:
+                raise web.HTTPBadRquest()
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
@@ -756,7 +779,8 @@ class UploadHandler:
         Note: likely deprecated: not used by Plom itself and not
             recommended for anyone else.
         """
-        spec = self.server.testSpec
+        # TODO - we weren't using 'spec'
+        # spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
         ver = self.server.DB.getPageVersions(paper_idx)
         if ver:
@@ -875,6 +899,7 @@ class UploadHandler:
         router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
         router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
+        router.add_delete("/admin/singlePage", self.removeSinglePage)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedEXPage", self.getEXPageImage)

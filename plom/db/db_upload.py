@@ -579,7 +579,6 @@ def buildUpToDateAnnotation(self, qref):
     # recycle if only zeroth annotation present - question untouched.
     # and - of course, be careful if there are no annotations yet (eg on build)
     with plomdb.atomic():
-        log.warn(f"HERE - annot length = {qref.group.gid} - {len(qref.annotations)}")
         if len(qref.annotations) > 1:
             for aref in qref.annotations:
                 aref.outdated = True
@@ -734,6 +733,93 @@ def updateTestAfterChange(self, tref):
             tref.save()
 
 
+def removeSinglePage(self, test_number, page_name):
+    """Remove a single page from the test and update it
+
+    Args:
+        test_number(int): The number of the test
+        page_name(str): the name of the page - either "t.n", "h.q.o" or "e.q.o"
+    """
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return [False, "testError", f"Cannot find test {test_number}"]
+    # check if all owners of tasks in that test are logged out.
+    owners = self.testOwnersLoggedIn(tref)
+    if owners:
+        return [False, "owners", owners]
+
+    splut = page_name.split(".")
+    if splut[0] == "t":
+        n = int(splut[1])
+        pref = tref.tpages.where(TPage.page_number == n).first()
+        if pref is None:
+            log.warn(f"Cannot find page {page_name} of test {test_number}.")
+            return [False, "unknown"]
+
+        if pref.scanned is False:
+            log.warn(
+                f"Page {page_name} of test {test_number} is not scanned - cannot remove."
+            )
+            return [False, "unscanned"]
+        iref = pref.image
+        DiscardedPage.create(
+            image=iref,
+            reason=f"Discarded test-page scan from test {test_number} page {page_name}",
+        )
+        # Don't delete the actual test-page, just set its image to none and scanned to false
+        pref.image = None
+        pref.scanned = False
+        pref.save()
+
+    elif splut[0] == "h":
+        q = int(splut[1])
+        o = int(splut[2])
+        # get the q-group
+        qref = tref.qgroups.where(QGroup.question == q).first()
+        if qref is None:
+            log.warn(f"Cannot find question {q} - cannot remove page {page_name}")
+            return [False, "unknown"]
+        gref = qref.group
+        pref = gref.hwpages.where(HWPage.order == o).first()
+        if pref is None:
+            log.warn(f"Cannot find page {page_name} of test {test_number}.")
+            return [False, "unknown"]
+        # create the discard page
+        iref = pref.image
+        DiscardedPage.create(
+            image=iref,
+            reason=f"Discarded hw-page scan from test {test_number} page {page_name}",
+        )
+        # now delete that hwpage
+        pref.delete_instance()
+
+    elif splut[0] == "e":
+        q = int(splut[1])
+        o = int(splut[2])
+        # get the q-group
+        qref = tref.qgroups.where(QGroup.question == q).first()
+        if qref is None:
+            log.warn(f"Cannot find question {q} - cannot remove page {page_name}")
+            return [False, "unknown"]
+        gref = qref.group
+        pref = gref.expages.where(EXPage.order == o).first()
+        if pref is None:
+            log.warn(f"Cannot find page {page_name} of test {test_number}.")
+            return [False, "unknown"]
+        # create the discard page
+        iref = pref.image
+        DiscardedPage.create(
+            image=iref,
+            reason=f"Discarded extra-page scan from test {test_number} page {page_name}",
+        )
+        # now delete that hwpage
+        pref.delete_instance()
+
+    self.updateTestAfterChange(tref)
+    log.info(f"Removed page {page_name} of test {test_number} and updated test.")
+    return [True, f"Removed {page_name} form test {test_number}."]
+
+
 def removeAllScannedPages(self, test_number):
     # return the give test to the pre-upload state.
     tref = Test.get_or_none(test_number=test_number)
@@ -857,4 +943,5 @@ def getPageFromBundle(self, bundle_name, bundle_order):
 
 
 ##
+
 ##
