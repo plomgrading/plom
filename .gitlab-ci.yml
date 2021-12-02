@@ -11,6 +11,8 @@
 
 # This the CI configuration for Plom
 
+# Issue #1654: This stops multiple pipelines on merge-requests from forks
+# But it seems to prevent forks from running their own CI jobs pre-MR
 include:
   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
 
