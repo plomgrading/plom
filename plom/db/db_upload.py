@@ -705,7 +705,8 @@ def checkTestScanned(self, tref):
                         gref.gid, tref.test_number
                     )
                 )
-            elif not gref.scanned:
+            # TODO - HW WILL FAIL BECAUSE OF THIS ELIF -> IF CHANGE
+            if not gref.scanned:
                 log.info(
                     "ID Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
