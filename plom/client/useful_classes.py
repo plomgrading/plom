@@ -13,14 +13,19 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QFormLayout,
     QFrame,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
+    QSpacerItem,
+    QStackedLayout,
     QTableView,
     QTextEdit,
     QToolButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from plom import isValidStudentNumber
@@ -117,8 +122,8 @@ class SimpleTableView(QTableView):
     # This is picked up by the marker, lets it know to annotate
     annotateSignal = pyqtSignal()
 
-    def __init__(self, parent=None):
-        super(SimpleTableView, self).__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         # User can sort, cannot edit, selects by rows.
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -150,8 +155,8 @@ class SimpleToolButton(QToolButton):
 
 
 class NoAnswerBox(QDialog):
-    def __init__(self):
-        super(NoAnswerBox, self).__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
         self.setWindowTitle("Is this answer blank?")
         self.yesNextB = QPushButton("Yes and &Next")
         self.yesDoneB = QPushButton("&Yes")
@@ -178,8 +183,7 @@ class NoAnswerBox(QDialog):
 
 class BlankIDBox(QDialog):
     def __init__(self, parent, testNumber):
-        super(BlankIDBox, self).__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.testNumber = testNumber
         self.setWindowTitle("What is blank on test/paper {}?".format(testNumber))
         grid = QGridLayout()
@@ -208,8 +212,8 @@ class BlankIDBox(QDialog):
 
 
 class SNIDBox(QDialog):
-    def __init__(self, id_name_text):
-        super(SNIDBox, self).__init__()
+    def __init__(self, parent, id_name_text):
+        super().__init__(parent)
         self.sidLE = QLineEdit()
         self.snameLE = QLineEdit()
         self.guessInput(id_name_text)
@@ -259,9 +263,8 @@ class SNIDBox(QDialog):
 
 
 class ClientSettingsDialog(QDialog):
-    def __init__(self, s, logdir, cfgfile, tmpdir):
-        super().__init__()
-        # self.parent = parent
+    def __init__(self, parent, s, logdir, cfgfile, tmpdir):
+        super().__init__(parent)
         self.setWindowTitle("Plom client options")
 
         flay = QFormLayout()
@@ -365,36 +368,97 @@ class ClientSettingsDialog(QDialog):
         )
 
 
-class AddTagBox(QDialog):
-    def __init__(self, parent, currentTag, tagList=[]):
-        super().__init__()
-        self.parent = parent
-        self.CB = QComboBox()
-        self.TE = QTextEdit()
+class AddRemoveTagDialog(QDialog):
+    """A dialog for managing the tags of a task.
+
+    Uses the usual `accept()` `reject()` mechanism but on accept you'll need
+    to check `.return_values` which is a tuple of `("add", new_tag)` or
+    `("remove", tag)`.  In either case the latter is a string.
+
+    Note this dialog does not actually change the tag: the caller needs to
+    do that.
+    """
+
+    def __init__(self, parent, task, current_tags, tag_choices=[]):
+        super().__init__(parent)
+
+        self.setWindowTitle(f"Add/remove a tag for {task}")
+        self.task = task
+        self.return_values = None
 
         flay = QFormLayout()
-        flay.addRow("Enter tag\n(max 256 char)", self.TE)
-        flay.addRow("Choose tag", self.CB)
+        # flay = QVBoxLayout
 
+        def remove_func_factory(button, tag):
+            def remove_func():
+                self.remove_tag(tag)
+
+            return remove_func
+
+        if not current_tags:
+            flay.addRow(QLabel("<p><b>No current tags</b></p>"))
+        else:
+            flay.addRow(QLabel("Current tags:"))
+            flay.addItem(
+                QSpacerItem(20, 4, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+            )
+            for tag in current_tags:
+                row = QHBoxLayout()
+                row.addItem(QSpacerItem(48, 1))
+                row.addWidget(QLabel(f"<big><em>{tag}</em></big>"))
+                b = QToolButton()
+                b.setText("\N{Erase To The Left}")
+                # b.setText("\N{Cross Mark}")
+                # b.setText("\N{Multiplication Sign}")
+                b.setToolTip(f'Remove tag "{tag}"')
+                b.clicked.connect(remove_func_factory(b, tag))
+                row.addWidget(b)
+                row.addItem(
+                    QSpacerItem(
+                        48, 1, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum
+                    )
+                )
+                flay.addRow(row)
+        flay.addItem(
+            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        )
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        flay.addRow(line)
+        flay.addItem(
+            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        )
+        CBadd = QComboBox()
+        CBadd.setEditable(True)
+        CBadd.addItem("")
+        CBadd.addItems(tag_choices)
+        flay.addRow("Add new tag", CBadd)
+        self.CBadd = CBadd
+
+        flay.addItem(
+            QSpacerItem(20, 8, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        )
+
+        # TODO: cannot tab to OK
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-
         vlay = QVBoxLayout()
         vlay.addLayout(flay)
         vlay.addWidget(buttons)
         self.setLayout(vlay)
 
-        # set up widgets
-        buttons.accepted.connect(self.accept)
+        buttons.accepted.connect(self.add_tag)
         buttons.rejected.connect(self.reject)
-        self.CB.addItem("")
-        self.CB.addItems(tagList)
-        # Set up TE and CB so that when CB changed, text is updated
-        self.CB.currentTextChanged.connect(self.changedCB)
-        # If supplied with current text/delta then set them
-        if currentTag is not None:
-            self.TE.clear()
-            self.TE.insertPlainText(currentTag)
+        self.CBadd.setFocus(True)
 
-    def changedCB(self):
-        self.TE.clear()
-        self.TE.insertPlainText(self.CB.currentText())
+    def add_tag(self):
+        self.return_values = ("add", self.CBadd.currentText())
+        self.accept()
+
+    def remove_tag(self, tag):
+        msg = f"<p>Do you want to remove tag &ldquo;{tag}&rdquo;?"
+        title = f"Remove tag \u201C{tag}\u201D from {self.task}?"
+        if QMessageBox.question(self, title, msg) != QMessageBox.Yes:
+            return
+        self.return_values = ("remove", tag)
+        self.accept()

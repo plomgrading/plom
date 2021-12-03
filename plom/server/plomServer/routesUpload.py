@@ -840,6 +840,23 @@ class UploadHandler:
         return web.json_response(vers, status=200)
 
     @authenticate_by_token_required_fields([])
+    def getQuestionVersionMap(self, data, request):
+        """Get the mapping between questions and version for one tests.
+
+        Returns:
+            dict: keyed by question number.  Note keys will be strings b/c
+                of json limitations; you may need to convert back to int.
+                Fails with 500 Internal Server Error if a test does not
+                exist.
+        """
+        spec = self.server.testSpec
+        paper_idx = request.match_info["papernum"]
+        vers = self.server.DB.getQuestionVersions(paper_idx)
+        if not vers:
+            return web.Response(status=500)
+        return web.json_response(vers, status=200)
+
+    @authenticate_by_token_required_fields([])
     def getGlobalQuestionVersionMap(self, data, request):
         """Get the mapping between question and version for all tests.
 
@@ -952,6 +969,9 @@ class UploadHandler:
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
+        router.add_get(
+            "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
+        )
         router.add_get("/admin/questionVersionMap", self.getGlobalQuestionVersionMap)
         router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
         router.add_get("/admin/imagesInBundle", self.getImagesInBundle)

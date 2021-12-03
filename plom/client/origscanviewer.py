@@ -50,7 +50,7 @@ class SourceList(QListWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent = parent
+        self._parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setAcceptDrops(False)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
@@ -120,7 +120,7 @@ class SourceList(QListWidget):
                 ci.setHidden(False)
 
     def viewImage(self, qi):
-        self.parent.viewImage(self.item_files[qi.text()])
+        self._parent.viewImage(self.item_files[qi.text()])
 
 
 class SinkList(QListWidget):
@@ -133,7 +133,7 @@ class SinkList(QListWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.parent = parent
+        self._parent = parent
         self.setViewMode(QListWidget.IconMode)
         self.setFlow(QListView.LeftToRight)
         self.setAcceptDrops(False)
@@ -225,7 +225,7 @@ class SinkList(QListWidget):
             ci = self.item(i.row())
             name = ci.text()
             self.rotateItemBy(name, angle)
-        self.parent.update()
+        self._parent.update()
         # Issue #1164 workaround: https://www.qtcentre.org/threads/25867-Problem-with-QListWidget-Updating
         self.setFlow(QListView.LeftToRight)
 
@@ -278,7 +278,7 @@ class SinkList(QListWidget):
         # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
-        self.parent.viewImage(self.item_files[qi.text()])
+        self._parent.viewImage(self.item_files[qi.text()])
 
     def getNameList(self):
         nList = []
@@ -291,8 +291,7 @@ class RearrangementViewer(QDialog):
     def __init__(
         self, parent, testNumber, current_pages, page_data, need_to_confirm=False
     ):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
         self.testNumber = testNumber
         self.need_to_confirm = need_to_confirm
         self._setupUI()
@@ -457,8 +456,8 @@ class RearrangementViewer(QDialog):
         self.setLayout(vb0)
         self.resize(
             QSize(
-                int(self.parent.width() * 7 / 8),
-                int(self.parent.height() * 9 / 10),
+                int(self.parent().width() * 7 / 8),
+                int(self.parent().height() * 11 / 12),
             )
         )
 
@@ -692,7 +691,7 @@ class RearrangementViewer(QDialog):
 
     def viewImage(self, fname):
         """Shows a larger view of the currently selected page."""
-        ShowExamPage(self, fname)
+        GroupView(self, [fname], bigger=True).exec_()
 
     def doShuffle(self):
         """
@@ -748,64 +747,8 @@ class RearrangementViewer(QDialog):
                 lstViewI.selectionModel().clearSelection()
 
 
-class ShowExamPage(QDialog):
-    """
-    Shows an expanded view of the Exam.
-    """
-
-    def __init__(self, parent, fname):
-        """
-        Initialize new exam page
-        Args:
-            parent (RearrangementViewer): Parent.
-            fname (str): file name
-
-        """
-        super().__init__()
-        self.setParent(parent)
-        self.setWindowFlags(Qt.Dialog)
-        grid = QGridLayout()
-        self.testImg = ImageViewWidget(self, fname)
-        self.closeButton = QPushButton("&Close")
-        grid.addWidget(self.testImg, 1, 1, 6, 6)
-        grid.addWidget(self.closeButton, 7, 7)
-        self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
-        self.resize(
-            QSize(
-                int(self.parent().width() * 2 / 3),
-                int(self.parent().height() * 7 / 8),
-            )
-        )
-        self.testImg.forceRedrawOrSomeBullshit()
-        self.show()
-
-    def closeEvent(self, event):
-        """
-        Closes the window.
-
-        Args:
-            event (QEvent): the event of closing the window.
-
-        Returns:
-            None.
-
-        """
-        self.closeWindow()
-
-    def closeWindow(self):
-        """
-        Closes the window.
-
-        Returns:
-            None
-
-        """
-        self.close()
-
-
 class GroupView(QDialog):
-    def __init__(self, parent, fnames):
+    def __init__(self, parent, fnames, bigger=False):
         super().__init__(parent)
         grid = QGridLayout()
         self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
@@ -815,8 +758,19 @@ class GroupView(QDialog):
         grid.addWidget(closeButton, 2, 8)
         grid.addWidget(resetB, 2, 1)
         self.setLayout(grid)
+        if bigger:
+            self.resize(
+                QSize(
+                    int(self.parent().width() * 2 / 3),
+                    int(self.parent().height() * 11 / 12),
+                )
+            )
         resetB.clicked.connect(self.testImg.resetView)
         closeButton.clicked.connect(self.close)
+        if bigger:
+            # TODO: seems needed for Ctrl-R double-click popup
+            self.testImg.resetView()
+            self.testImg.forceRedrawOrSomeBullshit()
 
     def closeEvent(self, event):
         self.closeWindow()

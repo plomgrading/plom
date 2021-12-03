@@ -193,11 +193,7 @@ class Annotator(QWidget):
         if initialData:
             self.loadNewTGV(*initialData)
 
-        # since we now know question etc, we can now fire up initial rubrics
-        # we may have pre-existing user-tab state
-        self.rubric_widget.setInitialRubrics(
-            self.parentMarkerUI.annotatorSettings["rubricTabState"]
-        )
+        self.rubric_widget.setInitialRubrics()
 
         # Grab window settings from parent
         self.loadWindowSettings()
@@ -988,7 +984,7 @@ class Annotator(QWidget):
             getattr(self, name + "SC").setKey(keys[name])
 
     def setKeyBindings(self):
-        kw = KeyWrangler(self.keyBindings)
+        kw = KeyWrangler(self, self.keyBindings)
         if kw.exec_() == QDialog.Accepted:
             self.changeMainShortCuts(kw.getKeyBindings())
 
@@ -1410,11 +1406,6 @@ class Annotator(QWidget):
         else:
             self.parentMarkerUI.annotatorSettings["compact"] = True
 
-        # Marker will keep the tab state: which rubrics user has hidden, in tabs etc
-        self.parentMarkerUI.annotatorSettings[
-            "rubricTabState"
-        ] = self.rubric_widget.get_tab_rubric_lists()
-
     def saveAnnotations(self):
         """
         Try to save the annotations and signal Marker to upload them.
@@ -1607,6 +1598,8 @@ class Annotator(QWidget):
             log.debug("Cleaning a solution-view")
             self.solutionView.close()
             self.solutionView = None
+
+        self.saveTabStateToServer(self.rubric_widget.get_tab_rubric_lists())
 
         # weird hacking to force close if we came from saving.
         # Appropriate signals have already been sent so just close
@@ -1805,7 +1798,7 @@ class Annotator(QWidget):
             return
 
         self.scene.noAnswer(noAnswerCID)
-        nabValue = NoAnswerBox().exec_()
+        nabValue = NoAnswerBox(self).exec_()
         if nabValue == 0:
             # equivalent to cancel - apply undo three times (to remove the noanswer lines+rubric)
             self.scene.undo()
@@ -1824,6 +1817,10 @@ class Annotator(QWidget):
     def saveTabStateToServer(self, tab_state):
         """Have Marker upload this tab state to the server."""
         self.parentMarkerUI.saveTabStateToServer(tab_state)
+
+    def getTabStateFromServer(self):
+        """Have Marker download the tab state from the server."""
+        return self.parentMarkerUI.getTabStateFromServer()
 
     def refreshRubrics(self):
         """ask the rubric widget to refresh rubrics"""

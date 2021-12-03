@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
-from plom.db.tables import Rubric, User, Test, QGroup
+from plom.db.tables import Rubric, User, Test, QGroup, Tag
 from plom.db.tables import plomdb
 
 

@@ -107,8 +107,8 @@ class IDView(QGraphicsView):
     """
 
     def __init__(self, parent, fnames):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
         self.images = {}
@@ -116,7 +116,7 @@ class IDView(QGraphicsView):
         self.scene.addItem(self.imageGItem)
         self.updateImages(fnames)
         self.setBackgroundBrush(QBrush(Qt.darkCyan))
-        self.parent.tool = "zoom"
+        self._parent.tool = "zoom"
 
         self.boxFlag = False
         self.originPos = QPointF(0, 0)
@@ -160,10 +160,10 @@ class IDView(QGraphicsView):
         if self.boxItem.scene() is None:
             return
         self.scene.removeItem(self.boxItem)
-        self.parent.rectangle = None
+        self._parent.rectangle = None
 
     def mousePressEvent(self, event):
-        if self.parent.tool == "rect":
+        if self._parent.tool == "rect":
             self.originPos = self.mapToScene(event.pos())
             self.currentPos = self.originPos
             self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
@@ -174,7 +174,7 @@ class IDView(QGraphicsView):
             super(IDView, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if self.parent.tool == "rect" and self.boxFlag:
+        if self._parent.tool == "rect" and self.boxFlag:
             self.currentPos = self.mapToScene(event.pos())
             if self.boxItem is None:
                 return
@@ -186,9 +186,9 @@ class IDView(QGraphicsView):
     def mouseReleaseEvent(self, event):
         if self.boxFlag:
             self.boxFlag = False
-            self.parent.rectangle = self.boxItem.rect()
+            self._parent.rectangle = self.boxItem.rect()
             # legacy: left over from multiple id pages?
-            self.parent.whichFile = 0
+            self._parent.whichFile = 0
             return
 
         """Left/right click to zoom in and out"""

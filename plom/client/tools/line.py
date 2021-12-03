@@ -31,7 +31,7 @@ class CommandLine(CommandTool):
 
 
 class LineItem(QGraphicsLineItem):
-    def __init__(self, pti, ptf, style, parent=None):
+    def __init__(self, pti, ptf, style):
         super().__init__()
         self.saveable = True
         self.pti = pti

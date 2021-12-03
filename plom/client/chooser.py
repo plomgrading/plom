@@ -94,7 +94,7 @@ class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
         super().__init__()
-        self.parent = Qapp
+        self.Qapp = Qapp
         self.messenger = None
 
         self.lastTime = readLastTime()
@@ -158,7 +158,9 @@ class Chooser(QDialog):
         self.ui.mportSB.setValue(int(p))
 
     def options(self):
-        d = ClientSettingsDialog(self.lastTime, logdir, cfgfile, tempfile.gettempdir())
+        d = ClientSettingsDialog(
+            self, self.lastTime, logdir, cfgfile, tempfile.gettempdir()
+        )
         d.exec_()
         # TODO: do something more proper like QSettings
         stuff = d.getStuff()
@@ -272,7 +274,7 @@ class Chooser(QDialog):
             self.setEnabled(False)
             self.hide()
             window = Manager(
-                self.parent,
+                self.Qapp,
                 manager_msgr=self.messenger,
                 server=server,
                 user=user,
@@ -280,18 +282,18 @@ class Chooser(QDialog):
             )
             window.show()
             # store ref in Qapp to avoid garbase collection
-            self.parent._manager_window = window
+            self.Qapp._manager_window = window
         elif which_subapp == "Marker":
             question = self.getQuestion()
             v = self.getv()
             self.setEnabled(False)
             self.hide()
-            markerwin = MarkerClient(self.parent)
+            markerwin = MarkerClient(self.Qapp)
             markerwin.my_shutdown_signal.connect(self.on_marker_window_close)
             markerwin.show()
             markerwin.setup(self.messenger, question, v, self.lastTime)
             # store ref in Qapp to avoid garbase collection
-            self.parent.marker = markerwin
+            self.Qapp.marker = markerwin
         elif which_subapp == "Identifier":
             self.setEnabled(False)
             self.hide()
@@ -300,7 +302,7 @@ class Chooser(QDialog):
             idwin.show()
             idwin.setup(self.messenger)
             # store ref in Qapp to avoid garbase collection
-            self.parent.identifier = idwin
+            self.Qapp.identifier = idwin
         else:
             raise RuntimeError("Invalid subapplication value")
 
@@ -335,9 +337,9 @@ class Chooser(QDialog):
         args:
             n (int): the desired font size in points.
         """
-        fnt = self.parent.font()
+        fnt = self.Qapp.font()
         fnt.setPointSize(n)
-        self.parent.setFont(fnt)
+        self.Qapp.setFont(fnt)
 
     def getQuestion(self):
         """Return the integer question or None"""

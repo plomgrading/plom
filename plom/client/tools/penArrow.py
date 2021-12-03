@@ -26,8 +26,8 @@ class CommandPenArrow(CommandPen):
 
 
 class PenArrowItem(QGraphicsItemGroup):
-    def __init__(self, path, style, parent=None):
-        super(PenArrowItem, self).__init__()
+    def __init__(self, path, style):
+        super().__init__()
         self.saveable = True
         self.pi = QGraphicsPathItem()
         self.path = path
