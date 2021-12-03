@@ -620,7 +620,7 @@ def buildUpToDateAnnotation(self, qref):
 
 
 def updateQGroup(self, qref):
-    """A new page has been uploaded to the test, so we have to update the question-group and its annotations. Older annotations are not out-of-date and get flagged as such."""
+    """A new page has been uploaded to the test, so we have to update the question-group and its annotations. Older annotations are now out-of-date and get flagged as such."""
     # first set old annotations as out-of-date and,
     # create a new up-to-date annotation, and
     # set parent test/qgroup as unmarked with status blank.
