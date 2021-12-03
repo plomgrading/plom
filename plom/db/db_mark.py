@@ -327,7 +327,6 @@ def MtakeTaskFromClient(
             edition=oldaref.edition + 1,
             outdated=False,
             time=datetime.now(),
-            tags=oldaref.tags,
             integrity_check=oldaref.integrity_check,
         )
         # create apages from the image_ref_list.
