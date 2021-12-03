@@ -411,7 +411,7 @@ class UploadHandler:
             elif rval[1] == "invalid":
                 raise web.HTTPNotAcceptable(reason="Page name is invalid")
             else:
-                raise web.HTTPBadRquest()
+                raise web.HTTPBadRequest()
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
