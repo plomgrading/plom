@@ -705,8 +705,8 @@ def checkTestScanned(self, tref):
                         gref.gid, tref.test_number
                     )
                 )
-            # TODO - HW WILL FAIL BECAUSE OF THIS ELIF -> IF CHANGE
-            if not gref.scanned:
+            # CHANGE THIS (elif -> if) SO EVERYTHING NEEDS IDPAGE - needs HWFixes
+            elif not gref.scanned:
                 log.info(
                     "ID Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
