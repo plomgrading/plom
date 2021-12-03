@@ -296,7 +296,6 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
             file_name, page_number, test_number
         )
     )
-    # now update the test
     self.updateTestAfterChange(tref)
 
     return [True]

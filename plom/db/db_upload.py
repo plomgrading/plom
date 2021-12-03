@@ -122,9 +122,7 @@ def uploadTestPage(
                 original_name, test_number, page_number, version
             )
         )
-        # now update the test after this change
         self.updateTestAfterChange(tref)
-        # All done!
         return [
             True,
             "success",
