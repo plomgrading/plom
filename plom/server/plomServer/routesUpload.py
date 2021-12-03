@@ -406,8 +406,10 @@ class UploadHandler:
         else:
             if rval[1] == "owners":  # [False, "owners", owner_list]
                 return web.json_response(rval[2], status=409)
-            if rval[1] == "unknown":  # [False, "unknown"]
+            elif rval[1] == "unknown":  # [False, "unknown"]
                 raise web.HTTPGone(reason="Cannot find that page.")
+            elif rval[1] == "invalid":
+                raise web.HTTPNotAcceptable(reason="Page name is invalid")
             else:
                 raise web.HTTPBadRquest()
 
