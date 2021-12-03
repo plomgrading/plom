@@ -208,14 +208,12 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
             test=tref, group=qref.group, version=version, order=order, image=iref
         )
         uref.delete_instance()
-        gref.recent_upload = True
-        gref.save()
         log.info(
             "Moving unknown page {} to extra page {} of question {} of test {}".format(
                 file_name, order, question, test_number
             )
         )
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True]
 
 
@@ -261,7 +259,7 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
             file_name, order, question, test_number
         )
     )
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True]
 
 
@@ -298,7 +296,7 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
             file_name, page_number, test_number
         )
     )
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
 
     return [True]
 
@@ -470,8 +468,6 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
         )
         pref.image = iref
         pref.save()
-        gref.recent_upload = True
-        gref.save()
         cref.delete_instance()
     log.info(
         "Collision {} replacing tpv {}.{}.{}".format(
@@ -479,5 +475,5 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
         )
     )
     # trigger an update since underlying image changed.
-    self.updateTestAfterUpload(tref)
+    self.updateTestAfterChange(tref)
     return [True]

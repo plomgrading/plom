@@ -155,7 +155,8 @@ def processHWScans(
     which is a list of bundle-orders (i.e., page number within the PDF)
     that have already been uploaded. In typical use this will be empty.
 
-    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+    Then upload pages to the server if not in skip list.
+    Finally archive the bundle.
     """
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():

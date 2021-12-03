@@ -160,13 +160,12 @@ def uploadImages(
         return
 
     print("Upload images to server")
-    [TPN, updates] = uploadTPages(bundledir, skip_list, server, password)
+    TPN = uploadTPages(bundledir, skip_list, server, password)
     print(
         "Tests were uploaded to the following studentIDs: {}".format(
             ", ".join(TPN.keys())
         )
     )
-    print("Server reports {} papers updated.".format(updates))
 
     pdf_fname = Path(info["file"])
     if pdf_fname.exists():

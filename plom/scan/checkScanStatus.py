@@ -171,7 +171,7 @@ def replaceMissingHWQ(server, pwd, student_id, question):
         rval = msgr.replaceMissingHWQuestion(
             student_id=student_id, test=None, question=question
         )  # can replace by SID or by test-number
-        msgr.triggerUpdateAfterHWUpload()
+
     finally:
         msgr.closeUser()
         msgr.stop()
