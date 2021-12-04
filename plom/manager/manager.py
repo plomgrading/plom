@@ -686,16 +686,15 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            else:
-                try:
-                    rval = self.msgr.removeSinglePage(test_number, page_name)
-                    ErrorMessage("{}".format(rval)).exec_()
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                            err.args[-1]
-                        )
-                    ).exec_()
+            try:
+                rval = self.msgr.removeSinglePage(test_number, page_name)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = SimpleMessage(
@@ -705,16 +704,15 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            else:
-                try:
-                    rval = self.msgr.removeAllScannedPages(test_number)
-                    ErrorMessage("{}".format(rval)).exec_()
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                            err.args[-1]
-                        )
-                    ).exec_()
+            try:
+                rval = self.msgr.removeAllScannedPages(test_number)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         # refresh the two tables here.
         self.refreshSList()
         self.refreshIList()
@@ -727,18 +725,15 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        else:
-            try:
-                rval = self.msgr.replaceMissingTestPage(
-                    test_number, page_number, version
+        try:
+            rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
                 )
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+            ).exec_()
         self.refreshIList()
 
     def substituteHWQuestion(self, test_number, question):
@@ -749,20 +744,19 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        else:
-            try:
-                rval = self.msgr.replaceMissingHWQuestion(
-                    student_id=None, test=test_number, question=question
+        try:
+            rval = self.msgr.replaceMissingHWQuestion(
+                student_id=None, test=test_number, question=question
+            )
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomTakenException:
+            ErrorMessage("That question already has hw pages present.").exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that question - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
                 )
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomTakenException:
-                ErrorMessage("That question already has hw pages present.").exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot substitute that question - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+            ).exec_()
 
         self.refreshIList()
 
@@ -806,16 +800,15 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            else:
-                try:
-                    rval = self.msgr.removeSinglePage(test_number, page_name)
-                    ErrorMessage("{}".format(rval)).exec_()
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                            err.args[-1]
-                        )
-                    ).exec_()
+            try:
+                rval = self.msgr.removeSinglePage(test_number, page_name)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
             msg = SimpleMessage(
@@ -825,16 +818,15 @@ class Manager(QWidget):
             )
             if msg.exec_() == QMessageBox.No:
                 return
-            else:
-                try:
-                    rval = self.msgr.removeAllScannedPages(test_number)
-                    ErrorMessage("{}".format(rval)).exec_()
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
-                            err.args[-1]
-                        )
-                    ).exec_()
+            try:
+                rval = self.msgr.removeAllScannedPages(test_number)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         self.refreshIList()
 
     def initUnknownTab(self):
@@ -1384,8 +1376,7 @@ class Manager(QWidget):
             )
             if sm.exec_() == QMessageBox.No:
                 return
-            else:
-                self.runPredictor(ignoreStamp=True)
+            self.runPredictor(ignoreStamp=True)
 
     def getPredictions(self):
         csvfile = self.msgr.IDrequestPredictions()
