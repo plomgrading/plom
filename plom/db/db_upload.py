@@ -694,10 +694,11 @@ def checkTestScanned(self, tref):
         elif gref.group_type == "d":
             if gref.scanned is False:
                 log.info(
-                    "DNM Group {} of test {} is not scanned - ignored.".format(
+                    "DNM Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
                     )
                 )
+                return False
         elif gref.group_type == "i":
             if gref.idgroups[0].identified:
                 log.info(
@@ -705,8 +706,7 @@ def checkTestScanned(self, tref):
                         gref.gid, tref.test_number
                     )
                 )
-            # CHANGE THIS (elif -> if) SO EVERYTHING NEEDS IDPAGE - needs HWFixes
-            elif not gref.scanned:
+            if not gref.scanned:
                 log.info(
                     "ID Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
