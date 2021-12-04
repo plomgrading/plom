@@ -23,10 +23,10 @@ workflow:
       when: never
     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.8
+image: docker:20.10.11
 
 services:
-  - docker:20.10.8-dind
+  - docker:20.10.11-dind
 
 variables:
   DOCKER_DRIVER: overlay2
