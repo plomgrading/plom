@@ -53,6 +53,39 @@ page_not_submitted_text = dedent(
     """
 ).strip()
 
+dnm_not_submitted_text = dedent(
+    r"""
+    \documentclass[12pt,letterpaper]{article}
+    \usepackage[]{fullpage}
+    \usepackage{tikz}
+    \pagestyle{empty}
+    \begin{document}
+    \emph{This do-not-mark page was not submitted.}
+    \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, red!30] (watermark) at (0,0) {\bfseries
+        Not submitted};
+    \end{tikzpicture}
+    \vfill
+    \emph{This do-not-mark page was not submitted.}
+    \end{document}
+    """
+).strip()
+
+id_autogen_text = dedent(
+    r"""
+    \documentclass[12pt,letterpaper]{article}
+    \usepackage[]{fullpage}
+    \usepackage{tikz}
+    \pagestyle{empty}
+    \begin{document}
+    \emph{This is an auto-generated ID-page.}
+    \vfill
+    \emph{This is an auto-generated ID-page.}
+    \end{document}
+    """
+).strip()
+
 
 image_scale = 200 / 72
 
@@ -145,6 +178,28 @@ def build_homework_question_substitute(
     return True
 
 
+def build_autogen_template(template_text, output_file_name):
+    """Creates the document from given template text and saves at filename
+
+    Arguments:
+        template_text (str): The latex for the template document.
+        output_file_name (str): Name of the output file for
+            document.
+
+    Returns:
+        bool
+    """
+    with open(output_file_name, "wb") as file:
+        return_code, output = buildLaTeX(template_text, file)
+    if return_code != 0:
+        print(">>> Latex problems - see below <<<\n")
+        print(output)
+        print(">>> Latex problems - see above <<<")
+        return False
+
+    return True
+
+
 def build_not_submitted_page(output_file_name):
     """Creates the page not submitted document.
 
@@ -155,15 +210,7 @@ def build_not_submitted_page(output_file_name):
     Returns:
         bool
     """
-    with open(output_file_name, "wb") as file:
-        return_code, output = buildLaTeX(page_not_submitted_text, file)
-    if return_code != 0:
-        print(">>> Latex problems - see below <<<\n")
-        print(output)
-        print(">>> Latex problems - see above <<<")
-        return False
-
-    return True
+    return build_autogen_template(page_not_submitted_text)
 
 
 def build_not_submitted_question(output_file_name):
@@ -176,12 +223,30 @@ def build_not_submitted_question(output_file_name):
     Returns:
         bool
     """
-    with open(output_file_name, "wb") as file:
-        return_code, output = buildLaTeX(question_not_submitted_text, file)
-    if return_code != 0:
-        print(">>> Latex problems - see below <<<\n")
-        print(output)
-        print(">>> Latex problems - see above <<<")
-        return False
+    return build_autogen_template(question_not_submitted_text)
 
-    return True
+
+def build_not_submitted_dnm(output_file_name):
+    """Creates the dnm-page not submitted document.
+
+    Arguments:
+        output_file_name (str): Name of the output file for
+            dnm_not_submitted document.
+
+    Returns:
+        bool
+    """
+    return build_autogen_template(dnm_not_submitted_text)
+
+
+def build_autogen_id_page(output_file_name):
+    """Creates the id-page not submitted document.
+
+    Arguments:
+        output_file_name (str): Name of the output file for
+            autogen_id_page document
+
+    Returns:
+        bool
+    """
+    return build_autogen_template(id_autogen_text)
