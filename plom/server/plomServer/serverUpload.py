@@ -157,7 +157,7 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
 
 def replaceMissingDNMPage(self, testNumber, pageNumber):
     pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
-    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    # produces a file "dnm.<testNumber>.<pageNumber>.png"
     originalName = "dnm.{}.{}.png".format(testNumber, pageNumber)
     prefix = "pages/originalPages/dnm.{}p{}".format(
         str(testNumber).zfill(4), str(pageNumber).zfill(2)
@@ -175,6 +175,37 @@ def replaceMissingDNMPage(self, testNumber, pageNumber):
     rval = self.DB.replaceMissingTestPage(
         testNumber, pageNumber, 1, originalName, newName, md5
     )
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval
+
+
+def autogenerateIDPage(self, testNumber, student_id, student_name):
+    # TODO - this should likely be cross-ref'd with classlist
+
+    pageNotSubmitted.build_dnm_page_substitute(testNumber, student_id, student_name)
+
+    # produces a file "autogen.<sid>.png"
+    originalName = "autogen.{}.png".format(student_id)
+    prefix = "pages/originalPages/autogen.{}.{}".format(
+        str(testNumber).zfill(4), student_id
+    )
+    # make a non-colliding name
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+    # compute md5sum and put into database
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    # now try to put it into place
+    # all ID are test pages with version 1, so recycle the missing test page function
+    # get the id-page's pagenumber from the spec
+    pg = self.testSpec["idPage"]
+    rval = self.DB.replaceMissingTestPage(testNumber, pg, 1, originalName, newName, md5)
     # if move successful then actually move file into place, else delete it
     if rval[0]:
         shutil.move(originalName, newName)
