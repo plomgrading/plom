@@ -141,6 +141,50 @@ def build_test_page_substitute(
     return True
 
 
+def build_dnm_page_substitute(
+    test_number,
+    page_number,
+    template=specdir / "dnmPageNotSubmitted.pdf",
+    out_dir=Path("."),
+):
+    """Builds the substitute empty page for test.
+
+    Arguments:
+        test_number (int): Test number.
+        page_number (int): Page number.
+        template (pathlib.Path/str): the template pdf file.
+        out_dir (pathlib.Path/str): where to save the output.
+
+    Returns:
+        bool
+    """
+    pdf = fitz.open(template)
+
+    # create a box for the test number near top-centre
+    # Get page width and use it to inset this text into the page
+    page_width = pdf[0].bound().width
+    rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
+    text = "{}.{}".format(str(test_number).zfill(4), str(page_number).zfill(2))
+    excess = pdf[0].insert_textbox(
+        rect,
+        text,
+        fontsize=18,
+        color=[0, 0, 0],
+        fontname="Helvetica",
+        fontfile=None,
+        align=1,
+    )
+    assert excess > 0, "Text didn't fit: paper label too long?"
+
+    pdf[0].draw_rect(rect, color=[0, 0, 0])
+
+    image = pdf[0].get_pixmap(alpha=False, matrix=fitz.Matrix(image_scale, image_scale))
+    image.save(out_dir / f"dnm.{test_number}.{page_number}.png")
+    pdf.close()
+
+    return True
+
+
 def build_homework_question_substitute(
     student_id,
     question_number,

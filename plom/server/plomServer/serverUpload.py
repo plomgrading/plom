@@ -155,6 +155,34 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     return rval
 
 
+def replaceMissingDNMPage(self, testNumber, pageNumber):
+    pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
+    # produces a file "pns.<testNumber>.<pageNumber>.<ver>.png"
+    originalName = "dnm.{}.{}.png".format(testNumber, pageNumber)
+    prefix = "pages/originalPages/dnm.{}p{}".format(
+        str(testNumber).zfill(4), str(pageNumber).zfill(2)
+    )
+    # make a non-colliding name
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+    # compute md5sum and put into database
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    # now try to put it into place
+    # all DNM are test pages with version 1, so recycle the missing test page function
+    rval = self.DB.replaceMissingTestPage(
+        testNumber, pageNumber, 1, originalName, newName, md5
+    )
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval
+
+
 def getTPageImage(self, testNumber, pageNumber, version):
     return self.DB.getTPageImage(testNumber, pageNumber, version)
 
@@ -362,5 +390,7 @@ def getImagesInBundle(self, bundle_name):
 def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
 
+
+##
 
 ##
