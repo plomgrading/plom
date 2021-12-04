@@ -13,13 +13,20 @@
 
 # Issue #1654: This stops multiple pipelines on merge-requests from forks
 # But it seems to prevent forks from running their own CI jobs pre-MR
-include:
-  - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+# include:
+#   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
 
-image: docker:20.10.8
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_COMMIT_BRANCH'
+
+image: docker:20.10.11
 
 services:
-  - docker:20.10.8-dind
+  - docker:20.10.11-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -918,13 +925,14 @@ macos11_client:
     expire_in: 30 days
 
 
+# TODO: when: never versus manual
 macos1015_client:
   image: macos-10.15-xcode-11
   tags:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
+    when: never
   stage: packaging
   script:
   - sw_vers
@@ -968,7 +976,7 @@ macos1014_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
+    when: never
   stage: packaging
   script:
   - sw_vers
@@ -1011,7 +1019,7 @@ macos1013_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: manual
+    when: never
   stage: packaging
   script:
   - sw_vers
