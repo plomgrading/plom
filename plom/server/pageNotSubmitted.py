@@ -81,6 +81,11 @@ id_autogen_text = dedent(
     \begin{document}
     \emph{This is an auto-generated ID-page.}
     \vfill
+    \begin{tikzpicture}
+      \node[rotate=-45, scale=4, black!30] (watermark) at (0,0) {\bfseries
+        Generated automatically};
+    \end{tikzpicture}
+    \vfill
     \emph{This is an auto-generated ID-page.}
     \end{document}
     """
@@ -210,7 +215,7 @@ def build_not_submitted_page(output_file_name):
     Returns:
         bool
     """
-    return build_autogen_template(page_not_submitted_text)
+    return build_autogen_template(page_not_submitted_text, output_file_name)
 
 
 def build_not_submitted_question(output_file_name):
@@ -223,7 +228,7 @@ def build_not_submitted_question(output_file_name):
     Returns:
         bool
     """
-    return build_autogen_template(question_not_submitted_text)
+    return build_autogen_template(question_not_submitted_text, output_file_name)
 
 
 def build_not_submitted_dnm(output_file_name):
@@ -236,7 +241,7 @@ def build_not_submitted_dnm(output_file_name):
     Returns:
         bool
     """
-    return build_autogen_template(dnm_not_submitted_text)
+    return build_autogen_template(dnm_not_submitted_text, output_file_name)
 
 
 def build_autogen_id_page(output_file_name):
@@ -249,4 +254,4 @@ def build_autogen_id_page(output_file_name):
     Returns:
         bool
     """
-    return build_autogen_template(id_autogen_text)
+    return build_autogen_template(id_autogen_text, output_file_name)
