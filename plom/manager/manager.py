@@ -682,7 +682,7 @@ class Manager(QWidget):
             test_number = int(pvi[0].parent().text(0))
             page_name = pvi[0].text(1)
             msg = SimpleMessage(
-                f"Will the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
+                f"Will remove the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
             )
             if msg.exec_() == QMessageBox.No:
                 return
@@ -802,7 +802,7 @@ class Manager(QWidget):
             test_number = int(pvi[0].parent().text(0))
             page_name = pvi[0].text(1)
             msg = SimpleMessage(
-                f"Will the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
+                f"Will remove the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
             )
             if msg.exec_() == QMessageBox.No:
                 return
