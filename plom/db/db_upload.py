@@ -615,7 +615,7 @@ def buildUpToDateAnnotation(self, qref):
         tref.save()
 
     log.info(
-        f"Old annotations for qgroup {qref.question} for test {tref.test_number} are now oudated and a new annotation has been created."
+        f"Old annotations for qgroup {qref.question} for test {tref.test_number} are now outdated and a new annotation has been created."
     )
 
 
