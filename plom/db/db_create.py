@@ -398,7 +398,7 @@ def remove_id_from_paper(self, paper_num):
                 censorID(iref.student_id),
                 censorName(iref.student_name),
             )
-        # Note if you put a uref here, Identifier cannot get them again
+        # Note if you put a uref here, Identifier cannot get them again, Issue #1811
         iref.user = None
         iref.status = "todo"
         iref.student_id = None
