@@ -426,40 +426,6 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def triggerUpdateAfterTUpload(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/admin/testPagesUploaded",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
-    def triggerUpdateAfterHWUpload(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/admin/hwPagesUploaded",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
     def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
         # can replace by SID or by test-number
         self.SRmutex.acquire()

@@ -9,9 +9,6 @@ Use sklearn random forest model to read student IDs from ID-pages.
 Relies on use of standard ID template.
 
 Note: has hardcoded 8-digit student numbers.
-
-Note: Code in this file is very similar to idReader code for the Tensorflow
-model.
 """
 
 import csv

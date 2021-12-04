@@ -6,8 +6,8 @@
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import undo_json_packing_of_version_map
-from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log_request, log
+from .routeutils import authenticate_by_token_required_fields
+from .routeutils import validate_required_fields, log_request
 
 
 class UploadHandler:
@@ -293,7 +293,7 @@ class UploadHandler:
             return web.Response(status=401)
 
         # TODO: unused, we should ensure this matches the data
-        code = request.match_info["tpv"]
+        # code = request.match_info["tpv"]
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
@@ -387,6 +387,31 @@ class UploadHandler:
                 return web.json_response(rval[2], status=409)
             else:
                 return web.Response(status=404)  # page not found at all
+
+    async def removeSinglePage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data,
+            ["user", "token", "test", "page_name"],
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.removeSinglePage(data["test"], data["page_name"])
+        if rval[0]:
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            elif rval[1] == "unknown":  # [False, "unknown"]
+                raise web.HTTPGone(reason="Cannot find that page.")
+            elif rval[1] == "invalid":
+                raise web.HTTPNotAcceptable(reason="Page name is invalid")
+            else:
+                raise web.HTTPBadRequest()
 
     async def getUnknownPageNames(self, request):
         data = await request.json()
@@ -714,59 +739,6 @@ class UploadHandler:
         else:
             return web.Response(status=404)
 
-    async def processHWUploads(self, request):
-        """Trigger any updates that are appropriate after some uploads.
-
-        This is probably similar to :py:meth:`processTUploads`
-        """
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if data["user"] != "manager" and data["user"] != "scanner":
-            return web.Response(status=401)
-
-        update_count = self.server.processHWUploads()
-        return web.json_response(update_count, status=200)
-
-    async def processTUploads(self, request):
-        """Trigger any updates that are appropriate after some uploads.
-
-        If we upload a bunch of pages to the server, the server will
-        typically keep those in some sort of "staging" state where, for
-        example, they are not given to marking clients.  This is b/c it
-        will be distruptive to clients to have pages added to questions.
-        To "release" a these recent uploads, we make this API call.
-
-        Notes:
-          * its ok to upload to a bundle after calling this (worse case,
-            some client work will be invalidated or tagged to check).
-          * its ok to call this repeatedly.
-          * its not necessarily or useful to call this after uploading
-            Unknown Pages or Colliding Pages: those will need to be
-            dealt with in the Manager tool (e.g., added them to a
-            Paper) at which time similar triggers will occur.
-
-        Returns:
-            aiohttp.web.Response: with status code as below.
-
-        Status codes:
-            200 OK: action was taken, report number of Papers updated.
-            401 Unauthorized: invalid credientials.
-            403 Forbidden: only "manager"/"scanner" allowed to do this.
-        """
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if data["user"] != "manager" and data["user"] != "scanner":
-            return web.Response(status=403)
-
-        update_count = self.server.processTUploads()
-        return web.json_response(update_count, status=200)
-
     @authenticate_by_token_required_fields(["user", "version_map"])
     def populateExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database.
@@ -809,7 +781,8 @@ class UploadHandler:
         Note: likely deprecated: not used by Plom itself and not
             recommended for anyone else.
         """
-        spec = self.server.testSpec
+        # TODO - we weren't using 'spec'
+        # spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
         ver = self.server.DB.getPageVersions(paper_idx)
         if ver:
@@ -945,6 +918,7 @@ class UploadHandler:
         router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
         router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
+        router.add_delete("/admin/singlePage", self.removeSinglePage)
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedEXPage", self.getEXPageImage)
@@ -964,8 +938,6 @@ class UploadHandler:
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/hwPagesUploaded", self.processHWUploads)
-        router.add_put("/admin/testPagesUploaded", self.processTUploads)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)

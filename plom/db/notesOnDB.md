@@ -114,9 +114,6 @@ Note
 * when sufficient pages are uploaded for a question the DB will create an initial annotation for that question. This will consist of the page-images and belong to "HAL".
 * when the DB gives a question-marking task to a user it creates a new annotation from the previous one. Note that it does not immediately create links to the images, but instead passes the client the images in the previous annotation. When the client returns the annotated task it tells the DB which images it used and then the DB hooks them into the annotation. This allows the client to shuffle pages around reasonably simply.
 
-#### OldAnnotations
-Effectively a copy of Annotations - we use this to store old annotations - ones that are no longer valid because a new page was added to that question or the manager reverted the task
-
 
 
 ### Where are the pages?
@@ -152,4 +149,4 @@ The IDPage needs to connect an image to an IDGroup, but it also needs to know in
 
 Notice the IPage has two "parents" - I hope I've handled this structure correctly.
 
-The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively. Finally OAPage = functionally similar to APage except pointing to an OldAnnotation rather than an Annotation.
+The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively.

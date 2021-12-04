@@ -43,8 +43,6 @@ class Test(BaseModel):
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)
     marked = pw.BooleanField(default=False)
-    # a recentUpload flag to see which tests to check after uploads
-    recent_upload = pw.BooleanField(default=False)
 
 
 class Group(BaseModel):
@@ -53,8 +51,6 @@ class Group(BaseModel):
     group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
-    # a recentUpload flag to see which groups to check after uploads
-    recent_upload = pw.BooleanField(default=False)
 
 
 class IDGroup(BaseModel):
@@ -153,6 +149,10 @@ class Annotation(BaseModel):
     aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
     integrity_check = pw.CharField(null=True)  # random uuid
+    # add this for when we update underlying pages of
+    # a test
+    outdated = pw.BooleanField(default=False)
+    #
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
@@ -163,26 +163,6 @@ class Annotation(BaseModel):
 class APage(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="apages")
     image = pw.ForeignKeyField(Image, backref="apages")
-    order = pw.IntegerField(null=False)
-
-
-class OldAnnotation(BaseModel):
-    qgroup = pw.ForeignKeyField(QGroup, backref="oldannotations")
-    user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
-    aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
-    edition = pw.IntegerField(null=True)
-    # concat of md5sums of underlying apages
-    integrity_check = pw.CharField(null=True)
-    # we need to order the annotations - want the latest.
-    plom_file = pw.CharField(null=True)
-    mark = pw.IntegerField(null=True)
-    marking_time = pw.IntegerField(null=True)
-    time = pw.DateTimeField(null=True)
-
-
-class OAPage(BaseModel):
-    old_annotation = pw.ForeignKeyField(OldAnnotation, backref="oapages")
-    image = pw.ForeignKeyField(Image, backref="oapages")
     order = pw.IntegerField(null=False)
 
 
