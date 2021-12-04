@@ -120,6 +120,42 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def un_id_paper(self, code):
+        """Remove the identify of a paper directly.
+
+        TODO: eventually this may want its own API call.
+
+        Exceptions:
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+        """
+        with self.SRmutex:
+            # TODO: delete this version check hackery once we bump API
+            response = self.get("/Version")
+            srv_ver = response.text.split()[3]
+            from packaging.version import Version
+
+            if Version(srv_ver) <= Version("0.7.7"):
+                raise PlomSeriousException("Old server < 0.7.8: cannot unidentify")
+
+            try:
+                response = self.put(
+                    "/ID/{code}",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "sid": "",
+                        "sname": "",
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 404:
+                    raise PlomSeriousException(e) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
     def upload_classlist(self, classdict):
         """Give the server a classlist.
 
