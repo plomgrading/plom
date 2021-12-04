@@ -130,14 +130,6 @@ class ManagerMessenger(BaseMessenger):
             PlomSeriousException: other errors.
         """
         with self.SRmutex:
-            # TODO: delete this version check hackery once we bump API
-            response = self.get("/Version")
-            srv_ver = response.text.split()[3]
-            from packaging.version import Version
-
-            if Version(srv_ver) <= Version("0.7.7"):
-                raise PlomSeriousException("Old server < 0.7.8: cannot unidentify")
-
             try:
                 response = self.put(
                     "/ID/{code}",
