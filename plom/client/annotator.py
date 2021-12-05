@@ -1876,5 +1876,5 @@ class Annotator(QWidget):
         self.solutionView.show()
 
     def refreshSolutionImage(self):
-        # force a refresh
-        self.parentMarkerUI.refreshSolutionImage()
+        log.debug("force a refresh")
+        return self.parentMarkerUI.refreshSolutionImage()
