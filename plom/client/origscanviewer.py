@@ -990,7 +990,7 @@ class SolutionViewer(QWidget):
         super().__init__()
         self._annotr = parent
         grid = QGridLayout()
-        self.sv = ImageViewWidget(self, fname)
+        self.sv = ExamViewWindow(fname)
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
         self.maxNormButton = QPushButton("&Max/Norm")
@@ -1026,4 +1026,7 @@ class SolutionViewer(QWidget):
         solnfile = self._annotr.refreshSolutionImage()
         if solnfile is None:
             ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
-        self.sv.updateImage(solnfile)
+            # In `dev` branch, can just pass the None onward: TODO test to double check
+            self.sv.updateImage([])
+        else:
+            self.sv.updateImage(solnfile)
