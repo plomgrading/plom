@@ -22,6 +22,7 @@ def build_papers(
     fakepdf=False,
     no_qr=False,
     indexToMake=None,
+    xcoord=None,
     ycoord=None,
 ):
     """Build the blank papers using version information from server and source PDFs.
@@ -40,6 +41,8 @@ def build_papers(
             (which means *do* stamp with QR codes).
         indexToMake (int/None): prepare a particular paper, or None to make
             all papers.
+        xcoord (float/None): tweak the x-coordinate of the stamped name/id
+            box for prenamed papers.  None for a default value.
         ycoord (float/None): tweak the y-coordinate of the stamped name/id
             box for prenamed papers.  None for a default value.
     """
@@ -102,6 +105,7 @@ def build_papers(
                 fakepdf=fakepdf,
                 no_qr=no_qr,
                 indexToMake=indexToMake,
+                xcoord=xcoord,
                 ycoord=ycoord,
             )
 
