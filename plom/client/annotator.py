@@ -1849,5 +1849,5 @@ class Annotator(QWidget):
         self.parentMarkerUI.manage_task_tags(task, parent=self)
 
     def refreshSolutionImage(self):
-        # force a refresh
-        self.parentMarkerUI.refreshSolutionImage()
+        log.debug("force a refresh")
+        return self.parentMarkerUI.refreshSolutionImage()
