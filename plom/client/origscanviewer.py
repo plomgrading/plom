@@ -937,6 +937,6 @@ class SolutionViewer(QWidget):
 
     def refresh(self):
         solnfile = self._annotr.refreshSolutionImage()
+        self.sv.updateImage(solnfile)
         if solnfile is None:
             ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
-        self.sv.updateImage(solnfile)
