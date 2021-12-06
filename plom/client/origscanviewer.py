@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Vala Vakilian
 
 import logging
+from pathlib import Path
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
@@ -986,11 +987,10 @@ class SelectTestQuestion(QDialog):
 
 class SolutionViewer(QWidget):
     def __init__(self, parent, fname):
-        super(SolutionViewer, self).__init__()
-        self.parent = parent
-        self.solutionFile = fname
+        super().__init__()
+        self._annotr = parent
         grid = QGridLayout()
-        self.sv = ExamViewWindow(self.solutionFile)
+        self.sv = ExamViewWindow(fname)
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
         self.maxNormButton = QPushButton("&Max/Norm")
@@ -1002,9 +1002,8 @@ class SolutionViewer(QWidget):
         self.closeButton.clicked.connect(self.closeWindow)
         self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
-        from pathlib import Path
 
-        self.setWindowTitle(f"Solutions - {Path(self.solutionFile).stem}")
+        self.setWindowTitle(f"Solutions - {Path(fname).stem}")
 
         self.setMinimumSize(500, 500)
 
@@ -1024,6 +1023,10 @@ class SolutionViewer(QWidget):
         self.close()
 
     def refresh(self):
-        self.parent.refreshSolutionImage()
-        self.close()
-        self.parent.viewSolutions()
+        solnfile = self._annotr.refreshSolutionImage()
+        if solnfile is None:
+            ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
+            # In `dev` branch, can just pass the None onward: TODO test to double check
+            self.sv.updateImage([])
+        else:
+            self.sv.updateImage(solnfile)
