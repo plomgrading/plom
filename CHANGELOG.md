@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Manager can "unidentify" papers including prenamed papers.
+* Horizontal position of the prenamed box can be tweaked from command line.
 
 ### Changed
 
