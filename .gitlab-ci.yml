@@ -16,12 +16,12 @@
 # include:
 #   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
 
-workflow:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
-      when: never
-    - if: '$CI_COMMIT_BRANCH'
+# workflow:
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+#       when: never
+#     - if: '$CI_COMMIT_BRANCH'
 
 image: docker:20.10.11
 
