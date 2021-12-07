@@ -77,6 +77,7 @@ def build_papers_backend(
     fakepdf=False,
     no_qr=False,
     indexToMake=None,
+    xcoord=None,
     ycoord=None,
 ):
     """Builds the papers using _make_PDF.
@@ -101,6 +102,8 @@ def build_papers_backend(
         indexToMake (int/None): specified paper number to be built.  If
             None then build all papers.  If this parameter is specified,
             only this paper will be built and the others will be ignored.
+        xcoord (float): percentage from left to right of page to place
+            ID/Signature box.
         ycoord (float): percentage from top to bottom of page to place
             ID/Signature box.
 
@@ -142,6 +145,7 @@ def build_papers_backend(
                 student_info,
                 no_qr,
                 fakepdf,
+                xcoord,
                 ycoord,
             )
         )

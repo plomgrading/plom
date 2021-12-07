@@ -205,7 +205,18 @@ def get_parser():
         "-n", "--number", type=int, help="used for building a specific paper number"
     )
     spB.add_argument(
+        "-x",
+        "--namebox-xpos",
+        metavar="X",
+        type=float,
+        help="""
+            Specify horizontal centre of the name/ID box that will be printed
+            on named papers, a float from 0 (left) to 100 (right) of the page.
+            Defaults to 50.""",
+    )
+    spB.add_argument(
         "-m",
+        "-y",
         "--namebox-ypos",
         metavar="Y",
         type=float,
@@ -341,6 +352,7 @@ def main():
                 fakepdf=args.no_pdf,
                 no_qr=args.without_qr,
                 indexToMake=args.number,
+                xcoord=args.namebox_xpos,
                 ycoord=args.namebox_ypos,
             )
         except ValueError as err:

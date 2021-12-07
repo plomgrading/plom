@@ -225,12 +225,20 @@ def is_possible_to_encode_as(s, encoding):
         return False
 
 
-def insert_extra_info(extra, exam, y=None):
+def insert_extra_info(extra, exam, x=None, y=None):
     """Creates the extra info (usually student name and id) boxes and places them in the first page.
 
     Arguments:
         extra (dict): dictionary with student id and name.
         exam (fitz.Document): PDF document.
+        x (float): specifies the x-coordinate where the id and name
+            will be placed, as a float from 0 to 100, where 0 has the centre
+            of the box at left of the page and 100 has the centre at the right
+            of the page.  If None, defaults to 50.  Note that unlike the
+            y value, small and large values of can overhang the edge of the
+            page: this is intentional as centring the centre of this
+            box on the centre of the template works best if a name is
+            unexpectedly long.
         y (float): specifies the y-coordinate where the id and name
             will be placed, as a float from 0 to 100, where 0 is the top
             and 100 is the bottom of the page.  If None, defaults to 42.5
@@ -243,6 +251,8 @@ def insert_extra_info(extra, exam, y=None):
         fitz.Document: the exam object from the input, but with the extra
             info added into the first page.
     """
+    if x is None:
+        x = 50
     if y is None:
         y = 42.5
 
@@ -266,10 +276,10 @@ def insert_extra_info(extra, exam, y=None):
     box2_height = 48 * 1.6
 
     name_id_rect = fitz.Rect(
-        page_width / 2 - box_width / 2,
-        (page_height - box1_height - box2_height) * y / 100.0,
-        page_width / 2 + box_width / 2,
-        (page_height - box1_height - box2_height) * y / 100.0 + box1_height,
+        page_width * (x / 100.0) - box_width / 2,
+        (page_height - box1_height - box2_height) * (y / 100.0),
+        page_width * (x / 100.0) + box_width / 2,
+        (page_height - box1_height - box2_height) * (y / 100.0) + box1_height,
     )
     signature_rect = fitz.Rect(
         name_id_rect.x0,
@@ -328,6 +338,7 @@ def make_PDF(
     extra=None,
     no_qr=False,
     fakepdf=False,
+    xcoord=None,
     ycoord=None,
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
@@ -353,6 +364,7 @@ def make_PDF(
             save time when we have no use for the actual files.  Why?
             Maybe later confirmation steps check these files exist or
             something like that...
+        xcoord (float): horizontal positioning of the prename box.
         ycoord (float): vertical positioning of the prename box.
 
     Raises:
@@ -393,7 +405,7 @@ def make_PDF(
 
     # If provided with student name and id, preprint on cover
     if extra:
-        exam = insert_extra_info(extra, exam, ycoord)
+        exam = insert_extra_info(extra, exam, xcoord, ycoord)
 
     # Add the deflate option to compress the embedded pngs
     # see https://pymupdf.readthedocs.io/en/latest/document/#Document.save

@@ -5,9 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
 
 ### Added
+* Manager can "unidentify" papers including prenamed papers.
 * Solutions - can now optionally watermark solutions with the SID.
 * SSL verification enabled by default for releases.
 
@@ -27,9 +29,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Manager can "unidentify" papers including prenamed papers.
 
 ### Changed
+
+### Fixed
+
+
+
+## [0.7.9] - 2021-12-06
+
+### Added
+* Manager can "unidentify" papers including prenamed papers.
+* Horizontal position of the prenamed box can be tweaked from command line.
 
 ### Fixed
 * Client: save user tabs on manual sync and on annotator close.
@@ -612,7 +623,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.7...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.9...main
+[0.7.9]: https://gitlab.com/plom/plom/compare/v0.7.7...v0.7.9
 [0.7.7]: https://gitlab.com/plom/plom/compare/v0.7.5...v0.7.7
 [0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5
 [0.7.4]: https://gitlab.com/plom/plom/compare/v0.7.3...v0.7.4
