@@ -921,7 +921,6 @@ macos1015_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: never
   stage: packaging
   script:
   - sw_vers
@@ -965,7 +964,6 @@ macos1014_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: never
   stage: packaging
   script:
   - sw_vers
@@ -1008,7 +1006,6 @@ macos1013_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: never
   stage: packaging
   script:
   - sw_vers
