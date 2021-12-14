@@ -108,19 +108,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"].lower() in PlomImageExts:
-                    converttopng = False
-                    # Bail on jpeg if dimensions are not multiples of 16.
-                    # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
-                    if d["ext"].lower() in ("jpeg", "jpg") and not (
-                        d["width"] % 16 == 0 and d["height"] % 16 == 0
-                    ):
-                        converttopng = True
-                        print(
-                            "  JPEG dim not mult. of 16; transcoding to PNG to avoid lossy transforms"
-                        )
-                        # TODO: we know its jpeg, could use PIL instead of `convert` below
-                else:
+                converttopng = False
+                if d["ext"].lower() not in PlomImageExts:
                     converttopng = True
                     print(f"  {d['ext']} format not in allowlist: transcoding to PNG")
 
@@ -151,7 +140,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         # In the tall case, we use extra pixels vertically because there is
         # actually more to resolve.  But I've never seen a wide case that was
         # wider than a landscape sheet of paper.  Also, currently, Client's
-        # would display such a thin wide strip at to large a scale.
+        # would display such a thin wide strip at too large a scale.
         if aspect > 1:
             if W > MAXWIDTH:
                 # TODO: warn of extreme aspect ratio?  Flag to control this?
@@ -203,7 +192,6 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         #     continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
-        # (But be careful about "dim mult of 16" thing above.)
         outname = dest / (basename + ".png")
         pix.save(outname)
         files.append(outname)
