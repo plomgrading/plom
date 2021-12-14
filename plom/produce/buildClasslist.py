@@ -106,9 +106,8 @@ def clean_non_canvas_csv(csv_file_name):
         + student_info_df[lastname_column_title]
     )
 
-    student_info_df.columns = ["id", "studentName"]
-
-    return student_info_df
+    # just return the two relevant columns
+    return student_info_df[["id", "studentName"]]
 
 
 def check_is_non_canvas_csv(csv_file_name):
