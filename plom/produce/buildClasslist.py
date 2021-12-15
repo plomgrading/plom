@@ -59,11 +59,11 @@ def clean_non_canvas_csv(csv_file_name):
     # strip excess whitespace from column names
     student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
 
-    # now check we have the columns needed
-    if "id" in student_info_df.columns:
-        print('"id" column present')
-        # strip excess whitespace
-        student_info_df["id"] = student_info_df["id"].apply(lambda X: X.strip())
+    if not "id" in student_info_df.columns:
+        raise ValueError('no "id" column is present')
+    print('"id" column present')
+    # strip excess whitespace
+    student_info_df["id"] = student_info_df["id"].apply(lambda X: X.strip())
 
     # if we have fullname then we are good to go.
     if "studentName" in student_info_df.columns:
@@ -79,10 +79,6 @@ def clean_non_canvas_csv(csv_file_name):
             print('"{}" column present'.format(column_title))
             firstname_column_title = column_title
             break
-    # strip the excess whitespace
-    student_info_df[firstname_column_title] = student_info_df[
-        firstname_column_title
-    ].apply(lambda X: X.strip())
 
     # we need one of some approx of given-name field
     lastname_column_title = None
@@ -93,7 +89,14 @@ def clean_non_canvas_csv(csv_file_name):
             print('"{}" column present'.format(column_title))
             lastname_column_title = column_title
             break
+
+    if lastname_column_title is None or firstname_column_title is None:
+        raise ValueError("Cannot find appropriate column titles for names")
+
     # strip the excess whitespace
+    student_info_df[firstname_column_title] = student_info_df[
+        firstname_column_title
+    ].apply(lambda X: X.strip())
     student_info_df[lastname_column_title] = student_info_df[
         lastname_column_title
     ].apply(lambda X: X.strip())
