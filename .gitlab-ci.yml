@@ -895,16 +895,16 @@ macos11_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf which python
-  - asdf shell python 3.9.6
+  - asdf shell python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -932,7 +932,6 @@ macos1015_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: never
   stage: packaging
   script:
   - sw_vers
@@ -943,16 +942,19 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf which python
-  - asdf shell python 3.9.6
+  - asdf shell python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos10_15.zip
   - pushd dist
   - ls
@@ -976,15 +978,14 @@ macos1014_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: never
   stage: packaging
   script:
   - sw_vers
   - echo $SHELL
   - asdf current
-  - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
-  - asdf local python 3.9.6
+  # asdf which python  # has no python for some reason
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
+  - asdf local python 3.9.9
   - asdf which python
   - python --version
   - pip --version
@@ -992,7 +993,7 @@ macos1014_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1019,16 +1020,15 @@ macos1013_client:
   - shared-macos-amd64
   rules:
   - if: $CI_PROJECT_PATH == "plom/plom"
-    when: never
   stage: packaging
   script:
   - sw_vers
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf which python
-  - asdf local python 3.9.6
+  - asdf local python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
@@ -1036,7 +1036,7 @@ macos1013_client:
   - pip install -r requirements.txt.client
   - pip install PyQt5==5.15.2  # Issue #1434
   - pip install pyinstaller==4.3  # Issue #1587 codesign failure
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"

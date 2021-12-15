@@ -33,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Classlist import was broken when using multiple name fields.
+* MacOS continuous integration fixed.
 
 
 ## [0.7.9] - 2021-12-06
