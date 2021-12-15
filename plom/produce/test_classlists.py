@@ -52,7 +52,7 @@ def test_no_ID_column_fails(tmpdir):
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"idZ","Surname"\n')
+            f.write('"idZ","studentName"\n')
             f.write('12345678,"Doe"\n')
         assert not check_is_non_canvas_csv(foo)
         with raises(ValueError):
