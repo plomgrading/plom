@@ -972,7 +972,7 @@ macos1014_client:
   - sw_vers
   - echo $SHELL
   - asdf current
-  - asdf which python
+  # asdf which python  # has no python for some reason
   - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf local python 3.9.9
   - asdf which python
