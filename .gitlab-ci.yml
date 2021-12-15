@@ -749,6 +749,8 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME4 "$URL4"
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME5 "$URL5"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
     - echo "" >> release_desc.md
@@ -758,7 +760,6 @@ binary_upload:
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
     - echo "$URL4  $LINKNAME4" >> release_desc.md
-    - echo "This next one needs to be generated and uploaded manually:" >> release_desc.md
     - echo "$URL5  $LINKNAME5" >> release_desc.md
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
@@ -868,11 +869,53 @@ linuxbin_centos:
 # - build python from src for https://github.com/danhper/asdf-python/issues/38
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
+macos12_client:
+  image: macos-12-xcode-13
+  tags:
+  - shared-macos-amd64
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
 macos11_client:
   image: macos-11-xcode-12
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
@@ -920,6 +963,8 @@ macos1015_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
@@ -966,6 +1011,8 @@ macos1014_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
@@ -1008,6 +1055,8 @@ macos1013_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
