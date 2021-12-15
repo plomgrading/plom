@@ -52,65 +52,51 @@ def clean_non_canvas_csv(csv_file_name):
     Returns:
         pandas.DataFrame: data with columns `id` and `studentName`.
     """
-
-    student_info_df = pandas.read_csv(csv_file_name, dtype="object")
+    df = pandas.read_csv(csv_file_name, dtype="object")
     print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
 
     # strip excess whitespace from column names
-    student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
+    df.rename(columns=lambda x: x.strip(), inplace=True)
 
-    if not "id" in student_info_df.columns:
+    if not "id" in df.columns:
         raise ValueError('no "id" column is present')
     print('"id" column present')
     # strip excess whitespace
-    student_info_df["id"] = student_info_df["id"].apply(lambda X: X.strip())
+    df["id"] = df["id"].apply(lambda X: X.strip())
 
-    # if we have fullname then we are good to go.
-    if "studentName" in student_info_df.columns:
+    # see if we have our preferred format for a name column
+    if "studentName" in df.columns:
         print('"studentName" column present')
-        student_info_df["studentName"].apply(lambda X: X.strip())
-        return student_info_df
+        df["studentName"].apply(lambda X: X.strip())
+        return df
 
-    # Otherwise, we will check the titles again
-    # we need one of some approx of last-name field
-    firstname_column_title = None
-    for column_title in student_info_df.columns:
-        if column_title.casefold() in (x.casefold() for x in possible_surname_fields):
-            print('"{}" column present'.format(column_title))
-            firstname_column_title = column_title
+    # Otherwise, we will check the column headers again taking the first
+    # columns that looks like firstname and a lastname fields
+    firstname_column = None
+    lastname_column = None
+    for c in df.columns:
+        if c.casefold() in (x.casefold() for x in possible_surname_fields):
+            print(f'"{c}" column present')
+            firstname_column = c
+            break
+    for c in df.columns:
+        if c.casefold() in (x.casefold() for x in possible_given_name_fields):
+            print('"{c}" column present')
+            lastname_column = c
             break
 
-    # we need one of some approx of given-name field
-    lastname_column_title = None
-    for column_title in student_info_df.columns:
-        if column_title.casefold() in (
-            x.casefold() for x in possible_given_name_fields
-        ):
-            print('"{}" column present'.format(column_title))
-            lastname_column_title = column_title
-            break
-
-    if lastname_column_title is None or firstname_column_title is None:
+    if lastname_column is None or firstname_column is None:
         raise ValueError("Cannot find appropriate column titles for names")
 
-    # strip the excess whitespace
-    student_info_df[firstname_column_title] = student_info_df[
-        firstname_column_title
-    ].apply(lambda X: X.strip())
-    student_info_df[lastname_column_title] = student_info_df[
-        lastname_column_title
-    ].apply(lambda X: X.strip())
+    # strip excess whitespace
+    df[firstname_column] = df[firstname_column].apply(lambda X: X.strip())
+    df[lastname_column] = df[lastname_column].apply(lambda X: X.strip())
 
-    # concat firstname_column_title and lastname_column_title fields into fullName field
-    # strip excess whitespace from those fields
-    student_info_df["studentName"] = (
-        student_info_df[firstname_column_title]
-        + ", "
-        + student_info_df[lastname_column_title]
-    )
+    # concat columns to our preferred column
+    df["studentName"] = df[firstname_column] + ", " + df[lastname_column]
 
     # just return the two relevant columns
-    return student_info_df[["id", "studentName"]]
+    return df[["id", "studentName"]]
 
 
 def check_is_non_canvas_csv(csv_file_name):

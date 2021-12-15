@@ -22,6 +22,7 @@ def test_multi_column_names(tmpdir):
         assert "studentName" in df.columns
         assert set(df.columns) == set(("id", "studentName"))
 
+
 def test_ok_to_contain_unused_column_names(tmpdir):
     tmpdir = Path(tmpdir)
     with working_directory(tmpdir):
@@ -33,6 +34,7 @@ def test_ok_to_contain_unused_column_names(tmpdir):
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "studentName"))
 
+
 def test_only_one_name_column(tmpdir):
     tmdir = Path(tmpdir)
     with working_directory(tmpdir):
@@ -43,6 +45,7 @@ def test_only_one_name_column(tmpdir):
         assert not check_is_non_canvas_csv(foo)
         with raises(ValueError):
             df = clean_non_canvas_csv(foo)
+
 
 def test_no_ID_column_fails(tmpdir):
     tmpdir = Path(tmpdir)
