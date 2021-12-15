@@ -749,6 +749,8 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME4 "$URL4"
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME5 "$URL5"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
     - echo "" >> release_desc.md
@@ -758,7 +760,6 @@ binary_upload:
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
     - echo "$URL4  $LINKNAME4" >> release_desc.md
-    - echo "This next one needs to be generated and uploaded manually:" >> release_desc.md
     - echo "$URL5  $LINKNAME5" >> release_desc.md
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
