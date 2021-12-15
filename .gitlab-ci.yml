@@ -874,9 +874,9 @@ macos12_client:
   tags:
   - shared-macos-amd64
   rules:
-  - if: $CI_PROJECT_PATH == "plom/plom"
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
   - sw_vers
@@ -914,6 +914,8 @@ macos11_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
@@ -961,6 +963,8 @@ macos1015_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
@@ -1007,6 +1011,8 @@ macos1014_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
@@ -1049,6 +1055,8 @@ macos1013_client:
   tags:
   - shared-macos-amd64
   rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
