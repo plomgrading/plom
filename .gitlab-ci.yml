@@ -882,18 +882,19 @@ macos12_client:
   - python --version
   - pip --version
   - asdf current
-  - asdf which python
-  - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
-  - asdf which python
-  - asdf shell python 3.9.9
+  # Some reshim error, trying system python for now
+  # asdf which python
+  # asdf uninstall python 3.9.1
+  # PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
+  # asdf which python
+  # asdf shell python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
