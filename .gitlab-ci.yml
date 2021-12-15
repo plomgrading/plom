@@ -941,6 +941,9 @@ macos1015_client:
   - pip install -r requirements.txt.client
   - pip install pyinstaller
   - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos10_15.zip
   - pushd dist
   - ls
