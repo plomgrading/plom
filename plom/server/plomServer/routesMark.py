@@ -172,6 +172,8 @@ class MarkHandler:
             code, errmsg = retvals[1:]
             if code == "other_claimed":
                 raise web.HTTPConflict(reason=errmsg)
+            elif code == "not_todo":
+                raise web.HTTPConflict(reason=errmsg)
             elif code == "no_such_task":
                 raise web.HTTPGone(reason=errmsg)
             elif code == "not_scanned":

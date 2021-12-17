@@ -160,12 +160,16 @@ def MgiveTaskToClient(self, user_name, group_id):
             return [False, "not_scanned", msg]
         # grab the qdata corresponding to that group
         qref = gref.qgroups[0]
-        if (qref.user is not None) and (
-            qref.user != uref
-        ):
+        if (qref.user is not None) and (qref.user != uref):
             msg = f'Task {group_id} previously claimed by user "{qref.user.name}"'
             log.info(msg)
             return [False, "other_claimed", msg]
+        # Can only ask for tasks on the todo-pile... not ones in other states.
+        if qref.status != "todo":
+            msg = f"Task {group_id} is not on the todo pile - we cannot give you another copy."
+            log.info(msg)
+            return [False, "not_todo", msg]
+
         # update status, username
         qref.status = "out"
         qref.user = uref
