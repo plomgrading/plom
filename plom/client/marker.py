@@ -1796,7 +1796,7 @@ class MarkerClient(QWidget):
         # get solution and save it to temp dir
         catz = os.path.join(self.workingDirectory, "catz.png")
         try:
-            im_bytes = self.msgr.CgetCat(txt="Just for colin")
+            im_bytes = self.msgr.CgetCat()
             with open(catz, "wb") as fh:
                 fh.write(im_bytes)
             return catz
