@@ -1359,7 +1359,7 @@ class MarkerClient(QWidget):
         log.info("getting paper num %s", n)
         try:
             self.requestParticularPaper(n)
-        except PlomTakenException as err:
+        except (PlomTakenException, PlomRangeException) as err:
             ErrorMessage(f"Cannot get get paper {n}: {err}").exec_()
 
     def requestNext(self):
