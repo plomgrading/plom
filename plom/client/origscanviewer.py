@@ -426,7 +426,8 @@ class RearrangementViewer(QDialog):
         s.setOrientation(Qt.Vertical)
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
-        s.setHandleWidth(50)  # TODO: better not to hardcode, take from children?
+        # TODO: better not to hardcode, take from children?
+        s.setHandleWidth(50)
         vb0.addWidget(s)
         f = QFrame()
         s.addWidget(f)
@@ -940,3 +941,48 @@ class SolutionViewer(QWidget):
         self.sv.updateImage(solnfile)
         if solnfile is None:
             ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
+
+
+class CatViewer(QWidget):
+    def __init__(self, parent, fname):
+        super().__init__()
+        self._annotr = parent
+        grid = QGridLayout()
+        self.sv = ImageViewWidget(self, fname)
+        self.refreshButton = QPushButton("&Refresh")
+        self.closeButton = QPushButton("&Close")
+        self.maxNormButton = QPushButton("&Max/Norm")
+        grid.addWidget(self.sv, 1, 1, 6, 6)
+        grid.addWidget(self.refreshButton, 7, 1)
+        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(self.maxNormButton, 1, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.maxNormButton.clicked.connect(self.swapMaxNorm)
+        self.refreshButton.clicked.connect(self.refresh)
+
+        self.setWindowTitle(f"Catz")
+
+        self.setMinimumSize(500, 500)
+
+        self.show()
+
+    def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+
+    def closeEvent(self, event):
+        self.closeWindow()
+
+    def closeWindow(self):
+        self.close()
+
+    def refresh(self):
+        catFile = self._annotr.refreshCatImage()
+        self.sv.updateImage(catFile)
+        if catFile is None:
+            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()

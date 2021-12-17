@@ -60,6 +60,7 @@ from plom.plom_exceptions import (
     PlomException,
     PlomNoMoreException,
     PlomNoSolutionException,
+    PlomFelineException,
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
@@ -1781,6 +1782,28 @@ class MarkerClient(QWidget):
             # if a residual file is there, delete it
             if os.path.isfile(soln):
                 os.remove(soln)
+            return None
+
+    def getCatImage(self):
+        # get the file from disc if it exists, else grab from server
+        catz = os.path.join(self.workingDirectory, "catz.png")
+        if os.path.isfile(catz):
+            return catz
+        else:
+            return self.refreshCatImage()
+
+    def refreshCatImage(self):
+        # get solution and save it to temp dir
+        catz = os.path.join(self.workingDirectory, "catz.png")
+        try:
+            im_bytes = self.msgr.CgetCat(txt="Just for colin")
+            with open(catz, "wb") as fh:
+                fh.write(im_bytes)
+            return catz
+        except PlomFelineException as err:
+            # if a residual file is there, delete it
+            if os.path.isfile(catz):
+                os.remove(catz)
             return None
 
     def saveTabStateToServer(self, tab_state):

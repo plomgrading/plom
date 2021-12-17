@@ -696,3 +696,20 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
         return img
+
+    def CgetCat(self, txt="PLOM"):
+        self.SRmutex.acquire()
+        try:
+            # response = self.session.get(f"https://cataas.com/cat/says/{txt}")
+            response = self.session.get(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/1280px-Cat_poster_1.jpg"
+            )
+
+            img = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            raise PlomFelineException(
+                f"Panic - some sort of feline error = {e}"
+            ) from None
+        finally:
+            self.SRmutex.release()
+        return img

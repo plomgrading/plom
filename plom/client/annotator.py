@@ -61,7 +61,12 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import RearrangementViewer, SolutionViewer, WholeTestView
+from .origscanviewer import (
+    RearrangementViewer,
+    SolutionViewer,
+    WholeTestView,
+    CatViewer,
+)
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -126,6 +131,7 @@ class Annotator(QWidget):
 
         # a solution view pop-up window - initially set to None
         self.solutionView = None
+        self.catView = None
 
         # declares some instance vars
         self.cursorBox = None
@@ -239,6 +245,8 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addAction("Previous paper", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
+        m.addSeparator()
+        m.addAction("View cat", self.viewCat)
         m.addSeparator()
         m.addAction("View solutions\tF2", self.viewSolutions)
         m.addAction("Tag paper...\tF3", self.tag_paper)
@@ -1844,6 +1852,16 @@ class Annotator(QWidget):
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
 
+    def viewCat(self):
+        catFile = self.parentMarkerUI.getCatImage()
+        if catFile is None:
+            ErrorMessage("No cat photos available at present").exec_()
+            return
+
+        if self.catView is None:
+            self.catView = CatViewer(self, catFile)
+        self.catView.show()
+
     def tag_paper(self):
         task = f"q{self.tgvID}"
         self.parentMarkerUI.manage_task_tags(task, parent=self)
@@ -1851,3 +1869,7 @@ class Annotator(QWidget):
     def refreshSolutionImage(self):
         log.debug("force a refresh")
         return self.parentMarkerUI.refreshSolutionImage()
+
+    def refreshCatImage(self):
+        log.debug("force a refresh")
+        return self.parentMarkerUI.refreshCatImage()
