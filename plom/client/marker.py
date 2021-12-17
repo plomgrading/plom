@@ -43,6 +43,7 @@ from PyQt5.QtWidgets import (
     QDialog,
     QInputDialog,
     QMessageBox,
+    QMenu,
     QProgressDialog,
     QWidget,
 )
@@ -1145,6 +1146,10 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
+        m = QMenu()
+        m.addAction("Get nth...", self.requestInteractive)
+        self.ui.getNextButton.setMenu(m)
+        # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
@@ -1340,22 +1345,30 @@ class MarkerClient(QWidget):
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 
-    def requestNext(self):
+    def requestInteractive(self):
+        """Ask user for paper numner and then ask server for that paper.
+
+        If available, download stuff, add to list, update view.
         """
-        Ask server for unmarked paper, get file, add to list, update view.
+        s = f"<p>Which paper number would you like to get?</p>"
+        s += f"<p>Note: you are marking question {self.question}.</p>"
+        # TODO: min and max from the server?
+        n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, 9999)
+        if not ok:
+            return
+        log.info("getting paper num %s", n)
+        try:
+            self.requestParticularPaper(n)
+        except PlomTakenException as err:
+            ErrorMessage(f"Cannot get get paper {n}: {err}").exec_()
+
+    def requestNext(self):
+        """Ask server for an unmarked paper, get file, add to list, update view.
 
         Retry a few times in case two clients are asking for same.
-        Notes:
-            Side effects: on success, updates the table of tasks
-            TODO: return value on success?  Currently None.
-            TODO: rationalize return values
 
         Returns:
             None
-
-        Raises:
-            error if getting task from messenger throws PlomSeriousException
-
         """
         attempts = 0
         while True:
@@ -1367,7 +1380,7 @@ class MarkerClient(QWidget):
             try:
                 task = self.msgr.MaskNextTask(self.question, self.version)
                 if not task:
-                    return False
+                    return
             except PlomSeriousException as err:
                 log.exception("Unexpected error getting next task: %s", err)
                 ErrorMessage(
@@ -1375,18 +1388,32 @@ class MarkerClient(QWidget):
                 ).exec_()
                 raise
 
+            num = int(task[1:5])
             try:
-                page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
+                self.requestParticularPaper(num)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        num = int(task[1:5])
-        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+    def requestParticularPaper(self, papernum):
+        """Try to get a given paper number from the server.
+
+        Notes:
+            Side effects: on success, updates the table of tasks
+
+        Returns:
+            None
+
+        Raises:
+            PlomTakenException
+        """
+        task = f"q{papernum:04}g{self.question}"
+        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
+        full_pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
         for r in full_pagedata:
             r["local_filename"] = None
-        self._full_pagedata[num] = full_pagedata
+        self._full_pagedata[papernum] = full_pagedata
 
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
