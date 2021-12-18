@@ -1352,8 +1352,8 @@ class MarkerClient(QWidget):
         """
         s = f"<p>Which paper number would you like to get?</p>"
         s += f"<p>Note: you are marking question {self.question}.</p>"
-        # TODO: min and max from the server?
-        n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, 9999)
+        max_papernum = self.exam_spec["numberToProduce"]
+        n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, max_papernum)
         if not ok:
             return
         log.info("getting paper num %s", n)
