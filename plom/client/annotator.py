@@ -131,7 +131,6 @@ class Annotator(QWidget):
 
         # a solution view pop-up window - initially set to None
         self.solutionView = None
-        self.catView = None
 
         # declares some instance vars
         self.cursorBox = None
@@ -1853,14 +1852,7 @@ class Annotator(QWidget):
         self.solutionView.show()
 
     def viewCat(self):
-        catFile = self.parentMarkerUI.getCatImage()
-        if catFile is None:
-            ErrorMessage("No cat photos available at present").exec_()
-            return
-
-        if self.catView is None:
-            self.catView = CatViewer(self, catFile)
-        self.catView.show()
+        CatViewer(self).exec()
 
     def tag_paper(self):
         task = f"q{self.tgvID}"
@@ -1869,7 +1861,3 @@ class Annotator(QWidget):
     def refreshSolutionImage(self):
         log.debug("force a refresh")
         return self.parentMarkerUI.refreshSolutionImage()
-
-    def refreshCatImage(self):
-        log.debug("force a refresh")
-        return self.parentMarkerUI.refreshCatImage()

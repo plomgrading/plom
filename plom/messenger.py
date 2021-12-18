@@ -696,29 +696,3 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
         return img
-
-    def CgetCat(self):
-        self.SRmutex.acquire()
-        try:
-            # Hard coded wikipedia cat image
-            # response = self.session.get(
-            #     "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/1280px-Cat_poster_1.jpg"
-            # )
-
-            # Cataas is good but unfortunately seems to be down
-            # response = self.session.get(f"https://cataas.com/cat/says/{txt}")
-
-            # aws random.cat/meow is good.
-            # the aws returns json with {'file': the_url}
-            response = self.session.get(f"https://aws.random.cat/meow")
-            new_url = response.json()["file"]
-            response = self.session.get(new_url)
-
-            img = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            raise PlomFelineException(
-                f"Panic - some sort of feline error = {e}"
-            ) from None
-        finally:
-            self.SRmutex.release()
-        return img

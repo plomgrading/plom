@@ -943,12 +943,33 @@ class SolutionViewer(QWidget):
             ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
 
 
-class CatViewer(QWidget):
-    def __init__(self, parent, fname):
+class CatViewer(QDialog):
+    def __init__(self, parent):
+        import tempfile
+        import urllib.request
+
+        self.msgs = [
+            "PLOM",
+            "I%20can%20haz%20more%20markingz",
+            "Insert%20meme%20here",
+            "Hello%20Omer",
+            "More%20patz%20pleeze",
+        ]
+
         super().__init__()
         self._annotr = parent
         grid = QGridLayout()
-        self.sv = ImageViewWidget(self, fname)
+        self.count = 0
+        self.catz = tempfile.NamedTemporaryFile(delete=False)
+
+        try:
+            logging.debug("Trying to refresh cat image")
+            urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
+            self.sv = ImageViewWidget(self, self.catz.name)
+            logging.debug("Cat image refreshed")
+        except:
+            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
         self.maxNormButton = QPushButton("&Max/Norm")
@@ -975,14 +996,50 @@ class CatViewer(QWidget):
             self.setWindowState(Qt.WindowNoState)
 
     def closeEvent(self, event):
+        from os import unlink
+
+        try:
+            unlink(self.catz.name)
+        except OSError:
+            pass
         self.closeWindow()
 
     def closeWindow(self):
         self.close()
 
     def refresh(self):
-        catFile = self._annotr.refreshCatImage()
-        self.sv.updateImage(catFile)
-        if catFile is None:
-            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
-            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+        import urllib.request
+        import random
+
+        self.count += 1
+        if self.count > 5:
+            urllib.request.urlretrieve(
+                "https://cataas.com/cat/says/{Back%20to%20work}", self.catz.name
+            )
+            self.sv.updateImage(self.catz.name)
+            ErrorMessage("Enough break time").exec_()
+            self.close()
+
+        else:
+            try:
+                logging.debug("Trying to refresh cat image")
+                if random.choice([0, 1]) == 0:
+                    urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
+                else:
+                    msg = random.choice(self.msgs)
+                    urllib.request.urlretrieve(
+                        f"https://cataas.com/cat/says/{msg}", self.catz.name
+                    )
+
+                self.sv.updateImage(self.catz.name)
+                logging.debug("Cat image refreshed")
+            except:
+                ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+
+
+###
+
+###
+###
+###
+###
