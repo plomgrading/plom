@@ -956,8 +956,7 @@ class CatViewer(QDialog):
             "More%20patz%20pleeze",
         ]
 
-        super().__init__()
-        self._annotr = parent
+        super().__init__(parent)
         grid = QGridLayout()
         self.count = 0
         self.catz = tempfile.NamedTemporaryFile(delete=False)
@@ -973,7 +972,7 @@ class CatViewer(QDialog):
                 urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
             self.sv = ImageViewWidget(self, self.catz.name)
             logging.debug("Cat image refreshed")
-        except:
+        except Exception:
             ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
 
         self.refreshButton = QPushButton("&Refresh")
@@ -988,7 +987,7 @@ class CatViewer(QDialog):
         self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
 
-        self.setWindowTitle(f"Catz")
+        self.setWindowTitle("Catz")
 
         self.setMinimumSize(500, 500)
 
@@ -1039,12 +1038,15 @@ class CatViewer(QDialog):
 
                 self.sv.updateImage(self.catz.name)
                 logging.debug("Cat image refreshed")
-            except:
+            except Exception:
                 ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
 
 
 ###
 
+###
+###
+###
 ###
 ###
 ###
