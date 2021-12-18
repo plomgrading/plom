@@ -66,7 +66,7 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 409:
                 raise PlomExistingDatabase() from None
             if response.status_code == 404:
-                raise PlomServerNotReady(response.text) from None
+                raise PlomServerNotReady(response.reason) from None
             raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
             self.SRmutex.release()
@@ -183,7 +183,7 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 409:
                 raise PlomConflict(e) from None
             if response.status_code == 404:
-                raise PlomServerNotReady(response.text) from None
+                raise PlomServerNotReady(response.reason) from None
             if response.status_code == 406:
                 raise PlomRangeException(e) from None
             if response.status_code == 401:
@@ -220,9 +220,9 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 403:
-                raise PlomSeriousException(response.text) from None
+                raise PlomSeriousException(response.reason) from None
             if response.status_code == 400:
-                raise PlomSeriousException(response.text) from None
+                raise PlomSeriousException(response.reason) from None
             if response.status_code == 409:
                 raise PlomConflict(response.text) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None

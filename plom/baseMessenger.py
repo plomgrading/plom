@@ -272,7 +272,7 @@ class BaseMessenger:
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
-                raise PlomServerNotReady(response.text) from None
+                raise PlomServerNotReady(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
