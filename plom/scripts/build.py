@@ -334,7 +334,6 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parseAndVerifySpecification(fname)
     elif args.command == "parse":
-        print("DEPRECATED?")
         fname = checkTomlExtension(args.specFile)
         # copy the template spec into place
         parseAndVerifySpecification(fname)
