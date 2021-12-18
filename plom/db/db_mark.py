@@ -181,7 +181,7 @@ def MgiveTaskToClient(self, user_name, group_id):
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
             msg = f"unexpectedly, len(aref.annotations)={len(qref.annotations)}"
-            msg += f", qref={qref}, group_id={groud_id}"
+            msg += f", qref={qref}, group_id={group_id}"
             log.error(msg)
             return [False, "unexpected", msg]
         aref = qref.annotations[-1]  # are these in right order (TODO?)
