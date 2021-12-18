@@ -944,7 +944,7 @@ class SolutionViewer(QWidget):
 
 
 class CatViewer(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, dogAttempt=False):
         import tempfile
         import urllib.request
 
@@ -964,7 +964,13 @@ class CatViewer(QDialog):
 
         try:
             logging.debug("Trying to refresh cat image")
-            urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
+            if dogAttempt:
+                urllib.request.urlretrieve(
+                    "https://cataas.com/cat/says/No%20dogz.%20Only%20Catz%20and%20markingz",
+                    self.catz.name,
+                )
+            else:
+                urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
             self.sv = ImageViewWidget(self, self.catz.name)
             logging.debug("Cat image refreshed")
         except:

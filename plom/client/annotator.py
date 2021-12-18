@@ -246,6 +246,7 @@ class Annotator(QWidget):
         m.addAction("Close without saving\tctrl-c", self.close)
         m.addSeparator()
         m.addAction("View cat", self.viewCat)
+        m.addAction("View dog", self.viewNotCat)
         m.addSeparator()
         m.addAction("View solutions\tF2", self.viewSolutions)
         m.addAction("Tag paper...\tF3", self.tag_paper)
@@ -1853,6 +1854,9 @@ class Annotator(QWidget):
 
     def viewCat(self):
         CatViewer(self).exec()
+
+    def viewNotCat(self):
+        CatViewer(self, dogAttempt=True).exec()
 
     def tag_paper(self):
         task = f"q{self.tgvID}"
