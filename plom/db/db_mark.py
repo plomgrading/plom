@@ -129,7 +129,9 @@ def MgiveTaskToClient(self, user_name, group_id):
         group_id (TODO): somehow tells the task (?).
 
     Return:
-        list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
+        list: On error, `[False, code, errmsg]` where `code` is a string:
+            `"other_claimed"`, `"not_known"`, `"not_scanned"`, `"unexpected"`
+            and `errmsg` is a human-readable error message.
             Otherwise, the list is
                 `[True, metadata, [list of tag texts], integrity_check]`
             where each row of `metadata` consists of
@@ -148,18 +150,26 @@ def MgiveTaskToClient(self, user_name, group_id):
 
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == group_id)
-        if gref is None:  # this should not happen.
-            log.info("That question {} not known".format(group_id))
-            return [False]
-        if gref.scanned == False:  # this should not happen either
-            log.info("That question {} not scanned".format(group_id))
-            return [False]
+        if gref is None:
+            msg = f"The task {group_id} does not exist"
+            log.info(msg)
+            return [False, "no_such_task", msg]
+        if gref.scanned == False:
+            msg = f"The task {group_id} is not scanned"
+            log.info(msg)
+            return [False, "not_scanned", msg]
         # grab the qdata corresponding to that group
         qref = gref.qgroups[0]
-        if (qref.user is not None) and (
-            qref.user != uref
-        ):  # has been claimed by someone else.
-            return [False]
+        if (qref.user is not None) and (qref.user != uref):
+            msg = f'Task {group_id} previously claimed by user "{qref.user.name}"'
+            log.info(msg)
+            return [False, "other_claimed", msg]
+        # Can only ask for tasks on the todo-pile... not ones in other states.
+        if qref.status != "todo":
+            msg = f"Task {group_id} is not on the todo pile - we cannot give you another copy."
+            log.info(msg)
+            return [False, "not_todo", msg]
+
         # update status, username
         qref.status = "out"
         qref.user = uref
@@ -170,11 +180,10 @@ def MgiveTaskToClient(self, user_name, group_id):
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
-            log.error(
-                "unexpectedly, len(aref.annotations) = {}".format(len(qref.annotations))
-            )
-            log.error("qref={}, group_id={}".format(qref, group_id))
-            return [False]
+            msg = f"unexpectedly, len(aref.annotations)={len(qref.annotations)}"
+            msg += f", qref={qref}, group_id={groud_id}"
+            log.error(msg)
+            return [False, "unexpected", msg]
         aref = qref.annotations[-1]  # are these in right order (TODO?)
         image_metadata = []
         for p in aref.apages.order_by(APage.order):

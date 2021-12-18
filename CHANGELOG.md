@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Manager can "unidentify" papers including prenamed papers.
 * Solutions - can now optionally watermark solutions with the SID.
 * SSL verification enabled by default for releases.
+* Client Marker window can request any paper number with a long press on "Get next".
 
 ### Changed
 * Tags have been overhauled, with bug fixes and improved functionality

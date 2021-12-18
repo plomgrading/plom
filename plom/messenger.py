@@ -331,24 +331,31 @@ class Messenger(BaseMessenger):
 
         returns:
             list: Consisting of image_metadata, [list of tags], integrity_check.
-        """
 
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/MK/tasks/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-            if response.status_code == 204:
-                raise PlomTakenException("Task taken by another user.")
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        raises:
+            PlomTakenException: someone got it before you
+            PlomRangeException: no such test number or not yet scanned
+            PlomAuthenticationException
+            PlomSeriousException: generic unexpected error
+        """
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    f"/MK/tasks/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 409:
+                    raise PlomTakenException(response.reason) from None
+                if response.status_code == 404:
+                    raise PlomRangeException(response.reason) from None
+                if response.status_code == 410:
+                    raise PlomRangeException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MlatexFragment(self, latex):
         self.SRmutex.acquire()

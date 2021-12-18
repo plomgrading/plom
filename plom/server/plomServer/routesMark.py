@@ -155,17 +155,32 @@ class MarkHandler:
                 This request object will include the task code.
 
         Returns:
-            aiohttp.web_response.json_response: metadata about the images.
+            aiohttp.json_response: JSON of metadata about the images in the
+               task with status 200, or 409 if someone else has claimed this
+               task, or a 404 if there it not yet such a task (not scanned yet)
+               or 410 if there will never be such a task, or 400/401 for
+               other or authentication problems.
         """
 
         task_code = request.match_info["task"]
         # returns either
         #   [True, image_metadata, [tag text list], integrity_check]
-        #   [False]
+        #   [False, code, msg]
         retvals = self.server.MclaimThisTask(data["user"], task_code)
 
         if not retvals[0]:
-            return web.Response(status=204)  # that task already taken.
+            code, errmsg = retvals[1:]
+            if code == "other_claimed":
+                raise web.HTTPConflict(reason=errmsg)
+            elif code == "not_todo":
+                raise web.HTTPConflict(reason=errmsg)
+            elif code == "no_such_task":
+                raise web.HTTPGone(reason=errmsg)
+            elif code == "not_scanned":
+                raise web.HTTPNotFound(reason=errmsg)
+            else:
+                raise web.HTTPBadRequest(reason=errmsg)
+
         return web.json_response(retvals[1:], status=200)
 
     # @routes.delete("/MK/tasks/{task}")
