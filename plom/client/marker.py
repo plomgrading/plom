@@ -1346,7 +1346,7 @@ class MarkerClient(QWidget):
         self.ui.mProgressBar.setValue(val)
 
     def requestInteractive(self):
-        """Ask user for paper numner and then ask server for that paper.
+        """Ask user for paper number and then ask server for that paper.
 
         If available, download stuff, add to list, update view.
         """
