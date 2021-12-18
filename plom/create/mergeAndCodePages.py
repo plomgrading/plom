@@ -69,7 +69,7 @@ def create_exam_and_insert_QR(
     length,
     versions,
     papernum,
-    page_versions,
+    question_versions,
     qr_file,
     *,
     no_qr=False,
@@ -99,7 +99,7 @@ def create_exam_and_insert_QR(
     Returns:
         fitz.Document: PDF document.
     """
-    # A (int : fitz.fitz.Document) dictionary that has the page document/path from each source based on page version
+    # dict of version (int) -> source pdf (fitz.Document)
     pdf_version = {}
     for ver in range(1, versions + 1):
         pdf_version[ver] = fitz.open(f"sourceVersions/version{ver}.pdf")
@@ -334,7 +334,7 @@ def make_PDF(
     length,
     versions,
     papernum,
-    page_versions,
+    question_versions,
     extra=None,
     no_qr=False,
     fakepdf=False,
@@ -343,7 +343,7 @@ def make_PDF(
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
-    Take pages from each source version (according to `page_versions`) and
+    Take pages from each source version (according to `questions_versions`) and
     add QR codes and "DNW" staple-corner indicators.  Optionally stamp the
     student name/id from `extra` onto the cover page.  Save the new PDF
     file into the `paperdir` (typically "papersToPrint").
@@ -354,7 +354,7 @@ def make_PDF(
         length (int): Length of the document, number of pages.
         versions (int): Number of versions.
         papernum (int): the paper/test number.
-        page_versions (dict): the version of each page for this paper.
+        question_versions (dict): the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
         extra (dict/None): Dictionary with student id and name or None.
@@ -398,7 +398,7 @@ def make_PDF(
             length,
             versions,
             papernum,
-            page_versions,
+            question_versions,
             qr_file,
             no_qr=no_qr,
         )

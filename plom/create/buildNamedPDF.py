@@ -40,7 +40,7 @@ def outputProductionCSV(spec, make_PDF_args):
     # 2 - spec["numberOfPages"],
     # 3 - spec["numberOfVersions"],
     # 4 - paper_index,
-    # 5 - page_version = dict(page:version)
+    # 5 - question_version = dict(question:version)
     # 6 - student_info = dict(id:sid ,name:sname)
     # we only need the last 3 of these
     numberOfPages = spec["numberOfPages"]
@@ -60,9 +60,7 @@ def outputProductionCSV(spec, make_PDF_args):
             else:  # just skip those columns
                 row = [paper[4], None, None]
             for q in range(1, numberOfQuestions + 1):
-                # get first page of question to infer version
-                p = spec["question"]["{}".format(q)]["pages"][0]
-                row.append(paper[5][p])
+                row.append(paper[5][q])
             for p in range(1, numberOfPages + 1):
                 row.append(paper[5][p])
             csv_writer.writerow(row)
@@ -70,7 +68,7 @@ def outputProductionCSV(spec, make_PDF_args):
 
 def build_papers_backend(
     spec,
-    global_page_version_map,
+    global_question_version_map,
     classlist,
     *,
     fakepdf=False,
@@ -89,8 +87,8 @@ def build_papers_backend(
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        global_page_version_map (dict): dict of dicts mapping first by
-            paper number (int) then by page number (int) to version (int).
+        global_question_version_map (dict): dict of dicts mapping first by
+            paper numner (int) then by question number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
 
     Keyword arguments:
@@ -125,7 +123,7 @@ def build_papers_backend(
     else:
         papersToMake = [indexToMake]
     for paper_index in papersToMake:
-        page_version = global_page_version_map[paper_index]
+        question_version = global_question_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
             student_info = {
                 "id": classlist[paper_index - 1][0],
@@ -140,7 +138,7 @@ def build_papers_backend(
                 spec["numberOfPages"],
                 spec["numberOfVersions"],
                 paper_index,
-                page_version,
+                question_version,
                 student_info,
                 no_qr,
                 fakepdf,

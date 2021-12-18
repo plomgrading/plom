@@ -57,7 +57,7 @@ def build_papers(
 
     try:
         spec = msgr.get_spec()
-        pvmap = msgr.getGlobalPageVersionMap()
+        qvmap = msgr.getGlobalQuestionVersionMap()
         if spec["numberToName"] > 0:
             _classlist = msgr.IDrequestClasslist()
             # TODO: Issue #1646 mostly student number (w fallback)
@@ -96,7 +96,7 @@ def build_papers(
         with working_directory(basedir):
             build_papers_backend(
                 spec,
-                pvmap,
+                qvmap,
                 classlist,
                 fakepdf=fakepdf,
                 no_qr=no_qr,
