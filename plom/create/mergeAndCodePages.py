@@ -16,19 +16,18 @@ from plom.tpv_utils import encodeTPV
 from plom.create import paperdir
 
 
-def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
+def create_QR_codes(papernum, pagenum, ver, code, dur):
     """Creates QR codes as png files and a dictionary of their filenames.
 
     Arguments:
-        length (int): Length of the document, number of pages.
         papernum (int): the paper/test number.
-        page_versions (dict): the version of each page for this paper.
+        pagenum (int): the page number.
+        ver (int): the version of this page.
         code (str): 6 digits distinguishing this document from others.
         dur (pathlib.Path): a directory to save the QR codes.
 
     Returns:
-        dict: a dict of dicts.  The outer keys are integer page numbers.
-            The inner keys index the corners and each value is a
+        dict: The keys index the corners and each value is a
             `pathlib.Path` for a PNG file for that corner's QR code.
             The corners are indexed counterclockwise by:
 
@@ -41,24 +40,17 @@ def create_QR_file_dictionary(length, papernum, page_versions, code, dur):
     """
     qr_file = {}
 
-    for page_index in range(1, length + 1):
-        # 4 qr codes for the corners (one will be omitted for the staple)
-        qr_file[page_index] = {}
+    for corner_index in range(1, 5):
+        tpv = encodeTPV(papernum, pagenum, ver, corner_index, code)
+        filename = dur / f"qr_{papernum:04}_pg{pagenum}_{corner_index}.png"
 
-        for corner_index in range(1, 5):
-            # the tpv (test page version) is a code used for creating the qr code
-            tpv = encodeTPV(
-                papernum, page_index, page_versions[page_index], corner_index, code
-            )
-            # qr_code = pyqrcode.create(tpv, error="H")
-            # filename = dur / f"qr_{papernum:04}_pg{page_index}_{corner_index}.png"
-            # qr_code.png(filename, scale=4)
+        # qr_code = pyqrcode.create(tpv, error="H")
+        # qr_code.png(filename, scale=4)
 
-            qr_code = segno.make(tpv, error="H")
-            filename = dur / f"qr_{papernum:04}_pg{page_index}_{corner_index}.png"
-            qr_code.save(filename, scale=4)
+        qr_code = segno.make(tpv, error="H")
+        qr_code.save(filename, scale=4)
 
-            qr_file[page_index][corner_index] = filename
+        qr_file[corner_index] = filename
 
     return qr_file
 
@@ -386,14 +378,12 @@ def make_PDF(
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        # create QR codes and other stamps for each test/page/version
-        if no_qr:
-            # TODO: tmpdir thing is a unnecessary waste!
-            qr_file = {}
-        else:
-            qr_file = create_QR_file_dictionary(
-                length, papernum, page_versions, code, Path(tmp_dir)
-            )
+        # create QR codes for each test/page/version
+        qr_file = {}
+        if not no_qr:
+            for pg in range(1, length + 1):
+                ver = page_versions[pg]
+                qr_file[pg] = create_QR_codes(papernum, pg, ver, code, Path(tmp_dir))
 
         # We then create the exam pdf while adding the QR codes to it
         exam = create_exam_and_insert_QR(
