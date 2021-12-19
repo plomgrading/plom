@@ -34,15 +34,6 @@ def outputProductionCSV(spec, make_PDF_args):
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         make_PDF_args (list): a list of tuples of info for each paper
     """
-    # a tuple in make_pdf_args is a tuple
-    # 0 - spec["name"],
-    # 1 - spec["publicCode"],
-    # 2 - spec["numberOfPages"],
-    # 3 - spec["numberOfVersions"],
-    # 4 - paper_index,
-    # 5 - question_version = dict(question:version)
-    # 6 - student_info = dict(id:sid ,name:sname)
-    # we only need the last 3 of these
     numberOfPages = spec["numberOfPages"]
     numberOfQuestions = spec["numberOfQuestions"]
 
@@ -55,20 +46,23 @@ def outputProductionCSV(spec, make_PDF_args):
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
         for paper in make_PDF_args:
-            if paper[6]:  # if named paper then give id and name
-                row = [paper[4], paper[6]["id"], paper[6]["name"]]
+            # we need only a few bits of the tuple
+            idx, qver, pver, student_info = paper[4:8]
+            if student_info:
+                row = [idx, student_info["id"], student_info["name"]]
             else:  # just skip those columns
-                row = [paper[4], None, None]
+                row = [idx, None, None]
             for q in range(1, numberOfQuestions + 1):
-                row.append(paper[5][q])
+                row.append(qver[q])
             for p in range(1, numberOfPages + 1):
-                row.append(paper[5][p])
+                row.append(pver[p])
             csv_writer.writerow(row)
 
 
 def build_papers_backend(
     spec,
     global_question_version_map,
+    global_page_version_map,
     classlist,
     *,
     fakepdf=False,
@@ -89,6 +83,8 @@ def build_papers_backend(
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         global_question_version_map (dict): dict of dicts mapping first by
             paper numner (int) then by question number (int) to version (int).
+        global_page_version_map (dict): dict of dicts mapping first by
+            paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
 
     Keyword arguments:
@@ -123,7 +119,8 @@ def build_papers_backend(
     else:
         papersToMake = [indexToMake]
     for paper_index in papersToMake:
-        question_version = global_question_version_map[paper_index]
+        question_version_map = global_question_version_map[paper_index]
+        page_version_map = global_page_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
             student_info = {
                 "id": classlist[paper_index - 1][0],
@@ -138,7 +135,8 @@ def build_papers_backend(
                 spec["numberOfPages"],
                 spec["numberOfVersions"],
                 paper_index,
-                question_version,
+                question_version_map,
+                page_version_map,
                 student_info,
                 no_qr,
                 fakepdf,

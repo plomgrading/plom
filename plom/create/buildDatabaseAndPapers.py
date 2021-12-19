@@ -57,6 +57,7 @@ def build_papers(
 
     try:
         spec = msgr.get_spec()
+        pvmap = msgr.getGlobalPageVersionMap()
         qvmap = msgr.getGlobalQuestionVersionMap()
         if spec["numberToName"] > 0:
             _classlist = msgr.IDrequestClasslist()
@@ -97,6 +98,7 @@ def build_papers(
             build_papers_backend(
                 spec,
                 qvmap,
+                pvmap,
                 classlist,
                 fakepdf=fakepdf,
                 no_qr=no_qr,

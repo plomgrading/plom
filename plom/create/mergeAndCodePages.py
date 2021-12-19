@@ -70,6 +70,7 @@ def create_exam_and_insert_QR(
     versions,
     papernum,
     question_versions,
+    page_versions,
     qr_file,
     *,
     no_qr=False,
@@ -86,6 +87,7 @@ def create_exam_and_insert_QR(
         length (int): length of the document, number of pages.
         versions (int): Number of version of this document.
         papernum (int): the paper/test number.
+        question_versions (dict): version number for each question of this paper.
         page_versions (dict): version number for each page of this paper.
         qr_file (dict): a dict of dicts.  The outer keys are integer
             page numbers.  The inner keys index the corners, giving a
@@ -335,6 +337,7 @@ def make_PDF(
     versions,
     papernum,
     question_versions,
+    page_versions,
     extra=None,
     no_qr=False,
     fakepdf=False,
@@ -343,7 +346,7 @@ def make_PDF(
 ):
     """Make a PDF of particular versions, with QR codes, and optionally name stamped.
 
-    Take pages from each source version (according to `questions_versions`) and
+    Take pages from each source (using `questions_versions`/`page_versions`) and
     add QR codes and "DNW" staple-corner indicators.  Optionally stamp the
     student name/id from `extra` onto the cover page.  Save the new PDF
     file into the `paperdir` (typically "papersToPrint").
@@ -399,6 +402,7 @@ def make_PDF(
             versions,
             papernum,
             question_versions,
+            page_versions,
             qr_file,
             no_qr=no_qr,
         )
