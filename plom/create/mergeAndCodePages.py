@@ -92,7 +92,7 @@ def create_exam_and_insert_QR(
         qr_file (dict): a dict of dicts.  The outer keys are integer
             page numbers.  The inner keys index the corners, giving a
             path to an image of the appropriate QR code.
-            See :func:`create_QR_file_dictionary`.
+            TODO: consider calling the QR builder from here.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
@@ -101,10 +101,11 @@ def create_exam_and_insert_QR(
     Returns:
         fitz.Document: PDF document.
     """
+    source = Path("sourceVersions")
     # dict of version (int) -> source pdf (fitz.Document)
     pdf_version = {}
     for ver in range(1, versions + 1):
-        pdf_version[ver] = fitz.open(f"sourceVersions/version{ver}.pdf")
+        pdf_version[ver] = fitz.open(source / f"version{ver}.pdf")
 
     exam = fitz.open()
     # Insert the relevant page-versions into this pdf.
