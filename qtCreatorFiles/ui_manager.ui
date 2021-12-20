@@ -789,6 +789,13 @@
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_4">
                    <item>
+                    <widget class="QPushButton" name="unidB">
+                     <property name="text">
+                      <string>Un-ID</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
                     <spacer name="horizontalSpacer_9">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>

@@ -11,10 +11,22 @@
 
 # This the CI configuration for Plom
 
-image: docker:20.10.8
+# Issue #1654: This stops multiple pipelines on merge-requests from forks
+# But it seems to prevent forks from running their own CI jobs pre-MR
+# include:
+#   - template: 'Workflows/MergeRequest-Pipelines.gitlab-ci.yml'
+
+# workflow:
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+#     - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+#       when: never
+#     - if: '$CI_COMMIT_BRANCH'
+
+image: docker:20.10.11
 
 services:
-  - docker:20.10.8-dind
+  - docker:20.10.11-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -326,43 +338,46 @@ fullworkflow:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
-    - plom-solutions extract solutionSpec.toml -w 1234
-    - plom-solutions extract --upload  -w 1234
+    - export PLOM_USER=user0
+    - export PLOM_PASSWORD=0123
+    - export PLOM_MANAGER_PASSWORD=1234
+    - export PLOM_SCAN_PASSWORD=4567
+    - plom-build class --demo
+    - plom-build make
+    - plom-solutions extract solutionSpec.toml
+    - plom-solutions extract --upload
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    # TODO: https://gitlab.math.ubc.ca/andrewr/MLP/issues/695
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.produce.faketools
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
-    - plom-scan process -w 4567 fake_scribbled_exams1.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams1.pdf
+    - plom-scan process fake_scribbled_exams1.pdf
+    - plom-scan upload -u fake_scribbled_exams1.pdf
     # TODO: I removed some -c lines here...
-    - plom-scan status -w 4567
-    - plom-scan process -w 4567 fake_scribbled_exams2.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams2.pdf
-    - plom-scan status -w 4567
-    - plom-scan process -w 4567 fake_scribbled_exams3.pdf
-    - plom-scan upload -w 4567 -u fake_scribbled_exams3.pdf
-    - plom-scan status -w 4567
+    - plom-scan status
+    - plom-scan process fake_scribbled_exams2.pdf
+    - plom-scan upload -u fake_scribbled_exams2.pdf
+    - plom-scan status
+    - plom-scan process fake_scribbled_exams3.pdf
+    - plom-scan upload -u fake_scribbled_exams3.pdf
+    - plom-scan status
     ## not supposed to be done yet:
-    - if (plom-finish status -w 1234); then false; else true; fi
+    - if (plom-finish status); then false; else true; fi
     - python3 -m plom.client.randoIDer -s localhost -u user0 -w 0123
     - python3 -m plom.client.randoMarker -s localhost -u user0 -w 0123
-    - plom-finish status -w 1234
-    - plom-finish csv -w 1234
+    - plom-finish status
+    - plom-finish csv
     - A=`cat marks.csv  | wc -l`      # How many lines?
     - echo $A
     - A="$((A-1))"
     - bash -c "[[ $A == 19 ]]"        # b/c 1 page from 1 test is deleted
     - file marks.csv
     - file marks.csv | grep text
-    - plom-finish reassemble -w 1234
+    - plom-finish reassemble
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
-    - plom-finish solutions -w 1234 --mark
+    - plom-finish solutions --mark
     - A=`ls solutions/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
@@ -745,6 +760,8 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME4 "$URL4"
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME5 "$URL5"
     # TODO: we can either use release cli binary to push these or wait for gitlab
     # For now, just write into release description for manual editing
     - echo "" >> release_desc.md
@@ -754,7 +771,6 @@ binary_upload:
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
     - echo "$URL4  $LINKNAME4" >> release_desc.md
-    - echo "This next one needs to be generated and uploaded manually:" >> release_desc.md
     - echo "$URL5  $LINKNAME5" >> release_desc.md
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Other\"" >> release_desc.md
@@ -766,7 +782,7 @@ binary_upload:
   artifacts:
     paths:
       - release_desc.md
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # Build Client Binaries
@@ -798,7 +814,7 @@ linuxbin_ubuntu1804:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 linuxbin_ubuntu2004:
@@ -827,7 +843,7 @@ linuxbin_ubuntu2004:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # TODO: consider doing only on the main branch and only when tests pass
@@ -857,19 +873,61 @@ linuxbin_centos:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # Notes on macOS client builds
 # - build python from src for https://github.com/danhper/asdf-python/issues/38
 # - macOS <= 10.14: older asdf, use `asdf local` not `asdf shell`
 # - to get hardcoded path: verbose `pip install -v -v pyinstaller`
+macos12_client:
+  image: macos-12-xcode-13
+  tags:
+  - shared-macos-amd64
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
+  stage: packaging
+  script:
+  - sw_vers
+  - echo $SHELL
+  - which python
+  - python --version
+  - pip --version
+  - asdf current
+  - python -m pip install --upgrade pip
+  - pip --version
+  - pip install -r requirements.txt.client
+  - pip install pyinstaller
+  - pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
+  - export ZIPNAME=PlomClient-$VER-macos12.zip
+  - pushd dist
+  - ls
+  - ls -sklR PlomClient-$VER.app
+  - zip -r $ZIPNAME PlomClient-$VER.app
+  - popd
+  - mv dist/$ZIPNAME $ZIPNAME
+  - md5 $ZIPNAME > md5sum
+  - ls $ZIPNAME
+  - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.zip
+    - md5sum
+    expire_in: 30 days
+
 macos11_client:
   image: macos-11-xcode-12
   tags:
   - shared-macos-amd64
-  except:
-  - external_pull_requests
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
   - sw_vers
@@ -880,16 +938,16 @@ macos11_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.9.1
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf which python
-  - asdf shell python 3.9.6
+  - asdf shell python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -907,14 +965,18 @@ macos11_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
+# TODO: when: never versus manual
 macos1015_client:
   image: macos-10.15-xcode-11
   tags:
   - shared-macos-amd64
-  when: manual
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
   - sw_vers
@@ -925,16 +987,19 @@ macos1015_client:
   - asdf current
   - asdf which python
   - asdf uninstall python 3.8.0
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf which python
-  - asdf shell python 3.9.6
+  - asdf shell python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
+  - ls dist/
+  - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+  - echo "Extracted version string '$VER'"
   - export ZIPNAME=PlomClient-$VER-macos10_15.zip
   - pushd dist
   - ls
@@ -949,22 +1014,25 @@ macos1015_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos1014_client:
   image: macos-10.14-xcode-10
   tags:
   - shared-macos-amd64
-  when: manual
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
   - sw_vers
   - echo $SHELL
   - asdf current
-  - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
-  - asdf local python 3.9.6
+  # asdf which python  # has no python for some reason
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
+  - asdf local python 3.9.9
   - asdf which python
   - python --version
   - pip --version
@@ -972,7 +1040,7 @@ macos1014_client:
   - pip --version
   - pip install -r requirements.txt.client
   - pip install pyinstaller
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -990,23 +1058,26 @@ macos1014_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos1013_client:
   image: macos-10.13-xcode-9
   tags:
   - shared-macos-amd64
-  when: manual
+  rules:
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: $CI_PROJECT_PATH == "plom/plom"
   stage: packaging
   script:
   - sw_vers
   - echo $SHELL
   - asdf current
   - asdf which python
-  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.6
+  - PYTHON_CONFIGURE_OPTS="--enable-framework" asdf install python 3.9.9
   - asdf which python
-  - asdf local python 3.9.6
+  - asdf local python 3.9.9
   - python --version
   - pip --version
   - python -m pip install --upgrade pip
@@ -1014,7 +1085,7 @@ macos1013_client:
   - pip install -r requirements.txt.client
   - pip install PyQt5==5.15.2  # Issue #1434
   - pip install pyinstaller==4.3  # Issue #1587 codesign failure
-  - /Users/gitlab/.asdf/installs/python/3.9.6/bin/pyinstaller client.macos.spec
+  - /Users/gitlab/.asdf/installs/python/3.9.9/bin/pyinstaller client.macos.spec
   - ls dist/
   - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
   - echo "Extracted version string '$VER'"
@@ -1032,7 +1103,7 @@ macos1013_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 .shared_windows_runners:
@@ -1087,4 +1158,4 @@ winpyinst:
     paths:
     - PlomClient*.exe
     - md5sum.txt
-    expire_in: 30 days
+    expire_in: 16 days

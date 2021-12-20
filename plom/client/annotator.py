@@ -61,7 +61,12 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import RearrangementViewer, SolutionViewer, WholeTestView
+from .origscanviewer import (
+    RearrangementViewer,
+    SolutionViewer,
+    WholeTestView,
+    CatViewer,
+)
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
@@ -239,6 +244,9 @@ class Annotator(QWidget):
         m.addAction("Defer and go to next", lambda: None).setEnabled(False)
         m.addAction("Previous paper", lambda: None).setEnabled(False)
         m.addAction("Close without saving\tctrl-c", self.close)
+        m.addSeparator()
+        m.addAction("View cat", self.viewCat)
+        m.addAction("View dog", self.viewNotCat)
         m.addSeparator()
         m.addAction("View solutions\tF2", self.viewSolutions)
         m.addAction("Tag paper...\tF3", self.tag_paper)
@@ -1844,10 +1852,16 @@ class Annotator(QWidget):
             self.solutionView = SolutionViewer(self, solutionFile)
         self.solutionView.show()
 
+    def viewCat(self):
+        CatViewer(self).exec()
+
+    def viewNotCat(self):
+        CatViewer(self, dogAttempt=True).exec()
+
     def tag_paper(self):
         task = f"q{self.tgvID}"
         self.parentMarkerUI.manage_task_tags(task, parent=self)
 
     def refreshSolutionImage(self):
-        # force a refresh
-        self.parentMarkerUI.refreshSolutionImage()
+        log.debug("force a refresh")
+        return self.parentMarkerUI.refreshSolutionImage()

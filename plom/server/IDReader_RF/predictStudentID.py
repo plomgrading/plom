@@ -5,8 +5,8 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
 """
-Note: Code in this file is very similar to predictStudentID code for the
-Tensorflow model.
+See:
+https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 """
 
 import gzip

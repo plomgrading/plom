@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Vala Vakilian
 
 import logging
+from pathlib import Path
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
@@ -425,7 +426,8 @@ class RearrangementViewer(QDialog):
         s.setOrientation(Qt.Vertical)
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
-        s.setHandleWidth(50)  # TODO: better not to hardcode, take from children?
+        # TODO: better not to hardcode, take from children?
+        s.setHandleWidth(50)
         vb0.addWidget(s)
         f = QFrame()
         s.addWidget(f)
@@ -900,10 +902,9 @@ class SelectTestQuestion(QDialog):
 class SolutionViewer(QWidget):
     def __init__(self, parent, fname):
         super().__init__()
-        self.parent = parent
-        self.solutionFile = fname
+        self._annotr = parent
         grid = QGridLayout()
-        self.sv = ImageViewWidget(self, self.solutionFile)
+        self.sv = ImageViewWidget(self, fname)
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
         self.maxNormButton = QPushButton("&Max/Norm")
@@ -915,9 +916,8 @@ class SolutionViewer(QWidget):
         self.closeButton.clicked.connect(self.closeWindow)
         self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
-        from pathlib import Path
 
-        self.setWindowTitle(f"Solutions - {Path(self.solutionFile).stem}")
+        self.setWindowTitle(f"Solutions - {Path(fname).stem}")
 
         self.setMinimumSize(500, 500)
 
@@ -937,6 +937,117 @@ class SolutionViewer(QWidget):
         self.close()
 
     def refresh(self):
-        self.parent.refreshSolutionImage()
+        solnfile = self._annotr.refreshSolutionImage()
+        self.sv.updateImage(solnfile)
+        if solnfile is None:
+            ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
+
+
+class CatViewer(QDialog):
+    def __init__(self, parent, dogAttempt=False):
+        import tempfile
+        import urllib.request
+
+        self.msgs = [
+            "PLOM",
+            "I%20can%20haz%20more%20markingz",
+            "Insert%20meme%20here",
+            "Hello%20Omer",
+            "More%20patz%20pleeze",
+        ]
+
+        super().__init__(parent)
+        grid = QGridLayout()
+        self.count = 0
+        self.catz = tempfile.NamedTemporaryFile(delete=False)
+
+        try:
+            logging.debug("Trying to refresh cat image")
+            if dogAttempt:
+                urllib.request.urlretrieve(
+                    "https://cataas.com/cat/says/No%20dogz.%20Only%20Catz%20and%20markingz",
+                    self.catz.name,
+                )
+            else:
+                urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
+            self.sv = ImageViewWidget(self, self.catz.name)
+            logging.debug("Cat image refreshed")
+        except Exception:
+            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+
+        self.refreshButton = QPushButton("&Refresh")
+        self.closeButton = QPushButton("&Close")
+        self.maxNormButton = QPushButton("&Max/Norm")
+        grid.addWidget(self.sv, 1, 1, 6, 6)
+        grid.addWidget(self.refreshButton, 7, 1)
+        grid.addWidget(self.closeButton, 7, 7)
+        grid.addWidget(self.maxNormButton, 1, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.maxNormButton.clicked.connect(self.swapMaxNorm)
+        self.refreshButton.clicked.connect(self.refresh)
+
+        self.setWindowTitle("Catz")
+
+        self.setMinimumSize(500, 500)
+
+        self.show()
+
+    def swapMaxNorm(self):
+        """Toggles the window size between max and normal"""
+        if self.windowState() != Qt.WindowMaximized:
+            self.setWindowState(Qt.WindowMaximized)
+        else:
+            self.setWindowState(Qt.WindowNoState)
+
+    def closeEvent(self, event):
+        from os import unlink
+
+        try:
+            unlink(self.catz.name)
+        except OSError:
+            pass
+        self.closeWindow()
+
+    def closeWindow(self):
         self.close()
-        self.parent.viewSolutions()
+
+    def refresh(self):
+        import urllib.request
+        import random
+
+        self.count += 1
+        if self.count > 5:
+            urllib.request.urlretrieve(
+                "https://cataas.com/cat/says/{Back%20to%20work}", self.catz.name
+            )
+            self.sv.updateImage(self.catz.name)
+            ErrorMessage("Enough break time").exec_()
+            self.close()
+
+        else:
+            try:
+                logging.debug("Trying to refresh cat image")
+                if random.choice([0, 1]) == 0:
+                    urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
+                else:
+                    msg = random.choice(self.msgs)
+                    urllib.request.urlretrieve(
+                        f"https://cataas.com/cat/says/{msg}", self.catz.name
+                    )
+
+                self.sv.updateImage(self.catz.name)
+                logging.debug("Cat image refreshed")
+            except Exception:
+                ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+
+
+###
+
+###
+###
+###
+###
+###
+###
+###
