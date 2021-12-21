@@ -988,8 +988,6 @@ class CatViewer(QDialog):
 
         self.setMinimumSize(500, 500)
 
-        self.show()
-
     def closeEvent(self, event):
         from os import unlink
 
