@@ -2,6 +2,8 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
+from pathlib import Path
+
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QGuiApplication, QBrush, QPainter, QPixmap
 from PyQt5.QtWidgets import (
@@ -106,10 +108,11 @@ class ExamView(QGraphicsView):
         """Update the images new ones from filenames
 
         Args:
-            fnames (None/str/list): a list of `pathlib.Path` or `str` of
-                image filenames.  Can also be a str, for a single image.
+            fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
+                `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
+                for a single image.
         """
-        if isinstance(fnames, str):
+        if isinstance(fnames, (str, Path)):
             fnames = [fnames]
         for img in self.imageGItem.childItems():
             self.imageGItem.removeFromGroup(img)
