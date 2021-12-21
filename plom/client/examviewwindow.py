@@ -19,7 +19,11 @@ from plom.client.backGrid import BackGrid
 
 
 class ImageViewWidget(QWidget):
-    """Simple view widget for pageimages to be embedded in other windows."""
+    """Simple view widget for pageimages to be embedded in other windows.
+
+    TODO: clarify whether the caller must maintain the image on disc or if
+    the QPixmap will reads it once and stores it.  See Issue #1842.
+    """
 
     def __init__(self, parent, fnames=None, has_reset_button=True, compact=True):
         super().__init__(parent)
