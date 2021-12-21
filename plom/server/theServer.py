@@ -9,7 +9,6 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
-import os
 import ssl
 import subprocess
 import tempfile
