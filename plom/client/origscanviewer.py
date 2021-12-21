@@ -974,6 +974,7 @@ class CatViewer(QDialog):
             logging.debug("Cat image refreshed")
         except Exception:
             ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+            self.sv = ImageViewWidget(self, None)
 
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
