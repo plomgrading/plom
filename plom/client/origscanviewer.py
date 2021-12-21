@@ -977,14 +977,11 @@ class CatViewer(QDialog):
 
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("&Max/Norm")
-        grid.addWidget(self.sv, 1, 1, 6, 6)
+        grid.addWidget(self.sv, 1, 1, 6, 7)
         grid.addWidget(self.refreshButton, 7, 1)
         grid.addWidget(self.closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle("Catz")
@@ -992,13 +989,6 @@ class CatViewer(QDialog):
         self.setMinimumSize(500, 500)
 
         self.show()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
 
     def closeEvent(self, event):
         from os import unlink
@@ -1042,12 +1032,4 @@ class CatViewer(QDialog):
                 ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
 
 
-###
-
-###
-###
-###
-###
-###
-###
 ###
