@@ -82,7 +82,7 @@ def build_papers_backend(
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         global_question_version_map (dict): dict of dicts mapping first by
-            paper numner (int) then by question number (int) to version (int).
+            paper number (int) then by question number (int) to version (int).
         global_page_version_map (dict): dict of dicts mapping first by
             paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
