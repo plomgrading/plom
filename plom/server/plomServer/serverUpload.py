@@ -55,7 +55,27 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     return val
 
 
+def createIDPageForHW(self, sid):
+    # ask DB if that SID belongs to a test and if that has an ID page
+    val = self.DB.doesHWHaveIDPage(sid)
+    # returns [False, 'unknown'], [False, 'noid', test_number, student_name], or
+    # [True, 'idpage', test_number, student_name]
+    if val[0]:  # page already has an idpage, so we can just return
+        log.debug(f"HW from sid {sid} is test {val[2]} - already has an ID Page.")
+        return True
+    if val[1] == "unknown":
+        log.debug(f"The sid {sid} does not correspond to any test in the DB.")
+        return False
+    test_number = val[2]
+    student_name = val[3]
+    log.debug(f"HW from sid {sid} is test {val[2]}, {student_name} - creating ID page.")
+    return autogenerateIDPage(self, test_number, sid, student_name)
+
+
 def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
+    # Create an ID page for that HW if it is needed
+    self.createIDPageForHW(sid)
+
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -184,9 +204,8 @@ def replaceMissingDNMPage(self, testNumber, pageNumber):
 
 
 def autogenerateIDPage(self, testNumber, student_id, student_name):
-    # TODO - this should likely be cross-ref'd with classlist
-
-    pageNotSubmitted.build_dnm_page_substitute(testNumber, student_id, student_name)
+    # Do not call this directly, it should be called by createIDPageForHW
+    pageNotSubmitted.build_generated_id_page_for_student(student_id, student_name)
 
     # produces a file "autogen.<sid>.png"
     originalName = "autogen.{}.png".format(student_id)

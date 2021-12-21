@@ -112,6 +112,7 @@ class PlomDB:
         attachImageToTPage,
         createNewHWPage,
         uploadTestPage,
+        doesHWHaveIDPage,
         uploadHWPage,
         uploadUnknownPage,
         uploadCollidingPage,

@@ -197,6 +197,18 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         test_ref.save()
 
 
+def doesHWHaveIDPage(self, sid):
+    iref = IDGroup.get_or_none(student_id=sid)
+    if iref is None:
+        return [False, "unknown"]
+    # we know that SID, get the test and student name.
+    tref = iref.test
+    if len(iref.idpages) > 0:
+        return [True, "idpage", tref.test_number, iref.student_name]
+    else:
+        return [False, "noid", tref.test_number, iref.student_name]
+
+
 def uploadHWPage(
     self,
     sid,
