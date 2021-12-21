@@ -251,10 +251,11 @@ def build_generated_id_page_for_student(
 
     txt = "{}\n{}".format(student_id, student_name)
 
+    # make the box a little wider than the required text
     box_width = max(
         fitz.get_text_length(student_id, fontsize=36, fontname="Helvetica"),
         fitz.get_text_length(student_name, fontsize=36, fontname="Helvetica"),
-    )*1.2 # make it a little wider
+    )*1.2
     box1_height = 2 * 36 * 1.5  # two lines of 36 pt and baseline
 
     name_id_rect = fitz.Rect(
