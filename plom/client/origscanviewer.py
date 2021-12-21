@@ -870,9 +870,8 @@ class WholeTestView(QDialog):
 
 
 class SelectTestQuestion(QDialog):
-    def __init__(self, info, gn=None):
-        super().__init__()
-        self.setModal(True)
+    def __init__(self, parent, info, gn=None):
+        super().__init__(parent)
         self.setWindowTitle("View another test")
         self.iL = QLabel("From which test do you wish to view the current question?")
         self.ab = QPushButton("&Accept")
