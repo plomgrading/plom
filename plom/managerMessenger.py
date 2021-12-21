@@ -436,6 +436,33 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def replaceMissingDNMPage(self, t, p):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                "/admin/missingDNMPage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": t,
+                    "page": p,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the page - this should not happen!"
+                ) from None
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def replaceMissingHWQuestion(self, student_id=None, test=None, question=None):
         # can replace by SID or by test-number
         self.SRmutex.acquire()

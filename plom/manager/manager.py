@@ -19,17 +19,15 @@ if sys.version_info >= (3, 7):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
-from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QCheckBox,
     QDialog,
     QFileDialog,
     QGroupBox,
     QGridLayout,
-    QGroupBox,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -37,7 +35,6 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QStyleFactory,
     QTableWidgetItem,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -553,9 +550,18 @@ class Manager(QWidget):
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
+        # which test pages are which type "id", "dnm", or "qN"
+        self.testPageTypes = {info["idPage"]: "id"}
+        for pg in info["doNotMark"]["pages"]:
+            self.testPageTypes[pg] = "dnm"
+        for q in range(1, info["numberOfQuestions"] + 1):
+            for pg in info["question"][str(q)]["pages"]:
+                self.testPageTypes[pg] = f"q{q}"
+        print(self.testPageTypes)
 
     ################
     # scan tab stuff
+
     def initScanTab(self):
         self.initScanStatusTab()
         self.initUnknownTab()
@@ -719,11 +725,9 @@ class Manager(QWidget):
         self.refreshSList()
         self.refreshIList()
 
-    def substituteTestPage(self, test_number, page_number, version):
+    def substituteTestQuestionPage(self, test_number, page_number, question, version):
         msg = SimpleMessage(
-            'Are you sure you want to substitute a "Missing Page" blank for tpage {} of test {}?'.format(
-                page_number, test_number
-            )
+            f'Are you sure you want to substitute a "Missing Page" blank for tpage {page_number} of question {question} test {test_number}?'
         )
         if msg.exec_() == QMessageBox.No:
             return
@@ -736,6 +740,33 @@ class Manager(QWidget):
                     err.args[-1]
                 )
             ).exec_()
+
+    def substituteTestDNMPage(self, test_number, page_number):
+        msg = SimpleMessage(
+            f'Are you sure you want to substitute a "Missing Page" blank for tpage {page_number} of test {test_number} - it is a Do Not Mark page?'
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        try:
+            rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
+                )
+            ).exec_()
+
+    def substituteTestPage(self, test_number, page_number, version):
+        page_type = self.testPageTypes[page_number]
+        if page_type == "id":
+            print("Is an ID page - do stuff")
+        elif page_type == "dnm":
+            self.substituteTestDNMPage(test_number, page_number)
+        else:
+            qnum = int(page_type[1:])  # is qNNN
+            self.substituteTestQuestionPage(test_number, page_number, qnum, version)
+
         self.refreshIList()
 
     def substituteHWQuestion(self, test_number, question):
@@ -1021,7 +1052,7 @@ class Manager(QWidget):
             parent = self
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
-        if cp[1] == None:
+        if cp[1] is None:
             # TODO: ErrorMesage does not support parenting
             ErrorMessage(
                 "Page {} of test {} is not scanned - should be version {}".format(
@@ -1056,7 +1087,7 @@ class Manager(QWidget):
         colDict = self.msgr.getCollidingPageNames()  # dict [fname]=[t,p,v]
         r = 0
         for u in colDict.keys():
-            it0 = QStandardItem(u)
+            # it0 = QStandardItem(u)
             it1 = QStandardItem(os.path.split(u)[1])
             pm = QPixmap()
             pm.loadFromData(
@@ -1310,7 +1341,7 @@ class Manager(QWidget):
         try:
             imageList = self.msgr.IDgetImageFromATest()
         except PlomNoMoreException as err:
-            ErrorMessage("No unIDd images to show.").exec_()
+            ErrorMessage(f"No unIDd images to show - {err}").exec_()
             return
         # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
@@ -1910,7 +1941,6 @@ class Manager(QWidget):
         # get list of everything done by users, store by user for TW2
         # use directly for TW1
         uprog = defaultdict(list)
-        r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
