@@ -221,15 +221,18 @@
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QPushButton" name="blankButton">
+          <property name="toolTip">
+           <string>ID page or whole paper is blank</string>
+          </property>
           <property name="text">
-           <string>&amp;Blank page</string>
+           <string>&amp;Blank page...</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="viewButton">
           <property name="text">
-           <string>&amp;View whole</string>
+           <string>&amp;View whole paper</string>
           </property>
          </widget>
         </item>
