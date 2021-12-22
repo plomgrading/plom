@@ -2447,7 +2447,7 @@ class MarkerClient(QWidget):
 
     def view_testnum_question(self):
         """shows the image."""
-        tgs = SelectTestQuestion(self.exam_spec, self.question)
+        tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
             return
         tn = tgs.tsb.value()
