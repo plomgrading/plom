@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client warns if its version is older than the server.
 
 ### Fixed
 * Classlist import was broken when using multiple name fields.
