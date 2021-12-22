@@ -6,6 +6,9 @@
 
 import logging
 from pathlib import Path
+import random
+import tempfile
+import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
@@ -944,8 +947,6 @@ class SolutionViewer(QWidget):
 
 class CatViewer(QDialog):
     def __init__(self, parent, dogAttempt=False):
-        import tempfile
-        import urllib.request
 
         self.msgs = [
             "PLOM",
@@ -958,95 +959,84 @@ class CatViewer(QDialog):
         super().__init__(parent)
         grid = QGridLayout()
         self.count = 0
-        self.catz = tempfile.NamedTemporaryFile(delete=False)
-
-        try:
-            logging.debug("Trying to refresh cat image")
-            if dogAttempt:
-                urllib.request.urlretrieve(
-                    "https://cataas.com/cat/says/No%20dogz.%20Only%20Catz%20and%20markingz",
-                    self.catz.name,
-                )
-            else:
-                urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
-            self.sv = ImageViewWidget(self, self.catz.name)
-            logging.debug("Cat image refreshed")
-        except Exception:
-            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+        self.catz = None
+        if dogAttempt:
+            self.getNewImageFile(msg="No%20dogz.%20Only%20Catz%20and%20markingz")
+        else:
+            self.getNewImageFile()
+        self.img = ImageViewWidget(self, self.catz)
 
         self.refreshButton = QPushButton("&Refresh")
         self.closeButton = QPushButton("&Close")
-        self.maxNormButton = QPushButton("&Max/Norm")
-        grid.addWidget(self.sv, 1, 1, 6, 6)
+        grid.addWidget(self.img, 1, 1, 6, 7)
         grid.addWidget(self.refreshButton, 7, 1)
         grid.addWidget(self.closeButton, 7, 7)
-        grid.addWidget(self.maxNormButton, 1, 7)
         self.setLayout(grid)
         self.closeButton.clicked.connect(self.closeWindow)
-        self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle("Catz")
 
         self.setMinimumSize(500, 500)
 
-        self.show()
-
-    def swapMaxNorm(self):
-        """Toggles the window size between max and normal"""
-        if self.windowState() != Qt.WindowMaximized:
-            self.setWindowState(Qt.WindowMaximized)
-        else:
-            self.setWindowState(Qt.WindowNoState)
-
     def closeEvent(self, event):
-        from os import unlink
-
-        try:
-            unlink(self.catz.name)
-        except OSError:
-            pass
+        self.eraseImageFile()
         self.closeWindow()
 
     def closeWindow(self):
         self.close()
 
-    def refresh(self):
-        import urllib.request
-        import random
+    def getNewImageFile(self, *, msg=None):
+        """Erase the current stored image and try to get a new one.
 
+        args:
+            msg (None/str): something for the cat to say.
+
+        returns:
+            None: but sets the `.catz` instance variable as a side effect.
+        """
+        self.eraseImageFile()
+        logging.debug("Trying to refresh cat image")
+
+        # Do we need to manage this tempfile in instance variable? Issue #1842
+        # with tempfile.NamedTemporaryFile() as f:
+        #     urllib.request.urlretrieve("https://cataas.com/cat", f)
+        #     self.img.updateImages(f)
+        self.catz = Path(tempfile.NamedTemporaryFile(delete=False).name)
+
+        try:
+            if msg is None:
+                urllib.request.urlretrieve("https://cataas.com/cat", self.catz)
+            else:
+                urllib.request.urlretrieve(
+                    f"https://cataas.com/cat/says/{msg}", self.catz
+                )
+            logging.debug("Cat image refreshed")
+        except Exception:
+            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+            self.catz = None
+
+    def eraseImageFile(self):
+        if self.catz is None:
+            return
+        try:
+            self.catz.unlink()
+        except OSError:
+            pass
+
+    def refresh(self):
         self.count += 1
         if self.count > 5:
-            urllib.request.urlretrieve(
-                "https://cataas.com/cat/says/{Back%20to%20work}", self.catz.name
-            )
-            self.sv.updateImage(self.catz.name)
+            msg = "Back%20to%20work"
+        elif random.choice([0, 1]):
+            msg = random.choice(self.msgs)
+        else:
+            msg = None
+        self.getNewImageFile(msg=msg)
+        self.img.updateImage(self.catz)
+        if self.count > 5:
             ErrorMessage("Enough break time").exec_()
             self.close()
 
-        else:
-            try:
-                logging.debug("Trying to refresh cat image")
-                if random.choice([0, 1]) == 0:
-                    urllib.request.urlretrieve("https://cataas.com/cat", self.catz.name)
-                else:
-                    msg = random.choice(self.msgs)
-                    urllib.request.urlretrieve(
-                        f"https://cataas.com/cat/says/{msg}", self.catz.name
-                    )
 
-                self.sv.updateImage(self.catz.name)
-                logging.debug("Cat image refreshed")
-            except Exception:
-                ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
-
-
-###
-
-###
-###
-###
-###
-###
-###
 ###
