@@ -102,6 +102,7 @@ class Server:
         sidToTest,
         addTestPage,
         createIDPageForHW,
+        createDNMPagesForHW,
         addHWPage,
         addUnknownPage,
         addCollidingPage,
