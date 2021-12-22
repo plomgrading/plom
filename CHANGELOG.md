@@ -32,10 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Client warns if its version is older than the server.
 
 ### Fixed
 * Classlist import was broken when using multiple name fields.
 * MacOS continuous integration fixed.
+* Fix a crash in autoIDing related to unhandled errors.
 
 
 ## [0.7.9] - 2021-12-06
