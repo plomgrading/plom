@@ -109,6 +109,8 @@ class Server:
         replaceMissingTestPage,
         replaceMissingHWQuestion,
         replaceMissingDNMPage,
+        replaceMissingIDPage,
+        createIDPageForHW,
         autogenerateIDPage,
         removeAllScannedPages,
         removeSinglePage,

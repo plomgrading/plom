@@ -61,6 +61,7 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomAuthenticationException,
     PlomOwnersLoggedInException,
+    PlomUnidentifiedPaperException,
     PlomTakenException,
     PlomNoMoreException,
     PlomNoSolutionException,
@@ -757,10 +758,32 @@ class Manager(QWidget):
                 )
             ).exec_()
 
+    def autogenerateIDPage(self, test_number):
+        msg = SimpleMessage(
+            f'Are you sure you want to generate an ID for test {test_number}? You can only do this for homeworks or pre-named tests.'
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        try:
+            rval = self.msgr.replaceMissingIDPage(test_number)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
+                )
+            ).exec_()
+        except PlomUnidentifiedPaperException as err:
+            ErrorMessage(
+                "Cannot substitute that page - that paper has not been identified: {}".format(
+                    err.args[-1]
+                )
+            ).exec_()
+
     def substituteTestPage(self, test_number, page_number, version):
         page_type = self.testPageTypes[page_number]
         if page_type == "id":
-            print("Is an ID page - do stuff")
+            self.autogenerateIDPage(test_number)
         elif page_type == "dnm":
             self.substituteTestDNMPage(test_number, page_number)
         else:

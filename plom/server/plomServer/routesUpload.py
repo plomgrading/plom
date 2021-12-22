@@ -357,6 +357,30 @@ class UploadHandler:
             else:
                 return web.Response(status=404)  # page not found at all
 
+    async def replaceMissingIDPage(self, request):
+        data = await request.json()
+        if not validate_required_fields(
+            data, ["user", "token", "test"]
+        ):
+            return web.Response(status=400)
+        if not self.server.validate(data["user"], data["token"]):
+            return web.Response(status=401)
+        if not data["user"] == "manager":
+            return web.Response(status=401)
+
+        rval = self.server.replaceMissingIDPage(
+            data["test"]
+        )
+        if rval[0]:
+            return web.json_response(rval, status=200)  # all fine
+        else:
+            if rval[1] == "owners":  # [False, "owners", owner_list]
+                return web.json_response(rval[2], status=409)
+            elif rval[1] == "unknown":
+                return web.Response(status=410)
+            else:
+                return web.Response(status=404)  # page not found at all
+
     async def replaceMissingHWQuestion(self, request):
         # can replace either by SID-lookup or test-number
         data = await request.json()
@@ -844,7 +868,6 @@ class UploadHandler:
                 Fails with 500 Internal Server Error if a test does not
                 exist.
         """
-        spec = self.server.testSpec
         paper_idx = request.match_info["papernum"]
         vers = self.server.DB.getQuestionVersions(paper_idx)
         if not vers:
@@ -939,6 +962,7 @@ class UploadHandler:
         router.add_put("/admin/collidingPages/{tpv}", self.uploadCollidingPage)
         router.add_put("/admin/missingTestPage", self.replaceMissingTestPage)
         router.add_put("/admin/missingDNMPage", self.replaceMissingDNMPage)
+        router.add_put("/admin/missingIDPage", self.replaceMissingIDPage)
         router.add_put("/admin/missingHWQuestion", self.replaceMissingHWQuestion)
         router.add_delete("/admin/scannedPages", self.removeAllScannedPages)
         router.add_delete("/admin/singlePage", self.removeSinglePage)

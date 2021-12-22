@@ -55,6 +55,14 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     return val
 
 
+def replaceMissingIDPage(self, test_number):
+    val = self.DB.getSIDFromTest(test_number)
+    if val[0] is False:
+        return [False, "unknown"]
+    sid = val[1]
+    return self.createIDPageForHW(sid)
+
+
 def createIDPageForHW(self, sid):
     # ask DB if that SID belongs to a test and if that has an ID page
     val = self.DB.doesHWHaveIDPage(sid)
