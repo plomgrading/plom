@@ -776,7 +776,7 @@ class Manager(QWidget):
         except PlomUnidentifiedPaperException as err:
             ErrorMessage(
                 "Cannot substitute that page - that paper has not been identified: {}".format(
-                    err.args[-1]
+                    err
                 )
             ).exec_()
 
