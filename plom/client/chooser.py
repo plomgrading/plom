@@ -14,11 +14,12 @@ __license__ = "AGPL-3.0-or-later"
 
 from datetime import datetime
 import logging
+from packaging.version import Version
 from pathlib import Path
 import tempfile
 
-import toml
 import appdirs
+import toml
 
 import urllib3
 from PyQt5.QtCore import pyqtSlot
@@ -204,7 +205,7 @@ class Chooser(QDialog):
             else:
                 self.messenger = Messenger(server, mport)
         try:
-            self.messenger.start()
+            server_ver_str = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
             self.messenger = None
@@ -249,6 +250,24 @@ class Chooser(QDialog):
             ).exec_()
             self.messenger = None
             return
+
+        # fragile, use a regex?
+        srv_ver = server_ver_str.split()[3]
+        if Version(__version__) < Version(srv_ver):
+            msg = WarningQuestion(
+                f"Your client version {__version__} is older than the server {srv_ver}: you may want to consider upgrading.",
+                question="Do you want to continue?",
+                details=(
+                    f"You have Plom Client {__version__} with API {self.APIVersion}"
+                    + f"\nServer version string: “{server_ver_str}”\n"
+                    + f"Regex-extracted server version: {srv_ver}."
+                ),
+            )
+            if msg.exec_() != QMessageBox.Yes:
+                self.messenger.closeUser()
+                self.messenger.stop()
+                self.messenger = None
+                return
 
         # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
@@ -386,12 +405,25 @@ class Chooser(QDialog):
         if not self.messenger:
             self.messenger = Messenger(server, mport)
         try:
-            ver = self.messenger.start()
+            server_ver_str = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage("Could not connect to server.\n\n" "{}".format(e)).exec_()
             self.messenger = None
             return
-        self.ui.infoLabel.setText(ver)
+        self.ui.infoLabel.setText(server_ver_str)
+
+        # fragile, use a regex?
+        srv_ver = server_ver_str.split()[3]
+        if Version(__version__) < Version(srv_ver):
+            self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
+            ErrorMessage(
+                f"Your client version {__version__} is older than the server {srv_ver}: you may want to consider upgrading.",
+                details=(
+                    f"You have Plom Client {__version__} with API {self.APIVersion}"
+                    + f"\nServer version string: “{server_ver_str}”\n"
+                    + f"Regex-extracted server version: {srv_ver}."
+                ),
+            ).exec_()
 
         try:
             spec = self.messenger.get_spec()
