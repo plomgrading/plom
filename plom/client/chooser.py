@@ -254,14 +254,17 @@ class Chooser(QDialog):
         # fragile, use a regex?
         srv_ver = server_ver_str.split()[3]
         if Version(__version__) < Version(srv_ver):
-            msg = WarningQuestion(
-                f"Your client version {__version__} is older than the server {srv_ver}: you may want to consider upgrading.",
-                question="Do you want to continue?",
-                details=(
-                    f"You have Plom Client {__version__} with API {self.APIVersion}"
-                    + f"\nServer version string: “{server_ver_str}”\n"
-                    + f"Regex-extracted server version: {srv_ver}."
-                ),
+            # TODO: when we merge to dev, use WarningQuestion here, supports details
+            msg = SimpleMessage(
+                f"Your client version {__version__} is older than the server {srv_ver}:"
+                + " you may want to consider upgrading."
+                + "\n\nDo you want to continue?",
+                # question="Do you want to continue?",
+                # details=(
+                #    f"You have Plom Client {__version__} with API {self.APIVersion}"
+                #    + f"\nServer version string: “{server_ver_str}”\n"
+                #    + f"Regex-extracted server version: {srv_ver}."
+                # ),
             )
             if msg.exec_() != QMessageBox.Yes:
                 self.messenger.closeUser()
