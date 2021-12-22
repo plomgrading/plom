@@ -72,9 +72,27 @@ def createIDPageForHW(self, sid):
     return autogenerateIDPage(self, test_number, sid, student_name)
 
 
+def createDNMPagesForHW(self, sid):
+    # ask DB if that SID belongs to a test and if that has DNM Pages
+    val = self.DB.sidToTest(sid)
+    if val[0] is False:
+        log.debug(f"The sid {sid} does not correspond to any test in the DB.")
+        return False
+    test_number = val[1]
+    val = self.DB.getMissingDNMPages(test_number)
+    # return [False, "unknown"] or [True, [list of unscanned tpages from the dnm group]]
+    if val[0] is False:
+        log.debug(f"Test {test_number} does not correspond to a test in the database")
+        return False
+    needed_dnm_pages = val[1]
+    for page_number in needed_dnm_pages:
+        replaceMissingDNMPage(self, test_number, page_number)
+
+
 def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
-    # Create an ID page for that HW if it is needed
+    # Create an ID page and DNM for that HW if it is needed
     self.createIDPageForHW(sid)
+    self.createDNMPagesForHW(sid)
 
     # take extension from the client filename
     base, ext = os.path.splitext(fname)

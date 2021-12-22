@@ -113,6 +113,7 @@ class PlomDB:
         createNewHWPage,
         uploadTestPage,
         doesHWHaveIDPage,
+        geMissingDNMPages,
         uploadHWPage,
         uploadUnknownPage,
         uploadCollidingPage,
