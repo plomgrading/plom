@@ -14,11 +14,11 @@ __license__ = "AGPL-3.0-or-later"
 
 from datetime import datetime
 import logging
-from packaging.version import Version
 from pathlib import Path
 import tempfile
 
 import appdirs
+from packaging.version import Version
 import toml
 
 import urllib3
