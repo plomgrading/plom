@@ -64,7 +64,9 @@ def sigint_handler(*args):
     [1] https://stackoverflow.com/questions/4938723/what-is-the-correct-way-to-make-my-pyqt-application-quit-when-killed-from-the-co?noredirect=1&lq=1
     """
     sys.stderr.write("\r")
-    msg = WarningQuestion("Caught interrupt signal!", "Do you want to force-quit?")
+    msg = WarningQuestion(
+        None, "Caught interrupt signal!", "Do you want to force-quit?"
+    )
     msg.setDefaultButton(QMessageBox.No)
     if msg.exec_() == QMessageBox.Yes:
         QApplication.exit(42)

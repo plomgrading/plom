@@ -70,7 +70,7 @@ from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import (
     AddRemoveTagDialog,
     ErrorMessage,
-    SimpleMessage,
+    SimpleQuestion,
 )
 
 if platform.system() == "Darwin":
@@ -1565,10 +1565,11 @@ class MarkerClient(QWidget):
                 if (count % 10) == 0:
                     log.info("waiting for downloader to fill table...")
                 if count >= 100:
-                    msg = SimpleMessage(
+                    msg = SimpleQuestion(
+                        self,
                         "Still waiting for downloader to get the next image.  "
                         "Do you want to wait a few more seconds?\n\n"
-                        "(It is safe to choose 'no': the Annotator will simply close)"
+                        "(It is safe to choose 'no': the Annotator will simply close)",
                     )
                     if msg.exec_() == QMessageBox.No:
                         return False
@@ -1683,7 +1684,7 @@ class MarkerClient(QWidget):
         remarkFlag = False
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
-            msg = SimpleMessage("Continue marking paper?")
+            msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
@@ -1713,8 +1714,9 @@ class MarkerClient(QWidget):
                 if (count % 10) == 0:
                     log.info("waiting for downloader: {}".format(fnames))
                 if count >= 40:
-                    msg = SimpleMessage(
-                        "Still waiting for download.  Do you want to wait a bit longer?"
+                    msg = SimpleQuestion(
+                        self,
+                        "Still waiting for download.  Do you want to wait a bit longer?",
                     )
                     if msg.exec_() == QMessageBox.No:
                         return

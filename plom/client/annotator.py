@@ -68,7 +68,7 @@ from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import (
     ErrorMessage,
-    SimpleMessage,
+    SimpleQuestion,
     SimpleMessageCheckBox,
     NoAnswerBox,
 )
@@ -1543,7 +1543,7 @@ class Annotator(QWidget):
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
-                msg = SimpleMessage(msg)
+                msg = SimpleQuestion(self, msg)
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
@@ -1585,7 +1585,7 @@ class Annotator(QWidget):
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
-                msg = SimpleMessage(msg)
+                msg = SimpleQuestion(self, msg)
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
@@ -1639,9 +1639,10 @@ class Annotator(QWidget):
 
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene and self.scene.areThereAnnotations():
-            msg = SimpleMessage(
+            msg = SimpleQuestion(
+                self,
                 "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>"
+                "<p>Do you want to discard them and close the annotator?</p>",
             )
             if msg.exec_() == QMessageBox.No:
                 event.ignore()
