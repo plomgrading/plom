@@ -197,6 +197,31 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         test_ref.save()
 
 
+def doesHWHaveIDPage(self, sid):
+    iref = IDGroup.get_or_none(student_id=sid)
+    if iref is None:
+        return [False, "unknown"]
+    # we know that SID, get the test and student name.
+    tref = iref.test
+    if len(iref.idpages) > 0:
+        return [True, "idpage", tref.test_number, iref.student_name]
+    else:
+        return [False, "noid", tref.test_number, iref.student_name]
+
+
+def getMissingDNMPages(self, test_number):
+    tref = Test.get_or_none(test_number=test_number)
+    if tref is None:
+        return [False, "unknown"]
+    dref = tref.dnmgroups[0]
+    gref = dref.group
+    unscanned_list = []
+    for pref in gref.tpages:
+        if pref.scanned is False:
+            unscanned_list.append(pref.page_number)
+    return [True, unscanned_list]
+
+
 def uploadHWPage(
     self,
     sid,
@@ -487,8 +512,8 @@ def updateDNMGroup(self, dref):
     """Recreate the DNM pages of dnm-group, and check if all present.
     Set scanned flag accordingly.
     Since homework does not upload DNM pages, only check testpages.
-    Will fail if some, but not all, pages scanned.
-    Note - a DNM group can be empty.
+    Will fail if there is an unscanned tpage.
+    Note - a DNM group can be empty - then will succeed.
     """
     # get the parent-group of the dnm-group
     gref = dref.group
@@ -503,7 +528,7 @@ def updateDNMGroup(self, dref):
         if pref.scanned:
             DNMPage.create(dnmgroup=dref, image=pref.image, order=pref.page_number)
 
-    if True in scan_list and False in scan_list:  # some scanned, but not all.
+    if False in scan_list:  # some scanned, but not all.
         return False
     # all test pages scanned (or all unscanned), so set things ready to go.
     with plomdb.atomic():
@@ -694,10 +719,11 @@ def checkTestScanned(self, tref):
         elif gref.group_type == "d":
             if gref.scanned is False:
                 log.info(
-                    "DNM Group {} of test {} is not scanned - ignored.".format(
+                    "DNM Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
                     )
                 )
+                return False
         elif gref.group_type == "i":
             if gref.idgroups[0].identified:
                 log.info(
@@ -705,8 +731,7 @@ def checkTestScanned(self, tref):
                         gref.gid, tref.test_number
                     )
                 )
-            # CHANGE THIS (elif -> if) SO EVERYTHING NEEDS IDPAGE - needs HWFixes
-            elif not gref.scanned:
+            if not gref.scanned:
                 log.info(
                     "ID Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
@@ -935,7 +960,7 @@ def listBundles(self):
     return bundle_info
 
 
-## Bundle associated functions
+# ==== Bundle associated functions
 
 
 def getBundleFromImage(self, file_name):

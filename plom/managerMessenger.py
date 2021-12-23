@@ -18,6 +18,7 @@ from plom.plom_exceptions import (
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomOwnersLoggedInException,
+    PlomUnidentifiedPaperException,
     PlomRangeException,
     PlomTakenException,
 )
@@ -432,6 +433,61 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
                 raise PlomOwnersLoggedInException(response.json()) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def replaceMissingDNMPage(self, t, p):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                "/admin/missingDNMPage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": t,
+                    "page": p,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the page - this should not happen!"
+                ) from None
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def replaceMissingIDPage(self, t):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                "/admin/missingIDPage",
+                json={
+                    "user": self.user,
+                    "token": self.token,
+                    "test": t,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the page - this should not happen!"
+                ) from None
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomOwnersLoggedInException(response.json()) from None
+            if response.status_code == 410:
+                raise PlomUnidentifiedPaperException() from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
