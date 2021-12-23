@@ -886,7 +886,7 @@ class UploadHandler:
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
-    ## Some more bundle things
+    # Some more bundle things
 
     @authenticate_by_token_required_fields(["user", "filename"])
     def getBundleFromImage(self, data, request):
@@ -989,7 +989,4 @@ class UploadHandler:
         router.add_get("/admin/bundlePage", self.getPageFromBundle)
 
 
-##
-##
-##
 ##

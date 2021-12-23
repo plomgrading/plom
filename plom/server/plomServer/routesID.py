@@ -5,7 +5,6 @@
 
 import csv
 import os
-from pathlib import Path
 
 from aiohttp import web, MultipartWriter
 
@@ -97,7 +96,7 @@ class IDHandler:
         classlist = data["classlist"]
         # verify classlist: all rows must have non-empty ID
         for row in classlist:
-            if not "id" in row:
+            if "id" not in row:
                 raise web.HTTPBadRequest(reason="Every row must have an id")
             if not row["id"]:
                 raise web.HTTPBadRequest(reason="Every row must non-empty id")
