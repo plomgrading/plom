@@ -3,9 +3,9 @@
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import QTimer, Qt, QPointF
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPen, QColor, QBrush
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsTextItem, QGraphicsItem
+from PyQt5.QtWidgets import QGraphicsTextItem, QGraphicsItem
 
 from plom.client.tools.text import CommandMoveText
 

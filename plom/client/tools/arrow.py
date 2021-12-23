@@ -12,8 +12,6 @@ from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 from plom.client.tools.line import CommandLine, LineItem
 from plom.client.tools.move import CommandMoveItem
 
-from plom.client.tools.tool import DeleteObject
-
 
 class CommandArrow(CommandLine):
     def __init__(self, scene, pti, ptf):
