@@ -337,18 +337,14 @@ class UploadHandler:
 
     async def replaceMissingDNMPage(self, request):
         data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test", "page"]
-        ):
+        if not validate_required_fields(data, ["user", "token", "test", "page"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rval = self.server.replaceMissingDNMPage(
-            data["test"], data["page"]
-        )
+        rval = self.server.replaceMissingDNMPage(data["test"], data["page"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:
@@ -359,18 +355,14 @@ class UploadHandler:
 
     async def replaceMissingIDPage(self, request):
         data = await request.json()
-        if not validate_required_fields(
-            data, ["user", "token", "test"]
-        ):
+        if not validate_required_fields(data, ["user", "token", "test"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rval = self.server.replaceMissingIDPage(
-            data["test"]
-        )
+        rval = self.server.replaceMissingIDPage(data["test"])
         if rval[0]:
             return web.json_response(rval, status=200)  # all fine
         else:

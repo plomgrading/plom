@@ -760,7 +760,7 @@ class Manager(QWidget):
 
     def autogenerateIDPage(self, test_number):
         msg = SimpleMessage(
-            f'Are you sure you want to generate an ID for test {test_number}? You can only do this for homeworks or pre-named tests.'
+            f"Are you sure you want to generate an ID for test {test_number}? You can only do this for homeworks or pre-named tests."
         )
         if msg.exec_() == QMessageBox.No:
             return
