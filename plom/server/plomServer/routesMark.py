@@ -541,7 +541,7 @@ class MarkHandler:
         tag_text = data["tag_text"].strip()
 
         if not self.server.remove_tag(task, tag_text):
-            raise web.HTTPGone(reason=f"No such tag")
+            raise web.HTTPGone(reason="No such tag")
         return web.Response(status=200)
 
     # @routes.get("/all_tags")

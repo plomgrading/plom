@@ -110,7 +110,6 @@ class Server:
         replaceMissingHWQuestion,
         replaceMissingDNMPage,
         replaceMissingIDPage,
-        createIDPageForHW,
         autogenerateIDPage,
         removeAllScannedPages,
         removeSinglePage,
