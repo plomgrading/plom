@@ -38,12 +38,15 @@ def train_model():
     model = RandomForestClassifier()
     model.fit(X_train, y_train)
 
+    model_cache = Path("model_cache")
+    model_cache.mkdir(exist_ok=True)
+
     filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
-    with gzip.open(Path("model_cache") / filename, "wb") as f:
+    with gzip.open(model_cache / filename, "wb") as f:
         pickle.dump(model, f)
 
     # Now we are done, we will do a sanity check
-    with gzip.open(Path("model_cache") / filename, "rb") as f:
+    with gzip.open(model_cache / filename, "rb") as f:
         loaded_model = pickle.load(f)
     testing_predictions = loaded_model.predict(X_test)
     # score = model.score(X_test, y_test)
