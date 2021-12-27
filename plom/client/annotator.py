@@ -656,20 +656,34 @@ class Annotator(QWidget):
         testNumber = self.tgvID[:4]
         # TODO: maybe download should happen in Marker?
         image_md5_list = [x["md5"] for x in self.src_img_data]
-        if len(set(image_md5_list)) != len(image_md5_list):
-            s = dedent(
+        # Look for duplicates by first inverting the dict
+        repeats = {}
+        for i, md5 in enumerate(image_md5_list):
+            repeats.setdefault(md5, []).append(i)
+        repeats = {k: v for k, v in repeats.items() if len(v) > 1}
+        if repeats:
+            log.warning("Repeated pages in md5sum data: %s", repeats)
+            info = dedent(
                 """
-                Unexpectedly repeated md5sums: are there two identical pages
-                in the current annotator?  Is it allowed?  How did it happen?\n
-                Annotator's image_md5_list is {}\n
-                The src_img_data is {}\n
-                Consider filing a bug with this info!
-                """.format(
-                    image_md5_list, self.src_img_data
-                )
-            ).strip()
-            log.error(s)
-            ErrorMessage(s).exec_()
+                <p>This can happen with self-submitted work if a student
+                submits multiple copies of the same page.
+                Its probably harmless in that case, but if you see this
+                with scanned work, it might indicate a bug.</p>
+                <p>The repeated pages are:</p>
+                <ul>
+                """
+            )
+            for md5, pages in repeats.items():
+                info += f"<li>pages {pages} @ md5: {md5}</li>"
+            info += "</ul>"
+            ErrorMessage(
+                "Warning: duplicate pages detected!",
+                info=info,
+                info_preformatted=False,
+                details=f"Annotator's image_md5_list is\n  {image_md5_list}\n"
+                "The src_img_data is\n  {self.src_img_data}\n"
+                "Include this info if you think this is a bug!",
+            ).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         # do a deep copy of this list of dict - else hit #1690
         # keep original readonly?
