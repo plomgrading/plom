@@ -310,7 +310,7 @@ def sqrDistance(vect):
     return vect.x() * vect.x() + vect.y() * vect.y()
 
 
-def whichLineToDraw(g_rect, b_rect):
+def whichLineToDraw_original(g_rect, b_rect):
     """Get approximately shortest line between two shapes.
 
     More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
@@ -328,6 +328,55 @@ def whichLineToDraw(g_rect, b_rect):
                 bp = q
                 dd = dst
     return QLineF(bp, gp)
+
+
+def get_intersection_bw_rect_line(rec, lin):
+    """Return the intersection between a line and rectangle or None."""
+    if isinstance(rec, QPointF):
+        return None
+    x, y, w, h = rec.getRect()
+    yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    return None
+
+
+def whichLineToDraw(ghost, r):
+    """Get approximately shortest line between two shapes using a "center-to-centre construction.
+
+    args:
+        ghost (QRect/QPointF):
+        r (QRect):
+
+    returns:
+        QLineF
+    """
+    if isinstance(ghost, QPointF):
+        A = ghost
+    else:
+        x, y, w, h = ghost.getRect()
+        A = QPointF(x + w / 2, y + h / 2)
+    if isinstance(r, QPointF):
+        B = r
+    else:
+        x, y, w, h = r.getRect()
+        B = QPointF(x + w / 2, y + h / 2)
+    CtoC = QLineF(A, B)
+    A = get_intersection_bw_rect_line(ghost, CtoC)
+    B = get_intersection_bw_rect_line(r, CtoC)
+    if A is None or B is None:
+        # probably inside
+        return whichLineToDraw_original(ghost, r)
+    return QLineF(A, B)
 
 
 class PageScene(QGraphicsScene):
