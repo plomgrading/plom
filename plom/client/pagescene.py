@@ -315,8 +315,8 @@ def whichLineToDraw(g_rect, b_rect):
 
     More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
     """
-    gvert = shape_to_sample_points_on_boundary(g_rect)
-    bvert = shape_to_sample_points_on_boundary(b_rect)
+    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
+    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
     gp = gvert[0]
     bp = bvert[0]
     dd = sqrDistance(gp - bp)
