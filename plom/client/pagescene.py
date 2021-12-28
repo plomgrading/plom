@@ -279,21 +279,30 @@ mouseRelease = {
 minimum_box_side_length = 24
 
 
-def shape_to_sample_points_on_boundary(a_rect):
-    """given a rectangle, return list of vertices in the middle of each side.
-    given a point - just return that point
+def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
+    """Return some points on the perimeter of a shape.
+
+    If the input is a point, just return that point.
+
+    If the input is a rectangle, dy default, list of vertices in the
+    middle of each side, but this can be adjusted.
     """
-    if isinstance(a_rect, QRectF):
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        if corners:
+            trange = range(0, N + 1)
+        else:
+            trange = range(1, N)
         return [
-            (a_rect.topLeft() + a_rect.topRight()) / 2,
-            (a_rect.bottomRight() + a_rect.topRight()) / 2,
-            (a_rect.bottomLeft() + a_rect.bottomRight()) / 2,
-            (a_rect.bottomLeft() + a_rect.topLeft()) / 2,
+            *(QPointF(x + w * n / N, y) for n in trange),
+            *(QPointF(x + w * n / N, y + h) for n in trange),
+            *(QPointF(x, y + h * n / N) for n in range(1, N)),
+            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
         ]
-    elif isinstance(a_rect, QPointF):  # is a point
-        return [a_rect]
+    elif isinstance(shape, QPointF):
+        return [shape]
     else:
-        raise ValueError
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
 
 
 def sqrDistance(vect):
