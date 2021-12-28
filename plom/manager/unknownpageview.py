@@ -343,7 +343,6 @@ class UnknownViewWindow(QDialog):
         self.test = 0
         self.pq = 0
         self.sid = ""
-        
 
     def initUI(self, fnames):
         # Grab an UnknownView widget (QGraphicsView)

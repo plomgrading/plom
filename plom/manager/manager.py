@@ -75,8 +75,6 @@ from plom.aliceBob import simple_password
 from plom import __version__, Plom_API_Version, Default_Port
 
 
-
-
 class UserDialog(QDialog):
     """Simple dialog to enter username and password"""
 
@@ -195,9 +193,9 @@ class QVHistogram(QDialog):
             gp.addWidget(pb)
         gg.addLayout(gp)
         self.eG.setLayout(gg)
-        grid.addWidget(self.eG,0,0)
+        grid.addWidget(self.eG, 0, 0)
 
-        max_number_of_rows = 4 # should depend on user's viewport
+        max_number_of_rows = 4  # should depend on user's viewport
         current_row = 1
         current_column = 0
 
@@ -352,7 +350,6 @@ class ProgressBox(QGroupBox):
 
 
 class Manager(QWidget):
-
     def __init__(
         self, parent, *, server=None, user=None, password=None, manager_msgr=None
     ):
