@@ -350,7 +350,7 @@ def get_intersection_bw_rect_line(rec, lin):
     return None
 
 
-def whichLineToDraw(ghost, r):
+def whichLineToDraw_centre(ghost, r):
     """Get approximately shortest line between two shapes using a "center-to-centre construction.
 
     args:
@@ -377,6 +377,120 @@ def whichLineToDraw(ghost, r):
         # probably inside
         return whichLineToDraw_original(ghost, r)
     return QLineF(A, B)
+
+
+def whichLineToDraw(g, r):
+    """Choose an aesthetically-pleasing line between the rectangle and the ghost.
+
+    args:
+        g (QRect/QPointF): The ghost, can be rect or a point.
+        r (QRect):
+
+    returns:
+        QLineF
+    """
+    if isinstance(g, QPointF):
+        g = QRectF(g, g)
+
+    # slope parameter > 1, determines the angle before we unsnap from corners
+    slurp = 4
+
+    # We cut up the space around "r" into four regions by the eikonal solution
+    # shocks.  Then we process each of those 4 regions.  For example the "top"
+    # region looks like this, showing also two ghosts that should be considered
+    # "in" this region.
+    #                  /
+    # \            +----+
+    # +---+       g| /  |
+    # | \ |g       +----+
+    # +---+        /
+    #     \       /
+    #      +-----+
+    #      |  r  |
+    #      +-----+
+    if (
+        g.bottom() <= r.top()
+        and g.bottom() <= r.top() - (g.left() - r.right())
+        and g.bottom() <= r.top() - (r.left() - g.right())
+    ):
+        crit1 = r.left() - (r.top() - g.bottom()) / slurp
+        crit2 = r.right() + (r.top() - g.bottom()) / slurp
+        if g.right() <= crit1:
+            lin = QLineF(r.topLeft(), g.bottomRight())
+        elif g.left() >= crit2:
+            lin = QLineF(r.topRight(), g.bottomLeft())
+        else:
+            t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
+            lin = QLineF(
+                r.left() + t * r.width(),
+                r.top(),
+                g.left() + (1 - t) * g.width(),
+                g.bottom(),
+            )
+        return lin
+
+    #     |   r |
+    #     +-----+
+    #    /       \
+    # --/+        +---
+    #  / |g      g|\
+    if (
+        g.top() >= r.bottom()
+        and g.top() - r.bottom() >= g.left() - r.right()
+        and g.top() - r.bottom() >= r.left() - g.right()
+    ):
+        crit1 = r.left() - (g.top() - r.bottom()) / slurp
+        crit2 = r.right() + (g.top() - r.bottom()) / slurp
+        if g.right() <= crit1:
+            lin = QLineF(r.bottomLeft(), g.topRight())
+        elif g.left() >= crit2:
+            lin = QLineF(r.bottomRight(), g.topLeft())
+        else:
+            t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
+            lin = QLineF(
+                r.left() + t * r.width(),
+                r.bottom(),
+                g.left() + (1 - t) * g.width(),
+                g.top(),
+            )
+        return lin
+
+    if g.left() >= r.right():
+        crit1 = r.top() - (g.left() - r.right()) / slurp
+        crit2 = r.bottom() + (g.left() - r.right()) / slurp
+        if g.bottom() <= crit1:
+            lin = QLineF(r.topRight(), g.bottomLeft())
+        elif g.top() >= crit2:
+            lin = QLineF(r.bottomRight(), g.topLeft())
+        else:
+            t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
+            lin = QLineF(
+                r.right(),
+                r.top() + t * r.height(),
+                g.left(),
+                g.top() + (1 - t) * g.height(),
+            )
+        return lin
+
+    if g.right() <= r.left():
+        crit1 = r.top() - (r.left() - g.right()) / slurp
+        crit2 = r.bottom() + (r.left() - g.right()) / slurp
+        if g.bottom() <= crit1:
+            lin = QLineF(r.topLeft(), g.bottomRight())
+        elif g.top() >= crit2:
+            lin = QLineF(r.bottomLeft(), g.topRight())
+        else:
+            t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
+            lin = QLineF(
+                r.left(),
+                r.top() + t * r.height(),
+                g.right(),
+                g.top() + (1 - t) * g.height(),
+            )
+        return lin
+
+    # TODO: maybe return None?  but needs reworking
+    return whichLineToDraw_original(g, r)
 
 
 class PageScene(QGraphicsScene):
