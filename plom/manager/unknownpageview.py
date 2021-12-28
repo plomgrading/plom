@@ -343,6 +343,7 @@ class UnknownViewWindow(QDialog):
         self.test = 0
         self.pq = 0
         self.sid = ""
+        
 
     def initUI(self, fnames):
         # Grab an UnknownView widget (QGraphicsView)
@@ -378,13 +379,13 @@ class UnknownViewWindow(QDialog):
         grid.addWidget(self.cancelB, 20, 20)
         grid.addWidget(self.maxNormB, 1, 20)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
         self.theta = 0
         self.initTabs()
+        self.show()
 
     def updateImage(self, fnames):
         """Pass file to the view to update the image"""

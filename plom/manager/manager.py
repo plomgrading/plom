@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2021 Elizabeth Xiao
 
 from collections import defaultdict
 import os
@@ -72,6 +73,8 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
+
+
 
 
 class UserDialog(QDialog):
@@ -160,7 +163,7 @@ class QVHistogram(QDialog):
         super().__init__()
         self.question = q
         self.version = v
-        self.setWindowTitle("Histograms")
+        self.setWindowTitle("Histograms for question {} version {}".format(q, v))
         self.hist = hist
         tot = 0
         mx = 0
@@ -175,8 +178,7 @@ class QVHistogram(QDialog):
                     dist[im] = 0
                 dist[im] += s
 
-        grid = QVBoxLayout()
-        grid.addWidget(QLabel("Histograms for question {} version {}".format(q, v)))
+        grid = QGridLayout()
 
         self.eG = QGroupBox("All markers")
         gg = QVBoxLayout()
@@ -193,7 +195,11 @@ class QVHistogram(QDialog):
             gp.addWidget(pb)
         gg.addLayout(gp)
         self.eG.setLayout(gg)
-        grid.addWidget(self.eG)
+        grid.addWidget(self.eG,0,0)
+
+        max_number_of_rows = 4 # should depend on user's viewport
+        current_row = 1
+        current_column = 0
 
         self.uG = {}
         for u in self.hist:
@@ -216,7 +222,10 @@ class QVHistogram(QDialog):
                 gp.addWidget(pb)
             gg.addLayout(gp)
             self.uG[u].setLayout(gg)
-            grid.addWidget(self.uG[u])
+            grid.addWidget(self.uG[u], current_row, current_column)
+            current_row = (current_row + 1) % max_number_of_rows
+            if current_row == 0:
+                current_column = current_column + 1
 
         self.cB = QPushButton("&Close")
         self.cB.clicked.connect(self.accept)
@@ -343,6 +352,7 @@ class ProgressBox(QGroupBox):
 
 
 class Manager(QWidget):
+
     def __init__(
         self, parent, *, server=None, user=None, password=None, manager_msgr=None
     ):
@@ -389,6 +399,8 @@ class Manager(QWidget):
         else:
             if password:
                 self.login()
+
+        self.has_unperformed_action = False
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
@@ -548,11 +560,20 @@ class Manager(QWidget):
         self.initDiscardTab()
 
     def refreshScanTab(self):
+        if self.has_unperformed_action:
+            msg = SimpleMessage(
+                "You have not performed your actions in the Unknown Pages section.\n"
+                "Are you sure you want to refresh the scanning tab?"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+
         self.refreshIList()
         self.refreshSList()
         self.refreshUList()
         self.refreshCList()
         self.refreshDList()
+        self.has_unperformed_action = False
 
     def initScanStatusTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -859,6 +880,7 @@ class Manager(QWidget):
                         resources.read_binary(plom.client.icons, "manager_hw.svg")
                     )
                     self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            self.has_unperformed_action = True
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):

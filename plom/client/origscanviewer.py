@@ -919,8 +919,8 @@ class WholeTestView(QDialog):
 
         self.setMinimumSize(500, 500)
 
-        self.show()
         self.buildTabs()
+        self.show()
 
     def swapMaxNorm(self):
         """Toggles the window size between max and normal"""
