@@ -395,6 +395,46 @@ def whichLineToDraw(g, r):
     # slope parameter > 1, determines the angle before we unsnap from corners
     slurp = 4
 
+    def transf(t):
+        """Transform function for the box.
+
+        Each side is mapped to t in [0, 1] which is used for a linear
+        interpolation, but we can pass t through a transform.  Some overlap
+        between this and slurp.
+
+        Here we implement a p.w. linear regularized double-step.
+        """
+        p = 0.15
+        assert p < 0.25
+        if t <= p:
+            return 0.0
+        if t <= 0.5 - p:
+            return (0.5 / (0.5 - p - p)) * (t - p)
+        if t <= 0.5 + p:
+            return 0.5
+        if t <= 1 - p:
+            return (0.5 / (0.5 - p - p)) * (t - (0.5 + p)) + 0.5
+        else:
+            return 1.0
+
+    def ghost_transf(t):
+        """Transform function for the ghost.
+
+        Each side is mapped to t in [0, 1] which is used for a linear
+        interpolation, but we can pass t through a transform.  Some overlap
+        between this and slurp.
+
+        Here we implement a p.w. linear regularized double-step.
+        """
+        p = 0.1
+        assert p < 0.5
+        if t <= p:
+            return (0.5 / p) * t
+        if t <= 1 - p:
+            return 0.5
+        else:
+            return (0.5 / p) * (t - (1 - p)) + 0.5
+
     # We cut up the space around "r" into four regions by the eikonal solution
     # shocks.  Then we process each of those 4 regions.  For example the "top"
     # region looks like this, showing also two ghosts that should be considered
@@ -421,10 +461,12 @@ def whichLineToDraw(g, r):
             t = 1
         else:
             t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
+        tt = transf(t)
+        gt = ghost_transf(t)
         return QLineF(
-            r.left() + t * r.width(),
+            r.left() + tt * r.width(),
             r.top(),
-            g.left() + (1 - t) * g.width(),
+            g.left() + (1 - gt) * g.width(),
             g.bottom(),
         )
 
@@ -462,11 +504,13 @@ def whichLineToDraw(g, r):
             t = 1
         else:
             t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
+        tt = transf(t)
+        gt = ghost_transf(t)
         return QLineF(
             r.right(),
-            r.top() + t * r.height(),
+            r.top() + tt * r.height(),
             g.left(),
-            g.top() + (1 - t) * g.height(),
+            g.top() + (1 - gt) * g.height(),
         )
 
     if g.right() <= r.left():
