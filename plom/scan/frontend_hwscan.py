@@ -284,31 +284,20 @@ def processMissing(server, password, *, yes_flag):
 
     Student may not upload pages for questions they don't answer. This function
     asks server for list of all missing hw-questions from all tests that have
-    been used (but are not complete).
+    been used (but are not complete). The server only returns questions that
+    have neither hw-pages nor t-pages - so any partially scanned tests with
+    tpages are avoided.
 
-    For each test we check if any test-pages are present and skip if they are.
 
-    For each remaining test we replace each missing question with a 'question not submitted' page. The user will be prompted in each case unless the 'yes_flag' is set.
+    For each remaining test we replace each missing question with a 'question not submitted' page. 
+    The user will be prompted in each case unless the 'yes_flag' is set.
     """
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
-    # returns list for each test [scanned-tpages-present boolean, sid, missing-question-numbers]
-    reallyMissing = {}  # new list of those without tpages present
+    # returns list for each test [sid, list of missing hwq]
     for t in missingHWQ:
-        if missingHWQ[t][0]:  # scanned test-pages present, so no replacing.
-            print(
-                "Student {}'s paper has tpages present, so skipping".format(
-                    missingHWQ[t][1]
-                )
-            )
-        else:
-            print(
-                "Student {} is missing questions {}".format(
-                    missingHWQ[t][1], missingHWQ[t][2:]
-                )
-            )
-            reallyMissing[t] = missingHWQ[t]
+        print(f"Student {missingHWQ[t][0]}'s paper is missing questions")
 
-    if len(reallyMissing) == 0:
+    if len(missingHWQ) == 0:
         print("All papers either complete or have scanned test-pages present.")
         return
 
@@ -318,8 +307,8 @@ def processMissing(server, password, *, yes_flag):
         print("Stopping.")
         return
 
-    for t in reallyMissing:
-        sid = reallyMissing[t][1]
-        for q in reallyMissing[t][2:]:
+    for t in missingHWQ:
+        sid = missingHWQ[t][0]
+        for q in missingHWQ[t][1:]:
             print("Replacing q{} of sid {}".format(q, sid))
             checkScanStatus.replaceMissingHWQ(server, password, sid, q)
