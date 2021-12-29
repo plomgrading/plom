@@ -416,18 +416,17 @@ def whichLineToDraw(g, r):
         crit1 = r.left() - (r.top() - g.bottom()) / slurp
         crit2 = r.right() + (r.top() - g.bottom()) / slurp
         if g.right() <= crit1:
-            lin = QLineF(r.topLeft(), g.bottomRight())
+            t = 0
         elif g.left() >= crit2:
-            lin = QLineF(r.topRight(), g.bottomLeft())
+            t = 1
         else:
             t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
-            lin = QLineF(
-                r.left() + t * r.width(),
-                r.top(),
-                g.left() + (1 - t) * g.width(),
-                g.bottom(),
-            )
-        return lin
+        return QLineF(
+            r.left() + t * r.width(),
+            r.top(),
+            g.left() + (1 - t) * g.width(),
+            g.bottom(),
+        )
 
     #     |   r |
     #     +-----+
@@ -442,52 +441,49 @@ def whichLineToDraw(g, r):
         crit1 = r.left() - (g.top() - r.bottom()) / slurp
         crit2 = r.right() + (g.top() - r.bottom()) / slurp
         if g.right() <= crit1:
-            lin = QLineF(r.bottomLeft(), g.topRight())
+            t = 1
         elif g.left() >= crit2:
-            lin = QLineF(r.bottomRight(), g.topLeft())
+            t = 0
         else:
             t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
-            lin = QLineF(
-                r.left() + t * r.width(),
-                r.bottom(),
-                g.left() + (1 - t) * g.width(),
-                g.top(),
-            )
-        return lin
+        return QLineF(
+            r.left() + t * r.width(),
+            r.bottom(),
+            g.left() + (1 - t) * g.width(),
+            g.top(),
+        )
 
     if g.left() >= r.right():
         crit1 = r.top() - (g.left() - r.right()) / slurp
         crit2 = r.bottom() + (g.left() - r.right()) / slurp
         if g.bottom() <= crit1:
-            lin = QLineF(r.topRight(), g.bottomLeft())
+            t = 0
         elif g.top() >= crit2:
-            lin = QLineF(r.bottomRight(), g.topLeft())
+            t = 1
         else:
             t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
-            lin = QLineF(
-                r.right(),
-                r.top() + t * r.height(),
-                g.left(),
-                g.top() + (1 - t) * g.height(),
-            )
-        return lin
+        return QLineF(
+            r.right(),
+            r.top() + t * r.height(),
+            g.left(),
+            g.top() + (1 - t) * g.height(),
+        )
 
     if g.right() <= r.left():
         crit1 = r.top() - (r.left() - g.right()) / slurp
         crit2 = r.bottom() + (r.left() - g.right()) / slurp
         if g.bottom() <= crit1:
-            lin = QLineF(r.topLeft(), g.bottomRight())
+            t = 0
         elif g.top() >= crit2:
-            lin = QLineF(r.bottomLeft(), g.topRight())
+            t = 1
         else:
             t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
-            lin = QLineF(
-                r.left(),
-                r.top() + t * r.height(),
-                g.right(),
-                g.top() + (1 - t) * g.height(),
-            )
-        return lin
+        return QLineF(
+            r.left(),
+            r.top() + t * r.height(),
+            g.right(),
+            g.top() + (1 - t) * g.height(),
+        )
 
     # TODO: maybe return None?  but needs reworking
     return whichLineToDraw_original(g, r)
