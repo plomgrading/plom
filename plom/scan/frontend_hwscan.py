@@ -289,7 +289,7 @@ def processMissing(server, password, *, yes_flag):
     tpages are avoided.
 
 
-    For each remaining test we replace each missing question with a 'question not submitted' page. 
+    For each remaining test we replace each missing question with a 'question not submitted' page.
     The user will be prompted in each case unless the 'yes_flag' is set.
     """
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
