@@ -63,7 +63,7 @@ def clean_non_canvas_csv(csv_file_name):
     # strip excess whitespace from column names
     df.rename(columns=lambda x: x.strip(), inplace=True)
 
-    if not "id" in df.columns:
+    if "id" not in df.columns:
         raise ValueError('no "id" column is present')
     print('"id" column present')
     # strip excess whitespace

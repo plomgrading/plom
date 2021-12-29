@@ -24,7 +24,6 @@ else:
 
 from PyQt5.QtCore import (
     Qt,
-    QSize,
     QTimer,
     QElapsedTimer,
     pyqtSlot,
@@ -32,7 +31,6 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtGui import (
     QCursor,
-    QGuiApplication,
     QIcon,
     QKeySequence,
     QPixmap,
@@ -41,11 +39,9 @@ from PyQt5.QtWidgets import (
     QAction,
     QActionGroup,
     QDialog,
-    QInputDialog,
     QWidget,
     QMenu,
     QMessageBox,
-    QPushButton,
     QShortcut,
     QToolButton,
     QFileDialog,

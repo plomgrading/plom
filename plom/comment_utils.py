@@ -3,8 +3,6 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 import random
-import time
-import copy
 
 
 def generate_new_comment_ID(num_of_digits=12):

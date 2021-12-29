@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 
-from aiohttp import web, MultipartWriter, MultipartReader
+from aiohttp import web
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
 

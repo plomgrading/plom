@@ -245,7 +245,7 @@ def reassemble_all_papers(
 
 
 def main(testnum, server, password, skip):
-    if testnum == None:
+    if testnum is None:
         reassemble_all_papers(server, password, skip=skip)
     else:
         reassemble_one_paper(testnum, server, password, skip=skip)
