@@ -424,7 +424,7 @@ def whichLineToDraw(g, r):
         interpolation, but we can pass t through a transform.  Some overlap
         between this and slurp.
 
-        Here we implement a p.w. linear regularized double-step.
+        Here we implement a flat middle at 0.5 with a ramp at each end.
         """
         p = 0.1
         assert p < 0.5
@@ -488,10 +488,12 @@ def whichLineToDraw(g, r):
             t = 1
         else:
             t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
+        tt = transf(t)
+        gt = ghost_transf(t)
         return QLineF(
-            r.left() + t * r.width(),
+            r.left() + tt * r.width(),
             r.bottom(),
-            g.left() + (1 - t) * g.width(),
+            g.left() + (1 - gt) * g.width(),
             g.top(),
         )
 
@@ -522,11 +524,13 @@ def whichLineToDraw(g, r):
             t = 1
         else:
             t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
+        tt = transf(t)
+        gt = ghost_transf(t)
         return QLineF(
             r.left(),
-            r.top() + t * r.height(),
+            r.top() + tt * r.height(),
             g.right(),
-            g.top() + (1 - t) * g.height(),
+            g.top() + (1 - gt) * g.height(),
         )
 
     # TODO: maybe return None?  but needs reworking
