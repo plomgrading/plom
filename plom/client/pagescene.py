@@ -455,20 +455,24 @@ def whichLineToDraw(g, r):
     ):
         crit1 = r.left() - (r.top() - g.bottom()) / slurp
         crit2 = r.right() + (r.top() - g.bottom()) / slurp
+        gmid = g.left() + g.width() / 2
         if g.right() <= crit1:
             t = 0
+            gx = g.right()
+        elif gmid <= crit1:
+            t = 0
+            gx = crit1
         elif g.left() >= crit2:
             t = 1
+            gx = g.left()
+        elif gmid >= crit2:
+            t = 1
+            gx = crit2
         else:
             t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
-        tt = transf(t)
-        gt = ghost_transf(t)
-        return QLineF(
-            r.left() + tt * r.width(),
-            r.top(),
-            g.left() + (1 - gt) * g.width(),
-            g.bottom(),
-        )
+            gx = gmid
+        t = transf(t)
+        return QLineF(r.left() + t * r.width(), r.top(), gx, g.bottom())
 
     #     |   r |
     #     +-----+
@@ -500,20 +504,24 @@ def whichLineToDraw(g, r):
     if g.left() >= r.right():
         crit1 = r.top() - (g.left() - r.right()) / slurp
         crit2 = r.bottom() + (g.left() - r.right()) / slurp
+        gmid = g.top() + g.height() / 2
         if g.bottom() <= crit1:
             t = 0
+            gy = g.bottom()
+        elif gmid <= crit1:
+            t = 0
+            gy = crit1
         elif g.top() >= crit2:
             t = 1
+            gy = g.top()
+        elif gmid >= crit2:
+            t = 1
+            gy = crit2
         else:
             t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
-        tt = transf(t)
-        gt = ghost_transf(t)
-        return QLineF(
-            r.right(),
-            r.top() + tt * r.height(),
-            g.left(),
-            g.top() + (1 - gt) * g.height(),
-        )
+            gy = gmid
+        t = transf(t)
+        return QLineF(r.right(), r.top() + t * r.height(), g.left(), gy)
 
     if g.right() <= r.left():
         crit1 = r.top() - (r.left() - g.right()) / slurp
