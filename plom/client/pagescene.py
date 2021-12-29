@@ -441,9 +441,9 @@ def whichLineToDraw(g, r):
         crit1 = r.left() - (g.top() - r.bottom()) / slurp
         crit2 = r.right() + (g.top() - r.bottom()) / slurp
         if g.right() <= crit1:
-            t = 1
-        elif g.left() >= crit2:
             t = 0
+        elif g.left() >= crit2:
+            t = 1
         else:
             t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
         return QLineF(
