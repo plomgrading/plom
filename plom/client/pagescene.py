@@ -417,24 +417,6 @@ def whichLineToDraw(g, r):
         else:
             return 1.0
 
-    def ghost_transf(t):
-        """Transform function for the ghost.
-
-        Each side is mapped to t in [0, 1] which is used for a linear
-        interpolation, but we can pass t through a transform.  Some overlap
-        between this and slurp.
-
-        Here we implement a flat middle at 0.5 with a ramp at each end.
-        """
-        p = 0.1
-        assert p < 0.5
-        if t <= p:
-            return (0.5 / p) * t
-        if t <= 1 - p:
-            return 0.5
-        else:
-            return (0.5 / p) * (t - (1 - p)) + 0.5
-
     # We cut up the space around "r" into four regions by the eikonal solution
     # shocks.  Then we process each of those 4 regions.  For example the "top"
     # region looks like this, showing also two ghosts that should be considered
@@ -486,20 +468,24 @@ def whichLineToDraw(g, r):
     ):
         crit1 = r.left() - (g.top() - r.bottom()) / slurp
         crit2 = r.right() + (g.top() - r.bottom()) / slurp
+        gmid = g.left() + g.width() / 2
         if g.right() <= crit1:
             t = 0
+            gx = g.right()
+        elif gmid <= crit1:
+            t = 0
+            gx = crit1
         elif g.left() >= crit2:
             t = 1
+            gx = g.left()
+        elif gmid >= crit2:
+            t = 1
+            gx = crit2
         else:
-            t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
-        tt = transf(t)
-        gt = ghost_transf(t)
-        return QLineF(
-            r.left() + tt * r.width(),
-            r.bottom(),
-            g.left() + (1 - gt) * g.width(),
-            g.top(),
-        )
+            t = (gmid - crit1) / (crit2 - crit1)
+            gx = gmid
+        t = transf(t)
+        return QLineF(r.left() + t * r.width(), r.bottom(), gx, g.top())
 
     if g.left() >= r.right():
         crit1 = r.top() - (g.left() - r.right()) / slurp
@@ -526,20 +512,25 @@ def whichLineToDraw(g, r):
     if g.right() <= r.left():
         crit1 = r.top() - (r.left() - g.right()) / slurp
         crit2 = r.bottom() + (r.left() - g.right()) / slurp
+        gmid = g.top() + g.height() / 2
         if g.bottom() <= crit1:
             t = 0
+            gy = g.bottom()
+        elif gmid <= crit1:
+            t = 0
+            gy = crit1
         elif g.top() >= crit2:
             t = 1
+            gy = g.top()
+        elif gmid >= crit2:
+            t = 1
+            gy = crit2
         else:
-            t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
-        tt = transf(t)
-        gt = ghost_transf(t)
-        return QLineF(
-            r.left(),
-            r.top() + tt * r.height(),
-            g.right(),
-            g.top() + (1 - gt) * g.height(),
-        )
+            t = (gmid - crit1) / (crit2 - crit1)
+            gy = gmid
+        print((t, gy, gmid))
+        t = transf(t)
+        return QLineF(r.left(), r.top() + t * r.height(), g.right(), gy)
 
     # TODO: maybe return None?  but needs reworking
     return whichLineToDraw_original(g, r)
