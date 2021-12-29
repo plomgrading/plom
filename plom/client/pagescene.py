@@ -469,7 +469,7 @@ def whichLineToDraw(g, r):
             t = 1
             gx = crit2
         else:
-            t = (g.left() - crit1 + g.width()) / (crit2 - crit1 + g.width())
+            t = (gmid - crit1) / (crit2 - crit1)
             gx = gmid
         t = transf(t)
         return QLineF(r.left() + t * r.width(), r.top(), gx, g.bottom())
@@ -518,7 +518,7 @@ def whichLineToDraw(g, r):
             t = 1
             gy = crit2
         else:
-            t = (g.top() - crit1 + g.height()) / (crit2 - crit1 + g.height())
+            t = (gmid - crit1) / (crit2 - crit1)
             gy = gmid
         t = transf(t)
         return QLineF(r.right(), r.top() + t * r.height(), g.left(), gy)
