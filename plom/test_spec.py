@@ -241,3 +241,10 @@ def test_spec_str_missing_select_in_q1():
     s.verifySpec(verbose=False)
     st = str(s)
     assert "shuffle*" not in st
+
+
+def test_spec_zero_question_issue617():
+    s = SpecVerifier.demo()
+    s["question"]["1"]["mark"] = 0
+    with raises(ValueError):
+        s.verify()
