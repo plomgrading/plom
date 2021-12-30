@@ -45,7 +45,6 @@ pages = [2]  # can be an empty list or omitted
 [question.1]
 pages = [3]
 mark = 5
-select = "shuffle"
 
 [question.2]
 label = "Q(2)"
