@@ -24,7 +24,7 @@ class PlomBundleImageDuplicationException(Exception):
         Exception.__init__(self, *args, **kwargs)
 
 
-## - create an image and return the reference
+# create an image and return the reference
 def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order):
     # todo = this should check for existence of (bundle_ref, bundle_order) before building.
     # if exists then send fail message.
@@ -122,7 +122,7 @@ def uploadTestPage(
                 original_name, test_number, page_number, version
             )
         )
-        self.updateTestAfterChange(tref)
+        self.updateTestAfterChange(tref, group_refs=[pref.group])
         return [
             True,
             "success",
@@ -166,9 +166,7 @@ def replaceMissingTestPage(
         "__replacements__system__",
         bundle_order,
     )
-    if rval[0]:  # success - so trigger an update.
-        tref = Test.get(test_number=test_number)
-        self.updateTestAfterChange(tref)
+    # uploadTestPage does an test-update for us - so we don't have to do it here.
     return rval
 
 
@@ -297,8 +295,8 @@ def uploadHWPage(
             )
         )
         self.createNewHWPage(tref, qref, tmp_order, image_ref)
-        # now update the test after this change
-        self.updateTestAfterChange(tref)
+        # now update the test after this change - only need to update the single group
+        self.updateTestAfterChange(tref, group_refs=[qref.group])
     return [True]
 
 
@@ -377,7 +375,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
     # create the associated HW page
     self.createNewHWPage(tref, qref, order, image_ref)
     # and do an update.
-    self.updateTestAfterChange(tref)
+    self.updateTestAfterChange(tref, group_refs=[qref.group])
 
     return [True]
 
@@ -741,12 +739,17 @@ def checkTestScanned(self, tref):
     return True
 
 
-def updateTestAfterChange(self, tref):
+def updateTestAfterChange(self, tref, group_refs=None):
     """The given test has changed (page upload/delete) and so its groups need to be updated."""
 
-    # update each group in the test
-    for gref in tref.groups:
-        self.updateGroupAfterChange(gref)
+    # if group_refs supplied then update just those groups
+    if group_refs:
+        for gref in group_refs:
+            self.updateGroupAfterChange(gref)
+    else:  # update all the groups in the test
+        # update each group in the test
+        for gref in tref.groups:
+            self.updateGroupAfterChange(gref)
 
     # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
@@ -796,6 +799,8 @@ def removeScannedTestPage(self, test_number, page_number):
         gref = pref.group
         gref.scanned = False
         gref.save()
+    # TODO - update the group to which this tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
     self.updateTestAfterChange(tref)
     log.info(f"Removed t-page {page_number} of test {test_number} and updated test.")
     return [True, f"Removed tpage-{page_number} form test {test_number}."]
@@ -833,6 +838,8 @@ def removeScannedHWPage(self, test_number, question, order):
         gref = pref.group
         gref.scanned = False
         gref.save()
+    # TODO - update the group to which this tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
     self.updateTestAfterChange(tref)
     log.info(
         f"Removed hwpage {question}.{order} of test {test_number} and updated test."
@@ -872,6 +879,8 @@ def removeScannedEXPage(self, test_number, question, order):
         gref = pref.group
         gref.scanned = False
         gref.save()
+    # TODO - update the group to which this tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
     self.updateTestAfterChange(tref)
     log.info(
         f"Removed expage {question}.{order} of test {test_number} and updated test."
