@@ -204,3 +204,40 @@ def test_spec_invalid_donotmark():
     with raises(ValueError) as e:
         SpecVerifier(r).verifySpec(verbose=False)
     assert "larger than" in e.value.args[0]
+
+
+def test_spec_str():
+    st = str(SpecVerifier.demo())
+    assert st.startswith("Plom exam specification")
+
+
+def test_spec_str_missing_numberOfQuestions():
+    r = deepcopy(raw)
+    r.pop("numberOfQuestions")
+    s = SpecVerifier(r)
+    st = str(s)
+    assert "TBD*" in st
+    s.verifySpec(verbose=False)
+    st = str(s)
+    assert "TBD*" not in st
+
+
+def test_spec_str_missing_totalMarks():
+    r = deepcopy(raw)
+    r.pop("totalMarks")
+    s = SpecVerifier(r)
+    st = str(s)
+    assert "TBD*" in st
+    s.verifySpec(verbose=False)
+    st = str(s)
+    assert "TBD*" not in st
+
+
+def test_spec_str_missing_select_in_q1():
+    s = SpecVerifier.demo()
+    assert s["question"]["1"].get("select", None) is None
+    st = str(s)
+    assert "shuffle*" in st
+    s.verifySpec(verbose=False)
+    st = str(s)
+    assert "shuffle*" not in st

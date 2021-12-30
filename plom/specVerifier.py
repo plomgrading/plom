@@ -328,6 +328,7 @@ class SpecVerifier:
         )
 
     def __str__(self):
+        N = self.spec.get("numberOfQuestions", "TBD*")
         s = "Plom exam specification:\n  "
         s += "\n  ".join(
             (
@@ -343,23 +344,21 @@ class SpecVerifier:
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpage = {}".format(self.spec["idPage"]),
                 "Do not mark pages = {}".format(self.spec["doNotMark"]["pages"]),
-                "Number of questions to mark = {}".format(
-                    self.spec["numberOfQuestions"]
-                ),
+                f"Number of questions to mark = {N}"
             )
         )
         s += "\n"
-        tot = 0
-        for g in range(self.spec["numberOfQuestions"]):
+        for g in range(len(self.spec["question"])):
+            # TODO: replace with integers
             gs = str(g + 1)
-            tot += self.spec["question"][gs]["mark"]
             s += "    Question.{}: pages {}, selected as {}, worth {} marks\n".format(
                 gs,
                 self.spec["question"][gs]["pages"],
-                self.spec["question"][gs]["select"],
+                self.spec["question"][gs].get("select", "shuffle*"),
                 self.spec["question"][gs]["mark"],
             )
-        s += "  Test total = {} marks".format(tot)
+        K = self.spec.get("totalMarks", "TBD*")
+        s += f"  Test total = {K} marks"
         return s
 
     def get_public_spec_dict(self):
