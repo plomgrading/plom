@@ -19,21 +19,26 @@ def test_spec_verify():
     s.verifySpec(verbose=False)
 
 
+def test_spec_verify_quiet():
+    s = SpecVerifier.demo()
+    s.verify()
+
+
 def test_spec_wrong_number_questions():
     r = raw.copy()
     r["numberOfQuestions"] = 2
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
     r["numberOfQuestions"] = 10
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_autocount_questions():
     r = raw.copy()
     r.pop("numberOfQuestions")
     s = SpecVerifier(r)
-    s.verifySpec(verbose=False)
+    s.verify()
     assert s["numberOfQuestions"] == 3
 
 
@@ -41,14 +46,14 @@ def test_spec_wrong_total_marks():
     r = raw.copy()
     r["totalMarks"] += 1
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_autocount_missing_total_marks():
     r = raw.copy()
     y = r.pop("totalMarks")
     s = SpecVerifier(r)
-    s.verifySpec(verbose=False)
+    s.verify()
     assert s.spec["totalMarks"] == y
 
 
@@ -58,14 +63,14 @@ def test_spec_too_many_named():
     r["numberToName"] = 60
     s = SpecVerifier(r)
     with raises(ValueError):
-        s.verifySpec(verbose=False)
+        s.verify()
 
 
 def test_spec_negatives_still_pass():
     r = raw.copy()
     r["numberToName"] = -1
     r["numberToProduce"] = -1
-    SpecVerifier(r).verifySpec(verbose=False)
+    SpecVerifier(r).verify()
 
 
 def test_spec_setting_adds_spares():
@@ -78,14 +83,14 @@ def test_spec_setting_adds_spares():
     assert s.numberToName == 16
     # creates some spares
     assert s.numberToProduce > 16
-    s.verifySpec(verbose=False)
+    s.verify()
 
 
 def test_spec_question_extra_key():
     r = deepcopy(raw)
     r["question"]["1"]["libel"] = "defamation"
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_question_missing_key():
@@ -94,14 +99,14 @@ def test_spec_question_missing_key():
         r = deepcopy(raw)
         r["question"]["1"].pop(k)
         with raises(ValueError):
-            SpecVerifier(r).verifySpec(verbose=False)
+            SpecVerifier(r).verify()
 
 
 def test_spec_question_select_key_takes_default():
     r = deepcopy(raw)
     r["question"]["1"].pop("select")
     s = SpecVerifier(r)
-    s.verifySpec(verbose=False)
+    s.verify()
     assert s["question"]["1"]["select"] == "shuffle"
 
 
@@ -109,13 +114,13 @@ def test_spec_invalid_shortname():
     r = raw.copy()
     r["name"] = "no spaces"
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_longname_slash_issue1364():
     r = raw.copy()
     r["longName"] = 'Math123 / Bio321 Midterm ∫∇·Fdv — "have fun!"😀'
-    SpecVerifier(r).verifySpec(verbose=False)
+    SpecVerifier(r).verify()
 
 
 def test_spec_invalid_select():
@@ -150,25 +155,25 @@ def test_spec_unique_labels():
     r["question"]["1"]["label"] = "ExA"
     r["question"]["2"]["label"] = "ExA"
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_label_too_long():
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "Distrust That Particular Flavour"
     with raises(ValueError):
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
 
 
 def test_spec_overused_page():
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [1, 2, 3]
     with raises(ValueError) as e:
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
     assert "overused" in e.value.args[0]
     r["question"]["1"]["pages"] = [2]
     with raises(ValueError) as e:
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
     assert "overused" in e.value.args[0]
 
 
@@ -177,7 +182,7 @@ def test_spec_donotmark_default():
     r.pop("doNotMark")
     r["question"]["1"]["pages"] = [2, 3]
     s = SpecVerifier(r)
-    s.verifySpec(verbose=False)
+    s.verify()
     assert s["doNotMark"]["pages"] == []
 
 
@@ -186,7 +191,7 @@ def test_spec_donotmark_default2():
     r["doNotMark"].pop("pages")
     r["question"]["1"]["pages"] = [2, 3]
     s = SpecVerifier(r)
-    s.verifySpec(verbose=False)
+    s.verify()
     assert s["doNotMark"]["pages"] == []
 
 
@@ -194,15 +199,15 @@ def test_spec_invalid_donotmark():
     r = deepcopy(raw)
     r["doNotMark"]["pages"] = "Fragments of a Hologram Rose"
     with raises(ValueError) as e:
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
     assert "not a list" in e.value.args[0]
     r["doNotMark"]["pages"] = [2, -17]
     with raises(ValueError) as e:
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
     assert "not a positive integer" in e.value.args[0]
     r["doNotMark"]["pages"] = [2, 42]
     with raises(ValueError) as e:
-        SpecVerifier(r).verifySpec(verbose=False)
+        SpecVerifier(r).verify()
     assert "larger than" in e.value.args[0]
 
 
@@ -217,7 +222,7 @@ def test_spec_str_missing_numberOfQuestions():
     s = SpecVerifier(r)
     st = str(s)
     assert "TBD*" in st
-    s.verifySpec(verbose=False)
+    s.verify()
     st = str(s)
     assert "TBD*" not in st
 
@@ -228,7 +233,7 @@ def test_spec_str_missing_totalMarks():
     s = SpecVerifier(r)
     st = str(s)
     assert "TBD*" in st
-    s.verifySpec(verbose=False)
+    s.verify()
     st = str(s)
     assert "TBD*" not in st
 
@@ -238,7 +243,7 @@ def test_spec_str_missing_select_in_q1():
     assert s["question"]["1"].get("select", None) is None
     st = str(s)
     assert "shuffle*" in st
-    s.verifySpec(verbose=False)
+    s.verify()
     st = str(s)
     assert "shuffle*" not in st
 
