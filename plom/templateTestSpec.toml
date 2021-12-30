@@ -14,7 +14,7 @@ numberOfVersions = 2
 # how many pages
 numberOfPages = 6
 # sum of marks for all questions, for sanity checking (omit to live dangerously)
-totalMarks = 26
+totalMarks = 25
 # how many questions to mark
 numberOfQuestions = 3
 

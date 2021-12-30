@@ -37,6 +37,21 @@ def test_spec_autocount_questions():
     assert s["numberOfQuestions"] == 3
 
 
+def test_spec_wrong_total_marks():
+    r = raw.copy()
+    r["totalMarks"] += 1
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
+
+
+def test_spec_autocount_missing_total_marks():
+    r = raw.copy()
+    y = r.pop("totalMarks")
+    s = SpecVerifier(r)
+    s.verifySpec(verbose=False)
+    assert s.spec["totalMarks"] == y
+
+
 def test_spec_too_many_named():
     r = raw.copy()
     r["numberToProduce"] = 50

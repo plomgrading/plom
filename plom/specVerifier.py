@@ -397,8 +397,6 @@ class SpecVerifier:
         self.check_doNotMark(lastPage, print=prnt)
         prnt("Checking question groups")
         self.check_questions(print=prnt)
-        for g in range(self.spec["numberOfQuestions"]):
-            self.check_question_group(str(g + 1), lastPage, print=prnt)
         # Note: enable all-or-none check for labels
         # prnt("Checking either all or no questions have labels")
         # has_label = [
@@ -558,6 +556,25 @@ class SpecVerifier:
                 raise ValueError(f"Specification error - could not find question {k}")
             print(f"    Found question {k} of {N}{chk}")
 
+        for k in range(1, N + 1):
+            # TODO: why not integers for key k?  See also elsewhere
+            k = str(k)
+            self.check_question_group(k, self.spec["numberOfPages"], print=print)
+
+        K = sum(m["mark"] for m in self.spec["question"].values())
+        if "totalMarks" not in self.spec:
+            self.spec["totalMarks"] = K
+            print(f'    "totalMarks" omitted; calculated as {K}{chk}')
+        else:
+            total = self.spec["totalMarks"]
+            if not isPositiveInt(total):
+                raise ValueError(f'"totalMarks" = {total} must be a positive integer.')
+            if self["totalMarks"] != K:
+                raise ValueError(
+                    f'"totalMarks" = {total} does not match question sum {K}.'
+                )
+            print(f'    "totalMarks" = {total} matches question sum {K}{chk}')
+
     def check_IDPage(self, lastPage, print=print):
         print("Checking IDpage")
         if not (1 <= self.spec["idPage"] <= lastPage):
@@ -603,6 +620,7 @@ class SpecVerifier:
             print("    DoNotMark pages is list of positive integers" + chk)
 
     def check_question_group(self, g, lastPage, print=print):
+        g = str(g)  # TODO: why?
         print("  Checking question group #{}".format(g))
         required_keys = set(("pages", "mark"))
         optional_keys = set(("label", "select"))
