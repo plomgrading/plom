@@ -68,7 +68,6 @@ def parse_verify_save_spec(fname, save=True):
     if not save:
         return
     specdir.mkdir(exist_ok=True)
-    Path("sourceVersions").mkdir(exist_ok=True)
     sv.saveVerifiedSpec(verbose=True)
     print(
         ">>> Note <<<\n"
