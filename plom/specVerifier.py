@@ -397,7 +397,7 @@ class SpecVerifier:
         self.check_doNotMark(lastPage, print=prnt)
         prnt("Checking question groups")
         for g in range(self.spec["numberOfQuestions"]):
-            self.check_group(str(g + 1), lastPage, print=prnt)
+            self.check_question_group(str(g + 1), lastPage, print=prnt)
         # Note: enable all-or-none check for labels
         # prnt("Checking either all or no questions have labels")
         # has_label = [
@@ -597,10 +597,10 @@ class SpecVerifier:
         else:
             print("    DoNotMark pages is list of positive integers" + chk)
 
-    def check_group(self, g, lastPage, print=print):
+    def check_question_group(self, g, lastPage, print=print):
         print("  Checking question group #{}".format(g))
-        required_keys = set(("pages", "select", "mark"))
-        optional_keys = set(("label",))
+        required_keys = set(("pages", "mark"))
+        optional_keys = set(("label", "select"))
         for k in required_keys:
             if k not in self.spec["question"][g]:
                 raise ValueError('Question error - could not find "{}" key'.format(k))
@@ -631,12 +631,14 @@ class SpecVerifier:
                 self.spec["question"][g]["mark"], chk
             )
         )
-        # check select is "fix" or "shuffle"
-        if self.spec["question"][g]["select"] not in ["fix", "shuffle"]:
+        select = self.spec["question"][g].get("select")
+        if not select:
+            select = "shuffle"
+            self.spec["question"][g]["select"] = select
+            print(f'    missing select key, add default "{select}"' + chk)
+        if select not in ("fix", "shuffle"):
             raise ValueError(
-                'Question error - select {} is not "fix" or "shuffle"'.format(
-                    self.spec["question"][g]["select"]
-                )
+                f'Question error - select "{select}" is not "fix" or "shuffle"'
             )
         print('    select is "fix" or "shuffle"' + chk)
 

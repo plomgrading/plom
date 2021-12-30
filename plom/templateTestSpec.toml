@@ -35,9 +35,9 @@ pages = [2]  # can be an empty list or omitted
 # label = string such as "1", "Q2", or "Exercise 7.3".  Defaults to "Qn" if omitted.
 # pages = [4, 5, 6] - contiguous ordered list of positive integers.
 # mark = positive integer, the marks for this question.
-# select = "shuffle" or "fix".
-# --> "fix" = that question will always be drawn from source-version 1.
-# --> "shuffle" = that question will be drawn randomly from one of the source versions.
+# select = "shuffle" (default) or "fix"
+# --> "fix" = question will always be drawn from source-version 1.
+# --> "shuffle" = question will be drawn randomly from one of the source versions.
 
 [question.1]
 pages = [3]

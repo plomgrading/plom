@@ -54,11 +54,20 @@ def test_spec_question_extra_key():
 
 
 def test_spec_question_missing_key():
-    required_keys = ("pages", "select", "mark")
+    required_keys = ("pages", "mark")
     for k in required_keys:
         r = deepcopy(raw)
         r["question"]["1"].pop(k)
-        raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+        with raises(ValueError):
+            SpecVerifier(r).verifySpec(verbose=False)
+
+
+def test_spec_question_select_key_takes_default():
+    r = deepcopy(raw)
+    r["question"]["1"].pop("select")
+    s = SpecVerifier(r)
+    s.verifySpec(verbose=False)
+    assert s["question"]["1"]["select"] == "shuffle"
 
 
 def test_spec_invalid_shortname():
