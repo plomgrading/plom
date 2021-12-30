@@ -35,7 +35,7 @@ from plom.produce import clear_manager_login
 from plom.produce import version_map_from_csv
 
 
-def checkTomlExtension(fname):
+def ensureTomlExtension(fname):
     """Append a .toml extension if not present.
 
     Args:
@@ -53,9 +53,7 @@ def checkTomlExtension(fname):
         return fname
     if fname.suffix == "":
         return fname.with_suffix(".toml")
-    raise ValueError(
-        'Your specification file name should either have no extension or end in ".toml".'
-    )
+    raise ValueError('Your specification file should have a ".toml" extension.')
 
 
 def parseAndVerifySpecification(fname):
@@ -287,7 +285,7 @@ def main():
         if args.demo:
             fname = "demoSpec.toml"
         else:
-            fname = checkTomlExtension(args.specFile)
+            fname = ensureTomlExtension(args.specFile)
 
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
@@ -321,7 +319,7 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parseAndVerifySpecification(fname)
     elif args.command == "parse":
-        fname = checkTomlExtension(args.specFile)
+        fname = ensureTomlExtension(args.specFile)
         # copy the template spec into place
         parseAndVerifySpecification(fname)
     elif args.command == "class":
