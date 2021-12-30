@@ -110,6 +110,18 @@ def test_spec_label_too_long():
     raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
 
 
+def test_spec_overused_page():
+    r = deepcopy(raw)
+    r["question"]["1"]["pages"] = [1, 2, 3]
+    with raises(ValueError) as e:
+        SpecVerifier(r).verifySpec(verbose=False)
+    assert "overused" in e.value.args[0]
+    r["question"]["1"]["pages"] = [2]
+    with raises(ValueError) as e:
+        SpecVerifier(r).verifySpec(verbose=False)
+    assert "overused" in e.value.args[0]
+
+
 def test_spec_donotmark_default():
     r = deepcopy(raw)
     r.pop("doNotMark")

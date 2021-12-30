@@ -653,7 +653,7 @@ class SpecVerifier:
         for p in range(1, self.spec["numberOfPages"] + 1):
             if pageUse[p] != 1:
                 raise ValueError(
-                    "Page overused - page {} used {} times".format(p, pageUse[p])
+                    f"Page under/overused - page {p} used {pageUse[p]} times"
                 )
             print("  Page {} used once{}".format(p, chk))
 
