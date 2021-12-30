@@ -79,6 +79,30 @@ def bundle_has_nonuploaded_collisions(bundle_dir):
     return False
 
 
+def list_bundle_nonuploaded_collisions(bundle_dir):
+    """Uploading a bundle sometimes results in collisions: list them.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        list(Path)
+    """
+    return list(((Path(bundle_dir) / "uploads") / "collidingPages").glob("*.png"))
+
+
+def count_bundle_nonuploaded_collisions(bundle_dir):
+    """Uploading a bundle sometimes results in collisions: how many does this have?
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        int
+    """
+    return len(list_bundle_nonuploaded_collisions(bundle_dir))
+
+
 def print_collision_warning(bundle_dir):
     """Print info about collisions and list of collisions in this bundle.
 

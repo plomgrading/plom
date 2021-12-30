@@ -9,9 +9,21 @@ import logging
 import peewee as pw
 
 from plom.db.tables import plomdb
-from plom.db.tables import AImage, Annotation, APage, ARLink, OAPage, OldAnnotation
-from plom.db.tables import Image, Group, QGroup, LPage, Rubric, Test, TPage, User
 
+from plom.db.tables import AImage, Annotation, APage, ARLink
+from plom.db.tables import (
+    Image,
+    Group,
+    QGroup,
+    Rubric,
+    Test,
+    TPage,
+    User,
+    Tag,
+    QuestionTagLink,
+)
+
+from plom.comment_utils import generate_new_comment_ID
 
 log = logging.getLogger("DB")
 
@@ -57,7 +69,7 @@ def McountMarked(self, q, v):
 
 def MgetDoneTasks(self, user_name, q, v):
     """When a marker-client logs on they request a list of papers they have already marked.
-    Send back the list of [group-ids, mark, marking_time, tags] for each paper.
+    Send back the list of [group-ids, mark, marking_time, [list_of_tag_texts] ] for each paper.
     """
     uref = User.get(name=user_name)  # authenticated, so not-None
 
@@ -69,13 +81,15 @@ def MgetDoneTasks(self, user_name, q, v):
     )
     mark_list = []
     for qref in query:  # grab that questionData object
+        # get the tag texts for that qgroup
+        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
         aref = qref.annotations[-1]  # grab the last annotation
         mark_list.append(
             [
                 qref.group.gid,
                 aref.mark,
                 aref.marking_time,
-                aref.tags,
+                tag_list,
                 aref.integrity_check,
             ]
         )
@@ -115,9 +129,11 @@ def MgiveTaskToClient(self, user_name, group_id):
         group_id (TODO): somehow tells the task (?).
 
     Return:
-        list: `[False]` on error.  TODO: different cases handled?  Issue #1267.
+        list: On error, `[False, code, errmsg]` where `code` is a string:
+            `"other_claimed"`, `"not_known"`, `"not_scanned"`, `"unexpected"`
+            and `errmsg` is a human-readable error message.
             Otherwise, the list is
-                `[True, metadata, tags, integrity_check]`
+                `[True, metadata, [list of tag texts], integrity_check]`
             where each row of `metadata` consists of
                 `[DB_id, md5_sum, server_filename]`
             Note: `server_filename` is implementation-dependent, could change
@@ -134,31 +150,40 @@ def MgiveTaskToClient(self, user_name, group_id):
 
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == group_id)
-        if gref is None:  # this should not happen.
-            log.info("That question {} not known".format(group_id))
-            return [False]
-        if gref.scanned == False:  # this should not happen either
-            log.info("That question {} not scanned".format(group_id))
-            return [False]
+        if gref is None:
+            msg = f"The task {group_id} does not exist"
+            log.info(msg)
+            return [False, "no_such_task", msg]
+        if gref.scanned == False:
+            msg = f"The task {group_id} is not scanned"
+            log.info(msg)
+            return [False, "not_scanned", msg]
         # grab the qdata corresponding to that group
         qref = gref.qgroups[0]
-        if (qref.user is not None) and (
-            qref.user != uref
-        ):  # has been claimed by someone else.
-            return [False]
+        if (qref.user is not None) and (qref.user != uref):
+            msg = f'Task {group_id} previously claimed by user "{qref.user.name}"'
+            log.info(msg)
+            return [False, "other_claimed", msg]
+        # Can only ask for tasks on the todo-pile... not ones in other states.
+        if qref.status != "todo":
+            msg = f"Task {group_id} is not on the todo pile - we cannot give you another copy."
+            log.info(msg)
+            return [False, "not_todo", msg]
+
         # update status, username
         qref.status = "out"
         qref.user = uref
         qref.time = datetime.now()
         qref.save()
+        # get tag_list
+        tag_list = [qtref.tag.text for qtref in qref.questiontaglinks]
         # we give the marker the pages from the **existing** annotation
         # (when task comes back we create the new pages, new annotation etc)
         if len(qref.annotations) < 1:
-            log.error(
-                "unexpectedly, len(aref.annotations) = {}".format(len(qref.annotations))
-            )
-            log.error("qref={}, group_id={}".format(qref, group_id))
-            return [False]
+            msg = f"unexpectedly, len(aref.annotations)={len(qref.annotations)}"
+            msg += f", qref={qref}, group_id={group_id}"
+            log.error(msg)
+            return [False, "unexpected", msg]
         aref = qref.annotations[-1]  # are these in right order (TODO?)
         image_metadata = []
         for p in aref.apages.order_by(APage.order):
@@ -172,7 +197,7 @@ def MgiveTaskToClient(self, user_name, group_id):
                 group_id, user_name, aref.integrity_check
             )
         )
-        return [True, image_metadata, aref.tags, aref.integrity_check]
+        return [True, image_metadata, tag_list, aref.integrity_check]
 
 
 def MdidNotFinish(self, user_name, group_id):
@@ -206,11 +231,12 @@ def MdidNotFinish(self, user_name, group_id):
         log.info("User {} did not mark task {}".format(user_name, group_id))
 
 
-def MgetOneImageFilename(self, user_name, task, image_id, md5):
+def MgetOneImageFilename(self, image_id, md5):
     """Get the filename of one image.
 
     Args:
-        TODO: drop user_name and task?
+        image_id: internal db ref number to image
+        md5: the md5sum of that image (as sanity check)
 
     Returns:
         list: [True, file_name] or [False, error_msg] where
@@ -220,16 +246,12 @@ def MgetOneImageFilename(self, user_name, task, image_id, md5):
     with plomdb.atomic():
         iref = Image.get_or_none(id=image_id)
         if iref is None:
-            log.warning(
-                "User {} asked for a non-existent image with id={}".format(
-                    user_name, image_id
-                )
-            )
+            log.warning("Asked for a non-existent image with id={}".format(image_id))
             return [False, "no such image"]
         if iref.md5sum != md5:
             log.warning(
-                "User {} asked for image id={} but supplied wrong md5sum".format(
-                    user_name, image_id
+                "Asked for image id={} but supplied wrong md5sum {} instead of {}".format(
+                    image_id, md5, iref.md5sum
                 )
             )
             return [False, "wrong md5sum"]
@@ -245,7 +267,6 @@ def MtakeTaskFromClient(
     plom_fname,
     rubrics,
     marking_time,
-    tags,
     md5,
     integrity_check,
     image_md5_list,
@@ -299,8 +320,6 @@ def MtakeTaskFromClient(
             test_image_md5s.append(pref.image.md5sum)
         for pref in tref.expages:
             test_image_md5s.append(pref.image.md5sum)
-        for pref in tref.lpages:
-            test_image_md5s.append(pref.image.md5sum)
         # check image_id_list against this list
         for img_md5 in image_md5_list:
             if img_md5 not in test_image_md5s:
@@ -315,7 +334,7 @@ def MtakeTaskFromClient(
             qgroup=qref,
             user=uref,
             edition=oldaref.edition + 1,
-            tags=tags,
+            outdated=False,
             time=datetime.now(),
             integrity_check=oldaref.integrity_check,
         )
@@ -444,38 +463,20 @@ def MgetOriginalImages(self, task):
                 "MgetOriginalImages - task {} not completely scanned".format(task)
             )
             return [False, "Task {} is not completely scanned".format(task)]
-        aref = gref.qgroups[0].annotations[0]  # the original annotation pages
+        # get the first non-outdated annotation for the group
+        aref = (
+            gref.qgroups[0]
+            .annotations.where(Annotation.outdated == False)
+            .order_by(Annotation.edition)
+            .get()
+        )
+        # this is the earliest non-outdated annotation = the original
+
         # return [true, page1,..,page.n]
         rval = [True]
         for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
         return rval
-
-
-def MsetTag(self, user_name, task, tag):
-    """Set tag on last annotation of given task.
-
-    TODO: scary that its the last annotation: maybe client should be telling us which one?
-    """
-
-    uref = User.get(name=user_name)  # authenticated, so not-None
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # should not happen
-            log.error("MsetTag -  task {} not known".format(task))
-            return False
-        qref = gref.qgroups[0]
-        if qref.user != uref:
-            return False  # not your task - should not happen
-        # grab the last annotation
-        aref = qref.annotations[-1]
-        if aref.user != uref and aref.user.name != "HAL":
-            return False  # not your annotation - should not happen
-        # update tag
-        aref.tags = tag
-        aref.save()
-        log.info('Task {} tagged by user "{}": "{}"'.format(task, user_name, tag))
-        return True
 
 
 def MgetWholePaper(self, test_number, question):
@@ -511,7 +512,7 @@ def MgetWholePaper(self, test_number, question):
         # return [False]
     for pref in aref.apages:
         current_image_orders[pref.image.id] = pref.order
-    # give TPages (aside from ID pages), then HWPages, then EXPages, and then LPages
+    # give TPages (aside from ID pages), then HWPages, then EXPages
     for p in tref.tpages.order_by(TPage.page_number):
         if p.scanned is False:  # skip unscanned testpages
             continue
@@ -556,18 +557,6 @@ def MgetWholePaper(self, test_number, question):
                 val[2] = True
             pageData.append(val)
             pageFiles.append(p.image.file_name)
-    # then give LPages
-    for p in tref.lpages.order_by(LPage.order):
-        pageData.append(
-            [
-                "l{}".format(p.order),
-                p.image.md5sum,
-                False,
-                current_image_orders.get(p.image.id),
-                p.image.id,
-            ]
-        )
-        pageFiles.append(p.image.file_name)
     return [True, pageData] + pageFiles
 
 
@@ -618,42 +607,151 @@ def MrevertTask(self, task):
         qref.time = datetime.now()
         qref.user = None
         qref.save()
-        rval = [True]  # keep list of files to delete.
-        # now move existing annotations to oldannotations
-        # set starting edition for oldannot to either 0 or whatever was last.
-        if len(qref.oldannotations) == 0:
-            ed = 0
-        else:
-            ed = qref.oldannotations[-1].edition
+    # now we need to set annotations to "outdated"
+    # first find the first not-outdated annotation - that is the "original" state
+    aref0 = (
+        gref.qgroups[0]
+        .annotations.where(Annotation.outdated == False)
+        .order_by(Annotation.edition)
+        .get()
+    )
+    # now set all subsequent annotations to outdated
+    for aref in gref.qgroups[0].annotations.where(
+        Annotation.outdated == False, Annotation.edition > aref0.edition
+    ):
+        aref.outdated = True
+        aref.save()
 
-        for aref in qref.annotations:
-            if aref.edition == 0:  # leave 0th annotation alone.
-                continue
-            ed += 1
-            # make new oldannot using data from aref
-            oaref = OldAnnotation.create(
-                qgroup=aref.qgroup,
-                user=aref.user,
-                aimage=aref.aimage,
-                edition=ed,
-                plom_file=aref.plom_file,
-                mark=aref.mark,
-                marking_time=aref.marking_time,
-                time=aref.time,
-                tags=aref.tags,
-            )
-            # make oapges
-            for pref in aref.apages:
-                OAPage.create(old_annotation=oaref, order=pref.order, image=pref.image)
-            # now delete the apages, ar-links and then the annotation-image and finally the annotation.
-            for pref in aref.apages:
-                pref.delete_instance()
-            # any ar-links - see #1764
-            for arref in aref.arlinks:
-                arref.delete_instance()
-            # delete the annotated image from table.
-            aref.aimage.delete_instance()
-            # finally delete the annotation itself.
-            aref.delete_instance()
     log.info(f"Reverted tq {task}")
     return [True]
+
+
+# ===== tag stuff
+
+
+def McreateNewTag(self, user_name, tag_text):
+    """Create a new tag entry in the DB
+
+    Args:
+        user_name (str): name of user creating the tag
+        tag_text (str): the text of the tag - already validated by system
+
+    Returns:
+        tuple: `(True, key)` or `(False, err_msg)` where `key` is the
+            key for the new tag.  Can fail if tag text is not alphanum, or if tag already exists.
+    """
+    if Tag.get_or_none(text=tag_text) is not None:
+        return (False, "Tag already exists")
+
+    uref = User.get(name=user_name)  # authenticated, so not-None
+    with plomdb.atomic():
+        # build unique key while holding atomic access
+        # use a 10digit key to distinguish from rubrics
+        key = generate_new_comment_ID(10)
+        while Tag.get_or_none(key=key) is not None:
+            key = generate_new_comment_ID(10)
+        Tag.create(key=key, user=uref, creationTime=datetime.now(), text=tag_text)
+    return (True, key)
+
+
+def MgetAllTags(self):
+    """Return a list of all tags - each tag is pair (key, text)"""
+    # return all the tags
+    tag_list = []
+    for tref in Tag.select():
+        tag_list.append((tref.key, tref.text))
+    return tag_list
+
+
+def McheckTagKeyExists(self, tag_key):
+    """Check that the given tag_key in the database"""
+    if Tag.get_or_none(key=tag_key) is None:
+        return False
+    else:
+        return True
+
+
+def McheckTagTextExists(self, tag_text):
+    """Check that the given tag_text in the database"""
+    if Tag.get_or_none(text=tag_text) is None:
+        return False
+    else:
+        return True
+
+
+def MgetTagsOfTask(self, task):
+    """Get tags on given task.
+
+    Returns:
+        str/None: If no such task, return None.
+    """
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MgetTags - task {} not known".format(task))
+        return None
+    qref = gref.qgroups[0]
+
+    return [qtref.tag.text for qtref in qref.questiontaglinks]
+
+
+def MaddExistingTag(self, username, task, tag_text):
+    """Add an existing tag to the task"""
+    uref = User.get(name=username)  # authenticated, so not-None
+
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MaddExistingTag - task {} not known".format(task))
+        return False
+    # get the question-group and the tag
+    qref = gref.qgroups[0]
+    tgref = Tag.get(text=tag_text)
+    if tgref is None:
+        # server existence of tag before, so this should not happen.
+        log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        return False
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
+    # check if task is already tagged
+    if qtref is not None:
+        log.warn(f"MaddExistingTag - task {task} is already tagged with {tag_text}.")
+        return False
+    else:
+        QuestionTagLink.create(tag=tgref, qgroup=qref, user=uref)
+        log.info(f"MaddExistingTag - tag {tag_text} added to task {task}.")
+        return True
+
+
+def MremoveExistingTag(self, task, tag_text):
+    """Remove an existing tag to the task"""
+    gref = Group.get_or_none(Group.gid == task)
+    if gref is None:
+        log.error("MremoveExistingTag - task {} not known".format(task))
+        return False
+    # get the question-group and the tag
+    qref = gref.qgroups[0]
+    tgref = Tag.get(text=tag_text)
+    if tgref is None:
+        # server existence of tag before, so this should not happen.
+        log.warn(f"MaddExistingTag - tag {tag_text} is not in the system.")
+        return False
+    qtref = QuestionTagLink.get_or_none(qgroup=qref, tag=tgref)
+    # check if task is already tagged
+    if qtref is not None:
+        qtref.delete_instance()
+        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
+        return True
+    else:
+        log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
+        return False
+
+    ##
+    if qtref is not None:
+        qtref.delete_instance()
+        log.info(f"MremoveExistingTag - tag {tag_text} removed from task {task}.")
+        return True
+    else:
+        log.warn(f"MremoveExistingTag - task {task} did not have tag {tag_text}.")
+        return False
+
+
+##

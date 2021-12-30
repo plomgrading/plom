@@ -3,15 +3,12 @@
 # Copyright (C) 2019-2021 Colin B. Macdonald
 
 from collections import defaultdict
-from glob import glob
 import hashlib
 import json
-import os
 import shutil
 from pathlib import Path
 
 from plom.messenger import ScanMessenger
-from plom.misc_utils import working_directory
 from plom.plom_exceptions import PlomExistingLoginException
 from plom import PlomImageExts
 
@@ -67,7 +64,7 @@ def move_files_post_upload(bundle, f, qr=True):
         f (pathlib.Path): a filename, possibly with a path.
         qr (bool): There should also be a file same as `f` but
             with a ".qr" appended.  Move it too.  Note that TPages
-            will have a qr file, while HWPages and LPages do not.
+            will have a qr file, while HWPages do not.
     """
     shutil.move(f, bundle / "uploads/sentPages" / f.name)
     if qr:
@@ -186,62 +183,13 @@ def extractJIDO(fileName):  # get just ID, Order
     return (sid, n)
 
 
-def sendLFiles(msgr, fileList, skip_list, student_id, bundle_name):
-    """Send the hw-page images of one bundle to the server.
-
-    Args:
-        msgr (Messenger): an open authenticated communication mechanism.
-        files (list of pathlib.Path): the page images to upload.
-        bundle_name (str): the name of the bundle we are sending.
-        student_id (int): the id of the student whose hw is being uploaded
-        question (int): the question being uploaded
-        skip_list (list of int): the bundle-orders of pages already in
-            the system and so can be skipped.
-
-    Returns:
-        defaultdict: TODO document this.
-
-    After each image is uploaded we move it to various places in the
-    bundle's "uploads" subdirectory.
-    """
-    # keep track of which SID uploaded.
-    JSID = {}
-    for fname in fileList:
-        fname = Path(fname)
-        print(f'Upload "Loose" page image {fname}')
-        sid, n = extractJIDO(fname.name)
-        bundle_order = n
-        if bundle_order in skip_list:
-            print(
-                "Image {} with bundle_order {} already uploaded. Skipping.".format(
-                    fname, bundle_order
-                )
-            )
-            continue
-        if str(sid) != str(student_id):  # careful with type casting
-            print("Problem with file {} - skipping".format(fname))
-            continue
-
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        rmsg = msgr.uploadLPage(sid, n, fname, md5, bundle_name, bundle_order)
-        if not rmsg[0]:
-            raise RuntimeError(
-                "Unsuccessful Loose upload, with server returning:\n{}".format(rmsg[1:])
-            )
-        move_files_post_upload(Path("./"), fname, qr=False)
-        # be careful of workingdir.
-        JSID[sid] = True
-    return JSID
-
-
 def uploadTPages(bundleDir, skip_list, server=None, password=None):
     """Upload the test pages to the server.
 
     Skips pages-image with orders in the skip-list (i.e., the page
     number within the bundle.pdf)
 
-    Bundle must already be created.  We will upload the
-    files and then send a 'please trigger an update' message to the server.
+    Bundle must already be created and then upload files.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -272,12 +220,10 @@ def uploadTPages(bundleDir, skip_list, server=None, password=None):
             files.extend(sorted((bundleDir / "decodedPages").glob("t*.{}".format(ext))))
         TUP = sendTestFiles(msgr, bundleDir.name, files, skip_list)
         # we do not automatically replace any missing test-pages, since that is a serious issue for tests, and should be done only by manager.
-
-        updates = msgr.triggerUpdateAfterTUpload()
     finally:
         msgr.closeUser()
         msgr.stop()
-    return [TUP, updates]
+    return TUP
 
 
 def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, password=None):
@@ -292,8 +238,7 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
         server (str/None)
         password (str/None)
 
-    Bundle must already be created.  We will upload the files and then
-    send a 'please trigger an update' message to the server.
+    Bundle must already be created.  We will upload the files.
     """
     if server and ":" in server:
         s, p = server.split(":")
@@ -327,61 +272,10 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
             # TODO: this feels out a bit out of place?
             move_files_post_upload(bundledir, f, qr=False)
 
-        updates = msgr.triggerUpdateAfterHWUpload()
     finally:
         msgr.closeUser()
         msgr.stop()
-    return (SIDQ, updates)
-
-
-def uploadLPages(bundle_name, skip_list, student_id, server=None, password=None):
-    """Upload the hw pages to the server.
-
-    lpages uploaded to given student_id.
-    Skips pages-image with orders in the skip-list (i.e., the page
-    number within the bundle.pdf)
-
-    Bundle must already be created.  We will upload the
-    files and then send a 'please trigger an update' message to the server.
-    """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p)
-    else:
-        msgr = ScanMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
-        )
-        raise
-
-    file_list = []
-    # files are sitting in "bundles/submittedLoose/<bundle_name>"
-    with working_directory(os.path.join("bundles", "submittedLoose", bundle_name)):
-        # Look for pages in pageImages
-        for ext in PlomImageExts:
-            file_list.extend(
-                sorted(glob(os.path.join("pageImages", "*.{}".format(ext))))
-            )
-
-        LUP = sendLFiles(msgr, file_list, skip_list, student_id, bundle_name)
-
-        updates = msgr.triggerUpdateAfterLUpload()
-
-        # go back to original dir
-    # close down messenger
-    msgr.closeUser()
-    msgr.stop()
-
-    return [LUP, updates]
+    return SIDQ
 
 
 def checkTestHasThatSID(student_id, server=None, password=None):

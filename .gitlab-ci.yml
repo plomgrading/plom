@@ -191,6 +191,29 @@ doctests:
     - pytest -l --doctest-modules --doctest-continue-on-failure --ignore-glob="*IDReader_TF" --ignore-glob="*digitHunter.py" --ignore-glob="*/test_*.py" plom
 
 
+pylint:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install pylint
+  script:
+    - pylint plom
+  allow_failure: true
+
+
+flake8:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install flake8
+  script:
+    # exit-zero until we can pass
+    - flake8 plom --exit-zero
+  allow_failure: true
+
+
 demoserver:
   stage: test
   needs: ["docker-image"]
@@ -286,7 +309,7 @@ hwdemoserver:
     - B=`ls reassembled/ | wc -l`    # How many files?
     - echo $B
     - bash -c "[[ $B == $A ]]"
-    - plom-finish solutions
+    - plom-finish solutions --mark
     - B=`ls solutions/ | wc -l`    # How many files?
     - echo $B
     - bash -c "[[ $B == $A ]]"
@@ -366,7 +389,7 @@ fullworkflow:
     - plom-finish reassemble
     - A=`ls reassembled/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]" # since 1 test incomplete
-    - plom-finish solutions
+    - plom-finish solutions --mark
     - A=`ls solutions/ | wc -l`    # How many files?
     - bash -c "[[ $A == 19 ]]"
     - A=`du -sm reassembled/ | cut -f1`  # Don't regress on issue #627
@@ -771,7 +794,7 @@ binary_upload:
   artifacts:
     paths:
       - release_desc.md
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # Build Client Binaries
@@ -803,7 +826,7 @@ linuxbin_ubuntu1804:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 linuxbin_ubuntu2004:
@@ -832,7 +855,7 @@ linuxbin_ubuntu2004:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # TODO: consider doing only on the main branch and only when tests pass
@@ -862,7 +885,7 @@ linuxbin_centos:
     paths:
     - PlomClient*.bin
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # Notes on macOS client builds
@@ -954,7 +977,7 @@ macos11_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 # TODO: when: never versus manual
@@ -1003,7 +1026,7 @@ macos1015_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos1014_client:
@@ -1047,7 +1070,7 @@ macos1014_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 macos1013_client:
@@ -1092,7 +1115,7 @@ macos1013_client:
     paths:
     - PlomClient*.zip
     - md5sum
-    expire_in: 30 days
+    expire_in: 16 days
 
 
 .shared_windows_runners:
@@ -1147,4 +1170,4 @@ winpyinst:
     paths:
     - PlomClient*.exe
     - md5sum.txt
-    expire_in: 30 days
+    expire_in: 16 days

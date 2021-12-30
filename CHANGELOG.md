@@ -6,9 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.7.11] - 2021-12-22
+## [Unreleased]
 
 ### Added
+* Manager can "unidentify" papers including prenamed papers.
+* Solutions - can now optionally watermark solutions with the SID.
+* SSL verification enabled by default for releases.
+* Client Marker window can request any paper number with a long press on "Get next".
+
+### Changed
+* Tags have been overhauled, with bug fixes and improved functionality
+* Annotator can tag papers directly.
+* Deprecated "LoosePages" have been removed.
+* Tests have exactly one ID page (before they could have more than one).
+* Misc plom-manager improvements.
+
+### Fixed
+* Potential memory leaks in Annotator, Manager, and dialogs.
+* A large number of modal dialog fixes.
+* Other misc changes.
+
+
+## [0.7.11] - 2021-12-22
 
 ### Changed
 * Client warns if its version is older than the server.

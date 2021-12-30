@@ -63,6 +63,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     doc = fitz.open(file_name)
 
     if not doc.is_pdf:
+        doc.close()
         raise TypeError("This does not appear to be a PDF file")
     if doc.is_repaired:
         warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
@@ -157,6 +158,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 W = MAXWIDTH
                 H = W / aspect
                 if H < 100:
+                    # TODO: use a context manager for doc to avoid this
+                    doc.close()
                     raise ValueError("Scanned a strip too wide and thin?")
         else:
             if W < MINWIDTH:
@@ -166,6 +169,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                     H = MAXHEIGHT
                     W = H * aspect
                     if W < 100:
+                        # TODO: use a context manager for doc to avoid this
+                        doc.close()
                         raise ValueError("Scanned a long strip of thin paper?")
 
         # fitz uses ceil (not round) so decrease a little bit
@@ -173,7 +178,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             z = (float(W) - 0.0001) / p.mediabox_size[0]
         else:
             z = (float(H) - 0.0001) / p.mediabox_size[1]
-        ## For testing, choose widely varying random sizes
+        # # For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
         print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
@@ -183,7 +188,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
-        ## For testing, randomly make jpegs, sometimes of truly horrid quality
+        # # For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
         #     outname = dest / (basename + ".jpg")
         #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
@@ -203,6 +208,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         pix.save(outname)
         files.append(outname)
     assert len(files) == len(doc), "Expected one image per page"
+    doc.close()
     return files
 
 

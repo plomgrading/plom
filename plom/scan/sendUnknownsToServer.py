@@ -56,6 +56,30 @@ def bundle_has_nonuploaded_unknowns(bundle_dir):
     return False
 
 
+def list_bundle_nonuploaded_unknowns(bundle_dir):
+    """List any non-uploaded unknown pages does this bundle have.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        List(Path)
+    """
+    return list((Path(bundle_dir) / "unknownPages").glob("*.png"))
+
+
+def count_bundle_nonuploaded_unknowns(bundle_dir):
+    """How many non-uploaded unknown pages does this bundle have.
+
+    Args:
+        bundle_dir (str, Path): path to a bundle.
+
+    Return:
+        int
+    """
+    return len(list_bundle_nonuploaded_unknowns(bundle_dir))
+
+
 def print_unknowns_warning(bundle_dir):
     """Print info about unknowns and list of unknowns in this bundle.
 

@@ -41,7 +41,9 @@ from PyQt5.QtCore import (
 from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QDialog,
+    QInputDialog,
     QMessageBox,
+    QMenu,
     QProgressDialog,
     QWidget,
 )
@@ -49,6 +51,7 @@ from PyQt5.QtWidgets import (
 from plom import get_question_label
 from plom.plom_exceptions import (
     PlomAuthenticationException,
+    PlomBadTagError,
     PlomRangeException,
     PlomSeriousException,
     PlomTakenException,
@@ -61,10 +64,14 @@ from plom.plom_exceptions import (
 )
 from plom.messenger import Messenger
 from .annotator import Annotator
-from .examviewwindow import ExamViewWindow
-from .origscanviewer import GroupView, SelectTestQuestion
+from .examviewwindow import ImageViewWidget
+from .origscanviewer import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import AddTagBox, ErrorMessage, SimpleMessage
+from .useful_classes import (
+    AddRemoveTagDialog,
+    ErrorMessage,
+    SimpleMessage,
+)
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -90,7 +97,7 @@ class BackgroundDownloader(QThread):
 
     """
 
-    downloadSuccess = pyqtSignal(str, list, list, str, str)
+    downloadSuccess = pyqtSignal(str, list, list, list, str)
     downloadNoneAvailable = pyqtSignal()
     downloadFail = pyqtSignal(str)
 
@@ -177,9 +184,9 @@ class BackgroundDownloader(QThread):
         for i, row in enumerate(src_img_data):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(task, row["id"], row["md5"])
+            im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -273,7 +280,8 @@ class BackgroundUploader(QThread):
             except EmptyQueueException:
                 return
             self.is_upload_in_progress = True
-            code = data[0]  # TODO: remove so that queue needs no knowledge of args
+            # TODO: remove so that queue needs no knowledge of args
+            code = data[0]
             log.info("upQ thread: popped code {} from queue, uploading".format(code))
             # For experimenting with slow uploads
             # time.sleep(30)
@@ -305,7 +313,6 @@ def upload(
     question,
     ver,
     rubrics,
-    tags,
     integrity_check,
     image_md5_list,
     knownFailCallback=None,
@@ -324,7 +331,6 @@ def upload(
         mtime (int): the marking time (s) for this specific question.
         question (int or str): the question number
         ver (int or str): the version number
-        tags (str): any tags associated with this exam.
         integrity_check (str): the integrity_check string of the task.
         image_md5_list (list[str]): a list of image md5sums used.
         knownFailCallback: if we fail in a way that is reasonably expected,
@@ -361,7 +367,6 @@ def upload(
             ver,
             grade,
             mtime,
-            tags,
             aname,
             pname,
             rubrics,
@@ -399,7 +404,7 @@ class ExamQuestion:
         stat="untouched",
         mrk="-1",
         mtime="0",
-        tags="",
+        tags=[],
         integrity_check="",
     ):
         """
@@ -411,7 +416,8 @@ class ExamQuestion:
             stat (str): test status.
             mrk (int): the mark of the question.
             mtime (int): marking time spent on that page in seconds.
-            tags (str): Tags corresponding to the exam.
+            tags (list): Tags corresponding to the exam.  We will flatten to
+                a space-separaed string.
             integrity_check (str): integrity_check = concat of md5sums of underlying images
             src_img_metadata (list[dict]): a list of dicts of md5sums,
                 filenames and other metadata of the images for the test
@@ -424,10 +430,11 @@ class ExamQuestion:
         self.status = stat
         self.mark = mrk
         self.src_img_data = src_img_data
-        self.annotatedFile = ""  # The filename for the (future) annotated image
+        # The filename for the (future) annotated image
+        self.annotatedFile = ""
         self.plomFile = ""  # The filename for the (future) plom file
         self.markingTime = mtime
-        self.tags = tags
+        self.tags = " ".join(tags)
         self.integrity_check = integrity_check
 
 
@@ -674,21 +681,17 @@ class MarkerExamModel(QStandardItemModel):
         self._setDataByTask(task, 1, st)
 
     def getTagsByTask(self, task):
-        """Return tags for task, (task(str) defined above.)"""
-        return self._getDataByTask(task, 4)
+        """Return a list of tags for task.
+
+        TODO: can we draw flat, but use list for storing?
+        """
+        return self._getDataByTask(task, 4).split()
 
     def setTagsByTask(self, task, tags):
-        """Set tags for task, (task (str) defined above.)"""
-        return self._setDataByTask(task, 4, tags)
-
-    def getAllTags(self):
-        """Return all tags as a set."""
-        tags = set()
-        for r in range(self.rowCount()):
-            v = self.data(self.index(r, 4))
-            if len(v) > 0:
-                tags.add(v)
-        return tags
+        """Set a list of tags for task.
+        Note: internally stored as flattened string.
+        """
+        return self._setDataByTask(task, 4, " ".join(tags))
 
     def getMTimeByTask(self, task):
         """Return total marking time (s) for task, (task(str), return (int).)"""
@@ -855,33 +858,29 @@ class ProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(self, pos, index):
         """
-        Checks if a row fits the given filter.
+        Checks if a row matches the current filter.
 
         Notes:
             Overrides base method.
 
         Args:
-            pos (int): row desired.
+            pos (int): row being checked.
             index (any): unused.
 
         Returns:
-            True if filter accepts the row, False otherwise.
+            bool: True if filter accepts the row, False otherwise.
 
+        The filter string is first broken into words.  All of those words
+        must be in the tags of the row, in any order.  The `invert` flag
+        inverts that logic: at least one of the words must not be in the
+        tags.
         """
-        if (len(self.filterString) == 0) or (
-            self.filterString.casefold()
-            in self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
-        ):
-            # we'd return true here, unless INVERT, then false
-            if self.invert:
-                return False
-            else:
-                return True
-        else:  # we'd return false here, unless invert, then true
-            if self.invert:
-                return True
-            else:
-                return False
+        search_terms = self.filterString.casefold().split()
+        tags = self.sourceModel().data(self.sourceModel().index(pos, 4)).casefold()
+        all_search_terms_in_tags = all(x in tags for x in search_terms)
+        if self.invert:
+            return not all_search_terms_in_tags
+        return all_search_terms_in_tags
 
     def getPrefix(self, r):
         """
@@ -969,7 +968,6 @@ class MarkerClient(QWidget):
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
 
-        self.viewFiles = []  # For viewing the whole paper we'll need these two lists.
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
         # Note: specific to this question
@@ -978,9 +976,8 @@ class MarkerClient(QWidget):
             MarkerExamModel()
         )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
-        self.testImg = (
-            ExamViewWindow()
-        )  # A view window for the papers so user can zoom in as needed.
+        # A view window for the papers so user can zoom in as needed.
+        self.testImg = ImageViewWidget(self)
         self.annotatorSettings = defaultdict(
             lambda: None
         )  # settings variable for annotator settings (initially None)
@@ -996,6 +993,7 @@ class MarkerClient(QWidget):
         self.exam_spec = None
         self.ui = None
         self.msgr = None
+        self._cachedProgressFormatStr = None
 
     def setup(self, messenger, question, version, lastTime):
         """Performs setup procedure for markerClient.
@@ -1036,11 +1034,8 @@ class MarkerClient(QWidget):
         self.version = version
 
         # Get the number of Tests, Pages, Questions and Versions
-        try:
-            self.exam_spec = self.msgr.get_spec()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err, rethrow=False)
-            return
+        # Note: if this fails UI is not yet in a usable state
+        self.exam_spec = self.msgr.get_spec()
 
         self.UIInitialization()
         self.applyLastTimeOptions(lastTime)
@@ -1053,14 +1048,11 @@ class MarkerClient(QWidget):
             return
         self.ui.maxscoreLabel.setText(str(self.maxMark))
 
-        try:
-            self.loadMarkedList()  # Get list of papers already marked and add to table.
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        # Get list of papers already marked and add to table.
+        self.loadMarkedList()
 
         # Keep the original format around in case we need to change it
-        self.ui._cachedProgressFormatStr = self.ui.mProgressBar.format()
+        self._cachedProgressFormatStr = self.ui.mProgressBar.format()
         self.updateProgress()  # Update counts
 
         # Connect the view **after** list updated.
@@ -1068,7 +1060,8 @@ class MarkerClient(QWidget):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.updateImg)
 
         self.requestNext()  # Get a question to mark from the server
-        self.testImg.resetB.animateClick()  # reset the view so whole exam shown.
+        # reset the view so whole exam shown.
+        self.testImg.resetView()
         # resize the table too.
         QTimer.singleShot(100, self.ui.tableView.resizeRowsToContents)
         log.debug("Marker main thread: " + str(threading.get_ident()))
@@ -1153,14 +1146,18 @@ class MarkerClient(QWidget):
             None - Modifies self.ui
         """
         self.ui.closeButton.clicked.connect(self.close)
+        m = QMenu()
+        m.addAction("Get nth...", self.requestInteractive)
+        self.ui.getNextButton.setMenu(m)
+        # self.ui.getNextButton.setPopupMode(QToolButton.MenuButtonPopup)
         self.ui.getNextButton.clicked.connect(self.requestNext)
         self.ui.annButton.clicked.connect(self.annotateTest)
         self.ui.deferButton.clicked.connect(self.deferTest)
-        self.ui.tagButton.clicked.connect(self.tagTest)
+        self.ui.tagButton.clicked.connect(self.manage_tags)
         self.ui.filterButton.clicked.connect(self.setFilter)
         self.ui.filterLE.returnPressed.connect(self.setFilter)
         self.ui.filterInvCB.stateChanged.connect(self.setFilter)
-        self.ui.viewButton.clicked.connect(self.viewSpecificImage)
+        self.ui.viewButton.clicked.connect(self.view_testnum_question)
 
     def resizeEvent(self, event):
         """
@@ -1179,37 +1176,10 @@ class MarkerClient(QWidget):
 
         """
         if hasattr(self, "testImg"):
-            self.testImg.resetB.animateClick()
+            self.testImg.resetView()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
-
-    def throwSeriousError(self, error, rethrow=True):
-        """
-        Logs an exception, pops up a dialog and shuts down.
-
-        Args:
-            error: the exception to be reraised
-            rethrow: True if the only way to solve this error is to crash
-                and shut down Plom. False if the exception can be handled in a
-                way other than crashing, in which case it will initiate
-                shutdown and not re-raise the exception (thus avoiding a crash)
-
-        Returns:
-            None
-
-        """
-        # automatically prints a stacktrace into the log!
-        log.exception("A serious error has been detected")
-        msg = 'A serious error has been thrown:\n"{}"'.format(error)
-        if rethrow:
-            msg += "\nProbably we will crash now..."
-        else:
-            msg += "\nShutting down Marker."
-        ErrorMessage(msg).exec_()
-        self.shutDownError()
-        if rethrow:
-            raise (error)
 
     def loadMarkedList(self):
         """
@@ -1281,9 +1251,6 @@ class MarkerClient(QWidget):
             # import sys
             # sys.exit(58)
             raise PlomSeriousException("Manager changed task") from ex
-        except PlomSeriousException as e:
-            self.throwSeriousError(e)
-            return False
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
@@ -1300,8 +1267,8 @@ class MarkerClient(QWidget):
         # TODO: use server filename from server_path_filename
         for i, row in enumerate(src_img_data):
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
-            with open(tmp, "wb+") as fh:
+            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1315,7 +1282,7 @@ class MarkerClient(QWidget):
         self.examModel.setPaperDirByTask(task, paperDir)
         aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
         pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
-        with open(aname, "wb+") as fh:
+        with open(aname, "wb") as fh:
             fh.write(annotated_image)
         with open(pname, "w") as f:
             json.dump(plomdata, f, indent="  ")
@@ -1363,10 +1330,8 @@ class MarkerClient(QWidget):
             try:
                 val, maxm = self.msgr.MprogressCount(self.question, self.version)
             except PlomSeriousException as err:
-                log.exception("Serious error detected while updating progress")
-                msg = 'A serious error happened while updating progress:\n"{}"'.format(
-                    err
-                )
+                log.exception("Serious error detected while updating progress: %s", err)
+                msg = f"A serious error happened while updating progress:\n{err}"
                 msg += "\nThis is not good: restart, report bug, etc."
                 ErrorMessage(msg).exec_()
                 return
@@ -1376,26 +1341,34 @@ class MarkerClient(QWidget):
             ErrorMessage("No papers to mark.").exec_()
         else:
             # Neither is quite right, instead, we cache on init
-            self.ui.mProgressBar.setFormat(self.ui._cachedProgressFormatStr)
+            self.ui.mProgressBar.setFormat(self._cachedProgressFormatStr)
         self.ui.mProgressBar.setMaximum(maxm)
         self.ui.mProgressBar.setValue(val)
 
-    def requestNext(self):
+    def requestInteractive(self):
+        """Ask user for paper number and then ask server for that paper.
+
+        If available, download stuff, add to list, update view.
         """
-        Ask server for unmarked paper, get file, add to list, update view.
+        s = f"<p>Which paper number would you like to get?</p>"
+        s += f"<p>Note: you are marking question {self.question}.</p>"
+        max_papernum = self.exam_spec["numberToProduce"]
+        n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, max_papernum)
+        if not ok:
+            return
+        log.info("getting paper num %s", n)
+        try:
+            self.requestParticularPaper(n)
+        except (PlomTakenException, PlomRangeException) as err:
+            ErrorMessage(f"Cannot get get paper {n}: {err}").exec_()
+
+    def requestNext(self):
+        """Ask server for an unmarked paper, get file, add to list, update view.
 
         Retry a few times in case two clients are asking for same.
-        Notes:
-            Side effects: on success, updates the table of tasks
-            TODO: return value on success?  Currently None.
-            TODO: rationalize return values
 
         Returns:
             None
-
-        Raises:
-            error if getting task from messenger throws PlomSeriousException
-
         """
         attempts = 0
         while True:
@@ -1404,31 +1377,43 @@ class MarkerClient(QWidget):
             # TODO remove.
             if attempts > 5:
                 return
-            # ask server for task of next task
             try:
                 task = self.msgr.MaskNextTask(self.question, self.version)
                 if not task:
-                    return False
+                    return
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
+                log.exception("Unexpected error getting next task: %s", err)
+                ErrorMessage(
+                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                ).exec_()
+                raise
 
+            num = int(task[1:5])
             try:
-                page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
+                self.requestParticularPaper(num)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
 
-        num = int(task[1:5])
-        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+    def requestParticularPaper(self, papernum):
+        """Try to get a given paper number from the server.
+
+        Notes:
+            Side effects: on success, updates the table of tasks
+
+        Returns:
+            None
+
+        Raises:
+            PlomTakenException
+        """
+        task = f"q{papernum:04}g{self.question}"
+        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
+        full_pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
         for r in full_pagedata:
             r["local_filename"] = None
-        self._full_pagedata[num] = full_pagedata
-        # print("=" * 80)
-        # print(task)
-        # print("\n".join([str(x) for x in full_pagedata]))
-        # print("\n".join([str(x) for x in page_metadata]))
-        # print("=" * 80)
+        self._full_pagedata[papernum] = full_pagedata
 
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
@@ -1444,9 +1429,9 @@ class MarkerClient(QWidget):
         for i, row in enumerate(src_img_data):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(task, row["id"], row["md5"])
+            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
             row["filename"] = tmp
             for r in full_pagedata:
@@ -1512,7 +1497,7 @@ class MarkerClient(QWidget):
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
             full_pagedata (list): temporary hacks to merge with above?
-            tags (str): tags for the TGV.
+            tags (list[str]): list of texts for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
         Returns:
@@ -1816,7 +1801,7 @@ class MarkerClient(QWidget):
         )
         try:
             im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
-            with open(soln, "wb+") as fh:
+            with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
         except PlomNoSolutionException as err:
@@ -1926,7 +1911,6 @@ class MarkerClient(QWidget):
         )
         # update the markingTime to be the total marking time
         totmtime = self.examModel.getMTimeByTask(task)
-        tags = self.examModel.getTagsByTask(task)
         # TODO: should examModel have src_img_data and fnames updated too?
 
         _data = (
@@ -1940,7 +1924,6 @@ class MarkerClient(QWidget):
             self.question,
             self.version,
             rubrics,
-            tags,
             integrity_check,
             [x["md5"] for x in src_img_data],
         )
@@ -2211,46 +2194,42 @@ class MarkerClient(QWidget):
         event.accept()
         log.debug("Marker: goodbye!")
 
-    def shutDownError(self):
-        """Shuts down self due to error."""
-        if getattr(self, "_annotator", None):
-            # try to shut down annotator too if we have one
-            self._annotator.close()
-        log.error("Shutting down due to error")
-        self.close()
-
     def downloadWholePaper(self, testNumber):
-        """
+        """Legacy method, yet another way of getting images.
 
         Args:
             testNumber (int): the test number.
 
         Returns:
-            (tuple) containing pageData and viewFiles
+            tuple: containing pageData and viewFiles.  You are responsible
+                for deleting the files when done with them, in particular
+                these may include duplicate images.
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
                 testNumber, self.question
             )
         except PlomTakenException as err:
-            log.exception("Taken exception when downloading whole paper")
-            ErrorMessage("{}".format(err)).exec_()
-            return ([], [])  # TODO: what to return?
+            log.exception("Taken exception while downloading whole paper %s", err)
+            ErrorMessage(
+                f"'Taken exception' while downloading whole paper:\n{err}"
+            ).exec_()
+            return ([], [])
 
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(
                 dir=self.workingDirectory, suffix=".image", delete=False
             ).name
-            viewFiles.append(tfn)
+            viewFiles.append(Path(tfn))
             with open(tfn, "wb") as fh:
                 fh.write(iab)
 
-        return [pageData, viewFiles]
+        return (pageData, viewFiles)
 
-    def downloadOneImage(self, task, image_id, md5):
+    def downloadOneImage(self, image_id, md5):
         """Download one image from server by its database id."""
-        return self.msgr.MrequestOneImage(task, image_id, md5)
+        return self.msgr.MrequestOneImage(image_id, md5)
 
     def doneWithWholePaperFiles(self, viewFiles):
         """Unlinks files in viewFiles to os."""
@@ -2387,41 +2366,75 @@ class MarkerClient(QWidget):
         fragFile = tempfile.NamedTemporaryFile(
             dir=self.workingDirectory, suffix=".png", delete=False
         ).name
-        with open(fragFile, "wb+") as fh:
+        with open(fragFile, "wb") as fh:
             fh.write(fragment)
         # add it to the cache
         self.commentCache[txt] = fragFile
         return fragFile
 
-    def tagTest(self):
-        """Adds a tag to the current Test."""
+    def manage_tags(self):
+        """Manage the tags of the current task."""
         if len(self.ui.tableView.selectedIndexes()):
             pr = self.ui.tableView.selectedIndexes()[0].row()
         else:
             return
         task = self.prxM.getPrefix(pr)
-        tagSet = self.examModel.getAllTags()
-        currentTag = self.examModel.getTagsByTask(task)
+        self.manage_task_tags(task)
 
-        atb = AddTagBox(self, currentTag, list(tagSet))
-        if atb.exec_() == QDialog.Accepted:
-            txt = atb.TE.toPlainText().strip()
-            if len(txt) > 256:
-                log.warning("overly long tags truncated to 256 chars")
-                txt = txt[:256]
-            # send updated tag back to server.
+    def manage_task_tags(self, task, parent=None):
+        """Manage the tags of a task.
+
+        args:
+            task (str): A string like "q0003g2" for paper 3 question 2.
+
+        keyword args:
+            parent (Window/None): Which window should be dialog's parent?
+                If None, then use `self` (which is Marker) but if other
+                windows (such as Annotator or PageRearranger) are calling
+                this and if so they should pass themselves: that way they
+                would be the visual parents of this dialog.
+        """
+        if not parent:
+            parent = self
+
+        all_tags = [tag for key, tag in self.msgr.get_all_tags()]
+        current_tags = self.msgr.get_tags(task)
+        tag_choices = [X for X in all_tags if X not in current_tags]
+
+        artd = AddRemoveTagDialog(parent, task, current_tags, tag_choices=tag_choices)
+        if artd.exec_() == QDialog.Accepted:
+            cmd, new_tag = artd.return_values
+            if cmd == "add":
+                if len(new_tag) == 0:
+                    pass  # user is not adding a tag
+                elif new_tag in current_tags:
+                    pass  # already have that tag
+                # an actual new tag for this task (though it may exist already)
+                else:
+                    try:
+                        self.msgr.add_single_tag(task, new_tag)
+                        log.debug('tagging paper "%s" with "%s"', task, new_tag)
+                    except PlomBadTagError as e:
+                        ErrorMessage(f"Tag not acceptable: {e}").exec_()
+            elif cmd == "remove":
+                try:
+                    self.msgr.remove_single_tag(task, new_tag)
+                except PlomBadTagError as e:
+                    ErrorMessage(f"Problem removing tag: {e}").exec_()
+            else:
+                # do nothing - shouldn't arrive here.
+                pass
+
+            # refresh the tags
+            current_tags = self.msgr.get_tags(task)
+
             try:
-                self.msgr.MsetTag(task, txt)
-            except PlomTakenException as err:
-                log.exception("exception when trying to set tag")
-                ErrorMessage('Could not set tag:\n"{}"'.format(err)).exec_()
-                return
-            except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                return
-            self.examModel.setTagsByTask(task, txt)
-            # resize view too
-            self.ui.tableView.resizeRowsToContents()
+                self.examModel.setTagsByTask(task, current_tags)
+                self.ui.tableView.resizeColumnsToContents()
+                self.ui.tableView.resizeRowsToContents()
+            except ValueError:
+                # we might not own the task for which we've have been managing tags
+                pass
 
     def setFilter(self):
         """Sets a filter tag."""
@@ -2432,9 +2445,9 @@ class MarkerClient(QWidget):
         else:
             self.prxM.filterTags()
 
-    def viewSpecificImage(self):
+    def view_testnum_question(self):
         """shows the image."""
-        tgs = SelectTestQuestion(self.exam_spec, self.question)
+        tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
             return
         tn = tgs.tsb.value()
@@ -2453,6 +2466,6 @@ class MarkerClient(QWidget):
             )
             ifile.write(img)
             ifilenames.append(ifile.name)
-        tvw = GroupView(ifilenames)
-        tvw.setWindowTitle(f"Original ungraded image for question {gn} of test {tn}")
-        tvw.exec_()
+        qvmap = self.msgr.getQuestionVersionMap(tn)
+        ver = qvmap[gn]
+        QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()

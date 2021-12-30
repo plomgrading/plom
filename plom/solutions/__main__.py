@@ -99,7 +99,7 @@ def uploadSolutionImage(server, password, question, version, imageName):
         print(f"Failure - {rv[1]}")
 
 
-def deleteSolutionImage(server, password, question, version):
+def deleteSolutionImage_frontend(server, password, question, version):
     if deleteSolutionImage(question, version, server, password):
         print(
             "Successfully removed solution to question {} version {}".format(
@@ -265,7 +265,7 @@ def main():
     elif args.command == "get":
         getSolutionImageFromServer(args.server, args.password, args.q, args.v)
     elif args.command == "delete":
-        deleteSolutionImage(args.server, args.password, args.q, args.v)
+        deleteSolutionImage_frontend(args.server, args.password, args.q, args.v)
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "extract":
