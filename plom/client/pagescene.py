@@ -528,7 +528,6 @@ def whichLineToDraw(g, r):
         else:
             t = (gmid - crit1) / (crit2 - crit1)
             gy = gmid
-        print((t, gy, gmid))
         t = transf(t)
         return QLineF(r.left(), r.top() + t * r.height(), g.right(), gy)
 
