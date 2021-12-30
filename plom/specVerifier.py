@@ -369,7 +369,7 @@ class SpecVerifier:
         return d
 
     def verifySpec(self, verbose=True):
-        """Check that spec contains required attributes.
+        """Check that spec contains required attributes and insert default values.
 
         args:
             verbose: `None`/`False` for don't print; `True` is print to
@@ -461,7 +461,7 @@ class SpecVerifier:
 
     def check_keys(self, print=print):
         """Check that spec contains required keys."""
-        print("Checking specification keys")
+        print("Checking mandatory specification keys")
         for x in [
             "name",
             "longName",
@@ -471,16 +471,19 @@ class SpecVerifier:
             "numberToName",
             "numberOfQuestions",
             "idPage",
-            "doNotMark",
         ]:
             if x not in self.spec:
                 raise ValueError('Specification error - must contain "{}"'.format(x))
-            print('  contains "{}"{}'.format(x, chk))
+            print(f'  contains "{x}"{chk}')
         if "1" not in self.spec["question"]:
             raise ValueError(
                 'Specification error - must contain at least one question (i.e., "question.1")'
             )
         print('  contains at least one question (ie "question.1"){}'.format(chk))
+        print("Checking optional specification keys")
+        for x in ["doNotMark"]:
+            if x in self.spec:
+                print(f'  contains "{x}"{chk}')
 
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
@@ -568,25 +571,31 @@ class SpecVerifier:
 
     def check_doNotMark(self, lastPage, print=print):
         print("Checking DoNotMark-pages")
-        if "pages" not in self.spec["doNotMark"]:
+        if "doNotMark" not in self.spec:
+            print("    DoNotMark pages is missing: defaulting to empty" + chk)
+            self.spec["doNotMark"] = {"pages": []}
+        try:
+            pages = self.spec["doNotMark"]["pages"]
+        except KeyError:
             raise ValueError('DoNotMark pages error - could not find "pages" key')
-        if type(self.spec["doNotMark"]["pages"]) is not list:
+        if type(pages) is not list:
             raise ValueError(
-                'DoNotMark pages error - "pages" = {} should be a list of positive integers'.format(
-                    self.spec["doNotMark"]["pages"]
-                )
+                f'DoNotMark pages "{pages}" is not a list of positive integers'
             )
-        # should be a list of positive integers
-        for n in self.spec["doNotMark"]["pages"]:
-            if isPositiveInt(n) and n <= lastPage:
-                pass
-            else:
+        for n in pages:
+            if not isPositiveInt(n):
                 raise ValueError(
-                    'DoNotMark pages error - "pages" = {} should be a list of positive integers in range'.format(
-                        self.spec["doNotMark"]["pages"]
-                    )
+                    f"DoNotMark pages {pages} contains {n} which is not a positive integer"
                 )
-        print("    DoNotMark pages is list of positive integers" + chk)
+            if n > lastPage:
+                raise ValueError(
+                    f"DoNotMark page {n} is out of range: larger than lastPage={lastPage}"
+                )
+
+        if not self.spec["doNotMark"]["pages"]:
+            print("    DoNotMark pages is empty" + chk)
+        else:
+            print("    DoNotMark pages is list of positive integers" + chk)
 
     def check_group(self, g, lastPage, print=print):
         print("  Checking question group #{}".format(g))
@@ -635,8 +644,9 @@ class SpecVerifier:
         print("Checking all pages used exactly once:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         pageUse[self.spec["idPage"]] += 1
-        for p in self.spec["doNotMark"]["pages"]:
-            pageUse[p] += 1
+        if self.spec.get("doNotMark"):
+            for p in self.spec["doNotMark"]["pages"]:
+                pageUse[p] += 1
         for g in range(self.spec["numberOfQuestions"]):
             for p in self.spec["question"][str(g + 1)]["pages"]:
                 pageUse[p] += 1

@@ -28,7 +28,7 @@ idPage = 1  # must be exactly 1 page
 
 # pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
 [doNotMark]
-pages = [2]  # can be an empty list.
+pages = [2]  # can be an empty list or omitted
 
 # Now the actual questions (groups of pages) to be marked
 # [question.n] with n a positive integer [1, 2, 3, ... etc] - contiguous please.

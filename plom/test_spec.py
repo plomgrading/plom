@@ -74,7 +74,7 @@ def test_spec_longname_slash_issue1364():
 
 
 def test_spec_invalid_select():
-    r = raw.copy()
+    r = deepcopy(raw)
     r["question"]["1"]["select"] = "consult the oracle"
 
 
@@ -108,3 +108,28 @@ def test_spec_label_too_long():
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "Distrust That Particular Flavour"
     raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+
+
+def test_spec_donotmark_default():
+    r = deepcopy(raw)
+    r.pop("doNotMark")
+    r["question"]["1"]["pages"] = [2, 3]
+    s = SpecVerifier(r)
+    s.verifySpec(verbose=False)
+    assert s["doNotMark"]["pages"] == []
+
+
+def test_spec_invalid_donotmark():
+    r = deepcopy(raw)
+    r["doNotMark"]["pages"] = "Fragments of a Hologram Rose"
+    with raises(ValueError) as e:
+        SpecVerifier(r).verifySpec(verbose=False)
+    assert "not a list" in e.value.args[0]
+    r["doNotMark"]["pages"] = [2, -17]
+    with raises(ValueError) as e:
+        SpecVerifier(r).verifySpec(verbose=False)
+    assert "not a positive integer" in e.value.args[0]
+    r["doNotMark"]["pages"] = [2, 42]
+    with raises(ValueError) as e:
+        SpecVerifier(r).verifySpec(verbose=False)
+    assert "larger than" in e.value.args[0]
