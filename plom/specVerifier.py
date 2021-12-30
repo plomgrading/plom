@@ -481,7 +481,7 @@ class SpecVerifier:
             )
         print('  contains at least one question (ie "question.1"){}'.format(chk))
         print("Checking optional specification keys")
-        for x in ["doNotMark"]:
+        for x in ["doNotMark", "totalMarks"]:
             if x in self.spec:
                 print(f'  contains "{x}"{chk}')
 

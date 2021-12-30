@@ -13,6 +13,9 @@ longName = "Midterm Demo using Plom"
 numberOfVersions = 2
 # how many pages
 numberOfPages = 6
+# sum of marks for all questions, for sanity checking (omit to live dangerously)
+totalMarks = 26
+
 # total number of papers to produce
 # (set to "-1" to use length of classlist + 10%)
 numberToProduce = 20
