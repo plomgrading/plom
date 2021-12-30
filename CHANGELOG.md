@@ -27,15 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Other misc changes.
 
 
-## [Unreleased]
-
-### Added
+## [0.7.11] - 2021-12-22
 
 ### Changed
+* Client warns if its version is older than the server.
 
 ### Fixed
 * Classlist import was broken when using multiple name fields.
 * MacOS continuous integration fixed.
+* Fix a crash in autoIDing related to unhandled errors.
 
 
 ## [0.7.9] - 2021-12-06
@@ -625,7 +625,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.9...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.11...main
+[0.7.11]: https://gitlab.com/plom/plom/compare/v0.7.9...v0.7.11
 [0.7.9]: https://gitlab.com/plom/plom/compare/v0.7.7...v0.7.9
 [0.7.7]: https://gitlab.com/plom/plom/compare/v0.7.5...v0.7.7
 [0.7.5]: https://gitlab.com/plom/plom/compare/v0.7.4...v0.7.5

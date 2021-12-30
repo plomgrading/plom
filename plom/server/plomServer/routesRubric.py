@@ -252,8 +252,8 @@ class RubricHandler:
         self.server.MsaveUserRubricPanes(save_to_user, question, rubricConfig)
         return web.Response(status=200)
 
-    ## =====================
-    ## rubric analysis stuff
+    # =====================
+    # rubric analysis stuff
 
     @authenticate_by_token_required_fields(["user"])
     def RgetTestRubricMatrix(self, data, request):
@@ -318,8 +318,6 @@ class RubricHandler:
             return web.json_response(rmsg[1], status=200)
         else:
             raise web.HTTPBadRequest(reason="no such rubric")
-
-    ## =====================
 
     def setUpRoutes(self, router):
         """Adds the response functions to the router object.

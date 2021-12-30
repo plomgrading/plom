@@ -6,6 +6,9 @@
 
 import logging
 from pathlib import Path
+import random
+import tempfile
+import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
@@ -426,7 +429,8 @@ class RearrangementViewer(QDialog):
         s.setOrientation(Qt.Vertical)
         # s.setOpaqueResize(False)
         s.setChildrenCollapsible(False)
-        s.setHandleWidth(50)  # TODO: better not to hardcode, take from children?
+        # TODO: better not to hardcode, take from children?
+        s.setHandleWidth(50)
         vb0.addWidget(s)
         f = QFrame()
         s.addWidget(f)
@@ -869,9 +873,8 @@ class WholeTestView(QDialog):
 
 
 class SelectTestQuestion(QDialog):
-    def __init__(self, info, gn=None):
-        super().__init__()
-        self.setModal(True)
+    def __init__(self, parent, info, gn=None):
+        super().__init__(parent)
         self.setWindowTitle("View another test")
         self.iL = QLabel("From which test do you wish to view the current question?")
         self.ab = QPushButton("&Accept")
@@ -940,3 +943,100 @@ class SolutionViewer(QWidget):
         self.sv.updateImage(solnfile)
         if solnfile is None:
             ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
+
+
+class CatViewer(QDialog):
+    def __init__(self, parent, dogAttempt=False):
+
+        self.msgs = [
+            "PLOM",
+            "I%20can%20haz%20more%20markingz",
+            "Insert%20meme%20here",
+            "Hello%20Omer",
+            "More%20patz%20pleeze",
+        ]
+
+        super().__init__(parent)
+        grid = QGridLayout()
+        self.count = 0
+        self.catz = None
+        if dogAttempt:
+            self.getNewImageFile(msg="No%20dogz.%20Only%20Catz%20and%20markingz")
+        else:
+            self.getNewImageFile()
+        self.img = ImageViewWidget(self, self.catz)
+
+        self.refreshButton = QPushButton("&Refresh")
+        self.closeButton = QPushButton("&Close")
+        grid.addWidget(self.img, 1, 1, 6, 7)
+        grid.addWidget(self.refreshButton, 7, 1)
+        grid.addWidget(self.closeButton, 7, 7)
+        self.setLayout(grid)
+        self.closeButton.clicked.connect(self.closeWindow)
+        self.refreshButton.clicked.connect(self.refresh)
+
+        self.setWindowTitle("Catz")
+
+        self.setMinimumSize(500, 500)
+
+    def closeEvent(self, event):
+        self.eraseImageFile()
+        self.closeWindow()
+
+    def closeWindow(self):
+        self.close()
+
+    def getNewImageFile(self, *, msg=None):
+        """Erase the current stored image and try to get a new one.
+
+        args:
+            msg (None/str): something for the cat to say.
+
+        returns:
+            None: but sets the `.catz` instance variable as a side effect.
+        """
+        self.eraseImageFile()
+        logging.debug("Trying to refresh cat image")
+
+        # Do we need to manage this tempfile in instance variable? Issue #1842
+        # with tempfile.NamedTemporaryFile() as f:
+        #     urllib.request.urlretrieve("https://cataas.com/cat", f)
+        #     self.img.updateImages(f)
+        self.catz = Path(tempfile.NamedTemporaryFile(delete=False).name)
+
+        try:
+            if msg is None:
+                urllib.request.urlretrieve("https://cataas.com/cat", self.catz)
+            else:
+                urllib.request.urlretrieve(
+                    f"https://cataas.com/cat/says/{msg}", self.catz
+                )
+            logging.debug("Cat image refreshed")
+        except Exception:
+            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+            self.catz = None
+
+    def eraseImageFile(self):
+        if self.catz is None:
+            return
+        try:
+            self.catz.unlink()
+        except OSError:
+            pass
+
+    def refresh(self):
+        self.count += 1
+        if self.count > 5:
+            msg = "Back%20to%20work"
+        elif random.choice([0, 1]):
+            msg = random.choice(self.msgs)
+        else:
+            msg = None
+        self.getNewImageFile(msg=msg)
+        self.img.updateImage(self.catz)
+        if self.count > 5:
+            ErrorMessage("Enough break time").exec_()
+            self.close()
+
+
+###

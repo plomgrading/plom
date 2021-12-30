@@ -93,6 +93,10 @@ class PlomOwnersLoggedInException(PlomBenignException):
     pass
 
 
+class PlomUnidentifiedPaperException(PlomBenignException):
+    pass
+
+
 class PlomTaskChangedError(PlomBenignException):
     pass
 

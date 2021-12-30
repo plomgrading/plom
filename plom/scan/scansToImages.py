@@ -178,7 +178,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             z = (float(W) - 0.0001) / p.mediabox_size[0]
         else:
             z = (float(H) - 0.0001) / p.mediabox_size[1]
-        ## For testing, choose widely varying random sizes
+        # # For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
         print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
@@ -188,7 +188,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
-        ## For testing, randomly make jpegs, sometimes of truly horrid quality
+        # # For testing, randomly make jpegs, sometimes of truly horrid quality
         # if random.uniform(0, 1) < 0.4:
         #     outname = dest / (basename + ".jpg")
         #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)

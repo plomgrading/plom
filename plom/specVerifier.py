@@ -677,7 +677,7 @@ def checkSolutionSpec(testSpec, solutionSpec):
             return (False, f"Value of {x} does not match test spec")
     # check pages is pos-int
     if isPositiveInt(solutionSpec["numberOfPages"]) is False:
-        return (False, f"numberOfPages must be a positive integer.")
+        return (False, "numberOfPages must be a positive integer.")
 
     # make sure right number of question-keys - match test-spec
     if len(solutionSpec["solution"]) != solutionSpec["numberOfQuestions"]:

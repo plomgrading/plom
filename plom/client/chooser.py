@@ -17,8 +17,9 @@ import logging
 from pathlib import Path
 import tempfile
 
-import toml
 import appdirs
+from packaging.version import Version
+import toml
 
 import urllib3
 from PyQt5.QtCore import pyqtSlot
@@ -209,7 +210,7 @@ class Chooser(QDialog):
                 self.messenger = Messenger(server, mport)
         try:
             try:
-                self.messenger.start()
+                server_ver_str = self.messenger.start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     "SSL error: cannot verify the identity of the server.",
@@ -221,7 +222,7 @@ class Chooser(QDialog):
                     self.messenger = None
                     return
                 self.messenger.force_ssl_unverified()
-                self.messenger.start()
+                server_ver_str = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage(
                 "Could not connect to server:", info=f"{e}", info_preformatted=False
@@ -265,6 +266,25 @@ class Chooser(QDialog):
             ).exec_()
             self.messenger = None
             return
+
+        # fragile, use a regex?
+        srv_ver = server_ver_str.split()[3]
+        if Version(__version__) < Version(srv_ver):
+            msg = WarningQuestion(
+                f"Your client version {__version__} is older than the server {srv_ver}:"
+                " you may want to consider upgrading.",
+                question="Do you want to continue?",
+                details=(
+                    f"You have Plom Client {__version__} with API {self.APIVersion}"
+                    f"\nServer version string: “{server_ver_str}”\n"
+                    f"Regex-extracted server version: {srv_ver}."
+                ),
+            )
+            if msg.exec_() != QMessageBox.Yes:
+                self.messenger.closeUser()
+                self.messenger.stop()
+                self.messenger = None
+                return
 
         # TODO: implement shared tempdir/workfir for Marker/IDer & list in options dialog
 
@@ -404,7 +424,7 @@ class Chooser(QDialog):
 
         try:
             try:
-                ver = self.messenger.start()
+                server_ver_str = self.messenger.start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
                     "SSL error: cannot verify the identity of the server.",
@@ -416,14 +436,28 @@ class Chooser(QDialog):
                     self.messenger = None
                     return
                 self.messenger.force_ssl_unverified()
-                ver = self.messenger.start()
+                server_ver_str = self.messenger.start()
         except PlomBenignException as e:
             ErrorMessage(
                 "Could not connect to server:", info=f"{e}", info_preformatted=False
             ).exec_()
             self.messenger = None
             return
-        self.ui.infoLabel.setText(ver)
+        self.ui.infoLabel.setText(server_ver_str)
+
+        # fragile, use a regex?
+        srv_ver = server_ver_str.split()[3]
+        if Version(__version__) < Version(srv_ver):
+            self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
+            ErrorMessage(
+                f"Your client version {__version__} is older than the server {srv_ver}:"
+                "you may want to consider upgrading.",
+                details=(
+                    f"You have Plom Client {__version__} with API {self.APIVersion}"
+                    f"\nServer version string: “{server_ver_str}”\n"
+                    f"Regex-extracted server version: {srv_ver}."
+                ),
+            ).exec_()
 
         try:
             spec = self.messenger.get_spec()

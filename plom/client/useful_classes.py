@@ -20,12 +20,9 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QSpacerItem,
-    QStackedLayout,
     QTableView,
-    QTextEdit,
     QToolButton,
     QVBoxLayout,
-    QWidget,
 )
 
 from plom import isValidStudentNumber

@@ -31,7 +31,7 @@ pymupdf==1.19.3
 pyzbar==0.1.8
 requests==2.26.0
 requests-toolbelt==0.9.1
-scikit-learn==1.0.1
+scikit-learn==1.0.2
 segno==1.4.1
 stdiomask==0.0.6
 toml==0.10.2

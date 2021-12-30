@@ -140,7 +140,7 @@ if __name__ == "__main__":
         cid, name_from_file = cid_name_from_canvas_submitted_filename(f)
         sid, name = sid_name_from_cid(df, cid)
         print("Canvas ID number: {}\tStudent ID: {}".format(cid, sid))
-        if not name[0].lower() in name_from_file.lower():
+        if name[0].lower() not in name_from_file.lower():
             print(
                 'sanity failure: name "{}" matches "{}"?'.format(name, name_from_file)
             )

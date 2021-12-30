@@ -9,7 +9,6 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
-import os
 import ssl
 import subprocess
 import tempfile
@@ -101,11 +100,16 @@ class Server:
         createNewBundle,
         sidToTest,
         addTestPage,
+        createIDPageForHW,
+        createDNMPagesForHW,
         addHWPage,
         addUnknownPage,
         addCollidingPage,
         replaceMissingTestPage,
         replaceMissingHWQuestion,
+        replaceMissingDNMPage,
+        replaceMissingIDPage,
+        autogenerateIDPage,
         removeAllScannedPages,
         removeSinglePage,
         getUnknownPageNames,

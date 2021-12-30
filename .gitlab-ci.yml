@@ -202,6 +202,18 @@ pylint:
   allow_failure: true
 
 
+flake8:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - python3 -m pip install flake8
+  script:
+    # exit-zero until we can pass
+    - flake8 plom --exit-zero
+  allow_failure: true
+
+
 demoserver:
   stage: test
   needs: ["docker-image"]

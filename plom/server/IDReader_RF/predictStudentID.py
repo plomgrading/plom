@@ -68,7 +68,6 @@ def get_digit_box(filename, top, bottom):
     sorted_contour_list = sorted(contour_lists, key=cv2.contourArea, reverse=True)
     id_box_contour = None
 
-    # Loop over the contours.
     for contour in sorted_contour_list:
         # Approximate the contour.
         perimeter = cv2.arcLength(contour, True)
@@ -77,6 +76,10 @@ def get_digit_box(filename, top, bottom):
         if len(third_order_moment) == 4:
             id_box_contour = third_order_moment
             break
+
+    # if whatever the above is doing failed, then abort
+    if id_box_contour is None:
+        return None
 
     # TODO: Why is this this not using edged_image
     # warped = four_point_transform(edged_image, id_box_contour.reshape(4, 2))
