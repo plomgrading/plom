@@ -574,10 +574,10 @@ class SpecVerifier:
         if "doNotMark" not in self.spec:
             print("    DoNotMark pages is missing: defaulting to empty" + chk)
             self.spec["doNotMark"] = {"pages": []}
-        try:
-            pages = self.spec["doNotMark"]["pages"]
-        except KeyError:
-            raise ValueError('DoNotMark pages error - could not find "pages" key')
+        if "pages" not in self.spec["doNotMark"]:
+            print("    DoNotMark pages is missing: defaulting to empty" + chk)
+            self.spec["doNotMark"]["pages"] = []
+        pages = self.spec["doNotMark"]["pages"]
         if type(pages) is not list:
             raise ValueError(
                 f'DoNotMark pages "{pages}" is not a list of positive integers'

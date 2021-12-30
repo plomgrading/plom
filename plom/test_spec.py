@@ -148,6 +148,15 @@ def test_spec_donotmark_default():
     assert s["doNotMark"]["pages"] == []
 
 
+def test_spec_donotmark_default2():
+    r = deepcopy(raw)
+    r["doNotMark"].pop("pages")
+    r["question"]["1"]["pages"] = [2, 3]
+    s = SpecVerifier(r)
+    s.verifySpec(verbose=False)
+    assert s["doNotMark"]["pages"] == []
+
+
 def test_spec_invalid_donotmark():
     r = deepcopy(raw)
     r["doNotMark"]["pages"] = "Fragments of a Hologram Rose"
