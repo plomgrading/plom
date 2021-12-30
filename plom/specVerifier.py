@@ -132,9 +132,10 @@ class SpecVerifier:
     ... 'longName': 'Midterm Demo using Plom',
     ... 'numberOfVersions': 2,
     ... 'numberOfPages': 6,
+    ... 'numberOfQuestions': 3,
+    ... 'totalMarks': 25,
     ... 'numberToProduce': 20,
     ... 'numberToName': 10,
-    ... 'numberOfQuestions': 3,
     ... 'privateSeed': '1001378822317872',
     ... 'publicCode': '270385',
     ... 'idPage': 1,
@@ -150,8 +151,8 @@ class SpecVerifier:
     Here `spec` is an object representing a Plom exam specification:
     >>> print(spec)
     Plom exam specification:
-      Name of test = plomdemo
-      Long name of test = Midterm Demo using Plom
+      Name of exam = plomdemo
+      Long name of exam = Midterm Demo using Plom
       Number of source versions = 2
       Number of tests to produce = 20
       Number of those to be printed with names = 10
@@ -162,12 +163,12 @@ class SpecVerifier:
         Question.1: pages [3], selected as shuffle, worth 5 marks
         Question.2: pages [4], selected as fix, worth 10 marks
         Question.3: pages [5, 6], selected as shuffle, worth 10 marks
-      Test total = 25 marks
+      Exam total = 25 marks
 
 
     We can verify that this input is valid:
     >>> spec.verifySpec()     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Checking specification keys
+    Checking mandatory specification keys
         contains "name" [check]
         contains "longName" [check]
         ...
@@ -332,8 +333,8 @@ class SpecVerifier:
         s = "Plom exam specification:\n  "
         s += "\n  ".join(
             (
-                "Name of test = {}".format(self.spec["name"]),
-                "Long name of test = {}".format(self.spec["longName"]),
+                "Name of exam = {}".format(self.spec["name"]),
+                "Long name of exam = {}".format(self.spec["longName"]),
                 "Number of source versions = {}".format(self.spec["numberOfVersions"]),
                 # "Public code (to prevent project collisions) = {}".format(self.spec["publicCode"]),
                 # "Private random seed (for randomisation) = {}".format(self.spec["privateSeed"]),
@@ -358,7 +359,7 @@ class SpecVerifier:
                 self.spec["question"][gs]["mark"],
             )
         K = self.spec.get("totalMarks", "TBD*")
-        s += f"  Test total = {K} marks"
+        s += f"  Exam total = {K} marks"
         return s
 
     def get_public_spec_dict(self):
