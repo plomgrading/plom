@@ -24,7 +24,7 @@ numberToName = 10
 numberOfQuestions = 3
 
 # the id-page - always taken from Version1
-idPage = 1  # must be exactly 1 page 
+idPage = 1  # must be exactly 1 page
 
 # pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
 [doNotMark]

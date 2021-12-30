@@ -24,7 +24,8 @@ def test_spec_too_many_named():
     r["numberToProduce"] = 50
     r["numberToName"] = 60
     s = SpecVerifier(r)
-    raises(ValueError, lambda: s.verifySpec(verbose=False))
+    with raises(ValueError):
+        s.verifySpec(verbose=False)
 
 
 def test_spec_negatives_still_pass():
@@ -50,7 +51,8 @@ def test_spec_setting_adds_spares():
 def test_spec_question_extra_key():
     r = deepcopy(raw)
     r["question"]["1"]["libel"] = "defamation"
-    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
 
 
 def test_spec_question_missing_key():
@@ -73,7 +75,8 @@ def test_spec_question_select_key_takes_default():
 def test_spec_invalid_shortname():
     r = raw.copy()
     r["name"] = "no spaces"
-    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
 
 
 def test_spec_longname_slash_issue1364():
@@ -101,22 +104,27 @@ def test_spec_question_label_printer():
 def test_spec_question_label_printer_errors():
     s = SpecVerifier.demo()
     N = s["numberOfQuestions"]
-    raises(ValueError, lambda: get_question_label(s, N + 1))
-    raises(ValueError, lambda: get_question_label(s, -1))
-    raises(ValueError, lambda: get_question_label(s, 0))
+    with raises(ValueError):
+        get_question_label(s, N + 1)
+    with raises(ValueError):
+        get_question_label(s, -1)
+    with raises(ValueError):
+        get_question_label(s, 0)
 
 
 def test_spec_unique_labels():
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "ExA"
     r["question"]["2"]["label"] = "ExA"
-    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
 
 
 def test_spec_label_too_long():
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "Distrust That Particular Flavour"
-    raises(ValueError, lambda: SpecVerifier(r).verifySpec(verbose=False))
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
 
 
 def test_spec_overused_page():
