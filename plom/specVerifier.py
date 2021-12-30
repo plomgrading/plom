@@ -561,6 +561,7 @@ class SpecVerifier:
             k = str(k)
             self.check_question_group(k, self.spec["numberOfPages"], print=print)
 
+        print("  Checking mark totals")
         K = sum(m["mark"] for m in self.spec["question"].values())
         if "totalMarks" not in self.spec:
             self.spec["totalMarks"] = K
