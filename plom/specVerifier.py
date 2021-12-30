@@ -345,7 +345,7 @@ class SpecVerifier:
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpage = {}".format(self.spec["idPage"]),
                 "Do not mark pages = {}".format(self.spec["doNotMark"]["pages"]),
-                f"Number of questions to mark = {N}"
+                f"Number of questions to mark = {N}",
             )
         )
         s += "\n"
@@ -367,6 +367,10 @@ class SpecVerifier:
         d = self.spec.copy()
         d.pop("privateSeed", None)
         return d
+
+    def verify(self, verbose=False):
+        """Check that spec contains required attributes and insert default values."""
+        self.verifySpec(verbose=verbose)
 
     def verifySpec(self, verbose=True):
         """Check that spec contains required attributes and insert default values.
