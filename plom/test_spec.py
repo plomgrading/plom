@@ -19,6 +19,24 @@ def test_spec_verify():
     s.verifySpec(verbose=False)
 
 
+def test_spec_wrong_number_questions():
+    r = raw.copy()
+    r["numberOfQuestions"] = 2
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
+    r["numberOfQuestions"] = 10
+    with raises(ValueError):
+        SpecVerifier(r).verifySpec(verbose=False)
+
+
+def test_spec_autocount_questions():
+    r = raw.copy()
+    r.pop("numberOfQuestions")
+    s = SpecVerifier(r)
+    s.verifySpec(verbose=False)
+    assert s["numberOfQuestions"] == 3
+
+
 def test_spec_too_many_named():
     r = raw.copy()
     r["numberToProduce"] = 50

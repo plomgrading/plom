@@ -396,6 +396,7 @@ class SpecVerifier:
         self.check_IDPage(lastPage, print=prnt)
         self.check_doNotMark(lastPage, print=prnt)
         prnt("Checking question groups")
+        self.check_questions(print=prnt)
         for g in range(self.spec["numberOfQuestions"]):
             self.check_question_group(str(g + 1), lastPage, print=prnt)
         # Note: enable all-or-none check for labels
@@ -469,7 +470,6 @@ class SpecVerifier:
             "numberOfPages",
             "numberToProduce",
             "numberToName",
-            "numberOfQuestions",
             "idPage",
         ]:
             if x not in self.spec:
@@ -481,7 +481,7 @@ class SpecVerifier:
             )
         print('  contains at least one question (ie "question.1"){}'.format(chk))
         print("Checking optional specification keys")
-        for x in ["doNotMark", "totalMarks"]:
+        for x in ["doNotMark", "totalMarks", "numberOfQuestions"]:
             if x in self.spec:
                 print(f'  contains "{x}"{chk}')
 
@@ -502,12 +502,13 @@ class SpecVerifier:
         print('    has long name "{}"{}'.format(self["longName"], chk))
 
         print("  Checking production numbers")
-        for x in ("numberOfVersions", "numberOfPages", "numberOfQuestions"):
+        for x in ("numberOfVersions", "numberOfPages"):
             if not isPositiveInt(self.spec[x]):
                 raise ValueError(
                     'Specification error - "{}" must be a positive integer.'.format(x)
                 )
             print('    "{}" = {} is positive integer{}'.format(x, self.spec[x], chk))
+
         for x in ("numberToName", "numberToProduce"):
             try:
                 self.spec[x] = int(self.spec[x])
@@ -542,16 +543,20 @@ class SpecVerifier:
             else:
                 print("    Producing sufficiently many spare papers" + chk)
 
-        for k in range(1, self.spec["numberOfQuestions"] + 1):
+    def check_questions(self, print=print):
+        if "numberOfQuestions" not in self.spec:
+            N = len(self.spec["question"])
+            self.spec["numberOfQuestions"] = N
+            print(f'    "numberOfQuestions" omitted; calculated as {N}{chk}')
+        N = self.spec["numberOfQuestions"]
+        if not isPositiveInt(N):
+            raise ValueError(f'numberOfQuestions = "{N}" must be a positive integer.')
+            print(f'    "numberOfQuestions" = {N} is a positive integer{chk}')
+        for k in range(1, N + 1):
+            # TODO: why not integers for key k?  See also elsewhere
             if not str(k) in self.spec["question"]:
-                raise ValueError(
-                    "Specification error - could not find question {}".format(k)
-                )
-            print(
-                "    Found question {} of {}{}".format(
-                    k, self.spec["numberOfQuestions"], chk
-                )
-            )
+                raise ValueError(f"Specification error - could not find question {k}")
+            print(f"    Found question {k} of {N}{chk}")
 
     def check_IDPage(self, lastPage, print=print):
         print("Checking IDpage")

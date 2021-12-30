@@ -15,6 +15,8 @@ numberOfVersions = 2
 numberOfPages = 6
 # sum of marks for all questions, for sanity checking (omit to live dangerously)
 totalMarks = 26
+# how many questions to mark
+numberOfQuestions = 3
 
 # total number of papers to produce
 # (set to "-1" to use length of classlist + 10%)
@@ -23,8 +25,6 @@ numberToProduce = 20
 # (again set to "-1" to use the length of the classlist)
 # See `plom-build make --help` for instructions on how to position the prenamed-box
 numberToName = 10
-# how many questions to mark
-numberOfQuestions = 3
 
 # the id-page - always taken from Version1
 idPage = 1  # must be exactly 1 page
