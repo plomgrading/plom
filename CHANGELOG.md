@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotator can tag papers directly.
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
+* Spec files have more sanity checks and some keys are now optional.
 * Misc plom-manager improvements.
 
 ### Fixed
