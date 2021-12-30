@@ -400,7 +400,7 @@ def whichLineToDraw(g, r):
 
         Each side is mapped to t in [0, 1] which is used for a linear
         interpolation, but we can pass t through a transform.  Some overlap
-        between this and slurp.
+        between this and the slurp parameter.
 
         Here we implement a p.w. linear regularized double-step.
         """
@@ -416,6 +416,48 @@ def whichLineToDraw(g, r):
             return (0.5 / (0.5 - p - p)) * (t - (0.5 + p)) + 0.5
         else:
             return 1.0
+
+    def capped_ramp(crit1, crit2, x):
+        """Map x into [crit1, crit2] returning a scalar in [0, 1]."""
+        t = (x - crit1) / (crit2 - crit1)
+        t = min(t, 1)
+        t = max(0, t)
+        # comment out for non-sticky midpoints
+        t = transf(t)
+        return t
+
+    def ramble(a, b, left, right):
+        """Some kind of soft thresholding of an interval near two points a and b.
+
+        Consider sliding the little figure ``l-m-r`` through two values a and b.
+        We want to return a value ``{r, a, m, b, l}`` depending where ``l-m-r``
+        lies compared to ``[a, b]``.  Roughly, if m is in ``[A, B]`` then we
+        return m, otherwise, some soft thresholding near a and b.
+
+        The capital letters in the follow diagram illustrate the return value::
+
+                              a                   b
+                              |     return M      |
+                     ⎧  l-m-R |                   | L-m-r  ⎫
+              return ⎪   l-m-R|                   |L-m-r   ⎪ return
+              R or A ⎨    l-m-A                   B-m-r    ⎬ B or L
+                     ⎪     l-mAr                 lBm r     ⎪
+                     ⎩      l-A-r               l-Br       ⎭
+                             l|M-r             l-M|r
+                              l-M-r           l-M-r
+                              |l-M-r  l-M-r  l-M-r|
+                              |                   |
+        """
+        mid = (left + right) / 2
+        if right <= a:
+            return right
+        elif mid <= a:
+            return a
+        elif left >= b:
+            return left
+        elif mid >= b:
+            return b
+        return mid
 
     # We cut up the space around "r" into four regions by the eikonal solution
     # shocks.  Then we process each of those 4 regions.  For example the "top"
@@ -437,98 +479,33 @@ def whichLineToDraw(g, r):
     ):
         crit1 = r.left() - (r.top() - g.bottom()) / slurp
         crit2 = r.right() + (r.top() - g.bottom()) / slurp
-        gmid = g.left() + g.width() / 2
-        if g.right() <= crit1:
-            t = 0
-            gx = g.right()
-        elif gmid <= crit1:
-            t = 0
-            gx = crit1
-        elif g.left() >= crit2:
-            t = 1
-            gx = g.left()
-        elif gmid >= crit2:
-            t = 1
-            gx = crit2
-        else:
-            t = (gmid - crit1) / (crit2 - crit1)
-            gx = gmid
-        t = transf(t)
+        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
+        gx = ramble(crit1, crit2, g.left(), g.right())
         return QLineF(r.left() + t * r.width(), r.top(), gx, g.bottom())
 
-    #     |   r |
-    #     +-----+
-    #    /       \
-    # --/+        +---
-    #  / |g      g|\
     if (
         g.top() >= r.bottom()
-        and g.top() - r.bottom() >= g.left() - r.right()
-        and g.top() - r.bottom() >= r.left() - g.right()
+        and g.top() >= r.bottom() + g.left() - r.right()
+        and g.top() >= r.bottom() + r.left() - g.right()
     ):
         crit1 = r.left() - (g.top() - r.bottom()) / slurp
         crit2 = r.right() + (g.top() - r.bottom()) / slurp
-        gmid = g.left() + g.width() / 2
-        if g.right() <= crit1:
-            t = 0
-            gx = g.right()
-        elif gmid <= crit1:
-            t = 0
-            gx = crit1
-        elif g.left() >= crit2:
-            t = 1
-            gx = g.left()
-        elif gmid >= crit2:
-            t = 1
-            gx = crit2
-        else:
-            t = (gmid - crit1) / (crit2 - crit1)
-            gx = gmid
-        t = transf(t)
+        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
+        gx = ramble(crit1, crit2, g.left(), g.right())
         return QLineF(r.left() + t * r.width(), r.bottom(), gx, g.top())
 
     if g.left() >= r.right():
         crit1 = r.top() - (g.left() - r.right()) / slurp
         crit2 = r.bottom() + (g.left() - r.right()) / slurp
-        gmid = g.top() + g.height() / 2
-        if g.bottom() <= crit1:
-            t = 0
-            gy = g.bottom()
-        elif gmid <= crit1:
-            t = 0
-            gy = crit1
-        elif g.top() >= crit2:
-            t = 1
-            gy = g.top()
-        elif gmid >= crit2:
-            t = 1
-            gy = crit2
-        else:
-            t = (gmid - crit1) / (crit2 - crit1)
-            gy = gmid
-        t = transf(t)
+        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
+        gy = ramble(crit1, crit2, g.top(), g.bottom())
         return QLineF(r.right(), r.top() + t * r.height(), g.left(), gy)
 
     if g.right() <= r.left():
         crit1 = r.top() - (r.left() - g.right()) / slurp
         crit2 = r.bottom() + (r.left() - g.right()) / slurp
-        gmid = g.top() + g.height() / 2
-        if g.bottom() <= crit1:
-            t = 0
-            gy = g.bottom()
-        elif gmid <= crit1:
-            t = 0
-            gy = crit1
-        elif g.top() >= crit2:
-            t = 1
-            gy = g.top()
-        elif gmid >= crit2:
-            t = 1
-            gy = crit2
-        else:
-            t = (gmid - crit1) / (crit2 - crit1)
-            gy = gmid
-        t = transf(t)
+        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
+        gy = ramble(crit1, crit2, g.top(), g.bottom())
         return QLineF(r.left(), r.top() + t * r.height(), g.right(), gy)
 
     # TODO: maybe return None?  but needs reworking
