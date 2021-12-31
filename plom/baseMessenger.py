@@ -117,12 +117,12 @@ class BaseMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
             self.session.verify = self.verify
 
         try:
             try:
-                response = self.get("/Version")
+                response = self.get("/Version", timeout=2)
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -135,7 +135,7 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.get("/Version")
+                response = self.get("/Version", timeout=2)
                 response.raise_for_status()
                 return response.text
         except requests.ConnectionError as err:
