@@ -56,7 +56,7 @@ def import_canvas_csv(canvas_fromfile):
         axis=1,
     )
     # pylint: disable=unsubscriptable-object
-    df = df[isbad is False]
+    df = df[isbad == False]  # noqa: E712
     # reset the Pandas-added index column to 0 for first row
     df = df.reset_index(drop=True)
     return df
