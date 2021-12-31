@@ -209,9 +209,11 @@ flake8:
   before_script:
     - python3 -m pip install flake8
   script:
+    # show all errors and warnings but don't fail
     - flake8 --exit-zero
-    # exit-zero until we can pass
-    - flake8 --select E --exit-zero
+    # fail test if any errors here
+    # TODO: remove `plom` and run on contrib code too
+    - flake8 plom --select E
   allow_failure: true
 
 
