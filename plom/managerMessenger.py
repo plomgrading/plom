@@ -1453,8 +1453,8 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    ## =====
-    ## Rubric analysis stuff
+    # =====
+    # Rubric analysis stuff
 
     def RgetTestRubricMatrix(self):
         self.SRmutex.acquire()
@@ -1507,8 +1507,8 @@ class ManagerMessenger(BaseMessenger):
 
         return response.json()
 
-    ## =====
-    ## Bundle image stuff
+    # =====
+    # Bundle image stuff
 
     def getBundleFromImage(self, filename):
         self.SRmutex.acquire()
@@ -1571,6 +1571,3 @@ class ManagerMessenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-
-##
