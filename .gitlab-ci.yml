@@ -209,8 +209,9 @@ flake8:
   before_script:
     - python3 -m pip install flake8
   script:
+    - flake8 --exit-zero
     # exit-zero until we can pass
-    - flake8 plom --exit-zero
+    - flake8 --select E --exit-zero
   allow_failure: true
 
 
