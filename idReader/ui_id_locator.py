@@ -6,7 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
 class Ui_idLocator(object):
@@ -78,5 +78,3 @@ class Ui_idLocator(object):
         self.goButton.setText(_translate("idLocator", "Go"))
         self.topLabel.setText(_translate("idLocator", "TextLabel"))
         self.bottomLabel.setText(_translate("idLocator", "TextLabel"))
-
-
