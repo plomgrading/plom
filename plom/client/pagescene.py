@@ -268,7 +268,7 @@ mouseRelease = {
     "text": "mouseReleaseText",
 }
 
-## things for nice rubric/text drag-box tool
+# things for nice rubric/text drag-box tool
 # work out how to draw line from current point
 # to nearby point on a given rectangle
 # also need a minimum size threshold for that box
@@ -942,14 +942,12 @@ class PageScene(QGraphicsScene):
             return getattr(self, functionName, None)(event)
         return super().mouseReleaseEvent(event)
 
-    ###########
     # Tool functions for press, move and release.
     # Depending on the tool different functions are called
     # Many (eg tick) just create a graphics item, others (eg line)
     # create a temp object (on press) which is changes (as mouse-moves)
     # and then destroyed (on release) and replaced with the
     # more permanent graphics item.
-    ###########
 
     def textUnderneathGhost(self):
         """Check to see if any text-like object under current ghost-text"""
