@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
 * Misc plom-manager improvements.
+* API calls have a default 10s timeout (and 2 retries), so semi-inevitable failures fail faster.
 
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
