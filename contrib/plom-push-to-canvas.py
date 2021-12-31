@@ -31,6 +31,7 @@ import random
 import string
 import time
 
+from canvasapi.exceptions import CanvasException
 import pandas
 from tqdm import tqdm
 
@@ -274,21 +275,24 @@ if __name__ == "__main__":
             continue
 
         # TODO: should look at the return values
-        # TODO: except CanvasException
+        # TODO: back off on canvasapi.exception.RateLimitExceeded?
         try:
             sub.upload_comment(pdf)
-        except:
+        except CanvasException as e:
+            print(e)
             timeouts.append((pdf.name, sis_id, name))
         time.sleep(random.uniform(0.25, 0.5))
         if args.solutions and soln_pdf:
             try:
                 sub.upload_comment(soln_pdf)
-            except:
+            except CanvasException as e:
+                print(e)
                 timeouts.append((soln_pdf.name, sis_id, name))
             time.sleep(random.uniform(0.25, 0.5))
         try:
             sub.edit(submission={"posted_grade": mark})
-        except:
+        except CanvasException as e:
+            print(e)
             timeouts.append((mark, sis_id, name))
         time.sleep(random.uniform(0.25, 0.5))
 
