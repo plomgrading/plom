@@ -56,7 +56,7 @@ def import_canvas_csv(canvas_fromfile):
         axis=1,
     )
     # pylint: disable=unsubscriptable-object
-    df = df[isbad == False]
+    df = df[isbad == False]  # noqa: E712
     # reset the Pandas-added index column to 0 for first row
     df = df.reset_index(drop=True)
     return df
@@ -88,10 +88,8 @@ def find_partial_column_name(df, parthead, at_start=True):
     print("  We found: " + str(possible_matches))
     try:
         (col,) = possible_matches
-    except ValueError as e:
-        raise ValueError(
-            'Column match for "{}" not found/not unique'.format(parthead)
-        ) from None
+    except ValueError:
+        raise ValueError(f'Column match for "{parthead}" not found/not unique')
     return col
 
 
