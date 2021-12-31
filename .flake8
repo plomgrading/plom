@@ -1,4 +1,6 @@
 [flake8]
 max-line-length = 88
 exclude = plom/*/uiFiles/ui_*.py
-ignore = E501
+# E203 conflicts with black
+# E402 seems to happen our init files
+ignore = E501,E741,E402,E203
