@@ -8,7 +8,6 @@
 
 import html
 import logging
-from pathlib import Path
 from textwrap import shorten
 
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -1284,10 +1283,10 @@ class AddRubricBox(QDialog):
         else:
             self.setWindowTitle("Add new rubric")
 
-        ## Set self to be 1/2 the size of the annotator
+        # Set self to be 1/2 the size of the annotator
         if annotator_size:
             self.resize(annotator_size / 2)
-        ##
+        #
         self.CB = QComboBox()
         self.TE = QTextEdit()
         self.SB = SignedSB(maxMark)
@@ -1306,7 +1305,7 @@ class AddRubricBox(QDialog):
         )
         sizePolicy.setVerticalStretch(3)
 
-        ##
+        #
         self.TE.setSizePolicy(sizePolicy)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setVerticalStretch(1)
