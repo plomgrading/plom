@@ -53,6 +53,7 @@ class BaseMessenger:
         self.session = None
         self.user = None
         self.token = None
+        self.default_timeout = 10
         if s:
             server = s
         else:
@@ -94,18 +95,28 @@ class BaseMessenger:
         return self.user
 
     def get(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
 
     def put(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
 
     def start(self):
