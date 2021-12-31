@@ -212,8 +212,7 @@ flake8:
     # show all errors and warnings but don't fail
     - flake8 --exit-zero
     # fail test if any errors here
-    # TODO: remove `plom` and run on contrib code too
-    - flake8 plom --select E,W
+    - flake8 --select E,W
   allow_failure: true
 
 
