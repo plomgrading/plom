@@ -142,6 +142,11 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
                 tmpdir / f"solutions{v}-{p:03}.png"
                 for p in solutionSpec["solution"][sq]["pages"]
             ]
+            # maybe processing made jpegs
+            for i, f in enumerate(image_list):
+                if not f.is_file():
+                    if f.with_suffix(".jpg").is_file():
+                        image_list[i] = f.with_suffix(".jpg")
             # check the image list - make sure they exist
             for fn in image_list:
                 if not fn.is_file():
