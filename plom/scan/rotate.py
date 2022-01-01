@@ -37,7 +37,7 @@ def rotateBitmap(fname, angle):
         if have_jpegtran:
             print("**** Doing JPEG rotation {} on {}".format(angle, fname))
             im = jpegtran.JPEGImage(fname)
-            im.rotate(angle).save(fname)
+            im.rotate(angle).save(str(fname))
             return
         warn(
             f"Doing LOSSY jpeg rotation {angle} on {fname} [b/c jpegtran-cffi not installed]"
