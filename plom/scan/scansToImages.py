@@ -68,12 +68,9 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     if doc.is_repaired:
         warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
 
-    # 0:9 -> 10 pages -> 2 digits
-    zpad = math.floor(math.log10(len(doc))) + 1
-
     files = []
     for p in doc:
-        basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
+        basename = f"{safeScan}-{(p.number + 1):03}"
 
         ok_extract = True
         msgs = []
