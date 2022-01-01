@@ -10,6 +10,7 @@ import shutil
 import subprocess
 from multiprocessing import Pool
 import math
+import random
 import tempfile
 from warnings import warn
 
@@ -175,11 +176,16 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             )
 
         # For testing, randomly make jpegs, sometimes of truly horrid quality
-        if random.uniform(0, 1) < 0.4:
+        if random.uniform(0, 1) < 0.5:
             outname = dest / (basename + ".jpg")
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             quality = random.choice([4, 94, 94, 94, 94])
             img.save(outname, "JPEG", quality=quality, optimize=True)
+            # randomly hard orient 50% of them:
+            if random.uniform(0, 1) < 0.5:
+                r = random.choice([90, 180, -90, -80, 5])
+                print(f"randomly hard-rotating by {r}")
+                img = img.rotate(r, expand=True)
             # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
             r = random.choice([None, None, None, 3, 6, 8])
             if r:
