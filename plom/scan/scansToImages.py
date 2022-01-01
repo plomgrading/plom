@@ -177,19 +177,19 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
-        # # For testing, randomly make jpegs, sometimes of truly horrid quality
-        # if random.uniform(0, 1) < 0.4:
-        #     outname = dest / (basename + ".jpg")
-        #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        #     quality = random.choice([4, 94, 94, 94, 94])
-        #     img.save(outname, "JPEG", quality=quality, optimize=True)
-        #     # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
-        #     r = random.choice([None, None, None, 3, 6, 8])
-        #     if r:
-        #         print("re-orienting randomly {}".format(r))
-        #         subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
-        #     files.append(outname)
-        #     continue
+        # For testing, randomly make jpegs, sometimes of truly horrid quality
+        if random.uniform(0, 1) < 0.4:
+            outname = dest / (basename + ".jpg")
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            quality = random.choice([4, 94, 94, 94, 94])
+            img.save(outname, "JPEG", quality=quality, optimize=True)
+            # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
+            r = random.choice([None, None, None, 3, 6, 8])
+            if r:
+                print("re-orienting randomly {}".format(r))
+                subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
+            files.append(outname)
+            continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
         outname = dest / (basename + ".png")
