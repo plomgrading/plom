@@ -412,7 +412,6 @@ class PageScene(QGraphicsScene):
         self.zoomBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
-        self.imageItem = QGraphicsPixmapItem
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
