@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Potential memory leaks in Annotator, Manager, and dialogs.
 * A large number of modal dialog fixes.
 * Other misc changes.
+* JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
 
 
 ## [0.7.11] - 2021-12-22
