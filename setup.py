@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 #
 # Copying and distribution of this file, with or without modification,
@@ -41,6 +41,7 @@ client_install_requires = [
 server_install_requires = [
     "appdirs>=1.4.3",
     "canvasapi>=2.0.0",
+    "exif>=1.3.0",
     "toml>=0.10.0",
     "tqdm",
     "numpy",
