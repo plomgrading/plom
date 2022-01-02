@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
-import os
+from pathlib import Path
 import PIL.Image
 import PIL.ExifTags
 import subprocess
@@ -22,15 +22,15 @@ def rotateBitmap(fname, angle):
     """Rotate bitmap, possible in metadata.
 
     args:
-        filename (str): name of a file
+        filename (pathlib.Path/str): name of a file
         angle (int): 0, 90, 180, 270, or -90 degree rotation.
 
     If its a jpeg, wehave special handling, otherwise, we currently shell-out
     to the `mogrify` command line tool from ImageMagick.
     """
     assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
-    fnamebase, fnameext = os.path.splitext(fname)
-    if fnameext.lower() in (".jpg", ".jpeg"):
+    fname = Path(fname)
+    if fname.suffix.lower() in (".jpg", ".jpeg"):
         return rotate_bitmap_jpeg_exif(fname, angle)
 
     if angle == 0:
@@ -47,7 +47,7 @@ def rotate_bitmap_jpeg_exif(fname, angle):
     """Rotate jpeg using exif metadata rotations.
 
     args:
-        filename (str): name of a file
+        filename (pathlib.Path): name of a file
         angle (int): 0, 90, 180, 270, or -90 degree rotation.
 
     If the image already had a exif rotation tag it is ignored: the
@@ -78,7 +78,7 @@ def rotate_bitmap_jpeg_jpegtran_cffi(fname, angle):
     """Rotate jpeg (almost) losslessly using jpegtran-cffi if available.  DEPRECATED.
 
     args:
-        filename (str): name of a file
+        filename (pathlib.Path): name of a file
         angle (int): 0, 90, 180, 270, or -90 degree rotation.
 
     If available, this routine uses the `jpegtran-cffi` library for
