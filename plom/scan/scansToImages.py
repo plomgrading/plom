@@ -24,7 +24,7 @@ from plom.scan.rotate import normalizeJPEGOrientation
 from plom.scan.bundle_utils import make_bundle_dir
 
 
-def processFileToBitmaps(file_name, dest, do_not_extract=False):
+def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -35,8 +35,12 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.
         dest (str, Path): where to save the resulting bitmap files.
+
+    Keyword Args:
         do_not_extract (bool): always render, do no extract even if
             it seems possible to do so.
+        debug_jpeg (bool): make jpegs, randomly rotated of various
+            quality settings, for debugging or demos.  Default: False.
 
     Returns:
         list: an ordered list of the images of each page.  Each entry
@@ -176,8 +180,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             )
 
         # For testing, randomly make jpegs, sometimes of truly horrid quality
-        random_jpeg_debugging = True
-        if random_jpeg_debugging and random.uniform(0, 1) < 0.8:
+        if debug_jpeg and random.uniform(0, 1) < 0.8:
             outname = dest / (basename + ".jpg")
             img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             msgs = []
@@ -329,7 +332,7 @@ def postProcessing(thedir, dest, skip_gamma=False):
         shutil.move(file, dest / file.name)
 
 
-def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False):
+def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False, *, demo=False):
     """Process a pdf file into bitmap images of each page.
 
     Process each page of a pdf file into bitmaps.
@@ -351,12 +354,21 @@ def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=Fals
             extracted: there are a variety of sanity checks that must
             pass.
 
+    Keyword Args:
+        demo (bool): Simulate scanning with random rotations, adding
+            noise, lower-quality jpegs, etc.  Default: False
+
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
     """
     make_bundle_dir(bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
-    files = processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
+    files = processFileToBitmaps(
+        pdf_fname,
+        bitmaps_dir,
+        do_not_extract=skip_img_extract,
+        debug_jpeg=demo,
+    )
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
     #           ,,,
     #          (o o)
