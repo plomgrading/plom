@@ -33,3 +33,18 @@ template for this called `extraSheets.tex`.
 If you want to enforce blind-grading, see `extraSheets_noname.tex`.
 
 Make sure you print these double-sided!
+
+
+Source code for misc support files
+----------------------------------
+
+To build `idBox` and `idBox2` from sources:
+
+  * `latex idBox2-source.tex`
+  * `dvips idBox2-source.dvi`
+  * ... TODO
+  * `epstopdf idBox2-source.eps`
+  * rename as needed
+
+TODO: add instructions for how to build these!  I don't remember how to
+automatically get a cropped `.eps` file from `.tex`.
