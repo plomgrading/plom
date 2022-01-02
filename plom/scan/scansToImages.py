@@ -298,12 +298,16 @@ def postProcessing(thedir, dest, skip_gamma=False):
     thedir = Path(thedir)
     dest = Path(dest)
 
-    print("Normalizing jpeg orientation from Exif metadata")
-    stuff = list(thedir.glob("*.jpg"))
-    stuff.extend(thedir.glob("*.jpeg"))
-    N = len(stuff)
-    with Pool() as p:
-        r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
+    # TODO: likely deprecated
+    jpeg_normalize_orientation = False
+
+    if jpeg_normalize_orientation:
+        print("Normalizing jpeg orientation from Exif metadata")
+        stuff = list(thedir.glob("*.jpg"))
+        stuff.extend(thedir.glob("*.jpeg"))
+        N = len(stuff)
+        with Pool() as p:
+            r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
 
     if not skip_gamma:
         # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
