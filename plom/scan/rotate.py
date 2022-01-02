@@ -19,37 +19,20 @@ except ImportError:
 
 
 def rotateBitmap(fname, angle):
-    """Rotate bitmap, in metadata if possible (for jpg).
+    """Rotate bitmap, possible in metadata.
 
     args:
         filename (str): name of a file
         angle (int): 0, 90, 180, 270, or -90 degree rotation.
 
-    If the image already had a exif rotation tag, the rotation is absoluate,
-    that is NOT relative to that existing transform.  This is b/c the QR
-    code reading bits earlier in the pipeline do not support exif tags.
-    Perhaps they should and we could revisit this decision.
+    If its a jpeg, wehave special handling, otherwise, we currently shell-out
+    to the `mogrify` command line tool from ImageMagick.
     """
-    assert angle in (0, 90, 180, 270, -90), "Invalid rotation angle {}".format(angle)
+    assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     fnamebase, fnameext = os.path.splitext(fname)
     if fnameext.lower() in (".jpg", ".jpeg"):
-        print(f"Rotation of {angle} on JPEG {fname}: doing metadata EXIF rotations")
-        with open(fname, "rb") as f:
-            im = exif.Image(f)
-        if im.has_exif:
-            print(f'{fname} has exif already, orientation: {im.get("orientation")}')
-        # Notation is OrigTop_OrigLeft -> RIGHT_TOP (90 degree rot)
-        table = {
-            0: exif.Orientation.TOP_LEFT,
-            90: exif.Orientation.RIGHT_TOP,
-            180: exif.Orientation.BOTTOM_RIGHT,
-            270: exif.Orientation.LEFT_BOTTOM,
-            -90: exif.Orientation.LEFT_BOTTOM,
-        }
-        im.set("orientation", table[angle])
-        with open(fname, "wb") as f:
-            f.write(im.get_file())
-        return
+        return rotate_bitmap_jpeg_exif(fname, angle)
+
     if angle == 0:
         return
     subprocess.run(
@@ -60,8 +43,39 @@ def rotateBitmap(fname, angle):
     )
 
 
-def rotateBitmap_jpegtran_cffi_DEPRECATED(fname, angle):
-    """Rotate bitmap, (almost) lossless for jpg.
+def rotate_bitmap_jpeg_exif(fname, angle):
+    """Rotate jpeg using exif metadata rotations.
+
+    args:
+        filename (str): name of a file
+        angle (int): 0, 90, 180, 270, or -90 degree rotation.
+
+    If the image already had a exif rotation tag it is ignored: the
+    rotation is absolute, NOT relative to that existing transform.
+    This is b/c the QR code reading bits earlier in the pipeline do not
+    support exif tags: perhaps they should and we revisit this decision.
+    """
+    assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
+    print(f"Rotation of {angle} on JPEG {fname}: doing metadata EXIF rotations")
+    with open(fname, "rb") as f:
+        im = exif.Image(f)
+    if im.has_exif:
+        print(f'{fname} has exif already, orientation: {im.get("orientation")}')
+    # Notation is OrigTop_OrigLeft -> RIGHT_TOP (90 degree rot)
+    table = {
+        0: exif.Orientation.TOP_LEFT,
+        90: exif.Orientation.RIGHT_TOP,
+        180: exif.Orientation.BOTTOM_RIGHT,
+        270: exif.Orientation.LEFT_BOTTOM,
+        -90: exif.Orientation.LEFT_BOTTOM,
+    }
+    im.set("orientation", table[angle])
+    with open(fname, "wb") as f:
+        f.write(im.get_file())
+
+
+def rotate_bitmap_jpeg_jpegtran_cffi(fname, angle):
+    """Rotate jpeg (almost) losslessly using jpegtran-cffi if available.  DEPRECATED.
 
     args:
         filename (str): name of a file
@@ -70,23 +84,18 @@ def rotateBitmap_jpegtran_cffi_DEPRECATED(fname, angle):
     If available, this routine uses the `jpegtran-cffi` library for
     lossless jpeg rotations.  If that library is not available, there
     will be a loss of quality when rotating a jpeg image.
-
-    TODO: think about multiples of 8/16 thing for jpeg.
     """
-    assert angle in (0, 90, 180, 270, -90), "Invalid rotation angle {}".format(angle)
+    assert angle in (0, 90, 180, 270, -90), f"Invalid rotation angle {angle}"
     if angle == 0:
         return
-    fnamebase, fnameext = os.path.splitext(fname)
-    if fnameext.lower() in (".jpg", ".jpeg"):
-        if have_jpegtran:
-            print("**** Doing JPEG rotation {} on {}".format(angle, fname))
-            im = jpegtran.JPEGImage(fname)
-            im.rotate(angle).save(str(fname))
-            return
-        warn(
-            f"Doing LOSSY jpeg rotation {angle} on {fname} [b/c jpegtran-cffi not installed]"
-        )
-
+    if have_jpegtran:
+        print("**** Doing JPEG rotation {} on {}".format(angle, fname))
+        im = jpegtran.JPEGImage(fname)
+        im.rotate(angle).save(str(fname))
+        return
+    warn(
+        f"Doing LOSSY jpeg rotation {angle} on {fname} [b/c jpegtran-cffi not installed]"
+    )
     subprocess.run(
         ["mogrify", "-quiet", "-rotate", str(angle), fname],
         stderr=subprocess.STDOUT,
@@ -104,8 +113,6 @@ def normalizeJPEGOrientation(f):
     Gives a warning if size not a multiple 16 b/c underlying library
     just quietly mucks up the bottom/right edge:
     https://github.com/jbaiter/jpegtran-cffi/issues/23
-
-    In Plom, we generally transcode jpeg's that are not multiples of 16.
     """
     # First use Pillow: return early if we can, in case we don't have jpegtran
     pil_img = PIL.Image.open(f)
