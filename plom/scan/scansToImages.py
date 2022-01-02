@@ -187,7 +187,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             if random.uniform(0, 1) < 0.5:
                 angle = random.choice([91, 181, -92, -85, -3])
                 msgs.append(f"hard-rotate {angle}")
-                img = img.rotate(angle, expand=True)
+                img = img.rotate(
+                    angle,
+                    resample=PIL.Image.BILINEAR,
+                    expand=True,
+                    fillcolor=(128, 128, 128, 0),
+                )
             quality = random.choice([4, 94, 94, 94, 94])
             msgs.append(f"quality {quality}")
             r = random.choice([None, None, None, 3, 6, 8])
