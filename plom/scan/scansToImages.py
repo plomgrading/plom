@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
@@ -9,14 +9,14 @@ from pathlib import Path
 import shutil
 import subprocess
 from multiprocessing import Pool
-import math
 import random
 import tempfile
 from warnings import warn
 
 from tqdm import tqdm
+import exif
 import fitz
-from PIL import Image
+import PIL
 
 from plom import PlomImageExts
 from plom import ScenePixelHeight
@@ -176,21 +176,27 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
             )
 
         # For testing, randomly make jpegs, sometimes of truly horrid quality
-        if random.uniform(0, 1) < 0.5:
+        random_jpeg_debugging = True
+        if random_jpeg_debugging and random.uniform(0, 1) < 0.8:
             outname = dest / (basename + ".jpg")
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            quality = random.choice([4, 94, 94, 94, 94])
-            img.save(outname, "JPEG", quality=quality, optimize=True)
-            # randomly hard orient 50% of them:
+            img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            msgs = []
             if random.uniform(0, 1) < 0.5:
-                r = random.choice([90, 180, -90, -80, 5])
-                print(f"randomly hard-rotating by {r}")
-                img = img.rotate(r, expand=True)
-            # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
+                angle = random.choice([91, 181, -92, -85, -3])
+                msgs.append(f"hard-rotate {angle}")
+                img = img.rotate(angle, expand=True)
+            quality = random.choice([4, 94, 94, 94, 94])
+            msgs.append(f"quality {quality}")
             r = random.choice([None, None, None, 3, 6, 8])
             if r:
-                print("re-orienting randomly {}".format(r))
-                subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
+                msgs.append(f"exif rotate {r}")
+            print("  Randomly making jpeg " + ", ".join(msgs))
+            img.save(outname, "JPEG", quality=quality, optimize=True)
+            if r:
+                im = exif.Image(outname)
+                im.set("orientation", r)
+                # or cmdline, Ubuntu: libimage-exiftool-perl, Fedora: perl-Image-ExifTool
+                # subprocess.check_call(["exiftool", "-overwrite_original", f"-Orientation#={r}", outname])
             files.append(outname)
             continue
 
