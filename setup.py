@@ -41,7 +41,7 @@ client_install_requires = [
 server_install_requires = [
     "appdirs>=1.4.3",
     "canvasapi>=2.0.0",
-    "exif>=1.3.4",
+    "exif>=1.2.2",
     "toml>=0.10.0",
     "tqdm",
     "numpy",
