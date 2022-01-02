@@ -45,7 +45,9 @@ from plom.scan.scansToImages import process_scans
 from plom.scan import readQRCodes
 
 
-def processScans(server, password, pdf_fname, *, gamma=False, extractbmp=False, demo=False):
+def processScans(
+    server, password, pdf_fname, *, gamma=False, extractbmp=False, demo=False
+):
     """Process PDF file into images and read QRcodes
 
     args:
