@@ -180,20 +180,18 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             )
 
         # For testing, randomly make jpegs, sometimes of truly horrid quality
-        if debug_jpeg and random.uniform(0, 1) < 0.8:
+        if debug_jpeg and random.uniform(0, 1) <= 0.5:
             outname = dest / (basename + ".jpg")
             img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            msgs = []
-            if random.uniform(0, 1) < 0.5:
-                angle = random.choice([91, 181, -92, -85, -3])
-                msgs.append(f"hard-rotate {angle}")
-                img = img.rotate(
-                    angle,
-                    resample=PIL.Image.BILINEAR,
-                    expand=True,
-                    fillcolor=(128, 128, 128, 0),
-                )
-            quality = random.choice([4, 94, 94, 94, 94])
+            angle = random.choice([90.5, 180.4, -90.3, -88, -1])
+            msgs = [f"hard-rotate {angle}"]
+            img = img.rotate(
+                angle,
+                resample=PIL.Image.BILINEAR,
+                expand=True,
+                fillcolor=(128, 128, 128, 0),
+            )
+            quality = random.choice([5, 94, 94, 94, 94])
             msgs.append(f"quality {quality}")
             r = random.choice([None, None, None, 3, 6, 8])
             if r:
