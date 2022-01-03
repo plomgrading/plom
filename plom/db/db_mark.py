@@ -211,9 +211,11 @@ def MdidNotFinish(self, user_name, group_id):
         if gref is None:  # this should not happen.
             log.info("That task {} not known".format(group_id))
             return
-        if not gref.scanned: # sanity check
-            log.warning(f"User returning task {group_id} that wasn't scanned. This should not happen!")
-            return  
+        if not gref.scanned:  # sanity check
+            log.warning(
+                f"User returning task {group_id} that wasn't scanned. This should not happen!"
+            )
+            return
         qref = gref.qgroups[0]
         # sanity check that user has task
         if qref.user != uref or qref.status != "out":
