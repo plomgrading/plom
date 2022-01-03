@@ -450,8 +450,6 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
             "Cannot find page {} of test {}".format(page_number, test_number),
         ]
     oref = pref.image  # the original page image for this tpage.
-    # get the group of that tpage - so we can trigger an update.
-    gref = pref.group
 
     # check if all owners of tasks in that test are logged out.
     owners = self.testOwnersLoggedIn(tref)

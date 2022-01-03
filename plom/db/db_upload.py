@@ -178,7 +178,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         # get the first non-outdated annotation for the group
         aref = (
             gref.qgroups[0]
-            .annotations.where(Annotation.outdated == False)
+            .annotations.where(Annotation.outdated == False)  # noqa: E712
             .order_by(Annotation.edition)
             .get()
         )
@@ -215,7 +215,7 @@ def getMissingDNMPages(self, test_number):
     gref = dref.group
     unscanned_list = []
     for pref in gref.tpages:
-        if pref.scanned is False:
+        if not pref.scanned:
             unscanned_list.append(pref.page_number)
     return [True, unscanned_list]
 
@@ -707,7 +707,7 @@ def checkTestScanned(self, tref):
     """Check if all groups scanned."""
     for gref in tref.groups:
         if gref.group_type == "q":
-            if gref.scanned is False:
+            if not gref.scanned:
                 log.info(
                     "Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
@@ -715,7 +715,7 @@ def checkTestScanned(self, tref):
                 )
                 return False
         elif gref.group_type == "d":
-            if gref.scanned is False:
+            if not gref.scanned:
                 log.info(
                     "DNM Group {} of test {} is not scanned - test not ready.".format(
                         gref.gid, tref.test_number
@@ -780,7 +780,7 @@ def removeScannedTestPage(self, test_number, page_number):
         log.warn(f"Cannot find t-page {page_number} of test {test_number}.")
         return [False, "unknown"]
 
-    if pref.scanned is False:
+    if not pref.scanned:
         log.warn(
             f"T-Page {page_number} of test {test_number} is not scanned - cannot remove."
         )
