@@ -38,13 +38,21 @@ Make sure you print these double-sided!
 Source code for misc support files
 ----------------------------------
 
-To build `idBox` and `idBox2` from sources:
+There are several ways to build `idBox` and `idBox2` from sources. First, with fewer steps, run
+  * `pdflatex idBox2-source.tex`
+  * `pdfcrop --margins -1 idBox2-source.pdf idBox2.pdf`
+  * `pdf2svg idBox2.pdf idBox2.svg`
 
+Or, if you have inkscape installed you can get pdf and svg easily:
+  * `pdflatex idBox2-source.tex`
+  * `inkscape --pdf-poppler --export-area-drawing idBox2-source.pdf -o idBox2.pdf`
+  * `inkscape --pdf-poppler --export-area-drawing --export-plain-svg idBox2-source.pdf -o idBox2.svg`
+
+Alternatively, with more steps and intermediaries, run
   * `latex idBox2-source.tex`
   * `dvips idBox2-source.dvi`
-  * ... TODO
-  * `epstopdf idBox2-source.eps`
-  * rename as needed
+  * `ps2epsi idBox2-source.ps`    (note that this produces a large and not especially good eps file)
+  * `epspdf idBox2-source.epsi idBox2.pdf`
+  * `pdf2svg idBox2.pdf idBox2.svg`
 
-TODO: add instructions for how to build these!  I don't remember how to
-automatically get a cropped `.eps` file from `.tex`.
+Note that without the extra `margins` argument pdfcrop leaves a 1pt white margin around the idbox. Also note that the intermediate .epsi file is quite large but the final cropped pdf is reasonably sized.
