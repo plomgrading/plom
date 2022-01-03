@@ -380,7 +380,9 @@ def MtakeTaskFromClient(
                 ARLink.create(annotation=aref, rubric=rref)
 
         # check if there are any unmarked questions left in the test
-        if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:  # noqa: E712
+        if (
+            QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None
+        ):  # noqa: E712
             log.info("Still unmarked questions in test {}".format(tref.test_number))
             return [True, "more"]
 

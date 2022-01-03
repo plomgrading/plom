@@ -45,8 +45,8 @@ def IDcountIdentified(self):
             IDGroup.select()
             .join(Group)
             .where(
-                Group.scanned == True,   # noqa: E712
-                IDGroup.identified == True,   # noqa: E712
+                Group.scanned == True,  # noqa: E712
+                IDGroup.identified == True,  # noqa: E712
             )
             .count()
         )
@@ -63,7 +63,7 @@ def IDgetNextTask(self):
                 .join(Group)
                 .where(
                     IDGroup.status == "todo",
-                    Group.scanned == True,   # noqa: E712
+                    Group.scanned == True,  # noqa: E712
                 )
                 .get()
             )
@@ -202,7 +202,9 @@ def IDgetImagesOfNotAutoIdentified(self):
     """
     rval = {}
     uref = User.get(User.name == "HAL")
-    query = Group.select().where(Group.group_type == "i", Group.scanned == True)   # noqa: E712
+    query = Group.select().where(
+        Group.group_type == "i", Group.scanned == True
+    )  # noqa: E712
     for gref in query:
         iref = gref.idgroups[0]  # there is always exactly 1.
         # we want to ignore pre-named papers - those are owned by HAL
@@ -335,8 +337,8 @@ def IDgetImageFromATest(self):
         .join(Group)
         .where(
             Group.group_type == "i",
-            Group.scanned == True,   # noqa: E712
-            IDGroup.identified == False,   # noqa: E712
+            Group.scanned == True,  # noqa: E712
+            IDGroup.identified == False,  # noqa: E712
         )
         .order_by(pw.fn.Random())
         .limit(1)  # we only need 1.
@@ -360,7 +362,7 @@ def IDreviewID(self, test_number):
         return [False]
     iref = IDGroup.get_or_none(
         IDGroup.test == tref,
-        IDGroup.identified == True,   # noqa: E712
+        IDGroup.identified == True,  # noqa: E712
     )
     if iref is None:
         return [False]
