@@ -4,10 +4,8 @@
 from PyQt5.QtCore import QTimer, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import (
-    QGraphicsItem,
     QGraphicsObject,
     QGraphicsPathItem,
-    QGraphicsRectItem,
     QUndoCommand,
 )
 
@@ -35,7 +33,7 @@ class CommandTool(QUndoCommand):
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
 
-## For animation of undo / redo / delete
+# For animation of undo / redo / delete
 
 
 class DeleteObject(QGraphicsObject):

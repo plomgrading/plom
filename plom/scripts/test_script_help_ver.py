@@ -5,9 +5,10 @@ import subprocess
 import pkg_resources
 from plom import __version__
 
-## Get list of console scripts
-# https://stackoverflow.com/questions/35275787/create-a-list-of-console-scripts-defined-in-a-python-package
+
 def find_my_console_scripts(package_name):
+    # Get list of console scripts
+    # https://stackoverflow.com/questions/35275787/create-a-list-of-console-scripts-defined-in-a-python-package
     entrypoints = (
         ep.name
         for ep in pkg_resources.iter_entry_points("console_scripts")

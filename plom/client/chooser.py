@@ -380,7 +380,7 @@ class Chooser(QDialog):
             v = self.ui.vSB.value()
         try:
             return int(v)
-        except:
+        except:  # noqa: E722
             return None
 
     def ungetInfo(self):

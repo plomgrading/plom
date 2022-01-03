@@ -62,7 +62,7 @@ def sis_id_to_student_dict(student_list):
     for student in student_list:
         assert student.role == "StudentEnrollment"
         try:
-            assert not student.sis_user_id is None
+            assert student.sis_user_id is not None
         except AssertionError:
             # print(student.user_id)
             pass

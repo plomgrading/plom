@@ -32,9 +32,8 @@ warn_mark = " [warning]"
 check_mark = " [check]"
 chk = check_mark
 
-##
-## Some useful functions
-##
+
+# Some helper functions
 
 
 def get_question_label(spec, n):
@@ -57,7 +56,6 @@ def get_question_label(spec, n):
     return "Q{}".format(n)
 
 
-# a couple of useful functions
 def isPositiveInt(s):
     """Check that given string s can be converted to a positive int"""
     try:
@@ -648,7 +646,6 @@ class SpecVerifier:
             print("  Page {} used once{}".format(p, chk))
 
 
-## For parsing solution spec
 def checkSolutionSpec(testSpec, solutionSpec):
     """Check the given solution spec against the validated test-spec and confirm its validity.
 

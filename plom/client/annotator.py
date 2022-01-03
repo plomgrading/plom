@@ -783,8 +783,8 @@ class Annotator(QWidget):
                 log.error(s)
                 ErrorMessage(s).exec_()
             stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.tgvID, perm)
-            ## TODO: do we need to do this?
-            ## TODO: before or after stuff = ...?
+            # TODO: do we need to do this?
+            # TODO: before or after stuff = ...?
             # closeCurrentTGV(self)
             # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
