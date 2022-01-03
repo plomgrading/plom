@@ -154,7 +154,7 @@ def MgiveTaskToClient(self, user_name, group_id):
             msg = f"The task {group_id} does not exist"
             log.info(msg)
             return [False, "no_such_task", msg]
-        if gref.scanned is False:
+        if not gref.scanned:
             msg = f"The task {group_id} is not scanned"
             log.info(msg)
             return [False, "not_scanned", msg]
@@ -211,8 +211,9 @@ def MdidNotFinish(self, user_name, group_id):
         if gref is None:  # this should not happen.
             log.info("That task {} not known".format(group_id))
             return
-        if gref.scanned is False:  # sanity check
-            return  # should not happen
+        if not gref.scanned: # sanity check
+            log.warning(f"User returning task {group_id} that wasn't scanned. This should not happen!")
+            return  
         qref = gref.qgroups[0]
         # sanity check that user has task
         if qref.user != uref or qref.status != "out":
@@ -291,7 +292,7 @@ def MtakeTaskFromClient(
 
         # grab the group corresponding to that task
         gref = Group.get_or_none(Group.gid == task)
-        if gref is None or gref.scanned is False:  # this should not happen
+        if gref is None or not gref.scanned:  # this should not happen
             log.warning(
                 "That returning marking task number {} / user {} pair not known".format(
                     task, user_name
@@ -419,7 +420,7 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
         if gref is None:
             log.info("M_get_annotations - task {} not known".format(task))
             return [False, "no_such_task"]
-        if gref.scanned is False:  # perhaps this should not happen?
+        if not gref.scanned:  # Sanity check - this should not happen.
             return [False, "no_such_task"]
         qref = gref.qgroups[0]
         if edition == -1:
@@ -463,7 +464,7 @@ def MgetOriginalImages(self, task):
         if gref is None:  # should not happen
             log.info("MgetOriginalImages - task {} not known".format(task))
             return [False, "Task {} not known".format(task)]
-        if gref.scanned is False:
+        if not gref.scanned:
             log.warning(
                 "MgetOriginalImages - task {} not completely scanned".format(task)
             )
@@ -519,7 +520,7 @@ def MgetWholePaper(self, test_number, question):
         current_image_orders[pref.image.id] = pref.order
     # give TPages (aside from ID pages), then HWPages, then EXPages
     for p in tref.tpages.order_by(TPage.page_number):
-        if p.scanned is False:  # skip unscanned testpages
+        if not p.scanned:  # skip unscanned testpages
             continue
         # skip IDpages (but we'll include dnm pages)
         if p.group.group_type == "i":
@@ -598,7 +599,7 @@ def MrevertTask(self, task):
     qref = gref.qgroups[0]
     tref = gref.test
     # check task is "done"
-    if qref.status != "done" or qref.marked is False:
+    if qref.status != "done" or not qref.marked:
         return [False, "NAC"]  # nothing to do here
     # now update things
     log.info("Manager reverting task {}".format(task))

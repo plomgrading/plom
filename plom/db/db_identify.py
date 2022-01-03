@@ -91,7 +91,7 @@ def IDgiveTaskToClient(self, user_name, test_number):
         # grab the ID group of that test
         iref = tref.idgroups[0]
         # verify the id-group has been scanned - it should be if we got here.
-        if iref.group.scanned is False:
+        if not iref.group.scanned:
             return [False]
         if not (iref.user is None or iref.user == uref):
             # has been claimed by someone else.
@@ -152,7 +152,7 @@ def IDgetImage(self, user_name, test_number):
     # This is precisely what will happen when using plom for homework, there
     # are no id-page (so idgroup is unscanned), but the system automagically
     # identifies the test.
-    if iref.group.scanned is False and tref.identified is False:
+    if (not iref.group.scanned) and (not tref.identified):
         return (False, "NoScanAndNotIDd")
     # quick sanity check to make sure task given to user, (or if manager making request)
     if iref.user != uref and user_name != "manager":
@@ -187,7 +187,7 @@ def ID_get_donotmark_images(self, test_number):
     # This is precisely what will happen when using plom for homework, there
     # are no dnm-pages (so dnmgroup is unscanned), but the system automagically
     # identifies the test.
-    if iref.group.scanned is False and tref.identified is False:
+    if (not iref.group.scanned) and (not tref.identified):
         return (False, "NoScanAndNotIDd")
     file_list = []
     for p in iref.dnmpages.order_by(DNMPage.order):
@@ -289,7 +289,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             log.error("{}: {}".format(logbase, msg))
             return False, 404, msg
         iref = tref.idgroups[0]
-        if checks and iref.group.scanned is False:
+        if checks and (not iref.group.scanned):
             msg = "denied b/c its not scanned yet"
             log.error("{}: {}".format(logbase, msg))
             return False, 404, msg
