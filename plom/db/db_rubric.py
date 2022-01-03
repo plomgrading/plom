@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 
 from plom.comment_utils import generate_new_comment_ID
-from plom.db.tables import Rubric, User, Test, QGroup, Tag
+from plom.db.tables import Rubric, User, Test, QGroup
 from plom.db.tables import plomdb
 
 
@@ -214,7 +214,7 @@ def Rget_rubric_counts(self):
 
     # now go through all rubrics that **have** been used
     # and increment the count
-    for qref in QGroup.select().where(QGroup.marked == True):
+    for qref in QGroup.select().where(QGroup.marked == True):  # noqa: E712
         # grab latest annotation for each qgroup.
         aref = qref.annotations[-1]
         # skip if this annotation is outdated - this should not happen

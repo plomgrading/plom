@@ -180,7 +180,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         # get the first non-outdated annotation for the group
         aref = (
             gref.qgroups[0]
-            .annotations.where(Annotation.outdated == False)
+            .annotations.where(Annotation.outdated == False)  # noqa: E712
             .order_by(Annotation.edition)
             .get()
         )

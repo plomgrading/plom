@@ -3,5 +3,4 @@ max-line-length = 88
 exclude = plom/*/uiFiles/ui_*.py
 # E203 conflicts with black
 # E402 seems to happen our init files
-# E712 TEMPORARY: remove later post-big DB change: Issue #1863
-ignore = E501,E741,E402,E203,E712
+ignore = E501,E741,E402,E203

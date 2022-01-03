@@ -7,7 +7,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import plomdb
 from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
 
 
@@ -24,11 +23,11 @@ def RgetScannedTests(self):
     page-code is t{page}, h{question}{order}, or l{order}.
     """
     scan_dict = {}
-    for tref in Test.select().where(Test.scanned == True):
+    for tref in Test.select().where(Test.scanned == True):  # noqa: E712
         pScanned = []
         # first append test-pages
         for p in tref.tpages:
-            if p.scanned == True:
+            if p.scanned is True:
                 pScanned.append(["t.{}".format(p.page_number), p.version])
         # then append hw-pages in question-order
         for qref in tref.qgroups:
@@ -54,10 +53,10 @@ def RgetIncompleteTests(self):
     Similalry, if no hwpages/expages scanned, then it will not return hwpages/expages.
     """
     incomp_dict = {}
-    for tref in Test.select().where(Test.scanned == False, Test.used == True):
+    for tref in Test.select().where(Test.scanned == False, Test.used == True):  # noqa: E712
         page_state = []
         # if no tpages scanned then don't display
-        if TPage.select().where(TPage.test == tref, TPage.scanned == True).count() > 0:
+        if TPage.select().where(TPage.test == tref, TPage.scanned == True).count() > 0:  # noqa: E712
             for p in tref.tpages:
                 page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
 
@@ -92,7 +91,7 @@ def RgetCompleteHW(self):
     """Get a list of [test_number, sid] that have complete hw-uploads - ie all questions present."""
     hw_complete = []
     # look at all the scanned tests - they will either be hwpages or tpages
-    for tref in Test.select().where(Test.scanned == True):
+    for tref in Test.select().where(Test.scanned == True):  # noqa: E712
         # note - skip those with scanned TPages present.
         if TPage.get_or_none(test=tref, scanned=True) is None:
             hw_complete.append([tref.test_number, tref.idgroups[0].student_id])
@@ -108,7 +107,7 @@ def RgetMissingHWQ(self):
     incomp_dict = {}
     # look at tests that are not completely scanned
     for tref in Test.select().where(
-        Test.scanned == False, Test.used == True, Test.identified == True
+        Test.scanned == False, Test.used == True, Test.identified == True  # noqa: E712
     ):
         # list starts with the sid.
         question_list = [tref.idgroups[0].student_id]
@@ -130,7 +129,7 @@ def RgetMissingHWQ(self):
 def RgetUnusedTests(self):
     """Return list of tests (by testnumber) that have not been used - ie no test-pages scanned, no hw pages scanned."""
     unused_list = []
-    for tref in Test.select().where(Test.used == False):
+    for tref in Test.select().where(Test.used == False):  # noqa: E712
         unused_list.append(tref.test_number)
     log.debug("Sending list of unused tests")
     return unused_list
@@ -143,7 +142,7 @@ def RgetIdentified(self):
     Note that this includes papers which are not completely scanned.
     """
     idd_dict = {}
-    for iref in IDGroup.select().where(IDGroup.identified == True):
+    for iref in IDGroup.select().where(IDGroup.identified == True):  # noqa: E712
         idd_dict[iref.test.test_number] = (iref.student_id, iref.student_name)
     log.debug("Sending list of identified tests")
     return idd_dict
@@ -156,7 +155,7 @@ def RgetNotAutoIdentified(self):
     """
     unidd_list = []
     hal_ref = User.get(User.name == "HAL")
-    query = Group.select().where(Group.group_type == "i", Group.scanned == True)
+    query = Group.select().where(Group.group_type == "i", Group.scanned == True)  # noqa: E712
     for gref in query:
         # there is always exactly one idgroup here.
         # ignore those belonging to HAL - they are pre-id'd
@@ -192,11 +191,11 @@ def RgetProgress(self, spec, q, v):
         .where(
             QGroup.question == q,
             QGroup.version == v,
-            Group.scanned == True,
+            Group.scanned == True,  # noqa: E712
         )
     ):
         NScanned += 1
-        if qref.marked == True:
+        if qref.marked is True:
             NMarked += 1
             mark_list.append(qref.annotations[-1].mark)
             SMTime += qref.annotations[-1].marking_time
@@ -245,8 +244,8 @@ def RgetMarkHistogram(self, q, v):
         .where(
             QGroup.question == q,
             QGroup.version == v,
-            QGroup.marked == True,
-            Group.scanned == True,
+            QGroup.marked == True,  # noqa: E712
+            Group.scanned == True,  # noqa: E712
         )
     ):
         # make sure user.name in histogram
@@ -274,11 +273,11 @@ def RgetQuestionUserProgress(self, q, v):
         .where(
             QGroup.question == q,
             QGroup.version == v,
-            Group.scanned == True,
+            Group.scanned == True,  # noqa: E712
         )
     ):
         number_scanned += 1
-        if qref.marked == True:
+        if qref.marked is True:
             user_counts[qref.user.name] += 1
             user_times[qref.user.name] += qref.annotations[-1].marking_time
     # build return list
@@ -296,7 +295,7 @@ def RgetCompletionStatus(self):
     progress = {}
     for tref in Test.select():
         number_marked = (
-            QGroup.select().where(QGroup.test == tref, QGroup.marked == True).count()
+            QGroup.select().where(QGroup.test == tref, QGroup.marked == True).count()  # noqa: E712
         )
         progress[tref.test_number] = [tref.scanned, tref.identified, number_marked]
     log.debug("Sending list of completed tests")
@@ -389,7 +388,7 @@ def RgetSpreadsheet(self):
     # each value that dict is a dict which contains the info about that test
     sheet = {}
     # look for all tests that are completely scanned.
-    for tref in Test.select().where(Test.scanned == True):
+    for tref in Test.select().where(Test.scanned == True):  # noqa: E712
         # a dict for the current test.
         this_test = {
             "identified": tref.identified,  # id'd or not
@@ -465,7 +464,7 @@ def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
     [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
     """
     if filterM is True:
-        query = QGroup.select().join(User).where(QGroup.marked == True)
+        query = QGroup.select().join(User).where(QGroup.marked == True)  # noqa: E712
     else:
         query = QGroup.select()
     if filterQ != "*":
@@ -476,7 +475,7 @@ def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
         query = query.where(User.name == filterU)
     filtered = []
     for qref in query:
-        if qref.marked == True:
+        if qref.marked is True:
             filtered.append(
                 [
                     qref.test.test_number,
@@ -516,7 +515,7 @@ def RgetIDReview(self):
     For each paper return a tuple of [test_number, who did the iding, the time, the student ID, and the student name]
     """
     id_paper_list = []
-    query = IDGroup.select().where(IDGroup.identified == True)
+    query = IDGroup.select().where(IDGroup.identified == True)  # noqa: E712
     for iref in query:
         id_paper_list.append(
             [
@@ -543,9 +542,9 @@ def RgetUserFullProgress(self, user_name):
     log.debug("Sending user {} progress data".format(user_name))
     return [
         IDGroup.select()
-        .where(IDGroup.user == uref, IDGroup.identified == True)
+        .where(IDGroup.user == uref, IDGroup.identified == True)  # noqa: E712
         .count(),
-        QGroup.select().where(QGroup.user == uref, QGroup.marked == True).count(),
+        QGroup.select().where(QGroup.user == uref, QGroup.marked == True).count(),  # noqa: E712
     ]
 
 

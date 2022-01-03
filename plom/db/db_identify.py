@@ -30,7 +30,7 @@ def IDcountAll(self):
             Group.select()
             .where(
                 Group.group_type == "i",
-                Group.scanned == True,
+                Group.scanned == True,  # noqa: E712
             )
             .count()
         )
@@ -45,8 +45,8 @@ def IDcountIdentified(self):
             IDGroup.select()
             .join(Group)
             .where(
-                Group.scanned == True,
-                IDGroup.identified == True,
+                Group.scanned == True,   # noqa: E712
+                IDGroup.identified == True,   # noqa: E712
             )
             .count()
         )
@@ -63,7 +63,7 @@ def IDgetNextTask(self):
                 .join(Group)
                 .where(
                     IDGroup.status == "todo",
-                    Group.scanned == True,
+                    Group.scanned == True,   # noqa: E712
                 )
                 .get()
             )
@@ -91,7 +91,7 @@ def IDgiveTaskToClient(self, user_name, test_number):
         # grab the ID group of that test
         iref = tref.idgroups[0]
         # verify the id-group has been scanned - it should be if we got here.
-        if iref.group.scanned == False:
+        if iref.group.scanned is False:
             return [False]
         if not (iref.user is None or iref.user == uref):
             # has been claimed by someone else.
@@ -202,7 +202,7 @@ def IDgetImagesOfNotAutoIdentified(self):
     """
     rval = {}
     uref = User.get(User.name == "HAL")
-    query = Group.select().where(Group.group_type == "i", Group.scanned == True)
+    query = Group.select().where(Group.group_type == "i", Group.scanned == True)   # noqa: E712
     for gref in query:
         iref = gref.idgroups[0]  # there is always exactly 1.
         # we want to ignore pre-named papers - those are owned by HAL
@@ -287,7 +287,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             log.error("{}: {}".format(logbase, msg))
             return False, 404, msg
         iref = tref.idgroups[0]
-        if checks and iref.group.scanned == False:
+        if checks and iref.group.scanned is False:
             msg = "denied b/c its not scanned yet"
             log.error("{}: {}".format(logbase, msg))
             return False, 404, msg
@@ -335,8 +335,8 @@ def IDgetImageFromATest(self):
         .join(Group)
         .where(
             Group.group_type == "i",
-            Group.scanned == True,
-            IDGroup.identified == False,
+            Group.scanned == True,   # noqa: E712
+            IDGroup.identified == False,   # noqa: E712
         )
         .order_by(pw.fn.Random())
         .limit(1)  # we only need 1.
@@ -360,7 +360,7 @@ def IDreviewID(self, test_number):
         return [False]
     iref = IDGroup.get_or_none(
         IDGroup.test == tref,
-        IDGroup.identified == True,
+        IDGroup.identified == True,   # noqa: E712
     )
     if iref is None:
         return [False]

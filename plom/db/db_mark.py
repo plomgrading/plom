@@ -41,7 +41,7 @@ def McountAll(self, q, v):
             .where(
                 QGroup.question == q,
                 QGroup.version == v,
-                Group.scanned == True,
+                Group.scanned == True,  # noqa: E712
             )
             .count()
         )
@@ -59,7 +59,7 @@ def McountMarked(self, q, v):
                 QGroup.question == q,
                 QGroup.version == v,
                 QGroup.status == "done",
-                Group.scanned == True,
+                Group.scanned == True,  # noqa: E712
             )
             .count()
         )
@@ -109,7 +109,7 @@ def MgetNextTask(self, q, v):
                     QGroup.status == "todo",
                     QGroup.question == q,
                     QGroup.version == v,
-                    Group.scanned == True,
+                    Group.scanned == True,  # noqa: E712
                 )
                 .get()
             )
@@ -154,7 +154,7 @@ def MgiveTaskToClient(self, user_name, group_id):
             msg = f"The task {group_id} does not exist"
             log.info(msg)
             return [False, "no_such_task", msg]
-        if gref.scanned == False:
+        if gref.scanned is False:
             msg = f"The task {group_id} is not scanned"
             log.info(msg)
             return [False, "not_scanned", msg]
@@ -211,7 +211,7 @@ def MdidNotFinish(self, user_name, group_id):
         if gref is None:  # this should not happen.
             log.info("That task {} not known".format(group_id))
             return
-        if gref.scanned == False:  # sanity check
+        if gref.scanned is False:  # sanity check
             return  # should not happen
         qref = gref.qgroups[0]
         # sanity check that user has task
@@ -380,7 +380,7 @@ def MtakeTaskFromClient(
                 ARLink.create(annotation=aref, rubric=rref)
 
         # check if there are any unmarked questions left in the test
-        if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:
+        if QGroup.get_or_none(QGroup.test == tref, QGroup.marked == False) is not None:  # noqa: E712
             log.info("Still unmarked questions in test {}".format(tref.test_number))
             return [True, "more"]
 
@@ -458,7 +458,7 @@ def MgetOriginalImages(self, task):
         if gref is None:  # should not happen
             log.info("MgetOriginalImages - task {} not known".format(task))
             return [False, "Task {} not known".format(task)]
-        if gref.scanned == False:
+        if gref.scanned is False:
             log.warning(
                 "MgetOriginalImages - task {} not completely scanned".format(task)
             )
@@ -466,7 +466,7 @@ def MgetOriginalImages(self, task):
         # get the first non-outdated annotation for the group
         aref = (
             gref.qgroups[0]
-            .annotations.where(Annotation.outdated == False)
+            .annotations.where(Annotation.outdated == False)  # noqa: E712
             .order_by(Annotation.edition)
             .get()
         )
@@ -572,7 +572,7 @@ def MreviewQuestion(self, test_number, question, version):
         QGroup.test == tref,
         QGroup.question == question,
         QGroup.version == version,
-        QGroup.marked == True,
+        QGroup.marked == True,  # noqa: E712
     )
     if qref is None:
         return [False]
@@ -611,13 +611,13 @@ def MrevertTask(self, task):
     # first find the first not-outdated annotation - that is the "original" state
     aref0 = (
         gref.qgroups[0]
-        .annotations.where(Annotation.outdated == False)
+        .annotations.where(Annotation.outdated == False)  # noqa: E712
         .order_by(Annotation.edition)
         .get()
     )
     # now set all subsequent annotations to outdated
     for aref in gref.qgroups[0].annotations.where(
-        Annotation.outdated == False, Annotation.edition > aref0.edition
+        Annotation.outdated == False, Annotation.edition > aref0.edition  # noqa: E712
     ):
         aref.outdated = True
         aref.save()
