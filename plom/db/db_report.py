@@ -54,13 +54,16 @@ def RgetIncompleteTests(self):
     """
     incomp_dict = {}
     for tref in Test.select().where(
-        Test.scanned == False, Test.used == True
-    ):  # noqa: E712
+        Test.scanned == False, Test.used == True  # noqa: E712
+    ):
         page_state = []
         # if no tpages scanned then don't display
         if (
-            TPage.select().where(TPage.test == tref, TPage.scanned == True).count() > 0
-        ):  # noqa: E712
+            TPage.select()
+            .where(TPage.test == tref, TPage.scanned == True)  # noqa: E712
+            .count()
+            > 0
+        ):
             for p in tref.tpages:
                 page_state.append(["t.{}".format(p.page_number), p.version, p.scanned])
 
@@ -160,8 +163,8 @@ def RgetNotAutoIdentified(self):
     unidd_list = []
     hal_ref = User.get(User.name == "HAL")
     query = Group.select().where(
-        Group.group_type == "i", Group.scanned == True
-    )  # noqa: E712
+        Group.group_type == "i", Group.scanned == True  # noqa: E712
+    )
     for gref in query:
         # there is always exactly one idgroup here.
         # ignore those belonging to HAL - they are pre-id'd
@@ -302,8 +305,8 @@ def RgetCompletionStatus(self):
     for tref in Test.select():
         number_marked = (
             QGroup.select()
-            .where(QGroup.test == tref, QGroup.marked == True)
-            .count()  # noqa: E712
+            .where(QGroup.test == tref, QGroup.marked == True)  # noqa: E712
+            .count()
         )
         progress[tref.test_number] = [tref.scanned, tref.identified, number_marked]
     log.debug("Sending list of completed tests")
@@ -553,8 +556,8 @@ def RgetUserFullProgress(self, user_name):
         .where(IDGroup.user == uref, IDGroup.identified == True)  # noqa: E712
         .count(),
         QGroup.select()
-        .where(QGroup.user == uref, QGroup.marked == True)
-        .count(),  # noqa: E712
+        .where(QGroup.user == uref, QGroup.marked == True)  # noqa: E712
+        .count(),
     ]
 
 

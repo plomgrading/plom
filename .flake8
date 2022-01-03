@@ -1,6 +1,9 @@
 [flake8]
 max-line-length = 88
 exclude = plom/*/uiFiles/ui_*.py
-# E203 conflicts with black
-# E402 seems to happen our init files
-ignore = E501,E741,E402,E203
+# E203 = conflicts with black
+# E402 = seems to happen our init files - module import must be at top of file
+# E501 = line too long.
+# W503 = black breaks lines before a binary op which flake does not like.
+# E741 = do not use variables called I or O (confusion with one zero)
+ignore = E203, E402, E501, W503, E741

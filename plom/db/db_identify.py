@@ -203,8 +203,8 @@ def IDgetImagesOfNotAutoIdentified(self):
     rval = {}
     uref = User.get(User.name == "HAL")
     query = Group.select().where(
-        Group.group_type == "i", Group.scanned == True
-    )  # noqa: E712
+        Group.group_type == "i", Group.scanned == True  # noqa: E712
+    )
     for gref in query:
         iref = gref.idgroups[0]  # there is always exactly 1.
         # we want to ignore pre-named papers - those are owned by HAL
