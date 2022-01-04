@@ -35,7 +35,7 @@ from plom.produce import clear_manager_login
 from plom.produce import version_map_from_csv
 
 
-def ensureTomlExtension(fname):
+def ensure_toml_extension(fname):
     """Append a .toml extension if not present.
 
     Args:
@@ -309,7 +309,7 @@ def main():
         if args.demo:
             fname = "demoSpec.toml"
         else:
-            fname = ensureTomlExtension(args.specFile)
+            fname = ensure_toml_extension(args.specFile)
 
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
@@ -343,11 +343,11 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parse_verify_save_spec(fname)
     elif args.command == "parse":
-        fname = ensureTomlExtension(args.specFile)
+        fname = ensure_toml_extension(args.specFile)
         parse_verify_save_spec(fname, not args.no_save)
 
     elif args.command == "uploadspec":
-        fname = checkTomlExtension(args.specFile)
+        fname = ensure_toml_extension(args.specFile)
         sv = SpecVerifier.from_toml_file(fname)
         sv.verifySpec()
         sv.checkCodes()
