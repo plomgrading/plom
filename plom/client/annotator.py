@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
@@ -1273,8 +1273,8 @@ class Annotator(QWidget):
         fileName, _ = QFileDialog.getOpenFileName(
             self,
             "Select Image",
-            "/home",
-            "Image files (*.jpg *.gif " "*.png " "*.xpm" ")",
+            "",
+            "Image files (*.jpg *.gif *.png *.xpm)",
         )
         if not os.path.isfile(fileName):
             return
