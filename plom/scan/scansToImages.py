@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
@@ -9,13 +9,14 @@ from pathlib import Path
 import shutil
 import subprocess
 from multiprocessing import Pool
-import math
+import random
 import tempfile
 from warnings import warn
 
 from tqdm import tqdm
+import exif
 import fitz
-from PIL import Image
+import PIL
 
 from plom import PlomImageExts
 from plom import ScenePixelHeight
@@ -23,7 +24,7 @@ from plom.scan.rotate import normalizeJPEGOrientation
 from plom.scan.bundle_utils import make_bundle_dir
 
 
-def processFileToBitmaps(file_name, dest, do_not_extract=False):
+def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
@@ -34,8 +35,12 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.
         dest (str, Path): where to save the resulting bitmap files.
+
+    Keyword Args:
         do_not_extract (bool): always render, do no extract even if
             it seems possible to do so.
+        debug_jpeg (bool): make jpegs, randomly rotated of various
+            quality settings, for debugging or demos.  Default: False.
 
     Returns:
         list: an ordered list of the images of each page.  Each entry
@@ -68,12 +73,9 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
     if doc.is_repaired:
         warn("PyMuPDF had to repair this PDF: perhaps it is damaged in some way?")
 
-    # 0:9 -> 10 pages -> 2 digits
-    zpad = math.floor(math.log10(len(doc))) + 1
-
     files = []
     for p in doc:
-        basename = "{}-{:0{width}}".format(safeScan, p.number + 1, width=zpad)
+        basename = f"{safeScan}-{(p.number + 1):03}"
 
         ok_extract = True
         msgs = []
@@ -108,19 +110,8 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                         basename, d["ext"], d["width"], d["height"]
                     )
                 )
-                if d["ext"].lower() in PlomImageExts:
-                    converttopng = False
-                    # Bail on jpeg if dimensions are not multiples of 16.
-                    # (could relax: iMCU can also be 8x8, 16x8, 8x16: see PIL .layer)
-                    if d["ext"].lower() in ("jpeg", "jpg") and not (
-                        d["width"] % 16 == 0 and d["height"] % 16 == 0
-                    ):
-                        converttopng = True
-                        print(
-                            "  JPEG dim not mult. of 16; transcoding to PNG to avoid lossy transforms"
-                        )
-                        # TODO: we know its jpeg, could use PIL instead of `convert` below
-                else:
+                converttopng = False
+                if d["ext"].lower() not in PlomImageExts:
                     converttopng = True
                     print(f"  {d['ext']} format not in allowlist: transcoding to PNG")
 
@@ -151,7 +142,7 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
         # In the tall case, we use extra pixels vertically because there is
         # actually more to resolve.  But I've never seen a wide case that was
         # wider than a landscape sheet of paper.  Also, currently, Client's
-        # would display such a thin wide strip at to large a scale.
+        # would display such a thin wide strip at too large a scale.
         if aspect > 1:
             if W > MAXWIDTH:
                 # TODO: warn of extreme aspect ratio?  Flag to control this?
@@ -188,22 +179,34 @@ def processFileToBitmaps(file_name, dest, do_not_extract=False):
                 f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
             )
 
-        # # For testing, randomly make jpegs, sometimes of truly horrid quality
-        # if random.uniform(0, 1) < 0.4:
-        #     outname = dest / (basename + ".jpg")
-        #     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        #     quality = random.choice([4, 94, 94, 94, 94])
-        #     img.save(outname, "JPEG", quality=quality, optimize=True)
-        #     # random reorient half for debug/test, uses exiftool (Ubuntu: libimage-exiftool-perl)
-        #     r = random.choice([None, None, None, 3, 6, 8])
-        #     if r:
-        #         print("re-orienting randomly {}".format(r))
-        #         subprocess.check_call(["exiftool", "-overwrite_original", "-Orientation#={}".format(r), outname])
-        #     files.append(outname)
-        #     continue
+        # For testing, randomly make jpegs, rotated a bit, of various qualities
+        if debug_jpeg and random.uniform(0, 1) <= 0.5:
+            outname = dest / (basename + ".jpg")
+            img = PIL.Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            angle = random.choice([90.5, 180.4, -90.3, -88, -1])
+            msgs = [f"hard-rotate {angle}"]
+            img = img.rotate(
+                angle,
+                resample=PIL.Image.BILINEAR,
+                expand=True,
+                fillcolor=(128, 128, 128, 0),
+            )
+            quality = random.choice([6, 30, 94, 94, 94])
+            msgs.append(f"quality {quality}")
+            r = random.choice([None, None, None, 3, 6, 8])
+            if r:
+                msgs.append(f"exif rotate {r}")
+            print("  Randomly making jpeg " + ", ".join(msgs))
+            img.save(outname, "JPEG", quality=quality, optimize=True)
+            if r:
+                im = exif.Image(outname)
+                im.set("orientation", r)
+                # or cmdline, Ubuntu: libimage-exiftool-perl, Fedora: perl-Image-ExifTool
+                # subprocess.check_call(["exiftool", "-overwrite_original", f"-Orientation#={r}", outname])
+            files.append(outname)
+            continue
 
         # TODO: experiment with jpg: generate both and see which is smaller?
-        # (But be careful about "dim mult of 16" thing above.)
         outname = dest / (basename + ".png")
         pix.save(outname)
         files.append(outname)
@@ -301,12 +304,16 @@ def postProcessing(thedir, dest, skip_gamma=False):
     thedir = Path(thedir)
     dest = Path(dest)
 
-    print("Normalizing jpeg orientation from Exif metadata")
-    stuff = list(thedir.glob("*.jpg"))
-    stuff.extend(thedir.glob("*.jpeg"))
-    N = len(stuff)
-    with Pool() as p:
-        r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
+    # TODO: likely deprecated
+    jpeg_normalize_orientation = False
+
+    if jpeg_normalize_orientation:
+        print("Normalizing jpeg orientation from Exif metadata")
+        stuff = list(thedir.glob("*.jpg"))
+        stuff.extend(thedir.glob("*.jpeg"))
+        N = len(stuff)
+        with Pool() as p:
+            r = list(tqdm(p.imap_unordered(normalizeJPEGOrientation, stuff), total=N))
 
     if not skip_gamma:
         # TODO: maybe tiff as well?  Not jpeg: not anything lossy!
@@ -328,7 +335,9 @@ def postProcessing(thedir, dest, skip_gamma=False):
         shutil.move(file, dest / file.name)
 
 
-def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False):
+def process_scans(
+    pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=False, *, demo=False
+):
     """Process a pdf file into bitmap images of each page.
 
     Process each page of a pdf file into bitmaps.
@@ -350,12 +359,21 @@ def process_scans(pdf_fname, bundle_dir, skip_gamma=False, skip_img_extract=Fals
             extracted: there are a variety of sanity checks that must
             pass.
 
+    Keyword Args:
+        demo (bool): Simulate scanning with random rotations, adding
+            noise, lower-quality jpegs, etc.  Default: False
+
     Returns:
         list: filenames (`pathlib.Path`) in page order, one for each page.
     """
     make_bundle_dir(bundle_dir)
     bitmaps_dir = bundle_dir / "scanPNGs"
-    files = processFileToBitmaps(pdf_fname, bitmaps_dir, skip_img_extract)
+    files = processFileToBitmaps(
+        pdf_fname,
+        bitmaps_dir,
+        do_not_extract=skip_img_extract,
+        debug_jpeg=demo,
+    )
     postProcessing(bitmaps_dir, bundle_dir / "pageImages", skip_gamma)
     #           ,,,
     #          (o o)

@@ -13,6 +13,11 @@ longName = "Midterm Demo using Plom"
 numberOfVersions = 2
 # how many pages
 numberOfPages = 6
+# sum of marks for all questions, for sanity checking (omit to live dangerously)
+totalMarks = 25
+# how many questions to mark
+numberOfQuestions = 3
+
 # total number of papers to produce
 # (set to "-1" to use length of classlist + 10%)
 numberToProduce = 20
@@ -20,29 +25,26 @@ numberToProduce = 20
 # (again set to "-1" to use the length of the classlist)
 # See `plom-build make --help` for instructions on how to position the prenamed-box
 numberToName = 10
-# how many questions to mark
-numberOfQuestions = 3
 
 # the id-page - always taken from Version1
-idPage = 1  # must be exactly 1 page 
+idPage = 1  # must be exactly 1 page
 
 # pages that are not marked (like instructions, formula sheets, examination rules etc) - always taken from Version1
 [doNotMark]
-pages = [2]  # can be an empty list.
+pages = [2]  # can be an empty list or omitted
 
 # Now the actual questions (groups of pages) to be marked
 # [question.n] with n a positive integer [1, 2, 3, ... etc] - contiguous please.
 # label = string such as "1", "Q2", or "Exercise 7.3".  Defaults to "Qn" if omitted.
 # pages = [4, 5, 6] - contiguous ordered list of positive integers.
 # mark = positive integer, the marks for this question.
-# select = "shuffle" or "fix".
-# --> "fix" = that question will always be drawn from source-version 1.
-# --> "shuffle" = that question will be drawn randomly from one of the source versions.
+# select = "shuffle" or "fix" (if omitted, defaults to "shuffle")
+# --> "fix" = question will always be drawn from source-version 1.
+# --> "shuffle" = question will be drawn randomly from one of the source versions.
 
 [question.1]
 pages = [3]
 mark = 5
-select = "shuffle"
 
 [question.2]
 label = "Q(2)"
