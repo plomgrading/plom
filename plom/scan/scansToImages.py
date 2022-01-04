@@ -212,6 +212,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
         pix.save(pngname)
         # pix.pil_save(pngname, optimize=True)
         # TODO: add progressive=True?
+        # Note subsampling off to avoid mucking with red hairlines
         pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
         # Keep the jpeg if its at least a little smaller
         if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
