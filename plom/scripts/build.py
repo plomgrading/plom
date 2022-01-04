@@ -35,7 +35,7 @@ from plom.produce import clear_manager_login
 from plom.produce import version_map_from_csv
 
 
-def checkTomlExtension(fname):
+def ensureTomlExtension(fname):
     """Append a .toml extension if not present.
 
     Args:
@@ -53,15 +53,11 @@ def checkTomlExtension(fname):
         return fname
     if fname.suffix == "":
         return fname.with_suffix(".toml")
-    raise ValueError(
-        'Your specification file name should either have no extension or end in ".toml".'
-    )
+    raise ValueError('Your specification file should have a ".toml" extension.')
 
 
-def parseAndVerifySpecification(fname):
+def parse_verify_save_spec(fname, save=True):
     fname = Path(fname)
-    specdir.mkdir(exist_ok=True)
-    Path("sourceVersions").mkdir(exist_ok=True)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
         raise FileNotFoundError(f'Cannot find "{fname}": try "plom-build new"?')
@@ -69,6 +65,9 @@ def parseAndVerifySpecification(fname):
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
     sv.checkCodes()
+    if not save:
+        return
+    specdir.mkdir(exist_ok=True)
     sv.saveVerifiedSpec(verbose=True)
     print(
         ">>> Note <<<\n"
@@ -120,13 +119,22 @@ def get_parser():
     spP = sub.add_parser(
         "parse",
         help="Parse spec file",
-        description="Parse and verify the test-specification toml file.",
+        description="Parse, verify and save the test-specification toml file.",
     )
     spP.add_argument(
         "specFile",
         nargs="?",
         default="testSpec.toml",
         help="defaults to '%(default)s'.",
+    )
+    spP.add_argument(
+        "--no-save",
+        action="store_true",
+        help="""
+            By default the verified spec file is written to
+            'specAndDatabase/verifiedSpec.toml'.
+            Pass this to only check 'specFile' and not save it.
+        """,
     )
 
     #
@@ -287,7 +295,7 @@ def main():
         if args.demo:
             fname = "demoSpec.toml"
         else:
-            fname = checkTomlExtension(args.specFile)
+            fname = ensureTomlExtension(args.specFile)
 
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
@@ -319,11 +327,10 @@ def main():
             if not buildDemoSourceFiles(solutions=True):
                 exit(1)
             print('DEMO MODE: continuing as if "parse" command was run...')
-            parseAndVerifySpecification(fname)
+            parse_verify_save_spec(fname)
     elif args.command == "parse":
-        fname = checkTomlExtension(args.specFile)
-        # copy the template spec into place
-        parseAndVerifySpecification(fname)
+        fname = ensureTomlExtension(args.specFile)
+        parse_verify_save_spec(fname, not args.no_save)
     elif args.command == "class":
         if args.demo:
             classlist = get_demo_classlist()

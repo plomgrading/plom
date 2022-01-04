@@ -130,9 +130,10 @@ class SpecVerifier:
     ... 'longName': 'Midterm Demo using Plom',
     ... 'numberOfVersions': 2,
     ... 'numberOfPages': 6,
+    ... 'numberOfQuestions': 3,
+    ... 'totalMarks': 25,
     ... 'numberToProduce': 20,
     ... 'numberToName': 10,
-    ... 'numberOfQuestions': 3,
     ... 'privateSeed': '1001378822317872',
     ... 'publicCode': '270385',
     ... 'idPage': 1,
@@ -148,8 +149,8 @@ class SpecVerifier:
     Here `spec` is an object representing a Plom exam specification:
     >>> print(spec)
     Plom exam specification:
-      Name of test = plomdemo
-      Long name of test = Midterm Demo using Plom
+      Name of exam = plomdemo
+      Long name of exam = Midterm Demo using Plom
       Number of source versions = 2
       Number of tests to produce = 20
       Number of those to be printed with names = 10
@@ -160,12 +161,12 @@ class SpecVerifier:
         Question.1: pages [3], selected as shuffle, worth 5 marks
         Question.2: pages [4], selected as fix, worth 10 marks
         Question.3: pages [5, 6], selected as shuffle, worth 10 marks
-      Test total = 25 marks
+      Exam total = 25 marks
 
 
     We can verify that this input is valid:
     >>> spec.verifySpec()     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Checking specification keys
+    Checking mandatory specification keys
         contains "name" [check]
         contains "longName" [check]
         ...
@@ -326,11 +327,12 @@ class SpecVerifier:
         )
 
     def __str__(self):
+        N = self.spec.get("numberOfQuestions", "TBD*")
         s = "Plom exam specification:\n  "
         s += "\n  ".join(
             (
-                "Name of test = {}".format(self.spec["name"]),
-                "Long name of test = {}".format(self.spec["longName"]),
+                "Name of exam = {}".format(self.spec["name"]),
+                "Long name of exam = {}".format(self.spec["longName"]),
                 "Number of source versions = {}".format(self.spec["numberOfVersions"]),
                 # "Public code (to prevent project collisions) = {}".format(self.spec["publicCode"]),
                 # "Private random seed (for randomisation) = {}".format(self.spec["privateSeed"]),
@@ -341,23 +343,21 @@ class SpecVerifier:
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpage = {}".format(self.spec["idPage"]),
                 "Do not mark pages = {}".format(self.spec["doNotMark"]["pages"]),
-                "Number of questions to mark = {}".format(
-                    self.spec["numberOfQuestions"]
-                ),
+                f"Number of questions to mark = {N}",
             )
         )
         s += "\n"
-        tot = 0
-        for g in range(self.spec["numberOfQuestions"]):
+        for g in range(len(self.spec["question"])):
+            # TODO: replace with integers
             gs = str(g + 1)
-            tot += self.spec["question"][gs]["mark"]
             s += "    Question.{}: pages {}, selected as {}, worth {} marks\n".format(
                 gs,
                 self.spec["question"][gs]["pages"],
-                self.spec["question"][gs]["select"],
+                self.spec["question"][gs].get("select", "shuffle*"),
                 self.spec["question"][gs]["mark"],
             )
-        s += "  Test total = {} marks".format(tot)
+        K = self.spec.get("totalMarks", "TBD*")
+        s += f"  Exam total = {K} marks"
         return s
 
     def get_public_spec_dict(self):
@@ -366,8 +366,12 @@ class SpecVerifier:
         d.pop("privateSeed", None)
         return d
 
+    def verify(self, verbose=False):
+        """Check that spec contains required attributes and insert default values."""
+        self.verifySpec(verbose=verbose)
+
     def verifySpec(self, verbose=True):
-        """Check that spec contains required attributes.
+        """Check that spec contains required attributes and insert default values.
 
         args:
             verbose: `None`/`False` for don't print; `True` is print to
@@ -394,8 +398,7 @@ class SpecVerifier:
         self.check_IDPage(lastPage, print=prnt)
         self.check_doNotMark(lastPage, print=prnt)
         prnt("Checking question groups")
-        for g in range(self.spec["numberOfQuestions"]):
-            self.check_group(str(g + 1), lastPage, print=prnt)
+        self.check_questions(print=prnt)
         # Note: enable all-or-none check for labels
         # prnt("Checking either all or no questions have labels")
         # has_label = [
@@ -459,7 +462,7 @@ class SpecVerifier:
 
     def check_keys(self, print=print):
         """Check that spec contains required keys."""
-        print("Checking specification keys")
+        print("Checking mandatory specification keys")
         for x in [
             "name",
             "longName",
@@ -467,18 +470,20 @@ class SpecVerifier:
             "numberOfPages",
             "numberToProduce",
             "numberToName",
-            "numberOfQuestions",
             "idPage",
-            "doNotMark",
         ]:
             if x not in self.spec:
                 raise ValueError('Specification error - must contain "{}"'.format(x))
-            print('  contains "{}"{}'.format(x, chk))
+            print(f'  contains "{x}"{chk}')
         if "1" not in self.spec["question"]:
             raise ValueError(
                 'Specification error - must contain at least one question (i.e., "question.1")'
             )
         print('  contains at least one question (ie "question.1"){}'.format(chk))
+        print("Checking optional specification keys")
+        for x in ["doNotMark", "totalMarks", "numberOfQuestions"]:
+            if x in self.spec:
+                print(f'  contains "{x}"{chk}')
 
     def check_name_and_production_numbers(self, print=print):
         print("Checking specification name and numbers")
@@ -497,12 +502,13 @@ class SpecVerifier:
         print('    has long name "{}"{}'.format(self["longName"], chk))
 
         print("  Checking production numbers")
-        for x in ("numberOfVersions", "numberOfPages", "numberOfQuestions"):
+        for x in ("numberOfVersions", "numberOfPages"):
             if not isPositiveInt(self.spec[x]):
                 raise ValueError(
                     'Specification error - "{}" must be a positive integer.'.format(x)
                 )
             print('    "{}" = {} is positive integer{}'.format(x, self.spec[x], chk))
+
         for x in ("numberToName", "numberToProduce"):
             try:
                 self.spec[x] = int(self.spec[x])
@@ -537,16 +543,40 @@ class SpecVerifier:
             else:
                 print("    Producing sufficiently many spare papers" + chk)
 
-        for k in range(1, self.spec["numberOfQuestions"] + 1):
+    def check_questions(self, print=print):
+        if "numberOfQuestions" not in self.spec:
+            N = len(self.spec["question"])
+            self.spec["numberOfQuestions"] = N
+            print(f'    "numberOfQuestions" omitted; calculated as {N}{chk}')
+        N = self.spec["numberOfQuestions"]
+        if not isPositiveInt(N):
+            raise ValueError(f'numberOfQuestions = "{N}" must be a positive integer.')
+            print(f'    "numberOfQuestions" = {N} is a positive integer{chk}')
+        for k in range(1, N + 1):
+            # TODO: why not integers for key k?  See also elsewhere
             if not str(k) in self.spec["question"]:
+                raise ValueError(f"Specification error - could not find question {k}")
+            print(f"    Found question {k} of {N}{chk}")
+
+        for k in range(1, N + 1):
+            # TODO: why not integers for key k?  See also elsewhere
+            k = str(k)
+            self.check_question_group(k, self.spec["numberOfPages"], print=print)
+
+        print("  Checking mark totals")
+        K = sum(m["mark"] for m in self.spec["question"].values())
+        if "totalMarks" not in self.spec:
+            self.spec["totalMarks"] = K
+            print(f'    "totalMarks" omitted; calculated as {K}{chk}')
+        else:
+            total = self.spec["totalMarks"]
+            if not isPositiveInt(total):
+                raise ValueError(f'"totalMarks" = {total} must be a positive integer.')
+            if self["totalMarks"] != K:
                 raise ValueError(
-                    "Specification error - could not find question {}".format(k)
+                    f'"totalMarks" = {total} does not match question sum {K}.'
                 )
-            print(
-                "    Found question {} of {}{}".format(
-                    k, self.spec["numberOfQuestions"], chk
-                )
-            )
+            print(f'    "totalMarks" = {total} matches question sum {K}{chk}')
 
     def check_IDPage(self, lastPage, print=print):
         print("Checking IDpage")
@@ -566,30 +596,37 @@ class SpecVerifier:
 
     def check_doNotMark(self, lastPage, print=print):
         print("Checking DoNotMark-pages")
+        if "doNotMark" not in self.spec:
+            print("    DoNotMark pages is missing: defaulting to empty" + chk)
+            self.spec["doNotMark"] = {"pages": []}
         if "pages" not in self.spec["doNotMark"]:
-            raise ValueError('DoNotMark pages error - could not find "pages" key')
-        if type(self.spec["doNotMark"]["pages"]) is not list:
+            print("    DoNotMark pages is missing: defaulting to empty" + chk)
+            self.spec["doNotMark"]["pages"] = []
+        pages = self.spec["doNotMark"]["pages"]
+        if type(pages) is not list:
             raise ValueError(
-                'DoNotMark pages error - "pages" = {} should be a list of positive integers'.format(
-                    self.spec["doNotMark"]["pages"]
-                )
+                f'DoNotMark pages "{pages}" is not a list of positive integers'
             )
-        # should be a list of positive integers
-        for n in self.spec["doNotMark"]["pages"]:
-            if isPositiveInt(n) and n <= lastPage:
-                pass
-            else:
+        for n in pages:
+            if not isPositiveInt(n):
                 raise ValueError(
-                    'DoNotMark pages error - "pages" = {} should be a list of positive integers in range'.format(
-                        self.spec["doNotMark"]["pages"]
-                    )
+                    f"DoNotMark pages {pages} contains {n} which is not a positive integer"
                 )
-        print("    DoNotMark pages is list of positive integers" + chk)
+            if n > lastPage:
+                raise ValueError(
+                    f"DoNotMark page {n} is out of range: larger than lastPage={lastPage}"
+                )
 
-    def check_group(self, g, lastPage, print=print):
+        if not self.spec["doNotMark"]["pages"]:
+            print("    DoNotMark pages is empty" + chk)
+        else:
+            print("    DoNotMark pages is list of positive integers" + chk)
+
+    def check_question_group(self, g, lastPage, print=print):
+        g = str(g)  # TODO: why?
         print("  Checking question group #{}".format(g))
-        required_keys = set(("pages", "select", "mark"))
-        optional_keys = set(("label",))
+        required_keys = set(("pages", "mark"))
+        optional_keys = set(("label", "select"))
         for k in required_keys:
             if k not in self.spec["question"][g]:
                 raise ValueError('Question error - could not find "{}" key'.format(k))
@@ -620,12 +657,14 @@ class SpecVerifier:
                 self.spec["question"][g]["mark"], chk
             )
         )
-        # check select is "fix" or "shuffle"
-        if self.spec["question"][g]["select"] not in ["fix", "shuffle"]:
+        select = self.spec["question"][g].get("select")
+        if not select:
+            select = "shuffle"
+            self.spec["question"][g]["select"] = select
+            print(f'    missing select key, add default "{select}"' + chk)
+        if select not in ("fix", "shuffle"):
             raise ValueError(
-                'Question error - select {} is not "fix" or "shuffle"'.format(
-                    self.spec["question"][g]["select"]
-                )
+                f'Question error - select "{select}" is not "fix" or "shuffle"'
             )
         print('    select is "fix" or "shuffle"' + chk)
 
@@ -633,15 +672,16 @@ class SpecVerifier:
         print("Checking all pages used exactly once:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         pageUse[self.spec["idPage"]] += 1
-        for p in self.spec["doNotMark"]["pages"]:
-            pageUse[p] += 1
+        if self.spec.get("doNotMark"):
+            for p in self.spec["doNotMark"]["pages"]:
+                pageUse[p] += 1
         for g in range(self.spec["numberOfQuestions"]):
             for p in self.spec["question"][str(g + 1)]["pages"]:
                 pageUse[p] += 1
         for p in range(1, self.spec["numberOfPages"] + 1):
             if pageUse[p] != 1:
                 raise ValueError(
-                    "Page overused - page {} used {} times".format(p, pageUse[p])
+                    f"Page under/overused - page {p} used {pageUse[p]} times"
                 )
             print("  Page {} used once{}".format(p, chk))
 
