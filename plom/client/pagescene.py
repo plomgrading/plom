@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 import logging
@@ -11,6 +11,7 @@ from PyQt5.QtGui import (
     QColor,
     QCursor,
     QImage,
+    QImageReader,
     QFont,
     QGuiApplication,
     QPainter,
@@ -207,7 +208,11 @@ class UnderlyingImages(QGraphicsItemGroup):
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
-            pix = QPixmap(data["filename"])
+            qir = QImageReader(data["filename"])
+            # deal with jpeg exif rotations
+            qir.setAutoTransform(True)
+            pix = QPixmap(qir.read())
+            # after metadata rotations, we might have a further DB-level rotation
             rot = QTransform()
             rot.rotate(data["orientation"])
             pix = pix.transformed(rot)
@@ -598,7 +603,6 @@ class PageScene(QGraphicsScene):
         self.zoomBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
-        self.imageItem = QGraphicsPixmapItem
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)

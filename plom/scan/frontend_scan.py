@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """Plom tools for scanning tests and pushing to servers.
 
@@ -17,7 +17,6 @@ in the exam is less clear.  For these, see :py:module:`frontend_hwscan`.
 """
 
 from pathlib import Path
-from warnings import warn
 
 import toml
 
@@ -46,7 +45,9 @@ from plom.scan.scansToImages import process_scans
 from plom.scan import readQRCodes
 
 
-def processScans(server, password, pdf_fname, *, gamma=False, extractbmp=False):
+def processScans(
+    server, password, pdf_fname, *, gamma=False, extractbmp=False, demo=False
+):
     """Process PDF file into images and read QRcodes
 
     args:
@@ -60,6 +61,8 @@ def processScans(server, password, pdf_fname, *, gamma=False, extractbmp=False):
             default is generated from the PDF filename).
         gamma (bool):
         extractbmp (bool):
+        demo (bool): do things appropriate for a demo such as lower quality
+            or various simulated rotations.
 
     Convert file into a bundle-name
     Check with server if bundle/md5 already on server
@@ -101,7 +104,7 @@ def processScans(server, password, pdf_fname, *, gamma=False, extractbmp=False):
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)
 
     print("Processing PDF {} to images".format(pdf_fname))
-    process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
+    process_scans(pdf_fname, bundledir, not gamma, not extractbmp, demo=demo)
     print("Read QR codes")
     readQRCodes.processBitmaps(bundledir, server, password)
     # TODO: can collisions warning be written here too?
