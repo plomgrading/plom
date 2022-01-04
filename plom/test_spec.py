@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
+
+from copy import deepcopy
+from pathlib import Path
 
 from pytest import raises
-from copy import deepcopy
+from toml import TomlDecodeError
+
 from plom import SpecVerifier, get_question_label
+
 
 raw = SpecVerifier.demo().spec
 
@@ -253,3 +258,18 @@ def test_spec_zero_question_issue617():
     s["question"]["1"]["mark"] = 0
     with raises(ValueError):
         s.verify()
+
+
+def test_spec_dupe_question_fails_to_load(tmpdir):
+    tmpdir = Path(tmpdir)
+    sv = SpecVerifier.demo()
+    loc = tmpdir / "specAndDatabase"
+    loc.mkdir()
+    sv.saveVerifiedSpec(basedir=tmpdir)
+    with open(loc / "verifiedSpec.toml", "r") as f:
+        lines = f.readlines()
+    lines = ["[question.1]\n" if x == "[question.2]\n" else x for x in lines]
+    with open(tmpdir / "Fawlty.toml", "w") as f:
+        f.writelines(lines)
+    with raises(TomlDecodeError):
+        SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
