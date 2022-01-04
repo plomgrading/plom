@@ -954,10 +954,6 @@ def removeAllScannedPages(self, test_number):
                 ),
             )
             pref.delete_instance()
-        # set all the groups as unscanned
-        for gref in tref.groups:
-            gref.scanned = False
-            gref.save()
         # finally - clean off the scanned and used flags
         tref.scanned = False
         tref.used = False
