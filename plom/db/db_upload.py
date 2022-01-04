@@ -155,7 +155,9 @@ def replaceMissingTestPage(
         bundle_order = max(bundle_order, iref.bundle_order)
     bundle_order += 1
 
-    #
+    # we now 'upload' our replacement page using self.uploadTestPage
+    # this also triggers an update on the test, so we don't have to
+    # call self.updateTestAfterChange explicitly.
     rval = self.uploadTestPage(
         test_number,
         page_number,
@@ -166,7 +168,6 @@ def replaceMissingTestPage(
         "__replacements__system__",
         bundle_order,
     )
-    # uploadTestPage does an test-update for us - so we don't have to do it here.
     return rval
 
 
