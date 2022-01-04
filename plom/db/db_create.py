@@ -28,7 +28,7 @@ from plom.db.tables import plomdb
 log = logging.getLogger("DB")
 
 
-# ########## Bundle creation ##########
+# Bundle creation
 
 
 def createReplacementBundle(self):
@@ -102,7 +102,7 @@ def createNewBundle(self, bundle_name, md5):
         return (False, reason)
 
 
-# ########## Test creation stuff ##############
+# Test creation stuff
 def how_many_papers_in_database(self):
     """How many papers have been created in the database."""
     return len(Test.select())
@@ -413,7 +413,7 @@ def remove_id_from_paper(self, paper_num):
     return True
 
 
-### Create some default rubrics
+# Create some default rubrics
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
 

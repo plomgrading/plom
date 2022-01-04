@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 
@@ -11,14 +11,14 @@ import tempfile
 import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QPixmap, QTransform
+from PyQt5.QtGui import QBrush, QIcon, QImageReader, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QDialog,
     QFrame,
     QFormLayout,
-    QHBoxLayout,
     QGridLayout,
+    QHBoxLayout,
     QListView,
     QListWidget,
     QListWidgetItem,
@@ -80,7 +80,11 @@ class SourceList(QListWidget):
     def addImageItem(self, p, pfile, belongs):
         current_row = self.count()
         name = str(p)
-        it = QListWidgetItem(QIcon(pfile), name)
+        qir = QImageReader(pfile)
+        # deal with jpeg exif rotations
+        qir.setAutoTransform(True)
+        pix = QPixmap(qir.read())
+        it = QListWidgetItem(QIcon(pix), name)
         if belongs:
             it.setBackground(QBrush(Qt.darkGreen))
         self.addItem(it)  # item is added at current_row
@@ -186,7 +190,11 @@ class SinkList(QListWidget):
     def appendItem(self, name):
         if name is None:
             return
-        ci = QListWidgetItem(QIcon(self.item_files[name]), name)
+        qir = QImageReader(self.item_files[name])
+        # deal with jpeg exif rotations
+        qir.setAutoTransform(True)
+        pix = QPixmap(qir.read())
+        ci = QListWidgetItem(QIcon(pix), name)
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
         self.addItem(ci)
@@ -268,9 +276,11 @@ class SinkList(QListWidget):
         rot.rotate(angle)
         # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
-        rfile = self.item_files[name]
-        cpix = QPixmap(rfile)
-        npix = cpix.transformed(rot)
+        qir = QImageReader(self.item_files[name])
+        # deal with jpeg exif rotations
+        qir.setAutoTransform(True)
+        pix = QPixmap(qir.read())
+        npix = pix.transformed(rot)
         # ci = self.item(self.item_positions[name])
         # TODO: instead we get `ci` with a dumb loop
         for i in range(self.count()):

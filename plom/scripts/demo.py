@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-21 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Victoria Schuster
 
@@ -13,12 +13,11 @@ Instructions:
   * In a new terminal, run the Plom Client and connect to localhost.
 """
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import os
 from pathlib import Path
 from shlex import split
 import subprocess
@@ -155,7 +154,7 @@ def main():
                 "fake_scribbled_exams3.pdf",
             ):
                 subprocess.check_call(
-                    split(f"plom-scan process -w 4567 -s {server} {opts} {f}")
+                    split(f"plom-scan process -w 4567 -s {server} {opts} --demo {f}")
                 )
                 subprocess.check_call(
                     split(f"plom-scan upload -w 4567 -s {server} -u {f}")

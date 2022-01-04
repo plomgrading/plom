@@ -152,7 +152,7 @@ if __name__ == "__main__":
             stuff = z.infolist()
             # stuff = z.namelist()
             # shovel up the mac droppings
-            stuff = [x for x in stuff if not "__macosx" in x.filename.lower()]
+            stuff = [x for x in stuff if "__macosx" not in x.filename.lower()]
             print("\n  ".join([str(x) for x in stuff]))
             bundle_name, md5 = bundle_name_and_md5_from_file(f)
             bundle_success = msgr.createNewBundle(bundle_name, md5)

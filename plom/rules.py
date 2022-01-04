@@ -14,7 +14,7 @@ def isValidUBCStudentNumber(n):
     """
     try:
         sid = int(str(n))
-    except:
+    except:  # noqa: E722
         return False
     if sid < 0:
         return False
@@ -33,7 +33,7 @@ def is_z_padded_integer(n):
         return False
     try:
         sid = int(str(de_z))
-    except:
+    except:  # noqa: E722
         return False
     if sid < 0:
         return False

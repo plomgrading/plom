@@ -19,12 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Annotator can tag papers directly.
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
+* Spec files have more sanity checks and some keys are now optional.
 * Misc plom-manager improvements.
 
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
 * A large number of modal dialog fixes.
 * Other misc changes.
+* JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
 
 
 ## [0.7.11] - 2021-12-22

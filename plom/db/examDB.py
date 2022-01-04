@@ -16,9 +16,6 @@ import logging
 log = logging.getLogger("DB")
 
 
-######################################################################
-
-
 class PlomDB:
     def __init__(self, dbfile_name="plom.db"):
         # can't handle pathlib?
@@ -69,7 +66,7 @@ class PlomDB:
             )
             log.info("User 'HAL' created to do all our automated tasks.")
 
-    ########### User stuff #############
+    # User stuff
     from plom.db.db_user import (
         createUser,
         doesUserExist,

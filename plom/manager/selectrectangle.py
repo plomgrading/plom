@@ -1,10 +1,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtGui import QBrush, QColor, QGuiApplication, QPainter, QPen, QPixmap
+from PyQt5.QtGui import (
+    QBrush,
+    QColor,
+    QImageReader,
+    QGuiApplication,
+    QPainter,
+    QPen,
+    QPixmap,
+)
 from PyQt5.QtWidgets import (
     QDialog,
     QGraphicsRectItem,
@@ -136,7 +144,11 @@ class IDView(QGraphicsView):
             x = 0
             n = 0
             for fn in fnames:
-                self.images[n] = QGraphicsPixmapItem(QPixmap(fn))
+                qir = QImageReader(fn)
+                # deal with jpeg exif rotations
+                qir.setAutoTransform(True)
+                pix = QPixmap(qir.read())
+                self.images[n] = QGraphicsPixmapItem(pix)
                 self.images[n].setTransformationMode(Qt.SmoothTransformation)
                 self.images[n].setPos(x, 0)
                 self.images[n].setVisible(True)

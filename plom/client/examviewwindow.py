@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication, QBrush, QPainter, QPixmap
+from PyQt5.QtGui import QGuiApplication, QBrush, QImageReader, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -122,7 +122,10 @@ class ExamView(QGraphicsView):
         if fnames is not None:
             x = 0
             for (n, fn) in enumerate(fnames):
-                pix = QPixmap(str(fn))
+                qir = QImageReader(fn)
+                # deal with jpeg exif rotations
+                qir.setAutoTransform(True)
+                pix = QPixmap(qir.read())
                 pixmap = QGraphicsPixmapItem(pix)
                 pixmap.setTransformationMode(Qt.SmoothTransformation)
                 pixmap.setPos(x, 0)

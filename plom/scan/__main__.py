@@ -2,12 +2,13 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for scanning tests and pushing to servers.
 
-## Overview of the scanning process
+Overview of the scanning process
+--------------------------------
 
   1. Decide on a working directory for your scans, copy your PDFs into
      that directory and then cd into it.
@@ -47,7 +48,7 @@
   uploading.
 """
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -153,6 +154,14 @@ def get_parser():
             safer but not always ideal for image quality.
         """,
     )
+    g.add_argument(
+        "--demo",
+        action="store_true",
+        help="""
+            Simulate scanning with random rotations, adding noise etc.
+            Obviously not intended for production use.
+        """,
+    )
 
     spU.add_argument("bundleName", help="Usually the name of the PDF file.")
     spU.add_argument(
@@ -195,6 +204,7 @@ def main():
             args.scanPDF,
             gamma=args.gamma,
             extractbmp=args.extractbmp,
+            demo=args.demo,
         )
     elif args.command == "upload":
         uploadImages(

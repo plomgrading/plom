@@ -3,14 +3,8 @@
 # Copyright (C) 2020 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-from PyQt5.QtCore import Qt, QTimer, pyqtProperty, QRectF, QPropertyAnimation
-from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import (
-    QUndoCommand,
-    QGraphicsObject,
-    QGraphicsRectItem,
-    QGraphicsItem,
-)
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QUndoCommand
 
 from plom.client.tools.rubric import GroupDeltaTextItem
 from plom.client.tools.tool import DeleteObject
@@ -33,13 +27,13 @@ class CommandDelete(QUndoCommand):
         self.scene.removeItem(self.deleteItem)
         if isinstance(self.deleteItem, GroupDeltaTextItem):
             self.scene.refreshStateAndScore()
-        ## flash an animated box around the deleted object
+        # flash an animated box around the deleted object
         self.scene.addItem(self.do.item)
         self.do.flash_undo()  # note - is undo animation since object being removed
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
 
     def undo(self):
-        ## flash an animated box around the un-deleted object
+        # flash an animated box around the un-deleted object
         self.scene.addItem(self.do.item)
         self.do.flash_redo()  # is redo animation since object being brought back
         QTimer.singleShot(200, lambda: self.scene.removeItem(self.do.item))
