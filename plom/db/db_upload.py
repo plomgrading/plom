@@ -528,6 +528,10 @@ def updateDNMGroup(self, dref):
             DNMPage.create(dnmgroup=dref, image=pref.image, order=pref.page_number)
 
     if False in scan_list:  # some scanned, but not all.
+        # set group to "unscanned"
+        with plomdb.atomic():
+            gref.scanned = False
+            gref.save()
         return False
     # all test pages scanned (or all unscanned), so set things ready to go.
     with plomdb.atomic():
@@ -557,6 +561,9 @@ def updateIDGroup(self, idref):
     if pref.scanned:
         IDPage.create(idgroup=idref, image=pref.image, order=pref.page_number)
     else:
+        with plomdb.atomic():
+            gref.scanned = False
+            gref.save()
         return False  # not yet completely present - no updated needed.
 
     # all test ID pages present, and group cleaned, so set things ready to go.
@@ -661,6 +668,9 @@ def updateQGroup(self, qref):
         # some tpages unscanned - definitely not ready to go.
         if False in scan_list:
             log.info("Group {} is only half-scanned - not ready".format(gref.gid))
+            with plomdb.atomic():
+                gref.scanned = False
+                gref.save()
             return False
         else:
             pass  # all tpages scanned - so ready to go.
@@ -671,7 +681,9 @@ def updateQGroup(self, qref):
                     gref.gid
                 )
             )
-            return False
+            with plomdb.atomic():
+                gref.scanned = False
+                gref.save()
         else:
             pass  # no unscanned tpages, but not hw pages - so ready to go.
 
@@ -698,7 +710,6 @@ def updateGroupAfterChange(self, gref):
     elif gref.group_type == "d":
         return self.updateDNMGroup(gref.dnmgroups[0])
     elif gref.group_type == "q":
-        # if the group is ready - all good.
         return self.updateQGroup(gref.qgroups[0])
     else:
         raise ValueError("Tertium non datur: should never happen")
@@ -767,6 +778,16 @@ def updateTestAfterChange(self, tref, group_refs=None):
             tref.save()
 
 
+def get_qgroups_from_image(self, img_ref):
+    """Get all qgroups that use the given image in an not-outdated annotation"""
+    qgroups_to_update = set()
+    for apage_ref in img_ref.apages:
+        annot_ref = apage_ref.annotation
+        if not annot_ref.outdated:
+            qgroups_to_update.add(annot_ref.qgroup)
+    return list(qgroups_to_update)
+
+
 def removeScannedTestPage(self, test_number, page_number):
     """Remove a single scanned test-page."""
     tref = Test.get_or_none(test_number=test_number)
@@ -787,6 +808,7 @@ def removeScannedTestPage(self, test_number, page_number):
         )
         return [False, "unscanned"]
     iref = pref.image
+    gref = pref.group
     with plomdb.atomic():
         DiscardedPage.create(
             image=iref,
@@ -796,13 +818,12 @@ def removeScannedTestPage(self, test_number, page_number):
         pref.image = None
         pref.scanned = False
         pref.save()
-        # set the parent group to unscanned
-        gref = pref.group
-        gref.scanned = False
-        gref.save()
-    # TODO - update the group to which this tpage officially belongs, but also look to see if it had been
+    # Update the group to which this tpage officially belongs, but also look to see if it had been
     # attached to any annotations, in which case update those too.
-    self.updateTestAfterChange(tref)
+    groups_to_update = set([gref])
+    for qref in self.get_qgroups_from_image(iref):
+        groups_to_update.add(qref.group)
+    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
     log.info(f"Removed t-page {page_number} of test {test_number} and updated test.")
     return [True, f"Removed tpage-{page_number} form test {test_number}."]
 
@@ -828,6 +849,7 @@ def removeScannedHWPage(self, test_number, question, order):
         return [False, "unknown"]
     # create the discard page
     iref = pref.image
+    gref = pref.group
     with plomdb.atomic():
         DiscardedPage.create(
             image=iref,
@@ -835,13 +857,12 @@ def removeScannedHWPage(self, test_number, question, order):
         )
         # now delete that hwpage
         pref.delete_instance()
-        # set the parent group to unscanned
-        gref = pref.group
-        gref.scanned = False
-        gref.save()
-    # TODO - update the group to which this tpage officially belongs, but also look to see if it had been
+    # Update the group to which this tpage officially belongs, but also look to see if it had been
     # attached to any annotations, in which case update those too.
-    self.updateTestAfterChange(tref)
+    groups_to_update = set([gref])
+    for qref in self.get_qgroups_from_image(iref):
+        groups_to_update.add(qref.group)
+    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
     log.info(
         f"Removed hwpage {question}.{order} of test {test_number} and updated test."
     )
@@ -869,6 +890,7 @@ def removeScannedEXPage(self, test_number, question, order):
         return [False, "unknown"]
     # create the discard page
     iref = pref.image
+    gref = pref.group
     with plomdb.atomic():
         DiscardedPage.create(
             image=iref,
@@ -876,13 +898,12 @@ def removeScannedEXPage(self, test_number, question, order):
         )
         # now delete that hwpage
         pref.delete_instance()
-        # set the parent group to unscanned
-        gref = pref.group
-        gref.scanned = False
-        gref.save()
-    # TODO - update the group to which this tpage officially belongs, but also look to see if it had been
+    # Update the group to which this tpage officially belongs, but also look to see if it had been
     # attached to any annotations, in which case update those too.
-    self.updateTestAfterChange(tref)
+    groups_to_update = set([gref])
+    for qref in self.get_qgroups_from_image(iref):
+        groups_to_update.add(qref.group)
+    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
     log.info(
         f"Removed expage {question}.{order} of test {test_number} and updated test."
     )
