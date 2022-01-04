@@ -213,7 +213,8 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
                 file_name, order, question, test_number
             )
         )
-    self.updateTestAfterChange(tref)
+    # now update the test after this change - only need to update the single group
+    self.updateTestAfterChange(tref, group_refs=[qref.group])
     return [True]
 
 
