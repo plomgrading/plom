@@ -206,10 +206,21 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             files.append(outname)
             continue
 
-        # TODO: experiment with jpg: generate both and see which is smaller?
-        outname = dest / (basename + ".png")
-        pix.save(outname)
-        files.append(outname)
+        pngname = dest / (basename + ".png")
+        jpgname = dest / (basename + ".jpg")
+        # TODO: pil_save 10% smaller but 2x-3x slower, Issue #1866
+        pix.save(pngname)
+        # pix.pil_save(pngname, optimize=True)
+        # TODO: add progressive=True?
+        pix.pil_save(jpgname, quality=90, optimize=True, subsampling=0)
+        # Keep the jpeg if its at least a little smaller
+        if jpgname.stat().st_size < 0.9 * pngname.stat().st_size:
+            pngname.unlink()
+            files.append(jpgname)
+        else:
+            jpgname.unlink()
+            files.append(pngname)
+        # WebP here is also an option, Issue #1864.
     assert len(files) == len(doc), "Expected one image per page"
     doc.close()
     return files
