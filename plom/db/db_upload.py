@@ -375,7 +375,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
 
     # create the associated HW page
     self.createNewHWPage(tref, qref, order, image_ref)
-    # and do an update.
+    # and do an update - only the group affected
     self.updateTestAfterChange(tref, group_refs=[qref.group])
 
     return [True]
