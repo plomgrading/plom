@@ -81,7 +81,8 @@ class SceneParent(QWidget):
         self.scene = PageScene(self, src_img_data, maxMark, None)
         self.view.connectScene(self.scene)
 
-    def pickleIt(self, *, aname=""):
+    def pickleIt(self):
+        aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         plomDict = {
@@ -96,7 +97,7 @@ class SceneParent(QWidget):
         with open(plomfile, "w") as fh:
             json.dump(plomDict, fh, indent="  ")
             fh.write("\n")
-        return plomfile
+        return aname, plomfile
 
     def rpt(self):
         return QPointF(
@@ -171,8 +172,7 @@ class SceneParent(QWidget):
         )
 
     def doneAnnotating(self):
-        aname = self.scene.save(self.saveName)
-        plomfile = self.pickleIt(aname=aname.name)
+        aname, plomfile = self.pickleIt()
         return self.scene.score, self.scene.get_rubrics_from_page(), aname, plomfile
 
     def refreshDisplayedMark(self, score):

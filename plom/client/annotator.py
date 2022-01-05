@@ -1481,9 +1481,8 @@ class Annotator(QWidget):
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
-        aname = self.scene.save(self.saveName)
+        aname, plomfile = self.pickleIt()
         rubrics = self.scene.get_rubrics_from_page()
-        plomfile = self.pickleIt(aname=aname.name)
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
         self.view.setHidden(True)
@@ -1655,21 +1654,22 @@ class Annotator(QWidget):
         """Latex a fragment of text."""
         return self.parentMarkerUI.latexAFragment(*args, **kwargs)
 
-    def pickleIt(self, *, aname=""):
-        """
-        Pickles the current page and saves it as a .plom file.
-        1. Retrieves current scene items
-        2. Reverses list such that newest items show last
-        3. Saves pickled file as a .plom file
-        4. Adds a dictionary of current Plom Data to the .plom file.
+    def pickleIt(self):
+        """Capture the annotated pages as a bitmap and a .plom file.
 
-        kwargs:
-            annot_img_name (str/pathlib.Path): the name of a static
-                image rendering of the scene we are packing up.
+        1. Renders the current scene as a static bitmap.
+        2. Retrieves current annotations in reverse cronological order.
+        3. Adds varous other metadata.
+        4. Writes JSON into the .plom file.
 
-        Returns:
-            pathlib.Path: filename of the .plom file it builds.
+        Note: called "pickle" for historical reasons: it is neither a
+        Python pickle nor a real-life pickle.
+
+        Return:
+            tuple: two pathlib.Path, one for the rendered image and one
+                for the .plom file.
         """
+        aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
@@ -1688,7 +1688,7 @@ class Annotator(QWidget):
         with open(plomfile, "w") as fh:
             json.dump(plomData, fh, indent="  ")
             fh.write("\n")
-        return plomfile
+        return aname, plomfile
 
     def unpickleIt(self, plomData):
         """
