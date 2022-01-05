@@ -305,8 +305,7 @@ def uploadHWPage(
         pref = self.createNewHWPage(tref, qref, tmp_order, image_ref)
         # get all groups that use that image
         groups_to_update = self.get_groups_using_image(image_ref)
-        groups_to_update.add(pref)
-        # now update the test after this change - only need to update the single group
+        groups_to_update.add(pref.group)
         self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return [True]
 
