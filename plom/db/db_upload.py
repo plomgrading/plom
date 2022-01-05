@@ -122,7 +122,13 @@ def uploadTestPage(
                 original_name, test_number, page_number, version
             )
         )
-        self.updateTestAfterChange(tref, group_refs=[pref.group])
+
+        # find all qgroups with non-outdated annotations using that image
+        groups_to_update = self.get_groups_using_image(pref.image)
+        # add the group that should use that page
+        groups_to_update.add(pref.group)
+        # update the test.
+        self.updateTestAfterChange(tref, group_refs=groups_to_update)
         return [
             True,
             "success",
@@ -173,7 +179,7 @@ def replaceMissingTestPage(
 
 def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
     # can be called by an upload, but also by move-misc-to-tpage
-    # create a HW page
+    # create a HW page and return a ref to it
     gref = qdata_ref.group
     with plomdb.atomic():
         # get the first non-outdated annotation for the group
@@ -184,7 +190,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
             .get()
         )
         # create image, hwpage, annotationpage and link.
-        HWPage.create(
+        pref = HWPage.create(
             test=test_ref,
             group=gref,
             order=order,
@@ -194,6 +200,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         APage.create(annotation=aref, image=image_ref, order=order)
         test_ref.used = True
         test_ref.save()
+        return pref
 
 
 def doesHWHaveIDPage(self, sid):
@@ -295,9 +302,12 @@ def uploadHWPage(
                 tref, question, tmp_order
             )
         )
-        self.createNewHWPage(tref, qref, tmp_order, image_ref)
+        pref = self.createNewHWPage(tref, qref, tmp_order, image_ref)
+        # get all groups that use that image
+        groups_to_update = self.get_groups_using_image(image_ref)
+        groups_to_update.add(pref)
         # now update the test after this change - only need to update the single group
-        self.updateTestAfterChange(tref, group_refs=[qref.group])
+        self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return [True]
 
 
@@ -374,9 +384,13 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
         ]
 
     # create the associated HW page
-    self.createNewHWPage(tref, qref, order, image_ref)
-    # and do an update - only the group affected
-    self.updateTestAfterChange(tref, group_refs=[qref.group])
+    pref = self.createNewHWPage(tref, qref, order, image_ref)
+    # find groups using that image
+    groups_to_update = self.get_groups_using_image(image_ref)
+    # add in the group that must use it
+    groups_to_update.add(pref.group)
+    # and do an update
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
 
     return [True]
 
@@ -752,17 +766,25 @@ def checkTestScanned(self, tref):
     return True
 
 
+def get_groups_using_image(self, img_ref):
+    """Get all groups that use the given image in an not-outdated annotation"""
+    groups_to_update = set()
+    for apage_ref in img_ref.apages:
+        annot_ref = apage_ref.annotation
+        if not annot_ref.outdated:
+            groups_to_update.add(annot_ref.qgroup.group)
+    return groups_to_update
+
+
 def updateTestAfterChange(self, tref, group_refs=None):
     """The given test has changed (page upload/delete) and so its groups need to be updated."""
-
     # if group_refs supplied then update just those groups
-    if group_refs:
-        for gref in group_refs:
-            self.updateGroupAfterChange(gref)
-    else:  # update all the groups in the test
-        # update each group in the test
-        for gref in tref.groups:
-            self.updateGroupAfterChange(gref)
+    # otherwise update all the groups in the test
+    if not group_refs:
+        group_refs = tref.groups
+
+    for gref in group_refs:
+        self.updateGroupAfterChange(gref)
 
     # now make sure the whole thing is scanned.
     if self.checkTestScanned(tref):
@@ -777,16 +799,6 @@ def updateTestAfterChange(self, tref, group_refs=None):
             tref.scanned = False
             log.info("Test {} is not completely scanned".format(tref.test_number))
             tref.save()
-
-
-def get_qgroups_from_image(self, img_ref):
-    """Get all qgroups that use the given image in an not-outdated annotation"""
-    qgroups_to_update = set()
-    for apage_ref in img_ref.apages:
-        annot_ref = apage_ref.annotation
-        if not annot_ref.outdated:
-            qgroups_to_update.add(annot_ref.qgroup)
-    return list(qgroups_to_update)
 
 
 def removeScannedTestPage(self, test_number, page_number):
@@ -821,10 +833,9 @@ def removeScannedTestPage(self, test_number, page_number):
         pref.save()
     # Update the group to which this tpage officially belongs, but also look to see if it had been
     # attached to any annotations, in which case update those too.
-    groups_to_update = set([gref])
-    for qref in self.get_qgroups_from_image(iref):
-        groups_to_update.add(qref.group)
-    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(gref)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     log.info(f"Removed t-page {page_number} of test {test_number} and updated test.")
     return [True, f"Removed tpage-{page_number} form test {test_number}."]
 
@@ -860,10 +871,10 @@ def removeScannedHWPage(self, test_number, question, order):
         pref.delete_instance()
     # Update the group to which this tpage officially belongs, but also look to see if it had been
     # attached to any annotations, in which case update those too.
-    groups_to_update = set([gref])
-    for qref in self.get_qgroups_from_image(iref):
-        groups_to_update.add(qref.group)
-    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(qref.group)
+    # update the test
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     log.info(
         f"Removed hwpage {question}.{order} of test {test_number} and updated test."
     )
@@ -901,10 +912,9 @@ def removeScannedEXPage(self, test_number, question, order):
         pref.delete_instance()
     # Update the group to which this tpage officially belongs, but also look to see if it had been
     # attached to any annotations, in which case update those too.
-    groups_to_update = set([gref])
-    for qref in self.get_qgroups_from_image(iref):
-        groups_to_update.add(qref.group)
-    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(gref)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     log.info(
         f"Removed expage {question}.{order} of test {test_number} and updated test."
     )
@@ -959,7 +969,7 @@ def removeAllScannedPages(self, test_number):
         tref.scanned = False
         tref.used = False
         tref.save()
-    # update all the groups.
+    # update all the groups - don't pass any group-references
     self.updateTestAfterChange(tref)
     return [True, "Test {} wiped clean".format(test_number)]
 

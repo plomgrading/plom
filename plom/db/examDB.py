@@ -126,7 +126,7 @@ class PlomDB:
         replaceMissingHWQuestion,
         replaceMissingTestPage,
         removeAllScannedPages,
-        get_qgroups_from_image,
+        get_groups_using_image,
         removeScannedTestPage,
         removeScannedHWPage,
         removeScannedEXPage,
