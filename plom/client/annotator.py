@@ -1483,7 +1483,7 @@ class Annotator(QWidget):
 
         aname = self.scene.save(self.saveName)
         rubrics = self.scene.get_rubrics_from_page()
-        plomfile = self.pickleIt()
+        plomfile = self.pickleIt(aname=aname.name)
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
         self.view.setHidden(True)
@@ -1655,13 +1655,17 @@ class Annotator(QWidget):
         """Latex a fragment of text."""
         return self.parentMarkerUI.latexAFragment(*args, **kwargs)
 
-    def pickleIt(self):
+    def pickleIt(self, *, aname=""):
         """
         Pickles the current page and saves it as a .plom file.
         1. Retrieves current scene items
         2. Reverses list such that newest items show last
         3. Saves pickled file as a .plom file
         4. Adds a dictionary of current Plom Data to the .plom file.
+
+        kwargs:
+            annot_img_name (str/pathlib.Path): the name of a static
+                image rendering of the scene we are packing up.
 
         Returns:
             pathlib.Path: filename of the .plom file it builds.
@@ -1670,10 +1674,9 @@ class Annotator(QWidget):
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
-        # TODO: now saveName does not have .png: remove from .plom altogether?
         plomData = {
             "base_images": self.src_img_data,
-            "saveName": self.saveName.name,
+            "saveName": str(aname),
             "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
