@@ -475,6 +475,12 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
             file_name, test_number, page_number, version
         )
     )
-    # trigger an update since underlying image changed.
-    self.updateTestAfterChange(tref)
+
+    # Update the group to which this new tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
+    groups_to_update = set([pref.group])
+    for qref in self.get_qgroups_from_image(iref):
+        groups_to_update.add(qref.group)
+    self.updateTestAfterChange(tref, group_refs=list(groups_to_update))
+
     return [True]
