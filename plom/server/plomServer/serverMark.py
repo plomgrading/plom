@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from datetime import datetime
@@ -159,8 +159,8 @@ def MreturnMarkedTask(
     # do sanity checks on incoming annotation image file
     # Check the annotated_image is valid png - just check header presently
     imgtype = imghdr.what(annotated_filename, h=annotated_image)
-    if imgtype != "png":
-        errstr = f'Malformed annotated image file: expected png got "imgtype"'
+    if imgtype not in ("png", "jpg", "jpeg"):
+        errstr = f'Malformed annotated image file: expected png/jpg got "{imgtype}"'
         log.error(errstr)
         return [False, errstr]
 

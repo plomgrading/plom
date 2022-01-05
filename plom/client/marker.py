@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """
@@ -352,8 +352,8 @@ def upload(
 
     if not (
         task.startswith("q")
-        and os.path.basename(aname) == "G{}.png".format(task[1:])
-        and os.path.basename(pname) == "G{}.plom".format(task[1:])
+        and aname.stem == f"G{task[1:]}"
+        and pname.name == f"G{task[1:]}.plom"
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}] - this should not happen".format(
