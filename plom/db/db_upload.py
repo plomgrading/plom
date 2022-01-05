@@ -684,6 +684,7 @@ def updateQGroup(self, qref):
             with plomdb.atomic():
                 gref.scanned = False
                 gref.save()
+            return False
         else:
             pass  # no unscanned tpages, but not hw pages - so ready to go.
 
