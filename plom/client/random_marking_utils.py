@@ -72,12 +72,13 @@ class SceneParent(QWidget):
         self.question = question
         self.maxMark = maxMark
         self.rubric_widget = RW()  # a dummy class needed for compat with pagescene.
+        self.saveName = None
 
     def doStuff(self, src_img_data, saveName, maxMark, markStyle):
-        self.saveName = saveName
+        self.saveName = Path(saveName)
         self.src_img_data = src_img_data
 
-        self.scene = PageScene(self, src_img_data, saveName, maxMark, None)
+        self.scene = PageScene(self, src_img_data, maxMark, None)
         self.view.connectScene(self.scene)
 
     def pickleIt(self):
@@ -85,17 +86,17 @@ class SceneParent(QWidget):
         lst.reverse()  # so newest items last
         plomDict = {
             "base_images": self.src_img_data,
-            "saveName": os.path.basename(self.saveName),
+            "saveName": self.saveName.name,
             "markState": self.scene.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.scene.getScore(),
             "sceneItems": lst,
         }
-        # save pickled file as <blah>.plom
-        plomFile = self.saveName[:-3] + "plom"
-        with open(plomFile, "w") as fh:
+        plomfile = self.saveName.with_suffix(".plom")
+        with open(plomfile, "w") as fh:
             json.dump(plomDict, fh, indent="  ")
             fh.write("\n")
+        return plomfile
 
     def rpt(self):
         return QPointF(
@@ -170,10 +171,9 @@ class SceneParent(QWidget):
         )
 
     def doneAnnotating(self):
-        self.scene.save()
-        # Pickle the scene as a plom-file
-        self.pickleIt()
-        return self.scene.score, self.scene.get_rubrics_from_page()
+        aname = self.scene.save(self.saveName)
+        plomfile = self.pickleIt()
+        return self.scene.score, self.scene.get_rubrics_from_page(), aname, plomfile
 
     def refreshDisplayedMark(self, score):
         # needed for compat with pagescene.py
@@ -221,10 +221,9 @@ def do_random_marking_backend(question, version, *, messenger):
                 with open(tmp, "wb") as f:
                     f.write(obj)
                 r["filename"] = tmp
-            aFile = os.path.join(td, "argh.png")
-            plomFile = aFile[:-3] + "plom"
-            score, rubrics = annotatePaper(
-                question, maxMark, task, src_img_data, aFile, tags
+            basefile = Path(td) / "argh"
+            score, rubrics, aname, plomfile = annotatePaper(
+                question, maxMark, task, src_img_data, basefile, tags
             )
             print("Score of {} out of {}".format(score, maxMark))
             messenger.MreturnMarkedTask(
@@ -233,8 +232,8 @@ def do_random_marking_backend(question, version, *, messenger):
                 version,
                 score,
                 random.randint(1, 20),
-                aFile,
-                plomFile,
+                aname,
+                plomfile,
                 rubrics,
                 integrity_check,
                 [r["md5"] for r in src_img_data],

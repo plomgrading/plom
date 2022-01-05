@@ -11,6 +11,7 @@ __license__ = "AGPLv3"
 from copy import deepcopy
 import json
 import logging
+from pathlib import Path
 import os
 import re
 import sys
@@ -384,7 +385,8 @@ class Annotator(QWidget):
                 there is an integer for precise usage.
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
-            saveName (str): name the tgv is saved as
+            saveName (str/pathlib.Path): file (and dir, optionally) of the
+                basename to save things (no .png extension)
             maxMark (int): maximum possible score for that test question
             plomDict (dict): a dictionary of annotation information.
                 Contains sufficient information to recreate the annotation
@@ -405,7 +407,7 @@ class Annotator(QWidget):
         self.setWindowTitle("{} - Plom Annotator".format(s))
         log.info("Annotating {}".format(s))
         self.paperDir = paperdir
-        self.saveName = saveName
+        self.saveName = Path(saveName)
         self.integrity_check = integrity_check
         self.src_img_data = src_img_data
 
@@ -816,7 +818,6 @@ class Annotator(QWidget):
         self.scene = PageScene(
             self,
             self.src_img_data,
-            self.saveName,
             self.maxMark,
             self.question_label,
         )
@@ -1480,9 +1481,9 @@ class Annotator(QWidget):
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
-        self.scene.save()
+        aname = self.scene.save(self.saveName)
         rubrics = self.scene.get_rubrics_from_page()
-        self.pickleIt()  # Pickle the scene as a plom-file
+        plomfile = self.pickleIt()
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
         self.view.setHidden(True)
@@ -1494,13 +1495,12 @@ class Annotator(QWidget):
         tim = self.timer.elapsed() // 1000
 
         # some things here hardcoded elsewhere too, and up in marker
-        plomFile = self.saveName[:-3] + "plom"
         stuff = [
             self.getScore(),
             tim,
             self.paperDir,
-            self.saveName,
-            plomFile,
+            aname,
+            plomfile,
             rubrics,
             self.integrity_check,
             self.src_img_data,
@@ -1664,16 +1664,16 @@ class Annotator(QWidget):
         4. Adds a dictionary of current Plom Data to the .plom file.
 
         Returns:
-            None: builds a .plom file.
-
+            pathlib.Path: filename of the .plom file it builds.
         """
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
+        # TODO: now saveName does not have .png: remove from .plom altogether?
         plomData = {
             "base_images": self.src_img_data,
-            "saveName": os.path.basename(self.saveName),
+            "saveName": self.saveName.name,
             "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
@@ -1681,11 +1681,11 @@ class Annotator(QWidget):
             "annotationColor": self.scene.ink.color().getRgb()[:3],
             "sceneItems": lst,
         }
-        # save pickled file as <blah>.plom
-        plomFile = self.saveName[:-3] + "plom"
-        with open(plomFile, "w") as fh:
+        plomfile = self.saveName.with_suffix(".plom")
+        with open(plomfile, "w") as fh:
             json.dump(plomData, fh, indent="  ")
             fh.write("\n")
+        return plomfile
 
     def unpickleIt(self, plomData):
         """

@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+from pathlib import Path
 import logging
 
 from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
@@ -523,7 +524,7 @@ class PageScene(QGraphicsScene):
     QTextItems.
     """
 
-    def __init__(self, parent, src_img_data, saveName, maxMark, question_label):
+    def __init__(self, parent, src_img_data, maxMark, question_label):
         """
         Initialize a new PageScene.
 
@@ -534,7 +535,6 @@ class PageScene(QGraphicsScene):
             src_img_data (list[dict]): metadata for the underlying
                 source images.  Each dict has (at least) keys for
                `filename` and `orientation`.
-            saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
             question_label (str/None): how to display this question, for
                 example a string like "Q7", or `None` if not relevant.
@@ -542,7 +542,6 @@ class PageScene(QGraphicsScene):
         super().__init__(parent)
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
-        self.saveName = saveName
         self.maxMark = maxMark
         # Initially both score is None and markingState is neutral
         self.score = None
@@ -970,13 +969,17 @@ class PageScene(QGraphicsScene):
         self.setSceneRect(self.getSaveableRectangle())
         self.update()
 
-    def save(self):
+    def save(self, basename):
         """
         Save the annotated group-image.
 
-        Notes:
-        This overwrites the imagefile with a dump of the current
-        scene and all its graphics items.
+        args:
+            basename (str/pathlib.Path): where to save, we will add a png
+                or jpg extension added to it.  If the file already exists,
+                it will be overwritten.
+
+        returns:
+            pathlib.Path: the file we just saved to, including jpg or png.
         """
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
@@ -1021,8 +1024,10 @@ class PageScene(QGraphicsScene):
         # Render the scene via the painter
         self.render(exporter)
         exporter.end()
-        # Save the result to file.
-        oimg.save(self.saveName)
+        basename = Path(basename)
+        pngname = basename.with_suffix(".png")
+        oimg.save(str(pngname))
+        return pngname
 
     def keyPressEvent(self, event):
         """
