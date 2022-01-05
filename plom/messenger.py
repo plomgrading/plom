@@ -10,10 +10,11 @@ __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import json
 import hashlib
-import logging
 from io import StringIO, BytesIO
+import json
+import logging
+import mimetypes
 
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
@@ -413,12 +414,12 @@ class Messenger(BaseMessenger):
             "integrity_check": integrity_check,
             "image_md5s": image_md5_list,
         }
-
+        mime_type = mimetypes.guess_type(annotated_img)[0]
         dat = MultipartEncoder(
             fields={
                 "param": json.dumps(param),
-                "annotated": (annotated_img, open(annotated_img, "rb"), "image/png"),
-                "plom": (plomfile, open(plomfile, "rb"), "text/plain"),
+                "annotated": (annotated_img.name, open(annotated_img, "rb"), mime_type),
+                "plom": (plomfile.name, open(plomfile, "rb"), "text/plain"),
             }
         )
         self.SRmutex.acquire()

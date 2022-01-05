@@ -998,21 +998,21 @@ class PageScene(QGraphicsScene):
             r = (1.0 * w) / (1.0 * h)
             w = MINWIDTH
             h = w / r
-            msg.append("Increasing png width because of minimum width constraint")
+            msg.append("Increasing bitmap width because of minimum width constraint")
             if h > MAXHEIGHT:
                 h = MAXHEIGHT
                 w = h * r
-                msg.append("Constraining png height by min width constraint")
+                msg.append("Constraining bitmap height by min width constraint")
         if w > num_pages * MAX_PER_PAGE_WIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = num_pages * MAX_PER_PAGE_WIDTH
             h = w / r
-            msg.append("Constraining png width by maximum per page width")
+            msg.append("Constraining bitmap width by maximum per page width")
         if w > MAXWIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = MAXWIDTH
             h = w / r
-            msg.append("Constraining png width by overall maximum width")
+            msg.append("Constraining bitmap width by overall maximum width")
         w = round(w)
         h = round(h)
         if msg:
@@ -1026,8 +1026,14 @@ class PageScene(QGraphicsScene):
         exporter.end()
         basename = Path(basename)
         pngname = basename.with_suffix(".png")
-        oimg.save(str(pngname))
-        return pngname
+        jpgname = basename.with_suffix(".jpg")
+        import random
+
+        if random.uniform(0, 1) < 0.5:
+            oimg.save(str(pngname))
+            return pngname
+        oimg.save(str(jpgname), quality=90)
+        return jpgname
 
     def keyPressEvent(self, event):
         """
