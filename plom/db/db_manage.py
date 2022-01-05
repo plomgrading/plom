@@ -213,7 +213,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
                 file_name, order, question, test_number
             )
         )
-    # now update the test after this change - only need to update the single group
+    # update the group containing the new extra-pages
     self.updateTestAfterChange(tref, group_refs=[qref.group])
     return [True]
 
@@ -260,7 +260,8 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
             file_name, order, question, test_number
         )
     )
-    self.updateTestAfterChange(tref)
+    # only update the group containing that hwpage
+    self.updateTestAfterChange(tref, group_refs=[gref])
     return [True]
 
 
@@ -297,7 +298,8 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
             file_name, page_number, test_number
         )
     )
-    self.updateTestAfterChange(tref)
+    # only update the group containing that tpage
+    self.updateTestAfterChange(tref, group_refs=[pref.group])
 
     return [True]
 
