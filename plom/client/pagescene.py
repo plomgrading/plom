@@ -5,6 +5,9 @@
 
 from pathlib import Path
 import logging
+import random
+
+import PIL.Image
 
 from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
 from PyQt5.QtGui import (
@@ -1024,16 +1027,29 @@ class PageScene(QGraphicsScene):
         # Render the scene via the painter
         self.render(exporter)
         exporter.end()
+
         basename = Path(basename)
         pngname = basename.with_suffix(".png")
         jpgname = basename.with_suffix(".jpg")
-        import random
+        oimg.save(str(pngname))
+        # Sadly no control over chroma subsampling which mucks up thin red lines
+        # oimg.save(str(jpgname), quality=90)
 
-        if random.uniform(0, 1) < 0.5:
-            oimg.save(str(pngname))
+        # im = PIL.Image.fromqpixmap(oimg)
+        im = PIL.Image.open(pngname)
+        im.convert("RGB").save(jpgname, quality=90, optimize=True, subsampling=0)
+
+        jpgsize = jpgname.stat().st_size
+        pngsize = pngname.stat().st_size
+        log.debug("scene rendered: jpg/png sizes (%s, %s) bytes", jpgsize, pngsize)
+        # For testing
+        # if random.uniform(0, 1) < 0.5:
+        if jpgsize < 0.9 * pngsize:
+            pngname.unlink()
+            return jpgname
+        else:
+            jpgname.unlink()
             return pngname
-        oimg.save(str(jpgname), quality=90)
-        return jpgname
 
     def keyPressEvent(self, event):
         """
