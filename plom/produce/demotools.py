@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 """Build pdf files for a demo test and provide demo classlists"""
@@ -21,7 +21,6 @@ import pandas
 
 import plom
 from plom.textools import buildLaTeX
-from plom.scan.scansToImages import processFileToBitmaps
 
 
 def getDemoClassList():

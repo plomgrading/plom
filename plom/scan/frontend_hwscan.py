@@ -16,7 +16,6 @@ which pages belong to which student, see :py:module:`frontend_scan`.
 
 import ast
 from collections import defaultdict
-import os
 from pathlib import Path
 
 import fitz
@@ -25,7 +24,6 @@ import toml
 from plom.scan.sendPagesToServer import (
     does_bundle_exist_on_server,
     createNewBundle,
-    uploadLPages,
     upload_HW_pages,
     checkTestHasThatSID,
 )
@@ -33,116 +31,12 @@ from plom.scan.bundle_utils import (
     get_bundle_dir,
     make_bundle_dir,
     bundle_name_and_md5_from_file,
-    archiveLBundle,
     archiveHWBundle,
 )
 from plom.scan.checkScanStatus import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan.scansToImages import process_scans
 from plom.scan import checkScanStatus
-
-
-def processLooseScans(
-    server, password, pdf_fname, student_id, gamma=False, extractbmp=False
-):
-    """Process the given Loose-pages PDF into images, upload then archive the pdf.
-
-    pdf_fname should be for form 'submittedLoose/blah.XXXX.pdf'
-    where XXXX should be student_id. Do basic sanity check to confirm.
-
-    Ask server to map student_id to a test-number; these should have been
-    pre-populated on test-generation and if id not known there is an error.
-
-    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
-     - abort if name xor md5sum known,
-     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
-
-    Process PDF into images.
-
-    Ask server to create the bundle - it will return an error or [True, skip_list]. The skip_list is a list of bundle-orders (ie page number within the PDF) that have already been uploaded. In typical use this will be empty.
-
-    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
-    """
-    pdf_fname = Path(pdf_fname)
-    if not pdf_fname.is_file():
-        print("Cannot find file {} - skipping".format(pdf_fname))
-        return
-
-    assert os.path.split(pdf_fname)[0] in [
-        "submittedLoose",
-        "./submittedLoose",
-    ], 'At least for now, you must your file into a directory named "submittedLoose"'
-    IDQ = IDQorIDorBad(pdf_fname.name)
-    if len(IDQ) != 2:  # should return [JID, sid]
-        print("File name has wrong format. Should be 'blah.sid.pdf'. Stopping.")
-        return
-    sid = IDQ[1]
-    if sid != student_id:
-        print(
-            "Student ID supplied {} does not match that in filename {}. Stopping.".format(
-                student_id, sid
-            )
-        )
-        return
-    print(
-        "Process and upload file {} as loose pages for sid {}".format(
-            pdf_fname.name, student_id
-        )
-    )
-
-    bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
-    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
-    if exists:
-        if reason == "name":
-            print(
-                f'The bundle "{bundle_name}" has been used previously for a different bundle'
-            )
-            return
-        elif reason == "md5sum":
-            print(
-                "A bundle with matching md5sum is already in system with a different name"
-            )
-            return
-        elif reason == "both":
-            print(
-                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
-            )
-        else:
-            raise RuntimeError("Should not be here: unexpected code path! File issue")
-
-    bundledir = Path("bundles") / "submittedLoose" / bundle_name
-    make_bundle_dir(bundledir)
-
-    with open(bundledir / "source.toml", "w") as f:
-        toml.dump({"file": str(pdf_fname), "md5": md5}, f)
-
-    print("Processing PDF {} to images".format(pdf_fname))
-    process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
-
-    print("Creating bundle for {} on server".format(pdf_fname))
-    rval = createNewBundle(bundle_name, md5, server, password)
-    # should be [True, skip_list] or [False, reason]
-    if rval[0]:
-        skip_list = rval[1]
-        if len(skip_list) > 0:
-            print("Some images from that bundle were uploaded previously:")
-            print("Pages {}".format(skip_list))
-            print("Skipping those images.")
-    else:
-        print("There was a problem with this bundle.")
-        if rval[1] == "name":
-            print("A different bundle with the same name was uploaded previously.")
-        else:
-            print(
-                "A bundle with matching md5sum but different name was uploaded previously."
-            )
-        print("Stopping.")
-        return
-
-    # send the images to the server
-    uploadLPages(bundle_name, skip_list, student_id, server, password)
-    # now archive the PDF
-    archiveLBundle(pdf_fname)
 
 
 def _parse_questions(s):
@@ -261,7 +155,8 @@ def processHWScans(
     which is a list of bundle-orders (i.e., page number within the PDF)
     that have already been uploaded. In typical use this will be empty.
 
-    Then upload pages to the server if not in skip list (this will trigger a server-side update when finished). Finally archive the bundle.
+    Then upload pages to the server if not in skip list.
+    Finally archive the bundle.
     """
     pdf_fname = Path(pdf_fname)
     if not pdf_fname.is_file():
@@ -278,7 +173,8 @@ def processHWScans(
     )
 
     N = get_number_of_questions(server, password)
-    num_pages = len(fitz.open(pdf_fname))
+    with fitz.open(pdf_fname) as pdf:
+        num_pages = len(pdf)
     questions = canonicalize_question_list(questions, pages=num_pages, numquestions=N)
 
     test_number = checkTestHasThatSID(student_id, server, password)
@@ -388,31 +284,20 @@ def processMissing(server, password, *, yes_flag):
 
     Student may not upload pages for questions they don't answer. This function
     asks server for list of all missing hw-questions from all tests that have
-    been used (but are not complete).
+    been used (but are not complete). The server only returns questions that
+    have neither hw-pages nor t-pages - so any partially scanned tests with
+    tpages are avoided.
 
-    For each test we check if any test-pages are present and skip if they are.
 
-    For each remaining test we replace each missing question with a 'question not submitted' page. The user will be prompted in each case unless the 'yes_flag' is set.
+    For each remaining test we replace each missing question with a 'question not submitted' page.
+    The user will be prompted in each case unless the 'yes_flag' is set.
     """
     missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
-    # returns list for each test [scanned-tpages-present boolean, sid, missing-question-numbers]
-    reallyMissing = {}  # new list of those without tpages present
+    # returns list for each test [sid, list of missing hwq]
     for t in missingHWQ:
-        if missingHWQ[t][0]:  # scanned test-pages present, so no replacing.
-            print(
-                "Student {}'s paper has tpages present, so skipping".format(
-                    missingHWQ[t][1]
-                )
-            )
-        else:
-            print(
-                "Student {} is missing questions {}".format(
-                    missingHWQ[t][1], missingHWQ[t][2:]
-                )
-            )
-            reallyMissing[t] = missingHWQ[t]
+        print(f"Student {missingHWQ[t][0]}'s paper is missing questions")
 
-    if len(reallyMissing) == 0:
+    if len(missingHWQ) == 0:
         print("All papers either complete or have scanned test-pages present.")
         return
 
@@ -422,8 +307,8 @@ def processMissing(server, password, *, yes_flag):
         print("Stopping.")
         return
 
-    for t in reallyMissing:
-        sid = reallyMissing[t][1]
-        for q in reallyMissing[t][2:]:
+    for t in missingHWQ:
+        sid = missingHWQ[t][0]
+        for q in missingHWQ[t][1:]:
             print("Replacing q{} of sid {}".format(q, sid))
             checkScanStatus.replaceMissingHWQ(server, password, sid, q)

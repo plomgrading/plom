@@ -16,7 +16,7 @@ log = logging.getLogger("DB")
 
 def createUser(self, uname, passwordHash):
     try:
-        uref = User.create(
+        User.create(
             name=uname,
             password=passwordHash,
             last_activity=datetime.now(),

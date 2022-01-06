@@ -19,7 +19,7 @@ from plom import __version__
 from plom.scan import clear_login
 from plom.scan import print_who_submitted_what
 from plom.scan import check_and_print_scan_status
-from plom.scan import processHWScans, processLooseScans, processMissing
+from plom.scan import processHWScans, processMissing
 from plom.scan import processAllHWByQ
 from plom.scan import print_bundle_list
 
@@ -101,14 +101,7 @@ def get_parser():
             PDF file to detect possible duplicate uploads.
         """,
     )
-    g = spP.add_mutually_exclusive_group(required=True)
-    g.add_argument(
-        "-l",
-        "--loose",
-        action="store_true",
-        help="[DEPRECATED] Whether or not to upload file as loose pages.",
-    )
-    g.add_argument(
+    spP.add_argument(
         "-q",
         "--question",
         nargs=1,
@@ -208,29 +201,18 @@ def main():
     if args.command == "submitted":
         print_who_submitted_what(args.server, args.password, args.directory)
     elif args.command == "process":
-        if args.loose:
-            print('WARNING: "Loose pages" are deprecated: pass `-q all` instead')
-            processLooseScans(
-                args.server,
-                args.password,
-                args.hwPDF,
-                args.studentid,
-                args.gamma,
-                args.extractbmp,
-            )
-        else:
-            # args passes '[q]' rather than just 'q'
-            questions = args.question[0]
-            processHWScans(
-                args.server,
-                args.password,
-                args.hwPDF,
-                args.studentid,
-                questions,
-                gamma=args.gamma,
-                extractbmp=args.extractbmp,
-                bundle_name=args.bundle_name,
-            )
+        questions = args.question[0]
+        # args passes '[q]' rather than just 'q'
+        processHWScans(
+            args.server,
+            args.password,
+            args.hwPDF,
+            args.studentid,
+            questions,
+            gamma=args.gamma,
+            extractbmp=args.extractbmp,
+            bundle_name=args.bundle_name,
+        )
     elif args.command == "allbyq":
         # TODO: gamma and extractbmp?
         processAllHWByQ(args.server, args.password, args.yes)

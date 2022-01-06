@@ -55,7 +55,7 @@ class CommandPen(CommandTool):
 
 
 class PenItem(QGraphicsPathItem):
-    def __init__(self, path, style, parent=None):
+    def __init__(self, path, style):
         super().__init__()
         self.saveable = True
         self.path = path

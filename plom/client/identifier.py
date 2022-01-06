@@ -44,7 +44,7 @@ from plom import isValidStudentNumber
 from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
-from .examviewwindow import ExamViewWindow
+from .examviewwindow import ImageViewWidget
 from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
@@ -59,7 +59,7 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, test, fnames=[], stat="unidentified", id="", name=""):
+    def __init__(self, test, fname=None, stat="unidentified", id="", name=""):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test number
@@ -69,8 +69,8 @@ class Paper:
         # no name or id-number yet.
         self.sname = name
         self.sid = id
-        # the list filenames of the images.
-        self.originalFiles = fnames
+        # the filename of the image.
+        self.originalFile = fname
 
     def setStatus(self, st):
         self.status = st
@@ -216,24 +216,16 @@ class IDClient(QWidget):
         self.ui.tableView.setModel(self.exM)
         # A view window for the papers so user can zoom in as needed.
         # Paste into appropriate location in gui.
-        self.testImg = ExamViewWindow()
+        self.testImg = ImageViewWidget(self)
         self.ui.gridLayout_7.addWidget(self.testImg, 0, 0)
 
         # Get the classlist from server for name/ID completion.
-        try:
-            self.getClassList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getClassList()
 
         # Init the name/ID completers and a validator for ID
         self.setCompleters()
         # Get the predicted list from server for ID guesses.
-        try:
-            self.getPredictions()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getPredictions()
 
         # Connect buttons and key-presses to functions.
         self.ui.idEdit.returnPressed.connect(self.enterID)
@@ -250,11 +242,7 @@ class IDClient(QWidget):
         # Make sure window is maximised and request a paper from server.
         self.showMaximized()
         # Get list of papers already ID'd and add to table.
-        try:
-            self.getAlreadyIDList()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
+        self.getAlreadyIDList()
 
         # Connect the view **after** list updated.
         # Connect the table's model sel-changed to appropriate function.
@@ -265,18 +253,6 @@ class IDClient(QWidget):
         # Create variable to store ID/Name conf window position
         # Initially set to top-left corner of window
         self.msgGeometry = None
-
-    def throwSeriousError(self, err):
-        ErrorMessage(
-            'A serious error has been thrown:\n"{}".\nCannot recover from this, so shutting down identifier.'.format(
-                err
-            )
-        ).exec_()
-        self.shutDownError()
-        raise (err)
-
-    def throwBenign(self, err):
-        ErrorMessage('A benign exception has been thrown:\n"{}".'.format(err)).exec_()
 
     def skipOnClick(self):
         """Skip the current, moving to the next or loading a new one"""
@@ -386,7 +362,7 @@ class IDClient(QWidget):
         idList = self.msgr.IDrequestDoneTasks()
         for x in idList:
             self.addPaperToList(
-                Paper(x[0], fnames=[], stat="identified", id=x[1], name=x[2]),
+                Paper(x[0], fname=None, stat="identified", id=x[1], name=x[2]),
                 update=False,
             )
 
@@ -402,34 +378,31 @@ class IDClient(QWidget):
         # grab the selected tgv
         test = self.exM.paperList[r].test
         # check if we have a copy
-        if len(self.exM.paperList[r].originalFiles) > 0:
+        if self.exM.paperList[r].originalFile is not None:
             return
         # else try to grab it from server
         try:
-            imageList = self.msgr.request_ID_images(test)
-        except PlomSeriousException as e:
-            self.throwSeriousError(e)
-            return
+            imageDat = self.msgr.request_ID_image(test)
         except PlomBenignException as e:
-            self.throwBenign(e)
+            log.error("Somewhat unexpected error getting image for %s: %s", test, e)
+            ErrorMessage(f'Unexpected but benign exception:\n"{e}"').exec_()
             # self.exM.removePaper(r)
             return
 
-        # Image names = "i<testnumber>.<imagenumber>.<ext>"
-        inames = []
-        for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
-            inames.append(tmp)
-            with open(tmp, "wb+") as fh:
-                fh.write(imageList[i])
+        if imageDat is None:  # means no image
+            imageName = None
+        else:
+            imageName = os.path.join(self.workingDirectory, f"i{test}.0.image")
+            with open(imageName, "wb") as fh:
+                fh.write(imageDat)
 
-        self.exM.paperList[r].originalFiles = inames
+        self.exM.paperList[r].originalFile = imageName
 
     def updateImage(self, r=0):
         # Here the system should check if imagefile exist and grab if needed.
         self.checkFiles(r)
         # Update the test-image pixmap with the image in the indicated file.
-        self.testImg.updateImage(self.exM.paperList[r].originalFiles)
+        self.testImg.updateImage(self.exM.paperList[r].originalFile)
         # update the prediction if present
         tn = int(self.exM.paperList[r].test)
         if tn in self.predictedTestToNumbers:
@@ -468,10 +441,7 @@ class IDClient(QWidget):
 
     def updateProgress(self):
         # update progressbars
-        try:
-            v, m = self.msgr.IDprogressCount()
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
+        v, m = self.msgr.IDprogressCount()
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.idProgressBar.setFormat("No papers to identify")
@@ -501,8 +471,11 @@ class IDClient(QWidget):
                     ErrorMessage("No more tasks left on server.").exec_()
                     return False
             except PlomSeriousException as err:
-                self.throwSeriousError(err)
-                return False
+                log.exception("Unexpected error getting next task: %s", err)
+                ErrorMessage(
+                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                ).exec_()
+                raise
 
             try:
                 imageList = self.msgr.IDclaimThisTask(test)
@@ -515,7 +488,7 @@ class IDClient(QWidget):
         for i in range(len(imageList)):
             tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
             inames.append(tmp)
-            with open(tmp, "wb+") as fh:
+            with open(tmp, "wb") as fh:
                 fh.write(imageList[i])
 
         # Add the paper [code, filename, etc] to the list
@@ -598,16 +571,13 @@ class IDClient(QWidget):
         code = self.exM.data(index[0])
         # Return paper to server with the code, ID, name.
         try:
-            # TODO - do we need this return value
-            msg = self.msgr.IDreturnIDdTask(code, sid, sname)
+            self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.error("Somewhat unexpected error when returning %s: %s", code, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
-        except PlomSeriousException as err:
-            self.throwSeriousError(err)
-            return
         # successful ID
         # Issue #25: Use timer to avoid macOS conflict between completer and
         # clearing the line-edit. Very annoying but this fixes it.
@@ -697,7 +667,7 @@ class IDClient(QWidget):
                 return
             self.msgPosition = msg.pos()
             # Otherwise get an id and name from the user (and the okay)
-            snidbox = SNIDBox(self.ui.idEdit.text())
+            snidbox = SNIDBox(self, self.ui.idEdit.text())
             if snidbox.exec_() != QDialog.Accepted:
                 return
             sid = snidbox.sid.strip()
@@ -742,17 +712,20 @@ class IDClient(QWidget):
             return
         testNumber = self.exM.data(index[0])
         try:
-            pageNames, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
+            pageData, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
-            self.throwBenign(err)
+            log.error("Somewhat unexpected error when viewing %s: %s", testNumber, err)
+            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
+            return
 
+        labels = [x[0] for x in pageData]
         viewFiles = []
         for iab in imagesAsBytes:
             tfn = tempfile.NamedTemporaryFile(delete=False).name
             viewFiles.append(tfn)
             with open(tfn, "wb") as fh:
                 fh.write(iab)
-        WholeTestView(viewFiles).exec_()
+        WholeTestView(testNumber, viewFiles, labels, parent=self).exec_()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
 #
 # Copying and distribution of this file, with or without modification,
@@ -41,6 +41,7 @@ client_install_requires = [
 server_install_requires = [
     "appdirs>=1.4.3",
     "canvasapi>=2.0.0",
+    "exif>=1.2.2",
     "toml>=0.10.0",
     "tqdm",
     "numpy",
@@ -81,7 +82,7 @@ server_install_requires = [
 
 setup(
     name="plom",
-    version=__version__,
+    version=__version__,  # noqa: F821
     description="Plom is PaperLess Open Marking",
     long_description=long_description,
     long_description_content_type="text/markdown",

@@ -92,8 +92,9 @@ def reOrientPage(fname, qrs):
         "rot90cc": 90,
         "flipped": 180,
     }
-    # fake a default_dict
-    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else None
+
+    # fake a default_dict, flake8 does not like, consider using function
+    g = lambda x: getPosition(qrs.get(x)) if qrs.get(x, None) else None  # noqa: E731
     current = [g("NE"), g("NW"), g("SW"), g("SE")]
 
     def comp(A, B):

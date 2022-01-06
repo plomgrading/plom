@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
+
+from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication, QPainter, QPixmap
+from PyQt5.QtGui import QGuiApplication, QBrush, QImageReader, QPainter, QPixmap
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -18,31 +20,32 @@ from plom import ScenePixelHeight
 from plom.client.backGrid import BackGrid
 
 
-class ExamViewWindow(QWidget):
-    """Simple view window for pageimages"""
+class ImageViewWidget(QWidget):
+    """Simple view widget for pageimages to be embedded in other windows.
 
-    def __init__(self, fnames=None):
-        QWidget.__init__(self)
-        if isinstance(fnames, str):
-            fnames = [fnames]
-        self.initUI(fnames)
+    TODO: clarify whether the caller must maintain the image on disc or if
+    the QPixmap will reads it once and stores it.  See Issue #1842.
+    """
 
-    def initUI(self, fnames):
+    def __init__(self, parent, fnames=None, has_reset_button=True, compact=True):
+        super().__init__(parent)
         # Grab an examview widget (QGraphicsView)
         self.view = ExamView(fnames)
         # Render nicely
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # reset view button passes to the examview.
-        self.resetB = QPushButton("&reset view")
-        self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.resetB.setAutoDefault(False)  # return won't click the button by default.
-        # Layout simply
+        if has_reset_button:
+            resetB = QPushButton("&reset view")
+            resetB.clicked.connect(self.resetView)
+            # return won't click the button by default
+            resetB.setAutoDefault(False)
         grid = QGridLayout()
+        if compact:
+            grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view, 1, 1, 10, 4)
-        grid.addWidget(self.resetB, 20, 1)
+        if has_reset_button:
+            grid.addWidget(resetB, 20, 1)
         self.setLayout(grid)
-        self.show()
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
@@ -54,11 +57,7 @@ class ExamViewWindow(QWidget):
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        # update the image
-        if type(fnames) == list:
-            self.view.updateImage(fnames)
-        else:
-            self.view.updateImage([fnames])
+        self.view.updateImages(fnames)
 
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
@@ -67,6 +66,9 @@ class ExamViewWindow(QWidget):
 
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
+        self.view.resetView()
+
+    def resetView(self):
         self.view.resetView()
 
     def forceRedrawOrSomeBullshit(self):
@@ -87,48 +89,58 @@ class ExamView(QGraphicsView):
     - containing an image and click-to-zoom/unzoom
     """
 
-    def __init__(self, fnames):
-        QGraphicsView.__init__(self)
-        self.initUI(fnames)
-
-    def initUI(self, fnames):
+    def __init__(self, fnames, dark_background=False):
+        super().__init__()
         # set background
-        self.setStyleSheet("background: transparent")
-        self.setBackgroundBrush(BackGrid())
+        if dark_background:
+            self.setBackgroundBrush(QBrush(Qt.darkCyan))
+        else:
+            self.setStyleSheet("background: transparent")
+            self.setBackgroundBrush(BackGrid())
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
-        # Make QGraphicsScene
         self.scene = QGraphicsScene()
-        # TODO = handle different image sizes.
-        self.images = {}
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImage(fnames)
+        self.updateImages(fnames)
 
-    def updateImage(self, fnames):
-        """Update the image with that from filename"""
-        for n in self.images:
-            self.imageGItem.removeFromGroup(self.images[n])
-            self.images[n].setVisible(False)
+    def updateImages(self, fnames):
+        """Update the images new ones from filenames
+
+        Args:
+            fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
+                `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
+                for a single image.
+        """
+        if isinstance(fnames, (str, Path)):
+            fnames = [fnames]
+        for img in self.imageGItem.childItems():
+            self.imageGItem.removeFromGroup(img)
+            self.scene.removeItem(img)
+        img = None
+
         if fnames is not None:
             x = 0
             for (n, fn) in enumerate(fnames):
-                pix = QPixmap(fn)
-                self.images[n] = QGraphicsPixmapItem(pix)
-                self.images[n].setTransformationMode(Qt.SmoothTransformation)
-                self.images[n].setPos(x, 0)
-                self.images[n].setVisible(True)
+                qir = QImageReader(fn)
+                # deal with jpeg exif rotations
+                qir.setAutoTransform(True)
+                pix = QPixmap(qir.read())
+                pixmap = QGraphicsPixmapItem(pix)
+                pixmap.setTransformationMode(Qt.SmoothTransformation)
+                pixmap.setPos(x, 0)
+                pixmap.setVisible(True)
                 sf = float(ScenePixelHeight) / float(pix.height())
-                self.images[n].setScale(sf)
-                self.scene.addItem(self.images[n])
-                # x += self.images[n].boundingRect().width() + 10
-                # TODO: why did this have + 10 but the scene did not?
+                pixmap.setScale(sf)
+                self.scene.addItem(pixmap)
+                self.imageGItem.addToGroup(pixmap)
+                # x += pixmap.boundingRect().width() + 10
+                # TODO: some tools (manager?) had + 10 (maybe with darkbg?)
                 x += sf * (pix.width() - 1.0)
                 # TODO: don't floor here if units of scene are large!
                 x = int(x)
-                self.imageGItem.addToGroup(self.images[n])
 
-        # Set sensible sizes and put into the view, and fit view to the image.
+        # Set sensible sizes and put into the view, and fit view to the image
         br = self.imageGItem.boundingRect()
         self.scene.setSceneRect(
             0,
@@ -152,3 +164,7 @@ class ExamView(QGraphicsView):
     def resetView(self):
         """Reset the view to its reasonable initial state."""
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
+
+    def rotateImage(self, dTheta):
+        self.rotate(dTheta)
+        self.resetView()

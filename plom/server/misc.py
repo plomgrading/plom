@@ -60,10 +60,7 @@ def check_server_fully_configured(basedir):
         raise FileNotFoundError(
             "Server configuration file not present. Have you run 'plom-server init'?"
         )
-    if not (
-        (basedir / confdir / "plom.key").exists()
-        and (basedir / confdir / "plom-selfsigned.crt").exists()
-    ):
+    if not ((basedir / confdir).glob("*.key") and (basedir / confdir).glob("*.crt")):
         raise FileNotFoundError(
             "SSL keys not present. Have you run 'plom-server init'?"
         )

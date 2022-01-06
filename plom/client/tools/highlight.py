@@ -24,7 +24,7 @@ class CommandHighlight(CommandPen):
 
 
 class HighlightItem(QGraphicsPathItem):
-    def __init__(self, path, style, parent=None):
+    def __init__(self, path, style):
         super().__init__()
         self.saveable = True
         self.path = path

@@ -16,7 +16,7 @@ import sys
 def format_int_list_with_runs(L, use_unicode=None):
     """Replace runs in a list with a range notation"""
     if use_unicode is None:
-        if "UTF-8" in sys.stdout.encoding:
+        if "utf-8" in str(sys.stdout.encoding).casefold():
             use_unicode = True
         else:
             use_unicode = False

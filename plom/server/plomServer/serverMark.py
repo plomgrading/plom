@@ -62,7 +62,7 @@ def MgetDoneTasks(self, username, question_number, version_number):
 
     Returns:
         list: Respond with a list of done tasks, each list includes
-            [question_code string, maximum_mark, question_grade, question_tag string].
+            [question_code string, maximum_mark, question_grade, [list of tag_texts] ].
     """
 
     version_number = int(version_number)
@@ -139,7 +139,6 @@ def MreturnMarkedTask(
     plomdat,
     rubrics,
     time_spent_marking,
-    tags,
     annotated_image_md5,
     integrity_check,
     image_md5s,
@@ -157,11 +156,9 @@ def MreturnMarkedTask(
             editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (str): Tag assigned to the paper.
         annotated_image_md5 (str): MD5 hash of the annotated image.
         integrity_check (str): the integrity_check string for this task
         image_md5s (list[str]): list of image md5sums used.
-
 
     Returns:
         list: Respond with a list which includes:
@@ -211,7 +208,6 @@ def MreturnMarkedTask(
         plom_filename,
         rubrics,
         time_spent_marking,
-        tags,
         annotated_image_md5,
         integrity_check,
         image_md5s,
@@ -235,7 +231,7 @@ def MreturnMarkedTask(
     with open(plom_filename, "wb") as file_header:
         file_header.write(plomdat)
 
-    self.MrecordMark(username, mark, annotated_filename, time_spent_marking, tags)
+    self.MrecordMark(username, mark, annotated_filename, time_spent_marking)
     # return ack with current counts.
     return [
         True,
@@ -246,7 +242,7 @@ def MreturnMarkedTask(
     ]
 
 
-def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, tags):
+def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
     """Saves the marked paper information as a backup, independent of the server
 
     Args:
@@ -254,18 +250,16 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking, ta
         mark (int): Question mark.
         annotated_filename (str): Name of the annotated image file.
         time_spent_marking (int): Seconds spent marking the paper.
-        tags (str): Tag assigned to the paper.
     """
 
     with open("{}.txt".format(annotated_filename), "w") as file_header:
         file_header.write(
-            "{}\t{}\t{}\t{}\t{}\t{}".format(
+            "{}\t{}\t{}\t{}\t{}".format(
                 annotated_filename,
                 mark,
                 username,
                 datetime.now().strftime("%Y-%m-%d,%H:%M"),
                 time_spent_marking,
-                tags,
             )
         )
 
@@ -275,19 +269,78 @@ def MgetOriginalImages(self, task):
     return self.DB.MgetOriginalImages(task)
 
 
-def MsetTag(self, username, task_code, tag):
-    """Assign a tag string to a paper.
+# ==== tag stuff
+
+
+def checkTagTextValid(self, tag_text):
+    # put tag-text validity test in here.
+    # what else is reasonable here.
+    allow_list = ["_", "-", "+", ":", ";"]
+    if all(c.isalnum() or c in allow_list for c in tag_text):
+        return True
+    else:
+        return False
+
+
+def MgetAllTags(self):
+    return self.DB.MgetAllTags()
+
+
+def MgetTagsOfTask(self, task):
+    return self.DB.MgetTagsOfTask(task)
+
+
+def McheckTagKeyExists(self, tag_key):
+    return self.DB.McheckTagKeyExists(tag_key)
+
+
+def McheckTagTextExists(self, tag_text):
+    return self.DB.McheckTagTextExists(tag_text)
+
+
+def McreateNewTag(self, username, tag_text):
+    return self.DB.McreateNewTag(username, tag_text)
+
+
+def add_tag(self, username, task, tag_text):
+    """Assign a tag to a paper.
 
     Args:
-        username (str): User who assigned tag to the paper.
-        task_code (str): Code string for the task.
-        tags (str): Tag assigned to the paper.
+        username (str): User who is assigning tag to the paper.
+            TODO: currently not recorded but likely we want to record this.
+        task (str): Code string for the task (paper).
+        tag_text (str): Text of tag to assign to the paper.
 
     Returns:
-        bool: True or False indicating if tag was set in database successfully.
+        bool: True if tag was set in database successfully if the tag
+            was already set.  False if no such paper or other error.
     """
+    # do sanity check of the tag-text
+    if self.DB.McheckTagTextExists(tag_text) is False:
+        log.warn(f'tag with text "{tag_text}" does not exist - creating it now.')
+        self.DB.McreateNewTag(username, tag_text)
 
-    return self.DB.MsetTag(username, task_code, tag)
+    return self.DB.MaddExistingTag(username, task, tag_text)
+
+
+def remove_tag(self, task, tag_text):
+    """Remove a tag from a paper.
+
+    Args:
+        task (str): Code string for the task (paper).
+        tag_text (str): Text of tag to remove.
+
+    Returns:
+        bool: True if the tag was removed, or if it was not present to
+            start with.  False is not such paper, permissions or other
+            error.
+    """
+    # do sanity check of the tag-text
+    if self.DB.McheckTagTextExists(tag_text) is False:
+        log.warn(f'tag "{tag_text}" does not exist')
+        return False
+
+    return self.DB.MremoveExistingTag(task, tag_text)
 
 
 def MgetWholePaper(self, test_number, question_number):

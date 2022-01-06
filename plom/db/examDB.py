@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 
+from plom.db.tables import *
 from datetime import datetime, timedelta
 
 from peewee import *
@@ -13,10 +14,6 @@ from plom.rules import censorStudentName as censorName
 import logging
 
 log = logging.getLogger("DB")
-
-from plom.db.tables import *
-
-######################################################################
 
 
 class PlomDB:
@@ -40,27 +37,27 @@ class PlomDB:
                     TPage,
                     HWPage,
                     EXPage,
-                    LPage,
                     UnknownPage,
                     CollidingPage,
                     DiscardedPage,
                     ##
                     AImage,
                     Annotation,
-                    OldAnnotation,
                     ##
                     APage,
-                    OAPage,
                     IDPage,
                     DNMPage,
                     ##
                     Rubric,
                     ARLink,
+                    Tag,
+                    QuestionTagLink,
                 ]
             )
         log.info("Database initialised.")
         # check if HAL has been created
         if User.get_or_none(name="HAL") is None:
+            # pylint: disable=no-member
             User.create(
                 name="HAL",
                 password=None,
@@ -69,7 +66,7 @@ class PlomDB:
             )
             log.info("User 'HAL' created to do all our automated tasks.")
 
-    ########### User stuff #############
+    # User stuff
     from plom.db.db_user import (
         createUser,
         doesUserExist,
@@ -111,27 +108,31 @@ class PlomDB:
         createNewImage,
         attachImageToTPage,
         createNewHWPage,
-        createNewLPage,
         uploadTestPage,
+        doesHWHaveIDPage,
+        getMissingDNMPages,
         uploadHWPage,
-        uploadLPage,
         uploadUnknownPage,
         uploadCollidingPage,
         updateDNMGroup,
         updateIDGroup,
-        cleanIDGroup,
+        buildUpToDateAnnotation,
         updateQGroup,
-        cleanQGroup,
-        updateGroupAfterUpload,
+        updateGroupAfterChange,
         checkTestScanned,
-        updateTestAfterUpload,
-        processUpdatedTests,
+        updateTestAfterChange,
         getSIDFromTest,
         sidToTest,
         replaceMissingHWQuestion,
         replaceMissingTestPage,
         removeAllScannedPages,
+        removeScannedTestPage,
+        removeScannedHWPage,
+        removeScannedEXPage,
         listBundles,
+        getImagesInBundle,
+        getBundleFromImage,
+        getPageFromBundle,
     )
 
     from plom.db.db_manage import (
@@ -141,7 +142,6 @@ class PlomDB:
         getTPageImage,
         getHWPageImage,
         getEXPageImage,
-        getLPageImage,
         getAllTestImages,
         getQuestionImages,
         getUnknownImage,
@@ -166,6 +166,7 @@ class PlomDB:
         RgetMissingHWQ,
         RgetUnusedTests,
         RgetIdentified,
+        RgetNotAutoIdentified,
         RgetProgress,
         RgetMarkHistogram,
         RgetQuestionUserProgress,
@@ -186,9 +187,9 @@ class PlomDB:
         IDgetNextTask,
         IDgiveTaskToClient,
         IDgetDoneTasks,
-        IDgetImages,
-        IDgetImageByNumber,
+        IDgetImage,
         ID_get_donotmark_images,
+        IDgetImagesOfNotAutoIdentified,
         IDdidNotFinish,
         ID_id_paper,
         IDgetImageFromATest,
@@ -206,10 +207,23 @@ class PlomDB:
         Mget_annotations,
         MgetOneImageFilename,
         MgetOriginalImages,
-        MsetTag,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
+        MgetAllTags,
+        McheckTagKeyExists,
+        McheckTagTextExists,
+        McreateNewTag,
+        MgetTagsOfTask,
+        MaddExistingTag,
+        MremoveExistingTag,
     )
 
-    from plom.db.db_rubric import McreateRubric, MgetRubrics, MmodifyRubric
+    from plom.db.db_rubric import (
+        McreateRubric,
+        MgetRubrics,
+        MmodifyRubric,
+        Rget_test_rubric_count_matrix,
+        Rget_rubric_counts,
+        Rget_rubric_details,
+    )

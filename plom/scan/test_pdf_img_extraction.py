@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 from pathlib import Path
 import shutil
@@ -20,7 +20,7 @@ def test_pdf_extract_img_height(tmpdir):
     d.new_page()
     d.save(f)
     processFileToBitmaps(f, tmp_path)
-    im = Image.open(tmp_path / "doc-1.png")
+    im = Image.open(tmp_path / "doc-001.png")
     assert im.height == ScenePixelHeight
 
 
@@ -34,14 +34,14 @@ def test_pdf_extract_img_heights_other(tmpdir):
     d.new_page(width=400, height=100)
     d.save(f)
     processFileToBitmaps(f, tmp_path)
-    im = Image.open(tmp_path / "doc-1.png")
+    im = Image.open(tmp_path / "doc-001.png")
     assert im.height == ScenePixelHeight
-    im = Image.open(tmp_path / "doc-2.png")
+    im = Image.open(tmp_path / "doc-002.png")
     assert im.height == ScenePixelHeight
     assert im.width == ScenePixelHeight
-    im = Image.open(tmp_path / "doc-3.png")
+    im = Image.open(tmp_path / "doc-003.png")
     assert im.height > ScenePixelHeight
-    im = Image.open(tmp_path / "doc-4.png")
+    im = Image.open(tmp_path / "doc-004.png")
     assert im.height < ScenePixelHeight
 
 
@@ -60,7 +60,7 @@ def test_pdf_extract_img_ridiculous_ratios(tmpdir):
         processFileToBitmaps(f, tmp_path)
 
 
-def test_pdf_extract_error_not_pdf(tmpdir):
+def test_pdf_extract_error_no_file(tmpdir):
     tmp_path = Path(tmpdir)
     with raises(RuntimeError):
         processFileToBitmaps(tmp_path / "no_such_file.pdf", tmp_path)

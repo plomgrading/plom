@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
@@ -9,25 +9,35 @@ from plom.finish import start_messenger
 
 
 def proc_everything(comps, numberOfQuestions):
+    scannedList = []
     idList = []
     mList = [0 for j in range(numberOfQuestions + 1)]
-    sList = [[] for j in range(numberOfQuestions + 1)]
+    histList = [[] for j in range(numberOfQuestions + 1)]
     cList = []
+    partMarked = []
+    # each comps item = [Scanned, IDed, #Marked]
     for t, v in comps.items():
         if v[0]:
+            scannedList.append(int(t))
+        if v[1]:
             idList.append(int(t))
-        mList[v[1]] += 1
-        sList[v[1]].append(t)
-        if v[0] and v[1] == numberOfQuestions:
+        if v[2] > 0:
+            partMarked.append(int(t))
+
+        mList[v[2]] += 1
+        histList[v[2]].append(t)
+        if v[0] and v[1] and v[2] == numberOfQuestions:
             cList.append(t)
     idList.sort(key=int)
     # TODO bit crude, better to get from server
-    numScanned = sum(mList)
-    return idList, mList, sList, cList, numScanned
+    numScanned = len(scannedList)
+    return idList, mList, histList, cList, numScanned, partMarked
 
 
 def print_everything(comps, numPapersProduced, numQ):
-    idList, mList, sList, cList, numScanned = proc_everything(comps, numQ)
+    idList, mList, histList, cList, numScanned, partMarked = proc_everything(
+        comps, numQ
+    )
     print("*********************")
     print("** Completion data **")
     print("Produced papers: {}".format(numPapersProduced))
@@ -40,9 +50,14 @@ def print_everything(comps, numPapersProduced, numQ):
     for n in range(numQ + 1):
         print(
             "Number of papers with {} questions marked = {}. Tests numbers = {}".format(
-                n, mList[n], format_int_list_with_runs(sList[n])
+                n, mList[n], format_int_list_with_runs(histList[n])
             )
         )
+    print(
+        "Papers with at least one question marked = {}".format(
+            format_int_list_with_runs(partMarked)
+        )
+    )
 
 
 def print_still_out(outToDo):
@@ -70,13 +85,22 @@ def main(server=None, password=None):
 
     print_everything(completions, max_papers, numberOfQuestions)
 
-    idList, mList, sList, cList, numScanned = proc_everything(
+    idList, mList, sList, cList, numScanned, partMarked = proc_everything(
         completions, numberOfQuestions
     )
     numberComplete = len(cList)
-    print("{} of {} complete".format(numberComplete, numScanned))
+    print("{} complete of {} scanned".format(numberComplete, numScanned))
 
     print_still_out(outToDo)
+
+    if len(partMarked) > numberComplete:
+        print("*********************")
+        print(
+            "Still {} part-marked papers to go.".format(
+                len(partMarked) - numberComplete
+            )
+        )
+        print("*********************")
 
     if numberComplete == numScanned:
         exit(0)

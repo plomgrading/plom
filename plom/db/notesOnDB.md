@@ -114,9 +114,6 @@ Note
 * when sufficient pages are uploaded for a question the DB will create an initial annotation for that question. This will consist of the page-images and belong to "HAL".
 * when the DB gives a question-marking task to a user it creates a new annotation from the previous one. Note that it does not immediately create links to the images, but instead passes the client the images in the previous annotation. When the client returns the annotated task it tells the DB which images it used and then the DB hooks them into the annotation. This allows the client to shuffle pages around reasonably simply.
 
-#### OldAnnotations
-Effectively a copy of Annotations - we use this to store old annotations - ones that are no longer valid because a new page was added to that question or the manager reverted the task
-
 
 
 ### Where are the pages?
@@ -131,8 +128,6 @@ Types of pages:
 * HWPage - this corresponds to a page of student-uploaded homework (when each question is uploaded separately). It knows which student it belongs to (and so via some look-ups) it knows which test-number, which question, but it doesn't actually have a well-defined page-number, rather it only knows its "order" within the submission. This is because one student's HW response to a given question might be 2 pages, and another's might be 7. So it no longer makes sense to talk about page numbers like we do for "test pages".
 
 * EXPage - an extra page - primarily for tests. Functionally similar to HWPages - they have an "order" but not a page number.
-
-* LPage - these are "loose pages" - these correspond to (say) student uploaded homework when all questions are lumped together into a single file. It knows know which student they belong to and (via some look-ups) they know which test-number. They do not know which question, nor do they know a page. Instead they know their order within the submission. **note** these were previously "XPage"
 
 * UnknownPage - these are the most free-form, they do not know anything other than the image and their order within the submitted file. This is still a work-in-progress after Andrew futzed with the database structure.
 
@@ -154,4 +149,4 @@ The IDPage needs to connect an image to an IDGroup, but it also needs to know in
 
 Notice the IPage has two "parents" - I hope I've handled this structure correctly.
 
-The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively. Finally OAPage = functionally similar to APage except pointing to an OldAnnotation rather than an Annotation.
+The DNMPage and APage are very similar except that instead of pointing to an IDGroup, they point to a DNMGroup and Annotation respectively.
