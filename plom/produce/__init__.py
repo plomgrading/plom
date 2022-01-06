@@ -29,8 +29,8 @@ from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_fil
 
 from .version_map_from_csv import version_map_from_csv
 
-from .rando_exam_scribbler import rando_exam_scribbler
-from .rando_homework_scribbler import rando_homework_scribbler
+from .scribble_utils import make_scribbles
+from .scribble_hw_utils import make_hw_scribbles
 
 # what you get from "from plom.produce import *"
 __all__ = [
@@ -39,8 +39,8 @@ __all__ = [
     "process_classlist_file",
     "upload_classlist",
     "upload_demo_classlist",
-    "rando_exam_scribbler",
-    "rando_homework_scribbler",
+    "make_scribbles",
+    "make_hw_scribbles",
     "upload_demo_rubrics",
     "upload_rubrics_from_file",
     "download_rubrics_to_file",

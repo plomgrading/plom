@@ -18,7 +18,7 @@ from stdiomask import getpass
 
 from plom import __version__
 from plom.produce import start_messenger
-from plom.produce.rando_exam_scribbler import possible_answers as possibleAns
+from plom.produce.scribble_utils import possible_answers
 
 
 def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
@@ -70,7 +70,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
             rect = fitz.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
-            text = random.choice(possibleAns)
+            text = random.choice(possible_answers)
             rc = page.insert_textbox(
                 rect,
                 text,
@@ -95,7 +95,7 @@ def download_classlist_and_spec(server=None, password=None):
     return classlist, spec
 
 
-def rando_homework_scribbler(server, password, basedir=Path(".")):
+def make_hw_scribbles(server, password, basedir=Path(".")):
     """Fake homework submissions by scribbling on the pages of a blank test.
 
     After the files have been generated, this script can be used to scribble
@@ -151,7 +151,7 @@ def main():
     if not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
-    rando_homework_scribbler(args.server, args.password)
+    make_hw_scribbles(args.server, args.password)
 
 
 if __name__ == "__main__":

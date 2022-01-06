@@ -4,13 +4,8 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
-"""Plom tools for scribbling fake answers on PDF files"""
+"""Plom tools for scribbling fake answers on PDF files."""
 
-__copyright__ = "Copyright (C) 2019-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
-
-import argparse
 import base64
 from glob import glob
 import json
@@ -25,11 +20,9 @@ else:
     import importlib_resources as resources
 
 import fitz
-from stdiomask import getpass
 
 import plom.produce
 from plom.produce import paperdir as _paperdir
-from plom import __version__
 from plom.misc_utils import working_directory
 from plom.produce import start_messenger
 
@@ -336,13 +329,13 @@ def download_classlist(server=None, password=None):
     return classlist
 
 
-def rando_exam_scribbler(server, password, basedir=Path(".")):
-    """Fake test writing by scribbling on the pages of a blank test.
+def make_scribbles(server, password, basedir=Path(".")):
+    """Fake exam writing by scribbling on the pages of the blank exams.
 
-    After the files have been generated, this script can be used to scribble
-    on them to simulate random student work.  Note this tool does not upload
-    those files, it just makes some PDF files for you to play with or for
-    testing purposes.
+    After Plom exam PDF files have been generated, this can be used to
+    scribble on them to simulate random student work.  Note this tool does
+    not upload those files, it just makes some PDF files for you to play with
+    or for testing purposes.
 
     Args:
         server (str): the name and port of the server.
@@ -384,7 +377,7 @@ def main():
     if not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
-    rando_exam_scribbler(args.server, args.password)
+    make_scribbles(args.server, args.password)
 
 
 if __name__ == "__main__":
