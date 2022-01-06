@@ -10,6 +10,7 @@ import os
 import csv
 import sys
 import tempfile
+import arrow
 
 import urllib3
 
@@ -1772,6 +1773,11 @@ class Manager(QWidget):
         for u in uDict:
             dat = uDict[u]
             self.ui.userListTW.insertRow(r)
+
+            # change the last activity timestamp to be human readable
+            time = arrow.get(dat[2], 'YY:MM:DD-HH:mm:ss')
+            dat[2] = time.humanize()
+
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
             for k in range(6):
