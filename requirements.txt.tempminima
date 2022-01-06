@@ -15,6 +15,7 @@
 
 appdirs==1.4.3
 aiohttp==3.7.2
+arrow==1.2.1
 canvasapi==2.0.0
 exif==1.2.2
 Pillow==7.0.0
