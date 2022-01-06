@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 
 """Plom tools for producing papers"""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -29,8 +29,8 @@ from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_fil
 
 from .version_map_from_csv import version_map_from_csv
 
-from .faketools import make_scribbles
-from .hwFaker import make_hw_scribbles
+from .rando_exam_scribbler import rando_exam_scribbler
+from .rando_homework_scribbler import rando_homework_scribbler
 
 # what you get from "from plom.produce import *"
 __all__ = [
@@ -39,8 +39,8 @@ __all__ = [
     "process_classlist_file",
     "upload_classlist",
     "upload_demo_classlist",
-    "make_scribbles",
-    "make_hw_scribbles",
+    "rando_exam_scribbler",
+    "rando_homework_scribbler",
     "upload_demo_rubrics",
     "upload_rubrics_from_file",
     "download_rubrics_to_file",

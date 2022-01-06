@@ -1,22 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
 """Plom tools for scribbling fake answers on PDF files"""
 
-__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2019-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import os
-import random
-from pathlib import Path
-from glob import glob
 import argparse
-import json
 import base64
+from glob import glob
+import json
+import os
+from pathlib import Path
+import random
 import sys
 
 if sys.version_info >= (3, 7):
@@ -354,7 +354,7 @@ def download_classlist(server=None, password=None):
     return classlist
 
 
-def make_scribbles(server, password, basedir=Path(".")):
+def rando_exam_scribbler(server, password, basedir=Path(".")):
     """Fake test writing by scribbling on the pages of a blank test.
 
     After the files have been generated, this script can be used to scribble
@@ -402,7 +402,7 @@ def main():
     if not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
-    make_scribbles(args.server, args.password)
+    rando_exam_scribbler(args.server, args.password)
 
 
 if __name__ == "__main__":

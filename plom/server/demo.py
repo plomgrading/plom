@@ -51,7 +51,11 @@ class PlomDemoServer(PlomServer):
     TODO: make the demo less random so that we get predictable output from plom-finish.
 
     We can also simulate some nonsense student work:
-    >>> subprocess.check_call("plom-fake-scribbles", env=env)   # doctest: +SKIP
+    >>> from plom.produce import rando_exam_scribbler
+    >>> rando_exam_scribbler(env.PLOM_SERVER, env.PLOM_MANAGER_PASSWORD)  # doctest: +SKIP
+
+    Which can also be run from the command line using
+    `python3 -m plom.produce.rando_exam_scribbler`.
 
     At that point, we can connect a Plom Client and do some marking.
 

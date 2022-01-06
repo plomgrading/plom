@@ -139,7 +139,7 @@ def main():
 
     print("Creating fake-scan data")
     with working_directory(args.server_dir):
-        subprocess.check_call(split(f"plom-fake-scribbles -w 1234 -s {server}"))
+        subprocess.check_call(split(f"python3 -m plom.produce.rando_exam_scribbler -w 1234 -s {server}"))
     if args.no_scans:
         print(
             "Have not uploaded fake scan data - you will need to run plom-scan manually."

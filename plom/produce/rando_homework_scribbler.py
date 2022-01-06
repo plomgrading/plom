@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
-"""Plom tools for scribbling fake answers on PDF files"""
+"""Plom tool for scribbling fake homework answers for testing purposes."""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
-import random
 from pathlib import Path
+import random
 
 import fitz
 from stdiomask import getpass
@@ -19,8 +19,7 @@ from stdiomask import getpass
 from plom import __version__
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-
-from plom.produce.faketools import possible_answers as possibleAns
+from plom.produce.rando_exam_scribbler import possible_answers as possibleAns
 
 
 def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
@@ -105,7 +104,6 @@ def download_classlist_and_spec(server=None, password=None):
             'In order to force-logout the existing authorisation run "plom-build clear"'
         )
         raise
-
     try:
         classlist = msgr.IDrequestClasslist()
         spec = msgr.get_spec()
@@ -115,7 +113,7 @@ def download_classlist_and_spec(server=None, password=None):
     return classlist, spec
 
 
-def make_hw_scribbles(server, password, basedir=Path(".")):
+def rando_homework_scribbler(server, password, basedir=Path(".")):
     """Fake homework submissions by scribbling on the pages of a blank test.
 
     After the files have been generated, this script can be used to scribble
@@ -171,7 +169,7 @@ def main():
     if not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
-    make_hw_scribbles(args.server, args.password)
+    rando_homework_scribbler(args.server, args.password)
 
 
 if __name__ == "__main__":
