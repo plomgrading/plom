@@ -1,40 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
-from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import (
-    PlomExistingLoginException,
     PlomConflict,
     PlomRangeException,
 )
+from plom.produce import start_messenger
 from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
-
-
-def get_messenger(server=None, password=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        # TODO: bit annoying, maybe want manager UI open...
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        raise
-
-    return msgr
 
 
 def upload_classlist(classlist, server, password):
@@ -46,7 +20,7 @@ def upload_classlist(classlist, server, password):
         msgr (ManagerMessenger): an already-connected messenger object for
             talking to the server.
     """
-    msgr = get_messenger(server, password)
+    msgr = start_messenger(server, password)
     _raw_upload_classlist(classlist, msgr)
 
 

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 """Tools for upload/downloading rubrics from Plom servers."""
 
@@ -14,7 +14,7 @@ else:
 import pandas
 import toml
 
-from plom.produce import get_messenger
+from plom.produce import start_messenger
 
 
 def download_rubrics(msgr):
@@ -121,7 +121,7 @@ def upload_demo_rubrics(msgr, numquestions=3):
     except TypeError:
         return _upload_demo_rubrics(msgr, numquestions)
 
-    msgr = get_messenger(server, password)
+    msgr = start_messenger(server, password)
     try:
         return _upload_demo_rubrics(msgr, numquestions)
     finally:

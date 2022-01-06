@@ -17,8 +17,7 @@ import fitz
 from stdiomask import getpass
 
 from plom import __version__
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.produce import start_messenger
 from plom.produce.rando_exam_scribbler import possible_answers as possibleAns
 
 
@@ -86,24 +85,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
 
 def download_classlist_and_spec(server=None, password=None):
     """Download list of student IDs/names and test specification from server."""
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        raise
+    msgr = start_messenger(server, password)
     try:
         classlist = msgr.IDrequestClasslist()
         spec = msgr.get_spec()

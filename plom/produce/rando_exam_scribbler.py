@@ -31,8 +31,7 @@ import plom.produce
 from plom.produce import paperdir as _paperdir
 from plom import __version__
 from plom.misc_utils import working_directory
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.produce import start_messenger
 
 
 possible_answers = [
@@ -328,24 +327,7 @@ def splitFakeFile(out_file_path):
 
 def download_classlist(server=None, password=None):
     """Download list of student IDs/names from server."""
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        raise
+    msgr = start_messenger(server, password)
     try:
         classlist = msgr.IDrequestClasslist()
     finally:
