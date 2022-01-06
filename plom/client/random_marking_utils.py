@@ -41,18 +41,18 @@ from plom.messenger import Messenger
 # comments which will be made into rubrics by pushing them to server and getting back keys
 # need different ones for each question
 negativeComments = [
-    (-1, "Careful"),
-    (-1, "Algebra"),
-    (-1, "Arithmetic"),
-    (-2, "Sign error"),
-    (-2, "Huh?"),
+    ("-1", "Careful"),
+    ("-1", "Algebra"),
+    ("-1", "Arithmetic"),
+    ("-2", "Sign error"),
+    ("-2", "Huh?"),
 ]
 positiveComments = [
-    (1, "Yes"),
-    (1, "Nice"),
-    (1, "Well done"),
-    (2, "Good"),
-    (2, "Clever approach"),
+    ("+1", "Yes"),
+    ("+1", "Nice"),
+    ("+1", "Well done"),
+    ("+2", "Good"),
+    ("+2", "Clever approach"),
 ]
 negativeRubrics = {}
 positiveRubrics = {}
@@ -217,7 +217,7 @@ def do_random_marking_backend(question, version, *, messenger):
         ]
         with tempfile.TemporaryDirectory() as td:
             for i, r in enumerate(src_img_data):
-                obj = messenger.MrequestOneImage(task, r["id"], r["md5"])
+                obj = messenger.MrequestOneImage(r["id"], r["md5"])
                 tmp = os.path.join(td, f"{task}.{i}.image")
                 with open(tmp, "wb") as f:
                     f.write(obj)
@@ -234,7 +234,6 @@ def do_random_marking_backend(question, version, *, messenger):
                 version,
                 score,
                 random.randint(1, 20),
-                "",
                 aFile,
                 plomFile,
                 rubrics,

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 import logging
@@ -11,6 +11,7 @@ from PyQt5.QtGui import (
     QColor,
     QCursor,
     QImage,
+    QImageReader,
     QFont,
     QGuiApplication,
     QPainter,
@@ -207,7 +208,11 @@ class UnderlyingImages(QGraphicsItemGroup):
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
-            pix = QPixmap(data["filename"])
+            qir = QImageReader(data["filename"])
+            # deal with jpeg exif rotations
+            qir.setAutoTransform(True)
+            pix = QPixmap(qir.read())
+            # after metadata rotations, we might have a further DB-level rotation
             rot = QTransform()
             rot.rotate(data["orientation"])
             pix = pix.transformed(rot)
@@ -268,7 +273,7 @@ mouseRelease = {
     "text": "mouseReleaseText",
 }
 
-## things for nice rubric/text drag-box tool
+# things for nice rubric/text drag-box tool
 # work out how to draw line from current point
 # to nearby point on a given rectangle
 # also need a minimum size threshold for that box
@@ -279,21 +284,30 @@ mouseRelease = {
 minimum_box_side_length = 24
 
 
-def shape_to_sample_points_on_boundary(a_rect):
-    """given a rectangle, return list of vertices in the middle of each side.
-    given a point - just return that point
+def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
+    """Return some points on the perimeter of a shape.
+
+    If the input is a point, just return that point.
+
+    If the input is a rectangle, dy default, list of vertices in the
+    middle of each side, but this can be adjusted.
     """
-    if isinstance(a_rect, QRectF):
+    if isinstance(shape, QRectF):
+        x, y, w, h = shape.getRect()
+        if corners:
+            trange = range(0, N + 1)
+        else:
+            trange = range(1, N)
         return [
-            (a_rect.topLeft() + a_rect.topRight()) / 2,
-            (a_rect.bottomRight() + a_rect.topRight()) / 2,
-            (a_rect.bottomLeft() + a_rect.bottomRight()) / 2,
-            (a_rect.bottomLeft() + a_rect.topLeft()) / 2,
+            *(QPointF(x + w * n / N, y) for n in trange),
+            *(QPointF(x + w * n / N, y + h) for n in trange),
+            *(QPointF(x, y + h * n / N) for n in range(1, N)),
+            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
         ]
-    elif isinstance(a_rect, QPointF):  # is a point
-        return [a_rect]
+    elif isinstance(shape, QPointF):
+        return [shape]
     else:
-        raise ValueError
+        raise ValueError(f"Don't know how find points on perimeter of {shape}")
 
 
 def sqrDistance(vect):
@@ -301,13 +315,13 @@ def sqrDistance(vect):
     return vect.x() * vect.x() + vect.y() * vect.y()
 
 
-def whichLineToDraw(g_rect, b_rect):
+def whichLineToDraw_original(g_rect, b_rect):
     """Get approximately shortest line between two shapes.
 
     More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
     """
-    gvert = shape_to_sample_points_on_boundary(g_rect)
-    bvert = shape_to_sample_points_on_boundary(b_rect)
+    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
+    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
     gp = gvert[0]
     bp = bvert[0]
     dd = sqrDistance(gp - bp)
@@ -321,6 +335,188 @@ def whichLineToDraw(g_rect, b_rect):
     return QLineF(bp, gp)
 
 
+def get_intersection_bw_rect_line(rec, lin):
+    """Return the intersection between a line and rectangle or None."""
+    if isinstance(rec, QPointF):
+        return None
+    x, y, w, h = rec.getRect()
+    yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    return None
+
+
+def whichLineToDraw_centre(ghost, r):
+    """Get approximately shortest line between two shapes using a "center-to-centre construction.
+
+    args:
+        ghost (QRect/QPointF):
+        r (QRect):
+
+    returns:
+        QLineF
+    """
+    if isinstance(ghost, QPointF):
+        A = ghost
+    else:
+        x, y, w, h = ghost.getRect()
+        A = QPointF(x + w / 2, y + h / 2)
+    if isinstance(r, QPointF):
+        B = r
+    else:
+        x, y, w, h = r.getRect()
+        B = QPointF(x + w / 2, y + h / 2)
+    CtoC = QLineF(A, B)
+    A = get_intersection_bw_rect_line(ghost, CtoC)
+    B = get_intersection_bw_rect_line(r, CtoC)
+    if A is None or B is None:
+        # probably inside
+        return whichLineToDraw_original(ghost, r)
+    return QLineF(A, B)
+
+
+def whichLineToDraw(g, r):
+    """Choose an aesthetically-pleasing line between the rectangle and the ghost.
+
+    args:
+        g (QRect/QPointF): The ghost, can be rect or a point.
+        r (QRect):
+
+    returns:
+        QLineF
+    """
+    if isinstance(g, QPointF):
+        g = QRectF(g, g)
+
+    # slope parameter > 1, determines the angle before we unsnap from corners
+    slurp = 4
+
+    def transf(t):
+        """Transform function for the box.
+
+        Each side is mapped to t in [0, 1] which is used for a linear
+        interpolation, but we can pass t through a transform.  Some overlap
+        between this and the slurp parameter.
+
+        Here we implement a p.w. linear regularized double-step.
+        """
+        p = 0.15
+        assert p < 0.25
+        if t <= p:
+            return 0.0
+        if t <= 0.5 - p:
+            return (0.5 / (0.5 - p - p)) * (t - p)
+        if t <= 0.5 + p:
+            return 0.5
+        if t <= 1 - p:
+            return (0.5 / (0.5 - p - p)) * (t - (0.5 + p)) + 0.5
+        else:
+            return 1.0
+
+    def capped_ramp(crit1, crit2, x):
+        """Map x into [crit1, crit2] returning a scalar in [0, 1]."""
+        t = (x - crit1) / (crit2 - crit1)
+        t = min(t, 1)
+        t = max(0, t)
+        # comment out for non-sticky midpoints
+        t = transf(t)
+        return t
+
+    def ramble(a, b, left, right):
+        """Some kind of soft thresholding of an interval near two points a and b.
+
+        Consider sliding the little figure ``l-m-r`` through two values a and b.
+        We want to return a value ``{r, a, m, b, l}`` depending where ``l-m-r``
+        lies compared to ``[a, b]``.  Roughly, if m is in ``[A, B]`` then we
+        return m, otherwise, some soft thresholding near a and b.
+
+        The capital letters in the follow diagram illustrate the return value::
+
+                              a                   b
+                              |     return M      |
+                     ⎧  l-m-R |                   | L-m-r  ⎫
+              return ⎪   l-m-R|                   |L-m-r   ⎪ return
+              R or A ⎨    l-m-A                   B-m-r    ⎬ B or L
+                     ⎪     l-mAr                 lBm r     ⎪
+                     ⎩      l-A-r               l-Br       ⎭
+                             l|M-r             l-M|r
+                              l-M-r           l-M-r
+                              |l-M-r  l-M-r  l-M-r|
+                              |                   |
+        """
+        mid = (left + right) / 2
+        if right <= a:
+            return right
+        elif mid <= a:
+            return a
+        elif left >= b:
+            return left
+        elif mid >= b:
+            return b
+        return mid
+
+    # We cut up the space around "r" into four regions by the eikonal solution
+    # shocks.  Then we process each of those 4 regions.  For example the "top"
+    # region looks like this, showing also two ghosts that should be considered
+    # "in" this region.
+    #                  /
+    # \            +----+
+    # +---+       g| /  |
+    # | \ |g       +----+
+    # +---+        /
+    #     \       /
+    #      +-----+
+    #      |  r  |
+    #      +-----+
+    if (
+        g.bottom() <= r.top()
+        and g.bottom() <= r.top() - (g.left() - r.right())
+        and g.bottom() <= r.top() - (r.left() - g.right())
+    ):
+        crit1 = r.left() - (r.top() - g.bottom()) / slurp
+        crit2 = r.right() + (r.top() - g.bottom()) / slurp
+        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
+        gx = ramble(crit1, crit2, g.left(), g.right())
+        return QLineF(r.left() + t * r.width(), r.top(), gx, g.bottom())
+
+    if (
+        g.top() >= r.bottom()
+        and g.top() >= r.bottom() + g.left() - r.right()
+        and g.top() >= r.bottom() + r.left() - g.right()
+    ):
+        crit1 = r.left() - (g.top() - r.bottom()) / slurp
+        crit2 = r.right() + (g.top() - r.bottom()) / slurp
+        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
+        gx = ramble(crit1, crit2, g.left(), g.right())
+        return QLineF(r.left() + t * r.width(), r.bottom(), gx, g.top())
+
+    if g.left() >= r.right():
+        crit1 = r.top() - (g.left() - r.right()) / slurp
+        crit2 = r.bottom() + (g.left() - r.right()) / slurp
+        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
+        gy = ramble(crit1, crit2, g.top(), g.bottom())
+        return QLineF(r.right(), r.top() + t * r.height(), g.left(), gy)
+
+    if g.right() <= r.left():
+        crit1 = r.top() - (r.left() - g.right()) / slurp
+        crit2 = r.bottom() + (r.left() - g.right()) / slurp
+        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
+        gy = ramble(crit1, crit2, g.top(), g.bottom())
+        return QLineF(r.left(), r.top() + t * r.height(), g.right(), gy)
+
+    # TODO: maybe return None?  but needs reworking
+    return whichLineToDraw_original(g, r)
+
+
 class PageScene(QGraphicsScene):
     """Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
@@ -332,7 +528,9 @@ class PageScene(QGraphicsScene):
         Initialize a new PageScene.
 
         Args:
-            parent (SceneParent): the parent of the scene.
+            parent (Annotator): the parent of the scene.  Currently
+                this *must* be an Annotator, because we call various
+                functions from that Annotator.
             src_img_data (list[dict]): metadata for the underlying
                 source images.  Each dict has (at least) keys for
                `filename` and `orientation`.
@@ -342,7 +540,6 @@ class PageScene(QGraphicsScene):
                 example a string like "Q7", or `None` if not relevant.
         """
         super().__init__(parent)
-        self.parent = parent
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
         self.saveName = saveName
@@ -406,7 +603,6 @@ class PageScene(QGraphicsScene):
         self.zoomBoxItem = QGraphicsRectItem()
         self.ellipseItem = QGraphicsEllipseItem()
         self.lineItem = QGraphicsLineItem()
-        self.imageItem = QGraphicsPixmapItem
 
         # Add a ghost comment to scene, but make it invisible
         self.ghostItem = GhostComment("1", "blah", self.fontSize)
@@ -446,9 +642,9 @@ class PageScene(QGraphicsScene):
         # the scorebox
         self.scoreBox.changeScore(self.score)
         # TODO - this is a bit hack, but need to update the rubric-widget
-        self.parent.rubric_widget.changeMark(self.score, self.markingState)
+        self.parent().rubric_widget.changeMark(self.score, self.markingState)
         # also update the marklabel in the annotator - same text as scorebox
-        self.parent.refreshDisplayedMark(self.score)
+        self.parent().refreshDisplayedMark(self.score)
 
         # update the ghostcomment if in rubric-mode.
         if self.mode == "rubric":
@@ -662,7 +858,7 @@ class PageScene(QGraphicsScene):
         else:
             self.views()[0].setDragMode(0)
         # update the modelabels
-        self.parent.setModeLabels(self.mode)
+        self.parent().setModeLabels(self.mode)
 
     def get_nonrubric_text_from_page(self):
         """
@@ -847,11 +1043,11 @@ class PageScene(QGraphicsScene):
         """
 
         variableCursors = {
-            "cross": [self.parent.cursorTick, self.parent.cursorQMark],
-            "line": [self.parent.cursorArrow, self.parent.cursorDoubleArrow],
-            "tick": [self.parent.cursorCross, self.parent.cursorQMark],
-            "box": [self.parent.cursorEllipse, self.parent.cursorBox],
-            "pen": [self.parent.cursorHighlight, self.parent.cursorDoubleArrow],
+            "cross": [self.parent().cursorTick, self.parent().cursorQMark],
+            "line": [self.parent().cursorArrow, self.parent().cursorDoubleArrow],
+            "tick": [self.parent().cursorCross, self.parent().cursorQMark],
+            "box": [self.parent().cursorEllipse, self.parent().cursorBox],
+            "pen": [self.parent().cursorHighlight, self.parent().cursorDoubleArrow],
         }
 
         if self.mode in variableCursors:
@@ -882,11 +1078,11 @@ class PageScene(QGraphicsScene):
 
         """
         variableCursorRelease = {
-            "cross": self.parent.cursorCross,
-            "line": self.parent.cursorLine,
-            "tick": self.parent.cursorTick,
-            "box": self.parent.cursorBox,
-            "pen": self.parent.cursorPen,
+            "cross": self.parent().cursorCross,
+            "line": self.parent().cursorLine,
+            "tick": self.parent().cursorTick,
+            "box": self.parent().cursorBox,
+            "pen": self.parent().cursorPen,
         }
         if self.mode in variableCursorRelease:
             if self.views()[0].cursor() == variableCursorRelease.get(self.mode):
@@ -941,14 +1137,12 @@ class PageScene(QGraphicsScene):
             return getattr(self, functionName, None)(event)
         return super().mouseReleaseEvent(event)
 
-    ###########
     # Tool functions for press, move and release.
     # Depending on the tool different functions are called
     # Many (eg tick) just create a graphics item, others (eg line)
     # create a temp object (on press) which is changes (as mouse-moves)
     # and then destroyed (on release) and replaced with the
     # more permanent graphics item.
-    ###########
 
     def textUnderneathGhost(self):
         """Check to see if any text-like object under current ghost-text"""
@@ -1330,9 +1524,9 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
             self.tempImagePath = None
             # set the mode back to move
-            self.parent.moveMode()
+            self.parent().moveMode()
 
-            msg = QMessageBox()
+            msg = QMessageBox(self.parent())
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Image Information")
             msg.setText(
@@ -1385,7 +1579,7 @@ class PageScene(QGraphicsScene):
 
     def latexAFragment(self, *args, **kwargs):
         """Latex a fragment of text."""
-        return self.parent.latexAFragment(*args, **kwargs)
+        return self.parent().latexAFragment(*args, **kwargs)
 
     def event(self, event):
         """

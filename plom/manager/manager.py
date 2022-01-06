@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
 
 from collections import defaultdict
-import os
 import csv
+import os
+from pathlib import Path
 import sys
 import tempfile
 import arrow
@@ -19,17 +20,15 @@ if sys.version_info >= (3, 7):
 else:
     import importlib_resources as resources
 
-from PyQt5.QtCore import Qt, pyqtSlot, QRectF, QSize, QTimer
-from PyQt5.QtGui import QBrush, QFont, QIcon, QPixmap, QStandardItem, QStandardItemModel
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import (
     QAbstractItemView,
-    QApplication,
     QCheckBox,
     QDialog,
     QFileDialog,
     QGroupBox,
     QGridLayout,
-    QGroupBox,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -37,7 +36,6 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QStyleFactory,
     QTableWidgetItem,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -49,7 +47,7 @@ import plom.client.icons
 # TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage, SimpleMessage
 from plom.client.origscanviewer import WholeTestView, GroupView
-from .imageview import ImageViewWidget
+from plom.client.examviewwindow import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -64,6 +62,7 @@ from plom.plom_exceptions import (
     PlomExistingLoginException,
     PlomAuthenticationException,
     PlomOwnersLoggedInException,
+    PlomUnidentifiedPaperException,
     PlomTakenException,
     PlomNoMoreException,
     PlomNoSolutionException,
@@ -280,8 +279,8 @@ class TestStatus(QDialog):
 
 class ProgressBox(QGroupBox):
     def __init__(self, parent, qu, v, stats):
-        super().__init__()
-        self.parent = parent
+        super().__init__(parent)
+        self._parent = parent
         self.question = qu
         self.version = v
         self.setTitle("Q-{} V-{}".format(qu, v))
@@ -298,6 +297,8 @@ class ProgressBox(QGroupBox):
         grid.addWidget(self.mtL)
         self.avgL = QLabel()
         grid.addWidget(self.avgL)
+        self.mmfL = QLabel()
+        grid.addWidget(self.mmfL)
 
         self.pb = QProgressBar()
         self.pb.setFormat("%v / %m")
@@ -326,8 +327,15 @@ class ProgressBox(QGroupBox):
             return
         if self.stats["NMarked"] > 0:
             self.avgL.setText(
-                "Average mark = {:0.2f} / {}".format(
-                    self.stats["avgMark"], self.stats["fullMark"]
+                "Mean : Median : Mode = {:0.2f} : {} : {}".format(
+                    self.stats["avgMark"],
+                    self.stats["medianMark"],
+                    self.stats["modeMark"],
+                )
+            )
+            self.mmfL.setText(
+                "Min : Max : Full = {} : {} : {}".format(
+                    self.stats["minMark"], self.stats["maxMark"], self.stats["fullMark"]
                 )
             )
             self.mtL.setText(
@@ -335,22 +343,25 @@ class ProgressBox(QGroupBox):
             )
             self.lhL.setText("# Marked in last hour = {}".format(self.stats["NRecent"]))
         else:
-            self.avgL.setText("Average mark = N/A")
+            self.avgL.setText("Mean : Median : Mode  = N/A")
+            self.mmfL.setText(
+                "Min : Max : Full = N/A : N/A : {}".format(self.stats["fullMark"])
+            )
             self.mtL.setText("Avg marking time = N/A")
             self.lhL.setText("# Marked in last hour = N/A")
 
     def viewHist(self):
-        self.parent.viewMarkHistogram(self.question, self.version)
+        self._parent.viewMarkHistogram(self.question, self.version)
 
 
 class Manager(QWidget):
     def __init__(
-        self, parent, *, server=None, user=None, password=None, manager_msgr=None
+        self, Qapp, *, server=None, user=None, password=None, manager_msgr=None
     ):
         """Start a new Plom Manager window.
 
         Args:
-            parent: A QApplication (I think).
+            Qapp (QApplication):
 
         Keyword Args:
             manager_msgr (ManagerMessenger/None): a connected ManagerMessenger.
@@ -363,7 +374,7 @@ class Manager(QWidget):
         """
         self.APIVersion = Plom_API_Version
         super().__init__()
-        self.parent = parent
+        self.Qapp = Qapp
         self.msgr = manager_msgr
         print(
             "Plom Manager Client {} (communicates with api {})".format(
@@ -406,6 +417,8 @@ class Manager(QWidget):
 
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
+        self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
+
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
@@ -434,9 +447,9 @@ class Manager(QWidget):
         self.ui.mportSB.setValue(int(p))
 
     def setFont(self, n):
-        fnt = self.parent.font()
+        fnt = self.Qapp.font()
         fnt.setPointSize(n)
-        self.parent.setFont(fnt)
+        self.Qapp.setFont(fnt)
 
     def login(self):
         user = self.ui.userLE.text().strip()
@@ -539,9 +552,18 @@ class Manager(QWidget):
         self.numberOfPages = info["numberOfPages"]
         self.numberOfQuestions = info["numberOfQuestions"]
         self.numberOfVersions = info["numberOfVersions"]
+        # which test pages are which type "id", "dnm", or "qN"
+        self.testPageTypes = {info["idPage"]: "id"}
+        for pg in info["doNotMark"]["pages"]:
+            self.testPageTypes[pg] = "dnm"
+        for q in range(1, info["numberOfQuestions"] + 1):
+            for pg in info["question"][str(q)]["pages"]:
+                self.testPageTypes[pg] = f"q{q}"
+        print(self.testPageTypes)
 
     ################
     # scan tab stuff
+
     def initScanTab(self):
         self.initScanStatusTab()
         self.initUnknownTab()
@@ -621,9 +643,6 @@ class Manager(QWidget):
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
             vp = self.msgr.getEXPageImage(t, q, o)
-        elif pdetails[0] == "l":  # is an l-page = l.o
-            o = pdetails.split(".")[1]
-            vp = self.msgr.getLPageImage(t, o)
         else:
             return
 
@@ -631,7 +650,7 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
-            GroupView([fh.name]).exec_()
+            GroupView(self, [fh.name]).exec_()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -670,20 +689,31 @@ class Manager(QWidget):
             return
         # if selected not a top-level item (ie a test) - return
         if pvi[0].childCount() == 0:
-            ErrorMessage(
-                "Select the test from the left-most column. Cannot remove individual pages."
-            ).exec_()
-            return
-        test_number = int(pvi[0].text(0))  # grab test number
-
-        msg = SimpleMessage(
-            "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
-                test_number
+            test_number = int(pvi[0].parent().text(0))
+            page_name = pvi[0].text(1)
+            msg = SimpleMessage(
+                f"Will remove the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
             )
-        )
-        if msg.exec_() == QMessageBox.No:
-            return
+            if msg.exec_() == QMessageBox.No:
+                return
+            try:
+                rval = self.msgr.removeSinglePage(test_number, page_name)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
         else:
+            test_number = int(pvi[0].text(0))  # grab test number
+            msg = SimpleMessage(
+                "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
+                    test_number
+                )
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
             try:
                 rval = self.msgr.removeAllScannedPages(test_number)
                 ErrorMessage("{}".format(rval)).exec_()
@@ -693,28 +723,74 @@ class Manager(QWidget):
                         err.args[-1]
                     )
                 ).exec_()
+        # refresh the two tables here.
         self.refreshSList()
+        self.refreshIList()
 
-    def substituteTestPage(self, test_number, page_number, version):
+    def substituteTestQuestionPage(self, test_number, page_number, question, version):
         msg = SimpleMessage(
-            'Are you sure you want to substitute a "Missing Page" blank for tpage {} of test {}?'.format(
-                page_number, test_number
-            )
+            f'Are you sure you want to substitute a "Missing Page" blank for tpage {page_number} of question {question} test {test_number}?'
         )
         if msg.exec_() == QMessageBox.No:
             return
-        else:
-            try:
-                rval = self.msgr.replaceMissingTestPage(
-                    test_number, page_number, version
+        try:
+            rval = self.msgr.replaceMissingTestPage(test_number, page_number, version)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
                 )
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+            ).exec_()
+
+    def substituteTestDNMPage(self, test_number, page_number):
+        msg = SimpleMessage(
+            f'Are you sure you want to substitute a "Missing Page" blank for tpage {page_number} of test {test_number} - it is a Do Not Mark page?'
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        try:
+            rval = self.msgr.replaceMissingDNMPage(test_number, page_number)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
+                )
+            ).exec_()
+
+    def autogenerateIDPage(self, test_number):
+        msg = SimpleMessage(
+            f"Are you sure you want to generate an ID for test {test_number}? You can only do this for homeworks or pre-named tests."
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        try:
+            rval = self.msgr.replaceMissingIDPage(test_number)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that page - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
+                )
+            ).exec_()
+        except PlomUnidentifiedPaperException as err:
+            ErrorMessage(
+                "Cannot substitute that page - that paper has not been identified: {}".format(
+                    err
+                )
+            ).exec_()
+
+    def substituteTestPage(self, test_number, page_number, version):
+        page_type = self.testPageTypes[page_number]
+        if page_type == "id":
+            self.autogenerateIDPage(test_number)
+        elif page_type == "dnm":
+            self.substituteTestDNMPage(test_number, page_number)
+        else:
+            qnum = int(page_type[1:])  # is qNNN
+            self.substituteTestQuestionPage(test_number, page_number, qnum, version)
+
         self.refreshIList()
 
     def substituteHWQuestion(self, test_number, question):
@@ -725,20 +801,19 @@ class Manager(QWidget):
         )
         if msg.exec_() == QMessageBox.No:
             return
-        else:
-            try:
-                rval = self.msgr.replaceMissingHWQuestion(
-                    student_id=None, test=test_number, question=question
+        try:
+            rval = self.msgr.replaceMissingHWQuestion(
+                student_id=None, test=test_number, question=question
+            )
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomTakenException:
+            ErrorMessage("That question already has hw pages present.").exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot substitute that question - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
                 )
-                ErrorMessage("{}".format(rval)).exec_()
-            except PlomTakenException:
-                ErrorMessage("That question already has hw pages present.").exec_()
-            except PlomOwnersLoggedInException as err:
-                ErrorMessage(
-                    "Cannot substitute that question - owners of tasks in that test are logged in: {}".format(
-                        err.args[-1]
-                    )
-                ).exec_()
+            ).exec_()
 
         self.refreshIList()
 
@@ -767,6 +842,49 @@ class Manager(QWidget):
             self.substituteHWQuestion(test, int(question))
         else:  # can't substitute other sorts of pages
             return
+
+    def removePagesFromPartScan(self):
+        pvi = self.ui.incompTW.selectedItems()
+        # if nothing selected - return
+        if len(pvi) == 0:
+            return
+        # if selected not a top-level item (ie a test) - return
+        if pvi[0].childCount() == 0:
+            test_number = int(pvi[0].parent().text(0))
+            page_name = pvi[0].text(1)
+            msg = SimpleMessage(
+                f"Will remove the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            try:
+                rval = self.msgr.removeSinglePage(test_number, page_name)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
+        else:
+            test_number = int(pvi[0].text(0))  # grab test number
+            msg = SimpleMessage(
+                "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
+                    test_number
+                )
+            )
+            if msg.exec_() == QMessageBox.No:
+                return
+            try:
+                rval = self.msgr.removeAllScannedPages(test_number)
+                ErrorMessage("{}".format(rval)).exec_()
+            except PlomOwnersLoggedInException as err:
+                ErrorMessage(
+                    "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                        err.args[-1]
+                    )
+                ).exec_()
+        self.refreshIList()
 
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(0, 6)
@@ -923,38 +1041,43 @@ class Manager(QWidget):
                 # )
         self.refreshUList()
 
-    def viewWholeTest(self, testNumber):
+    def viewWholeTest(self, testNumber, parent=None):
         vt = self.msgr.getTestImages(testNumber)
         if vt is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vt)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vt[i])
                 inames.append(iname)
-            tv = WholeTestView(inames)
-            tv.exec_()
+            WholeTestView(testNumber, inames, parent=parent).exec_()
 
-    def viewQuestion(self, testNumber, questionNumber):
+    def viewQuestion(self, testNumber, questionNumber, parent=None):
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)
         if vq is None:
             return
+        if parent is None:
+            parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
             for i in range(len(vq)):
-                iname = td + "img.{}.image".format(i)
+                iname = Path(td) / f"img.{i}.image"
                 with open(iname, "wb") as fh:
                     fh.write(vq[i])
                 inames.append(iname)
-            qv = GroupView(inames)
-            qv.exec_()
+            GroupView(parent, inames).exec_()
 
-    def checkTPage(self, testNumber, pageNumber):
+    def checkTPage(self, testNumber, pageNumber, parent=None):
+        if parent is None:
+            parent = self
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
-        if cp[1] == None:
+        if cp[1] is None:
+            # TODO: ErrorMesage does not support parenting
             ErrorMessage(
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
@@ -968,7 +1091,7 @@ class Manager(QWidget):
                     pageNumber, testNumber
                 )
             ).exec_()
-            GroupView([fh.name]).exec_()
+            GroupView(parent, [fh.name]).exec_()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
@@ -988,7 +1111,7 @@ class Manager(QWidget):
         colDict = self.msgr.getCollidingPageNames()  # dict [fname]=[t,p,v]
         r = 0
         for u in colDict.keys():
-            it0 = QStandardItem(u)
+            # it0 = QStandardItem(u)
             it1 = QStandardItem(os.path.split(u)[1])
             pm = QPixmap()
             pm.loadFromData(
@@ -1170,7 +1293,7 @@ class Manager(QWidget):
 
     def initOverallTab(self):
         self.ui.overallTW.setHorizontalHeaderLabels(
-            ["Test number", "Identified", "Questions Marked"]
+            ["Test number", "Scanned", "Identified", "Questions Marked"]
         )
         self.ui.overallTW.activated.connect(self.viewTestStatus)
         self.ui.overallTW.setSortingEnabled(True)
@@ -1192,21 +1315,33 @@ class Manager(QWidget):
         opDict = self.msgr.RgetCompletionStatus()
         tk = list(opDict.keys())
         tk.sort(key=int)  # sort in numeric order
+        # each dict value is [Scanned, Identified, #Marked]
         r = 0
         for t in tk:
             self.ui.overallTW.insertRow(r)
             self.ui.overallTW.setItem(r, 0, QTableWidgetItem(str(t).rjust(4)))
+
             it = QTableWidgetItem("{}".format(opDict[t][0]))
             if opDict[t][0]:
                 it.setBackground(QBrush(Qt.green))
-                it.setToolTip("Has been identified")
+                it.setToolTip("Has been scanned")
+            elif opDict[t][2] > 0:
+                it.setBackground(QBrush(Qt.red))
+                it.setToolTip("Has been (part-)marked but not completely scanned.")
+
             self.ui.overallTW.setItem(r, 1, it)
 
-            it = QTableWidgetItem(str(opDict[t][1]).rjust(2))
-            if opDict[t][1] == self.numberOfQuestions:
+            it = QTableWidgetItem("{}".format(opDict[t][1]))
+            if opDict[t][1]:
+                it.setBackground(QBrush(Qt.green))
+                it.setToolTip("Has been identified")
+            self.ui.overallTW.setItem(r, 2, it)
+
+            it = QTableWidgetItem(str(opDict[t][2]).rjust(3))
+            if opDict[t][2] == self.numberOfQuestions:
                 it.setBackground(QBrush(Qt.green))
                 it.setToolTip("Has been marked")
-            self.ui.overallTW.setItem(r, 2, it)
+            self.ui.overallTW.setItem(r, 3, it)
             r += 1
 
     def initIDTab(self):
@@ -1230,7 +1365,7 @@ class Manager(QWidget):
         try:
             imageList = self.msgr.IDgetImageFromATest()
         except PlomNoMoreException as err:
-            ErrorMessage("No unIDd images to show.").exec_()
+            ErrorMessage(f"No unIDd images to show - {err}").exec_()
             return
         # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
@@ -1238,7 +1373,7 @@ class Manager(QWidget):
             for i in range(len(imageList)):
                 tmp = os.path.join(td, "id.{}.image".format(i))
                 inames.append(tmp)
-                with open(tmp, "wb+") as fh:
+                with open(tmp, "wb") as fh:
                     fh.write(imageList[i])
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
@@ -1258,19 +1393,18 @@ class Manager(QWidget):
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
-            imageList = self.msgr.request_ID_images(test)
+            imageDat = self.msgr.request_ID_image(test)
         except PlomException as err:
             ErrorMessage(err).exec_()
             return
 
-        inames = []
+        if imageDat is None:
+            return
         with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.image".format(i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            IDViewWindow(self, inames, sid).exec_()
+            imageName = os.path.join(td, "id.0.image")
+            with open(imageName, "wb") as fh:
+                fh.write(imageDat)
+            IDViewWindow(self, imageName, sid).exec_()
 
     def runPredictor(self, ignoreStamp=False):
         rmsg = self.msgr.IDrunPredictions(
@@ -1299,8 +1433,7 @@ class Manager(QWidget):
             )
             if sm.exec_() == QMessageBox.No:
                 return
-            else:
-                self.runPredictor(ignoreStamp=True)
+            self.runPredictor(ignoreStamp=True)
 
     def un_id_paper(self):
         # should we populate "test" from the list view?
@@ -1462,10 +1595,12 @@ class Manager(QWidget):
                 'Please set at least one of "Question", "Version", "User" to specific values.'
             ).exec_()
             return
+        markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
         mrList = self.msgr.getMarkReview(
             self.ui.questionCB.currentText(),
             self.ui.versionCB.currentText(),
             self.ui.userCB.currentText(),
+            markedOnly,
         )
 
         self.ui.reviewTW.clearContents()
@@ -1481,6 +1616,9 @@ class Manager(QWidget):
             if dat[4] == "reviewer":
                 for k in range(7):
                     self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.green))
+            if dat[3] == "n/a":
+                for k in range(7):
+                    self.ui.reviewTW.item(r, k).setBackground(QBrush(Qt.yellow))
             r += 1
 
     def reviewAnnotated(self):
@@ -1488,6 +1626,11 @@ class Manager(QWidget):
         if len(rvi) == 0:
             return
         r = rvi[0].row()
+        # no action if row is unmarked
+        # text in item is rjust(4)'d - so <space>n/a is the string
+        if self.ui.reviewTW.item(r, 3).text() == " n/a":
+            # TODO - in future fire up reviewer with original pages
+            return
         test = int(self.ui.reviewTW.item(r, 0).text())
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
@@ -1552,15 +1695,12 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        imageList = self.msgr.request_ID_images(test)
-        inames = []
+        imageDat = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.image".format(i))
-                inames.append(tmp)
-                with open(tmp, "wb+") as fh:
-                    fh.write(imageList[i])
-            rvw = ReviewViewWindow(self, inames, "ID pages")
+            imageName = os.path.join(td, "id.0.image")
+            with open(imageName, "wb") as fh:
+                fh.write(imageDat)
+            rvw = ReviewViewWindow(self, imageName, "ID pages")
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":
                     # first remove auth from that user - safer.
@@ -1578,7 +1718,7 @@ class Manager(QWidget):
         self.tempDirectory = tempfile.TemporaryDirectory(prefix="plom_manager_")
         self.solnPath = self.tempDirectory.name
         # set up the viewer
-        self.solnIV = ImageViewWidget()
+        self.solnIV = ImageViewWidget(self)
         self.ui.solnGBLayout.addWidget(self.solnIV)
 
         self.ui.solnQSB.setMaximum(self.numberOfQuestions)
@@ -1606,7 +1746,7 @@ class Manager(QWidget):
                 self.ui.solnQSB.value(), self.ui.solnVSB.value()
             ),
         )
-        with open(solutionName, "wb+") as fh:
+        with open(solutionName, "wb") as fh:
             fh.write(imgBytes)
         self.solnIV.updateImage(solutionName)
         return True
@@ -1690,7 +1830,14 @@ class Manager(QWidget):
     def initProgressQUTabs(self):
         self.ui.QPUserTW.setColumnCount(5)
         self.ui.QPUserTW.setHeaderLabels(
-            ["Question", "Version", "User", "Number Marked", "Percentage of Q/V marked"]
+            [
+                "Question",
+                "Version",
+                "User",
+                "Number Marked",
+                "Avg time per task",
+                "Percentage of Q/V marked",
+            ]
         )
         # self.ui.QPUserTW.setSortingEnabled(True)
         self.ui.QPUserTW.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1698,7 +1845,14 @@ class Manager(QWidget):
         # and the other tab
         self.ui.PUQTW.setColumnCount(5)
         self.ui.PUQTW.setHeaderLabels(
-            ["User", "Question", "Version", "Number Marked", "Percentage of Q/V marked"]
+            [
+                "User",
+                "Question",
+                "Version",
+                "Number Marked",
+                "Avg time per task",
+                "Percentage of Q/V marked",
+            ]
         )
         # self.ui.PUQTW.setSortingEnabled(True)
         self.ui.PUQTW.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -1816,31 +1970,36 @@ class Manager(QWidget):
         # get list of everything done by users, store by user for TW2
         # use directly for TW1
         uprog = defaultdict(list)
-        r = 0
         for q in range(1, self.numberOfQuestions + 1):
             for v in range(1, self.numberOfVersions + 1):
                 qpu = self.msgr.getQuestionUserProgress(q, v)
                 l0 = QTreeWidgetItem([str(q).rjust(4), str(v).rjust(2)])
-                for (u, n) in qpu[1:]:
-                    # question, version, no marked
-                    uprog[u].append([q, v, n, qpu[0]])
+                for (u, n, t) in qpu[1:]:
+                    # question, version, no marked, avg time
+                    uprog[u].append([q, v, n, t, qpu[0]])
                     pb = QProgressBar()
                     pb.setMaximum(qpu[0])
                     pb.setValue(n)
-                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4)])
+                    l1 = QTreeWidgetItem(["", "", str(u), str(n).rjust(4), f"{t}s"])
                     l0.addChild(l1)
-                    self.ui.QPUserTW.setItemWidget(l1, 4, pb)
+                    self.ui.QPUserTW.setItemWidget(l1, 5, pb)
                 self.ui.QPUserTW.addTopLevelItem(l0)
         # for TW2
         for u in uprog:
             l0 = QTreeWidgetItem([str(u)])
-            for qvn in uprog[u]:  # will be in q,v,n,ntot in qv order
+            for qvn in uprog[u]:  # will be in q,v,n,t, ntot in qv order
                 pb = QProgressBar()
-                pb.setMaximum(qvn[3])
+                pb.setMaximum(qvn[4])
                 pb.setValue(qvn[2])
                 l1 = QTreeWidgetItem(
-                    ["", str(qvn[0]).rjust(4), str(qvn[1]).rjust(2), str(n).rjust(4)]
+                    [
+                        "",
+                        str(qvn[0]).rjust(4),
+                        str(qvn[1]).rjust(2),
+                        str(n).rjust(4),
+                        f"{qvn[3]}s",
+                    ]
                 )
                 l0.addChild(l1)
-                self.ui.PUQTW.setItemWidget(l1, 4, pb)
+                self.ui.PUQTW.setItemWidget(l1, 5, pb)
             self.ui.PUQTW.addTopLevelItem(l0)

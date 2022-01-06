@@ -33,6 +33,14 @@ class PlomAPIException(PlomBenignException):
     pass
 
 
+class PlomSSLError(PlomBenignException):
+    pass
+
+
+class PlomConnectionError(PlomBenignException):
+    pass
+
+
 class PlomConflict(PlomBenignException):
     """The action was contradictory to info already in the system."""
 
@@ -44,6 +52,10 @@ class PlomNoMoreException(PlomBenignException):
 
 
 class PlomRangeException(PlomBenignException):
+    pass
+
+
+class PlomBadTagError(PlomBenignException):
     pass
 
 
@@ -78,6 +90,10 @@ class PlomExistingLoginException(PlomBenignException):
 
 
 class PlomOwnersLoggedInException(PlomBenignException):
+    pass
+
+
+class PlomUnidentifiedPaperException(PlomBenignException):
     pass
 
 

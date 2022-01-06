@@ -34,6 +34,7 @@ def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
         doc = fitz.open()
         scribble_doc(doc, student_num, name, maxpages, q)
         doc.save(fname)
+        doc.close()
 
 
 def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
@@ -46,6 +47,7 @@ def makeFakeHW2(numQuestions, paperNum, who, where, prefix, maxpages=4):
     for q in doneQ:
         scribble_doc(doc, student_num, name, maxpages, q)
     doc.save(fname)
+    doc.close()
 
 
 def scribble_doc(doc, student_num, name, maxpages, q):

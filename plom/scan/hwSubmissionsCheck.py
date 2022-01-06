@@ -41,7 +41,6 @@ def IDQorIDorBad(fullfname):
 def whoSubmittedWhatOnDisc():
     print(">> Checking submissions in local 'submittedHWByQ' subdirectory <<")
     hwByQ = defaultdict(list)
-    hwOne = defaultdict(list)
     problemFQ = []
     problemOF = []
 
@@ -54,32 +53,9 @@ def whoSubmittedWhatOnDisc():
             # print("File {} has incorrect format for homework-by-question".format(fn))
             problemFQ.append(os.path.basename(fn))
 
-    for fn in glob.glob(os.path.join("submittedLoose", "*.pdf")):
-        IDQ = IDQorIDorBad(fn)
-        if len(IDQ) == 2:
-            sid = IDQ[1]
-            hwOne[sid].append(fn)
-        else:
-            # print("File {} has incorrect format for homework-by-question".format(fn))
-            problemOF.append(os.path.basename(fn))
-
     for sid in sorted(hwByQ.keys()):
         print("#{} submitted q's {}".format(sid, sorted([x[1] for x in hwByQ[sid]])))
 
-    for sid in sorted(hwOne.keys()):
-        print("#{} submitted loose pages".format(sid))
-
-    warn = []
-    for sid in sorted(hwOne.keys()):
-        if sid in hwByQ:
-            warn.append(sid)
-    if len(warn) > 0:
-        print(">>> Warning <<<")
-        print(
-            "These students submitted both HW by Q, and HW in loose pages: {}".format(
-                warn
-            )
-        )
     if len(problemFQ) > 0:
         print(">>> Warning <<<")
         print(
@@ -120,7 +96,8 @@ def whoSubmittedWhatOnServer(server, password):
 
     try:
         missingHWQ = msgr.getMissingHW()  # passes back dict
-        completeHW = msgr.getCompleteHW()  # passes back list [test_number, sid]
+        # passes back list [test_number, sid]
+        completeHW = msgr.getCompleteHW()
     finally:
         msgr.closeUser()
         msgr.stop()

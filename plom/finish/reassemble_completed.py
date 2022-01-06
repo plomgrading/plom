@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -16,7 +16,7 @@ from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
 
 
-def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
+def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
     """Download information and create a cover page.
 
     Args:
@@ -24,6 +24,9 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
         tmpdir (pathlib.Path.str): where to save the coverpage.
         t (int): Test number.
         maxMarks (dict): Maxmarks per question str -> int.
+
+    Keyword Args:
+        solution (bool): build coverpage for solutions.
 
     Returns:
         pathlib.Path: filename of the coverpage.
@@ -40,7 +43,7 @@ def download_data_build_cover_page(msgr, tmpdir, t, maxMarks):
         arg.append([question_label, qvm[1], qvm[2], maxMarks[str(qvm[0])]])
     testnumstr = str(t).zfill(4)
     covername = tmpdir / "cover_{}.pdf".format(testnumstr)
-    makeCover(int(t), sname, sid, arg, covername)
+    makeCover(int(t), sname, sid, arg, covername, solution=solution)
     return covername
 
 
@@ -57,13 +60,17 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     Returns:
        tuple: (id_page_files, marked_page_files, dnm_page_files)
     """
-    id_image_blobs = msgr.request_ID_images(t)
-    id_pages = []
-    for i, obj in enumerate(id_image_blobs):
-        filename = tmpdir / f"img_{int(t):04}_id{i:02}.png"
-        id_pages.append(filename)
-        with open(filename, "wb") as f:
-            f.write(obj)
+    id_image_blob = msgr.request_ID_image(t)  # might be none - eg for hw.
+    if id_image_blob is not None:
+        id_page = tmpdir / f"img_{int(t):04}_id0.png"
+        with open(id_page, "wb") as f:
+            f.write(id_image_blob)
+        id_pages = [id_page]
+    else:
+        id_pages = []
+    # return id-page inside a list since then the 3 different page types
+    # are returned consistently inside lists.
+    # also - return an empty list if no ID-page - eg for hw.
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
@@ -79,13 +86,34 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         dnm_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
+    # return id-page inside a list since then the 3 different page types
+    # are returned consistently inside lists.
     return (id_pages, marked_pages, dnm_pages)
 
 
 def _reassemble_one_paper(
     msgr, tmpdir, outdir, short_name, max_marks, num_questions, t, sid, skip
 ):
-    """Reassemble a test paper."""
+    """Reassemble a test paper.
+
+    Args:
+        msgr (FinishMessenger): Messenger object that talks to the server.
+        tmpdir (pathlib.Path/str): The directory where we will download
+            the annotated images for each question.
+            We will also build cover pages there.
+        outdir (pathlib.Path/str): where to build the reassembled pdf.
+        short_name (str): the name of this exam, a form appropriate for
+            a filename prefix, e.g., "math107mt1".
+        max_marks (dict): the maximum mark for each question, keyed by the
+            question number, which seems to be a string.
+        t (int): Test number.
+        sid (str/None): The student number as a string.  Maybe `None` which
+            means that student has no ID (?)  Currently we just skip these.
+        skip (bool): whether to skip existing pdf files.
+
+    Returns:
+        None
+    """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
         print(f">>WARNING<< Test {t} has an ID of 'None', not reassembling!")
@@ -135,8 +163,10 @@ def reassemble_one_paper(
         except KeyError:
             raise ValueError(f"Paper {t} does not exist or is not marked") from None
         if not completed[0]:
+            raise ValueError(f"Paper {t} is not completed: not scanned")
+        if not completed[1]:
             raise ValueError(f"Paper {t} is not completed: not identified")
-        if completed[1] != num_questions:
+        if completed[2] != num_questions:
             raise ValueError(f"Paper {t} is not complete: unmarked questions")
 
         identifiedTests = msgr.RgetIdentified()
@@ -187,7 +217,7 @@ def reassemble_all_papers(
         max_marks = msgr.MgetAllMax()
 
         completedTests = msgr.RgetCompletionStatus()
-        # dict testnumber -> [id'd, #q's marked]
+        # dict testnumber -> [scanned, id'd, #q's marked]
         identifiedTests = msgr.RgetIdentified()
         # dict testNumber -> [sid, sname]
 
@@ -195,7 +225,7 @@ def reassemble_all_papers(
         print(f"Downloading to temp directory {tmpdir}")
 
         for t, completed in tqdm(completedTests.items()):
-            if completed[0] and completed[1] == num_questions:
+            if completed[0] and completed[1] and completed[2] == num_questions:
                 sid = identifiedTests[t][0]
                 _reassemble_one_paper(
                     msgr,
@@ -215,7 +245,7 @@ def reassemble_all_papers(
 
 
 def main(testnum, server, password, skip):
-    if testnum == None:
+    if testnum is None:
         reassemble_all_papers(server, password, skip=skip)
     else:
         reassemble_one_paper(testnum, server, password, skip=skip)

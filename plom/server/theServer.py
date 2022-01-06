@@ -9,7 +9,6 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
-import os
 import ssl
 import subprocess
 import tempfile
@@ -102,16 +101,18 @@ class Server:
         createNewBundle,
         sidToTest,
         addTestPage,
+        createIDPageForHW,
+        createDNMPagesForHW,
         addHWPage,
-        addLPage,
-        processHWUploads,
-        processTUploads,
-        processLUploads,
         addUnknownPage,
         addCollidingPage,
         replaceMissingTestPage,
         replaceMissingHWQuestion,
+        replaceMissingDNMPage,
+        replaceMissingIDPage,
+        autogenerateIDPage,
         removeAllScannedPages,
+        removeSinglePage,
         getUnknownPageNames,
         getDiscardNames,
         getCollidingPageNames,
@@ -121,7 +122,6 @@ class Server:
         getTPageImage,
         getHWPageImage,
         getEXPageImage,
-        getLPageImage,
         getQuestionImages,
         getAllTestImages,
         checkTPage,
@@ -133,12 +133,15 @@ class Server:
         collidingToTestPage,
         discardToUnknown,
         listBundles,
+        getBundleFromImage,
+        getImagesInBundle,
+        getPageFromBundle,
     )
     from .plomServer.serverID import (
         IDprogressCount,
         IDgetNextTask,
         IDgetDoneTasks,
-        IDgetImages,
+        IDgetImage,
         IDgetImageFromATest,
         ID_get_donotmark_images,
         IDclaimThisTask,
@@ -146,6 +149,7 @@ class Server:
         id_paper,
         ID_id_paper,
         IDdeletePredictions,
+        IDputPredictions,
         IDrunPredictions,
         IDreviewID,
     )
@@ -160,7 +164,12 @@ class Server:
         MrecordMark,
         MreturnMarkedTask,
         MgetOriginalImages,
-        MsetTag,
+        checkTagTextValid,
+        add_tag,
+        remove_tag,
+        MgetTagsOfTask,
+        MgetAllTags,
+        McreateNewTag,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
@@ -171,6 +180,9 @@ class Server:
         MmodifyRubric,
         MgetUserRubricPanes,
         MsaveUserRubricPanes,
+        RgetTestRubricMatrix,
+        RgetRubricCounts,
+        RgetRubricDetails,
     )
     from .plomServer.serverReport import (
         RgetUnusedTests,
@@ -182,6 +194,7 @@ class Server:
         RgetQuestionUserProgress,
         RgetMarkHistogram,
         RgetIdentified,
+        RgetNotAutoIdentified,
         RgetCompletionStatus,
         RgetOutToDo,
         RgetStatus,
@@ -290,9 +303,17 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     log.info("Loading ssl context")
     sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
     sslContext.check_hostname = False
-    sslContext.load_cert_chain(
-        basedir / confdir / "plom-selfsigned.crt", basedir / confdir / "plom.key"
-    )
+    try:
+        sslContext.load_cert_chain(
+            basedir / confdir / "plom-custom.crt", basedir / confdir / "plom-custom.key"
+        )
+        log.info("SSL: Loaded custom cert and key")
+    except FileNotFoundError:
+        sslContext.load_cert_chain(
+            basedir / confdir / "plom-selfsigned.crt",
+            basedir / confdir / "plom-selfsigned.key",
+        )
+        log.warning("SSL: Loaded default self-signed cert and key")
     log.info("Start the server!")
     with working_directory(basedir):
         web.run_app(app, ssl_context=sslContext, port=server_info["port"])

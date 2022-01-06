@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Colin B. Macdonald
+# Copyright (C) 2019-2021 Colin B. Macdonald
 # Copyright (C) 2019 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -12,6 +12,8 @@ This is intended for archival purposes.  Note it would not be easy to
 regrade a question within Plom using this archive.  If you ever
 anticipate revisiting the grading of this test, you should backup the
 entire directory structure.
+
+NOTE: unmaintained!
 
 Usage:
 $ ./12_archive course year term
@@ -86,7 +88,7 @@ entire directory structure.
             os.path.join(archivename, "sourceVersions"),
             symlinks=False,
         )
-    except:
+    except:  # noqa: E722
         print('  WARNING: could not archive "build/sourceVersions" directory')
         all_ok = False
 
@@ -97,12 +99,12 @@ entire directory structure.
             os.path.join(archivename, "scannedExams"),
             symlinks=False,
         )
-    except:
+    except:  # noqa: E722
         print('  WARNING: could not archive "scanAndGroup/scannedExams" directory')
         all_ok = False
     try:
         os.rmdir(os.path.join(archivename, "scannedExams", "png"))
-    except:
+    except:  # noqa: E722
         print(
             '  WARNING: could not remove supposedly-empty "scanningExams/png" directory'
         )

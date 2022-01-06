@@ -9,9 +9,6 @@ Use sklearn random forest model to read student IDs from ID-pages.
 Relies on use of standard ID template.
 
 Note: has hardcoded 8-digit student numbers.
-
-Note: Code in this file is very similar to idReader code for the Tensorflow
-model.
 """
 
 import csv
@@ -61,7 +58,7 @@ def download_model():
         if response.status_code != 200:
             print("\tError getting file {}.".format(file_name))
             return False
-        with open(base_path / file_name, "wb+") as file_header:
+        with open(base_path / file_name, "wb") as file_header:
             file_header.write(response.content)
         print("\tDone Saving")
     return True
@@ -113,7 +110,7 @@ def calc_log_likelihood(student_ID, prediction_probs, num_digits):
     return log_likelihood
 
 
-def run_id_reader(files_dict, rectangle):
+def run_id_reader(files_dict, rectangle, student_IDs):
     """Run ID detection on papers and save the prediction results to a csv file.
 
     Args:
@@ -122,6 +119,7 @@ def run_id_reader(files_dict, rectangle):
         rectangle (list): A list of the rectangle information of the form
             [top_left_x_coord, top_left_y_coord, x_width, y_height] for the
             cropped rectangle.
+        student_IDs (list): A list of student ID numbers
     """
 
     # Number of digits in the student ID.
@@ -148,14 +146,6 @@ def run_id_reader(files_dict, rectangle):
         files_dict, top_coordinate, bottom_coordinate, num_digits
     )
 
-    # Put student numbers in list
-    student_IDs = []
-    with open(specdir / "classlist.csv", newline="") as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=",")
-        next(csv_reader, None)  # skip the header
-        for row in csv_reader:
-            student_IDs.append(row[0])
-
     # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.
     print("Computing cost matrix")
     costs = []
@@ -176,15 +166,12 @@ def run_id_reader(files_dict, rectangle):
     print("Going hungarian")
     row_IDs, column_IDs = solve_dense(costs)
 
-    # now save the result
-    with open(specdir / "predictionlist.csv", "w") as file_header:
-        file_header.write("test, id\n")
-        for r, c in zip(row_IDs, column_IDs):
-            # the get test-number of r-th from the test_numbers_used
-            # since we may have skipped a few tests with hard-to-read IDs
-            test_number = test_numbers_used[r]
-            file_header.write("{}, {}\n".format(test_number, student_IDs[c]))
-        file_header.close()
+    prediction_pairs = []
 
-    print("Results saved in predictionlist.csv")
-    return
+    for r, c in zip(row_IDs, column_IDs):
+        # the get test-number of r-th from the test_numbers_used
+        # since we may have skipped a few tests with hard-to-read IDs
+        test_number = test_numbers_used[r]
+        prediction_pairs.append((test_number, student_IDs[c]))
+
+    return prediction_pairs

@@ -11,7 +11,7 @@ Utilities for canned users and auto-generated (poor) passwords
 
 import math
 import secrets
-from random import sample, randint
+from random import sample
 
 words = """
 about above across act active activity add afraid after again age ago agree

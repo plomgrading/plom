@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Colin B. Macdonald
 # Copyright (C) 2020 Matthew Coles
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 
 """Misc tools related to digital return.
@@ -55,7 +55,8 @@ def import_canvas_csv(canvas_fromfile):
         ),
         axis=1,
     )
-    df = df[isbad == False]
+    # pylint: disable=unsubscriptable-object
+    df = df[isbad == False]  # noqa: E712
     # reset the Pandas-added index column to 0 for first row
     df = df.reset_index(drop=True)
     return df
@@ -87,10 +88,8 @@ def find_partial_column_name(df, parthead, at_start=True):
     print("  We found: " + str(possible_matches))
     try:
         (col,) = possible_matches
-    except ValueError as e:
-        raise ValueError(
-            'Column match for "{}" not found/not unique'.format(parthead)
-        ) from None
+    except ValueError:
+        raise ValueError(f'Column match for "{parthead}" not found/not unique')
     return col
 
 
@@ -188,6 +187,7 @@ def csv_add_return_codes(csvin, csvout, idcol, use_hex, digits, salt=None):
     assert all(
         [c in df.columns for c in cols]
     ), "CSV file missing columns?  We need:\n  " + str(cols)
+    # pylint: disable=unsubscriptable-object
     df = df[cols]
 
     # TODO: rewrite using apply

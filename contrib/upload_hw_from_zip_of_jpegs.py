@@ -140,7 +140,7 @@ if __name__ == "__main__":
         cid, name_from_file = cid_name_from_canvas_submitted_filename(f)
         sid, name = sid_name_from_cid(df, cid)
         print("Canvas ID number: {}\tStudent ID: {}".format(cid, sid))
-        if not name[0].lower() in name_from_file.lower():
+        if name[0].lower() not in name_from_file.lower():
             print(
                 'sanity failure: name "{}" matches "{}"?'.format(name, name_from_file)
             )
@@ -152,7 +152,7 @@ if __name__ == "__main__":
             stuff = z.infolist()
             # stuff = z.namelist()
             # shovel up the mac droppings
-            stuff = [x for x in stuff if not "__macosx" in x.filename.lower()]
+            stuff = [x for x in stuff if "__macosx" not in x.filename.lower()]
             print("\n  ".join([str(x) for x in stuff]))
             bundle_name, md5 = bundle_name_and_md5_from_file(f)
             bundle_success = msgr.createNewBundle(bundle_name, md5)
