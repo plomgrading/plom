@@ -241,7 +241,7 @@ demoserver:
     - plom-build make -w 1234
     - plom-solutions extract solutionSpec.toml -w 1234
     - plom-solutions extract --upload -w 1234
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.produce.exam_scribbler -w 1234
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
     - plom-scan upload -w 4567 fake_scribbled_exams1.pdf
     - plom-scan status -w 4567
@@ -291,7 +291,7 @@ hwdemoserver:
     - plom-solutions extract solutionSpec.toml
     - plom-solutions extract --upload
     - plom-hwscan status
-    - python3 -m plom.produce.hwFaker
+    - python3 -m plom.produce.homework_scribbler
     # TODO: the actual hwdemo script does more with qstr, semiloose
     - plom-hwscan allbyq -y
     - plom-hwscan missing -y
@@ -304,7 +304,7 @@ hwdemoserver:
     - echo $A
     - A="$((A-1))"
     - bash -c "[[ $A -le 10 ]]"      # 10 named papers
-    - bash -c "[[ $A == 6 ]]"        # hwFaker makes 4 "semiloose"
+    - bash -c "[[ $A == 6 ]]"        # hw_scribber makes 4 "semiloose"
     - file marks.csv
     - file marks.csv | grep text
     - plom-finish reassemble
@@ -362,7 +362,7 @@ fullworkflow:
     - plom-solutions extract --upload
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools
+    - python3 -m plom.produce.exam_scribbler
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -485,7 +485,7 @@ fedora_build:
     - plom-build make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.produce.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -578,7 +578,7 @@ nodock_newdeps:
     - plom-build make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.produce.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -676,7 +676,7 @@ nodock_mindeps:
     - plom-build make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.produce.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi

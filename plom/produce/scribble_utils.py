@@ -360,25 +360,3 @@ def make_scribbles(server, password, basedir=Path(".")):
         make_colliding_pages(_paperdir, out_file_path)
         splitFakeFile(out_file_path)
         os.unlink(out_file_path)
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
-    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    args = parser.parse_args()
-
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
-
-    if not args.password:
-        args.password = getpass('Please enter the "manager" password: ')
-
-    make_scribbles(args.server, args.password)
-
-
-if __name__ == "__main__":
-    main()

@@ -2,21 +2,13 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
-"""Plom tool for scribbling fake homework answers for testing purposes."""
+"""Plom tools for scribbling fake homework answers for testing purposes."""
 
-__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
-
-import argparse
-import os
 from pathlib import Path
 import random
 
 import fitz
-from stdiomask import getpass
 
-from plom import __version__
 from plom.produce import start_messenger
 from plom.produce.scribble_utils import possible_answers
 
@@ -96,12 +88,7 @@ def download_classlist_and_spec(server=None, password=None):
 
 
 def make_hw_scribbles(server, password, basedir=Path(".")):
-    """Fake homework submissions by scribbling on the pages of a blank test.
-
-    After the files have been generated, this script can be used to scribble
-    on them to simulate random student work.  Note this tool does not upload
-    those files, it just makes some PDF files for you to play with or for
-    testing purposes.
+    """Fake homework submissions by scribbling on the pages of blank tests.
 
     Args:
         server (str): the name and port of the server.
@@ -134,25 +121,3 @@ def make_hw_scribbles(server, password, basedir=Path(".")):
     # a few more for "all questions in one" bundling
     for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
         makeFakeHW2(numberOfQuestions, k, classlist[k], d, "semiloose")
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
-    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    args = parser.parse_args()
-
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
-
-    if not args.password:
-        args.password = getpass('Please enter the "manager" password: ')
-
-    make_hw_scribbles(args.server, args.password)
-
-
-if __name__ == "__main__":
-    main()
