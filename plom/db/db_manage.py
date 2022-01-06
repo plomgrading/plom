@@ -214,7 +214,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
                 file_name, order, question, test_number
             )
         )
-    # update the group containing the new extra-pages
+    # update the groups containing the new extra-page
     groups_to_update = self.get_groups_using_image(iref)
     groups_to_update.add(qref.group)
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
