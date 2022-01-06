@@ -109,8 +109,6 @@ setup(
             "plom-scan=plom.scan.__main__:main",
             "plom-manager=plom.manager.__main__:main",
             "plom-finish=plom.finish.__main__:main",
-            "plom-fake-scribbles=plom.produce.faketools:main",
-            "plom-fake-hwscribbles=plom.produce.hwFaker:main",
             "plom-hwscan=plom.scripts.hwscan:main",
             "plom-solutions=plom.solutions.__main__:main",
         ],
