@@ -48,6 +48,7 @@ import plom.finish.reassemble_completed
 import plom.finish.reassemble_ID_only
 import plom.finish.coded_return
 import plom.finish.assemble_solutions
+import plom.finish.rubric_downloads
 
 
 def get_parser():
@@ -172,6 +173,14 @@ def get_parser():
         """,
     )
     spSolution.add_argument(
+        "-m",
+        "--mark",
+        action="store_true",
+        help="""
+            Watermark the solutions with the student number.
+        """,
+    )
+    spSolution.add_argument(
         "testnum",
         type=int,
         nargs="?",
@@ -180,14 +189,21 @@ def get_parser():
             solutions for all identified and marked papers.
         """,
     )
+    spRubric = sub.add_parser(
+        "rubric",
+        help="Download rubric info",
+        description="""
+            Download list of rubrics as json and the test-rubric use matrix (indexed by test-number and rubric-key) also as json.
+        """,
+    )
     spClear = sub.add_parser(
         "clear",
         help='Clear "manager" login',
         description='Clear "manager" login after a crash or other expected event.',
     )
-    for x in (spCheck, spCSV, spAssemble, spClear, spSolution, spCodedReturn):
+    for x in (spCheck, spCSV, spAssemble, spClear, spSolution, spCodedReturn, spRubric):
         x.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    for x in (spCheck, spCSV, spAssemble, spSolution, spClear):
+    for x in (spCheck, spCSV, spAssemble, spSolution, spRubric, spClear):
         x.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
     return parser
@@ -218,11 +234,15 @@ def main():
                 args.testnum, args.server, args.password, args.skip_existing
             )
     elif args.command == "solutions":
-        plom.finish.assemble_solutions.main(args.testnum, args.server, args.password)
+        plom.finish.assemble_solutions.main(
+            args.testnum, args.server, args.password, watermark=args.mark
+        )
     elif args.command == "webpage":
         plom.finish.coded_return.main(
             args.hex, args.digits, args.salt, args.server, args.solutions
         )
+    elif args.command == "rubric":
+        plom.finish.rubric_downloads.main(args.server, args.password)
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     else:

@@ -5,19 +5,24 @@
 
 from io import BytesIO
 import logging
-import ssl
+import os
 import threading
 
-import urllib3
 import requests
 from requests_toolbelt import MultipartDecoder
+import urllib3
 
 from plom import __version__, Plom_API_Version, Default_Port
+from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomAPIException,
+    PlomConnectionError,
+    PlomBadTagError,
     PlomExistingLoginException,
+    PlomSSLError,
+    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
 )
@@ -27,10 +32,6 @@ log = logging.getLogger("messenger")
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
-# If we use unverified ssl certificates we get lots of warnings,
-# so put in this to hide them.
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 class BaseMessenger:
     """Basic communication with a Plom Server.
@@ -39,10 +40,16 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port):
-        sslContext = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
-        sslContext.check_hostname = False
-        # Server defaults
+    def __init__(self, s=None, port=Default_Port, verify=True):
+        """Initialize a new BaseMessenger.
+
+        Args:
+
+        Keyword Arguments:
+            verify (True/False/str): controls where SSL certs are
+                checked, see `requests` lib which ultimately receives
+                this.
+        """
         self.session = None
         self.user = None
         self.token = None
@@ -53,6 +60,14 @@ class BaseMessenger:
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
         # base = "https://{}:{}/".format(s, mp)
+        self.verify = verify
+        if not self.verify:
+            self._shutup_urllib3()
+
+    def _shutup_urllib3(self):
+        # If we use unverified ssl certificates we get lots of warnings,
+        # so put in this to hide them.
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     @classmethod
     def clone(cls, m):
@@ -61,15 +76,37 @@ class BaseMessenger:
         In particular, we have our own mutex.
         """
         log.debug("cloning a messeger, but building new session...")
-        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1])
+        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1], verify=m.verify)
         x.start()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
         x.token = m.token
         return x
 
+    def force_ssl_unverified(self):
+        """This connection (can be open) does not need to verify cert SSL going forward"""
+        self.verify = False
+        if self.session:
+            self.session.verify = False
+        self._shutup_urllib3()
+
     def whoami(self):
         return self.user
+
+    def get(self, url, *args, **kwargs):
+        return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
+
+    def post(self, url, *args, **kwargs):
+        return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
+
+    def put(self, url, *args, **kwargs):
+        return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
+
+    def delete(self, url, *args, **kwargs):
+        return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
+
+    def patch(self, url, *args, **kwargs):
+        return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
 
     def start(self):
         """Start the messenger session"""
@@ -81,22 +118,30 @@ class BaseMessenger:
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+            self.session.verify = self.verify
+
         try:
-            response = self.session.get(
-                "https://{}/Version".format(self.server),
-                verify=False,
-            )
-            response.raise_for_status()
+            try:
+                response = self.get("/Version")
+                response.raise_for_status()
+                return response.text
+            except requests.exceptions.SSLError as err:
+                if os.environ.get("PLOM_NO_SSL_VERIFY"):
+                    log.warning("Server SSL cert self-signed/invalid: skip via env var")
+                elif "dev" in __version__:
+                    log.warning(
+                        "Server SSL cert self-signed/invalid: skip b/c dev client"
+                    )
+                else:
+                    raise PlomSSLError(err) from None
+                self.force_ssl_unverified()
+                response = self.get("/Version")
+                response.raise_for_status()
+                return response.text
         except requests.ConnectionError as err:
-            raise PlomBenignException(
-                "Cannot connect to server. Please check server details."
-            ) from None
+            raise PlomConnectionError(err) from None
         except requests.exceptions.InvalidURL as err:
-            raise PlomBenignException(
-                "The URL format was invalid. Please try again."
-            ) from None
-        r = response.text
-        return r
+            raise PlomConnectionError(f"Invalid URL: {err}") from None
 
     def stop(self):
         """Stop the messenger"""
@@ -128,15 +173,14 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/users/{}".format(self.server, user),
+            response = self.put(
+                f"/users/{user}",
                 json={
                     "user": user,
                     "pw": pw,
                     "api": Plom_API_Version,
                     "client_ver": __version__,
                 },
-                verify=False,
                 timeout=5,
             )
             # throw errors when response code != 200.
@@ -150,15 +194,10 @@ class BaseMessenger:
                 raise PlomAPIException(response.json()) from None
             elif response.status_code == 409:
                 raise PlomExistingLoginException(response.json()) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         except requests.ConnectionError as err:
             raise PlomSeriousException(
-                "Cannot connect to server\n {}\n Please check details before trying again.".format(
-                    self.server
-                )
+                f"Cannot connect to server {self.server}\n{err}\n\nPlease check details and try again."
             ) from None
         finally:
             self.SRmutex.release()
@@ -166,19 +205,14 @@ class BaseMessenger:
     def clearAuthorisation(self, user, pw):
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/authorisation".format(self.server),
-                json={"user": user, "password": pw},
-                verify=False,
+            response = self.delete(
+                "/authorisation", json={"user": user, "password": pw}
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -193,23 +227,17 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.delete(
-                "https://{}/users/{}".format(self.server, self.user),
+            response = self.delete(
+                f"/users/{self.user}",
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return True
 
     # ----------------------
     # ----------------------
@@ -218,24 +246,17 @@ class BaseMessenger:
     def getInfoShortName(self):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/info/shortName".format(self.server), verify=False
-            )
+            response = self.get("/info/shortName")
             response.raise_for_status()
-            shortName = response.text
+            return response.text
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException(
                     "Server could not find the spec - this should not happen!"
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-        return shortName
 
     def get_spec(self):
         """Get the specification of the exam from the server.
@@ -245,19 +266,50 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/info/spec".format(self.server),
-                verify=False,
-            )
+            response = self.get("/info/spec")
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 404:
                 raise PlomSeriousException("Server could not find the spec") from None
-            else:
-                raise PlomSeriousException("Some other sort of error {}".format(e))
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def getQuestionVersionMap(self, papernum):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/admin/questionVersionMap/{papernum}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        # JSON casts dict keys to str, force back to ints
+        return {int(q): v for q, v in response.json().items()}
+
+    def getGlobalQuestionVersionMap(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/admin/questionVersionMap",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+        # JSON casts dict keys to str, force back to ints
+        return undo_json_packing_of_version_map(response.json())
 
     def IDrequestClasslist(self):
         """Ask server for the classlist.
@@ -274,10 +326,9 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/classlist".format(self.server),
+            response = self.get(
+                "/ID/classlist",
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             # throw errors when response code != 200.
             response.raise_for_status()
@@ -291,12 +342,96 @@ class BaseMessenger:
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 raise PlomBenignException("Server cannot find the class list") from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def get_all_tags(self):
+        """All the tags currently in use and their frequencies.
+
+        Returns:
+            dict: keys are tags and values are usage counts.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/tags",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_tags(self, code):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def add_single_tag(self, code, tag_text):
+        self.SRmutex.acquire()
+        try:
+            response = self.patch(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code in [406, 410]:
+                raise PlomBadTagError(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def remove_single_tag(self, code, tag_text):
+        self.SRmutex.acquire()
+        try:
+            response = self.delete(
+                f"/tags/{code}",
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 410:
+                raise PlomBadTagError(response.reason)
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def create_new_tag(self, tag_text):
+        self.SRmutex.acquire()
+        try:
+            response = self.patch(
+                f"/tags",
+                json={"user": self.user, "token": self.token, "tag_text": tag_text},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code in [406, 409]:
+                raise PlomBadTagError(response.reason) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -317,34 +452,25 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/MK/rubric".format(self.server),
+            response = self.put(
+                "/MK/rubric",
                 json={
                     "user": self.user,
                     "token": self.token,
                     "rubric": new_rubric,
                 },
-                verify=False,
             )
             response.raise_for_status()
-
             new_key = response.json()
-            messenger_response = [True, new_key]
-
+            return [True, new_key]
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            elif response.status_code == 406:
+            if response.status_code == 406:
                 raise PlomSeriousException("Rubric sent was incomplete.") from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-            messenger_response = [False]
-
+            raise PlomSeriousException(f"Error when creating new rubric: {e}") from None
         finally:
             self.SRmutex.release()
-        return messenger_response
 
     def MgetRubrics(self):
         """Retrieve list of all rubrics from server.
@@ -359,23 +485,19 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/rubric".format(self.server),
+            response = self.get(
+                "/MK/rubric",
                 json={
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} getting rubric list".format(e)
-                ) from None
+            raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -395,23 +517,19 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/MK/rubric/{}".format(self.server, question_number),
+            response = self.get(
+                f"/MK/rubric/{question_number}",
                 json={
                     "user": self.user,
                     "token": self.token,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} getting rubric list".format(e)
-                ) from None
+            raise PlomSeriousException(f"Error getting rubric list: {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -432,19 +550,17 @@ class BaseMessenger:
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.patch(
-                "https://{}/MK/rubric/{}".format(self.server, key),
+            response = self.patch(
+                f"/MK/rubric/{key}",
                 json={
                     "user": self.user,
                     "token": self.token,
                     "rubric": new_rubric,
                 },
-                verify=False,
             )
             response.raise_for_status()
-
             new_key = response.json()
-            messenger_response = [True, new_key]
+            return [True, new_key]
 
         except requests.HTTPError as e:
             if response.status_code == 401:
@@ -455,31 +571,23 @@ class BaseMessenger:
                 raise PlomSeriousException("Rubric sent was incomplete.") from None
             elif response.status_code == 409:
                 raise PlomSeriousException("No rubric with that key found.") from None
-            else:
-                raise PlomSeriousException(
-                    "Error of type {} when creating new rubric".format(e)
-                ) from None
-            messenger_response = [False]
-
+            raise PlomSeriousException(
+                f"Error of type {e} when creating new rubric"
+            ) from None
         finally:
             self.SRmutex.release()
-        return messenger_response
 
-    def request_ID_images(self, code):
+    def request_ID_image(self, code):
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                "https://{}/ID/images/{}".format(self.server, code),
+            response = self.get(
+                f"/ID/image/{code}",
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
-                return []  # 204 is empty list
-            return [
-                BytesIO(img.content).getvalue()
-                for img in MultipartDecoder.from_response(response).parts
-            ]
+                return None  # 204 means no image
+            return BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -497,10 +605,7 @@ class BaseMessenger:
                         code
                     )
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -508,10 +613,9 @@ class BaseMessenger:
         """Get the various Do Not Mark images for a paper."""
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                f"https://{self.server}/ID/donotmark_images/{papernum}",
+            response = self.get(
+                f"/ID/donotmark_images/{papernum}",
                 json={"user": self.user, "token": self.token},
-                verify=False,
             )
             response.raise_for_status()
             if response.status_code == 204:
@@ -531,10 +635,7 @@ class BaseMessenger:
                 raise PlomBenignException(
                     f"The DNM group of {papernum} has not been scanned."
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -558,21 +659,20 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            url = f"https://{self.server}/annotations/{num}/{question}"
+            url = f"/annotations/{num}/{question}"
         else:
-            url = f"https://{self.server}/annotations/{num}/{question}/{edition}"
+            url = f"/annotations/{num}/{question}/{edition}"
         if integrity is None:
             integrity = ""
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
+            response = self.get(
                 url,
                 json={
                     "user": self.user,
                     "token": self.token,
                     "integrity": integrity,
                 },
-                verify=False,
             )
             response.raise_for_status()
             return response.json()
@@ -591,10 +691,7 @@ class BaseMessenger:
                 raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(num)
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
 
@@ -616,19 +713,12 @@ class BaseMessenger:
             PlomSeriousException
         """
         if edition is None:
-            url = f"https://{self.server}/annotations_image/{num}/{question}"
+            url = f"/annotations_image/{num}/{question}"
         else:
-            url = f"https://{self.server}/annotations_image/{num}/{question}/{edition}"
+            url = f"/annotations_image/{num}/{question}/{edition}"
         self.SRmutex.acquire()
         try:
-            response = self.session.get(
-                url,
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-                verify=False,
-            )
+            response = self.get(url, json={"user": self.user, "token": self.token})
             response.raise_for_status()
             return BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
@@ -646,9 +736,6 @@ class BaseMessenger:
                 raise PlomTaskDeletedError(
                     "Task {} has been deleted by manager.".format(num)
                 ) from None
-            else:
-                raise PlomSeriousException(
-                    "Some other sort of error {}".format(e)
-                ) from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

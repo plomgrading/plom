@@ -12,8 +12,6 @@ from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 from plom.client.tools.line import CommandLine, LineItem
 from plom.client.tools.move import CommandMoveItem
 
-from plom.client.tools.tool import DeleteObject
-
 
 class CommandArrow(CommandLine):
     def __init__(self, scene, pti, ptf):
@@ -25,7 +23,7 @@ class CommandArrow(CommandLine):
 
 # TODO: LineItem is a QGraphicsLineItem, so cannot inherit (?)
 class ArrowItem(QGraphicsPathItem):
-    def __init__(self, pti, ptf, style, parent=None):
+    def __init__(self, pti, ptf, style):
         """Creates an arrow from pti to ptf.
         Some manipulations required to draw the arrow head.
         """

@@ -28,14 +28,14 @@ from plom.db.tables import plomdb
 log = logging.getLogger("DB")
 
 
-########## Bundle creation ##########
+# Bundle creation
 
 
 def createReplacementBundle(self):
     try:
-        bref = Bundle.create(name="__replacements__system__")
+        Bundle.create(name="__replacements__system__")
     except pw.IntegrityError as e:
-        log.error("Failed to create replacement page bundle - %s", e)
+        log.error(f"Failed to create replacement page bundle - {e}")
         return False
     return True
 
@@ -102,7 +102,7 @@ def createNewBundle(self, bundle_name, md5):
         return (False, reason)
 
 
-########## Test creation stuff ##############
+# Test creation stuff
 def how_many_papers_in_database(self):
     """How many papers have been created in the database."""
     return len(Test.select())
@@ -119,7 +119,7 @@ def is_paper_database_populated(self):
 
 
 def nextqueue_position(self):
-    lastPos = Group.select(fn.MAX(Group.queue_position)).scalar()
+    lastPos = Group.select(fn.MAX(Group.queue_position)).scalar(plomdb)
     if lastPos is None:
         return 0
     return lastPos + 1
@@ -128,7 +128,7 @@ def nextqueue_position(self):
 def createTest(self, t):
     with plomdb.atomic():
         try:
-            tref = Test.create(test_number=t)  # must be unique
+            Test.create(test_number=t)  # must be unique
         except pw.IntegrityError as e:
             log.error("Create test {} error - {}".format(t, e))
             return False
@@ -180,7 +180,7 @@ def createIDGroup(self, t, pages):
             return False
         # make the IDGroup
         try:
-            iref = IDGroup.create(test=tref, group=gref)
+            IDGroup.create(test=tref, group=gref)
         except pw.IntegrityError as e:
             log.error(
                 "Create ID for gid={} test={} Group={}: cannot create IDGroup - {}.".format(
@@ -267,10 +267,14 @@ def createQGroup(self, t, q, v, pages):
                 )
             )
             return False
-        ## create annotation 0 owned by HAL
+        # create annotation 0 owned by HAL
         try:
             uref = User.get(name="HAL")
-            aref = Annotation.create(qgroup=qref, edition=0, user=uref)
+            Annotation.create(qgroup=qref, edition=0, user=uref)
+            # pylint: disable=no-member
+            log.warn(
+                f"Created edition {len(qref.annotations)} annotation for qgroup {gid}"
+            )
         except pw.IntegrityError as e:
             log.error(
                 "Create Q - cannot create Annotation  of question {} error - {}.".format(
@@ -394,7 +398,7 @@ def remove_id_from_paper(self, paper_num):
                 censorID(iref.student_id),
                 censorName(iref.student_name),
             )
-        # Note if you put a uref here, Identifier cannot get them again
+        # Note if you put a uref here, Identifier cannot get them again, Issue #1811
         iref.user = None
         iref.status = "todo"
         iref.student_id = None
@@ -409,7 +413,7 @@ def remove_id_from_paper(self, paper_num):
     return True
 
 
-### Create some default rubrics
+# Create some default rubrics
 def createNoAnswerRubric(self, questionNumber, maxMark):
     """Create rubrics for when no answer given for question
 

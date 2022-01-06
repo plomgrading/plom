@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """Plom script to start a demo server for homework submissions.
@@ -12,12 +12,11 @@ Instructions:
   * In a new terminal, run the Plom Client and connect to localhost.
 """
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
-import os
 from pathlib import Path
 from random import randint
 from shlex import split
@@ -169,6 +168,7 @@ def main():
                 qstr = "[[1,2,3],"
                 qstr += ",".join(f"[{randint(1,3)}]" for q in range(2, len(doc) + 1))
                 qstr += "]"
+                doc.close()
                 print(f'Using a randomish page->question mapping of "{qstr}"')
                 subprocess.check_call(
                     split(

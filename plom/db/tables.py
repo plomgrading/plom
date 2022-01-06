@@ -43,8 +43,6 @@ class Test(BaseModel):
     scanned = pw.BooleanField(default=False)
     identified = pw.BooleanField(default=False)
     marked = pw.BooleanField(default=False)
-    # a recentUpload flag to see which tests to check after uploads
-    recent_upload = pw.BooleanField(default=False)
 
 
 class Group(BaseModel):
@@ -53,8 +51,6 @@ class Group(BaseModel):
     group_type = pw.CharField()  # to distinguish between ID, DNM, and Mark groups
     queue_position = pw.IntegerField(unique=True, null=False)
     scanned = pw.BooleanField(default=False)  # should get all its tpages
-    # a recentUpload flag to see which groups to check after uploads
-    recent_upload = pw.BooleanField(default=False)
 
 
 class IDGroup(BaseModel):
@@ -112,12 +108,6 @@ class EXPage(BaseModel):
     image = pw.ForeignKeyField(Image, backref="expages")
 
 
-class LPage(BaseModel):  # a page that just knows its t. - a loose page
-    test = pw.ForeignKeyField(Test, backref="lpages")
-    order = pw.IntegerField(null=False)
-    image = pw.ForeignKeyField(Image, backref="lpages")
-
-
 # still needs work - maybe some bundle object with unique key.
 class UnknownPage(BaseModel):
     image = pw.ForeignKeyField(Image, backref="upages", null=True)
@@ -135,6 +125,8 @@ class DiscardedPage(BaseModel):
 
 
 class IDPage(BaseModel):
+    # even though there is only one, for simplicity
+    # this is a many-to-one mapping by this backref
     idgroup = pw.ForeignKeyField(IDGroup, backref="idpages")
     image = pw.ForeignKeyField(Image, backref="idpages")
     order = pw.IntegerField(null=False)
@@ -157,37 +149,20 @@ class Annotation(BaseModel):
     aimage = pw.ForeignKeyField(AImage, backref="annotations", null=True)
     edition = pw.IntegerField(null=True)
     integrity_check = pw.CharField(null=True)  # random uuid
+    # add this for when we update underlying pages of
+    # a test
+    outdated = pw.BooleanField(default=False)
+    #
     # we need to order the annotations - want the latest.
     plom_file = pw.CharField(null=True)
     mark = pw.IntegerField(null=True)
     marking_time = pw.IntegerField(null=True)
     time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
 
 
 class APage(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="apages")
     image = pw.ForeignKeyField(Image, backref="apages")
-    order = pw.IntegerField(null=False)
-
-
-class OldAnnotation(BaseModel):
-    qgroup = pw.ForeignKeyField(QGroup, backref="oldannotations")
-    user = pw.ForeignKeyField(User, backref="oldannotations", null=True)
-    aimage = pw.ForeignKeyField(AImage, backref="oldannotations", null=True)
-    edition = pw.IntegerField(null=True)
-    integrity_check = pw.CharField(null=True)  # concat of md5sums of underlying apages
-    # we need to order the annotations - want the latest.
-    plom_file = pw.CharField(null=True)
-    mark = pw.IntegerField(null=True)
-    marking_time = pw.IntegerField(null=True)
-    time = pw.DateTimeField(null=True)
-    tags = pw.CharField(default="")
-
-
-class OAPage(BaseModel):
-    old_annotation = pw.ForeignKeyField(OldAnnotation, backref="oapages")
-    image = pw.ForeignKeyField(Image, backref="oapages")
     order = pw.IntegerField(null=False)
 
 
@@ -210,3 +185,17 @@ class Rubric(BaseModel):
 class ARLink(BaseModel):
     annotation = pw.ForeignKeyField(Annotation, backref="arlinks")
     rubric = pw.ForeignKeyField(Rubric, backref="arlinks")
+
+
+class Tag(BaseModel):
+    # unique key - user-generated have 10 digits
+    key = pw.CharField(unique=True, null=False)
+    text = pw.CharField(null=False)
+    creationTime = pw.DateTimeField(null=False)
+    user = pw.ForeignKeyField(User, backref="tags", null=False)
+
+
+class QuestionTagLink(BaseModel):
+    qgroup = pw.ForeignKeyField(QGroup, backref="questiontaglinks")
+    tag = pw.ForeignKeyField(Tag, backref="questiontaglinks")
+    user = pw.ForeignKeyField(User, backref="questiontaglinks", null=False)

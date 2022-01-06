@@ -3,11 +3,6 @@
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Colin B. Macdonald
 
-"""
-Note: Code in this file is very similar to test_IDreader code for the
-Tensorflow model.
-"""
-
 from .idReader import calc_log_likelihood
 from .idReader import is_model_present, download_model, download_or_train_model
 from ...misc_utils import working_directory

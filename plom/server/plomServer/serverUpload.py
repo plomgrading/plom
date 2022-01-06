@@ -55,7 +55,53 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     return val
 
 
+def replaceMissingIDPage(self, test_number):
+    val = self.DB.getSIDFromTest(test_number)
+    if val[0] is False:
+        return [False, "unknown"]
+    sid = val[1]
+    return self.createIDPageForHW(sid)
+
+
+def createIDPageForHW(self, sid):
+    # ask DB if that SID belongs to a test and if that has an ID page
+    val = self.DB.doesHWHaveIDPage(sid)
+    # returns [False, 'unknown'], [False, 'noid', test_number, student_name], or
+    # [True, 'idpage', test_number, student_name]
+    if val[0]:  # page already has an idpage, so we can just return
+        log.debug(f"HW from sid {sid} is test {val[2]} - already has an ID Page.")
+        return True
+    if val[1] == "unknown":
+        log.debug(f"The sid {sid} does not correspond to any test in the DB.")
+        return False
+    test_number = val[2]
+    student_name = val[3]
+    log.debug(f"HW from sid {sid} is test {val[2]}, {student_name} - creating ID page.")
+    return autogenerateIDPage(self, test_number, sid, student_name)
+
+
+def createDNMPagesForHW(self, sid):
+    # ask DB if that SID belongs to a test and if that has DNM Pages
+    val = self.DB.sidToTest(sid)
+    if val[0] is False:
+        log.debug(f"The sid {sid} does not correspond to any test in the DB.")
+        return False
+    test_number = val[1]
+    val = self.DB.getMissingDNMPages(test_number)
+    # return [False, "unknown"] or [True, [list of unscanned tpages from the dnm group]]
+    if val[0] is False:
+        log.debug(f"Test {test_number} does not correspond to a test in the database")
+        return False
+    needed_dnm_pages = val[1]
+    for page_number in needed_dnm_pages:
+        replaceMissingDNMPage(self, test_number, page_number)
+
+
 def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
+    # Create an ID page and DNM for that HW if it is needed
+    self.createIDPageForHW(sid)
+    self.createDNMPagesForHW(sid)
+
     # take extension from the client filename
     base, ext = os.path.splitext(fname)
     # create a filename for the image
@@ -70,28 +116,6 @@ def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
         if not os.path.isfile(newName):
             break
     val = self.DB.uploadHWPage(sid, q, o, fname, newName, md5o, bundle, bundle_order)
-    if val[0]:
-        with open(newName, "wb") as fh:
-            fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
-        assert md5n == md5o
-        log.debug("Storing {} as {} = {}".format(prefix, newName, val))
-    else:
-        log.debug("Did not store page.  From database = {}".format(val[1]))
-    return val
-
-
-def addLPage(self, sid, o, fname, image, md5o, bundle, bundle_order):
-    # take extension from the client filename
-    base, ext = os.path.splitext(fname)
-    # create a filename for the image
-    prefix = "s{}o{}".format(sid, o)
-    while True:
-        unique = "." + str(uuid.uuid4())[:8]
-        newName = "pages/originalPages/" + prefix + unique + ext
-        if not os.path.isfile(newName):
-            break
-    val = self.DB.uploadLPage(sid, o, fname, newName, md5o, bundle, bundle_order)
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
@@ -177,6 +201,64 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
     return rval
 
 
+def replaceMissingDNMPage(self, testNumber, pageNumber):
+    pageNotSubmitted.build_dnm_page_substitute(testNumber, pageNumber)
+    # produces a file "dnm.<testNumber>.<pageNumber>.png"
+    originalName = "dnm.{}.{}.png".format(testNumber, pageNumber)
+    prefix = "pages/originalPages/dnm.{}p{}".format(
+        str(testNumber).zfill(4), str(pageNumber).zfill(2)
+    )
+    # make a non-colliding name
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+    # compute md5sum and put into database
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    # now try to put it into place
+    # all DNM are test pages with version 1, so recycle the missing test page function
+    rval = self.DB.replaceMissingTestPage(
+        testNumber, pageNumber, 1, originalName, newName, md5
+    )
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval
+
+
+def autogenerateIDPage(self, testNumber, student_id, student_name):
+    # Do not call this directly, it should be called by createIDPageForHW
+    pageNotSubmitted.build_generated_id_page_for_student(student_id, student_name)
+
+    # produces a file "autogen.<sid>.png"
+    originalName = "autogen.{}.png".format(student_id)
+    prefix = "pages/originalPages/autogen.{}.{}".format(
+        str(testNumber).zfill(4), student_id
+    )
+    # make a non-colliding name
+    while True:
+        unique = "." + str(uuid.uuid4())[:8]
+        newName = prefix + unique + ".png"
+        if not os.path.isfile(newName):
+            break
+    # compute md5sum and put into database
+    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    # now try to put it into place
+    # all ID are test pages with version 1, so recycle the missing test page function
+    # get the id-page's pagenumber from the spec
+    pg = self.testSpec["idPage"]
+    rval = self.DB.replaceMissingTestPage(testNumber, pg, 1, originalName, newName, md5)
+    # if move successful then actually move file into place, else delete it
+    if rval[0]:
+        shutil.move(originalName, newName)
+    else:
+        os.unlink(originalName)
+    return rval
+
+
 def getTPageImage(self, testNumber, pageNumber, version):
     return self.DB.getTPageImage(testNumber, pageNumber, version)
 
@@ -187,10 +269,6 @@ def getHWPageImage(self, testNumber, question, order):
 
 def getEXPageImage(self, testNumber, question, order):
     return self.DB.getEXPageImage(testNumber, question, order)
-
-
-def getLPageImage(self, testNumber, order):
-    return self.DB.getLPageImage(testNumber, order)
 
 
 def getUnknownImage(self, fname):
@@ -309,6 +387,35 @@ def removeAllScannedPages(self, test_number):
     return self.DB.removeAllScannedPages(test_number)
 
 
+def removeSinglePage(self, test_number, page_name):
+    # page name should be "t.n" or "h.q.o" or "e.q.o"
+    splut = page_name.split(".")
+    if len(splut) not in [2, 3]:
+        return [False, "invalid"]
+    if splut[0] == "t":
+        try:
+            page_number = int(splut[1])
+        except ValueError:
+            return [False, "page name invalid"]
+        return self.DB.removeScannedTestPage(test_number, page_number)
+    elif splut[0] == "h":
+        try:
+            question = int(splut[1])
+            order = int(splut[2])
+        except ValueError:
+            return [False, "page name invalid"]
+        return self.DB.removeScannedHWPage(test_number, question, order)
+    elif splut[0] == "e":
+        try:
+            question = int(splut[1])
+            order = int(splut[2])
+        except ValueError:
+            return [False, "page name invalid"]
+        return self.DB.removeScannedEXPage(test_number, question, order)
+    else:
+        return [False, "invalid"]
+
+
 def collidingToTestPage(self, file_name, test, page, version):
     return self.DB.moveCollidingToTPage(file_name, test, page, version)
 
@@ -348,13 +455,18 @@ def replaceMissingHWQuestion(self, sid, test, question):
     return rval
 
 
-def processHWUploads(self):
-    return self.DB.processUpdatedTests()
+def getBundleFromImage(self, file_name):
+    return self.DB.getBundleFromImage(file_name)
 
 
-def processLUploads(self):
-    return self.DB.processUpdatedTests()
+def getImagesInBundle(self, bundle_name):
+    return self.DB.getImagesInBundle(bundle_name)
 
 
-def processTUploads(self):
-    return self.DB.processUpdatedTests()
+def getPageFromBundle(self, bundle_name, bundle_order):
+    return self.DB.getPageFromBundle(bundle_name, bundle_order)
+
+
+##
+
+##

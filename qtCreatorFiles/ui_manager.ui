@@ -254,7 +254,7 @@
           <enum>QTabWidget::North</enum>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="scanTab">
           <property name="enabled">
@@ -311,7 +311,7 @@
                 <item>
                  <widget class="QPushButton" name="removePagesB">
                   <property name="text">
-                   <string>Remove All Scanned Pages from Test</string>
+                   <string>Remove Scanned Page(s) from Test</string>
                   </property>
                  </widget>
                 </item>
@@ -373,6 +373,30 @@
                  <widget class="QPushButton" name="subsPageB">
                   <property name="text">
                    <string>Substitute missing page / question with blank</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_25">
+                <item>
+                 <spacer name="horizontalSpacer_13">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="removePartScanB">
+                  <property name="text">
+                   <string>Remove Page(s) From Part-scanned Test</string>
                   </property>
                  </widget>
                 </item>
@@ -573,7 +597,7 @@
               <enum>QAbstractItemView::SelectRows</enum>
              </property>
              <property name="columnCount">
-              <number>3</number>
+              <number>4</number>
              </property>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
@@ -581,6 +605,7 @@
              <attribute name="verticalHeaderVisible">
               <bool>false</bool>
              </attribute>
+             <column/>
              <column/>
              <column/>
              <column/>
@@ -1061,6 +1086,16 @@
                 <widget class="QComboBox" name="userCB"/>
                </item>
               </layout>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="markedOnlyCB">
+               <property name="text">
+                <string>Marked Only</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item>
               <spacer name="horizontalSpacer_11">

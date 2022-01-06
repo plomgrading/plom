@@ -1,6 +1,6 @@
-import hashlib
-import os
-import uuid
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2020-2021 Colin B. Macdonald
 
 
 def RgetScannedTests(self):
@@ -39,6 +39,10 @@ def RgetIdentified(self):
     return self.DB.RgetIdentified()
 
 
+def RgetNotAutoIdentified(self):
+    return self.DB.RgetNotAutoIdentified()
+
+
 def RgetCompletionStatus(self):
     return self.DB.RgetCompletionStatus()
 
@@ -63,8 +67,8 @@ def RgetOriginalFiles(self, testNumber):
     return self.DB.RgetOriginalFiles(testNumber)
 
 
-def RgetMarkReview(self, filterQ, filterV, filterU):
-    return self.DB.RgetMarkReview(filterQ, filterV, filterU)
+def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
+    return self.DB.RgetMarkReview(filterQ, filterV, filterU, filterM)
 
 
 def RgetIDReview(self):

@@ -51,7 +51,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
             w, h = papersize_landscape
         else:
             w, h = papersize_portrait
-        pg = exam.newPage(width=w, height=h)
+        pg = exam.new_page(width=w, height=h)
         rec = fitz.Rect(margin, margin, w - margin, h - margin)
 
         # Make a jpeg in memory, and use that if its significantly smaller
@@ -72,7 +72,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     else:
         w, h = papersize_portrait
     if dnm_images:
-        pg = exam.newPage(width=w, height=h)
+        pg = exam.new_page(width=w, height=h)
         W = (w - 2 * margin) // len(dnm_images)
         header_bottom = margin + h // 10
         offset = margin
@@ -96,7 +96,7 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         )
         assert r > 0
 
-    exam.setMetadata(
+    exam.set_metadata(
         {
             "title": "{} {}".format(shortName, sid),
             "producer": "Plom {}".format(__version__),

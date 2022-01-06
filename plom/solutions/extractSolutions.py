@@ -138,21 +138,15 @@ def extractSolutionImages(server, password, solution_spec_filename=None):
             mxv = 1  # only do version 1 if 'fix'
         for v in range(1, mxv + 1):
             print(f"Processing solutions for Q{q} V{v}")
-            # TODO: Issue #1744: need proper fix coordinating with filenames
-            #       from processFileToBitmaps
-            if solutionSpec["numberOfPages"] >= 100:
-                raise NotImplementedError("Need proper fix for #1744")
-            if solutionSpec["numberOfPages"] >= 10:
-                # 10 quite likely off by one
-                image_list = [
-                    tmpdir / f"solutions{v}-{p:02}.png"
-                    for p in solutionSpec["solution"][sq]["pages"]
-                ]
-            else:
-                image_list = [
-                    tmpdir / f"solutions{v}-{p}.png"
-                    for p in solutionSpec["solution"][sq]["pages"]
-                ]
+            image_list = [
+                tmpdir / f"solutions{v}-{p:03}.png"
+                for p in solutionSpec["solution"][sq]["pages"]
+            ]
+            # maybe processing made jpegs
+            for i, f in enumerate(image_list):
+                if not f.is_file():
+                    if f.with_suffix(".jpg").is_file():
+                        image_list[i] = f.with_suffix(".jpg")
             # check the image list - make sure they exist
             for fn in image_list:
                 if not fn.is_file():

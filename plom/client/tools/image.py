@@ -3,22 +3,11 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 
-from PyQt5.QtCore import (
-    QTimer,
-    QPropertyAnimation,
-    QByteArray,
-    QBuffer,
-    QIODevice,
-    QPoint,
-    QPointF,
-    pyqtProperty,
-)
+from PyQt5.QtCore import QIODevice, QPointF, QBuffer, QByteArray
 from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QPen
 from PyQt5.QtWidgets import (
-    QUndoCommand,
     QGraphicsItem,
     QGraphicsPixmapItem,
-    QGraphicsObject,
     QGraphicsSceneMouseEvent,
     QDialog,
     QSpinBox,

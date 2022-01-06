@@ -15,41 +15,41 @@ htmlsrc = """
 <meta charset="UTF-8" />
 <style>
 body {
-	padding: 2em;
+    padding: 2em;
 }
 
 label {
     font-weight: bold;
     font-style: italic;
-	font-size: medium;
+        font-size: medium;
     width: 12em;
     display: inline-block;
 }
 
 button {
-	font-weight: bold;
-	margin-top: 1em;
-	line-height: 2;
+    font-weight: bold;
+    margin-top: 1em;
+    line-height: 2;
 }
 
 </style>
 
 <script>
-	function retrievePaper() {
-		var id = document.getElementById('studentID').value;
-		if( !id || id.length!=__SID_LENGTH__ ) {
-			alert("Invalid student number!");
-			return;
-		}
-		var code = document.getElementById('studentCode').value;
-		code = code.replace(/,/g,'')
-		if( !code || code.length!=__CODE_LENGTH__ ) {
-			alert("Invalid code!");
-			return;
-		}
-		var which = '__TESTNAME__'
-		window.location.href = which+"_"+id+"_"+code+".pdf";
-	}
+    function retrievePaper() {
+        var id = document.getElementById('studentID').value;
+        if( !id || id.length!=__SID_LENGTH__ ) {
+            alert("Invalid student number!");
+            return;
+        }
+        var code = document.getElementById('studentCode').value;
+        code = code.replace(/,/g,'')
+        if( !code || code.length!=__CODE_LENGTH__ ) {
+            alert("Invalid code!");
+            return;
+        }
+        var which = '__TESTNAME__'
+        window.location.href = which+"_"+id+"_"+code+".pdf";
+    }
 </script>
 </head>
 
@@ -70,18 +70,18 @@ your __CODE_LENGTH__-digit &ldquo;return code&rdquo; from <a href="http://canvas
 <p><i>NOTE:</i> the request will fail if incorrect information is entered.<p>
 
 <div>
-	<label class="label" for="studentID">Student number: </label>
-	<input id="studentID" name="studentID" type="text" maxlength="__SID_LENGTH__" />
+    <label class="label" for="studentID">Student number: </label>
+    <input id="studentID" name="studentID" type="text" maxlength="__SID_LENGTH__" />
 </div>
 <br>
 <div>
-	<label class="label" for="studentCode">Code: </label>
-	<input id="studentCode" name="studentCode" type="text" />
+    <label class="label" for="studentCode">Code: </label>
+    <input id="studentCode" name="studentCode" type="text" />
 </div>
 <br>
 <div>
-	<label class="label" for="retrieve"></label>
-	<button id="retrieve" name="retrieve" onclick="retrievePaper()" type="button">Retrieve paper</button>
+    <label class="label" for="retrieve"></label>
+    <button id="retrieve" name="retrieve" onclick="retrievePaper()" type="button">Retrieve paper</button>
 </div>
 <div>
 
@@ -108,50 +108,50 @@ htmlsrc_w_solutions = """
 <meta charset="UTF-8" />
 <style>
 body {
-	padding: 2em;
+    padding: 2em;
 }
 
 label {
     font-weight: bold;
     font-style: italic;
-	font-size: medium;
+    font-size: medium;
     width: 12em;
     display: inline-block;
 }
 
 button {
-	font-weight: bold;
-	margin-top: 1em;
-	line-height: 2;
+    font-weight: bold;
+    margin-top: 1em;
+    line-height: 2;
 }
 
 </style>
 
 <script>
-	function retrievePaper() {
-		var id = document.getElementById('studentID').value;
-		if( !id || id.length!=__SID_LENGTH__ ) {
-			alert("Invalid student number!");
-			return;
-		}
-		var code = document.getElementById('studentCode').value;
-		code = code.replace(/,/g,'')
-		if( !code || code.length!=__CODE_LENGTH__ ) {
-			alert("Invalid code!");
-			return;
-		}
-		var which = '__TESTNAME__'
-		window.location.href = which+"_"+id+"_"+code+".pdf";
-	}
-	function retrieveSolution() {
-		var id = document.getElementById('studentID').value;
-		if( !id || id.length!=__SID_LENGTH__ ) {
-			alert("Invalid student number!");
-			return;
-		}
-		var which = '__TESTNAME__'
-		window.location.href = which+"_solutions_"+id+".pdf";
-	}
+    function retrievePaper() {
+        var id = document.getElementById('studentID').value;
+        if( !id || id.length!=__SID_LENGTH__ ) {
+            alert("Invalid student number!");
+            return;
+        }
+        var code = document.getElementById('studentCode').value;
+        code = code.replace(/,/g,'')
+        if( !code || code.length!=__CODE_LENGTH__ ) {
+            alert("Invalid code!");
+            return;
+        }
+        var which = '__TESTNAME__'
+        window.location.href = which+"_"+id+"_"+code+".pdf";
+    }
+    function retrieveSolution() {
+        var id = document.getElementById('studentID').value;
+        if( !id || id.length!=__SID_LENGTH__ ) {
+            alert("Invalid student number!");
+            return;
+        }
+        var which = '__TESTNAME__'
+        window.location.href = which+"_solutions_"+id+".pdf";
+}
 </script>
 </head>
 
@@ -172,23 +172,23 @@ your __CODE_LENGTH__-digit &ldquo;return code&rdquo; from <a href="http://canvas
 <p><i>NOTE:</i> the request will fail if incorrect information is entered.<p>
 
 <div>
-	<label class="label" for="studentID">Student number: </label>
-	<input id="studentID" name="studentID" type="text" maxlength="__SID_LENGTH__" />
+    <label class="label" for="studentID">Student number: </label>
+    <input id="studentID" name="studentID" type="text" maxlength="__SID_LENGTH__" />
 </div>
 <br>
 <div>
-	<label class="label" for="studentCode">Code: </label>
-	<input id="studentCode" name="studentCode" type="text" />
+    <label class="label" for="studentCode">Code: </label>
+    <input id="studentCode" name="studentCode" type="text" />
 </div>
 <br>
 <div>
-	<label class="label" for="retrieve"></label>
-	<button id="retrieve" name="retrieve" onclick="retrievePaper()" type="button">Retrieve paper</button>
+    <label class="label" for="retrieve"></label>
+    <button id="retrieve" name="retrieve" onclick="retrievePaper()" type="button">Retrieve paper</button>
 </div>
 <br>
 <div>
-	<label class="label" for="solution"></label>
-	<button id="solution" name="solution" onclick="retrieveSolution()" type="button">Retrieve solutions</button>
+    <label class="label" for="solution"></label>
+    <button id="solution" name="solution" onclick="retrieveSolution()" type="button">Retrieve solutions</button>
 </div>
 <div>
 

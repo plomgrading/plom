@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020 Michael Zhang
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 #
 # Copying and distribution of this file, with or without modification,
@@ -9,30 +9,31 @@
 # without any warranty.
 
 # Not really server deps
-PyQt5==5.15.4
+PyQt5==5.15.6
 PyQt5-sip==12.9.0
 
-aiohttp==3.7.4.post0
+aiohttp==3.8.1
 appdirs==1.4.4
 canvasapi==2.2.0
+exif==1.3.4
 file-magic==0.4.0
-importlib-resources==5.3.0
+importlib-resources==5.4.0
 imutils==0.5.4
 lapsolver==1.1.0
 numpy==1.19.5
-opencv-python==4.5.4.58
-packaging==21.0
+opencv-python==4.5.4.60
+packaging==21.3
 pandas==1.1.5
 passlib==1.7.4
 peewee==3.14.8
 Pillow==8.4.0
-pycparser==2.20
-pymupdf==1.19.1
+pycparser==2.21
+pymupdf==1.19.3
 pyzbar==0.1.8
 requests==2.26.0
 requests-toolbelt==0.9.1
-scikit-learn==1.0.1
-segno==1.3.3
+scikit-learn==1.0.2
+segno==1.4.1
 stdiomask==0.0.6
 toml==0.10.2
 tqdm==4.62.3

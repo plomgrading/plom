@@ -32,8 +32,8 @@ class CommandCross(CommandTool):
 
 
 class CrossItem(QGraphicsPathItem):
-    def __init__(self, pt, style, parent=None):
-        super(CrossItem, self).__init__()
+    def __init__(self, pt, style):
+        super().__init__()
         self.saveable = True
         self.pt = pt
         self.path = QPainterPath()
