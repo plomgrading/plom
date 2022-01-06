@@ -1775,7 +1775,7 @@ class Manager(QWidget):
             self.ui.userListTW.insertRow(r)
 
             # change the last activity timestamp to be human readable
-            time = arrow.get(dat[2], 'YY:MM:DD-HH:mm:ss')
+            time = arrow.get(dat[2], "YY:MM:DD-HH:mm:ss")
             dat[2] = time.humanize()
 
             # rjust(4) entries so that they can sort like integers... without actually being integers
