@@ -1871,14 +1871,16 @@ class Manager(QWidget):
         if len(ri) == 0:
             return
 
-        selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+        selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
         if "manager" in selectedUsers:
-            ErrorMessage("You cannot force-logout the manager. To logout, click on the Quit button.").exec_()
+            ErrorMessage(
+                "You cannot force-logout the manager. To logout, click on the Quit button."
+            ).exec_()
             return
         if (
             SimpleMessage(
-                'Are you sure you want to force-logout users {}?'.format(selectedUsers)
+                "Are you sure you want to force-logout users {}?".format(selectedUsers)
                 # do something about this formatting, right now it's just a python list
             ).exec_()
             == QMessageBox.Yes
@@ -1892,7 +1894,7 @@ class Manager(QWidget):
         if len(ri) == 0:
             return
 
-        selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+        selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
         # Surreptitiously removes HAL because it generates some weird error
         if "HAL" in selectedUsers:
@@ -1903,7 +1905,7 @@ class Manager(QWidget):
 
         if (
             SimpleMessage(
-                'Are you sure you want to enable user(s) {}?'.format(selectedUsers)
+                "Are you sure you want to enable user(s) {}?".format(selectedUsers)
                 # do something about this formatting, right now it's just a python list
             ).exec_()
             == QMessageBox.Yes
@@ -1917,7 +1919,7 @@ class Manager(QWidget):
         if len(ri) == 0:
             return
 
-        selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+        selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
         if "HAL" in selectedUsers:
             ErrorMessage(
@@ -1931,7 +1933,7 @@ class Manager(QWidget):
 
         if (
             SimpleMessage(
-                'Are you sure you want to disable user(s) {}?'.format(selectedUsers)
+                "Are you sure you want to disable user(s) {}?".format(selectedUsers)
                 # do something about this formatting, right now it's just a python list
             ).exec_()
             == QMessageBox.Yes
@@ -1945,7 +1947,9 @@ class Manager(QWidget):
         if len(ri) == 0:
             return
         if len(ri) > 7:
-            ErrorMessage("You can only change the password of one user at a time.").exec()
+            ErrorMessage(
+                "You can only change the password of one user at a time."
+            ).exec()
             return
 
         r = ri[0].row()
