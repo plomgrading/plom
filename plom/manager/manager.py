@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
-# Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2021-2022 Elizabeth Xiao
 
 from collections import defaultdict
 import csv
@@ -408,8 +408,6 @@ class Manager(QWidget):
             if password:
                 self.login()
 
-        self.has_unperformed_action = False
-
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
         self.ui.closeButton.clicked.connect(self.closeWindow)
@@ -579,20 +577,11 @@ class Manager(QWidget):
         self.initDiscardTab()
 
     def refreshScanTab(self):
-        if self.has_unperformed_action:
-            msg = SimpleMessage(
-                "You have not performed your actions in the Unknown Pages section.\n"
-                "Are you sure you want to refresh the scanning tab?"
-            )
-            if msg.exec_() == QMessageBox.No:
-                return
-
         self.refreshIList()
         self.refreshSList()
         self.refreshUList()
         self.refreshCList()
         self.refreshDList()
-        self.has_unperformed_action = False
 
     def initScanStatusTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -995,7 +984,6 @@ class Manager(QWidget):
                         resources.read_binary(plom.client.icons, "manager_hw.svg")
                     )
                     self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-            self.has_unperformed_action = True
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
