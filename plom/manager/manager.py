@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Elizabeth Xiao
 
 from collections import defaultdict
 import csv
