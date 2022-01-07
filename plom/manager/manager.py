@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import arrow
 
 import urllib3
 
@@ -1933,6 +1934,13 @@ class Manager(QWidget):
         for u in uDict:
             dat = uDict[u]
             self.ui.userListTW.insertRow(r)
+
+            # change the last activity to be human readable
+            rawTimestamp = dat[2]
+
+            time = arrow.get(rawTimestamp, "YY:MM:DD-HH:mm:ss")
+            dat[2] = time.humanize()
+
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
             for k in range(6):
@@ -1948,6 +1956,9 @@ class Manager(QWidget):
 
             if u in ["manager", "scanner", "reviewer"]:
                 self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
+
+            # add tooltip to show timestamp when hovering over human readable description
+            self.ui.userListTW.item(r, 3).setToolTip(rawTimestamp)
 
             r += 1
 

@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Elizabeth Xiao
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -29,6 +30,7 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
 
 client_install_requires = [
     "appdirs>=1.4.3",
+    "arrow>=1.2.1",
     "toml>=0.10.0",
     "packaging",
     "passlib",
