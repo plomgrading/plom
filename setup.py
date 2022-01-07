@@ -30,7 +30,7 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
 
 client_install_requires = [
     "appdirs>=1.4.3",
-    "arrow>=1.2.1",
+    "arrow>=1.1.1",
     "toml>=0.10.0",
     "packaging",
     "passlib",
