@@ -300,7 +300,6 @@ class UnknownViewWindow(QDialog):
         self.dy = self.view.verticalScrollBar().value()
         self.theta = 0
         self.initTabs()
-        self.show()
 
     def updateImage(self, fnames):
         """Pass file to the view to update the image"""
