@@ -433,7 +433,8 @@ class Manager(QWidget):
         self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
-        self.ui.enabDisabB.clicked.connect(self.toggleEnableDisable)
+        self.ui.enableUserB.clicked.connect(self.enableUsers)
+        self.ui.disableUserB.clicked.connect(self.disableUsers)
         self.ui.changePassB.clicked.connect(self.changeUserPassword)
         self.ui.newUserB.clicked.connect(self.createUser)
 
@@ -1831,7 +1832,7 @@ class Manager(QWidget):
             ]
         )
         self.ui.userListTW.setSortingEnabled(True)
-        self.ui.userListTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.userListTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def initProgressQUTabs(self):
@@ -1869,8 +1870,14 @@ class Manager(QWidget):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
+        if len(ri) > 7:
+            ErrorMessage("You can only log out one user at a time (for now).").exec_()
+            return
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
+        if user == "manager":
+            ErrorMessage("You are the manager! To logout, click on the Quit button.").exec_()
+            return
         if (
             SimpleMessage(
                 'Are you sure you want to force-logout user "{}"?'.format(user)
@@ -1880,31 +1887,54 @@ class Manager(QWidget):
             self.msgr.clearAuthorisationUser(user)
             self.refreshUserList()
 
-    def toggleEnableDisable(self):
+    def enableUsers(self):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
-        r = ri[0].row()
-        user = self.ui.userListTW.item(r, 0).text()
-        if user == "manager":
-            ErrorMessage("You cannot disable the manager.").exec_()
-            return
+
+        selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+
         if (
             SimpleMessage(
-                'Are you sure you want to toggle enable/disable user "{}"?'.format(user)
+                'Are you sure you want to enable user(s) {}?'.format(selectedUsers)
+                # do something about this formatting, right now it's just a python list
             ).exec_()
             == QMessageBox.Yes
         ):
-            if self.ui.userListTW.item(r, 1).text() == "True":
-                self.msgr.setUserEnable(user, False)
-            else:
+            for user in selectedUsers:
                 self.msgr.setUserEnable(user, True)
+            self.refreshUserList()
+
+    def disableUsers(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
+            return
+
+        selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+
+        if "manager" in selectedUsers:
+            ErrorMessage("You cannot disable the manager.").exec_()
+            return
+
+        if (
+            SimpleMessage(
+                'Are you sure you want to disable user(s) {}?'.format(selectedUsers)
+                # do something about this formatting, right now it's just a python list
+            ).exec_()
+            == QMessageBox.Yes
+        ):
+            for user in selectedUsers:
+                self.msgr.setUserEnable(user, False)
             self.refreshUserList()
 
     def changeUserPassword(self):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
+        if len(ri) > 7:
+            ErrorMessage("You can only change the password of one user at a time.").exec()
+            return
+
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(name=user)
