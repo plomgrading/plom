@@ -4,7 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
-# Copyright (C) 2022 Elizabeth Xiao
+# Copyright (C) 2021-2022 Elizabeth Xiao
 
 from collections import defaultdict
 import csv
@@ -161,7 +161,7 @@ class QVHistogram(QDialog):
         super().__init__()
         self.question = q
         self.version = v
-        self.setWindowTitle("Histograms")
+        self.setWindowTitle("Histograms for question {} version {}".format(q, v))
         self.hist = hist
         tot = 0
         mx = 0
@@ -176,8 +176,7 @@ class QVHistogram(QDialog):
                     dist[im] = 0
                 dist[im] += s
 
-        grid = QVBoxLayout()
-        grid.addWidget(QLabel("Histograms for question {} version {}".format(q, v)))
+        grid = QGridLayout()
 
         self.eG = QGroupBox("All markers")
         gg = QVBoxLayout()
@@ -194,7 +193,11 @@ class QVHistogram(QDialog):
             gp.addWidget(pb)
         gg.addLayout(gp)
         self.eG.setLayout(gg)
-        grid.addWidget(self.eG)
+        grid.addWidget(self.eG, 0, 0)
+
+        max_number_of_rows = 4  # should depend on user's viewport
+        current_row = 1
+        current_column = 0
 
         self.uG = {}
         for u in self.hist:
@@ -217,7 +220,10 @@ class QVHistogram(QDialog):
                 gp.addWidget(pb)
             gg.addLayout(gp)
             self.uG[u].setLayout(gg)
-            grid.addWidget(self.uG[u])
+            grid.addWidget(self.uG[u], current_row, current_column)
+            current_row = (current_row + 1) % max_number_of_rows
+            if current_row == 0:
+                current_column = current_column + 1
 
         self.cB = QPushButton("&Close")
         self.cB.clicked.connect(self.accept)
