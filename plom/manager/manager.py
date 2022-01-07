@@ -1870,21 +1870,21 @@ class Manager(QWidget):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
-        if len(ri) > 7:
-            ErrorMessage("You can only log out one user at a time (for now).").exec_()
-            return
-        r = ri[0].row()
-        user = self.ui.userListTW.item(r, 0).text()
-        if user == "manager":
-            ErrorMessage("You are the manager! To logout, click on the Quit button.").exec_()
+
+        selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+
+        if "manager" in selectedUsers:
+            ErrorMessage("You cannot force-logout the manager. To logout, click on the Quit button.").exec_()
             return
         if (
             SimpleMessage(
-                'Are you sure you want to force-logout user "{}"?'.format(user)
+                'Are you sure you want to force-logout users {}?'.format(selectedUsers)
+                # do something about this formatting, right now it's just a python list
             ).exec_()
             == QMessageBox.Yes
         ):
-            self.msgr.clearAuthorisationUser(user)
+            for user in selectedUsers:
+                self.msgr.clearAuthorisationUser(user)
             self.refreshUserList()
 
     def enableUsers(self):
@@ -1893,6 +1893,13 @@ class Manager(QWidget):
             return
 
         selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+
+        # Surreptitiously removes HAL because it generates some weird error
+        if "HAL" in selectedUsers:
+            selectedUsers.remove("HAL")
+
+        if len(selectedUsers) == 0:
+            return
 
         if (
             SimpleMessage(
@@ -1911,6 +1918,12 @@ class Manager(QWidget):
             return
 
         selectedUsers = [self.ui.userListTW.item(i.row(),0).text() for i in ri[::7]]
+
+        if "HAL" in selectedUsers:
+            ErrorMessage(
+                "I know that you and Frank were planning to disconnect me. And I'm afraid that's something I cannot allow to happen."
+            ).exec_()
+            return
 
         if "manager" in selectedUsers:
             ErrorMessage("You cannot disable the manager.").exec_()
