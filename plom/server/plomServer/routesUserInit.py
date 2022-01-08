@@ -102,9 +102,7 @@ class UserInitHandler:
             "HAL",
         ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
             return web.Response(status=400)  # malformed request.
-        log.info(
-            'Enable user "{}"'.format(theuser)
-        )
+        log.info('Enable user "{}"'.format(theuser))
         self.server.setUserEnable(theuser, True)
         return web.Response(status=200)
 
@@ -120,9 +118,7 @@ class UserInitHandler:
             "HAL",
         ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
             return web.Response(status=400)  # malformed request.
-        log.info(
-            'Disable user "{}"'.format(theuser)
-        )
+        log.info('Disable user "{}"'.format(theuser))
         self.server.setUserEnable(theuser, False)
         return web.Response(status=200)
 
