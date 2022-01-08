@@ -1214,12 +1214,27 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def setUserEnable(self, someuser, enableFlag):
+    def enableUser(self, someuser):
         self.SRmutex.acquire()
         try:
             response = self.put(
-                f"/enableDisable/{someuser}",
-                json={"user": self.user, "token": self.token, "enableFlag": enableFlag},
+                f"/enable/{someuser}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
+    def disableUser(self, someuser):
+        self.SRmutex.acquire()
+        try:
+            response = self.put(
+                f"/disable/{someuser}",
+                json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()
         except requests.HTTPError as e:

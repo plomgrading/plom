@@ -90,9 +90,9 @@ class UserInitHandler:
             log.info('Manager failed to create/modify user "{}"'.format(theuser))
             return web.Response(text=rval[1], status=406)
 
-    # @routes.put("/enableDisable/{user}")
-    async def setUserEnable(self, request):
-        log_request("setUserEnable", request)
+    # @routes.put("/enable/{user}")
+    async def enableUser(self, request):
+        log_request("enableUser", request)
         data = await request.json()
         if not data["user"] == "manager":
             return web.Response(status=400)  # malformed request.
@@ -103,9 +103,27 @@ class UserInitHandler:
         ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
             return web.Response(status=400)  # malformed request.
         log.info(
-            'Set enable/disable for User "{}" = {}'.format(theuser, data["enableFlag"])
+            'Enable user "{}"'.format(theuser)
         )
-        self.server.setUserEnable(theuser, data["enableFlag"])
+        self.server.setUserEnable(theuser, True)
+        return web.Response(status=200)
+
+    # @routes.put("/disable/{user}")
+    async def disableUser(self, request):
+        log_request("disableUser", request)
+        data = await request.json()
+        if not data["user"] == "manager":
+            return web.Response(status=400)  # malformed request.
+        theuser = request.match_info["user"]
+        if theuser in [
+            "manager",
+            "HAL",
+        ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
+            return web.Response(status=400)  # malformed request.
+        log.info(
+            'Disable user "{}"'.format(theuser)
+        )
+        self.server.setUserEnable(theuser, False)
         return web.Response(status=200)
 
     # @routes.put("/users/{user}")
@@ -175,4 +193,5 @@ class UserInitHandler:
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
         router.add_post("/authorisation/{user}", self.createModifyUser)
-        router.add_put("/enableDisable/{user}", self.setUserEnable)
+        router.add_put("/enable/{user}", self.enableUser)
+        router.add_put("/disable/{user}", self.disableUser)

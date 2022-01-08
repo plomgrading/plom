@@ -1911,7 +1911,7 @@ class Manager(QWidget):
             == QMessageBox.Yes
         ):
             for user in selectedUsers:
-                self.msgr.setUserEnable(user, True)
+                self.msgr.enableUser(user)
             self.refreshUserList()
 
     def disableUsers(self):
@@ -1939,7 +1939,7 @@ class Manager(QWidget):
             == QMessageBox.Yes
         ):
             for user in selectedUsers:
-                self.msgr.setUserEnable(user, False)
+                self.msgr.disableUser(user)
             self.refreshUserList()
 
     def changeUserPassword(self):
