@@ -130,7 +130,9 @@ def main():
     print("Creating fake-scan data")
     with working_directory(args.server_dir):
         # this creates two batches of fake hw - prefixes = hwA and hwB
-        subprocess.check_call(split(f"python3 -m plom.produce.rando_homework_scribbler -w 1234 -s {server}"))
+        subprocess.check_call(
+            split(f"python3 -m plom.produce.homework_scribbler -w 1234 -s {server}")
+        )
 
         # TODO: this is fragile, should not hardcode these student numbers!
         A = "semiloose.10433917._.pdf"
