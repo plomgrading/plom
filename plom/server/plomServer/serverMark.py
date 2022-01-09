@@ -139,7 +139,8 @@ def MreturnMarkedTask(
         question_number (int): Marked queston number.
         version_number (int): Marked question version number.
         mark (int): Question mark.
-        annotated_image (bytearray): Marked image of question.
+        annotated_image (bytearray): Marked image of question.  Currently
+            accepts jpeg or png.
         plomdat (bytearray): Plom data file used for saving marking information in
             editable format.   TODO: should be json?
         rubrics (list[str]): Return the list of rubric IDs used
@@ -153,12 +154,9 @@ def MreturnMarkedTask(
             [False, Error message of either mismatching codes or database owning the task.]
             [True, number of graded tasks, total number of tasks.]
     """
-    annotated_filename = "markedQuestions/G{}.png".format(task_code[1:])
-    plom_filename = "markedQuestions/plomFiles/G{}.plom".format(task_code[1:])
-
     # do sanity checks on incoming annotation image file
-    # Check the annotated_image is valid png - just check header presently
-    imgtype = imghdr.what(annotated_filename, h=annotated_image)
+    # first the image header to determine the filetype and check if admissible
+    imgtype = imghdr.what(None, h=annotated_image)
     if imgtype not in ("png", "jpg", "jpeg"):
         errstr = f'Malformed annotated image file: expected png/jpg got "{imgtype}"'
         log.error(errstr)
@@ -170,6 +168,9 @@ def MreturnMarkedTask(
         errstr = f"Checksum mismatch: annotated image data has {md5} but client said {annotated_image_md5}"
         log.error(errstr)
         return [False, errstr]
+
+    annotated_filename = f"markedQuestions/G{task_code[1:]}.{imgtype}"
+    plom_filename = f"markedQuestions/plomFiles/G{task_code[1:]}.plom"
 
     # Sanity check the plomfile
     # TODO: ok to read plomdat twice?  Maybe save the json later
