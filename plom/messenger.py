@@ -414,7 +414,8 @@ class Messenger(BaseMessenger):
             "integrity_check": integrity_check,
             "image_md5s": image_md5_list,
         }
-        mime_type = mimetypes.guess_type(annotated_img)[0]
+        # Python 3.6 fails on pathlib.Path. remove `str` when we drop Python 3.6
+        mime_type = mimetypes.guess_type(str(annotated_img))[0]
         dat = MultipartEncoder(
             fields={
                 "param": json.dumps(param),
