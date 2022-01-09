@@ -385,8 +385,8 @@ class Annotator(QWidget):
                 there is an integer for precise usage.
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
-            saveName (str/pathlib.Path): file (and dir, optionally) of the
-                basename to save things (no .png extension)
+            saveName (str/pathlib.Path): file name (and dir, optionally)
+                of the basename to save things (no .png/.jpg extension)
             maxMark (int): maximum possible score for that test question
             plomDict (dict): a dictionary of annotation information.
                 Contains sufficient information to recreate the annotation

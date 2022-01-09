@@ -978,8 +978,8 @@ class PageScene(QGraphicsScene):
 
         args:
             basename (str/pathlib.Path): where to save, we will add a png
-                or jpg extension added to it.  If the file already exists,
-                it will be overwritten.
+                or jpg extension to it.  If the file already exists, it
+                will be overwritten.
 
         returns:
             pathlib.Path: the file we just saved to, including jpg or png.
