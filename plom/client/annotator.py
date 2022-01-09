@@ -1658,7 +1658,7 @@ class Annotator(QWidget):
         """Capture the annotated pages as a bitmap and a .plom file.
 
         1. Renders the current scene as a static bitmap.
-        2. Retrieves current annotations in reverse cronological order.
+        2. Retrieves current annotations in reverse chronological order.
         3. Adds varous other metadata.
         4. Writes JSON into the .plom file.
 
