@@ -22,7 +22,7 @@ file-magic==0.4.0
 importlib-resources==5.4.0
 imutils==0.5.4
 lapsolver==1.1.0
-numpy==1.19.5
+numpy==1.21.0
 opencv-python==4.5.4.60
 packaging==21.3
 pandas==1.1.5
