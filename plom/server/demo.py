@@ -28,6 +28,10 @@ class PlomDemoServer(PlomServer):
     >>> demo.pid     # doctest: +SKIP
     14242
 
+    The randomly-generated directory name of the server:
+    >>> str(demo.basedir)    # doctest: +SKIP
+    /home/user/plomdemo_s7j9x
+
     We can then get the credientials needed to interact with the server:
     >>> demo.get_env_vars()    # doctest: +NORMALIZE_WHITESPACE
       {'PLOM_SERVER': 'localhost:41981',
@@ -51,11 +55,17 @@ class PlomDemoServer(PlomServer):
     (Here these are performed in an interactive Python shell but could
     also be done from the command line).
 
-    TODO: make the demo less random so that we get predictable output from plom-finish.
+    Build papers
+    >>> from plom.produce import build_database, build_papers
+    >>> print(build_database(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]))   # doctest: +ELLIPSIS
+    DB entry for test 0001: ...
+
+    >>> build_papers(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
+    Building 2 pre-named papers and 3 blank papers in ...
 
     We can also simulate some nonsense student work:
     >>> from plom.produce import make_scribbles
-    >>> make_scribbles(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])   # doctest: +ELLIPSIS
+    >>> make_scribbles(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
     Annotating papers with fake student data and scribbling on pages...
 
     This can also be run from the command line using
