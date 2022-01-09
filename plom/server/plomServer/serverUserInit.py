@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
-import hashlib
 import json
-import os
-import uuid
 import logging
+import os
 
 log = logging.getLogger("servUI")
 
@@ -23,7 +21,7 @@ def validate(self, user, token):
     # log.debug(f'Validating user "{user}"')
     try:
         dbToken = self.DB.getUserToken(user)
-    except ValueError as e:
+    except ValueError:
         log.warning(f'User "{user}" tried a token but we have no such user!')
         return False
     if not dbToken:
