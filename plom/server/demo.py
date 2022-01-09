@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from pathlib import Path
@@ -19,7 +19,7 @@ class PlomDemoServer(PlomServer):
 
     For example:
 
-    >>> demo = PlomDemoServer(port=41981, num_papers=5, scans=False)    # doctest: +ELLIPSIS
+    >>> demo = PlomDemoServer(port=41981, num_papers=5, scans=False)   # doctest: +ELLIPSIS
     Making a 5-paper demo...
 
     >>> demo.process_is_running()
@@ -44,17 +44,21 @@ class PlomDemoServer(PlomServer):
     >>> subprocess.call(["plom-finish", "status"], env=env)   # doctest: +SKIP
     1
 
+    We can upload a classlist to our server:
+    >>> subprocess.check_call(["plom-build", "class", "--demo"], env=env)
+    0
+
     (Here these are performed in an interactive Python shell but could
     also be done from the command line).
 
-    TODO: maybe better to give direct (non-subprocess-based) methods.
     TODO: make the demo less random so that we get predictable output from plom-finish.
 
     We can also simulate some nonsense student work:
     >>> from plom.produce import make_scribbles
-    >>> make_scribbles(env.PLOM_SERVER, env.PLOM_MANAGER_PASSWORD)  # doctest: +SKIP
+    >>> make_scribbles(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])   # doctest: +ELLIPSIS
+    Annotating papers with fake student data and scribbling on pages...
 
-    Which can also be run from the command line using
+    This can also be run from the command line using
     `python3 -m plom.produce.exam_scribbler`.
 
     At that point, we can connect a Plom Client and do some marking.
