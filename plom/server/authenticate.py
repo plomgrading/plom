@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import logging
 import uuid
@@ -108,6 +108,8 @@ class Authority:
         Returns:
             bool: True on match, False otherwise.
         """
+        if not isinstance(password, str):
+            password = ""
         return self.ctx.verify(password, expected_hash)
 
     def create_token(self):
