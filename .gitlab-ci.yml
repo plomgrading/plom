@@ -1133,7 +1133,7 @@ winmintest:
   stage: test
   needs: []
   script:
-  - choco install -y python3 --version 3.9
+  - choco install -y python3 --version 3.9.9
   - refreshenv
   - c:\Python39\Scripts\pip install -r requirements.txt.client
   - refreshenv
@@ -1148,7 +1148,7 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python3 --version 3.9
+  - choco install -y python3 --version 3.9.9
   - refreshenv
   - c:\python39\python -m pip --version
   - c:\python39\python -m pip install --user --upgrade pip
