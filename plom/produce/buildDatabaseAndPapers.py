@@ -45,6 +45,10 @@ def build_papers(
             box for prenamed papers.  None for a default value.
         ycoord (float/None): tweak the y-coordinate of the stamped name/id
             box for prenamed papers.  None for a default value.
+
+    Raises:
+        PlomConflict: server does not yet have a version map database, say
+            b/c build_database has not yet been called.
     """
     msgr = start_messenger(server, password)
 

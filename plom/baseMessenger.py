@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 
 from io import BytesIO
@@ -18,11 +18,11 @@ from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomAPIException,
+    PlomConflict,
     PlomConnectionError,
     PlomBadTagError,
     PlomExistingLoginException,
     PlomSSLError,
-    PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
 )
@@ -277,37 +277,36 @@ class BaseMessenger:
             self.SRmutex.release()
 
     def getQuestionVersionMap(self, papernum):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/admin/questionVersionMap/{papernum}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/admin/questionVersionMap/{papernum}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                elif response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return {int(q): v for q, v in response.json().items()}
 
     def getGlobalQuestionVersionMap(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/questionVersionMap",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/questionVersionMap",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                elif response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
@@ -421,7 +420,7 @@ class BaseMessenger:
         self.SRmutex.acquire()
         try:
             response = self.patch(
-                f"/tags",
+                "/tags",
                 json={"user": self.user, "token": self.token, "tag_text": tag_text},
             )
             response.raise_for_status()
