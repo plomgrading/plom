@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -807,27 +807,6 @@ class UploadHandler:
         else:
             raise web.HTTPInternalServerError(text=summary)
 
-    # TODO: would be nice to use @authenticate_by_token, see comments in routeutils.py
-    @authenticate_by_token_required_fields([])
-    def getPageVersionMap(self, data, request):
-        """Get the mapping between page number and version for one test.
-
-        Returns:
-            dict: keyed by page number. Note keys will be strings b/c of
-                json limitations; you may want to convert back to int.
-
-        Note: likely deprecated: not used by Plom itself and not
-            recommended for anyone else.
-        """
-        # TODO - we weren't using 'spec'
-        # spec = self.server.testSpec
-        paper_idx = request.match_info["papernum"]
-        ver = self.server.DB.getPageVersions(paper_idx)
-        if ver:
-            return web.json_response(ver, status=200)
-        else:
-            return web.Response(status=404)
-
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):
         """Get the mapping between page number and version for all tests.
@@ -986,7 +965,6 @@ class UploadHandler:
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
-        router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
             "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
@@ -995,6 +973,3 @@ class UploadHandler:
         router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
         router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
         router.add_get("/admin/bundlePage", self.getPageFromBundle)
-
-
-##

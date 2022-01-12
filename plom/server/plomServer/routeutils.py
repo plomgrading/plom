@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 """Misc routing utilities"""
@@ -36,8 +36,7 @@ def log_request(request_name, request):
 
 
 # TODO: try to work the @routes decorator in too
-# TODO: does not work if the function to be decorated needs access to `requests`,
-#       see e.g., `routesUpload.getPageVersionMap`
+# TODO: does not work if the function to be decorated needs access to `requests`
 def authenticate_by_token(f):
     """Decorator for authentication by token, logging and field validation.
 
