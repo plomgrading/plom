@@ -23,7 +23,7 @@ from stdiomask import getpass
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
-from plom.plom_exceptions import PlomConflict, PlomExistingDatabase
+from plom.plom_exceptions import PlomExistingDatabase
 from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.produce import start_messenger
 from plom.produce import build_database, build_papers
