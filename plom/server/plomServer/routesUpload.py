@@ -847,7 +847,7 @@ class UploadHandler:
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getPageVersions(paper_idx)
             if not ver:
-                _msg = "We do not yet have a version map: have you built it?"
+                _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)
                 raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
@@ -888,7 +888,7 @@ class UploadHandler:
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getQuestionVersions(paper_idx)
             if not ver:
-                _msg = "We do not yet have a version map: have you built it?"
+                _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)
                 raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
