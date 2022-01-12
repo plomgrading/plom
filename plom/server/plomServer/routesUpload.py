@@ -7,7 +7,7 @@ from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log_request
+from .routeutils import validate_required_fields, log_request, log
 
 
 class UploadHandler:
@@ -816,7 +816,8 @@ class UploadHandler:
             dict: dict of dicts, keyed first by paper index then by page
                 number.  Both keys are strings b/c of json limitations;
                 you may need to iterate and convert back to int.  Fails
-                with 500 Internal Server Error if a test does not exist.
+                with 409 if the version map database has not been built
+                yet.
 
         Note: careful not to confuse this with /admin/questionVersionMap
             which is much more likely what you are looking for.
@@ -828,7 +829,9 @@ class UploadHandler:
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getPageVersions(paper_idx)
             if not ver:
-                return web.Response(status=500)
+                _msg = "There is no version map: have you built the database?"
+                log.warn(_msg)
+                raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
@@ -839,13 +842,16 @@ class UploadHandler:
         Returns:
             dict: keyed by question number.  Note keys will be strings b/c
                 of json limitations; you may need to convert back to int.
-                Fails with 500 Internal Server Error if a test does not
-                exist.
+                Fails with 409 if that paper number no version map, which
+                could be because its out of range or because the database
+                version map has not yet been built.
         """
         paper_idx = request.match_info["papernum"]
         vers = self.server.DB.getQuestionVersions(paper_idx)
         if not vers:
-            return web.Response(status=500)
+            _msg = f"paper {paper_idx} does not (yet?) have a version map"
+            log.warn(_msg)
+            raise web.HTTPConflict(reason=_msg)
         return web.json_response(vers, status=200)
 
     @authenticate_by_token_required_fields([])
@@ -856,8 +862,8 @@ class UploadHandler:
             dict: dict of dicts, keyed first by paper index then by
                 question number.  Both keys will become strings b/c of
                 json limitations; you may need to convert back to int.
-                Fails with 500 Internal Server Error if a test does not
-                exist.
+                Fails with 409 if the version map database has not been
+                built yet.
         """
         spec = self.server.testSpec
         if not spec:
@@ -866,7 +872,9 @@ class UploadHandler:
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getQuestionVersions(paper_idx)
             if not ver:
-                return web.Response(status=500)
+                _msg = "There is no version map: have you built the database?"
+                log.warn(_msg)
+                raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 

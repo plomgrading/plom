@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Elizabeth Xiao
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -29,6 +30,7 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
 
 client_install_requires = [
     "appdirs>=1.4.3",
+    "arrow>=1.1.1",
     "toml>=0.10.0",
     "packaging",
     "passlib",
@@ -109,8 +111,6 @@ setup(
             "plom-scan=plom.scan.__main__:main",
             "plom-manager=plom.manager.__main__:main",
             "plom-finish=plom.finish.__main__:main",
-            "plom-fake-scribbles=plom.produce.faketools:main",
-            "plom-fake-hwscribbles=plom.produce.hwFaker:main",
             "plom-hwscan=plom.scripts.hwscan:main",
             "plom-solutions=plom.solutions.__main__:main",
         ],

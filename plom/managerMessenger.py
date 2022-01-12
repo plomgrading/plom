@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
 from io import StringIO, BytesIO
@@ -75,20 +75,19 @@ class ManagerMessenger(BaseMessenger):
         return response.text
 
     def getGlobalPageVersionMap(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/pageVersionMap",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/pageVersionMap",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                elif response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 

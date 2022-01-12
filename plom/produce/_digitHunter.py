@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020 Colin B. Macdonald
+# Copyright (C) 2020, 2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 """
 Digit hunter extracts random digit images from the MNIST database
 and stores then in a json file (used to create digits.json).  The
-results are used by faketools.py to create ID-pages for the plom-demo.
+results are used by various demo tools to create fake ID-pages.
 This python program not run on a normal Plom (or demo) run, however it
 is being kept in the repo for posterity.
 
