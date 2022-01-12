@@ -352,7 +352,7 @@ def main():
         sv.verifySpec()
         sv.checkCodes()
         print("spec seems ok: we will upload it to the server")
-        msgr = get_messenger(args.server, args.password)
+        msgr = start_messenger(args.server, args.password)
         try:
             # TODO: sv.spec versus sv.get_public_spec_dict()?
             # TODO: think about who is supposed to know/generate the privateSeed
