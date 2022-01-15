@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -202,8 +202,11 @@ def resetUsersToDo(self, uname):
         for x in query:
             x.status = "todo"
             x.user = None
-            # now clean up the qgroup
-            # TODO: why is this code different from db_marks->MdidNotFinish?
+            # TODO: old MdidNotFinish() method did this extra stuff, does it matter?
+            # x.marked = False
+            # x.time = datetime.now()
+            # x.test.marked = False
+            # x.test.save()
             x.save()
             log.info(
                 "Reset user {} question-annotation task {}".format(uname, x.group.gid)

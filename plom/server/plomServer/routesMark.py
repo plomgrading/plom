@@ -183,26 +183,6 @@ class MarkHandler:
 
         return web.json_response(retvals[1:], status=200)
 
-    # @routes.delete("/MK/tasks/{task}")
-    @authenticate_by_token_required_fields(["user"])
-    def MdidNotFinishTask(self, data, request):
-        """Assign tasks that are not graded (untouched) as unfinished in the database.
-
-        Respond with status 200.
-
-        Args:
-            data (dict): Includes the user/token and task code.
-            request (aiohttp.web_request.Request): Request of type DELETE /MK/tasks/`question code`.
-
-        Returns:
-            aiohttp.web_response.Response: Returns a success status indicating the task is unfinished.
-        """
-
-        task_code = request.match_info["task"]
-        self.server.MdidNotFinish(data["user"], task_code)
-
-        return web.json_response(status=200)
-
     # @routes.put("/MK/tasks/{task}")
     async def MreturnMarkedTask(self, request):
         """Save the graded/processes task, extract data and save to database.
@@ -820,7 +800,6 @@ class MarkHandler:
         router.add_get("/MK/tasks/available", self.MgetNextTask)
         router.add_get("/MK/latex", self.MlatexFragment)
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
-        router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)

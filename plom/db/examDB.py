@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from plom.db.tables import *
 from datetime import datetime, timedelta
@@ -190,7 +190,6 @@ class PlomDB:
         IDgetImage,
         ID_get_donotmark_images,
         IDgetImagesOfNotAutoIdentified,
-        IDdidNotFinish,
         ID_id_paper,
         IDgetImageFromATest,
         IDreviewID,
@@ -202,7 +201,6 @@ class PlomDB:
         MgetDoneTasks,
         MgetNextTask,
         MgiveTaskToClient,
-        MdidNotFinish,
         MtakeTaskFromClient,
         Mget_annotations,
         MgetOneImageFilename,
