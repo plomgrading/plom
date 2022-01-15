@@ -418,11 +418,13 @@ appstreamValid:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
 
 
+# TODO: perhaps all deps should be in the docker image?
 docs_sphinx:
   stage: test
   needs: ["docker-image"]
   image: $IM
   before_script:
+    - apt-get --no-install-recommends --yes install tex-gyre
     - pip install myst-parser sphinx sphinx_rtd_theme
   script:
     - pushd doc
