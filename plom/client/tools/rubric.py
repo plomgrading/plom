@@ -1,18 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QTimer, Qt, QPointF
 from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import QUndoCommand, QGraphicsItemGroup, QGraphicsItem
+from PyQt5.QtWidgets import QGraphicsItemGroup, QGraphicsItem
 
-from plom.client.tools.move import CommandMoveItem
+from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
 from plom.client.tools.delta import DeltaItem, GhostDelta
 from plom.client.tools.text import GhostText, TextItem
-
-
-from plom.client.tools.tool import CommandTool, DeleteObject
 
 
 class CommandGroupDeltaText(CommandTool):

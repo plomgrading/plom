@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QCursor, QPainter
-from PyQt5.QtWidgets import QGraphicsView, QApplication
+from PyQt5.QtGui import QPainter
+from PyQt5.QtWidgets import QGraphicsView
 from plom.client.backGrid import BackGrid
 
 

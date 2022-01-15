@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
 
-from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QPointF
+from PyQt5.QtCore import QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import (
     QGraphicsItemGroup,
@@ -13,9 +13,8 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
 )
 
+from plom.client.tools import CommandMoveItem
 from plom.client.tools.pen import CommandPen, PenItem
-from plom.client.tools import CommandMoveItem, log
-from plom.client.tools.tool import DeleteObject
 
 
 class CommandPenArrow(CommandPen):
@@ -108,4 +107,4 @@ class PenArrowItem(QGraphicsItemGroup):
             painter.setBrush(QBrush(QColor(255, 165, 0, 128)))
             painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal item with the default 'paint' method
-        super(PenArrowItem, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)

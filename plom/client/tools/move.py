@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtWidgets import QUndoCommand, QGraphicsItem
@@ -12,7 +12,7 @@ class CommandMoveItem(QUndoCommand):
     # Don't use this for moving text - that gets its own command.
     # Graphicsitems are separate from graphicsTEXTitems
     def __init__(self, xitem, delta):
-        super(CommandMoveItem, self).__init__()
+        super().__init__()
         # The item to move
         self.xitem = xitem
         # The delta-position of that item.
