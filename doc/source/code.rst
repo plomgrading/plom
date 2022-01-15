@@ -44,7 +44,7 @@ Other supporting code
 
 .. automodule:: plom.manager
 
-.. automodule:: plom.produce.faketools
+.. automodule:: plom.produce.scribble_utils
     :members:
 
 TeX Tools
