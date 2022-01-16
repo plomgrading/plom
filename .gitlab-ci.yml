@@ -176,6 +176,18 @@ unittests:
   script:
     - pytest-3 -l --pyargs plom
 
+coverage:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pip install pytest pytest-cov
+    - coverage run -m pytest
+    - coverage report
+    - coverage xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
 
 # Notes:
 # masked out some stuff that deps on tensorflow
