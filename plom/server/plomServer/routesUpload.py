@@ -719,6 +719,20 @@ class UploadHandler:
                 return web.Response(status=404)
 
     async def unknownToExtraPage(self, request):
+        """Map an unknown page onto an extra page.
+
+        args:
+            request (aiohttp.web_request.Request): This has the usual "user"
+                and "token" fields but also:
+                    fileName (str): identifies the UnknownPage.
+                    test (str): paper number to map onto (int passed as str).
+                    question (str): question number (again, an int)
+                    rotation: TODO: doc
+
+        returns:
+            web.Response: 200 if all went well.  409 if we can't do the
+                move due to users logged in.  404 if TODO.
+        """
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "question", "rotation"]
