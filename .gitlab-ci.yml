@@ -185,8 +185,8 @@ coverage:
   script:
     - pip install pytest pytest-cov
     - coverage run -m pytest
-    - coverage report -i
-    - coverage xml -i
+    - coverage report -i --omit="/usr/*"
+    - coverage xml -i --omit="/usr/*"
   artifacts:
     reports:
       cobertura: coverage.xml
