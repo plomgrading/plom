@@ -176,6 +176,8 @@ unittests:
   script:
     - pytest-3 -l --pyargs plom
 
+
+# TODO: may consider merging with unittests job above
 coverage:
   stage: test
   needs: ["docker-image"]
@@ -183,8 +185,8 @@ coverage:
   script:
     - pip install pytest pytest-cov
     - coverage run -m pytest
-    - coverage report
-    - coverage xml
+    - coverage report -i
+    - coverage xml -i
   artifacts:
     reports:
       cobertura: coverage.xml
