@@ -11,7 +11,6 @@ from plom.produce.buildNamedPDF import build_papers_backend
 from plom.produce.buildNamedPDF import check_pdf_and_id_if_needed
 from plom.produce import paperdir as paperdir_name
 from plom.produce import start_messenger
-from plom.plom_exceptions import PlomExistingDatabase
 
 
 def build_papers(
@@ -129,22 +128,20 @@ def build_database(server=None, password=None, vermap={}):
 
     return:
         str: long multiline string of all the version DB entries.
+
+    raises:
+        PlomExistingDatabase
     """
     check_version_map(vermap)
 
     msgr = start_messenger(server, password)
     try:
         status = msgr.TriggerPopulateDB(vermap)
-    except PlomExistingDatabase:
+        # sanity check the version map
+        qvmap = msgr.getGlobalQuestionVersionMap()
+        if vermap:
+            assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
+        return status
+    finally:
         msgr.closeUser()
         msgr.stop()
-        raise
-
-    # grab map and sanity check
-    qvmap = msgr.getGlobalQuestionVersionMap()
-    if vermap:
-        assert qvmap == vermap
-
-    msgr.closeUser()
-    msgr.stop()
-    return status
