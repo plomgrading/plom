@@ -727,7 +727,10 @@ class UploadHandler:
                     fileName (str): identifies the UnknownPage.
                     test (str): paper number to map onto (int passed as str).
                     question (str): question number (again, an int)
-                    rotation: TODO: doc
+                    rotation (str): an integer, presumably a multiple of 90
+                        0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
+                        to support immutable server side images (with in-DB
+                        metadata rotations (Issue #1879).
 
         returns:
             web.Response: 200 if all went well.  409 if we can't do the
