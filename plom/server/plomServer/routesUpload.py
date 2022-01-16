@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -978,6 +978,3 @@ class UploadHandler:
         router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
         router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
         router.add_get("/admin/bundlePage", self.getPageFromBundle)
-
-
-##

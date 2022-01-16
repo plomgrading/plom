@@ -1,17 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import QRectF
 from PyQt5.QtGui import QPen, QBrush, QColor
-from PyQt5.QtWidgets import (
-    QGraphicsEllipseItem,
-    QGraphicsItem,
-)
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
-from plom.client.tools import CommandMoveItem
-from plom.client.tools.tool import CommandTool, DeleteObject
+from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
 
 
 class CommandEllipse(CommandTool):
