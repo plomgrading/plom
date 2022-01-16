@@ -999,11 +999,8 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 3).text(),
                     )
                 except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move unknown {} to extra page - owners of tasks in that test are logged in: {}".format(
-                            self.unknownModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                    ErrorMessage(f"{err}").exec_()
+                # TODO: some other exceptions here
             elif self.unknownModel.item(r, 2).text() == "test":
                 try:
                     if (

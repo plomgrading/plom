@@ -748,11 +748,14 @@ class UploadHandler:
         )  # returns [True], or [False, reason]
         if rval[0]:
             return web.Response(status=200)  # all fine
+        if rval[1] == "owners":  # [False, "owners", owner_list]
+            msg = f'Cannot move unknown {data["fileName"]} to extra page - '
+            msg += "owners of tasks in that test are logged in: "
+            msg += ", ".join(rval[2])
+            log.warn(msg)
+            raise web.HTTPConflict(reason=msg)
         else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)
+            return web.Response(status=404)
 
     async def collidingToTestPage(self, request):
         data = await request.json()

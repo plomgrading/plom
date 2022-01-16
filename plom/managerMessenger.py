@@ -967,7 +967,7 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
+                raise PlomOwnersLoggedInException(response.reason) from None
             if response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find test/question {}/{}.".format(test, question)
