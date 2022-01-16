@@ -15,8 +15,8 @@ arrow==1.2.1
 importlib-resources==5.4.0
 packaging==21.3
 passlib==1.7.4
-requests==2.26.0
+requests==2.27.1
 requests-toolbelt==0.9.1
 stdiomask==0.0.6
 toml==0.10.2
-urllib3==1.26.7
+urllib3==1.26.8
