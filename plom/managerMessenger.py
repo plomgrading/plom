@@ -1398,35 +1398,34 @@ class ManagerMessenger(BaseMessenger):
         return img
 
     def putSolutionImage(self, question, version, fileName):
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "question": question,
-                "version": version,
-                "md5sum": hashlib.md5(open(fileName, "rb").read()).hexdigest(),
-            }
-
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "image": open(fileName, "rb"),  # image
-                }
-            )
-            response = self.put(
-                "/admin/solution",
-                json={"user": self.user, "token": self.token},
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                with open(fileName, "rb") as f:
+                    param = {
+                        "user": self.user,
+                        "token": self.token,
+                        "question": question,
+                        "version": version,
+                        "md5sum": hashlib.md5(f.read()).hexdigest(),
+                    }
+                    f.seek(0)  # seems wasteful to reread the file
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "image": f,
+                        }
+                    )
+                    response = self.put(
+                        "/admin/solution",
+                        json={"user": self.user, "token": self.token},
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def deleteSolutionImage(self, question, version):
         self.SRmutex.acquire()
