@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
 import json
@@ -50,7 +50,8 @@ def sendCollidingFiles(scanMessenger, bundle_name, fileList):
         ps = str(cdat[2]).zfill(2)
         vs = str(cdat[3])
         code = "t{}p{}v{}".format(ts, ps, vs)
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        with open(fname, "rb") as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
         bundle_order = extract_order(fname)
         rmsg = scanMessenger.uploadCollidingPage(
             code,

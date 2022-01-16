@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 
 from collections import defaultdict
 import hashlib
@@ -133,7 +133,8 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
 
         ts, ps, vs = extractTPV(fname.name)
         print("Upload {},{},{} = {} to server".format(ts, ps, vs, fname.name))
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        with open(fname, "rb") as f:
+            md5 = hashlib.md5(f.read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
         rmsg = msgr.uploadTestPage(
             code,
@@ -262,7 +263,8 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
     try:
         SIDQ = defaultdict(list)
         for n, f, q in file_list:
-            md5 = hashlib.md5(open(f, "rb").read()).hexdigest()
+            with open(f, "rb") as fh:
+                md5 = hashlib.md5(fh.read()).hexdigest()
             rmsg = msgr.uploadHWPage(sid, q, n, f, md5, bundle_name, n)
             if not rmsg[0]:
                 raise RuntimeError(
