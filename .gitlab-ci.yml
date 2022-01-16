@@ -177,6 +177,20 @@ unittests:
     - pytest-3 -l --pyargs plom
 
 
+# TODO: may consider merging with unittests job above
+coverage:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pip install pytest pytest-cov
+    - coverage run -m pytest
+    - coverage report -i
+    - coverage xml -i
+  artifacts:
+    reports:
+      cobertura: coverage.xml
+
 # Notes:
 # masked out some stuff that deps on tensorflow
 doctests:
