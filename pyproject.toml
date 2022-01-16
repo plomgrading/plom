@@ -18,3 +18,8 @@ disable = ["not-an-iterable"]
 output-format = "colorized"
 # we have some in-tree deprecated or to-move code that needs tensorflow
 ignored-modules = ["tensorflow", "api_secrets"]
+
+[tool.coverage.report]
+# our CI runs /usr/local stuff for some reason
+# python*.py errors need -i or config match here
+omit = ["*/test_*", "/usr/*", "*/config*"]

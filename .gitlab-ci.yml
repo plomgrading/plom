@@ -183,10 +183,10 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov
+    - pip install pytest pytest-cov coverage[toml]
     - coverage run -m pytest
-    - coverage report -i --omit="/usr/*"
-    - coverage xml -i --omit="/usr/*"
+    - coverage report
+    - coverage xml
   artifacts:
     reports:
       cobertura: coverage.xml
