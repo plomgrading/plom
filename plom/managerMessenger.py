@@ -968,10 +968,6 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 409:
                 raise PlomOwnersLoggedInException(response.reason) from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find test/question {}/{}.".format(test, question)
-                ) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
