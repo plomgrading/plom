@@ -749,17 +749,18 @@ class UploadHandler:
 
         rval = self.server.unknownToExtraPage(
             data["fileName"], data["test"], data["question"], data["rotation"]
-        )  # returns [True], or [False, reason]
+        )
         if rval[0]:
             return web.Response(status=200)  # all fine
-        if rval[1] == "owners":  # [False, "owners", owner_list]
-            msg = f'Cannot move unknown {data["fileName"]} to extra page - '
-            msg += "owners of tasks in that test are logged in: "
-            msg += ", ".join(rval[2])
+        status, code, msg = rval  # have more info on failure
+        if code == "owners":
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
-        log.warn("Unexpected situation: %s", rval[1])
-        raise web.HTTPNotFound(reason=f"Unexpected situation: {rval[1]}")
+        elif code == "notfound":
+            log.warn(msg)
+            raise web.HTTPNotFound(reason=msg)
+        log.warn("Unexpected situation: %s", msg)
+        raise web.HTTPNotFound(reason=f"Unexpected situation: {msg}")
 
     async def collidingToTestPage(self, request):
         data = await request.json()

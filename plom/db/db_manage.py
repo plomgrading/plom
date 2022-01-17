@@ -168,25 +168,44 @@ def testOwnersLoggedIn(self, tref):
 
 
 def moveUnknownToExtraPage(self, file_name, test_number, question):
+    """Map an unknown page onto an extra page.
+
+    args:
+        file_name (str): a path and filename to a an image, e.g.,
+            "pages/unknownPages/unk.16d85240.jpg"
+        test_number (int):
+        question (int):
+
+    returns:
+        tuple: either (True,) if the action worked or a 3-tuple
+            `(False, code, msg)` where code is a short string,
+            which currently can "notfound" or "owners".  `msg`
+            is a human-readable string suitable for an error
+            message.
+    """
     iref = Image.get_or_none(file_name=file_name)
-    if iref is None:  # should not happen
-        return [False, "Cannot find image"]
+    if iref is None:
+        return (False, "notfound", f"Cannot find image {file_name}")
     uref = iref.upages[0]
-    if uref is None:  # should not happen
-        return [False, "Cannot find unknown page for that image."]
+    if uref is None:
+        return (False, "notfound", f"There is no UnknownPage with image {file_name}")
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "Cannot find that test"]
+        return (False, "notfound", f"Cannot find test {test_number}")
+
     # check if all owners of tasks in that test are logged out.
     owners = self.testOwnersLoggedIn(tref)
     if owners:
-        return [False, "owners", owners]
+        msg = f"Cannot move unknown {file_name} to extra page b/c"
+        msg += " owners of tasks in that test are logged in: "
+        msg += ", ".join(owners)
+        return (False, "owners", msg)
 
     # find the qgroup to which the new page should belong
     qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:  # should not happen
-        return [False, "Cannot find that question"]
+    if qref is None:
+        return (False, "notfound", f"Cannot find question {question}")
     version = qref.version  # we'll need the version
     gref = qref.group  # and the parent group
     # find the last expage in that group - if there are expages
