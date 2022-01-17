@@ -1000,7 +1000,8 @@ class Manager(QWidget):
                     )
                 except PlomOwnersLoggedInException as err:
                     ErrorMessage(f"{err}").exec_()
-                # TODO: some other exceptions here
+                except PlomSeriousException as err:
+                    ErrorMessage(f"{err}").exec_()
             elif self.unknownModel.item(r, 2).text() == "test":
                 try:
                     if (

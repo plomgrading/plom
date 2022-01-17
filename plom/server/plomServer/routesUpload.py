@@ -734,7 +734,8 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  409 if we can't do the
-                move due to users logged in.  404 if TODO.
+                move due to users logged in.  404 in all other situations.
+                TODO: rework the 404.
         """
         data = await request.json()
         if not validate_required_fields(
@@ -757,8 +758,8 @@ class UploadHandler:
             msg += ", ".join(rval[2])
             log.warn(msg)
             raise web.HTTPConflict(reason=msg)
-        else:
-            return web.Response(status=404)
+        log.warn("Unexpected situation: %s", rval[1])
+        raise web.HTTPNotFound(reason=f"Unexpected situation: {rval[1]}")
 
     async def collidingToTestPage(self, request):
         data = await request.json()
