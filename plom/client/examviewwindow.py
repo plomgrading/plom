@@ -142,7 +142,7 @@ class ExamView(QGraphicsView):
         if fnames is not None:
             x = 0
             for (n, fn) in enumerate(fnames):
-                qir = QImageReader(fn)
+                qir = QImageReader(str(fn))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())

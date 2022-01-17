@@ -208,7 +208,7 @@ class UnderlyingImages(QGraphicsItemGroup):
         self.images = {}
         x = 0
         for (n, data) in enumerate(image_data):
-            qir = QImageReader(data["filename"])
+            qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
             pix = QPixmap(qir.read())
