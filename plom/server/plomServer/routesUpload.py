@@ -427,6 +427,12 @@ class UploadHandler:
                 return web.Response(status=404)  # page not found at all
 
     async def removeSinglePage(self, request):
+        """Remove the page (as described by its name) and reset any tasks that involve that page.
+        This tries to be as minimal as possible - so, for example, if a tpage is removed, then
+        the question that included that page goes back on the todo-list (after a newpage is uploaded),
+        but at the same time if a TA has used a copy of that page in the annotation of another
+        question, that group is also reset and goes back on the todo-list."""
+
         data = await request.json()
         if not validate_required_fields(
             data,
@@ -675,6 +681,10 @@ class UploadHandler:
             return web.Response(status=404)
 
     async def unknownToTestPage(self, request):
+        """The unknown page is moved to the indicated tpage.
+        The minimal set of groups are reset when this happens
+        - namely the group containing the new tpage.
+        """
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "page", "rotation"]
@@ -741,6 +751,9 @@ class UploadHandler:
                 return web.Response(status=404)
 
     async def collidingToTestPage(self, request):
+        """The group containing the tpage is reset when it is replaced.
+        At the same time, any annotation that involved the old tpage is reset.
+        """
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "page", "version"]
