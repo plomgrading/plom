@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import shutil
 import subprocess
 
@@ -142,18 +141,6 @@ def ID_id_paper(self, *args, **kwargs):
     """
 
     return self.DB.ID_id_paper(*args, **kwargs)
-
-
-def IDdidNotFinish(self, username, test_number):
-    """Tell database to add unfinished ID'ing task to the todo pile.
-
-    Args:
-        username (str): Username with unfinished tasks.
-        test_number (str): Test ID number.
-    """
-
-    self.DB.IDdidNotFinish(username, test_number)
-    return
 
 
 def IDgetImageFromATest(self):

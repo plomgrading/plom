@@ -381,26 +381,6 @@ class IDHandler:
         else:
             raise web.HTTPInternalServerError(reason=msg)
 
-    # @routes.delete("/ID/tasks/{task}")
-    @authenticate_by_token_required_fields(["user"])
-    def IDdidNotFinishTask(self, data, request):
-        """Accept the client's surrender of a previously-claimed identifying task.
-
-        This could occur for example when the client closes with unfinished tasks.
-        Responds with status 200.
-
-        Args:
-            data (dict): A (str:str) dictionary having keys `user` and `token`.
-            request (aiohttp.web_request.Request'): Request of type DELETE /ID/tasks/#TaskNumber.
-
-        Returns:
-            aiohttp.web_response.Response: A response with status 200.
-        """
-
-        testNumber = request.match_info["task"]
-        self.server.IDdidNotFinish(data["user"], testNumber)
-        return web.json_response(status=200)
-
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
     def IDgetImageFromATest(self, data, request):
@@ -572,7 +552,6 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
-        router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
