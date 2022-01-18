@@ -2,22 +2,21 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
 See:
 https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 """
 
-import gzip
 from pathlib import Path
-import pickle
 
 import numpy as np
-import sklearn
 from cv2 import cv2
 import imutils
 from imutils.perspective import four_point_transform
+
+from .model_utils import load_model
 
 
 # define this in order to sort by area of bounding rect
@@ -39,8 +38,10 @@ def get_digit_box(filename, top, bottom):
 
     Args:
         filename (str/pathlib.Path): the image of the ID page.
-        top (int): Top coordinate of the cropping.
-        bottom (int): Bottom coordinate of the cropping.
+        top (int): Top coordinate of the cropping in pixels.
+        bottom (int): Bottom coordinate of the cropping in pixels.  Its
+            often helpful to crop in case there are other large boxes on
+            the page, which might confuse the box-finder.
 
     Returns:
         None: in case of some sort of error, or
@@ -49,7 +50,6 @@ def get_digit_box(filename, top, bottom):
     """
     front_image = cv2.imread(str(filename))
 
-    # TODO: Why do we even pass top and bottom.
     # Extract only the required portion of the image.
     cropped_image = front_image[:][top:bottom]
 
@@ -182,8 +182,8 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
     Args:
         prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
         id_page_file (str/pathlib.Path): File path for the image which includes the ID box.
-        top (int): Top boundary of image.
-        bottom (int): Bottom boundary of image.
+        top (int): Top boundary of image in pixels.
+        bottom (int): Bottom boundary of image in pixels.
         num_digits (int): Number of digits in the student ID.
 
     Returns:
@@ -238,18 +238,14 @@ def compute_probabilities(
 
     Args:
         image_file_paths (dict): A dictionary including the paths of the images.
-        top_coordinate (int): Top boundary of image.
-        bottom_coordinate (int): Bottom boundary of image.
+        top_coordinate (int): Top boundary of image, in pixels.
+        bottom_coordinate (int): Bottom boundary of image, in pixels.
         num_digits (int): Number of digits in the student ID.
 
     Returns:
         dict: A dictionary which involves the probabilities for each image file.
     """
-
-    # load the model
-    filename = f"RF_ML_model_sklearn{sklearn.__version__}.gz"
-    with gzip.open(Path("model_cache") / filename, "rb") as f:
-        prediction_model = pickle.load(f)
+    prediction_model = load_model()
 
     # Dictionary of test numbers their digit-probabilities
     probabilities = {}

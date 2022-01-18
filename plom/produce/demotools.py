@@ -41,6 +41,11 @@ def getDemoClassListLength():
 def buildDemoSourceFiles(basedir=Path("."), solutions=False):
     """Builds the LaTeX source files for the demo.
 
+    Keyword args:
+        basedir (libpath.Path): where to make the files?  We will build
+            in a "sourceVersions" under this directory.
+        solutions (bool): build solutions as well.  Default: False.
+
     Returns:
         bool: True if successful, False if it failed.
     """

@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
 Use sklearn random forest model to read student IDs from ID-pages.
@@ -11,7 +11,6 @@ Relies on use of standard ID template.
 Note: has hardcoded 8-digit student numbers.
 """
 
-import csv
 from pathlib import Path
 
 import requests
@@ -19,7 +18,6 @@ from lapsolver import solve_dense
 import numpy as np
 import sklearn
 
-from plom import specdir
 from .predictStudentID import compute_probabilities
 from .trainRandomForestModel import train_model
 
