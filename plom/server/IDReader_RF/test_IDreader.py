@@ -9,8 +9,12 @@ import numpy as np
 
 from plom.misc_utils import working_directory
 from .idReader import calc_log_likelihood
-from .idReader import is_model_present, download_model, download_or_train_model
-from .model_utils import load_model
+from .model_utils import (
+    load_model,
+    is_model_present,
+    download_model,
+    download_or_train_model,
+)
 from .predictStudentID import get_digit_box, get_digit_prob
 from plom.produce.demotools import buildDemoSourceFiles
 from plom.scan.scansToImages import processFileToBitmaps
@@ -54,7 +58,7 @@ def test_download_or_train_model(tmpdir):
 def test_get_digit_box(tmpdir):
     tmpdir = Path(tmpdir)
     # for persistent debugging:
-    # tmpdir = Path("home/cbm/src/plom/plom.git/tmp")
+    # tmpdir = Path("/home/cbm/src/plom/plom.git/tmp")
     assert buildDemoSourceFiles(basedir=tmpdir)
     # TODO: we should scribble on them here?
     files = processFileToBitmaps(tmpdir / "sourceVersions/version1.pdf", tmpdir)
@@ -70,10 +74,8 @@ def test_get_digit_box(tmpdir):
     # should get a bunch of pixels
     assert len(x) > 100
 
-    # TODO: it downloads even if present!
-    with working_directory(tmpdir):
-        download_or_train_model()
-        model = load_model()
+    download_or_train_model(tmpdir)
+    model = load_model(tmpdir)
 
     # TODO: b/c we didn't scribble, this likely to fail
     x = get_digit_prob(model, id_img, 100, 1950, 8)
