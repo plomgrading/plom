@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -481,7 +481,7 @@ class MarkHandler:
         with MultipartWriter("images") as multipart_writer:
             for file_nam in original_image_paths:
                 multipart_writer.append(open(file_nam, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+            return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
@@ -638,7 +638,7 @@ class MarkHandler:
             multipart_writer.append_json(pages_data)
             for file_name in all_pages_paths:
                 multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+            return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/MK/TMP/whole/{number}/{question}")
     @authenticate_by_token_required_fields([])
