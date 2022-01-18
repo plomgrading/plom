@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 
 import numpy as np
+import PIL.Image
 
 from plom.misc_utils import working_directory
 from .idReader import calc_log_likelihood
@@ -57,6 +58,7 @@ def test_download_or_train_model(tmpdir):
         assert isinstance(m.get_params(), dict)
 
 
+# Bit messy with so many subtests: refactor to a setup / teardown class?
 def test_get_digit_box(tmpdir):
     tmpdir = Path(tmpdir)
     # for persistent debugging:
@@ -81,12 +83,22 @@ def test_get_digit_box(tmpdir):
     # should get a bunch of pixels
     assert len(x) > 100
 
+    # test: list_of_list_of_probabilities
     download_or_train_model(tmpdir)
     model = load_model(tmpdir)
-
     x = get_digit_prob(model, id_img, 100, 1950, 8)
     assert len(x) == 8
     for probs in x:
         assert len(probs) == 10
         for p in probs:
             assert 0 <= p <= 1, "Not a probablility"
+
+    # test: debug_extracts_images
+    with working_directory(tmpdir):
+        x = get_digit_prob(model, id_img, 1, 2000, 8, debug=True)
+    d = tmpdir / "debug_id_reader"
+    assert len(list(d.glob("digit_*"))) == 8
+    for f in d.glob("digit_*"):
+        p = PIL.Image.open(f)
+        assert p.width == p.height == 28
+    assert len(list(d.glob("idbox_*"))) == 1

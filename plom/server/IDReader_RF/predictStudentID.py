@@ -176,7 +176,9 @@ def get_digit_images(ID_box, num_digits):
     return processed_digits_images_list
 
 
-def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
+def get_digit_prob(
+    prediction_model, id_page_file, top, bottom, num_digits, *, debug=True
+):
     """Return a list of probability predictions for the student ID digits on the cropped image.
 
     Args:
@@ -185,6 +187,9 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
         top (int): Top boundary of image in pixels.
         bottom (int): Bottom boundary of image in pixels.
         num_digits (int): Number of digits in the student ID.
+
+    Keyword Args:
+        debug (bool): output the trimmed images into "debug_id_reader/"
 
     Returns:
         list: A list of lists of probabilities.  The outer list is over
@@ -199,7 +204,6 @@ def get_digit_prob(prediction_model, id_page_file, top, bottom, num_digits):
         print("Trouble finding the ID box")
         return []
 
-    debug = True
     if debug:
         dbdir = Path("debug_id_reader")
         dbdir.mkdir(exist_ok=True)
