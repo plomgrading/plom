@@ -4,6 +4,7 @@
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
 from pathlib import Path
+import shutil
 
 import numpy as np
 
@@ -18,6 +19,7 @@ from .model_utils import (
 from .predictStudentID import get_digit_box, get_digit_prob
 from plom.produce.demotools import buildDemoSourceFiles
 from plom.scan.scansToImages import processFileToBitmaps
+from plom.produce.scribble_utils import fill_in_fake_data_on_exams
 
 
 def test_log_likelihood():
@@ -59,11 +61,16 @@ def test_get_digit_box(tmpdir):
     tmpdir = Path(tmpdir)
     # for persistent debugging:
     # tmpdir = Path("/home/cbm/src/plom/plom.git/tmp")
-    assert buildDemoSourceFiles(basedir=tmpdir)
-    # TODO: we should scribble on them here?
-    files = processFileToBitmaps(tmpdir / "sourceVersions/version1.pdf", tmpdir)
 
+    assert buildDemoSourceFiles(basedir=tmpdir)
+
+    shutil.copy(tmpdir / "sourceVersions/version1.pdf", tmpdir / "exam_0001.pdf")
+    miniclass = [{"id": "01234567", "studentName": "Testy McTester"}]
+    fill_in_fake_data_on_exams(tmpdir, miniclass, tmpdir / "foo.pdf")
+
+    files = processFileToBitmaps(tmpdir / "foo.pdf", tmpdir)
     id_img = files[0]
+
     # these will fail if we don't include the box
     x = get_digit_box(id_img, 5, 10)
     assert x is None
@@ -77,6 +84,9 @@ def test_get_digit_box(tmpdir):
     download_or_train_model(tmpdir)
     model = load_model(tmpdir)
 
-    # TODO: b/c we didn't scribble, this likely to fail
     x = get_digit_prob(model, id_img, 100, 1950, 8)
-    assert len(x) == 0 or len(x) == 8
+    assert len(x) == 8
+    for probs in x:
+        assert len(probs) == 10
+        for p in probs:
+            assert 0 <= p <= 1, "Not a probablility"
