@@ -1,6 +1,6 @@
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2021 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2022 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2020 Victoria Schuster"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -41,6 +41,6 @@ https://gitlab.com/plom/plom/-/merge_requests/960).
 More dependencies for the machine-learning-based ID Reader:
 ```
 $ pip3 install termcolor wheel grpcio markdown h5py
-$ pip3 install --user imutils lapsolver opencv-python scikit-learn
+$ pip3 install --user imutils lapsolver opencv-python-headless scikit-learn
 ```
 (Also `tensorflow` if using that ID Reader instead).

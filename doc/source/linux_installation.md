@@ -44,7 +44,7 @@ There are additional dependencies for the machine-learning-based ID Reader:
 ```
   # sudo dnf install python3-termcolor python3-grpcio \
                      python3-markdown python3-h5py
-  # pip install --user imutils lapsolver opencv-python
+  # pip install --user imutils lapsolver opencv-python-headless
 ```
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
@@ -82,7 +82,7 @@ Other stuff we get from pip:
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
         aiohttp pyzbar jpegtran-cffi peewee
-  # python3 -m pip install --user imutils lapsolver opencv-python
+  # python3 -m pip install --user imutils lapsolver opencv-python-headless
   # python3 -m pip install --user scikit-learn
 ```
 Note `python3 -m pip` uses the newly upgraded pip (necessary at least on Ubuntu 18.04).

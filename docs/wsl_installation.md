@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2021 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2021-2022 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2021 Jalal Khouhak"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -35,11 +35,11 @@ sudo apt install \
 ```
 2. `python3 -m pip install --upgrade --user setuptools`
 3. `pip3 install --user testresources`
-4.  Some libraries that are either no in package manager or too old
+4.  Some libraries that are either not in package manager or are too old
 ```
 python3 -m pip install --upgrade --user pymupdf weasyprint imutils \
         aiohttp pyzbar jpegtran-cffi peewee \
-        lapsolver opencv-python
+        lapsolver opencv-python-headless
 ```
 5. `pip3 install --user plom`
 6. Seems to have the same lack of `~/.local/bin` in path, just like on regular Ubuntu.
