@@ -4,6 +4,7 @@
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2021-2022 Elizabeth Xiao
 
 from collections import defaultdict
 import csv
@@ -11,6 +12,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import arrow
 
 import urllib3
 
@@ -159,7 +161,7 @@ class QVHistogram(QDialog):
         super().__init__()
         self.question = q
         self.version = v
-        self.setWindowTitle("Histograms")
+        self.setWindowTitle("Histograms for question {} version {}".format(q, v))
         self.hist = hist
         tot = 0
         mx = 0
@@ -174,8 +176,7 @@ class QVHistogram(QDialog):
                     dist[im] = 0
                 dist[im] += s
 
-        grid = QVBoxLayout()
-        grid.addWidget(QLabel("Histograms for question {} version {}".format(q, v)))
+        grid = QGridLayout()
 
         self.eG = QGroupBox("All markers")
         gg = QVBoxLayout()
@@ -192,7 +193,11 @@ class QVHistogram(QDialog):
             gp.addWidget(pb)
         gg.addLayout(gp)
         self.eG.setLayout(gg)
-        grid.addWidget(self.eG)
+        grid.addWidget(self.eG, 0, 0)
+
+        max_number_of_rows = 4  # should depend on user's viewport
+        current_row = 1
+        current_column = 0
 
         self.uG = {}
         for u in self.hist:
@@ -215,7 +220,10 @@ class QVHistogram(QDialog):
                 gp.addWidget(pb)
             gg.addLayout(gp)
             self.uG[u].setLayout(gg)
-            grid.addWidget(self.uG[u])
+            grid.addWidget(self.uG[u], current_row, current_column)
+            current_row = (current_row + 1) % max_number_of_rows
+            if current_row == 0:
+                current_column = current_column + 1
 
         self.cB = QPushButton("&Close")
         self.cB.clicked.connect(self.accept)
@@ -1926,6 +1934,13 @@ class Manager(QWidget):
         for u in uDict:
             dat = uDict[u]
             self.ui.userListTW.insertRow(r)
+
+            # change the last activity to be human readable
+            rawTimestamp = dat[2]
+
+            time = arrow.get(rawTimestamp, "YY:MM:DD-HH:mm:ss")
+            dat[2] = time.humanize()
+
             # rjust(4) entries so that they can sort like integers... without actually being integers
             self.ui.userListTW.setItem(r, 0, QTableWidgetItem("{}".format(u)))
             for k in range(6):
@@ -1941,6 +1956,9 @@ class Manager(QWidget):
 
             if u in ["manager", "scanner", "reviewer"]:
                 self.ui.userListTW.item(r, 0).setBackground(QBrush(Qt.green))
+
+            # add tooltip to show timestamp when hovering over human readable description
+            self.ui.userListTW.item(r, 3).setToolTip(rawTimestamp)
 
             r += 1
 

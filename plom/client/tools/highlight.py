@@ -1,18 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import (
-    QGraphicsObject,
-    QGraphicsPathItem,
-    QGraphicsItem,
-)
+from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
 from plom.client.tools.pen import CommandPen, PenItem
-from plom.client.tools import CommandMoveItem
-from plom.client.tools.tool import DeleteObject
+from plom.client.tools import CommandMoveItem, DeleteObject
 
 
 class CommandHighlight(CommandPen):

@@ -1,6 +1,6 @@
 <!--
 __copyright__ = "Copyright (C) 2018 Andrew Rechnitzer"
-__copyright__ = "Copyright (C) 2018-2021 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2018-2022 Colin B. Macdonald"
 __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __license__ = "AGPL-3.0-or-later"
  -->
@@ -22,13 +22,15 @@ Tested on Fedora 35.  Some stuff from the package manager:
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
-        python3-urllib3 python3-more-itertools \
-        python3-seaborn python3-cairosvg python3-aiohttp \
-        python3-peewee python3-pandas python3-requests-toolbelt \
-        python3-pip python3-wheel python3-setuptools \
-        python3-toml python3-weasyprint python3-pillow python3-tqdm python3-appdirs \
-        python3-pytest \
+        python3-more-itertools \
+        python3-seaborn python3-cairosvg \
+        python3-aiohttp python3-appdirs python3-arrow \
+        python3-pillow python3-pandas python3-peewee \
         python3-PyMuPDF python3-scikit-learn \
+        python3-stdiomask python3-requests-toolbelt \
+        python3-pip python3-wheel python3-setuptools \
+        python3-toml python3-tqdm python3-urllib3 python3-weasyprint \
+        python3-pytest \
         latexmk tex-dvipng texlive-scheme-basic \
         tex-preview tex-charter tex-exam tex-preprint
 ```

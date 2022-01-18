@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from math import sqrt
@@ -9,8 +9,8 @@ from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QPen, QPainterPath, QBrush, QColor
 from PyQt5.QtWidgets import QGraphicsPathItem, QGraphicsItem
 
+from plom.client.tools import CommandMoveItem
 from plom.client.tools.line import CommandLine, LineItem
-from plom.client.tools.move import CommandMoveItem
 
 
 class CommandArrow(CommandLine):

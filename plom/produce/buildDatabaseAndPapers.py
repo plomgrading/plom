@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 
 from pathlib import Path
@@ -10,8 +10,7 @@ from plom.misc_utils import working_directory
 from plom.produce.buildNamedPDF import build_papers_backend
 from plom.produce.buildNamedPDF import check_pdf_and_id_if_needed
 from plom.produce import paperdir as paperdir_name
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingDatabase
+from plom.produce import start_messenger
 
 
 def build_papers(
@@ -45,15 +44,12 @@ def build_papers(
             box for prenamed papers.  None for a default value.
         ycoord (float/None): tweak the y-coordinate of the stamped name/id
             box for prenamed papers.  None for a default value.
-    """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
 
-    msgr.requestAndSaveToken("manager", password)
+    Raises:
+        PlomConflict: server does not yet have a version map database, say
+            b/c build_database has not yet been called.
+    """
+    msgr = start_messenger(server, password)
 
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
@@ -132,29 +128,20 @@ def build_database(server=None, password=None, vermap={}):
 
     return:
         str: long multiline string of all the version DB entries.
-    """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
 
+    raises:
+        PlomExistingDatabase
+    """
     check_version_map(vermap)
 
-    msgr.requestAndSaveToken("manager", password)
+    msgr = start_messenger(server, password)
     try:
         status = msgr.TriggerPopulateDB(vermap)
-    except PlomExistingDatabase:
+        # sanity check the version map
+        qvmap = msgr.getGlobalQuestionVersionMap()
+        if vermap:
+            assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
+        return status
+    finally:
         msgr.closeUser()
         msgr.stop()
-        raise
-
-    # grab map and sanity check
-    qvmap = msgr.getGlobalQuestionVersionMap()
-    if vermap:
-        assert qvmap == vermap
-
-    msgr.closeUser()
-    msgr.stop()
-    return status

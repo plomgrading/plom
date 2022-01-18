@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import undo_json_packing_of_version_map
 from .routeutils import authenticate_by_token_required_fields
-from .routeutils import validate_required_fields, log_request
+from .routeutils import validate_required_fields, log_request, log
 
 
 class UploadHandler:
@@ -140,7 +140,7 @@ class UploadHandler:
 
         # TODO: unused, we should ensure this matches the data
         # TODO: or why bother passing those in to param?
-        code = request.match_info["tpv"]
+        code = request.match_info["tpv"]  # noqa: F841
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
@@ -807,27 +807,6 @@ class UploadHandler:
         else:
             raise web.HTTPInternalServerError(text=summary)
 
-    # TODO: would be nice to use @authenticate_by_token, see comments in routeutils.py
-    @authenticate_by_token_required_fields([])
-    def getPageVersionMap(self, data, request):
-        """Get the mapping between page number and version for one test.
-
-        Returns:
-            dict: keyed by page number. Note keys will be strings b/c of
-                json limitations; you may want to convert back to int.
-
-        Note: likely deprecated: not used by Plom itself and not
-            recommended for anyone else.
-        """
-        # TODO - we weren't using 'spec'
-        # spec = self.server.testSpec
-        paper_idx = request.match_info["papernum"]
-        ver = self.server.DB.getPageVersions(paper_idx)
-        if ver:
-            return web.json_response(ver, status=200)
-        else:
-            return web.Response(status=404)
-
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):
         """Get the mapping between page number and version for all tests.
@@ -836,7 +815,8 @@ class UploadHandler:
             dict: dict of dicts, keyed first by paper index then by page
                 number.  Both keys are strings b/c of json limitations;
                 you may need to iterate and convert back to int.  Fails
-                with 500 Internal Server Error if a test does not exist.
+                with 409 if the version map database has not been built
+                yet.
 
         Note: careful not to confuse this with /admin/questionVersionMap
             which is much more likely what you are looking for.
@@ -846,7 +826,9 @@ class UploadHandler:
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getPageVersions(paper_idx)
             if not ver:
-                return web.Response(status=500)
+                _msg = "There is no version map: have you built the database?"
+                log.warn(_msg)
+                raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
@@ -857,13 +839,16 @@ class UploadHandler:
         Returns:
             dict: keyed by question number.  Note keys will be strings b/c
                 of json limitations; you may need to convert back to int.
-                Fails with 500 Internal Server Error if a test does not
-                exist.
+                Fails with 409 if that paper number no version map, which
+                could be because its out of range or because the database
+                version map has not yet been built.
         """
         paper_idx = request.match_info["papernum"]
         vers = self.server.DB.getQuestionVersions(paper_idx)
         if not vers:
-            return web.Response(status=500)
+            _msg = f"paper {paper_idx} does not (yet?) have a version map"
+            log.warn(_msg)
+            raise web.HTTPConflict(reason=_msg)
         return web.json_response(vers, status=200)
 
     @authenticate_by_token_required_fields([])
@@ -874,15 +859,17 @@ class UploadHandler:
             dict: dict of dicts, keyed first by paper index then by
                 question number.  Both keys will become strings b/c of
                 json limitations; you may need to convert back to int.
-                Fails with 500 Internal Server Error if a test does not
-                exist.
+                Fails with 409 if the version map database has not been
+                built yet.
         """
         spec = self.server.testSpec
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getQuestionVersions(paper_idx)
             if not ver:
-                return web.Response(status=500)
+                _msg = "There is no version map: have you built the database?"
+                log.warn(_msg)
+                raise web.HTTPConflict(reason=_msg)
             vers[paper_idx] = ver
         return web.json_response(vers, status=200)
 
@@ -978,7 +965,6 @@ class UploadHandler:
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
-        router.add_get("/admin/pageVersionMap/{papernum}", self.getPageVersionMap)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
             "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
@@ -987,6 +973,3 @@ class UploadHandler:
         router.add_get("/admin/bundleFromImage", self.getBundleFromImage)
         router.add_get("/admin/imagesInBundle", self.getImagesInBundle)
         router.add_get("/admin/bundlePage", self.getPageFromBundle)
-
-
-##

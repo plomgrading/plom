@@ -80,7 +80,7 @@ class SourceList(QListWidget):
     def addImageItem(self, p, pfile, belongs):
         current_row = self.count()
         name = str(p)
-        qir = QImageReader(pfile)
+        qir = QImageReader(str(pfile))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
@@ -190,7 +190,7 @@ class SinkList(QListWidget):
     def appendItem(self, name):
         if name is None:
             return
-        qir = QImageReader(self.item_files[name])
+        qir = QImageReader(str(self.item_files[name]))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
@@ -276,7 +276,7 @@ class SinkList(QListWidget):
         rot.rotate(angle)
         # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
-        qir = QImageReader(self.item_files[name])
+        qir = QImageReader(str(self.item_files[name]))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 from PyQt5.QtCore import Qt
@@ -97,4 +97,4 @@ class GhostDelta(QGraphicsTextItem):
         painter.setPen(QPen(Qt.blue, 1))
         painter.drawRoundedRect(option.rect, 10, 10)
         # paint the normal TextItem with the default 'paint' method
-        super(GhostDelta, self).paint(painter, option, widget)
+        super().paint(painter, option, widget)

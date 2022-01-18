@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 from PyQt5.QtCore import QIODevice, QPointF, QBuffer, QByteArray
 from PyQt5.QtGui import QBrush, QColor, QImage, QPixmap, QPen
@@ -19,8 +19,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
 )
 
-from plom.client.tools import CommandMoveItem
-from plom.client.tools.tool import CommandTool, DeleteObject
+from plom.client.tools import CommandMoveItem, CommandTool, DeleteObject
 
 
 class CommandImage(CommandTool):
@@ -84,7 +83,7 @@ class ImageItem(QGraphicsPixmapItem):
             data (str): Base64 data held in a string if the image had
                 previously been json serialized.
         """
-        super(ImageItem, self).__init__()
+        super().__init__()
         self.qImage = qImage
         self.border = border
         self.setPixmap(QPixmap.fromImage(self.qImage))
@@ -188,7 +187,7 @@ class ImageSettingsDialog(QDialog):
             checked (bool): True if the image currently has a red border,
                 False otherwise.
         """
-        super(ImageSettingsDialog, self).__init__()
+        super().__init__()
         self.createFormGroupBox(scalePercent, checked)
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttonBox.accepted.connect(self.accept)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021 Peter Lee
@@ -9,7 +9,7 @@
 
 """Plom tools for building tests."""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -25,7 +25,7 @@ from plom import SpecVerifier
 from plom import specdir
 from plom.plom_exceptions import PlomExistingDatabase
 from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
-from plom.produce import get_messenger
+from plom.produce import start_messenger
 from plom.produce import build_database, build_papers
 from plom.produce import possible_surname_fields, possible_given_name_fields
 from plom.produce.demotools import buildDemoSourceFiles
@@ -35,7 +35,7 @@ from plom.produce import clear_manager_login
 from plom.produce import version_map_from_csv
 
 
-def ensureTomlExtension(fname):
+def ensure_toml_extension(fname):
     """Append a .toml extension if not present.
 
     Args:
@@ -295,7 +295,7 @@ def main():
         if args.demo:
             fname = "demoSpec.toml"
         else:
-            fname = ensureTomlExtension(args.specFile)
+            fname = ensure_toml_extension(args.specFile)
 
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
@@ -329,7 +329,7 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parse_verify_save_spec(fname)
     elif args.command == "parse":
-        fname = ensureTomlExtension(args.specFile)
+        fname = ensure_toml_extension(args.specFile)
         parse_verify_save_spec(fname, not args.no_save)
     elif args.command == "class":
         if args.demo:
@@ -363,7 +363,7 @@ def main():
         )
 
     elif args.command == "rubric":
-        msgr = get_messenger(args.server, args.password)
+        msgr = start_messenger(args.server, args.password)
         try:
             if args.demo:
                 N = upload_demo_rubrics(msgr)

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: FSFAP
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2022 Elizabeth Xiao
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -10,11 +11,12 @@
 PyQt5==5.15.6
 PyQt5-sip==12.9.0
 appdirs==1.4.4
+arrow==1.2.1
 importlib-resources==5.4.0
 packaging==21.3
 passlib==1.7.4
-requests==2.26.0
+requests==2.27.1
 requests-toolbelt==0.9.1
 stdiomask==0.0.6
 toml==0.10.2
-urllib3==1.26.7
+urllib3==1.26.8
