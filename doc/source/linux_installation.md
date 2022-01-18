@@ -32,7 +32,8 @@ Tested on Fedora 35.  Some stuff from the package manager:
         python3-toml python3-tqdm python3-urllib3 python3-weasyprint \
         python3-pytest \
         latexmk tex-dvipng texlive-scheme-basic \
-        tex-preview tex-charter tex-exam tex-preprint
+        tex-preview tex-charter tex-exam tex-preprint \
+        python3-myst-parser python3-sphinx python3-sphinx_rtd_theme
 ```
 At this point `pip install --user .` from inside the Plom source tree should pull
 in the remaining dependencies.  Alternatively, you can do something like:
@@ -100,7 +101,7 @@ Finally: it has been noted that ImageMagick doesn't allow hacking
 of pdf files by default, some edits are needed to
 `/etc/ImageMagick-6/policy.xml`.  Near the end of the file,
 comment out the `pattern="PDF"` part:
-```dif
+```diff
    <policy domain="coder" rights="none" pattern="EPS" />
 -  <policy domain="coder" rights="none" pattern="PDF" />
 +  <!--<policy domain="coder" rights="none" pattern="PDF" />-->
