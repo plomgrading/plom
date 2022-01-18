@@ -597,7 +597,7 @@ class UploadHandler:
                 mpwriter.append(str(len(rmsg) - 1))
                 for fn in rmsg[1:]:
                     mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+                return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldn't find that test/question
 
@@ -618,7 +618,7 @@ class UploadHandler:
                         mpwriter.append("")
                     else:
                         mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+                return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldn't find that test/question
 
@@ -640,7 +640,7 @@ class UploadHandler:
                 mpwriter.append("{}".format(rmsg[2]))  # append "version"
                 if len(rmsg) == 4:  # append the image.
                     mpwriter.append(open(rmsg[3], "rb"))
-            return web.Response(body=mpwriter, status=200)
+                return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldn't find that test/question
 
