@@ -140,7 +140,7 @@ class UploadHandler:
 
         # TODO: unused, we should ensure this matches the data
         # TODO: or why bother passing those in to param?
-        code = request.match_info["tpv"]
+        code = request.match_info["tpv"]  # noqa: F841
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
