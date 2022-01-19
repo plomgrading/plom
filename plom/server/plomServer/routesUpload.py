@@ -797,10 +797,10 @@ class UploadHandler:
         TODO: maybe the api call should just be for one row of the database.
         """
         if not data["user"] == "manager":
-            raise web.HTTPBadRequest(reason="Not manager")
+            raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
-            raise web.HTTPNotFound(reason="Server has no spec; cannot populate DB")
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
 
         # TODO: talking to DB directly is not design we use elsewhere: call helper?
         from plom.db import buildExamDatabaseFromSpec

@@ -47,7 +47,8 @@ class ManagerMessenger(BaseMessenger):
 
         Raises:
             PlomExistingDatabase: already has a populated database.
-            PlomAuthenticationException: cannot login.
+            PlomServerNotReady: e.g., has no spec.
+            PlomAuthenticationException: login troubles.
             PlomSeriousException: unexpected errors.
         """
         self.SRmutex.acquire()
@@ -64,9 +65,11 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 409:
-                raise PlomExistingDatabase() from None
-            if response.status_code == 404:
+                raise PlomExistingDatabase(response.reason) from None
+            if response.status_code == 400:
                 raise PlomServerNotReady(response.reason) from None
             raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
