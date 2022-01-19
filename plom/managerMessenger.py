@@ -202,31 +202,31 @@ class ManagerMessenger(BaseMessenger):
             PlomConflict: server already has a database, cannot accept spec.
             PlomAuthenticationException: login problems.
             PlomSeriousException: other errors.
-        TODO anything else?
+
+        Returns:
+            None
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/info/spec",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "spec": specdata,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
-                raise PlomSeriousException(response.reason) from None
-            if response.status_code == 400:
-                raise PlomSeriousException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(response.text) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/info/spec",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "spec": specdata,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def RgetCompletionStatus(self):
         self.SRmutex.acquire()
