@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Solutions - can now optionally watermark solutions with the SID.
 * SSL verification enabled by default for releases.
 * Client Marker window can request any paper number with a long press on "Get next".
+* Mild warnings when user gives 0 but there are some ticks on page. sSimilar mild warnings when user gives full but there are crosses.
 
 ### Changed
 * Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.

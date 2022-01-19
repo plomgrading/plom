@@ -1460,6 +1460,16 @@ class Annotator(QWidget):
             msg.exec_()
             return False
 
+        # do some checks when score is zero (and not marking down)
+        if self.getScore() == 0 and self.getMarkingState() != "down":
+            if not self._zeroMarksWarn():
+                return False
+
+        # do similar checks when score is full (and not marking up)
+        if self.getScore() == self.maxMark and self.getMarkingState() != "up":
+            if not self._fullMarksWarn():
+                return False
+
         # warn if points where lost but insufficient annotations
         if (
             self.rubricWarn
@@ -1512,7 +1522,7 @@ class Annotator(QWidget):
         """
         A helper method for saveAnnotations.
 
-        Controls warnings for when paper has 0 marks.
+        Controls warnings for when paper has 0 marks. If there are only-ticks or some-ticks then warns user.
 
         Returns:
             False if user cancels, True otherwise.
@@ -1544,11 +1554,11 @@ class Annotator(QWidget):
                     self.markWarn = False
         return True
 
-    def _fullMarkWarn(self):
+    def _fullMarksWarn(self):
         """
         A helper method for saveAnnotations.
 
-        Controls warnings for when paper has full marks.
+        Controls warnings for when paper has full marks. If there are some crosses or only crosses then warns user.
 
         Returns:
             False if user cancels, True otherwise.
