@@ -16,6 +16,8 @@ def main():
         "Please use `plom-create` or `python3 -m plom.create` directly",
         category=DeprecationWarning,
     )
+    # not sure why this warn doesn't show up, so print instead:
+    print('Warning: "plom-build" is deprecated: use `plom-create` or `python3 -m plom.create`')
     plom.create.__main__.main()
 
 
