@@ -69,9 +69,7 @@ class Test:
         assert any("chain rule" in x for x in L)
 
     def test_random_grading(self):
-        subprocess.check_call(
-            split("python3 -m plom.client.randoMarker"), env=self.env
-        )
+        subprocess.check_call(split("python3 -m plom.client.randoMarker"), env=self.env)
 
     def test_scan_finish_after(self):
         subprocess.check_call(split("python3 -m plom.scan status"), env=self.env)
