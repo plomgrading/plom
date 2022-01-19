@@ -36,7 +36,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools
 RUN apt-get -y install python3-pyqt5
 
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
-RUN pip install --no-cache-dir cffi==1.14.6 pycparser==2.20 && \
+RUN pip install --no-cache-dir cffi==1.14.6 pycparser==2.21 && \
     pip install --no-cache-dir jpegtran-cffi==0.5.2
 COPY requirements.txt /src/
 WORKDIR /src
