@@ -185,7 +185,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
             if page_index >= 1:
                 # Get path to custom handwriting font
-                with resources.path(plom.create.fonts, "") as fontdir:
+                with resources.path(plom.create, "fonts") as fontdir:
                     if ttf is not None:
                         # remove str once minimum PyMuPDF >= 1.19.5
                         ttf = str(fontdir / ttf)
