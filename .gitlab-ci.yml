@@ -241,7 +241,7 @@ demoserver:
     - pushd demo
     - plom-server init
     - plom-server users --demo
-    - plom-build new --demo
+    - plom-create new --demo
     # Start server
     - ip addr
     - plom-server launch &
@@ -251,11 +251,11 @@ demoserver:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - plom-solutions extract solutionSpec.toml -w 1234
     - plom-solutions extract --upload -w 1234
-    - python3 -m plom.produce.exam_scribbler -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
     - plom-scan upload -w 4567 fake_scribbled_exams1.pdf
     - plom-scan status -w 4567
@@ -286,7 +286,7 @@ hwdemoserver:
     - pushd demo
     - plom-server init
     - plom-server users --demo
-    - plom-build new --demo
+    - plom-create new --demo
     # Start server
     - ip addr
     - plom-server launch &
@@ -300,12 +300,12 @@ hwdemoserver:
     - export PLOM_PASSWORD=0123
     - export PLOM_MANAGER_PASSWORD=1234
     - export PLOM_SCAN_PASSWORD=4567
-    - plom-build class --demo
-    - plom-build make
+    - plom-create class --demo
+    - plom-create make
     - plom-solutions extract solutionSpec.toml
     - plom-solutions extract --upload
     - plom-hwscan status
-    - python3 -m plom.produce.homework_scribbler
+    - python3 -m plom.create.homework_scribbler
     # TODO: the actual hwdemo script does more with qstr, semiloose
     - plom-hwscan allbyq -y
     - plom-hwscan missing -y
@@ -351,9 +351,9 @@ fullworkflow:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools solutions # to get soln pdf copied
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools solutions # to get soln pdf copied
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
@@ -370,13 +370,13 @@ fullworkflow:
     - export PLOM_PASSWORD=0123
     - export PLOM_MANAGER_PASSWORD=1234
     - export PLOM_SCAN_PASSWORD=4567
-    - plom-build class --demo
-    - plom-build make
+    - plom-create class --demo
+    - plom-create make
     - plom-solutions extract solutionSpec.toml
     - plom-solutions extract --upload
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.exam_scribbler
+    - python3 -m plom.create.exam_scribbler
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -490,9 +490,9 @@ fedora_build:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools
     - ip addr
     - plom-server launch &
     - sleep 2
@@ -501,11 +501,11 @@ fedora_build:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.exam_scribbler -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -583,9 +583,9 @@ nodock_newdeps:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools
     - ip addr
     - plom-server launch &
     - sleep 2
@@ -594,11 +594,11 @@ nodock_newdeps:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.exam_scribbler -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -681,9 +681,9 @@ nodock_mindeps:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools
     - ip addr
     - plom-server launch &
     - sleep 2
@@ -692,11 +692,11 @@ nodock_mindeps:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.exam_scribbler -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
