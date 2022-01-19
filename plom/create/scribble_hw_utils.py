@@ -9,8 +9,8 @@ import random
 
 import fitz
 
-from plom.produce import start_messenger
-from plom.produce.scribble_utils import possible_answers
+from plom.create import start_messenger
+from plom.create.scribble_utils import possible_answers
 
 
 def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):

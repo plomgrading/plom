@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2020 Dryden Wiebe
 
-"""Plom tool for scribbling fake homework answers for testing purposes.
+"""Plom tool for scribbling fake answers on PDF files.
 
 After the exam PDF files have been generated, this can be used to
-scribble on them (and other pages) to simulate random student work.
+scribble on them to simulate random student work.
 """
 
-__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2019-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -18,7 +20,7 @@ import os
 from stdiomask import getpass
 
 from plom import __version__
-from plom.produce import make_hw_scribbles
+from plom.create import make_scribbles
 
 
 def main():
@@ -36,7 +38,7 @@ def main():
     if not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
-    make_hw_scribbles(args.server, args.password)
+    make_scribbles(args.server, args.password)
 
 
 if __name__ == "__main__":

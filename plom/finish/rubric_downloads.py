@@ -37,7 +37,7 @@ def download_rubric_files(server=None, password=None):
         msgr.stop()
 
     # counts is a dict indexed by key - turn it into a list
-    # this makes it compatible with plom-build rubric upload
+    # this makes it compatible with plom-create rubric upload
     rubric_list = [Y for X, Y in counts.items()]
 
     with open(RubricListFilename, "w") as fh:

@@ -7,10 +7,10 @@ from pathlib import Path
 
 from plom import check_version_map
 from plom.misc_utils import working_directory
-from plom.produce.buildNamedPDF import build_papers_backend
-from plom.produce.buildNamedPDF import check_pdf_and_id_if_needed
-from plom.produce import paperdir as paperdir_name
-from plom.produce import start_messenger
+from plom.create.buildNamedPDF import build_papers_backend
+from plom.create.buildNamedPDF import check_pdf_and_id_if_needed
+from plom.create import paperdir as paperdir_name
+from plom.create import start_messenger
 
 
 def build_papers(

@@ -7,7 +7,11 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
 
-"""Plom tools for building tests."""
+"""Plom tools related to producing papers, and setting up servers.
+
+See help for each subcommand or consult online documentation for an
+overview of the steps in setting up a server.
+"""
 
 __copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
@@ -24,15 +28,15 @@ from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
 from plom.plom_exceptions import PlomExistingDatabase
-from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
-from plom.produce import start_messenger
-from plom.produce import build_database, build_papers
-from plom.produce import possible_surname_fields, possible_given_name_fields
-from plom.produce.demotools import buildDemoSourceFiles
-from plom.produce import upload_rubrics_from_file, download_rubrics_to_file
-from plom.produce import upload_demo_rubrics
-from plom.produce import clear_manager_login
-from plom.produce import version_map_from_csv
+from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
+from plom.create import start_messenger
+from plom.create import build_database, build_papers
+from plom.create import possible_surname_fields, possible_given_name_fields
+from plom.create.demotools import buildDemoSourceFiles
+from plom.create import upload_rubrics_from_file, download_rubrics_to_file
+from plom.create import upload_demo_rubrics
+from plom.create import clear_manager_login
+from plom.create import version_map_from_csv
 
 
 def ensure_toml_extension(fname):
@@ -60,7 +64,7 @@ def parse_verify_save_spec(fname, save=True):
     fname = Path(fname)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
-        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-build new"?')
+        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create new"?')
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
@@ -79,12 +83,16 @@ def parse_verify_save_spec(fname, save=True):
     if spec["numberToName"] > 0:
         print(
             ">>> Note <<<\n"
-            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-build class ".\n'
+            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-create class ".\n'
         )
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )

@@ -11,7 +11,7 @@ from plom import Default_Port
 from plom.misc_utils import working_directory
 from plom.server import PlomServer
 import plom.scan
-import plom.produce
+import plom.create
 
 
 class PlomDemoServer(PlomServer):
@@ -51,14 +51,14 @@ class PlomDemoServer(PlomServer):
     1
 
     We can upload a classlist to our server:
-    >>> subprocess.check_call(["plom-build", "class", "--demo"], env=env)
+    >>> subprocess.check_call(["plom-create", "class", "--demo"], env=env)
     0
 
     (Here these are performed in an interactive Python shell but could
     also be done from the command line).
 
     Build papers
-    >>> from plom.produce import build_database, build_papers
+    >>> from plom.create import build_database, build_papers
     >>> print(build_database(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]))   # doctest: +ELLIPSIS
     DB entry for test 0001: ...
 
@@ -66,12 +66,12 @@ class PlomDemoServer(PlomServer):
     Building 2 pre-named papers and 3 blank papers in ...
 
     We can also simulate some nonsense student work:
-    >>> from plom.produce import make_scribbles
+    >>> from plom.create import make_scribbles
     >>> make_scribbles(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
     Annotating papers with fake student data and scribbling on pages...
 
     This can also be run from the command line using
-    `python3 -m plom.produce.exam_scribbler`.
+    `python3 -m plom.create.exam_scribbler`.
 
     At that point, we can connect a Plom Client and do some marking.
 
@@ -117,7 +117,7 @@ class PlomDemoServer(PlomServer):
         super().__init__(basedir=tmpdir, **kwargs)
         server_loc = f'{self.server_info["server"]}:{self.port}'
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        plom.produce.upload_demo_rubrics((server_loc, pwd))
+        plom.create.upload_demo_rubrics((server_loc, pwd))
         if scans:
             self.fill_with_fake_scribbled_tests()
 
@@ -126,13 +126,13 @@ class PlomDemoServer(PlomServer):
         s = f"localhost:{self.port}"
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        plom.produce.upload_demo_classlist(s, pwd)
-        # plom-build make: build_database and build_papers
-        status = plom.produce.build_database(s, pwd)
+        plom.create.upload_demo_classlist(s, pwd)
+        # plom-create make: build_database and build_papers
+        status = plom.create.build_database(s, pwd)
         print("Database built with output:")
         print(status)
-        plom.produce.build_papers(s, pwd, basedir=self.basedir)
-        plom.produce.make_scribbles(s, pwd, basedir=self.basedir)
+        plom.create.build_papers(s, pwd, basedir=self.basedir)
+        plom.create.make_scribbles(s, pwd, basedir=self.basedir)
         with working_directory(self.basedir):
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 plom.scan.processScans(s, scan_pwd, f, gamma=False)

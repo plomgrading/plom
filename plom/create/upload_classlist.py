@@ -6,7 +6,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
-from plom.produce import start_messenger
+from plom.create import start_messenger
 from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
 

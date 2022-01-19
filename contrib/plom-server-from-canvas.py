@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 """Build and populate a Plom server from a Canvas Assignment.
 
@@ -146,7 +146,7 @@ def initialize(course, assignment, marks, *, server_dir="."):
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
         # TODO: capture and log all this output with capture_output=True?
-        subprocess.check_call(["plom-build", "parse", "canvasSpec.toml"])
+        subprocess.check_call(["plom-create", "parse", "canvasSpec.toml"])
         print("Running `plom-server init`...")
         subprocess.check_call(["plom-server", "init"])
         print("Autogenerating users...")
@@ -171,11 +171,11 @@ def initialize(course, assignment, marks, *, server_dir="."):
     # TODO: these had capture_output=True but this hides errors
     print("Building classlist...")
     build_class = subprocess.check_call(
-        ["plom-build", "class", server_dir / "classlist.csv"]
+        ["plom-create", "class", server_dir / "classlist.csv"]
     )
     print("Building the database...")
     with working_directory(server_dir):
-        build_class = subprocess.check_call(["plom-build", "make", "--no-pdf"])
+        build_class = subprocess.check_call(["plom-create", "make", "--no-pdf"])
 
     return plom_server
 

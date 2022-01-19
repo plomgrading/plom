@@ -27,7 +27,7 @@ Plom Server
 
 Tools for producing papers, scanning papers, and finishing the grading process.
 
-.. automodule:: plom.produce
+.. automodule:: plom.create
     :members:
 
 .. automodule:: plom.scan
@@ -44,7 +44,7 @@ Other supporting code
 
 .. automodule:: plom.manager
 
-.. automodule:: plom.produce.scribble_utils
+.. automodule:: plom.create.scribble_utils
     :members:
 
 TeX Tools

@@ -22,7 +22,7 @@ def start_messenger(server=None, pwd=None):
             "  * Perhaps a previous session crashed?\n"
             "  * Do you have another management tool running,\n"
             "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
+            'In order to force-logout the existing authorisation run "plom-create clear"'
         )
         raise
     return msgr
