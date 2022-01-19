@@ -91,9 +91,11 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     out_file_path = Path(outfile)
 
     # In principle you can put other fonts in plom.create.fonts
+    #   * If built-in font, use None
+    #   * is it "helv" or "Helvetica"?
     font_dict = {
         "ejx": "ejx_handwriting.ttf",
-        "helv": None,
+        # "helv": None,
     }
 
     print("Annotating papers with fake student data and scribbling on pages...")
