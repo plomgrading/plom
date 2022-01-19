@@ -11,6 +11,14 @@ import plom.create
 import plom.create.__main__
 
 
+def main():
+    warn(
+        "Please use `plom-create` or `python3 -m plom.create` directly",
+        category=DeprecationWarning,
+    )
+    plom.create.__main__.main()
+
+
 if __name__ == "__main__":
     warn(
         "Please use `plom-create` or `python3 -m plom.create` directly",
