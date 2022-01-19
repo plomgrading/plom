@@ -7,7 +7,11 @@
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
 
-"""Plom tools for building tests."""
+"""Plom tools related to producing papers, and setting up servers.
+
+See help for each subcommand or consult online documentation for an
+overview of the steps in setting up a server.
+"""
 
 __copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
@@ -84,7 +88,11 @@ def parse_verify_save_spec(fname, save=True):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
