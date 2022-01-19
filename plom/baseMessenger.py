@@ -275,18 +275,19 @@ class BaseMessenger:
 
         Returns:
             dict: the server's spec file, as in :func:`plom.SpecVerifier`.
+
+        Exceptions:
+            PlomServerNotReady: server does not yet have a spec.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.get("/info/spec")
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomServerNotReady(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                response = self.get("/info/spec")
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomServerNotReady(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getQuestionVersionMap(self, papernum):
         with self.SRmutex:
