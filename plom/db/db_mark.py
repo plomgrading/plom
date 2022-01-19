@@ -114,7 +114,9 @@ def MgetNextTask(self, q, v):
                 .get()
             )
             # as per #1811 - the user should be none here - assert here.
-            assert qref.user is None, f"Marking-task for test {qref.test.test_number}, question {q} version {v} is todo, but has a user = {qref.user.name}"
+            assert (
+                qref.user is None
+            ), f"Marking-task for test {qref.test.test_number}, question {q} version {v} is todo, but has a user = {qref.user.name}"
         except pw.DoesNotExist:
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None

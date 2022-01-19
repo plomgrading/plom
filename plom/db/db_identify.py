@@ -68,7 +68,9 @@ def IDgetNextTask(self):
                 .get()
             )
             # as per #1811 - the user should be none here - assert here.
-            assert iref.user is None, f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
+            assert (
+                iref.user is None
+            ), f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
             # note - test need not be all scanned, just the ID page.
         except pw.DoesNotExist:
             log.info("Nothing left on ID to-do pile")
