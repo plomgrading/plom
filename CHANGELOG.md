@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Tags have been overhauled, with bug fixes and improved functionality
 * Annotator can tag papers directly.
+* Server can now optionally start without a spec file.
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
 * Spec files have more sanity checks and some keys are now optional.
@@ -25,9 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
+* JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
+* Removing or adding pages is more selective about which annotations are invalidated.
 * A large number of modal dialog fixes.
 * Other misc changes.
-* JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
 
 
 ## [0.7.11] - 2021-12-22
