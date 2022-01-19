@@ -116,6 +116,7 @@ def get_parser():
         help="How many fake exam papers for the demo (defaults to 20 if omitted)",
     )
 
+    # TODO: is saving deprecated?
     spP = sub.add_parser(
         "parse",
         help="Parse spec file",
@@ -137,7 +138,20 @@ def get_parser():
         """,
     )
 
-    #
+    spS = sub.add_parser(
+        "uploadspec",
+        help="Upload spec to server",
+        description="Upload exam specification to server.",
+    )
+    spS.add_argument(
+        "specFile",
+        nargs="?",
+        default="testSpec.toml",
+        help="defaults to '%(default)s'.",
+    )
+    spS.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    spS.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
     spL = sub.add_parser(
         "class",
         help="Read in a classlist",
@@ -331,6 +345,22 @@ def main():
     elif args.command == "parse":
         fname = ensure_toml_extension(args.specFile)
         parse_verify_save_spec(fname, not args.no_save)
+
+    elif args.command == "uploadspec":
+        fname = ensure_toml_extension(args.specFile)
+        sv = SpecVerifier.from_toml_file(fname)
+        sv.verifySpec()
+        sv.checkCodes()
+        print("spec seems ok: we will upload it to the server")
+        msgr = start_messenger(args.server, args.password)
+        try:
+            # TODO: sv.spec versus sv.get_public_spec_dict()?
+            # TODO: think about who is supposed to know/generate the privateSeed
+            msgr.upload_spec(sv.spec)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
     elif args.command == "class":
         if args.demo:
             classlist = get_demo_classlist()

@@ -797,7 +797,10 @@ class UploadHandler:
         TODO: maybe the api call should just be for one row of the database.
         """
         if not data["user"] == "manager":
-            return web.Response(status=400)  # malformed request.
+            raise web.HTTPForbidden(reason="Not manager")
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
 
         # TODO: talking to DB directly is not design we use elsewhere: call helper?
         from plom.db import buildExamDatabaseFromSpec
@@ -808,9 +811,7 @@ class UploadHandler:
             vmap = undo_json_packing_of_version_map(data["version_map"])
 
         try:
-            r, summary = buildExamDatabaseFromSpec(
-                self.server.testSpec, self.server.DB, vmap
-            )
+            r, summary = buildExamDatabaseFromSpec(spec, self.server.DB, vmap)
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"
@@ -835,6 +836,8 @@ class UploadHandler:
             which is much more likely what you are looking for.
         """
         spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getPageVersions(paper_idx)
@@ -876,6 +879,8 @@ class UploadHandler:
                 built yet.
         """
         spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
             ver = self.server.DB.getQuestionVersions(paper_idx)
