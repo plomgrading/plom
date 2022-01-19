@@ -24,15 +24,15 @@ from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
 from plom.plom_exceptions import PlomExistingDatabase
-from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
-from plom.produce import start_messenger
-from plom.produce import build_database, build_papers
-from plom.produce import possible_surname_fields, possible_given_name_fields
-from plom.produce.demotools import buildDemoSourceFiles
-from plom.produce import upload_rubrics_from_file, download_rubrics_to_file
-from plom.produce import upload_demo_rubrics
-from plom.produce import clear_manager_login
-from plom.produce import version_map_from_csv
+from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
+from plom.create import start_messenger
+from plom.create import build_database, build_papers
+from plom.create import possible_surname_fields, possible_given_name_fields
+from plom.create.demotools import buildDemoSourceFiles
+from plom.create import upload_rubrics_from_file, download_rubrics_to_file
+from plom.create import upload_demo_rubrics
+from plom.create import clear_manager_login
+from plom.create import version_map_from_csv
 
 
 def ensure_toml_extension(fname):

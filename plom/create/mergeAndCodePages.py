@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2019 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
@@ -13,7 +13,7 @@ import segno
 import fitz
 
 from plom.tpv_utils import encodeTPV
-from plom.produce import paperdir
+from plom.create import paperdir
 
 
 def create_QR_file_dictionary(length, papernum, page_versions, code, dur):

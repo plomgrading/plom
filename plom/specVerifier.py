@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import logging
 from math import ceil
@@ -222,7 +222,7 @@ class SpecVerifier:
         """
         s = cls._template_as_string()
         if num_to_produce:
-            from plom.produce.demotools import getDemoClassListLength
+            from plom.create.demotools import getDemoClassListLength
 
             # TODO: 20 and 10 in source file hardcoded here, use regex instead
             s = s.replace(

@@ -21,10 +21,10 @@ else:
 
 import fitz
 
-import plom.produce
-from plom.produce import paperdir as _paperdir
+import plom.create
+from plom.create import paperdir as _paperdir
 from plom.misc_utils import working_directory
-from plom.produce import start_messenger
+from plom.create import start_messenger
 
 
 possible_answers = [
@@ -79,7 +79,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     extra_page_font_size = 18
 
     # load the digit images
-    digit_array = json.loads(resources.read_text(plom.produce, "digits.json"))
+    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
     # how many of each digit were collected
     number_of_digits = len(digit_array) // 10
     assert len(digit_array) % 10 == 0

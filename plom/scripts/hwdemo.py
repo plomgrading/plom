@@ -131,7 +131,7 @@ def main():
     with working_directory(args.server_dir):
         # this creates two batches of fake hw - prefixes = hwA and hwB
         subprocess.check_call(
-            split(f"python3 -m plom.produce.homework_scribbler -w 1234 -s {server}")
+            split(f"python3 -m plom.create.homework_scribbler -w 1234 -s {server}")
         )
 
         # TODO: this is fragile, should not hardcode these student numbers!

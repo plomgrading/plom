@@ -18,9 +18,9 @@ from .model_utils import (
     download_or_train_model,
 )
 from .predictStudentID import get_digit_box, get_digit_prob
-from plom.produce.demotools import buildDemoSourceFiles
+from plom.create.demotools import buildDemoSourceFiles
 from plom.scan.scansToImages import processFileToBitmaps
-from plom.produce.scribble_utils import fill_in_fake_data_on_exams
+from plom.create.scribble_utils import fill_in_fake_data_on_exams
 
 
 def test_log_likelihood():
