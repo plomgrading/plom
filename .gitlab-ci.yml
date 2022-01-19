@@ -23,10 +23,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.11
+image: docker:20.10.12
 
 services:
-  - docker:20.10.11-dind
+  - docker:20.10.12-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -183,10 +183,10 @@ coverage:
   needs: ["docker-image"]
   image: $IM
   script:
-    - pip install pytest pytest-cov
+    - pip install pytest pytest-cov coverage[toml]
     - coverage run -m pytest
-    - coverage report -i
-    - coverage xml -i
+    - coverage report
+    - coverage xml
   artifacts:
     reports:
       cobertura: coverage.xml
@@ -423,23 +423,6 @@ fullworkflow:
     - popd
 
 
-backgroundTest:
-  image: alpine
-  stage: static_analysis
-  script:
-    - sleep 60 &
-    - jobs -l
-    - jobs -p
-    - echo "Sleep job has started"
-    - sleep 2
-    - jobs -l
-    - jobs -p
-    - echo "We will kill it"
-    - kill -9 %1
-    - echo "Should be no jobs and this should succeed"
-    - jobs -p
-
-
 appstreamValid:
   stage: static_analysis
   image: alpine
@@ -447,6 +430,29 @@ appstreamValid:
     - apk add appstream-glib
   script:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
+
+
+# TODO: perhaps all deps should be in the docker image?
+docs_sphinx:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install tex-gyre
+    - pip install myst-parser sphinx sphinx_rtd_theme
+  script:
+    - pushd doc
+    - ls
+    - make html
+    - make singlehtml
+    - make linkcheck
+    - make latexpdf
+    - popd
+  artifacts:
+    paths:
+      - doc/build/latex/plom.pdf
+      - doc/build/html/
+    expire_in: 16 days
 
 
 # get latest pip deps, doesn't use docker, closer to user install

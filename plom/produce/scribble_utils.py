@@ -66,8 +66,9 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
     Keyword Arguments:
-        which: by default ("`which=None`") scribble on all exams or specify
-            something like `which=range(10, 16)` to scribble on a subset.
+        which (iterable): By default we scribble on all exams or specify
+            something like `which=range(10, 16)` here to scribble on a
+            subset. (default: `None`)
     """
     # Customizable data
     blue = [0, 0, 0.75]
@@ -219,7 +220,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     print('Assembled in "{}"'.format(out_file_path))
 
 
-def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
+def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     """Randomly generates and inserts garbage pages into a PDF document.
 
     Used for testing.
@@ -232,16 +233,16 @@ def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
     """
     green = [0, 0.75, 0]
 
-    all_pdf_documents = fitz.open(out_file_path)
-    print("Doc has {} pages".format(len(all_pdf_documents)))
+    doc = fitz.open(pdf_file)
+    print("Doc has {} pages".format(len(doc)))
     for _ in range(number_of_garbage_pages):
-        garbage_page_index = random.randint(-1, len(all_pdf_documents))
+        garbage_page_index = random.randint(-1, len(doc))
         print("Insert garbage page at garbage_page_index={}".format(garbage_page_index))
-        all_pdf_documents.insert_page(
+        doc.insert_page(
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
-    all_pdf_documents.saveIncr()
-    all_pdf_documents.close()
+    doc.saveIncr()
+    doc.close()
 
 
 def make_colliding_pages(paper_dir_path, outfile):

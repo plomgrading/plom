@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Peter Lee
@@ -144,7 +144,6 @@ class Server:
         IDgetImageFromATest,
         ID_get_donotmark_images,
         IDclaimThisTask,
-        IDdidNotFinish,
         id_paper,
         ID_id_paper,
         IDdeletePredictions,
@@ -159,7 +158,6 @@ class Server:
         MgetNextTask,
         MlatexFragment,
         MclaimThisTask,
-        MdidNotFinish,
         MrecordMark,
         MreturnMarkedTask,
         MgetOriginalImages,

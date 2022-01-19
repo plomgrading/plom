@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from datetime import datetime
 import json
@@ -198,40 +198,6 @@ def MgiveTaskToClient(self, user_name, group_id):
             )
         )
         return [True, image_metadata, tag_list, aref.integrity_check]
-
-
-def MdidNotFinish(self, user_name, group_id):
-    """When user logs off, any images they have still out should be put
-    back on todo pile. This returns the given gid to the todo pile.
-    """
-    uref = User.get(name=user_name)  # authenticated, so not-None
-
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == group_id)
-        if gref is None:  # this should not happen.
-            log.info("That task {} not known".format(group_id))
-            return
-        if not gref.scanned:  # sanity check
-            log.warning(
-                f"User returning task {group_id} that wasn't scanned. This should not happen!"
-            )
-            return
-        qref = gref.qgroups[0]
-        # sanity check that user has task
-        if qref.user != uref or qref.status != "out":
-            return  # has been claimed by someone else. Should not happen
-
-        # update status, etc
-        qref.status = "todo"
-        qref.user = None
-        qref.marked = False
-        qref.time = datetime.now()
-        # now clean up the qgroup
-        qref.test.marked = False
-        qref.test.save()
-        qref.save()
-        # Log user returning given task.
-        log.info("User {} did not mark task {}".format(user_name, group_id))
 
 
 def MgetOneImageFilename(self, image_id, md5):

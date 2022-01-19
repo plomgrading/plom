@@ -140,7 +140,7 @@ class UploadHandler:
 
         # TODO: unused, we should ensure this matches the data
         # TODO: or why bother passing those in to param?
-        code = request.match_info["tpv"]
+        code = request.match_info["tpv"]  # noqa: F841
 
         part1 = await reader.next()  # should be the image file
         if part1 is None:  # weird error
@@ -427,6 +427,12 @@ class UploadHandler:
                 return web.Response(status=404)  # page not found at all
 
     async def removeSinglePage(self, request):
+        """Remove the page (as described by its name) and reset any tasks that involve that page.
+        This tries to be as minimal as possible - so, for example, if a tpage is removed, then
+        the question that included that page goes back on the todo-list (after a newpage is uploaded),
+        but at the same time if a TA has used a copy of that page in the annotation of another
+        question, that group is also reset and goes back on the todo-list."""
+
         data = await request.json()
         if not validate_required_fields(
             data,
@@ -597,7 +603,7 @@ class UploadHandler:
                 mpwriter.append(str(len(rmsg) - 1))
                 for fn in rmsg[1:]:
                     mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+                return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldn't find that test/question
 
@@ -618,7 +624,7 @@ class UploadHandler:
                         mpwriter.append("")
                     else:
                         mpwriter.append(open(fn, "rb"))
-            return web.Response(body=mpwriter, status=200)
+                return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldn't find that test/question
 
@@ -640,7 +646,7 @@ class UploadHandler:
                 mpwriter.append("{}".format(rmsg[2]))  # append "version"
                 if len(rmsg) == 4:  # append the image.
                     mpwriter.append(open(rmsg[3], "rb"))
-            return web.Response(body=mpwriter, status=200)
+                return web.Response(body=mpwriter, status=200)
         else:
             return web.Response(status=404)  # couldn't find that test/question
 
@@ -675,6 +681,10 @@ class UploadHandler:
             return web.Response(status=404)
 
     async def unknownToTestPage(self, request):
+        """The unknown page is moved to the indicated tpage.
+        The minimal set of groups are reset when this happens
+        - namely the group containing the new tpage.
+        """
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "page", "rotation"]
@@ -741,6 +751,9 @@ class UploadHandler:
                 return web.Response(status=404)
 
     async def collidingToTestPage(self, request):
+        """The group containing the tpage is reset when it is replaced.
+        At the same time, any annotation that involved the old tpage is reset.
+        """
         data = await request.json()
         if not validate_required_fields(
             data, ["user", "token", "fileName", "test", "page", "version"]

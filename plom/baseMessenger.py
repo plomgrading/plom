@@ -54,6 +54,7 @@ class BaseMessenger:
         self.session = None
         self.user = None
         self.token = None
+        self.default_timeout = 10
         if s:
             server = s
         else:
@@ -95,18 +96,28 @@ class BaseMessenger:
         return self.user
 
     def get(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.get(f"https://{self.server}" + url, *args, **kwargs)
 
     def post(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.post(f"https://{self.server}" + url, *args, **kwargs)
 
     def put(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.put(f"https://{self.server}" + url, *args, **kwargs)
 
     def delete(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.delete(f"https://{self.server}" + url, *args, **kwargs)
 
     def patch(self, url, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
         return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
 
     def start(self):
@@ -118,12 +129,12 @@ class BaseMessenger:
             self.session = requests.Session()
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
-            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=3))
+            self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
             self.session.verify = self.verify
 
         try:
             try:
-                response = self.get("/Version")
+                response = self.get("/Version", timeout=2)
                 response.raise_for_status()
                 return response.text
             except requests.exceptions.SSLError as err:
@@ -136,7 +147,7 @@ class BaseMessenger:
                 else:
                     raise PlomSSLError(err) from None
                 self.force_ssl_unverified()
-                response = self.get("/Version")
+                response = self.get("/Version", timeout=2)
                 response.raise_for_status()
                 return response.text
         except requests.ConnectionError as err:
