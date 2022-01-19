@@ -113,6 +113,10 @@ def MgetNextTask(self, q, v):
                 )
                 .get()
             )
+            # as per #1811 - the user should be none here - assert here.
+            assert (
+                qref.user is None
+            ), f"Marking-task for test {qref.test.test_number}, question {q} version {v} is todo, but has a user = {qref.user.name}"
         except pw.DoesNotExist:
             log.info("Nothing left on Q{}v{} to-do pile".format(q, v))
             return None
@@ -161,6 +165,7 @@ def MgiveTaskToClient(self, user_name, group_id):
         # grab the qdata corresponding to that group
         qref = gref.qgroups[0]
         if (qref.user is not None) and (qref.user != uref):
+            # see also #1811 - if a task is "todo" then its user should be None.
             msg = f'Task {group_id} previously claimed by user "{qref.user.name}"'
             log.info(msg)
             return [False, "other_claimed", msg]
