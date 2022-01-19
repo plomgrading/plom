@@ -561,7 +561,7 @@ class Manager(QWidget):
         self.numberOfVersions = info["numberOfVersions"]
         # which test pages are which type "id", "dnm", or "qN"
         self.testPageTypes = {info["idPage"]: "id"}
-        for pg in info["doNotMark"]["pages"]:
+        for pg in info["doNotMarkPages"]:
             self.testPageTypes[pg] = "dnm"
         for q in range(1, info["numberOfQuestions"] + 1):
             for pg in info["question"][str(q)]["pages"]:
