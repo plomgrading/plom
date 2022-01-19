@@ -10,8 +10,8 @@
 # without any warranty.
 
 # Not really server deps
-PyQt5==5.15.6
-PyQt5-sip==12.9.0
+PyQt5
+PyQt5-sip
 
 aiohttp==3.8.1
 appdirs==1.4.4
@@ -29,6 +29,7 @@ pandas==1.1.5
 passlib==1.7.4
 peewee==3.14.8
 Pillow==9.0.0
+# note: pycparser also in Dockerfile
 pycparser==2.21
 pymupdf==1.19.3
 pyzbar==0.1.8

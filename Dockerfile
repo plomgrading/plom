@@ -33,16 +33,18 @@ RUN apt-get -y update && \
 RUN pip install --no-cache-dir --upgrade pip setuptools
 # Note: newer setuptools to avoid some cairocffi issue
 
+RUN apt-get -y install python3-pyqt5
+
 # install cffi first: https://github.com/jbaiter/jpegtran-cffi/issues/27
-RUN pip install --no-cache-dir cffi==1.14.6 pycparser==2.20 && \
+RUN pip install --no-cache-dir cffi==1.14.6 pycparser==2.21 && \
     pip install --no-cache-dir jpegtran-cffi==0.5.2
 COPY requirements.txt /src/
 WORKDIR /src
 RUN pip install --no-cache-dir -r requirements.txt
 
-# client dependency: keep in image for now after others so easy to discard
-RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install qtbase5-dev
+# client dependency: if pip installing pyqt5, likely need this
+# RUN apt-get -y update && \
+#     apt-get --no-install-recommends -y install qtbase5-dev
 
 COPY . /src
 WORKDIR /src
