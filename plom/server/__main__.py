@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
@@ -45,7 +45,7 @@ server_instructions = f"""Overview of running the Plom server:
 
        3a. Optionally you can delete the plain-text passwords.
 
-  4. Add a specfile to '{specdir}': 'plom-build' can do this..
+  4. Add a specfile to '{specdir}': 'plom-create' can do this..
 
   5. Now you can start the server with '%(prog)s launch'.
 """

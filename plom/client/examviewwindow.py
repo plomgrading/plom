@@ -23,8 +23,19 @@ from plom.client.backGrid import BackGrid
 class ImageViewWidget(QWidget):
     """Simple view widget for pageimages to be embedded in other windows.
 
-    TODO: clarify whether the caller must maintain the image on disc or if
-    the QPixmap will reads it once and stores it.  See Issue #1842.
+    args:
+        parent (QWidget): the parent container for this widget.
+        fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
+            `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
+            for a single image.  Unclear whether the caller must maintain
+            these image files on disc or if the QPixmap will reads it once
+            and stores it.  See Issue #1842.  For now, safest to assume
+            you must maintain it.
+        has_reset_button (bool): whether to include a reset zoom button,
+            default: True.
+        compact (bool): whether to include a margin (default True) or
+            not.  Correct choice will depend on parent but is probably
+            only cosmetic.
     """
 
     def __init__(self, parent, fnames=None, has_reset_button=True, compact=True):
@@ -52,7 +63,7 @@ class ImageViewWidget(QWidget):
         self.dy = self.view.verticalScrollBar().value()
 
     def updateImage(self, fnames):
-        """Pass file to the view to update the image"""
+        """Pass file(s) to the view to update the image"""
         # first store the current view transform and scroll values
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
@@ -85,8 +96,17 @@ class ImageViewWidget(QWidget):
 
 
 class ExamView(QGraphicsView):
-    """Simple extension of QGraphicsView
-    - containing an image and click-to-zoom/unzoom
+    """Display images with some interaction: click-to-zoom/unzoom
+
+    args:
+        fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
+            `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
+            for a single image.  Unclear whether the caller must maintain
+            these image files on disc or if the QPixmap will reads it once
+            and stores it.  See Issue #1842.  For now, safest to assume
+            you must maintain it.
+        dark_background (bool): default False which means follow theme,
+            or pass true to force a darker coloured background.
     """
 
     def __init__(self, fnames, dark_background=False):
@@ -122,7 +142,7 @@ class ExamView(QGraphicsView):
         if fnames is not None:
             x = 0
             for (n, fn) in enumerate(fnames):
-                qir = QImageReader(fn)
+                qir = QImageReader(str(fn))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())

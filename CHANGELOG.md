@@ -15,18 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client Marker window can request any paper number with a long press on "Get next".
 
 ### Changed
+* Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.
+* Module `plom.produce` has been renamed to `plom.create`.
 * Tags have been overhauled, with bug fixes and improved functionality
 * Annotator can tag papers directly.
+* Server can now optionally start without a spec file.
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
 * Spec files have more sanity checks and some keys are now optional.
 * Misc plom-manager improvements.
+* API calls have a default 10s timeout (and 2 retries), so semi-inevitable failures fail faster.
 
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
+* JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
+* Removing or adding pages is more selective about which annotations are invalidated.
 * A large number of modal dialog fixes.
 * Other misc changes.
-* JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
 
 
 ## [0.7.11] - 2021-12-22

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020-2021 Forest Kobayashi
 
@@ -10,7 +10,6 @@ This is a Plom server that forks a background process and returns
 control to the caller with the server continuing in the background.
 """
 
-import os
 from multiprocessing import Process
 from pathlib import Path
 from shlex import split
@@ -22,8 +21,7 @@ import toml
 
 from plom import Default_Port
 from plom import SpecVerifier
-from plom.misc_utils import working_directory
-from plom.produce.demotools import buildDemoSourceFiles
+from plom.create.demotools import buildDemoSourceFiles
 from plom.server import theServer
 from plom.server import specdir as specdirname
 from plom.server import confdir
@@ -102,7 +100,7 @@ class PlomServer:
 
     @classmethod
     def add_demo_spec(cls, basedir, num_to_produce=10):
-        """Add a spec file to a Plom server, roughly equivalent to `plom-build parse` cmdline.
+        """Add a spec file to a Plom server, roughly equivalent to `plom-create parse` cmdline.
 
         TODO: add features or other class methods?
 

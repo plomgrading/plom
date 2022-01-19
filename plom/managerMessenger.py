@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
 from io import StringIO, BytesIO
@@ -18,9 +18,10 @@ from plom.plom_exceptions import (
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomOwnersLoggedInException,
-    PlomUnidentifiedPaperException,
+    PlomServerNotReady,
     PlomRangeException,
     PlomTakenException,
+    PlomUnidentifiedPaperException,
 )
 from plom.baseMessenger import BaseMessenger
 
@@ -46,7 +47,8 @@ class ManagerMessenger(BaseMessenger):
 
         Raises:
             PlomExistingDatabase: already has a populated database.
-            PlomAuthenticationException: cannot login.
+            PlomServerNotReady: e.g., has no spec.
+            PlomAuthenticationException: login troubles.
             PlomSeriousException: unexpected errors.
         """
         self.SRmutex.acquire()
@@ -63,8 +65,12 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 409:
-                raise PlomExistingDatabase() from None
+                raise PlomExistingDatabase(response.reason) from None
+            if response.status_code == 400:
+                raise PlomServerNotReady(response.reason) from None
             raise PlomSeriousException("Unexpected {}".format(e)) from None
         finally:
             self.SRmutex.release()
@@ -72,20 +78,19 @@ class ManagerMessenger(BaseMessenger):
         return response.text
 
     def getGlobalPageVersionMap(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/pageVersionMap",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/pageVersionMap",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                elif response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())
 
@@ -164,6 +169,7 @@ class ManagerMessenger(BaseMessenger):
                 spec.  Most likely numberToProduce is too small but
                 check error message to be sure.
             PlomAuthenticationException: login problems.
+            PlomServerNotReady: e.g., it has no spec.
             PlomSeriousException: other errors.
         """
         self.SRmutex.acquire()
@@ -180,13 +186,53 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 409:
                 raise PlomConflict(e) from None
+            if response.status_code == 400 and "no spec" in response.reason:
+                raise PlomServerNotReady(response.reason) from None
             if response.status_code == 406:
                 raise PlomRangeException(e) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def upload_spec(self, specdata):
+        """Give the server a specification.
+
+        Args:
+            specdata (dict): see :func:`plom.SpecVerifier`.
+
+        Exceptions:
+            PlomConflict: server already has a database, cannot accept spec.
+            PlomAuthenticationException: login problems.
+            PlomSeriousException: other errors.
+
+        Returns:
+            None
+        """
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/info/spec",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "spec": specdata,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def RgetCompletionStatus(self):
         self.SRmutex.acquire()

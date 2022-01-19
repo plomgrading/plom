@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
@@ -17,7 +17,7 @@ else:
 import pandas
 
 import plom
-from ..finish.return_tools import import_canvas_csv
+from plom.finish.return_tools import import_canvas_csv
 
 
 possible_surname_fields = ["surname", "familyName", "lastName"]
@@ -316,8 +316,8 @@ def process_classlist_file(student_csv_file_name):
     try to construct a name from surname, given name, guessing
     column names from the following lists:
 
-      - :func:`plom.produce.possible_surname_fields`
-      - :func:`plom.produce.possible_given_name_fields`
+      - :func:`plom.create.possible_surname_fields`
+      - :func:`plom.create.possible_given_name_fields`
 
     Alternatively, give a .csv exported from Canvas (experimental!)
 

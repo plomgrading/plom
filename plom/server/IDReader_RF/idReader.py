@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
 Use sklearn random forest model to read student IDs from ID-pages.
@@ -11,76 +11,11 @@ Relies on use of standard ID template.
 Note: has hardcoded 8-digit student numbers.
 """
 
-import csv
-from pathlib import Path
-
-import requests
 from lapsolver import solve_dense
 import numpy as np
-import sklearn
 
-from plom import specdir
+from .model_utils import download_or_train_model
 from .predictStudentID import compute_probabilities
-from .trainRandomForestModel import train_model
-
-
-def is_model_present():
-    """Checks if the ML model is available.
-
-    Returns:
-        boolean: True/False, indicating if the model is present.
-    """
-
-    base_path = Path("model_cache")
-    files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
-
-    for filename in files:
-        if not (base_path / filename).is_file():
-            return False
-    return True
-
-
-def download_model():
-    """Try to download the model, respond with False if unsuccessful.
-
-    Returns:
-        boolean: True/False about if the model was successful.
-    """
-    base_path = Path("model_cache")
-    base_path.mkdir(exist_ok=True)
-
-    base_url = "https://gitlab.com/plom/plomidreaderdata/-/raw/main/plomBuzzword/"
-    files = [f"RF_ML_model_sklearn{sklearn.__version__}.gz"]
-    for file_name in files:
-        url = base_url + file_name
-        print("Getting {} - ".format(file_name))
-        response = requests.get(url)
-        if response.status_code != 200:
-            print("\tError getting file {}.".format(file_name))
-            return False
-        with open(base_path / file_name, "wb") as file_header:
-            file_header.write(response.content)
-        print("\tDone Saving")
-    return True
-
-
-def download_or_train_model():
-    """Download the ID detection model if possible, if not, train it."""
-
-    base_path = Path("model_cache")
-    base_path.mkdir(exist_ok=True)
-
-    print(
-        "Will try to download model and if that fails, then train it locally (which is time-consuming)"
-    )
-    if download_model():
-        print("Successfully downloaded sklearn (Random-Forest) model. Good to go.")
-    else:
-        print("Could not download the model, need to train model instead.")
-        print(
-            "This will take some time -- on the order of 2-3 minutes depending on your computer."
-        )
-        train_model()
 
 
 def calc_log_likelihood(student_ID, prediction_probs, num_digits):
@@ -136,8 +71,8 @@ def run_id_reader(files_dict, rectangle, student_IDs):
     # we may skip some tests if hard to extract the ID boxes
     test_numbers_used = []
 
-    if not is_model_present():
-        download_or_train_model()
+    download_or_train_model()
+
     # probabilities that digit k of ID is "n" for each file.
     # this is potentially time-consuming - could be parallelized
     # pass in the list of files to check, top /bottom of image-region to check.

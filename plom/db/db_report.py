@@ -99,8 +99,9 @@ def RgetCompleteHW(self):
     hw_complete = []
     # look at all the scanned tests - they will either be hwpages or tpages
     for tref in Test.select().where(Test.scanned == True):  # noqa: E712
-        # note - skip those with scanned TPages present.
-        if TPage.get_or_none(test=tref, scanned=True) is None:
+        # make sure every group has hwpages
+        qhwlist = [qref.group.hwpages.count() for qref in tref.qgroups]
+        if 0 not in qhwlist:
             hw_complete.append([tref.test_number, tref.idgroups[0].student_id])
     return hw_complete
 

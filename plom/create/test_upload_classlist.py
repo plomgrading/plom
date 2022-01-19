@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Dryden S. Wiebe
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from unittest.mock import MagicMock
 
 from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomConflict
 
-from plom.produce.upload_classlist import _raw_upload_classlist
+from plom.create.upload_classlist import _raw_upload_classlist
 
 
 def test_produce_upload_classlist():

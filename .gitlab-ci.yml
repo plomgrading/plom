@@ -23,10 +23,10 @@
 #       when: never
 #     - if: '$CI_COMMIT_BRANCH'
 
-image: docker:20.10.11
+image: docker:20.10.12
 
 services:
-  - docker:20.10.11-dind
+  - docker:20.10.12-dind
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -177,6 +177,20 @@ unittests:
     - pytest-3 -l --pyargs plom
 
 
+# TODO: may consider merging with unittests job above
+coverage:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  script:
+    - pip install pytest pytest-cov coverage[toml]
+    - coverage run -m pytest
+    - coverage report
+    - coverage xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
+
 # Notes:
 # masked out some stuff that deps on tensorflow
 doctests:
@@ -227,7 +241,7 @@ demoserver:
     - pushd demo
     - plom-server init
     - plom-server users --demo
-    - plom-build new --demo
+    - plom-create new --demo
     # Start server
     - ip addr
     - plom-server launch &
@@ -237,11 +251,11 @@ demoserver:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - plom-solutions extract solutionSpec.toml -w 1234
     - plom-solutions extract --upload -w 1234
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     - plom-scan process -w 4567 fake_scribbled_exams1.pdf
     - plom-scan upload -w 4567 fake_scribbled_exams1.pdf
     - plom-scan status -w 4567
@@ -272,7 +286,7 @@ hwdemoserver:
     - pushd demo
     - plom-server init
     - plom-server users --demo
-    - plom-build new --demo
+    - plom-create new --demo
     # Start server
     - ip addr
     - plom-server launch &
@@ -286,12 +300,12 @@ hwdemoserver:
     - export PLOM_PASSWORD=0123
     - export PLOM_MANAGER_PASSWORD=1234
     - export PLOM_SCAN_PASSWORD=4567
-    - plom-build class --demo
-    - plom-build make
+    - plom-create class --demo
+    - plom-create make
     - plom-solutions extract solutionSpec.toml
     - plom-solutions extract --upload
     - plom-hwscan status
-    - python3 -m plom.produce.hwFaker
+    - python3 -m plom.create.homework_scribbler
     # TODO: the actual hwdemo script does more with qstr, semiloose
     - plom-hwscan allbyq -y
     - plom-hwscan missing -y
@@ -304,7 +318,7 @@ hwdemoserver:
     - echo $A
     - A="$((A-1))"
     - bash -c "[[ $A -le 10 ]]"      # 10 named papers
-    - bash -c "[[ $A == 6 ]]"        # hwFaker makes 4 "semiloose"
+    - bash -c "[[ $A == 6 ]]"        # hw_scribber makes 4 "semiloose"
     - file marks.csv
     - file marks.csv | grep text
     - plom-finish reassemble
@@ -337,9 +351,9 @@ fullworkflow:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools solutions # to get soln pdf copied
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools solutions # to get soln pdf copied
     # TODO: override the private seed
     # sed specAndDatabase/verifiedSpec.toml -i -e "s/privateSeed = .*/privateSeed = \"8253996856355501\"/"
     # diff -u specAndDatabase/verifiedSpec.toml ../tmp/resources/verifiedSpec.toml
@@ -356,13 +370,13 @@ fullworkflow:
     - export PLOM_PASSWORD=0123
     - export PLOM_MANAGER_PASSWORD=1234
     - export PLOM_SCAN_PASSWORD=4567
-    - plom-build class --demo
-    - plom-build make
+    - plom-create class --demo
+    - plom-create make
     - plom-solutions extract solutionSpec.toml
     - plom-solutions extract --upload
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools
+    - python3 -m plom.create.exam_scribbler
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -409,23 +423,6 @@ fullworkflow:
     - popd
 
 
-backgroundTest:
-  image: alpine
-  stage: static_analysis
-  script:
-    - sleep 60 &
-    - jobs -l
-    - jobs -p
-    - echo "Sleep job has started"
-    - sleep 2
-    - jobs -l
-    - jobs -p
-    - echo "We will kill it"
-    - kill -9 %1
-    - echo "Should be no jobs and this should succeed"
-    - jobs -p
-
-
 appstreamValid:
   stage: static_analysis
   image: alpine
@@ -433,6 +430,29 @@ appstreamValid:
     - apk add appstream-glib
   script:
     - appstream-util validate-relax org.plomgrading.PlomClient.metainfo.xml
+
+
+# TODO: perhaps all deps should be in the docker image?
+docs_sphinx:
+  stage: test
+  needs: ["docker-image"]
+  image: $IM
+  before_script:
+    - apt-get --no-install-recommends --yes install tex-gyre
+    - pip install myst-parser sphinx sphinx_rtd_theme
+  script:
+    - pushd doc
+    - ls
+    - make html
+    - make singlehtml
+    - make linkcheck
+    - make latexpdf
+    - popd
+  artifacts:
+    paths:
+      - doc/build/latex/plom.pdf
+      - doc/build/html/
+    expire_in: 16 days
 
 
 # get latest pip deps, doesn't use docker, closer to user install
@@ -470,9 +490,9 @@ fedora_build:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools
     - ip addr
     - plom-server launch &
     - sleep 2
@@ -481,11 +501,11 @@ fedora_build:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -563,9 +583,9 @@ nodock_newdeps:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools
     - ip addr
     - plom-server launch &
     - sleep 2
@@ -574,11 +594,11 @@ nodock_newdeps:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -661,9 +681,9 @@ nodock_mindeps:
     - pushd play
     - plom-server init
     - plom-server users --demo
-    - plom-build new
-    - plom-build parse
-    - python3 -m plom.produce.demotools
+    - plom-create new
+    - plom-create parse
+    - python3 -m plom.create.demotools
     - ip addr
     - plom-server launch &
     - sleep 2
@@ -672,11 +692,11 @@ nodock_mindeps:
     - jobs -l
     - echo "We should be able to connect to it"
     - curl -k https://localhost:41984/Version
-    - plom-build class --demo -w 1234
-    - plom-build make -w 1234
+    - plom-create class --demo -w 1234
+    - plom-create make -w 1234
     - A=`ls papersToPrint/ | wc -l`  # How many files?
     - bash -c "[[ $A == 20 ]]"       # should be 20
-    - python3 -m plom.produce.faketools -w 1234
+    - python3 -m plom.create.exam_scribbler -w 1234
     # Scan and upload
     # supposed to fail:
     - if (plom-scan process); then false; else true; fi
@@ -1133,7 +1153,7 @@ winmintest:
   stage: test
   needs: []
   script:
-  - choco install -y python3 --version 3.9
+  - choco install -y python3 --version 3.9.9
   - refreshenv
   - c:\Python39\Scripts\pip install -r requirements.txt.client
   - refreshenv
@@ -1148,7 +1168,7 @@ winpyinst:
   - .shared_windows_runners
   stage: packaging
   before_script:
-  - choco install -y python3 --version 3.9
+  - choco install -y python3 --version 3.9.9
   - refreshenv
   - c:\python39\python -m pip --version
   - c:\python39\python -m pip install --user --upgrade pip
@@ -1157,7 +1177,7 @@ winpyinst:
   script:
   - c:\python39\python -m pip install -r requirements.txt.client
   # Delay pyinstaller for a month or so, sometimes output flagged as virus (Issue #1353)
-  - c:\python39\python -m pip install pyinstaller==4.6
+  - c:\python39\python -m pip install pyinstaller==4.7
   - refreshenv
   - c:\python39\python -m plom.client -h
   - c:\python39\scripts\pyinstaller client.windows.spec

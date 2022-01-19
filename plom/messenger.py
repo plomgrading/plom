@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 
 """
 Backend bits n bobs to talk to the server
@@ -198,21 +198,6 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def IDdidNotFinishTask(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                f"/ID/tasks/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     # ------------------------
     # ------------------------
     # Marker stuff
@@ -244,23 +229,6 @@ class Messenger(BaseMessenger):
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
-
-    def MdidNotFinishTask(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.delete(
-                f"/MK/tasks/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return True
 
     def MrequestDoneTasks(self, q, v):
         self.SRmutex.acquire()

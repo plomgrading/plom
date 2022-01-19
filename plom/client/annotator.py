@@ -377,9 +377,8 @@ class Annotator(QWidget):
         """Loads new data into the window for marking.
 
         Args:
-            tgvID (str):  Test-Group-Version ID.
-                            For Example: for Test # 0027, group # 13, Version #2
-                                         tgv = t0027g13v2
+            tgvID (str): Test-Group-Version ID code.  For example, for
+                Test #0027, group #13, version #2, we have `t0027g13v2`.
             question_label (str): The name of the question we are
                 marking.  This is generally used for display only as
                 there is an integer for precise usage.
@@ -387,11 +386,10 @@ class Annotator(QWidget):
             paperdir (dir): Working directory for the current task
             saveName (str): name the tgv is saved as
             maxMark (int): maximum possible score for that test question
-            plomDict (dict) : a dictionary of annotation information.
-                                A dict that contains sufficient information to recreate the
-                                annotation objects on the page if you go back to continue annotating a
-                                question. ie - is it mark up/down, where are all the objects, how to
-                                rebuild those objects, etc.
+            plomDict (dict): a dictionary of annotation information.
+                Contains sufficient information to recreate the annotation
+                objects on the page if you go back to continue annotating a
+                question.
             integrity_check (str): integrity check string
             src_img_data (list[dict]): image md5sums, filenames etc.
 
@@ -1336,7 +1334,7 @@ class Annotator(QWidget):
 
         Args:
             dlt_txt (tuple): the delta, string of text, rubric_id, and
-            kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
+                kind, e.g., `[-2, "missing chain rule", 12345, "relative"]`
 
         Returns:
             None: Modifies self.scene and self.toolMode
@@ -1595,11 +1593,12 @@ class Annotator(QWidget):
 
         Deal with various cases of window trying to close.
 
-        Notes:
-        These include:
+        Notes: These include:
+
           * User closes window via titlebar close icon (or alt-f4 or...)
           * User clicks "Cancel"
           * User clicks "Done"
+
         Window close or Cancel are currently treated the same way:
         discard all annotations.
 

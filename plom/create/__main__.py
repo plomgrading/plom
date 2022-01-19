@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
 
-"""Plom tools for building tests."""
+"""Plom tools related to producing papers, and setting up servers.
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald et al"
+See help for each subcommand or consult online documentation for an
+overview of the steps in setting up a server.
+"""
+
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -24,18 +28,18 @@ from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
 from plom.plom_exceptions import PlomExistingDatabase
-from plom.produce import process_classlist_file, get_demo_classlist, upload_classlist
-from plom.produce import get_messenger
-from plom.produce import build_database, build_papers
-from plom.produce import possible_surname_fields, possible_given_name_fields
-from plom.produce.demotools import buildDemoSourceFiles
-from plom.produce import upload_rubrics_from_file, download_rubrics_to_file
-from plom.produce import upload_demo_rubrics
-from plom.produce import clear_manager_login
-from plom.produce import version_map_from_csv
+from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
+from plom.create import start_messenger
+from plom.create import build_database, build_papers
+from plom.create import possible_surname_fields, possible_given_name_fields
+from plom.create.demotools import buildDemoSourceFiles
+from plom.create import upload_rubrics_from_file, download_rubrics_to_file
+from plom.create import upload_demo_rubrics
+from plom.create import clear_manager_login
+from plom.create import version_map_from_csv
 
 
-def ensureTomlExtension(fname):
+def ensure_toml_extension(fname):
     """Append a .toml extension if not present.
 
     Args:
@@ -60,7 +64,7 @@ def parse_verify_save_spec(fname, save=True):
     fname = Path(fname)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
-        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-build new"?')
+        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create new"?')
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
@@ -79,12 +83,16 @@ def parse_verify_save_spec(fname, save=True):
     if spec["numberToName"] > 0:
         print(
             ">>> Note <<<\n"
-            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-build class ".\n'
+            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-create class ".\n'
         )
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        epilog="\n".join(__doc__.split("\n")[1:]),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--version", action="version", version="%(prog)s " + __version__
     )
@@ -116,6 +124,7 @@ def get_parser():
         help="How many fake exam papers for the demo (defaults to 20 if omitted)",
     )
 
+    # TODO: is saving deprecated?
     spP = sub.add_parser(
         "parse",
         help="Parse spec file",
@@ -137,7 +146,20 @@ def get_parser():
         """,
     )
 
-    #
+    spS = sub.add_parser(
+        "uploadspec",
+        help="Upload spec to server",
+        description="Upload exam specification to server.",
+    )
+    spS.add_argument(
+        "specFile",
+        nargs="?",
+        default="testSpec.toml",
+        help="defaults to '%(default)s'.",
+    )
+    spS.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    spS.add_argument("-w", "--password", type=str, help='for the "manager" user')
+
     spL = sub.add_parser(
         "class",
         help="Read in a classlist",
@@ -295,7 +317,7 @@ def main():
         if args.demo:
             fname = "demoSpec.toml"
         else:
-            fname = ensureTomlExtension(args.specFile)
+            fname = ensure_toml_extension(args.specFile)
 
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
@@ -329,8 +351,24 @@ def main():
             print('DEMO MODE: continuing as if "parse" command was run...')
             parse_verify_save_spec(fname)
     elif args.command == "parse":
-        fname = ensureTomlExtension(args.specFile)
+        fname = ensure_toml_extension(args.specFile)
         parse_verify_save_spec(fname, not args.no_save)
+
+    elif args.command == "uploadspec":
+        fname = ensure_toml_extension(args.specFile)
+        sv = SpecVerifier.from_toml_file(fname)
+        sv.verifySpec()
+        sv.checkCodes()
+        print("spec seems ok: we will upload it to the server")
+        msgr = start_messenger(args.server, args.password)
+        try:
+            # TODO: sv.spec versus sv.get_public_spec_dict()?
+            # TODO: think about who is supposed to know/generate the privateSeed
+            msgr.upload_spec(sv.spec)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
     elif args.command == "class":
         if args.demo:
             classlist = get_demo_classlist()
@@ -363,7 +401,7 @@ def main():
         )
 
     elif args.command == "rubric":
-        msgr = get_messenger(args.server, args.password)
+        msgr = start_messenger(args.server, args.password)
         try:
             if args.demo:
                 N = upload_demo_rubrics(msgr)

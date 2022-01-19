@@ -1,7 +1,7 @@
 #!/bin/env python3
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 """Start a Plom server from a PrairieLearn pdf file upload.
 
@@ -28,7 +28,6 @@ import csv
 import os
 from pathlib import Path
 import subprocess
-import shutil
 
 # confusingly, there are two: https://gitlab.com/plom/plom/-/issues/1570
 import magic
@@ -122,10 +121,10 @@ with open(serverdir / "userListRaw.csv", "r") as csvfile:
 os.environ["PLOM_MANAGER_PASSWORD"] = pwds["manager"]
 os.environ["PLOM_SCAN_PASSWORD"] = pwds["scanner"]
 
-subprocess.check_call(["plom-build", "class", "fake_classlist.csv"])
+subprocess.check_call(["plom-create", "class", "fake_classlist.csv"])
 try:
     os.chdir(serverdir)
-    subprocess.check_call(["plom-build", "make", "--no-pdf"])
+    subprocess.check_call(["plom-create", "make", "--no-pdf"])
 finally:
     os.chdir(cwd)
 

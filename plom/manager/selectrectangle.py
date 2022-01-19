@@ -144,7 +144,7 @@ class IDView(QGraphicsView):
             x = 0
             n = 0
             for fn in fnames:
-                qir = QImageReader(fn)
+                qir = QImageReader(str(fn))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())

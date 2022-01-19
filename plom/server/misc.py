@@ -72,10 +72,6 @@ def check_server_fully_configured(basedir):
         raise FileNotFoundError(
             "Processed userlist is not present. Have you run 'plom-server users'?"
         )
-    if not (basedir / specdir / "verifiedSpec.toml").exists():
-        raise FileNotFoundError(
-            'Cannot find test specification. Try "plom-build new" and "plom-build parse"?'
-        )
 
 
 def create_server_config(dur=confdir, *, port=None):

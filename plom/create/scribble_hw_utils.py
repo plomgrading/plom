@@ -1,26 +1,16 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
-"""Plom tools for scribbling fake answers on PDF files"""
+"""Plom tools for scribbling fake homework answers for testing purposes."""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
-
-import argparse
-import os
-import random
 from pathlib import Path
+import random
 
 import fitz
-from stdiomask import getpass
 
-from plom import __version__
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
-
-from plom.produce.faketools import possible_answers as possibleAns
+from plom.create import start_messenger
+from plom.create.scribble_utils import possible_answers
 
 
 def makeFakeHW(numQuestions, paperNum, who, where, prefix, maxpages=3):
@@ -72,7 +62,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
             rect = fitz.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
-            text = random.choice(possibleAns)
+            text = random.choice(possible_answers)
             rc = page.insert_textbox(
                 rect,
                 text,
@@ -87,25 +77,7 @@ def scribble_doc(doc, student_num, name, maxpages, q):
 
 def download_classlist_and_spec(server=None, password=None):
     """Download list of student IDs/names and test specification from server."""
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        raise
-
+    msgr = start_messenger(server, password)
     try:
         classlist = msgr.IDrequestClasslist()
         spec = msgr.get_spec()
@@ -116,12 +88,7 @@ def download_classlist_and_spec(server=None, password=None):
 
 
 def make_hw_scribbles(server, password, basedir=Path(".")):
-    """Fake homework submissions by scribbling on the pages of a blank test.
-
-    After the files have been generated, this script can be used to scribble
-    on them to simulate random student work.  Note this tool does not upload
-    those files, it just makes some PDF files for you to play with or for
-    testing purposes.
+    """Fake homework submissions by scribbling on the pages of blank tests.
 
     Args:
         server (str): the name and port of the server.
@@ -154,25 +121,3 @@ def make_hw_scribbles(server, password, basedir=Path(".")):
     # a few more for "all questions in one" bundling
     for k in range(numberNamed - num_all_q_one_bundle, numberNamed):
         makeFakeHW2(numberOfQuestions, k, classlist[k], d, "semiloose")
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
-    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    args = parser.parse_args()
-
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
-
-    if not args.password:
-        args.password = getpass('Please enter the "manager" password: ')
-
-    make_hw_scribbles(args.server, args.password)
-
-
-if __name__ == "__main__":
-    main()

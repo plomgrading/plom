@@ -1006,21 +1006,17 @@ class MarkerClient(QWidget):
             messenger (Messenger): handle communication with server.
             question (int): question number.
             version (int): version number
-            lastTime (dict): a dictionary containing
-                 {"user": username
-                "server": serverNumber
-                 "question": question number
-                 "version": version number
-                 "fontsize"
-                 "FOREGROUND"
-                 "upDown": marking style (up vs down)
-                 "LogLevel"
-                 "LogToFile"
-                 "CommentsWarnings"
-                 "MarkWarnings"
-                 "mouse": left or right mouse hand
-                 "SidebarOnRight": True if sidebar is on right
-                  }
+            lastTime (dict): settings.
+                containing::
+
+                   {
+                     "POWERUSER"
+                     "FOREGROUND"
+                     "CommentsWarnings"
+                     "MarkWarnings"
+                     "SidebarOnRight"
+                   }
+
                 and potentially others
 
         Returns:
@@ -1673,8 +1669,8 @@ class MarkerClient(QWidget):
         Args:
             task (str): the task id.  If original qXXXXgYY, then annotated
                 version is GXXXXgYY (G=graded).
-        Returns
-            data (list): (as described by startTheAnnotator) if successful.
+        Returns:
+            list/None: as described by startTheAnnotator, if successful.
         """
         # Create annotated filename.
         assert task.startswith("q")
@@ -1990,7 +1986,7 @@ class MarkerClient(QWidget):
                 rearranged.  Each row looks like `[md5, filename, angle]`.
 
         Returns:
-            initialData (as described by getDataForAnnotator)
+            tuple: initialData (as described by :func:`plom.client.marker.Marker.startTheAnnotator`.)
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place

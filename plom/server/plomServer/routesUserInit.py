@@ -1,12 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-import os
-import json
-
-from aiohttp import web, MultipartWriter, MultipartReader
+from aiohttp import web
 
 from .routeutils import (
     authenticate_by_token,
@@ -15,6 +12,8 @@ from .routeutils import (
 )
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
+
+from plom import SpecVerifier
 
 
 class UserInitHandler:
@@ -165,19 +164,58 @@ class UserInitHandler:
     # @routes.get("/info/spec")
     @no_authentication_only_log_request
     async def info_spec(self, request):
+        """Return the public part of the server specification.
+
+        Response:
+            200: the public part of the spec.
+            400: spec not found (server does not have one yet).
+        """
         spec = self.server.info_spec()
         if not spec:
-            return web.Response(status=404)
+            raise web.HTTPBadRequest(reason="Server does not yet have a spec")
         return web.json_response(spec, status=200)
+
+    # @routes.put("/info/spec")
+    @authenticate_by_token_required_fields(["user", "spec"])
+    def put_spec(self, data, request):
+        """Accept an uploaded exam specification.
+
+        Response:
+            403: only manager can upload a spec.
+            400: the provided spec is not valid.
+            409: Conflict: server has already populated the database.
+            200: new spec file accepted.  TODO: would be polite to inform
+                caller if we already had one or not.
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
+
+        if self.server.DB.is_paper_database_populated():
+            raise web.HTTPConflict(reason="Server has populated DB: cannot accept spec")
+        sv = SpecVerifier(data["spec"])
+        try:
+            sv.verifySpec(verbose="log")
+            sv.checkCodes(verbose="log")
+        except ValueError as e:
+            raise web.HTTPBadRequest(reason=f"{e}")
+        sv.saveVerifiedSpec()
+        self.server.testSpec = SpecVerifier.load_verified()
+        log.info("spec loaded: %s", self.server.info_spec())
+        return web.Response()
 
     # @routes.get("/info/shortName")
     @no_authentication_only_log_request
     async def InfoShortName(self, request):
-        rmsg = self.server.InfoShortName()
-        if rmsg[0]:
-            return web.Response(text=rmsg[1], status=200)
-        else:  # this should not happen
-            return web.Response(status=404)
+        """The short name of the exam.
+
+        Response:
+            200: the short name.
+            400: server has no spec.
+        """
+        name = self.server.InfoShortName()
+        if not name:
+            raise web.HTTPBadRequest(reason="Server does not yet have a spec")
+        return web.Response(text=name, status=200)
 
     def setUpRoutes(self, router):
         router.add_get("/Version", self.version)
@@ -186,6 +224,7 @@ class UserInitHandler:
         router.add_put("/admin/reloadUsers", self.adminReloadUsers)
         router.add_get("/info/shortName", self.InfoShortName)
         router.add_get("/info/spec", self.info_spec)
+        router.add_put("/info/spec", self.put_spec)
         router.add_delete("/authorisation", self.clearAuthorisation)
         router.add_delete("/authorisation/{user}", self.clearAuthorisationUser)
         router.add_post("/authorisation/{user}", self.createModifyUser)

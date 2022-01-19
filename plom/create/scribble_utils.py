@@ -1,22 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
 
-"""Plom tools for scribbling fake answers on PDF files"""
+"""Plom tools for scribbling fake answers on PDF files."""
 
-__copyright__ = "Copyright (C) 2019-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
-__credits__ = "The Plom Project Developers"
-__license__ = "AGPL-3.0-or-later"
-
-import os
-import random
-from pathlib import Path
-from glob import glob
-import argparse
-import json
 import base64
+from glob import glob
+import json
+import os
+from pathlib import Path
+import random
 import sys
 
 if sys.version_info >= (3, 7):
@@ -25,14 +20,11 @@ else:
     import importlib_resources as resources
 
 import fitz
-from stdiomask import getpass
 
-import plom.produce
-from plom.produce import paperdir as _paperdir
-from plom import __version__
+import plom.create
+from plom.create import paperdir as _paperdir
 from plom.misc_utils import working_directory
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.create import start_messenger
 
 
 possible_answers = [
@@ -74,8 +66,9 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
 
     Keyword Arguments:
-        which: by default ("`which=None`") scribble on all exams or specify
-            something like `which=range(10, 16)` to scribble on a subset.
+        which (iterable): By default we scribble on all exams or specify
+            something like `which=range(10, 16)` here to scribble on a
+            subset. (default: `None`)
     """
     # Customizable data
     blue = [0, 0, 0.75]
@@ -86,7 +79,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     extra_page_font_size = 18
 
     # load the digit images
-    digit_array = json.loads(resources.read_text(plom.produce, "digits.json"))
+    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
     # how many of each digit were collected
     number_of_digits = len(digit_array) // 10
     assert len(digit_array) % 10 == 0
@@ -227,7 +220,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     print('Assembled in "{}"'.format(out_file_path))
 
 
-def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
+def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     """Randomly generates and inserts garbage pages into a PDF document.
 
     Used for testing.
@@ -240,16 +233,16 @@ def make_garbage_pages(out_file_path, number_of_garbage_pages=2):
     """
     green = [0, 0.75, 0]
 
-    all_pdf_documents = fitz.open(out_file_path)
-    print("Doc has {} pages".format(len(all_pdf_documents)))
+    doc = fitz.open(pdf_file)
+    print("Doc has {} pages".format(len(doc)))
     for _ in range(number_of_garbage_pages):
-        garbage_page_index = random.randint(-1, len(all_pdf_documents))
+        garbage_page_index = random.randint(-1, len(doc))
         print("Insert garbage page at garbage_page_index={}".format(garbage_page_index))
-        all_pdf_documents.insert_page(
+        doc.insert_page(
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
-    all_pdf_documents.saveIncr()
-    all_pdf_documents.close()
+    doc.saveIncr()
+    doc.close()
 
 
 def make_colliding_pages(paper_dir_path, outfile):
@@ -328,24 +321,7 @@ def splitFakeFile(out_file_path):
 
 def download_classlist(server=None, password=None):
     """Download list of student IDs/names from server."""
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another management tool running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-build clear"'
-        )
-        raise
+    msgr = start_messenger(server, password)
     try:
         classlist = msgr.IDrequestClasslist()
     finally:
@@ -355,12 +331,12 @@ def download_classlist(server=None, password=None):
 
 
 def make_scribbles(server, password, basedir=Path(".")):
-    """Fake test writing by scribbling on the pages of a blank test.
+    """Fake exam writing by scribbling on the pages of the blank exams.
 
-    After the files have been generated, this script can be used to scribble
-    on them to simulate random student work.  Note this tool does not upload
-    those files, it just makes some PDF files for you to play with or for
-    testing purposes.
+    After Plom exam PDF files have been generated, this can be used to
+    scribble on them to simulate random student work.  Note this tool does
+    not upload those files, it just makes some PDF files for you to play with
+    or for testing purposes.
 
     Args:
         server (str): the name and port of the server.
@@ -385,25 +361,3 @@ def make_scribbles(server, password, basedir=Path(".")):
         make_colliding_pages(_paperdir, out_file_path)
         splitFakeFile(out_file_path)
         os.unlink(out_file_path)
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--version", action="version", version="%(prog)s " + __version__
-    )
-    parser.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
-    parser.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    args = parser.parse_args()
-
-    args.server = args.server or os.environ.get("PLOM_SERVER")
-    args.password = args.password or os.environ.get("PLOM_MANAGER_PASSWORD")
-
-    if not args.password:
-        args.password = getpass('Please enter the "manager" password: ')
-
-    make_scribbles(args.server, args.password)
-
-
-if __name__ == "__main__":
-    main()
