@@ -256,19 +256,25 @@ class BaseMessenger:
     # Test information
 
     def getInfoShortName(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get("/info/shortName")
-            response.raise_for_status()
-            return response.text
-        except requests.HTTPError as e:
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Server could not find the spec - this should not happen!"
-                ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        """The short name of the exam.
+
+        Returns:
+            str: the short name of the exam.
+
+        Exceptions:
+            PlomServerNotReady: Server does not have name because it
+                does not yet have a spec.
+            PlomSeriousException: any other errors.
+        """
+        with self.SRmutex:
+            try:
+                response = self.get("/info/shortName")
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                if response.status_code == 400:
+                    raise PlomServerNotReady(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def get_spec(self):
         """Get the specification of the exam from the server.

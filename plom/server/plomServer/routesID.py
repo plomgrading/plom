@@ -94,7 +94,9 @@ class IDHandler:
             raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
-            raise web.HTTPBadRequest(reason="Server has no spec; cannot accept classlist")
+            raise web.HTTPBadRequest(
+                reason="Server has no spec; cannot accept classlist"
+            )
         if (specdir / "classlist.csv").exists():
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
