@@ -90,13 +90,10 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     paper_dir_path = Path(paper_dir_path)
     out_file_path = Path(outfile)
 
-    # Get path to custom handwriting font
-    with resources.path(plom.create.fonts, "") as p:
-        font_directory_path = str(p) + "/"
-
     # In principle you can put other fonts in plom.create.fonts
     font_dict = {
         "ejx": "ejx_handwriting.ttf",
+        "helv": None,
     }
 
     print("Annotating papers with fake student data and scribbling on pages...")
@@ -182,19 +179,24 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             )
             random_answer_text = random.choice(possible_answers)
 
-            random_font_name = random.choice(list(font_dict))
+            fontname, ttf = random.choice(list(font_dict.items()))
 
             if page_index >= 1:
-                excess = pdf_page.insert_textbox(
-                    random_answer_rect,
-                    random_answer_text,
-                    fontsize=answer_font_size,
-                    color=blue,
-                    fontname=random_font_name,
-                    fontfile=font_directory_path + font_dict[random_font_name],
-                    align=0,
-                )
-                assert excess > 0
+                # Get path to custom handwriting font
+                with resources.path(plom.create.fonts, "") as fontdir:
+                    if ttf is not None:
+                        # str for https://github.com/pymupdf/PyMuPDF/issues/1550
+                        ttf = str(Path(fontdir) / ttf)
+                    excess = pdf_page.insert_textbox(
+                        random_answer_rect,
+                        random_answer_text,
+                        fontsize=answer_font_size,
+                        color=blue,
+                        fontname=fontname,
+                        fontfile=ttf,
+                        align=0,
+                    )
+                    assert excess > 0
 
         # delete last page from the zeroth test.
         if index == 0:
