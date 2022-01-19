@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 import os
 from pathlib import Path
@@ -41,7 +41,7 @@ class Test:
     def test_get_rubrics_default_extension_is_toml(self, tmpdir):
         f = Path(tmpdir) / "foo"
         subprocess.check_call(
-            split(f"python3 -m plom.scripts.build rubric --dump {f}"),
+            split(f"python3 -m plom.create rubric --dump {f}"),
             env=self.env,
         )
         assert f.with_suffix(".toml").exists()
@@ -49,19 +49,19 @@ class Test:
     def test_get_rubrics_toml(self, tmpdir):
         f = Path(tmpdir) / "foo.toml"
         subprocess.check_call(
-            split(f"python3 -m plom.scripts.build rubric --dump {f}"),
+            split(f"python3 -m plom.create rubric --dump {f}"),
             env=self.env,
         )
         assert f.exists()
 
     def test_put_rubrics_demo(self, tmpdir):
         subprocess.check_call(
-            split(f"python3 -m plom.scripts.build rubric --demo"),
+            split(f"python3 -m plom.create rubric --demo"),
             env=self.env,
         )
         f = Path(tmpdir) / "foo.json"
         subprocess.check_call(
-            split(f"python3 -m plom.scripts.build rubric --dump {f}"),
+            split(f"python3 -m plom.create rubric --dump {f}"),
             env=self.env,
         )
         with open(f, "r") as fh:
@@ -70,7 +70,7 @@ class Test:
 
     def test_random_grading(self):
         subprocess.check_call(
-            split(f"python3 -m plom.client.randoMarker"), env=self.env
+            split("python3 -m plom.client.randoMarker"), env=self.env
         )
 
     def test_scan_finish_after(self):
@@ -79,6 +79,3 @@ class Test:
         # TODO: fix up this, seems erratic, perhaps even non-deterministic?
         assert r >= 0  # numScanned - numberComplete
         assert self.demo.process_is_running()
-
-
-###
