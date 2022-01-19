@@ -188,7 +188,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 with resources.path(plom.create.fonts, "") as fontdir:
                     if ttf is not None:
                         # str for https://github.com/pymupdf/PyMuPDF/issues/1550
-                        ttf = str(Path(fontdir) / ttf)
+                        ttf = str(fontdir / ttf)
                     excess = pdf_page.insert_textbox(
                         random_answer_rect,
                         random_answer_text,
