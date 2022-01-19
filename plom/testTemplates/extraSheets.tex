@@ -1,9 +1,9 @@
 \documentclass[12pt,letterpaper]{article}
 
-\usepackage[letterpaper,left=28mm,right=22mm,top=8mm,bottom=7mm]{geometry}
-\usepackage{graphicx}
+\usepackage[letterpaper,left=28mm,right=28mm,top=8mm,bottom=0mm]{geometry}
 \usepackage{color}
 \usepackage{amsmath}
+\usepackage{tikz}
 
 %%%%%%%%%%%%%
 
@@ -17,21 +17,13 @@
   \rule[-2ex]{0pt}{5ex}
   \hspace{3ex}}}
 
+\pagestyle{empty}
 
 \begin{document}
 
-
-% \begin{flushleft}
-%   \begin{tabular}{rlrl}
-%     Test \# & \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
-%     &
-%     Student \#:& \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
-%                     \digitbox\,\digitbox\,\digitbox\,\digitbox} \\[4ex]
-%     Q.\# & \fbox{\bigdigitbox\,\bigdigitbox} &
-%     Name: & \fbox{ \rule[-2ex]{0pt}{5ex}\hspace{40ex} }
-%     \end{tabular}
-% \end{flushleft}
-
+\begin{center}
+  \textbf{Only 1 question per page!}
+\end{center}
 
 \begin{flushleft}
 \noindent
@@ -39,23 +31,58 @@ Test \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
   \quad
 Student \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
                     \digitbox\,\digitbox\,\digitbox\,\digitbox}
-   \\[4ex]
+   \\[1ex]
 \noindent
 \phantom{est}Q.\#  \fbox{\bigdigitbox\,\bigdigitbox}
 \quad
 Name: \fbox{ \rule[-2.5ex]{0pt}{6ex}\hspace{52ex} }
 \end{flushleft}
 
-\begin{center}
-  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
-\end{center}
 
 \hrule
 
 \vfill
 
 \hrule
+\begin{center}
+  \textbf{If you need more space, use back or another sheet.}
+\end{center}
 
+
+\begin{tikzpicture}[remember picture,overlay]
+  \node[anchor=north west] at (current page.north west) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (3,0);
+      \coordinate (c) at (0,-3);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+  \node[anchor=north east] at (current page.north east) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (-3,0);
+      \coordinate (c) at (0,-3);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+  \node[anchor=south west] at (current page.south west) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (3,0);
+      \coordinate (c) at (0,3);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+  \node[anchor=south east] at (current page.south east) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (-3,0);
+      \coordinate (c) at (0,3);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+\end{tikzpicture}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -70,7 +97,7 @@ Test \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
   \quad
 Student \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
                     \digitbox\,\digitbox\,\digitbox\,\digitbox}
-   \\[4ex]
+   \\[1ex]
 \noindent
 \phantom{est}Q.\#  \fbox{\bigdigitbox\,\bigdigitbox}
 \quad
