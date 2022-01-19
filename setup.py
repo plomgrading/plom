@@ -56,7 +56,7 @@ server_install_requires = [
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
-    "opencv-python",
+    "opencv-python-headless",
     "scikit-learn>=0.23.1",
     "segno",
     "lapsolver",  # ID reading
