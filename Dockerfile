@@ -42,9 +42,9 @@ COPY requirements.txt /src/
 WORKDIR /src
 RUN pip install --no-cache-dir -r requirements.txt
 
-# client dependency: keep in image for now after others so easy to discard
-RUN apt-get -y update && \
-    apt-get --no-install-recommends -y install qtbase5-dev
+# client dependency: if pip installing pyqt5, likely need this
+# RUN apt-get -y update && \
+#     apt-get --no-install-recommends -y install qtbase5-dev
 
 COPY . /src
 WORKDIR /src
