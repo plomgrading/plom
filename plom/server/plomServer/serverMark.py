@@ -116,18 +116,6 @@ def MclaimThisTask(self, username, task_code):
     return self.DB.MgiveTaskToClient(username, task_code)
 
 
-def MdidNotFinish(self, username, task_code):
-    """Inform database that a user did not finish a task.
-
-    Args:
-        username (str): Owner of the unfinished task.
-        task_code (str): Code string for the unfinished task.
-    """
-
-    self.DB.MdidNotFinish(username, task_code)
-    return
-
-
 def MreturnMarkedTask(
     self,
     username,

@@ -151,8 +151,10 @@ def buildLaTeX(src, out):
         out (file-like): the binary pdf file will be written into this.
 
     Returns:
-        exit value from the subprocess call (zero good, non-zero BAD)
-        stdout/stderr from the subprocess call
+        tuple containing
+
+        - (*int*): exit value from the subprocess call (zero good, non-zero bad)
+        - (*str*): stdout/stderr from the subprocess call
 
     TODO: this is more generally useful but how to handle the idBox2?
     """

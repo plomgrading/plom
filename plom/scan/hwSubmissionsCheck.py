@@ -95,21 +95,24 @@ def whoSubmittedWhatOnServer(server, password):
         raise
 
     try:
-        missingHWQ = msgr.getMissingHW()  # passes back dict
-        # passes back list [test_number, sid]
+        # passes back dict {t: [sid, missing1, missing2, etc]}
+        missingHWQ = msgr.getMissingHW()
+        # passes back list of pairs [test_number, sid]
         completeHW = msgr.getCompleteHW()
+
     finally:
         msgr.closeUser()
         msgr.stop()
 
-    print(">> Checking incomplete submissions on server <<")
+    print(">> Checking hw submissions on server <<")
     print("The following students have complete submissions (each question present)")
     print(", ".join(sorted([x[1] for x in completeHW])))
+    print()
     print(
         "The following students have incomplete submissions (missing questions indicated)"
     )
-    for t in missingHWQ:
-        print("{} missing {}".format(missingHWQ[t][1], missingHWQ[t][2:]))
+    for t, val in missingHWQ.items():
+        print(f"\t{val[0]} is missing {val[1:]}")
 
 
 def print_who_submitted_what(server=None, password=None, directory_check=False):

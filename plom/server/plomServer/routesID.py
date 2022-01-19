@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 import csv
@@ -82,15 +82,21 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
                 200: success
-                400: authentication problem.
-                HTTPBadRequest (400): not manager, or malformed request
-                    such as missing required fields.
+                401: authentication problem.
+                403: not manager.
+                HTTPBadRequest (400): malformed request such as missing
+                    required fields or server has no spec.
                 HTTPConflict: we already have a classlist.
                     TODO: would be nice to be able to "try again".
                 HTTPNotAcceptable: classlist too short (see above).
         """
         if not data["user"] == "manager":
-            raise web.HTTPBadRequest(reason="Not manager")
+            raise web.HTTPForbidden(reason="Not manager")
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPBadRequest(
+                reason="Server has no spec; cannot accept classlist"
+            )
         if (specdir / "classlist.csv").exists():
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]
@@ -100,7 +106,7 @@ class IDHandler:
                 raise web.HTTPBadRequest(reason="Every row must have an id")
             if not row["id"]:
                 raise web.HTTPBadRequest(reason="Every row must non-empty id")
-        spec = self.server.testSpec
+
         if spec.numberToName < 0 or spec.numberToProduce < 0:
             if spec.number_to_name < 0:
                 spec.set_number_papers_to_name(len(classlist))
@@ -381,26 +387,6 @@ class IDHandler:
         else:
             raise web.HTTPInternalServerError(reason=msg)
 
-    # @routes.delete("/ID/tasks/{task}")
-    @authenticate_by_token_required_fields(["user"])
-    def IDdidNotFinishTask(self, data, request):
-        """Accept the client's surrender of a previously-claimed identifying task.
-
-        This could occur for example when the client closes with unfinished tasks.
-        Responds with status 200.
-
-        Args:
-            data (dict): A (str:str) dictionary having keys `user` and `token`.
-            request (aiohttp.web_request.Request'): Request of type DELETE /ID/tasks/#TaskNumber.
-
-        Returns:
-            aiohttp.web_response.Response: A response with status 200.
-        """
-
-        testNumber = request.match_info["task"]
-        self.server.IDdidNotFinish(data["user"], testNumber)
-        return web.json_response(status=200)
-
     # @routes.get("/ID/randomImage")
     @authenticate_by_token_required_fields(["user"])
     def IDgetImageFromATest(self, data, request):
@@ -572,7 +558,6 @@ class IDHandler:
         router.add_get("/ID/tasks/available", self.IDgetNextTask)
         router.add_patch("/ID/tasks/{task}", self.IDclaimThisTask)
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
-        router.add_delete("/ID/tasks/{task}", self.IDdidNotFinishTask)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)

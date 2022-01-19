@@ -22,7 +22,7 @@ Tested on Fedora 35.  Some stuff from the package manager:
         turbojpeg-devel libjpeg-turbo-devel python3-cffi \
         python3-passlib python3-qt5 \
         python3-jsmin python3-defusedxml python3-yaml \
-        python3-more-itertools \
+        python3-more-itertools python3-chardet \
         python3-seaborn python3-cairosvg \
         python3-aiohttp python3-appdirs python3-arrow \
         python3-pillow python3-pandas python3-peewee \
@@ -32,7 +32,8 @@ Tested on Fedora 35.  Some stuff from the package manager:
         python3-toml python3-tqdm python3-urllib3 python3-weasyprint \
         python3-pytest \
         latexmk tex-dvipng texlive-scheme-basic \
-        tex-preview tex-charter tex-exam tex-preprint
+        tex-preview tex-charter tex-exam tex-preprint \
+        python3-myst-parser python3-sphinx python3-sphinx_rtd_theme
 ```
 At this point `pip install --user .` from inside the Plom source tree should pull
 in the remaining dependencies.  Alternatively, you can do something like:
@@ -41,9 +42,7 @@ in the remaining dependencies.  Alternatively, you can do something like:
 ```
 There are additional dependencies for the machine-learning-based ID Reader:
 ```
-  # sudo dnf install python3-termcolor python3-grpcio \
-                     python3-markdown python3-h5py
-  # pip install --user imutils lapsolver opencv-python
+  # pip install --user imutils lapsolver opencv-python-headless
 ```
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
@@ -81,13 +80,10 @@ Other stuff we get from pip:
   # python3 -m pip install --upgrade --user setuptools
   # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
         aiohttp pyzbar jpegtran-cffi peewee
-  # python3 -m pip install --user imutils lapsolver opencv-python
+  # python3 -m pip install --user imutils lapsolver opencv-python-headless
   # python3 -m pip install --user scikit-learn
 ```
 Note `python3 -m pip` uses the newly upgraded pip (necessary at least on Ubuntu 18.04).
-
-If you're using the TensorFlow-based ID-Reader, you'll also need
-`python3 -m pip install --upgrade --user tensorflow`.
 
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
@@ -100,7 +96,7 @@ Finally: it has been noted that ImageMagick doesn't allow hacking
 of pdf files by default, some edits are needed to
 `/etc/ImageMagick-6/policy.xml`.  Near the end of the file,
 comment out the `pattern="PDF"` part:
-```dif
+```diff
    <policy domain="coder" rights="none" pattern="EPS" />
 -  <policy domain="coder" rights="none" pattern="PDF" />
 +  <!--<policy domain="coder" rights="none" pattern="PDF" />-->

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartWriter, MultipartReader
@@ -182,26 +182,6 @@ class MarkHandler:
                 raise web.HTTPBadRequest(reason=errmsg)
 
         return web.json_response(retvals[1:], status=200)
-
-    # @routes.delete("/MK/tasks/{task}")
-    @authenticate_by_token_required_fields(["user"])
-    def MdidNotFinishTask(self, data, request):
-        """Assign tasks that are not graded (untouched) as unfinished in the database.
-
-        Respond with status 200.
-
-        Args:
-            data (dict): Includes the user/token and task code.
-            request (aiohttp.web_request.Request): Request of type DELETE /MK/tasks/`question code`.
-
-        Returns:
-            aiohttp.web_response.Response: Returns a success status indicating the task is unfinished.
-        """
-
-        task_code = request.match_info["task"]
-        self.server.MdidNotFinish(data["user"], task_code)
-
-        return web.json_response(status=200)
 
     # @routes.put("/MK/tasks/{task}")
     async def MreturnMarkedTask(self, request):
@@ -481,7 +461,7 @@ class MarkHandler:
         with MultipartWriter("images") as multipart_writer:
             for file_nam in original_image_paths:
                 multipart_writer.append(open(file_nam, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+            return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
@@ -638,7 +618,7 @@ class MarkHandler:
             multipart_writer.append_json(pages_data)
             for file_name in all_pages_paths:
                 multipart_writer.append(open(file_name, "rb"))
-        return web.Response(body=multipart_writer, status=200)
+            return web.Response(body=multipart_writer, status=200)
 
     # @routes.get("/MK/TMP/whole/{number}/{question}")
     @authenticate_by_token_required_fields([])
@@ -657,23 +637,27 @@ class MarkHandler:
                 pagename, md5, included, order, id, orientation, server_path
                 as documented below.
 
-        Dictionary contents per-row
-        ---------------------------
+        The list of dicts (we think of them as rows) have the following
+        contents:
 
-        `pagename`: A string something like `"t2"`.  Reasonable to use
+        `pagename`
+            A string something like `"t2"`.  Reasonable to use
             as a thumbnail label for the image or in other cases where
             a very short string label is required.
 
-        `md5': A string of the md5sum of the image.
+        `md5`
+            A string of the md5sum of the image.
 
-        `id`: an integer like 19.  This is the key in the database to
+        `id`
+            an integer like 19.  This is the key in the database to
             the image of this page.  It is (I think) possible to have
             two pages pointing to the same image, in which case the md5
             and the id could be repeated.  TODO: determine if this only
             happens b/c of bugs/upload issues or if its a reasonably
             normal state.
 
-        `included`: boolean, did the server *originally* have this page
+        `included`
+            boolean, did the server *originally* have this page
             included in question number `question`?.  Note that clients
             may pull other pages into their annotating; you can only
             rely on this information for initializing a new annotating
@@ -681,14 +665,16 @@ class MarkHandler:
             you should rely on the info from that existing annotation
             instead of this.
 
-        `order`: None or an integer specifying the relative ordering of
+        `order`
+            None or an integer specifying the relative ordering of
             pages within a question.  As with `included`,
             this information only reflects the initial (typically
             scan-time) ordering of the images.  If its None, server has
             no info about what order might be appropriate, for example
             because this image is not thought to belong in `question`.
 
-        `orientation`: relative to the natural orientation of the image.
+        `orientation`
+            relative to the natural orientation of the image.
             This is an integer for the degrees of rotation.  Probably
             only multiples of 90 work and perhaps only [0, 90, 180, 270]
             but could/should (TODO) be generalized for arbitrary
@@ -698,7 +684,8 @@ class MarkHandler:
             the initial state.  Clients may rotate images and that
             information belongs their annotation.
 
-        `server_path`: a string of a path and filename where the server
+        `server_path`
+            a string of a path and filename where the server
             might have the file stored, such as
             `"pages/originalPages/t0004p02v1.86784dd1.png"`.
             This is guaranteed unique (such as by the random bit before
@@ -706,28 +693,26 @@ class MarkHandler:
             stores the file in this location, although the current
             implementation does.
 
-        Example
-        -------
-        ```
-          [
-           {'pagename': 't2',
-            'md5': 'e4e131f476bfd364052f2e1d866533ea',
-            'included': False,
-            'order': None,
-            'id': 19',
-            'orientation': 0
-            'server_path': 'pages/originalPages/t0004p02v1.86784dd1.png',
-           }
-           {'pagename': 't3',
-            'md5': 'a896cb05f2616cb101df175a94c2ef95',
-            'included': True,
-            'order': 1,
-            'id': 20,
-            'orientation': 270
-            'server_path': 'pages/originalPages/t0004p03v2.ef7f9754.png',
-           }
-          ]
-        ```
+        Example::
+
+            [
+              {'pagename': 't2',
+               'md5': 'e4e131f476bfd364052f2e1d866533ea',
+               'included': False,
+               'order': None,
+               'id': 19',
+               'orientation': 0
+               'server_path': 'pages/originalPages/t0004p02v1.86784dd1.png',
+              },
+              {'pagename': 't3',
+               'md5': 'a896cb05f2616cb101df175a94c2ef95',
+               'included': True,
+               'order': 1,
+               'id': 20,
+               'orientation': 270
+               'server_path': 'pages/originalPages/t0004p03v2.ef7f9754.png',
+              }
+            ]
         """
         test_number = request.match_info["number"]
         # this is used to determine the true/false "included" info
@@ -820,7 +805,6 @@ class MarkHandler:
         router.add_get("/MK/tasks/available", self.MgetNextTask)
         router.add_get("/MK/latex", self.MlatexFragment)
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
-        router.add_delete("/MK/tasks/{task}", self.MdidNotFinishTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
         router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)

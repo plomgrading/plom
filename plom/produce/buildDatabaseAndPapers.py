@@ -131,6 +131,7 @@ def build_database(server=None, password=None, vermap={}):
 
     raises:
         PlomExistingDatabase
+        PlomServerNotReady
     """
     check_version_map(vermap)
 

@@ -52,11 +52,11 @@ server_install_requires = [
     "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
     "weasyprint<53",  # temp pin for Issue #1594
-    "aiohttp~=3.7.2",
+    "aiohttp>=3.7.2",
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
-    "opencv-python",
+    "opencv-python-headless",
     "scikit-learn>=0.23.1",
     "segno",
     "lapsolver",  # ID reading

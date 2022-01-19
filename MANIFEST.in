@@ -6,7 +6,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-include CONTRIBUTORS CHANGELOG.md Dockerfile LICENSE.md
+include CONTRIBUTORS CHANGELOG.md Dockerfile LICENSE.md doc
 include requirements.txt requirements.txt.client
 
 # It seems I have to list files accessed with importlib.sources

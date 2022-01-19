@@ -26,7 +26,7 @@
 * get "/ID/images/{tgv}" - return the image-file for that TGV
 * patch "/ID/tasks/{task}" - claim task (if still available) - return imagefile
 * put "/ID/tasks/{task}" - update the ID/Name of the task (ie test)
-* delete "/ID/tasks/{task}" - unclaim task - ie tell server that user did not finish that task - go back on todo list
+* delete "/ID/tasks/{task}" - reserved but currently not implemented
 
 ## Marker
 * get "/MK/maxMark" - return max-mark for the page-group
@@ -40,7 +40,7 @@
 * patch "/MK/tags/{tgv}" - save user-tags of that tgv
 * put "/MK/tasks/{tgv}" - send back marked-image, plom-file, comments, mark etc.
 * patch "/MK/tasks/{task}" - claim the task (if still available) - return imagefile
-* delete "/MK/tasks/{task}" - unclaim the task.
+* delete "/MK/tasks/{task}" - unclaim the task, currently not implemented
 * patch "/MK/revert/{task}" - revert the task
 
 

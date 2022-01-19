@@ -56,13 +56,16 @@ def processScans(
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
 
-    kwargs:
+    keyword args:
         bundle_name (str/None): Override the bundle name (which is by
             default is generated from the PDF filename).
         gamma (bool):
         extractbmp (bool):
         demo (bool): do things appropriate for a demo such as lower quality
             or various simulated rotations.
+
+    return:
+        None
 
     Convert file into a bundle-name
     Check with server if bundle/md5 already on server
@@ -124,9 +127,12 @@ def uploadImages(
         bundle_name (str): usually the PDF filename but in general
             whatever string was used to define a bundle.
 
-    kwargs:
+    keyword args:
         do_unknowns (bool):
         do_collisions (bool):
+
+    return:
+        None
 
     Try to create a bundle on server.
     - abort if name xor md5sum of bundle known.

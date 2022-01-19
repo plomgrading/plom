@@ -117,8 +117,8 @@ def processHWScans(
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
         student_id (str)
-        questions (list): to which questions should we upload the pages
-            of this bundle?
+        questions (list): to which questions should we upload these pages?
+
               * a scalar number: all pages map to this question.
               * a list of integers: all pages map to those questions.
               * the string "all" maps each pages to all questions.
@@ -126,11 +126,12 @@ def processHWScans(
                 maps onto, e.g., `[[1],[1,2],[2]]` maps page 1 onto
                 question 1, page 2 onto questions 1 and 2, and page 3
                 onto question 2.
+
             Any string input will parsed to find the above options.
             Tuples or other iterables should be in place of lists.
             TODO: Currently `dict` are not supported, subject to change.
 
-    kwargs:
+    keyword args:
         basedir (pathlib.Path): where on the file system do we perform
             the work.  By default, the current working directory is used.
             Subdirectories "archivePDFs" and "bundles" will be created.
@@ -142,12 +143,15 @@ def processHWScans(
     returns:
         None
 
-    Ask server to map student_id to a test-number; these should have been
-    pre-populated on test-generation and if id not known there is an error.
+    Ask server to map `student_id` to a test-number; these should have been
+    pre-populated on test-generation so if `student_id` not known there is
+    an error.
 
-    Turn pdf_fname in to a bundle_name and check with server if that bundle_name / md5sum known.
-     - abort if name xor md5sum known,
-     - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
+    Turn `pdf_fname` into a bundle name and check with server if that
+    bundle_name / md5sum known.
+
+      - abort if name xor md5sum known,
+      - continue otherwise (when both name / md5sum known we assume this is resuming after a crash).
 
     Process PDF into images.
 

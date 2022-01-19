@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from datetime import datetime
 import logging
@@ -218,35 +218,6 @@ def IDgetImagesOfNotAutoIdentified(self):
         else:
             rval[iref.test.test_number] = iref.idpages[0].image.file_name
     return rval
-
-
-def IDdidNotFinish(self, user_name, test_number):
-    """When user logs off, any images they have still out should be put
-    back on todo pile
-    """
-    uref = User.get(name=user_name)
-    # since user authenticated, this will always return legit ref.
-
-    # Log user returning given tgv.
-    with plomdb.atomic():
-        tref = Test.get_or_none(Test.test_number == test_number)
-        if tref is None:
-            log.info("That test number {} not known".format(test_number))
-            return False
-
-        iref = tref.idgroups[0]
-        # sanity check that user has task out.
-        if iref.user != uref or iref.status != "out":
-            return False
-        # update status, id-time. If out, then student name/number are not set.
-        iref.status = "todo"
-        iref.user = None
-        iref.time = datetime.now()
-        iref.identified = False
-        iref.save()
-        tref.identified = False
-        tref.save()
-        log.info("User {} did not ID task {}".format(user_name, test_number))
 
 
 def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):

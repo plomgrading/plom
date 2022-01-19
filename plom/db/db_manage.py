@@ -212,13 +212,14 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     if gref.expages.count() == 0:
         order = 1
     else:
-        pref = (
+        order = (
             EXPage.select()
             .where(EXPage.group == gref)
             .order_by(EXPage.order.desc())
             .get()
+            .order
+            + 1
         )
-        order = pref.order + 1
 
     # now create the expage, delete upage
 
@@ -232,7 +233,10 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
                 file_name, order, question, test_number
             )
         )
-    self.updateTestAfterChange(tref)
+    # update the groups containing the new extra-page
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(qref.group)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return [True]
 
 
@@ -271,14 +275,17 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
         order = pref.order + 1
 
     # now create the hwpage, delete upage
-    self.createNewHWPage(tref, qref, order, iref)
+    pref = self.createNewHWPage(tref, qref, order, iref)
     uref.delete_instance()
     log.info(
         "Moving unknown page {} to hw page {} of question {} of test {}".format(
             file_name, order, question, test_number
         )
     )
-    self.updateTestAfterChange(tref)
+    # update groups associated to the image and page
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(gref)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return [True]
 
 
@@ -315,7 +322,10 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
             file_name, page_number, test_number
         )
     )
-    self.updateTestAfterChange(tref)
+    # update groups associated with the page and image
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(pref.group)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
 
     return [True]
 
@@ -491,6 +501,11 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
             file_name, test_number, page_number, version
         )
     )
-    # trigger an update since underlying image changed.
-    self.updateTestAfterChange(tref)
+
+    # Update the group to which this new tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(pref.group)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
+
     return [True]

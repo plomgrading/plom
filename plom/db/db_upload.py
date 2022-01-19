@@ -122,7 +122,13 @@ def uploadTestPage(
                 original_name, test_number, page_number, version
             )
         )
-        self.updateTestAfterChange(tref)
+
+        # find all qgroups with non-outdated annotations using that image
+        groups_to_update = self.get_groups_using_image(pref.image)
+        # add the group that should use that page
+        groups_to_update.add(pref.group)
+        # update the test.
+        self.updateTestAfterChange(tref, group_refs=groups_to_update)
         return [
             True,
             "success",
@@ -155,7 +161,9 @@ def replaceMissingTestPage(
         bundle_order = max(bundle_order, iref.bundle_order)
     bundle_order += 1
 
-    #
+    # we now 'upload' our replacement page using self.uploadTestPage
+    # this also triggers an update on the test, so we don't have to
+    # call self.updateTestAfterChange explicitly.
     rval = self.uploadTestPage(
         test_number,
         page_number,
@@ -166,15 +174,12 @@ def replaceMissingTestPage(
         "__replacements__system__",
         bundle_order,
     )
-    if rval[0]:  # success - so trigger an update.
-        tref = Test.get(test_number=test_number)
-        self.updateTestAfterChange(tref)
     return rval
 
 
 def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
     # can be called by an upload, but also by move-misc-to-tpage
-    # create a HW page
+    # create a HW page and return a ref to it
     gref = qdata_ref.group
     with plomdb.atomic():
         # get the first non-outdated annotation for the group
@@ -185,7 +190,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
             .get()
         )
         # create image, hwpage, annotationpage and link.
-        HWPage.create(
+        pref = HWPage.create(
             test=test_ref,
             group=gref,
             order=order,
@@ -195,6 +200,7 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         APage.create(annotation=aref, image=image_ref, order=order)
         test_ref.used = True
         test_ref.save()
+        return pref
 
 
 def doesHWHaveIDPage(self, sid):
@@ -296,9 +302,11 @@ def uploadHWPage(
                 tref, question, tmp_order
             )
         )
-        self.createNewHWPage(tref, qref, tmp_order, image_ref)
-        # now update the test after this change
-        self.updateTestAfterChange(tref)
+        pref = self.createNewHWPage(tref, qref, tmp_order, image_ref)
+        # get all groups that use that image
+        groups_to_update = self.get_groups_using_image(image_ref)
+        groups_to_update.add(pref.group)
+        self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return [True]
 
 
@@ -375,9 +383,13 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
         ]
 
     # create the associated HW page
-    self.createNewHWPage(tref, qref, order, image_ref)
-    # and do an update.
-    self.updateTestAfterChange(tref)
+    pref = self.createNewHWPage(tref, qref, order, image_ref)
+    # find groups using that image
+    groups_to_update = self.get_groups_using_image(image_ref)
+    # add in the group that must use it
+    groups_to_update.add(pref.group)
+    # and do an update
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
 
     return [True]
 
@@ -514,6 +526,14 @@ def updateDNMGroup(self, dref):
     Since homework does not upload DNM pages, only check testpages.
     Will fail if there is an unscanned tpage.
     Note - a DNM group can be empty - then will succeed.
+    Also note - hwscan upload creates and uploads tpages for DNM groups if needed.
+
+    args:
+        dref (DNMGroup): a reference to the DNM group to be updated
+
+    returns:
+        bool: True means DNM group is ready (ie all tpages scanned),
+              False otherwise (ie missing some tpages)
     """
     # get the parent-group of the dnm-group
     gref = dref.group
@@ -529,6 +549,10 @@ def updateDNMGroup(self, dref):
             DNMPage.create(dnmgroup=dref, image=pref.image, order=pref.page_number)
 
     if False in scan_list:  # some scanned, but not all.
+        # set group to "unscanned"
+        with plomdb.atomic():
+            gref.scanned = False
+            gref.save()
         return False
     # all test pages scanned (or all unscanned), so set things ready to go.
     with plomdb.atomic():
@@ -540,10 +564,16 @@ def updateDNMGroup(self, dref):
 
 def updateIDGroup(self, idref):
     """Update the ID task when new pages uploaded to IDGroup.
-    Recreate the IDpages and check if all scanned.
+    Recreate the IDpages and check if all scanned, set scanned flag accordingly.
     If group is all scanned then the associated ID-task should be set to "todo".
     Note - be careful when group was auto-IDd (which happens when the associated user = HAL) - then we don't change anything.
     Note - this should only be triggered by a tpage upload.
+    Also note - hwscan creates required tpage for the IDgroup on upload of pages.
+
+    args:
+        idref (IDGroup): A reference to the IDGroup of the test.
+    returns:
+        bool: True - the IDGroup (which is a single page) is scanned, False otherwise.
     """
 
     # grab associated parent group
@@ -558,6 +588,9 @@ def updateIDGroup(self, idref):
     if pref.scanned:
         IDPage.create(idgroup=idref, image=pref.image, order=pref.page_number)
     else:
+        with plomdb.atomic():
+            gref.scanned = False
+            gref.save()
         return False  # not yet completely present - no updated needed.
 
     # all test ID pages present, and group cleaned, so set things ready to go.
@@ -590,9 +623,19 @@ def updateIDGroup(self, idref):
 
 
 def buildUpToDateAnnotation(self, qref):
-    """The pages under the given qgroup have changed, so the old annotations need to be flagged as outdated, and a new up-to-date annotation needs to be instantiated. This also sets the parent qgroup and test as unmarked, and the qgroup status as "" - ie not ready to go.
+    """The pages under the given qgroup have changed, so the old annotations need
+    to be flagged as outdated, and a new up-to-date annotation needs to be instantiated.
+    This also sets the parent qgroup and test as unmarked, and the qgroup status is
+    set to an empty string, "",ie not ready to go.
 
-    If only the zeroth annotation present, then the question is untouched. In that case, recycle the zeroth annotation rather than replacing it. Do this so that when we do initial upload we don't create new annotations on each uploaded page.
+    If only the zeroth annotation present, then the question is untouched. In that case,
+    recycle the zeroth annotation rather than replacing it. Do this so that when we do
+    initial upload we don't create new annotations on each uploaded page.
+
+    args:
+        qref (QGroup): reference to the QGroup being updated.
+    returns:
+        nothing.
     """
 
     tref = qref.test
@@ -645,7 +688,21 @@ def buildUpToDateAnnotation(self, qref):
 
 
 def updateQGroup(self, qref):
-    """A new page has been uploaded to the test, so we have to update the question-group and its annotations. Older annotations are now out-of-date and get flagged as such."""
+    """A new page has been uploaded to the test, so we have to update the
+    question-group and its annotations.
+    Checks to see if the group has sufficient pages present and the scanned flag
+    is set accordingly (strictly speaking set in the parent 'group' not in the qgroup itself).
+
+    The updates to the annotations are done by an auxiliary function. Older annotations are
+    now out-of-date and get flagged as such by that aux function.
+
+    args:
+        qref (QGroup): a reference to the QGroup to be updated
+    returns:
+        bool: True means that the qgroup is ready (ie all tpages present, or hwpages present).
+              False means that either that the group is missing some (but not all) tpages,
+                or no tpages and no hwpages.
+    """
     # first set old annotations as out-of-date and,
     # create a new up-to-date annotation, and
     # set parent test/qgroup as unmarked with status blank.
@@ -662,6 +719,9 @@ def updateQGroup(self, qref):
         # some tpages unscanned - definitely not ready to go.
         if False in scan_list:
             log.info("Group {} is only half-scanned - not ready".format(gref.gid))
+            with plomdb.atomic():
+                gref.scanned = False
+                gref.save()
             return False
         else:
             pass  # all tpages scanned - so ready to go.
@@ -672,6 +732,9 @@ def updateQGroup(self, qref):
                     gref.gid
                 )
             )
+            with plomdb.atomic():
+                gref.scanned = False
+                gref.save()
             return False
         else:
             pass  # no unscanned tpages, but not hw pages - so ready to go.
@@ -693,20 +756,31 @@ def updateQGroup(self, qref):
 def updateGroupAfterChange(self, gref):
     """Check the type of the group and update accordingly.
     return success/failure of that update.
+
+    args:
+        gref (Group): A reference to the group to be updated.
+    returns:
+        bool: True - the group is ready (ie required pages present), otherwise False.
     """
     if gref.group_type == "i":
         return self.updateIDGroup(gref.idgroups[0])
     elif gref.group_type == "d":
         return self.updateDNMGroup(gref.dnmgroups[0])
     elif gref.group_type == "q":
-        # if the group is ready - all good.
         return self.updateQGroup(gref.qgroups[0])
     else:
         raise ValueError("Tertium non datur: should never happen")
 
 
 def checkTestScanned(self, tref):
-    """Check if all groups scanned."""
+    """Check if all groups scanned.
+
+    args:
+        tref (Test): A reference to the test being checked.
+    returns:
+        bool: True - all groups scanned (and so ready), False otherwise.
+    """
+
     for gref in tref.groups:
         if gref.group_type == "q":
             if not gref.scanned:
@@ -741,11 +815,47 @@ def checkTestScanned(self, tref):
     return True
 
 
-def updateTestAfterChange(self, tref):
-    """The given test has changed (page upload/delete) and so its groups need to be updated."""
+def get_groups_using_image(self, img_ref):
+    """Get all groups that use the given image in an not-outdated annotation.
+    Note that the image may still be attached to a tpage/hwpage/expage, but if that
+    page has been removed then it will no longer be attached to one of these and so not
+    directly attached to a group. Hence this function searches for annotations that
+    use the image (via an apage) and then finds the associated parent qgroup and
+    grand-parent group.
 
-    # update each group in the test
-    for gref in tref.groups:
+    args:
+        img_ref (Image): a reference to the image
+    returns:
+        set(Group): the set of groups that make use of that image in an annotation.
+    """
+
+    groups_to_update = set()
+    for apage_ref in img_ref.apages:
+        annot_ref = apage_ref.annotation
+        if not annot_ref.outdated:
+            groups_to_update.add(annot_ref.qgroup.group)
+    return groups_to_update
+
+
+def updateTestAfterChange(self, tref, group_refs=None):
+    """The given test has changed (page upload/delete) and so its groups need to be updated.
+    When a list or set of group references are passed, just those groups are updated, otherwise
+    all groups updated. When a group is updated, it is checked to see if it is ready (ie sufficient
+    pages present) and any existing work is reset (ie any existing annotations are marked as outdated).
+    After group updates done, the test's scanned flag set accordingly (ie true when all groups scanned
+    and false otherwise).
+
+    args:
+        tref (Test): reference to the test that needs to be updated after one of its pages has been changed.
+        group_refs (list or set of Group): If this is absent then all the groups of the test are updated
+        (and so the corresponding tasks reset), otherwise just those groups are updated.
+    """
+    # if group_refs supplied then update just those groups
+    # otherwise update all the groups in the test
+    if not group_refs:
+        group_refs = tref.groups
+
+    for gref in group_refs:
         self.updateGroupAfterChange(gref)
 
     # now make sure the whole thing is scanned.
@@ -783,6 +893,7 @@ def removeScannedTestPage(self, test_number, page_number):
         )
         return [False, "unscanned"]
     iref = pref.image
+    gref = pref.group
     with plomdb.atomic():
         DiscardedPage.create(
             image=iref,
@@ -792,11 +903,11 @@ def removeScannedTestPage(self, test_number, page_number):
         pref.image = None
         pref.scanned = False
         pref.save()
-        # set the parent group to unscanned
-        gref = pref.group
-        gref.scanned = False
-        gref.save()
-    self.updateTestAfterChange(tref)
+    # Update the group to which this tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(gref)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     log.info(f"Removed t-page {page_number} of test {test_number} and updated test.")
     return [True, f"Removed tpage-{page_number} form test {test_number}."]
 
@@ -822,6 +933,7 @@ def removeScannedHWPage(self, test_number, question, order):
         return [False, "unknown"]
     # create the discard page
     iref = pref.image
+    gref = pref.group
     with plomdb.atomic():
         DiscardedPage.create(
             image=iref,
@@ -829,11 +941,12 @@ def removeScannedHWPage(self, test_number, question, order):
         )
         # now delete that hwpage
         pref.delete_instance()
-        # set the parent group to unscanned
-        gref = pref.group
-        gref.scanned = False
-        gref.save()
-    self.updateTestAfterChange(tref)
+    # Update the group to which this tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(qref.group)
+    # update the test
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     log.info(
         f"Removed hwpage {question}.{order} of test {test_number} and updated test."
     )
@@ -861,6 +974,7 @@ def removeScannedEXPage(self, test_number, question, order):
         return [False, "unknown"]
     # create the discard page
     iref = pref.image
+    gref = pref.group
     with plomdb.atomic():
         DiscardedPage.create(
             image=iref,
@@ -868,11 +982,11 @@ def removeScannedEXPage(self, test_number, question, order):
         )
         # now delete that hwpage
         pref.delete_instance()
-        # set the parent group to unscanned
-        gref = pref.group
-        gref.scanned = False
-        gref.save()
-    self.updateTestAfterChange(tref)
+    # Update the group to which this tpage officially belongs, but also look to see if it had been
+    # attached to any annotations, in which case update those too.
+    groups_to_update = self.get_groups_using_image(iref)
+    groups_to_update.add(gref)
+    self.updateTestAfterChange(tref, group_refs=groups_to_update)
     log.info(
         f"Removed expage {question}.{order} of test {test_number} and updated test."
     )
@@ -923,15 +1037,11 @@ def removeAllScannedPages(self, test_number):
                 ),
             )
             pref.delete_instance()
-        # set all the groups as unscanned
-        for gref in tref.groups:
-            gref.scanned = False
-            gref.save()
         # finally - clean off the scanned and used flags
         tref.scanned = False
         tref.used = False
         tref.save()
-    # update all the groups.
+    # update all the groups - don't pass any group-references
     self.updateTestAfterChange(tref)
     return [True, "Test {} wiped clean".format(test_number)]
 
