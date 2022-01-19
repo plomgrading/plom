@@ -82,18 +82,19 @@ class IDHandler:
         Returns:
             aiohttp.web_response.Response: Success or failure.  Can be:
                 200: success
-                400: authentication problem.
-                HTTPBadRequest (400): not manager, or malformed request
-                    such as missing required fields.
+                401: authentication problem.
+                403: not manager.
+                HTTPBadRequest (400): malformed request such as missing
+                    required fields or server has no spec.
                 HTTPConflict: we already have a classlist.
                     TODO: would be nice to be able to "try again".
                 HTTPNotAcceptable: classlist too short (see above).
         """
         if not data["user"] == "manager":
-            raise web.HTTPBadRequest(reason="Not manager")
+            raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
-            raise web.HTTPNotFound(reason="Server has no spec; cannot accept classlist")
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot accept classlist")
         if (specdir / "classlist.csv").exists():
             raise web.HTTPConflict(reason="we already have a classlist")
         classlist = data["classlist"]

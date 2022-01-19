@@ -166,6 +166,7 @@ class ManagerMessenger(BaseMessenger):
                 spec.  Most likely numberToProduce is too small but
                 check error message to be sure.
             PlomAuthenticationException: login problems.
+            PlomServerNotReady: e.g., it has no spec.
             PlomSeriousException: other errors.
         """
         self.SRmutex.acquire()
@@ -182,12 +183,14 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 409:
                 raise PlomConflict(e) from None
-            if response.status_code == 404:
+            if response.status_code == 400 and "no spec" in response.reason:
                 raise PlomServerNotReady(response.reason) from None
             if response.status_code == 406:
                 raise PlomRangeException(e) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
