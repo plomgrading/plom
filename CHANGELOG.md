@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Client Marker window can request any paper number with a long press on "Get next".
 
 ### Changed
+* Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.
+* Module `plom.produce` has been renamed to `plom.create`.
 * Tags have been overhauled, with bug fixes and improved functionality
 * Annotator can tag papers directly.
 * Server can now optionally start without a spec file.
