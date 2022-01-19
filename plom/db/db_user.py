@@ -202,11 +202,7 @@ def resetUsersToDo(self, uname):
         for x in query:
             x.status = "todo"
             x.user = None
-            # TODO: old MdidNotFinish() method did this extra stuff, does it matter?
-            # x.marked = False
-            # x.time = datetime.now()
-            # x.test.marked = False
-            # x.test.save()
+            x.time = datetime.now()
             x.save()
             log.info(
                 "Reset user {} question-annotation task {}".format(uname, x.group.gid)
