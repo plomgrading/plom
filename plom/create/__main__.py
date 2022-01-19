@@ -64,7 +64,7 @@ def parse_verify_save_spec(fname, save=True):
     fname = Path(fname)
     print(f'Parsing and verifying the specification "{fname}"')
     if not fname.exists():
-        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-build new"?')
+        raise FileNotFoundError(f'Cannot find "{fname}": try "plom-create new"?')
 
     sv = SpecVerifier.from_toml_file(fname)
     sv.verifySpec()
@@ -83,7 +83,7 @@ def parse_verify_save_spec(fname, save=True):
     if spec["numberToName"] > 0:
         print(
             ">>> Note <<<\n"
-            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-build class ".\n'
+            'Your spec indicates that you wish to print named papers.\nWhen the server is running, please process your class list using "plom-create class ".\n'
         )
 
 

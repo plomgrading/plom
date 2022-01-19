@@ -51,7 +51,7 @@ class PlomDemoServer(PlomServer):
     1
 
     We can upload a classlist to our server:
-    >>> subprocess.check_call(["plom-build", "class", "--demo"], env=env)
+    >>> subprocess.check_call(["plom-create", "class", "--demo"], env=env)
     0
 
     (Here these are performed in an interactive Python shell but could
@@ -127,7 +127,7 @@ class PlomDemoServer(PlomServer):
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
         plom.create.upload_demo_classlist(s, pwd)
-        # plom-build make: build_database and build_papers
+        # plom-create make: build_database and build_papers
         status = plom.create.build_database(s, pwd)
         print("Database built with output:")
         print(status)

@@ -104,10 +104,10 @@ def main():
 
         if args.num_papers:
             subprocess.check_call(
-                split(f"plom-build new --demo --demo-num-papers {args.num_papers}")
+                split(f"plom-create new --demo --demo-num-papers {args.num_papers}")
             )
         else:
-            subprocess.check_call(split("plom-build new --demo"))
+            subprocess.check_call(split("plom-create new --demo"))
 
     background_server = PlomServer(basedir=args.server_dir)
 
@@ -119,10 +119,10 @@ def main():
         server = f"localhost:{args.port}"
     else:
         server = "localhost"
-    subprocess.check_call(split(f"plom-build class --demo -w 1234 -s {server}"))
-    subprocess.check_call(split(f"plom-build rubric --demo -w 1234 -s {server}"))
+    subprocess.check_call(split(f"plom-create class --demo -w 1234 -s {server}"))
+    subprocess.check_call(split(f"plom-create rubric --demo -w 1234 -s {server}"))
     with working_directory(args.server_dir):
-        subprocess.check_call(split(f"plom-build make -w 1234 -s {server}"))
+        subprocess.check_call(split(f"plom-create make -w 1234 -s {server}"))
     # extract solution images
     with working_directory(args.server_dir):
         print("Extract solution images from pdfs")

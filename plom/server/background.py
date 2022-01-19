@@ -100,7 +100,7 @@ class PlomServer:
 
     @classmethod
     def add_demo_spec(cls, basedir, num_to_produce=10):
-        """Add a spec file to a Plom server, roughly equivalent to `plom-build parse` cmdline.
+        """Add a spec file to a Plom server, roughly equivalent to `plom-create parse` cmdline.
 
         TODO: add features or other class methods?
 

@@ -23,7 +23,7 @@ numberOfQuestions = 3
 numberToProduce = 20
 # how many of those should be preprinted with names from a classlist
 # (again set to "-1" to use the length of the classlist)
-# See `plom-build make --help` for instructions on how to position the prenamed-box
+# See `plom-create make --help` for instructions on how to position the prenamed-box
 numberToName = 10
 
 # the id-page - always taken from Version1
