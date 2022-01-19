@@ -67,6 +67,8 @@ def IDgetNextTask(self):
                 )
                 .get()
             )
+            # as per #1811 - the user should be none here - assert here.
+            assert iref.user is None, f"ID-Task for test {iref.test.test_number} is todo, but has a user = {iref.user.name}"
             # note - test need not be all scanned, just the ID page.
         except pw.DoesNotExist:
             log.info("Nothing left on ID to-do pile")
@@ -95,6 +97,7 @@ def IDgiveTaskToClient(self, user_name, test_number):
             return [False]
         if not (iref.user is None or iref.user == uref):
             # has been claimed by someone else.
+            # see also #1811 - if a task is "todo" then its user should be None.
             return [False]
         # update status, owner of task, time
         iref.status = "out"
