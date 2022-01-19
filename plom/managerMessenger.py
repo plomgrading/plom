@@ -206,14 +206,13 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
-            response = self.session.put(
-                "https://{}/info/spec".format(self.server),
+            response = self.put(
+                "/info/spec",
                 json={
                     "user": self.user,
                     "token": self.token,
                     "spec": specdata,
                 },
-                verify=False,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
