@@ -43,8 +43,6 @@ class ManagerMessenger(BaseMessenger):
             str: a big block of largely useless status or summary info
                 from the database commands.
 
-        TODO: would be more symmetric to use PUT:/admin/pageVersionMap
-
         Raises:
             PlomExistingDatabase: already has a populated database.
             PlomServerNotReady: e.g., has no spec.
