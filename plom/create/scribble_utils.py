@@ -174,14 +174,14 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             assert excess > 0
             del front_page
 
+        fontname, ttf = random.choice(list(font_dict.items()))
+
         # Write some random answers on the pages
         for page_index, pdf_page in enumerate(pdf_document):
             random_answer_rect = fitz.Rect(
                 100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
             )
             random_answer_text = random.choice(possible_answers)
-
-            fontname, ttf = random.choice(list(font_dict.items()))
 
             # TODO: should match the ID page and DNM pages settings
             if page_index == 0:
