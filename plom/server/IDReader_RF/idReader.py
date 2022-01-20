@@ -55,6 +55,9 @@ def run_id_reader(files_dict, rectangle, student_IDs):
             [top_left_x_coord, top_left_y_coord, x_width, y_height] for the
             cropped rectangle.
         student_IDs (list): A list of student ID numbers
+
+    Returns:
+        list: return prediction_pairs TODO
     """
 
     # Number of digits in the student ID.

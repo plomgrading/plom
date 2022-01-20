@@ -10,7 +10,7 @@ import numpy as np
 import PIL.Image
 
 from plom.misc_utils import working_directory
-from .idReader import calc_log_likelihood
+from .idReader import calc_log_likelihood, run_id_reader
 from .model_utils import (
     load_model,
     is_model_present,
@@ -62,12 +62,22 @@ def test_download_or_train_model(tmpdir):
 def test_get_digit_box(tmpdir):
     tmpdir = Path(tmpdir)
     # for persistent debugging:
-    # tmpdir = Path("/home/cbm/src/plom/plom.git/tmp")
+    tmpdir = Path("/home/cbm/src/plom/plom.git/tmp")
 
     assert buildDemoSourceFiles(basedir=tmpdir)
 
     shutil.copy(tmpdir / "sourceVersions/version1.pdf", tmpdir / "exam_0001.pdf")
-    miniclass = [{"id": "01234567", "studentName": "Testy McTester"}]
+    shutil.copy(tmpdir / "sourceVersions/version1.pdf", tmpdir / "exam_0002.pdf")
+    shutil.copy(tmpdir / "sourceVersions/version1.pdf", tmpdir / "exam_0003.pdf")
+    shutil.copy(tmpdir / "sourceVersions/version1.pdf", tmpdir / "exam_0004.pdf")
+    shutil.copy(tmpdir / "sourceVersions/version1.pdf", tmpdir / "exam_0005.pdf")
+    miniclass = [
+        {"id": "01234567", "studentName": "Testy McTester"},
+        {"id": "07654321", "studentName": "Testing van Test"},
+        {"id": "01010101", "studentName": "Tessa Ting"},
+        {"id": "01277777", "studentName": "MC Test-a-lot"},
+        {"id": "01277788", "studentName": "DJ Testerella"},
+    ]
     fill_in_fake_data_on_exams(tmpdir, miniclass, tmpdir / "foo.pdf")
 
     files = processFileToBitmaps(tmpdir / "foo.pdf", tmpdir)
@@ -102,3 +112,8 @@ def test_get_digit_box(tmpdir):
         p = PIL.Image.open(f)
         assert p.width == p.height == 28
     assert len(list(d.glob("idbox_*"))) == 1
+
+    id_imgs = [files[x] for x in (0, 5, 11, 17)]
+    id_imgs = {(k + 1): x for k, x in enumerate(id_imgs)}
+    Y = run_id_reader(id_imgs, [0, 300, 0, 1800], [x["id"] for x in miniclass])
+    # TODO: check results
