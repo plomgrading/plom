@@ -100,21 +100,31 @@ def create_exam_and_insert_QR(
     for ver in range(1, versions + 1):
         pdf_version[ver] = fitz.open(source / f"version{ver}.pdf")
 
-    # We used to loop over pages which makes for a lot of "churn"; large font
-    # tables [1], etc.  Instead, do a run-length encoding of the page version
-    # map, then copy multiple pages at a time.  In the common single-version
-    # case, we do a single block of copying.
-    # [1] https://gitlab.com/plom/plom/-/issues/1795
-    ver_runs = run_length_encoding([v for p, v in page_versions.items()])
     exam = fitz.open()
-    for run in ver_runs:
-        ver, start, end = run
+
+    # Insert the relevant page-versions into this pdf.
+    for page_index in range(1, length + 1):
+        # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
         exam.insert_pdf(
-            pdf_version[ver],
-            from_page=start,
-            to_page=end - 1,
+            pdf_version[page_versions[page_index]],
+            from_page=page_index - 1,
+            to_page=page_index - 1,
             start_at=-1,
         )
+
+    # The above loops over pages: a lot of "churn"; large font tables [1], etc.
+    # Instead, do a run-length encoding of the page version then copy multiple
+    # pages at a time.  In single-version case, we do a single block of copying.
+    # [1] https://gitlab.com/plom/plom/-/issues/1795
+    # ver_runs = run_length_encoding([v for p, v in page_versions.items()])
+    # for run in ver_runs:
+    #     ver, start, end = run
+    #     exam.insert_pdf(
+    #         pdf_version[ver],
+    #         from_page=start,
+    #         to_page=end - 1,
+    #         start_at=-1,
+    #     )
 
     page_width = exam[0].bound().width
     page_height = exam[0].bound().height
