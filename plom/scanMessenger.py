@@ -178,11 +178,11 @@ class ScanMessenger(BaseMessenger):
                     "bundle_order": bundle_order,
                 }
                 mime_type = mimetypes.guess_type(f.name)[0]
-                with open(f, "rb") as handle:
+                with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "originalImage": (f.name, handle, mime_type),
+                            "originalImage": (f.name, fh, mime_type),
                         }
                     )
                     response = self.put(
@@ -246,11 +246,11 @@ class ScanMessenger(BaseMessenger):
                     "bundle_order": bundle_order,
                 }
                 mime_type = mimetypes.guess_type(f.name)[0]
-                with open(f, "rb") as handle:
+                with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "originalImage": (f.name, handle, mime_type),
+                            "originalImage": (f.name, fh, mime_type),
                         }
                     )
                     response = self.put(
@@ -280,11 +280,11 @@ class ScanMessenger(BaseMessenger):
                     "bundle_order": bundle_order,
                 }
                 mime_type = mimetypes.guess_type(f.name)[0]
-                with open(f, "rb") as handle:
+                with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "originalImage": (f.name, handle, mime_type),
+                            "originalImage": (f.name, fh, mime_type),
                         }
                     )
                     response = self.put(
@@ -317,11 +317,11 @@ class ScanMessenger(BaseMessenger):
                     "bundle_order": bundle_order,
                 }
                 mime_type = mimetypes.guess_type(f.name)[0]
-                with open(f, "rb") as handle:
+                with open(f, "rb") as fh:
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "originalImage": (f.name, handle, mime_type),
+                            "originalImage": (f.name, fh, mime_type),
                         }
                     )
                     response = self.put(
