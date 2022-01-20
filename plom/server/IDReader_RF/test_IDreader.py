@@ -8,6 +8,7 @@ from pathlib import Path
 import fitz
 import numpy as np
 import PIL.Image
+from pytest import raises
 
 from plom.misc_utils import working_directory
 from .idReader import calc_log_likelihood, run_id_reader
@@ -24,8 +25,7 @@ from plom.create.scribble_utils import scribble_name_and_id
 
 
 def test_log_likelihood():
-    num_digits = 8
-    student_ids = [i for i in range(0, num_digits)]
+    student_id = [i for i in range(0, 8)]
     probabilities = [
         [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0.5, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -36,13 +36,14 @@ def test_log_likelihood():
         [0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0],
     ]
-    assert bool(
-        np.isclose(
-            calc_log_likelihood(student_ids, probabilities, num_digits),
-            5.545177444479562,
-            1e-7,
-        )
+    assert np.isclose(
+        calc_log_likelihood(student_id, probabilities),
+        5.545177444479562,
+        1e-7,
     )
+    assert calc_log_likelihood([9] * 8, probabilities) > 100
+    with raises(ValueError):
+        calc_log_likelihood([1, 2, 3], probabilities)
 
 
 def test_download_or_train_model(tmpdir):

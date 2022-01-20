@@ -18,24 +18,28 @@ from .model_utils import download_or_train_model
 from .predictStudentID import compute_probabilities
 
 
-def calc_log_likelihood(student_ID, prediction_probs, num_digits):
+def calc_log_likelihood(student_ID, prediction_probs):
     """Calculate the log likelihood that an ID prediction matches the student ID.
 
     Args:
         student_ID (str): Student ID as a string.
-        prediction_probs (list): A list of the probabilities predicted by the model.
+        prediction_probs (list): A list of the probabilities predicted
+            by the model.
+            `prediction_probs[k][n]` is the probability that digit k of
+            ID is n.
+
         num_digits (int): Number of digits in the student ID.
 
     Returns:
-       numpy.float64: log likelihood.
+       numpy.float64: log likelihood.  Approx -log(prob), so more
+           probable means smaller.  Negative since we'll minimise
+           "cost" when we do the linear assignment problem later.
     """
+    num_digits = len(student_ID)
+    if len(prediction_probs) != num_digits:
+        raise ValueError("Wrong length")
 
-    # pass in the student ID-digits and the prediction_probs
-    # prediction_probs = scans[fn]
-    # prediction_probs[k][n] = approx prob that digit k of ID is n.
     log_likelihood = 0
-    # log_likelihood will be the approx -log(prob) - so more probable means smaller logP.
-    # make it negative since we'll minimise "cost" when we do the linear assignment problem stuff below.
     for digit_index in range(0, num_digits):
         digit_predicted = int(student_ID[digit_index])
         log_likelihood -= np.log(
@@ -93,11 +97,7 @@ def run_id_reader(files_dict, rectangle, student_IDs):
         test_numbers_used.append(test)
         row = []
         for student_ID in student_IDs:
-            row.append(
-                calc_log_likelihood(
-                    student_ID, probabilities[test], student_number_length
-                )
-            )
+            row.append(calc_log_likelihood(student_ID, probabilities[test]))
         costs.append(row)
 
     # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
