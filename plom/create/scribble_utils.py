@@ -78,6 +78,7 @@ def scribble_name_and_id(pdf_doc, student_number, student_name, pagenum=0):
     Returns:
         None: but modifies the open document as a side effect.
     """
+    # Number of digits in the student ID.
     student_number_length = 8
 
     # load the digit images

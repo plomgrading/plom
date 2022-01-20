@@ -57,11 +57,10 @@ def run_id_reader(files_dict, rectangle, student_IDs):
         student_IDs (list): A list of student ID numbers
 
     Returns:
-        list: return prediction_pairs TODO
+        list: pairs of (`paper_number`, `student_ID`).
     """
-
     # Number of digits in the student ID.
-    num_digits = 8
+    student_number_length = 8
 
     # convert rectangle to "top" and "bottom"
     # IDrectangle is a 4-tuple top_left_x, top_left_y, width, height - floats, but we'll need ints.
@@ -81,7 +80,7 @@ def run_id_reader(files_dict, rectangle, student_IDs):
     # pass in the list of files to check, top /bottom of image-region to check.
     print("Computing probabilities")
     probabilities = compute_probabilities(
-        files_dict, top_coordinate, bottom_coordinate, num_digits
+        files_dict, top_coordinate, bottom_coordinate, student_number_length
     )
 
     # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.
@@ -94,7 +93,11 @@ def run_id_reader(files_dict, rectangle, student_IDs):
         test_numbers_used.append(test)
         row = []
         for student_ID in student_IDs:
-            row.append(calc_log_likelihood(student_ID, probabilities[test], num_digits))
+            row.append(
+                calc_log_likelihood(
+                    student_ID, probabilities[test], student_number_length
+                )
+            )
         costs.append(row)
 
     # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
