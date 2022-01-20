@@ -356,7 +356,8 @@ def make_scribbles(server, password, basedir=Path(".")):
         password (str): the "manager" password.
         basedir (str/pathlib.Path): the blank tests (for scribbling) will
             be taken from `basedir/papersToPrint`.  The pdf files with
-            scribbles will be created in `basedir`.
+            scribbles will be created in `basedir`.  Defaults to current
+            directory.
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
@@ -364,11 +365,12 @@ def make_scribbles(server, password, basedir=Path(".")):
         * delete the last page of the first test.
         * Randomly add some extra pages
     """
-    outfile = Path(basedir) / "fake_scribbled_exams.pdf"
+    basedir = Path(basedir)
+    outfile = basedir / "fake_scribbled_exams.pdf"
     classlist = download_classlist(server, password)
 
-    fill_in_fake_data_on_exams(_paperdir, classlist, outfile)
+    fill_in_fake_data_on_exams(basedir / _paperdir, classlist, outfile)
     make_garbage_pages(outfile)
-    make_colliding_pages(_paperdir, outfile)
+    make_colliding_pages(basedir / _paperdir, outfile)
     splitFakeFile(outfile)
     outfile.unlink()
