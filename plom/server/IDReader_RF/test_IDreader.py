@@ -106,7 +106,7 @@ def test_get_digit_box(tmpdir):
     assert len(list(d.glob("idbox_foo*"))) == 1
 
     # nice to split out but waste to download
-# def test_lap_solver(tmpdir):
+    # def test_lap_solver(tmpdir):
     # tmpdir = Path(tmpdir)
     # assert buildDemoSourceFiles(basedir=tmpdir)
 
