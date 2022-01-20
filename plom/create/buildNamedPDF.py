@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -62,14 +62,14 @@ def outputProductionCSV(spec, make_PDF_args):
 
 def build_page_group_dict(spec):
     # start with the id page
-    page_to_group = {spec['idPage']: 'id'}
+    page_to_group = {spec["idPage"]: "id"}
     # now any dnm
-    for pg in spec['doNotMarkPages']:
-        page_to_group[pg] = 'dnm'
+    for pg in spec["doNotMarkPages"]:
+        page_to_group[pg] = "dnm"
     # now the questions
-    for q in spec['question']:
-        for pg in spec['question'][q]['pages']:
-            page_to_group[pg] = f'q{q}'
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            page_to_group[pg] = f"q{q}"
     return page_to_group
 
 

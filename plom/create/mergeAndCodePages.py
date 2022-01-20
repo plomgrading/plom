@@ -14,6 +14,7 @@ import fitz
 
 from plom.tpv_utils import encodeTPV
 from plom.create import paperdir
+
 # from plom.misc_utils import run_length_encoding
 
 
@@ -148,8 +149,10 @@ def create_exam_and_insert_QR(
         # papernum.page-name.pagenum stamp in top-centre of page
         rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 44)
         # name of the group to which page belongs
-        group = page_to_group[page_index+1]
-        text = "{}.{}p{}".format(f"{papernum:04}", group.ljust(6), str(page_index + 1).zfill(2))
+        group = page_to_group[page_index + 1]
+        text = "{}.{}p{}".format(
+            f"{papernum:04}", group.ljust(6), str(page_index + 1).zfill(2)
+        )
         excess = exam[page_index].insert_textbox(
             rect,
             text,
