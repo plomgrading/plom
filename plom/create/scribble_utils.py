@@ -69,7 +69,15 @@ answer_font_size = 18
 
 
 def scribble_name_and_id(pdf_doc, student_number, student_name, pagenum=0):
-    """Write name/number on coverpage of fitz pdf_doc."""
+    """Write name/number on coverpage of fitz pdf_doc.
+
+    Arguments:
+        pdf_doc (fitz.Document): an open pdf file, we'll modify it
+            implicitly but not close it.
+
+    Returns:
+        None: but modifies the open document as a side effect.
+    """
     student_number_length = 8
 
     # load the digit images
@@ -115,6 +123,13 @@ def scribble_name_and_id(pdf_doc, student_number, student_name, pagenum=0):
 
 def scribble_pages(pdf_doc, exclude=(0, 1)):
     """Scribble on most pages of fitz pdf_doc.
+
+    Arguments:
+        pdf_doc (fitz.Document): an open pdf file, we'll modify it
+            implicitly but not close it.
+
+    Returns:
+        None: but modifies the open document as a side effect.
 
     By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
