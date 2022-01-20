@@ -315,7 +315,7 @@ def sqrDistance(vect):
     return vect.x() * vect.x() + vect.y() * vect.y()
 
 
-def whichLineToDraw_original(g_rect, b_rect):
+def shortestLine(g_rect, b_rect):
     """Get approximately shortest line between two shapes.
 
     More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
@@ -335,186 +335,50 @@ def whichLineToDraw_original(g_rect, b_rect):
     return QLineF(bp, gp)
 
 
-def get_intersection_bw_rect_line(rec, lin):
-    """Return the intersection between a line and rectangle or None."""
-    if isinstance(rec, QPointF):
-        return None
-    x, y, w, h = rec.getRect()
-    yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    return None
+def whichLineToDraw(g_rect, b_rect):
+    # direct line from the box-rect to the ghost-rect
+    directLine = shortestLine(g_rect, b_rect)
+    thePath = QPainterPath(directLine.p1())
 
+    # iteration 1
+    # draw a path as vertical and then horizontal components.
+    # thePath.lineTo(directLine.x1(), directLine.y2())
+    # thePath.lineTo(directLine.p2())
 
-def whichLineToDraw_centre(ghost, r):
-    """Get approximately shortest line between two shapes using a "center-to-centre construction.
+    # iteration 2
+    # draw path as diagonal followed by flat
+    # sg = directLine.dy() * directLine.dx()  # get sign of gradient
+    # if abs(directLine.dy()) < abs(directLine.dx()):  # end in horizontal
+    #     sx = directLine.dy()
+    #     if sg < 0:  # flip sign if gradient negative
+    #         sx = -sx
+    #     thePath.lineTo(directLine.x1() + sx, directLine.y2())
+    #     thePath.lineTo(directLine.p2())
+    # else:  # end in vertical
+    #     sy = directLine.dx()
+    #     if sg < 0:  # flip sign if gradient negative
+    #         sy = -sy
+    #     thePath.lineTo(directLine.x2(), directLine.y1() + sy)
+    #     thePath.lineTo(directLine.p2())
 
-    args:
-        ghost (QRect/QPointF):
-        r (QRect):
+    # iteration 3
+    # as #2 but steeper diagonal
+    sg = directLine.dy() * directLine.dx()  # get sign of gradient
+    if abs(directLine.dy()) < 3*abs(directLine.dx()):  # end in horizontal
+        sx = directLine.dy()/3
+        if sg < 0:  # flip sign if gradient negative
+            sx = -sx
+        thePath.lineTo(directLine.x1() + sx, directLine.y2())
+        thePath.lineTo(directLine.p2())
+    else:  # end in vertical
+        sy = directLine.dx()*3
+        if sg < 0:  # flip sign if gradient negative
+            sy = -sy
+        thePath.lineTo(directLine.x2(), directLine.y1() + sy)
+        thePath.lineTo(directLine.p2())
 
-    returns:
-        QLineF
-    """
-    if isinstance(ghost, QPointF):
-        A = ghost
-    else:
-        x, y, w, h = ghost.getRect()
-        A = QPointF(x + w / 2, y + h / 2)
-    if isinstance(r, QPointF):
-        B = r
-    else:
-        x, y, w, h = r.getRect()
-        B = QPointF(x + w / 2, y + h / 2)
-    CtoC = QLineF(A, B)
-    A = get_intersection_bw_rect_line(ghost, CtoC)
-    B = get_intersection_bw_rect_line(r, CtoC)
-    if A is None or B is None:
-        # probably inside
-        return whichLineToDraw_original(ghost, r)
-    return QLineF(A, B)
-
-
-def whichLineToDraw(g, r):
-    """Choose an aesthetically-pleasing line between the rectangle and the ghost.
-
-    args:
-        g (QRect/QPointF): The ghost, can be rect or a point.
-        r (QRect):
-
-    returns:
-        QLineF
-    """
-    if isinstance(g, QPointF):
-        g = QRectF(g, g)
-
-    # slope parameter > 1, determines the angle before we unsnap from corners
-    slurp = 4
-
-    def transf(t):
-        """Transform function for the box.
-
-        Each side is mapped to t in [0, 1] which is used for a linear
-        interpolation, but we can pass t through a transform.  Some overlap
-        between this and the slurp parameter.
-
-        Here we implement a p.w. linear regularized double-step.
-        """
-        p = 0.15
-        assert p < 0.25
-        if t <= p:
-            return 0.0
-        if t <= 0.5 - p:
-            return (0.5 / (0.5 - p - p)) * (t - p)
-        if t <= 0.5 + p:
-            return 0.5
-        if t <= 1 - p:
-            return (0.5 / (0.5 - p - p)) * (t - (0.5 + p)) + 0.5
-        else:
-            return 1.0
-
-    def capped_ramp(crit1, crit2, x):
-        """Map x into [crit1, crit2] returning a scalar in [0, 1]."""
-        t = (x - crit1) / (crit2 - crit1)
-        t = min(t, 1)
-        t = max(0, t)
-        # comment out for non-sticky midpoints
-        t = transf(t)
-        return t
-
-    def ramble(a, b, left, right):
-        """Some kind of soft thresholding of an interval near two points a and b.
-
-        Consider sliding the little figure ``l-m-r`` through two values a and b.
-        We want to return a value ``{r, a, m, b, l}`` depending where ``l-m-r``
-        lies compared to ``[a, b]``.  Roughly, if m is in ``[A, B]`` then we
-        return m, otherwise, some soft thresholding near a and b.
-
-        The capital letters in the follow diagram illustrate the return value::
-
-                              a                   b
-                              |     return M      |
-                     ⎧  l-m-R |                   | L-m-r  ⎫
-              return ⎪   l-m-R|                   |L-m-r   ⎪ return
-              R or A ⎨    l-m-A                   B-m-r    ⎬ B or L
-                     ⎪     l-mAr                 lBm r     ⎪
-                     ⎩      l-A-r               l-Br       ⎭
-                             l|M-r             l-M|r
-                              l-M-r           l-M-r
-                              |l-M-r  l-M-r  l-M-r|
-                              |                   |
-        """
-        mid = (left + right) / 2
-        if right <= a:
-            return right
-        elif mid <= a:
-            return a
-        elif left >= b:
-            return left
-        elif mid >= b:
-            return b
-        return mid
-
-    # We cut up the space around "r" into four regions by the eikonal solution
-    # shocks.  Then we process each of those 4 regions.  For example the "top"
-    # region looks like this, showing also two ghosts that should be considered
-    # "in" this region.
-    #                  /
-    # \            +----+
-    # +---+       g| /  |
-    # | \ |g       +----+
-    # +---+        /
-    #     \       /
-    #      +-----+
-    #      |  r  |
-    #      +-----+
-    if (
-        g.bottom() <= r.top()
-        and g.bottom() <= r.top() - (g.left() - r.right())
-        and g.bottom() <= r.top() - (r.left() - g.right())
-    ):
-        crit1 = r.left() - (r.top() - g.bottom()) / slurp
-        crit2 = r.right() + (r.top() - g.bottom()) / slurp
-        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
-        gx = ramble(crit1, crit2, g.left(), g.right())
-        return QLineF(r.left() + t * r.width(), r.top(), gx, g.bottom())
-
-    if (
-        g.top() >= r.bottom()
-        and g.top() >= r.bottom() + g.left() - r.right()
-        and g.top() >= r.bottom() + r.left() - g.right()
-    ):
-        crit1 = r.left() - (g.top() - r.bottom()) / slurp
-        crit2 = r.right() + (g.top() - r.bottom()) / slurp
-        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
-        gx = ramble(crit1, crit2, g.left(), g.right())
-        return QLineF(r.left() + t * r.width(), r.bottom(), gx, g.top())
-
-    if g.left() >= r.right():
-        crit1 = r.top() - (g.left() - r.right()) / slurp
-        crit2 = r.bottom() + (g.left() - r.right()) / slurp
-        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
-        gy = ramble(crit1, crit2, g.top(), g.bottom())
-        return QLineF(r.right(), r.top() + t * r.height(), g.left(), gy)
-
-    if g.right() <= r.left():
-        crit1 = r.top() - (r.left() - g.right()) / slurp
-        crit2 = r.bottom() + (r.left() - g.right()) / slurp
-        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
-        gy = ramble(crit1, crit2, g.top(), g.bottom())
-        return QLineF(r.left(), r.top() + t * r.height(), g.right(), gy)
-
-    # TODO: maybe return None?  but needs reworking
-    return whichLineToDraw_original(g, r)
+    # now return the path
+    return thePath
 
 
 class PageScene(QGraphicsScene):
@@ -1201,13 +1065,13 @@ class PageScene(QGraphicsScene):
             self.addItem(self.boxItem)
             return
         elif self.rubricFlag == 2:
-            connectingLine = whichLineToDraw(
+            connectingPath = whichLineToDraw(
                 self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
                 self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
             )
-            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
+            command = CommandPen(self, connectingPath)
             self.undoStack.push(command)
-            self.removeItem(self.lineItem)
+            self.removeItem(self.pathItem)
             self.rubricFlag = 3
 
         pt = event.scenePos()  # grab the location of the mouse-click
@@ -1368,13 +1232,13 @@ class PageScene(QGraphicsScene):
             command.blurb.setFocus()
             self.undoStack.push(command)
             # connect up line
-            connectingLine = whichLineToDraw(
+            connectingPath = whichLineToDraw(
                 ept,
                 self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
             )
-            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
+            command = CommandPen(self, connectingPath)
             self.undoStack.push(command)
-            self.removeItem(self.lineItem)
+            self.removeItem(self.pathItem)
             log.debug(
                 "textFlag > 0 so we must be finishing a click-drag text: finalizing macro"
             )
@@ -1401,7 +1265,7 @@ class PageScene(QGraphicsScene):
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
         elif self.textFlag == 2:
             self.currentPos = event.scenePos()
-            self.lineItem.setLine(
+            self.pathItem.setPath(
                 whichLineToDraw(
                     self.currentPos,
                     self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
@@ -1443,9 +1307,9 @@ class PageScene(QGraphicsScene):
             self.textFlag = 2
             self.originPos = event.scenePos()
             self.currentPos = self.originPos
-            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
-            self.lineItem.setPen(self.ink)
-            self.addItem(self.lineItem)
+            self.pathItem = QGraphicsPathItem(QPainterPath(self.originPos))
+            self.pathItem.setPen(self.ink)
+            self.addItem(self.pathItem)
 
     def mousePressTick(self, event):
         """
@@ -2223,9 +2087,9 @@ class PageScene(QGraphicsScene):
             self.rubricFlag = 2
             self.originPos = event.scenePos()
             self.currentPos = self.originPos
-            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
-            self.lineItem.setPen(self.ink)
-            self.addItem(self.lineItem)
+            self.pathItem = QGraphicsPathItem(QPainterPath(self.originPos))
+            self.pathItem.setPen(self.ink)
+            self.addItem(self.pathItem)
 
     def mouseReleaseDelete(self, event):
         """
@@ -2414,7 +2278,7 @@ class PageScene(QGraphicsScene):
                 self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
         elif self.rubricFlag == 2:
             self.currentPos = event.scenePos()
-            self.lineItem.setLine(
+            self.pathItem.setPath(
                 whichLineToDraw(
                     self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
                     self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
@@ -2600,8 +2464,8 @@ class PageScene(QGraphicsScene):
         if self.rubricFlag == 1:  # drawing the box
             self.removeItem(self.boxItem)
             self.rubricFlag = 0
-        if self.rubricFlag == 2:  # undo-macro started, box drawn, mid draw of line
-            self.removeItem(self.lineItem)
+        if self.rubricFlag == 2:  # undo-macro started, box drawn, mid draw of path
+            self.removeItem(self.pathItem)
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
             self.rubricFlag = 0
@@ -2616,8 +2480,8 @@ class PageScene(QGraphicsScene):
         if self.textFlag == 1:  # drawing the box
             self.removeItem(self.boxItem)
             self.textFlag = 0
-        if self.textFlag == 2:  # undo-macro started, box drawn, mid draw of line
-            self.removeItem(self.lineItem)
+        if self.textFlag == 2:  # undo-macro started, box drawn, mid draw of path
+            self.removeItem(self.pathItem)
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
             self.textFlag = 0
