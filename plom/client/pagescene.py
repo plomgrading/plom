@@ -254,6 +254,7 @@ mousePress = {
 }
 mouseMove = {
     "box": "mouseMoveBox",
+    "cross": "mouseMoveCross",
     "delete": "mouseMoveDelete",
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
@@ -263,6 +264,7 @@ mouseMove = {
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
+    "cross": "mouseReleaseCross",
     "delete": "mouseReleaseDelete",
     "line": "mouseReleaseLine",
     "move": "mouseReleaseMove",
@@ -364,17 +366,13 @@ def whichLineToDraw(g_rect, b_rect):
     # iteration 3
     # as #2 but steeper diagonal
     sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if abs(directLine.dy()) < 3*abs(directLine.dx()):  # end in horizontal
-        sx = directLine.dy()/3
+    if abs(directLine.dy()) < 3 * abs(directLine.dx()):  # end in horizontal
+        sx = directLine.dy() / 3
         if sg < 0:  # flip sign if gradient negative
             sx = -sx
         thePath.lineTo(directLine.x1() + sx, directLine.y2())
         thePath.lineTo(directLine.p2())
-    else:  # end in vertical
-        sy = directLine.dx()*3
-        if sg < 0:  # flip sign if gradient negative
-            sy = -sy
-        thePath.lineTo(directLine.x2(), directLine.y1() + sy)
+    else:  # too steep - so draw single connecting line segment
         thePath.lineTo(directLine.p2())
 
     # now return the path
@@ -453,6 +451,8 @@ class PageScene(QGraphicsScene):
         self.rubricFlag = 0
         # similar for text tool
         self.textFlag = 0
+        # similar for cross
+        self.crossFlag = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -925,7 +925,7 @@ class PageScene(QGraphicsScene):
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
             # also if in box,line,pen,rubric,text - stop mid-draw
-            if self.mode in ["box", "line", "pen", "rubric", "text"]:
+            if self.mode in ["box", "line", "pen", "rubric", "text", "cross"]:
                 self.stopMidDraw()
         else:
             super().keyPressEvent(event)
@@ -1118,7 +1118,27 @@ class PageScene(QGraphicsScene):
             None.
 
         """
+        if self.crossFlag == 0:  # start a drag-box
+            self.crossFlag = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+            return
+        elif self.crossFlag == 2:  # draw the connecting line
+            connectingPath = whichLineToDraw(
+                QRectF(self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16),
+                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+            )
+            command = CommandPen(self, connectingPath)
+            self.undoStack.push(command)
+            self.removeItem(self.pathItem)
+            self.crossFlag = 3
+
         pt = event.scenePos()  # Grab the click's location and create command.
+
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
@@ -1130,6 +1150,67 @@ class PageScene(QGraphicsScene):
         else:
             command = CommandCross(self, pt)
         self.undoStack.push(command)  # push onto the stack.
+        if self.crossFlag > 0:
+            log.debug(
+                "crossFlag > 0 so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.crossFlag = 0
+            self.undoStack.endMacro()
+
+    def mouseMoveCross(self, event):
+        if self.crossFlag == 1:
+            self.currentPos = event.scenePos()
+            if self.boxItem is None:
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+        elif self.crossFlag == 2:
+            self.currentPos = event.scenePos()
+            self.pathItem.setPath(
+                whichLineToDraw(
+                    QRectF(self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16),
+                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+                )
+            )
+
+    def mouseReleaseCross(self, event):
+        if self.crossFlag == 0:
+            return
+        elif self.crossFlag == 1:
+            self.removeItem(self.boxItem)
+            # check if rect has some area
+            # this needs abs - see #977 - since rectangle is not normalized
+            if (
+                abs(self.boxItem.rect().width()) > minimum_box_side_length
+                and abs(self.boxItem.rect().height()) > minimum_box_side_length
+            ):
+                self.undoStack.beginMacro("Click-Drag composite object")
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
+            else:
+                # small box, so just stamp the tick/cross etc
+                pt = event.scenePos()
+                if (event.button() == Qt.RightButton) or (
+                    QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+                ):
+                    command = CommandTick(self, pt)
+                elif (event.button() == Qt.MiddleButton) or (
+                    QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+                ):
+                    command = CommandQMark(self, pt)
+                else:
+                    command = CommandCross(self, pt)
+                self.undoStack.push(command)  # push onto the stack.
+                self.crossFlag = 0
+                return
+            self.crossFlag = 2
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.pathItem = QGraphicsPathItem(QPainterPath(self.originPos))
+            self.pathItem.setPen(self.ink)
+            self.addItem(self.pathItem)
 
     def mousePressMove(self, event):
         """
@@ -2489,3 +2570,14 @@ class PageScene(QGraphicsScene):
         if self.zoomFlag == 2:
             self.removeItem(self.zoomBoxItem)
             self.zoomFlag = 0
+        # cross flag needs care - uses undo-macro - need to clean that up
+        # 1 = drawing the box
+        # 2 = drawing the line
+        if self.crossFlag == 1:  # drawing the box
+            self.removeItem(self.boxItem)
+            self.crossFlag = 0
+        if self.crossFlag == 2:  # undo-macro started, box drawn, mid draw of path
+            self.removeItem(self.pathItem)
+            self.undoStack.endMacro()
+            self.undo()  # removes the drawn box
+            self.crossFlag = 0
