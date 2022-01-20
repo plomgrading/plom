@@ -28,7 +28,8 @@ packaging==21.3
 pandas==1.3.5
 passlib==1.7.4
 peewee==3.14.8
-Pillow==9.0.0
+# note: cannot bump until we drop Python 3.6
+Pillow==8.4.0
 # note: pycparser also in Dockerfile
 pycparser==2.21
 pymupdf==1.19.3
