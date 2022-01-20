@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 
 from collections import defaultdict
 import hashlib
@@ -120,37 +120,36 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
     bundle's "uploads" subdirectory.
     """
     TUP = defaultdict(list)
-    for fname in files:
-        fname = Path(fname)
-        bundle_order = extract_order(fname)
+    for f in files:
+        f = Path(f)
+        bundle_order = extract_order(f)
         if bundle_order in skip_list:
             print(
-                "Image {} with bundle_order {} already uploaded. Skipping.".format(
-                    fname, bundle_order
-                )
+                f"Image {f} with bundle_order {bundle_order} already uploaded. Skipping."
             )
             continue
 
-        ts, ps, vs = extractTPV(fname.name)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, fname.name))
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
+        ts, ps, vs = extractTPV(f.name)
+        print("Upload {},{},{} = {} to server".format(ts, ps, vs, f.name))
+        with open(f, "rb") as fh:
+            md5 = hashlib.md5(fh.read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
         rmsg = msgr.uploadTestPage(
             code,
             int(ts),
             int(ps),
             int(vs),
-            fname,
+            f,
             md5,
             bundle_name,
             bundle_order,
         )
         # rmsg = [True] or [False, reason, message]
         if rmsg[0]:  # was successful upload
-            move_files_post_upload(Path("bundles") / bundle_name, fname)
+            move_files_post_upload(Path("bundles") / bundle_name, f)
             TUP[ts].append(ps)
         else:  # was failed upload - reason, message in rmsg[1], rmsg[2]
-            fileFailedUpload(rmsg[1], rmsg[2], Path("bundles") / bundle_name, fname)
+            fileFailedUpload(rmsg[1], rmsg[2], Path("bundles") / bundle_name, f)
     return TUP
 
 
@@ -262,7 +261,8 @@ def upload_HW_pages(file_list, bundle_name, bundledir, sid, server=None, passwor
     try:
         SIDQ = defaultdict(list)
         for n, f, q in file_list:
-            md5 = hashlib.md5(open(f, "rb").read()).hexdigest()
+            with open(f, "rb") as fh:
+                md5 = hashlib.md5(fh.read()).hexdigest()
             rmsg = msgr.uploadHWPage(sid, q, n, f, md5, bundle_name, n)
             if not rmsg[0]:
                 raise RuntimeError(
