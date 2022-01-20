@@ -37,33 +37,33 @@ def doFiling(rmsg, bundle, f):
             print("This should not happen - todo = log error in sensible way")
 
 
-def sendCollidingFiles(scanMessenger, bundle_name, fileList):
-    for fname in fileList:
-        with open(Path(str(fname) + ".collide"), "r") as fh:
+def sendCollidingFiles(scanMessenger, bundle_name, files):
+    for f in files:
+        with open(Path(str(f) + ".collide"), "r") as fh:
             cdat = json.load(fh)
         print(
             "Uploading {} which collides with {}, tpv = {} {} {}".format(
-                fname, cdat[0], cdat[1], cdat[2], cdat[3]
+                f, cdat[0], cdat[1], cdat[2], cdat[3]
             )
         )
         ts = str(cdat[1]).zfill(4)
         ps = str(cdat[2]).zfill(2)
         vs = str(cdat[3])
         code = "t{}p{}v{}".format(ts, ps, vs)
-        with open(fname, "rb") as f:
-            md5 = hashlib.md5(f.read()).hexdigest()
-        bundle_order = extract_order(fname)
+        with open(f, "rb") as fh:
+            md5 = hashlib.md5(fh.read()).hexdigest()
+        bundle_order = extract_order(f)
         rmsg = scanMessenger.uploadCollidingPage(
             code,
             int(ts),
             int(ps),
             int(vs),
-            fname,
+            f,
             md5,
             bundle_name,
             bundle_order,
         )
-        doFiling(rmsg, Path("bundles") / bundle_name, fname)
+        doFiling(rmsg, Path("bundles") / bundle_name, f)
 
 
 def bundle_has_nonuploaded_collisions(bundle_dir):

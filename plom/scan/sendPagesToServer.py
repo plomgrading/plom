@@ -120,38 +120,36 @@ def sendTestFiles(msgr, bundle_name, files, skip_list):
     bundle's "uploads" subdirectory.
     """
     TUP = defaultdict(list)
-    for fname in files:
-        fname = Path(fname)
-        bundle_order = extract_order(fname)
+    for f in files:
+        f = Path(f)
+        bundle_order = extract_order(f)
         if bundle_order in skip_list:
             print(
-                "Image {} with bundle_order {} already uploaded. Skipping.".format(
-                    fname, bundle_order
-                )
+                f"Image {f} with bundle_order {bundle_order} already uploaded. Skipping."
             )
             continue
 
-        ts, ps, vs = extractTPV(fname.name)
-        print("Upload {},{},{} = {} to server".format(ts, ps, vs, fname.name))
-        with open(fname, "rb") as f:
-            md5 = hashlib.md5(f.read()).hexdigest()
+        ts, ps, vs = extractTPV(f.name)
+        print("Upload {},{},{} = {} to server".format(ts, ps, vs, f.name))
+        with open(f, "rb") as fh:
+            md5 = hashlib.md5(fh.read()).hexdigest()
         code = "t{}p{}v{}".format(ts.zfill(4), ps.zfill(2), vs)
         rmsg = msgr.uploadTestPage(
             code,
             int(ts),
             int(ps),
             int(vs),
-            fname,
+            f,
             md5,
             bundle_name,
             bundle_order,
         )
         # rmsg = [True] or [False, reason, message]
         if rmsg[0]:  # was successful upload
-            move_files_post_upload(Path("bundles") / bundle_name, fname)
+            move_files_post_upload(Path("bundles") / bundle_name, f)
             TUP[ts].append(ps)
         else:  # was failed upload - reason, message in rmsg[1], rmsg[2]
-            fileFailedUpload(rmsg[1], rmsg[2], Path("bundles") / bundle_name, fname)
+            fileFailedUpload(rmsg[1], rmsg[2], Path("bundles") / bundle_name, f)
     return TUP
 
 
