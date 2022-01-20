@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
 
@@ -47,7 +47,8 @@ def addTestPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        with open(newName, "rb") as fh:
+            md5n = hashlib.md5(fh.read()).hexdigest()
         assert md5n == md5o
         log.debug("Storing {} as {} = {}".format(prefix, newName, val))
     else:
@@ -119,7 +120,8 @@ def addHWPage(self, sid, q, o, fname, image, md5o, bundle, bundle_order):
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        with open(newName, "rb") as fh:
+            md5n = hashlib.md5(fh.read()).hexdigest()
         assert md5n == md5o
         log.debug("Storing {} as {} = {}".format(prefix, newName, val))
     else:
@@ -141,7 +143,8 @@ def addUnknownPage(self, fname, image, order, md5o, bundle, bundle_order):
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        with open(newName, "rb") as fh:
+            md5n = hashlib.md5(fh.read()).hexdigest()
         assert md5n == md5o
         log.debug("Storing {} = {}".format(newName, val))
     else:
@@ -165,7 +168,8 @@ def addCollidingPage(self, t, p, v, fname, image, md5o, bundle, bundle_order):
     if val[0]:
         with open(newName, "wb") as fh:
             fh.write(image)
-        md5n = hashlib.md5(open(newName, "rb").read()).hexdigest()
+        with open(newName, "rb") as fh:
+            md5n = hashlib.md5(fh.read()).hexdigest()
         assert md5n == md5o
         log.debug("Storing {} as {} = {}".format(prefix, newName, val))
     else:
@@ -188,8 +192,8 @@ def replaceMissingTestPage(self, testNumber, pageNumber, version):
         if not os.path.isfile(newName):
             break
     # compute md5sum and put into database
-    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
-    # now try to put it into place
+    with open(originalName, "rb") as f:
+        md5 = hashlib.md5(f.read()).hexdigest()
     rval = self.DB.replaceMissingTestPage(
         testNumber, pageNumber, version, originalName, newName, md5
     )
@@ -215,8 +219,8 @@ def replaceMissingDNMPage(self, testNumber, pageNumber):
         if not os.path.isfile(newName):
             break
     # compute md5sum and put into database
-    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
-    # now try to put it into place
+    with open(originalName, "rb") as f:
+        md5 = hashlib.md5(f.read()).hexdigest()
     # all DNM are test pages with version 1, so recycle the missing test page function
     rval = self.DB.replaceMissingTestPage(
         testNumber, pageNumber, 1, originalName, newName, md5
@@ -245,8 +249,8 @@ def autogenerateIDPage(self, testNumber, student_id, student_name):
         if not os.path.isfile(newName):
             break
     # compute md5sum and put into database
-    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
-    # now try to put it into place
+    with open(originalName, "rb") as f:
+        md5 = hashlib.md5(f.read()).hexdigest()
     # all ID are test pages with version 1, so recycle the missing test page function
     # get the id-page's pagenumber from the spec
     pg = self.testSpec["idPage"]
@@ -444,7 +448,8 @@ def replaceMissingHWQuestion(self, sid, test, question):
             break
         newName = "pages/originalPages/" + prefix + unique + ".png"
     # compute md5sum and put into database
-    md5 = hashlib.md5(open(originalName, "rb").read()).hexdigest()
+    with open(originalName, "rb") as f:
+        md5 = hashlib.md5(f.read()).hexdigest()
     # now try to put it into place
     rval = self.DB.replaceMissingHWQuestion(sid, question, originalName, newName, md5)
     # if move successful then actually move file into place, else delete it

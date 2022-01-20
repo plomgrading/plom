@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
 import shutil
@@ -34,12 +34,13 @@ def doFiling(rmsg, bundle, f):
 
 
 def sendUnknownFiles(msgr, bundle_name, files):
-    for fname in files:
-        md5 = hashlib.md5(open(fname, "rb").read()).hexdigest()
-        order = extract_order(fname)
+    for f in files:
+        with open(f, "rb") as fh:
+            md5 = hashlib.md5(fh.read()).hexdigest()
+        order = extract_order(f)
         bundle_order = order
-        rmsg = msgr.uploadUnknownPage(fname, order, md5, bundle_name, bundle_order)
-        doFiling(rmsg, Path("bundles") / bundle_name, fname)
+        rmsg = msgr.uploadUnknownPage(f, order, md5, bundle_name, bundle_order)
+        doFiling(rmsg, Path("bundles") / bundle_name, f)
 
 
 def bundle_has_nonuploaded_unknowns(bundle_dir):
