@@ -183,22 +183,20 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
 
             fontname, ttf = random.choice(list(font_dict.items()))
 
-            if page_index >= 1:
-                # Get path to custom handwriting font
-                with resources.path(plom.create, "fonts") as fontdir:
-                    if ttf is not None:
-                        # remove str once minimum PyMuPDF >= 1.19.5
-                        ttf = str(fontdir / ttf)
-                    excess = pdf_page.insert_textbox(
-                        random_answer_rect,
-                        random_answer_text,
-                        fontsize=answer_font_size,
-                        color=blue,
-                        fontname=fontname,
-                        fontfile=ttf,
-                        align=0,
-                    )
-                    assert excess > 0
+            # TODO: should match the ID page and DNM pages settings
+            if page_index == 0:
+                continue
+            with resources.path(plom.create.fonts, ttf) as fontfile:
+                excess = pdf_page.insert_textbox(
+                    random_answer_rect,
+                    random_answer_text,
+                    fontsize=answer_font_size,
+                    color=blue,
+                    fontname=fontname,
+                    fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
+                    align=0,
+                )
+                assert excess > 0
 
         # delete last page from the zeroth test.
         if index == 0:
