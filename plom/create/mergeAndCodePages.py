@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2019 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -14,7 +14,7 @@ import fitz
 
 from plom.tpv_utils import encodeTPV
 from plom.create import paperdir
-from plom.misc_utils import run_length_encoding
+# from plom.misc_utils import run_length_encoding
 
 
 def create_QR_codes(papernum, pagenum, ver, code, dur):
@@ -64,6 +64,7 @@ def create_exam_and_insert_QR(
     papernum,
     question_versions,
     page_versions,
+    page_to_group,
     qr_file,
     *,
     no_qr=False,
@@ -82,6 +83,7 @@ def create_exam_and_insert_QR(
         papernum (int): the paper/test number.
         question_versions (dict): version number for each question of this paper.
         page_versions (dict): version number for each page of this paper.
+        page_to_group (dict): group name for each page (eg 'id', 'dnm' or 'q7')
         qr_file (dict): a dict of dicts.  The outer keys are integer
             page numbers.  The inner keys index the corners, giving a
             path to an image of the appropriate QR code.
@@ -143,9 +145,11 @@ def create_exam_and_insert_QR(
     for page_index in range(length):
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
         exam[page_index].clean_contents()
-        # papernum.pagenum stamp in top-centre of page
-        rect = fitz.Rect(page_width // 2 - 40, 20, page_width // 2 + 40, 44)
-        text = "{}.{}".format(f"{papernum:04}", str(page_index + 1).zfill(2))
+        # papernum.page-name.pagenum stamp in top-centre of page
+        rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 44)
+        # name of the group to which page belongs
+        group = page_to_group[page_index+1]
+        text = "{}.{}p{}".format(f"{papernum:04}", group.ljust(6), str(page_index + 1).zfill(2))
         excess = exam[page_index].insert_textbox(
             rect,
             text,
@@ -229,7 +233,7 @@ def is_possible_to_encode_as(s, encoding):
         bool
     """
     try:
-        _tmp = s.encode(encoding)
+        s.encode(encoding)
         return True
     except UnicodeEncodeError:
         return False
@@ -346,6 +350,7 @@ def make_PDF(
     papernum,
     question_versions,
     page_versions,
+    page_to_group,
     extra=None,
     no_qr=False,
     fakepdf=False,
@@ -368,6 +373,8 @@ def make_PDF(
         question_versions (dict): the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
+        page_versions (dict): version number for each page of this paper.
+        page_to_group (dict): the group to which each page belongs ('id', 'dnm', 'q7')
         extra (dict/None): Dictionary with student id and name or None.
         no_qr (bool): determine whether or not to paste in qr-codes.
         fakepdf (bool): when true, the build empty "pdf" files by just
@@ -409,6 +416,7 @@ def make_PDF(
             papernum,
             question_versions,
             page_versions,
+            page_to_group,
             qr_file,
             no_qr=no_qr,
         )

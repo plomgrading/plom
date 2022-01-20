@@ -47,7 +47,8 @@ def outputProductionCSV(spec, make_PDF_args):
         csv_writer.writerow(header)
         for paper in make_PDF_args:
             # we need only a few bits of the tuple
-            idx, qver, pver, student_info = paper[4:8]
+            idx, qver, pver, ptog, student_info = paper[4:9]
+            # we don't actually need ptog = page to group mapping.
             if student_info:
                 row = [idx, student_info["id"], student_info["name"]]
             else:  # just skip those columns
@@ -57,6 +58,19 @@ def outputProductionCSV(spec, make_PDF_args):
             for p in range(1, numberOfPages + 1):
                 row.append(pver[p])
             csv_writer.writerow(row)
+
+
+def build_page_group_dict(spec):
+    # start with the id page
+    page_to_group = {spec['idPage']: 'id'}
+    # now any dnm
+    for pg in spec['doNotMarkPages']:
+        page_to_group[pg] = 'dnm'
+    # now the questions
+    for q in spec['question']:
+        for pg in spec['question'][q]['pages']:
+            page_to_group[pg] = f'q{q}'
+    return page_to_group
 
 
 def build_papers_backend(
@@ -113,6 +127,8 @@ def build_papers_backend(
                     spec["numberToName"]
                 )
             )
+    # mapping from pages to groups for labelling top of pages
+    page_to_group = build_page_group_dict(spec)
     make_PDF_args = []
     if indexToMake is None:
         papersToMake = range(1, spec["numberToProduce"] + 1)
@@ -137,6 +153,7 @@ def build_papers_backend(
                 paper_index,
                 question_version_map,
                 page_version_map,
+                page_to_group,
                 student_info,
                 no_qr,
                 fakepdf,
@@ -150,7 +167,7 @@ def build_papers_backend(
     #     make_PDF(*x)
     num_PDFs = len(make_PDF_args)
     with Pool() as pool:
-        r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
+        list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
     # output CSV with all this info in it
     print("Writing produced_papers.csv.")
     outputProductionCSV(spec, make_PDF_args)
