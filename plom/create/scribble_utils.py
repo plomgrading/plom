@@ -55,6 +55,93 @@ possible_answers = [
 ]
 
 
+# In principle you can put other fonts in plom.create.fonts
+# Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+font_dict = {
+    "ejx": "ejx_handwriting.ttf",
+}
+
+
+# Customizable data
+blue = [0, 0, 0.75]
+digit_font_size = 24
+answer_font_size = 18
+
+
+def scribble_name_and_id(pdf_doc, student_number, student_name, pagenum=0):
+    """Write name/number on coverpage of fitz pdf_doc."""
+    student_number_length = 8
+
+    # load the digit images
+    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
+    # how many of each digit were collected
+    number_of_digits = len(digit_array) // 10
+    assert len(digit_array) % 10 == 0
+
+    # insert digit images into rectangles - some hackery required to get correct positions.
+    id_page = pdf_doc[pagenum]
+    width = 28
+    border = 8
+    for n in range(student_number_length):
+        rect1 = fitz.Rect(
+            220 + border * n + width * n,
+            265,
+            220 + border * n + width * (n + 1),
+            265 + width,
+        )
+        # uu-encoded png
+        uuImg = digit_array[
+            int(student_number[n]) * number_of_digits
+            + random.randrange(number_of_digits)
+        ]
+        img_BString = base64.b64decode(uuImg)
+        id_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
+        # TODO - there should be an assert or something here?
+
+    # TODO: use ejx_handwriting here too
+    digit_rectangle = fitz.Rect(228, 335, 550, 450)
+    excess = id_page.insert_textbox(
+        digit_rectangle,
+        student_name,
+        fontsize=digit_font_size,
+        color=blue,
+        fontname="Helvetica",
+        fontfile=None,
+        align=0,
+    )
+    assert excess > 0
+    del id_page
+
+
+def scribble_pages(pdf_doc, exclude=(0, 1)):
+    """Scribble on most pages of fitz pdf_doc.
+
+    By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
+    """
+    fontname, ttf = random.choice(list(font_dict.items()))
+
+    # Write some random answers on the pages
+    for page_index, pdf_page in enumerate(pdf_doc):
+        random_answer_rect = fitz.Rect(
+            100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
+        )
+        random_answer_text = random.choice(possible_answers)
+
+        if page_index in exclude:
+            continue
+        with resources.path(plom.create.fonts, ttf) as fontfile:
+            excess = pdf_page.insert_textbox(
+                random_answer_rect,
+                random_answer_text,
+                fontsize=answer_font_size,
+                color=blue,
+                fontname=fontname,
+                fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
+                align=0,
+            )
+            assert excess > 0
+
+
 def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     """Fill-in exams with fake data for demo or testing.
 
@@ -70,27 +157,11 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
             subset. (default: `None`)
     """
     # Customizable data
-    blue = [0, 0, 0.75]
-    student_number_length = 8
     extra_page_probability = 0.2
-    digit_font_size = 24
-    answer_font_size = 18  # font size should depend on font?
     extra_page_font_size = 18
-
-    # load the digit images
-    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
-    # how many of each digit were collected
-    number_of_digits = len(digit_array) // 10
-    assert len(digit_array) % 10 == 0
 
     paper_dir = Path(paper_dir)
     outfile = Path(outfile)
-
-    # In principle you can put other fonts in plom.create.fonts
-    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
-    font_dict = {
-        "ejx": "ejx_handwriting.ttf",
-    }
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
@@ -123,63 +194,12 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
         # TODO: could do `with fitz.open(f) as pdf_document:`
         pdf_document = fitz.open(f)
 
-        # First we input the student names
-        if f not in named_papers_paths:  # can draw on front page
-            # insert digit images into rectangles - some hackery required to get correct positions.
-            front_page = pdf_document[0]
-            width = 28
-            border = 8
-            for digit_index in range(student_number_length):
-                rect1 = fitz.Rect(
-                    220 + border * digit_index + width * digit_index,
-                    265,
-                    220 + border * digit_index + width * (digit_index + 1),
-                    265 + width,
-                )
-                uuImg = digit_array[
-                    int(student_number[digit_index]) * number_of_digits
-                    + random.randrange(number_of_digits)
-                ]  # uu-encoded png
-                img_BString = base64.b64decode(uuImg)
-                front_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
-                # TODO - there should be an assert or something here?
+        if f not in named_papers_paths:
+            # TODO: use spec.IDpage
+            scribble_name_and_id(pdf_document, student_number, student_name)
 
-            digit_rectangle = fitz.Rect(228, 335, 550, 450)
-            excess = front_page.insert_textbox(
-                digit_rectangle,
-                student_name,
-                fontsize=digit_font_size,
-                color=blue,
-                fontname="Helvetica",
-                fontfile=None,
-                align=0,
-            )
-            assert excess > 0
-            del front_page
-
-        fontname, ttf = random.choice(list(font_dict.items()))
-
-        # Write some random answers on the pages
-        for page_index, pdf_page in enumerate(pdf_document):
-            random_answer_rect = fitz.Rect(
-                100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
-            )
-            random_answer_text = random.choice(possible_answers)
-
-            # TODO: should match the ID page and DNM pages settings
-            if page_index == 0:
-                continue
-            with resources.path(plom.create.fonts, ttf) as fontfile:
-                excess = pdf_page.insert_textbox(
-                    random_answer_rect,
-                    random_answer_text,
-                    fontsize=answer_font_size,
-                    color=blue,
-                    fontname=fontname,
-                    fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
-                    align=0,
-                )
-                assert excess > 0
+        # TODO: should match the ID page and DNM pages from spec settings
+        scribble_pages(pdf_document)
 
         # delete last page from the first test
         if index == 0:
@@ -253,7 +273,6 @@ def make_colliding_pages(paper_dir, outfile):
 
     all_pdf_documents = fitz.open(outfile)
     # Customizable data
-    blue = [0, 0, 0.75]
     colliding_page_font_size = 18
 
     papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
