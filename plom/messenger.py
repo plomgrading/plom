@@ -434,7 +434,7 @@ class Messenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
-                with open(annotated_img, "rb") as f, open(plomfile, "rb") as f2:
+                with open(annotated_img, "rb") as fh, open(plomfile, "rb") as f2:
                     # doesn't like ints, so convert ints to strings
                     param = {
                         "user": self.user,
@@ -444,15 +444,16 @@ class Messenger(BaseMessenger):
                         "score": str(score),
                         "mtime": str(mtime),
                         "rubrics": rubrics,
-                        "md5sum": hashlib.md5(f.read()).hexdigest(),
+                        "md5sum": hashlib.md5(fh.read()).hexdigest(),
                         "integrity_check": integrity_check,
                         "image_md5s": image_md5_list,
                     }
-                    f.seek(0)  # seems wasteful to reread the file
+                    # reset stream position to start before reading again
+                    fh.seek(0)
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "annotated": (annotated_img, f, "image/png"),
+                            "annotated": (annotated_img, fh, "image/png"),
                             "plom": (plomfile, f2, "text/plain"),
                         }
                     )

@@ -1400,19 +1400,20 @@ class ManagerMessenger(BaseMessenger):
     def putSolutionImage(self, question, version, fileName):
         with self.SRmutex:
             try:
-                with open(fileName, "rb") as f:
+                with open(fileName, "rb") as fh:
                     param = {
                         "user": self.user,
                         "token": self.token,
                         "question": question,
                         "version": version,
-                        "md5sum": hashlib.md5(f.read()).hexdigest(),
+                        "md5sum": hashlib.md5(fh.read()).hexdigest(),
                     }
-                    f.seek(0)  # seems wasteful to reread the file
+                    # reset stream position to start before reading again
+                    fh.seek(0)
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "image": f,
+                            "image": fh,
                         }
                     )
                     response = self.put(
