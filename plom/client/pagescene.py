@@ -453,7 +453,6 @@ class PageScene(QGraphicsScene):
         # 4 = some sort of error
         self.boxStampFlag = 0
 
-        self.textFlag = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -1009,6 +1008,17 @@ class PageScene(QGraphicsScene):
     # and then destroyed (on release) and replaced with the
     # more permanent graphics item.
 
+    def textUnderneathPoint(self, pt):
+        """Check to see if any text-like object under point"""
+        for under in self.items(pt):
+            if (
+                isinstance(under, DeltaItem)
+                or isinstance(under, TextItem)
+                or isinstance(under, GroupDeltaTextItem)
+            ):
+                return True
+        return False
+
     def textUnderneathGhost(self):
         """Check to see if any text-like object under current ghost-text"""
         for under in self.ghostItem.collidingItems():
@@ -1349,11 +1359,6 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        # text flag explained
-        # 0 = initial state - before text click-drag-release-click started
-        # 1 = started drawing box
-        # 2 = started drawing line
-
         # Find the object under the click.
         # since there might be a line right under the point during stage2, offset the test point by a couple of pixels to the right.
         # note - chose to the right since when we start typing text it will extend rightwards
@@ -1367,7 +1372,7 @@ class PageScene(QGraphicsScene):
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
                 if (
-                    self.textFlag == 2
+                    self.boxStampFlag == 2
                 ):  # make sure not trying to start text on top of text
                     return
                 under.setTextInteractionFlags(Qt.TextEditorInteraction)
@@ -1379,16 +1384,10 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        if self.textFlag == 0:  # time to start drawing a box
-            self.textFlag = 1
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-            self.boxItem.setPen(self.ink)
-            self.boxItem.setBrush(self.lightBrush)
-            self.addItem(self.boxItem)
-            return
-        elif self.textFlag == 2:
+        # now use the boxstamp code to update things
+        self.boxStampPress(event)
+
+        if self.boxStampFlag == 3:
             # Construct empty text object, give focus to start editor
             ept = event.scenePos()
             command = CommandText(self, ept, "")
@@ -1398,18 +1397,10 @@ class PageScene(QGraphicsScene):
             command.blurb.enable_interactive()
             command.blurb.setFocus()
             self.undoStack.push(command)
-            # connect up line
-            connectingPath = whichLineToDraw(
-                ept,
-                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
-            )
-            command = CommandPen(self, connectingPath)
-            self.undoStack.push(command)
-            self.removeItem(self.pathItem)
+
             log.debug(
-                "textFlag > 0 so we must be finishing a click-drag text: finalizing macro"
+                "boxStampFlag > 0 so we must be finishing a click-drag text: finalizing macro"
             )
-            self.textFlag = 0
             self.undoStack.endMacro()
 
     def mouseMoveText(self, event):
@@ -1422,61 +1413,34 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.textFlag == 1:
-            self.currentPos = event.scenePos()
-            if self.boxItem is None:
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-        elif self.textFlag == 2:
-            self.currentPos = event.scenePos()
-            self.pathItem.setPath(
-                whichLineToDraw(
-                    self.currentPos,
-                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
-                )
-            )
+        self.boxStampMove(event)
 
     def mouseReleaseText(self, event):
-        if self.textFlag == 0:
+        # if haven't started drawing, or are mid draw of line be careful of what is underneath
+        # if there is text under the ghost then do not stamp anything - ignore the event.
+        if self.textUnderneathPoint(event.scenePos()) and self.boxStampFlag in [0, 2]:
             return
-        elif self.textFlag == 1:
-            self.removeItem(self.boxItem)
-            # check if rect has some area
-            # needs abs since rect is not normalised
-            if (
-                abs(self.boxItem.rect().width()) > minimum_box_side_length
-                and abs(self.boxItem.rect().height()) > minimum_box_side_length
-            ):
-                self.undoStack.beginMacro("Click-Drag composite object")
-                command = CommandBox(self, self.boxItem.rect())
-                self.undoStack.push(command)
-            else:
-                # small box, so build the text item
-                if self.textUnderneathGhost():
-                    self.textFlag = 0  # reset the rubric flag
-                    return  # can't paste it here.
+        
+        self.boxStampRelease(event)
 
-                # Construct empty text object, give focus to start editor
-                pt = event.scenePos()
-                command = CommandText(self, pt, "")
-                # move so centred under cursor   TODO: move into class!
-                pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
-                command.blurb.setPos(pt)
-                command.blurb.enable_interactive()
-                command.blurb.setFocus()
-                self.undoStack.push(command)
-                self.textFlag = 0  # reset the text flag
-                return
+        if self.boxStampFlag == 3:
+            # Construct empty text object, give focus to start editor
+            pt = event.scenePos()
+            command = CommandText(self, pt, "")
+            # move so centred under cursor   TODO: move into class!
+            pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
+            command.blurb.setPos(pt)
+            command.blurb.enable_interactive()
+            command.blurb.setFocus()
+            self.undoStack.push(command)
 
-            self.textFlag = 2
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.pathItem = QGraphicsPathItem(QPainterPath(self.originPos))
-            self.pathItem.setPen(self.ink)
-            self.addItem(self.pathItem)
+        if self.boxStampFlag >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxStampFlag} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxStampFlag = 0
+
 
     def mouseReleaseMove(self, event):
         """
@@ -2564,7 +2528,6 @@ class PageScene(QGraphicsScene):
                     self.arrowFlag,
                     self.boxFlag,
                     self.penFlag,
-                    self.textFlag,
                     self.zoomFlag,
                     self.boxStampFlag,
                 ]
@@ -2600,17 +2563,6 @@ class PageScene(QGraphicsScene):
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
 
-        # text flag needs care - uses undo-macro - need to clean that up
-        # 1 = drawing the box
-        # 2 = drawing the line
-        if self.textFlag == 1:  # drawing the box
-            self.removeItem(self.boxItem)
-            self.textFlag = 0
-        if self.textFlag == 2:  # undo-macro started, box drawn, mid draw of path
-            self.removeItem(self.pathItem)
-            self.undoStack.endMacro()
-            self.undo()  # removes the drawn box
-            self.textFlag = 0
         # check if mid-zoom-box draw:
         if self.zoomFlag == 2:
             self.removeItem(self.zoomBoxItem)
