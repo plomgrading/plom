@@ -625,7 +625,9 @@ class PageScene(QGraphicsScene):
         self.addItem(self.scoreBox)
 
         # make a box around the scorebox where mouse-press-event won't work.
-        self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
+        # make it fairly wide so that items pasted are not obscured when
+        # scorebox updated and becomes wider
+        self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
@@ -1106,6 +1108,10 @@ class PageScene(QGraphicsScene):
         # check if mouseclick inside the avoidBox
         if self.avoidBox.contains(event.scenePos()):
             return
+        # if there is a visible ghost then check its bounding box avoids the scorebox(+boundaries)
+        if self.ghostItem.isVisible():
+            if self.avoidBox.intersects(self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())):
+                return
 
         # Get the function name from the dictionary based on current mode.
         functionName = mousePress.get(self.mode, None)
