@@ -1209,7 +1209,11 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 4
 
     def whichLineToDraw_init(self):
-        witches = [whichLineToDraw, which_classic_shortest_corner_side, which_centre_to_centre]
+        witches = [
+            whichLineToDraw,
+            which_classic_shortest_corner_side,
+            which_centre_to_centre,
+        ]
         self._witches = cycle(witches)
         self._whichLineToDraw = next(self._witches)
 
