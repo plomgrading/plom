@@ -98,7 +98,7 @@ class WarningQuestion(SimpleQuestion):
         self.setIcon(QMessageBox.Warning)
 
 
-class SimpleMessageCheckBox(QMessageBox):
+class SimpleQuestionCheckBox(QMessageBox):
     """A simple message pop-up with yes/no buttons and a checkbox.
 
     Args:
@@ -106,8 +106,8 @@ class SimpleMessageCheckBox(QMessageBox):
         cbtxt: optional text for the checkbox else default
     """
 
-    def __init__(self, txt, cbtxt=None):
-        super().__init__()
+    def __init__(self, parent, txt, cbtxt=None):
+        super().__init__(parent)
         if cbtxt:
             self.cb = QCheckBox(cbtxt)
         else:
@@ -115,6 +115,7 @@ class SimpleMessageCheckBox(QMessageBox):
         self.setText(txt)
         self.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         self.setDefaultButton(QMessageBox.Yes)
+        self.setIcon(QMessageBox.Question)
         self.setCheckBox(self.cb)
 
 

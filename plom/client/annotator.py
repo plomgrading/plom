@@ -69,7 +69,7 @@ from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import (
     ErrorMessage,
     SimpleQuestion,
-    SimpleMessageCheckBox,
+    SimpleQuestionCheckBox,
     NoAnswerBox,
 )
 
@@ -1476,7 +1476,8 @@ class Annotator(QWidget):
             and (0 < self.getScore() < self.maxMark)
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
-            msg = SimpleMessageCheckBox(
+            msg = SimpleQuestionCheckBox(
+                self,
                 "<p>You have given neither comments nor detailed annotations "
                 "(other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>\n"
                 "<p>This may make it difficult for students to learn from this "
@@ -1547,7 +1548,9 @@ class Annotator(QWidget):
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
-                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                msg = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
@@ -1589,7 +1592,9 @@ class Annotator(QWidget):
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
-                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                msg = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
