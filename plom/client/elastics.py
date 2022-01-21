@@ -286,9 +286,9 @@ def which_sticky_corners(g, r):
         path.lineTo(QPointF(g.right(), gy))
         return path
 
-    # return which_classic_shortest_corner_side(g, r)
+    return which_classic_shortest_corner_side(g, r)
     # TODO: Issue #1892, or should we return None?
-    return QPainterPath()
+    # return QPainterPath()
 
 
 def which_horizontal_step(g_rect, b_rect):
