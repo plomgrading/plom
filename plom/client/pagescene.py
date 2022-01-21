@@ -68,6 +68,12 @@ from .tools import (
     CommandHighlight,
     CommandPenArrow,
 )
+from .elastics import (
+    which_horizontal_step,
+    which_sticky_corners,
+    which_classic_shortest_corner_side,
+    which_centre_to_centre,
+)
 
 
 log = logging.getLogger("pagescene")
@@ -287,166 +293,6 @@ mouseRelease = {
 # see #1435
 
 minimum_box_side_length = 24
-
-
-def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
-    """Return some points on the perimeter of a shape.
-
-    If the input is a point, just return that point.
-
-    If the input is a rectangle, dy default, list of vertices in the
-    middle of each side, but this can be adjusted.
-    """
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        if corners:
-            trange = range(0, N + 1)
-        else:
-            trange = range(1, N)
-        return [
-            *(QPointF(x + w * n / N, y) for n in trange),
-            *(QPointF(x + w * n / N, y + h) for n in trange),
-            *(QPointF(x, y + h * n / N) for n in range(1, N)),
-            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
-        ]
-    elif isinstance(shape, QPointF):
-        return [shape]
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
-def sqrDistance(vect):
-    """given a 2d-vector return l2 norm of that vector"""
-    return vect.x() * vect.x() + vect.y() * vect.y()
-
-
-def shortestLine(g_rect, b_rect):
-    """Get approximately shortest line between two shapes.
-
-    More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
-    """
-    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
-    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
-    gp = gvert[0]
-    bp = bvert[0]
-    dd = sqrDistance(gp - bp)
-    for p in gvert:
-        for q in bvert:
-            dst = sqrDistance(p - q)
-            if dst < dd:
-                gp = p
-                bp = q
-                dd = dst
-    return QLineF(bp, gp)
-
-
-def which_classic_shortest_corner_side(ghost, r):
-    """Get approximately shortest line between corners/midpoints of two rectangles.
-
-    args:
-        ghost (QRect/QPointF): considers the midpoints only.
-        r (QRect): uses the midpoints and corners.
-
-    returns:
-        QPainterPath
-    """
-    line = shortestLine(ghost, r)
-    path = QPainterPath(line.p1())
-    path.lineTo(line.p2())
-    return path
-
-
-def get_intersection_bw_rect_line(rec, lin):
-    """Return the intersection between a line and rectangle or None."""
-    if isinstance(rec, QPointF):
-        return None
-    x, y, w, h = rec.getRect()
-    yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    return None
-
-
-def which_centre_to_centre(ghost, r):
-    """Get approximately shortest line between two shapes "center-to-centre".
-
-    args:
-        ghost (QRect/QPointF):
-        r (QRect):
-
-    returns:
-        QPainterPath
-    """
-    if isinstance(ghost, QPointF):
-        A = ghost
-    else:
-        x, y, w, h = ghost.getRect()
-        A = QPointF(x + w / 2, y + h / 2)
-    if isinstance(r, QPointF):
-        B = r
-    else:
-        x, y, w, h = r.getRect()
-        B = QPointF(x + w / 2, y + h / 2)
-    CtoC = QLineF(A, B)
-    A = get_intersection_bw_rect_line(ghost, CtoC)
-    B = get_intersection_bw_rect_line(r, CtoC)
-    if A is None or B is None:
-        # probably inside
-        return which_classic_shortest_corner_side(ghost, r)
-    path = QPainterPath(A)
-    path.lineTo(B)
-    return path
-
-
-def whichLineToDraw(g_rect, b_rect):
-    # direct line from the box-rect to the ghost-rect
-    directLine = shortestLine(g_rect, b_rect)
-    thePath = QPainterPath(directLine.p1())
-
-    # iteration 1
-    # draw a path as vertical and then horizontal components.
-    # thePath.lineTo(directLine.x1(), directLine.y2())
-    # thePath.lineTo(directLine.p2())
-
-    # iteration 2
-    # draw path as diagonal followed by flat
-    # sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    # if abs(directLine.dy()) < abs(directLine.dx()):  # end in horizontal
-    #     sx = directLine.dy()
-    #     if sg < 0:  # flip sign if gradient negative
-    #         sx = -sx
-    #     thePath.lineTo(directLine.x1() + sx, directLine.y2())
-    #     thePath.lineTo(directLine.p2())
-    # else:  # end in vertical
-    #     sy = directLine.dx()
-    #     if sg < 0:  # flip sign if gradient negative
-    #         sy = -sy
-    #     thePath.lineTo(directLine.x2(), directLine.y1() + sy)
-    #     thePath.lineTo(directLine.p2())
-
-    # iteration 3
-    # as #2 but steeper diagonal
-    sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if abs(directLine.dy()) < 3 * abs(directLine.dx()):  # end in horizontal
-        sx = directLine.dy() / 3
-        if sg < 0:  # flip sign if gradient negative
-            sx = -sx
-        thePath.lineTo(directLine.x1() + sx, directLine.y2())
-        thePath.lineTo(directLine.p2())
-    else:  # too steep - so draw single connecting line segment
-        thePath.lineTo(directLine.p2())
-
-    # now return the path
-    return thePath
 
 
 class PageScene(QGraphicsScene):
@@ -1210,7 +1056,8 @@ class PageScene(QGraphicsScene):
 
     def whichLineToDraw_init(self):
         witches = [
-            whichLineToDraw,
+            which_horizontal_step,
+            which_sticky_corners,
             which_classic_shortest_corner_side,
             which_centre_to_centre,
         ]
