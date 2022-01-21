@@ -68,12 +68,22 @@ digit_font_size = 24
 answer_font_size = 18
 
 
-def scribble_name_and_id(pdf_doc, student_number, student_name, pagenum=0):
+def scribble_name_and_id(
+    pdf_doc, student_number, student_name, *, pagenum=0, seed=None
+):
     """Write name/number on coverpage of fitz pdf_doc.
 
     Arguments:
         pdf_doc (fitz.Document): an open pdf file, we'll modify it
             implicitly but not close it.
+        student_number (str)
+        student_name (str)
+
+    Keyword Args:
+        pagenum (int): which page is the coverpage, default 0 (1st page).
+        seed (None/int): seed the random number generator with this value.
+            Default of None means don't.  This can be used to ensure the
+            same digit images are chosen each time, useful for testing.
 
     Returns:
         None: but modifies the open document as a side effect.
@@ -86,6 +96,9 @@ def scribble_name_and_id(pdf_doc, student_number, student_name, pagenum=0):
     # how many of each digit were collected
     number_of_digits = len(digit_array) // 10
     assert len(digit_array) % 10 == 0
+
+    if seed is not None:
+        random.seed(seed)
 
     # insert digit images into rectangles - some hackery required to get correct positions.
     id_page = pdf_doc[pagenum]

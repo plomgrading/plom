@@ -121,7 +121,7 @@ def test_get_digit_box(tmpdir):
     id_imgs = []
     for s in miniclass:
         d = fitz.open(tmpdir / "sourceVersions/version1.pdf")
-        scribble_name_and_id(d, s["id"], s["studentName"])
+        scribble_name_and_id(d, s["id"], s["studentName"], seed=42)
         f = tmpdir / f"mytest_{s['id']}.pdf"
         d.save(f)
         d.close()
