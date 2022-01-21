@@ -123,6 +123,8 @@ def main():
 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
+    app.setApplicationName("PlomClient")
+    app.setApplicationVersion(__version__)
 
     signal.signal(signal.SIGINT, sigint_handler)
     add_popup_to_toplevel_exception_handler()
