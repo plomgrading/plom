@@ -39,6 +39,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
 )
 from plom import isValidStudentNumber
+
 # from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
