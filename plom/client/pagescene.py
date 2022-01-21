@@ -1060,7 +1060,7 @@ class PageScene(QGraphicsScene):
             self.removeItem(self.pathItem)
             self.boxLineStampState = 3  # get ready to stamp things.
         else:
-            # this shouldnt happen, so (??->4)
+            # this shouldn't happen, so (??->4)
             self.boxLineStampState = 4
         return
 
@@ -1076,7 +1076,7 @@ class PageScene(QGraphicsScene):
         elif self.boxLineStampState == 1:  # mid box draw - keep drawing it. (1->1)
             self.currentPos = event.scenePos()
             if self.boxItem is None:
-                # oops - it isnt there yet, so start it
+                # oops - it isn't there yet, so start it
                 self.boxItem = QGraphicsRectItem(
                     QRectF(self.originPos, self.currentPos)
                 )
