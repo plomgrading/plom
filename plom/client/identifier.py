@@ -14,7 +14,6 @@ __license__ = "AGPL-3.0-or-later"
 from collections import defaultdict
 import csv
 import logging
-import os
 from pathlib import Path
 import tempfile
 
@@ -27,7 +26,6 @@ from PyQt5.QtCore import (
     QVariant,
     pyqtSignal,
 )
-from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import (
     QCompleter,
     QDialog,
@@ -41,7 +39,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
 )
 from plom import isValidStudentNumber
-from plom.rules import censorStudentNumber as censorID
+# from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
 from .examviewwindow import ImageViewWidget
@@ -393,7 +391,7 @@ class IDClient(QWidget):
         if imageDat is None:  # means no image
             imageName = None
         else:
-            imageName = os.path.join(self.workingDirectory, f"i{test}.0.image")
+            imageName = self.workingDirectory / f"i{test}.0.image"
             with open(imageName, "wb") as fh:
                 fh.write(imageDat)
 
@@ -487,7 +485,7 @@ class IDClient(QWidget):
         # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
         for i in range(len(imageList)):
-            tmp = os.path.join(self.workingDirectory, "i{}.{}.image".format(test, i))
+            tmp = self.workingDirectory / "i{}.{}.image".format(test, i)
             inames.append(tmp)
             with open(tmp, "wb") as fh:
                 fh.write(imageList[i])
@@ -510,7 +508,7 @@ class IDClient(QWidget):
             # Put message popup on top-corner of idenfier window
             if msg.exec_() == QMessageBox.No:
                 return
-        code = self.exM.data(index[0])
+        # code = self.exM.data(index[0])
         sname = self.ui.pNameLabel.text()
         sid = self.ui.pSIDLabel.text()
 
@@ -733,7 +731,7 @@ class IDClient(QWidget):
         index = self.ui.tableView.selectedIndexes()
         if len(index) == 0:
             return
-        status = self.exM.data(index[1])
+        # status = self.exM.data(index[1])
         # if status != "unidentified":
         # return
         code = self.exM.data(index[0])

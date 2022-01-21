@@ -4,7 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
