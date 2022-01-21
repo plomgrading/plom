@@ -1110,7 +1110,9 @@ class PageScene(QGraphicsScene):
             return
         # if there is a visible ghost then check its bounding box avoids the scorebox(+boundaries)
         if self.ghostItem.isVisible():
-            if self.avoidBox.intersects(self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())):
+            if self.avoidBox.intersects(
+                self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
+            ):
                 return
 
         # Get the function name from the dictionary based on current mode.
