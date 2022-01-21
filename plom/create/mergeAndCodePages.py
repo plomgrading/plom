@@ -12,8 +12,10 @@ from pathlib import Path
 import segno
 import fitz
 
-from plom.tpv_utils import encodeTPV
 from plom.create import paperdir
+from plom.specVerifier import build_page_to_group_dict, build_page_to_version_dict
+from plom.tpv_utils import encodeTPV
+
 
 # from plom.misc_utils import run_length_encoding
 
@@ -58,14 +60,9 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
 
 
 def create_exam_and_insert_QR(
-    name,
-    code,
-    length,
-    versions,
+    spec,
     papernum,
     question_versions,
-    page_versions,
-    page_to_group,
     qr_file,
     *,
     no_qr=False,
@@ -77,14 +74,9 @@ def create_exam_and_insert_QR(
     (We create 4 QR codes but only add 3 of them because of the staple side, see below).
 
     Arguments:
-        name (str): Document Name.
-        code (str): 6 digits distinguishing this document from others.
-        length (int): length of the document, number of pages.
-        versions (int): Number of version of this document.
+        spec (dict): A validated test specification
         papernum (int): the paper/test number.
         question_versions (dict): version number for each question of this paper.
-        page_versions (dict): version number for each page of this paper.
-        page_to_group (dict): group name for each page (eg 'id', 'dnm' or 'q7')
         qr_file (dict): a dict of dicts.  The outer keys are integer
             page numbers.  The inner keys index the corners, giving a
             path to an image of the appropriate QR code.
@@ -97,19 +89,23 @@ def create_exam_and_insert_QR(
     Returns:
         fitz.Document: PDF document.
     """
+    # from spec get the mapping from page to group
+    page_to_group = build_page_to_group_dict(spec)
+    # also build page to version mapping from spec and the question-version dict
+    page_to_version = build_page_to_version_dict(spec, question_versions)
+
     source = Path("sourceVersions")
     # dict of version (int) -> source pdf (fitz.Document)
     pdf_version = {}
-    for ver in range(1, versions + 1):
+    for ver in range(1, spec["numberOfVersions"] + 1):
         pdf_version[ver] = fitz.open(source / f"version{ver}.pdf")
 
     exam = fitz.open()
-
     # Insert the relevant page-versions into this pdf.
-    for page_index in range(1, length + 1):
+    for page_index in range(1, spec["numberOfPages"] + 1):
         # Pymupdf starts pagecounts from 0 rather than 1. So offset things.
         exam.insert_pdf(
-            pdf_version[page_versions[page_index]],
+            pdf_version[page_to_version[page_index]],
             from_page=page_index - 1,
             to_page=page_index - 1,
             start_at=-1,
@@ -143,15 +139,15 @@ def create_exam_and_insert_QR(
     BL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
     BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
 
-    for page_index in range(length):
+    for page_index in range(spec["numberOfPages"]):
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
         exam[page_index].clean_contents()
         # papernum.page-name.pagenum stamp in top-centre of page
         rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 44)
         # name of the group to which page belongs
         group = page_to_group[page_index + 1]
-        text = "{}.{}p{}".format(
-            f"{papernum:04}", group.ljust(6), str(page_index + 1).zfill(2)
+        text = "{} {} p{}".format(
+            f"{papernum:04}", group.ljust(5), str(page_index + 1).zfill(2)
         )
         excess = exam[page_index].insert_textbox(
             rect,
@@ -192,7 +188,7 @@ def create_exam_and_insert_QR(
         morph = (pivot, mat)
         excess = exam[page_index].insert_textbox(
             rDNW,
-            name,
+            spec["name"],
             fontsize=8,
             fontname="Helvetica",
             fontfile=None,
@@ -346,14 +342,9 @@ def insert_extra_info(extra, exam, x=None, y=None):
 
 
 def make_PDF(
-    name,
-    code,
-    length,
-    versions,
+    spec,
     papernum,
     question_versions,
-    page_versions,
-    page_to_group,
     extra=None,
     no_qr=False,
     fakepdf=False,
@@ -368,16 +359,11 @@ def make_PDF(
     file into the `paperdir` (typically "papersToPrint").
 
     Arguments:
-        name (str): Document name, the shortname for the exam.
-        code (str): 6 digits distinguishing this document from others.
-        length (int): Length of the document, number of pages.
-        versions (int): Number of versions.
+        spec (dict): A validated test specification
         papernum (int): the paper/test number.
         question_versions (dict): the version of each question for this paper.
             Note this is an input and must be predetermined before
             calling.
-        page_versions (dict): version number for each page of this paper.
-        page_to_group (dict): the group to which each page belongs ('id', 'dnm', 'q7')
         extra (dict/None): Dictionary with student id and name or None.
         no_qr (bool): determine whether or not to paste in qr-codes.
         fakepdf (bool): when true, the build empty "pdf" files by just
@@ -391,6 +377,9 @@ def make_PDF(
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
+    # from spec get the mapping from page to version
+    page_to_version = build_page_to_version_dict(spec, question_versions)
+
     if extra:
         save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
@@ -406,20 +395,17 @@ def make_PDF(
         # create QR codes for each test/page/version
         qr_file = {}
         if not no_qr:
-            for pg in range(1, length + 1):
-                ver = page_versions[pg]
-                qr_file[pg] = create_QR_codes(papernum, pg, ver, code, Path(tmp_dir))
+            for pg in range(1, spec["numberOfPages"] + 1):
+                ver = page_to_version[pg]
+                qr_file[pg] = create_QR_codes(
+                    papernum, pg, ver, spec["publicCode"], Path(tmp_dir)
+                )
 
         # We then create the exam pdf while adding the QR codes to it
         exam = create_exam_and_insert_QR(
-            name,
-            code,
-            length,
-            versions,
+            spec,
             papernum,
             question_versions,
-            page_versions,
-            page_to_group,
             qr_file,
             no_qr=no_qr,
         )

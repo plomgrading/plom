@@ -12,6 +12,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 from plom.create import paperdir as paperdir_name
+from plom.specVerifier import build_page_to_version_dict
 from .mergeAndCodePages import make_PDF
 
 
@@ -42,13 +43,17 @@ def outputProductionCSV(spec, make_PDF_args):
         header.append("q{}.version".format(q))
     for p in range(1, numberOfPages + 1):
         header.append("p{}.version".format(p))
+    # start writing to the csv
     with open("produced_papers.csv", "w") as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
         for paper in make_PDF_args:
-            # we need only a few bits of the tuple
-            idx, qver, pver, ptog, student_info = paper[4:9]
-            # we don't actually need ptog = page to group mapping.
+            # args = spec, paper_index, qv-map, student-info, no-qr, fakepdf, xcoord, ycoord
+            # we need only a few bits of the tuple - paper_index, qvmap and student-info
+            idx, qver, student_info = paper[1:4]
+            # make page to version from the qvmap
+            page_to_version = build_page_to_version_dict(spec, qver)
+            # print the student info if there.
             if student_info:
                 row = [idx, student_info["id"], student_info["name"]]
             else:  # just skip those columns
@@ -56,27 +61,13 @@ def outputProductionCSV(spec, make_PDF_args):
             for q in range(1, numberOfQuestions + 1):
                 row.append(qver[q])
             for p in range(1, numberOfPages + 1):
-                row.append(pver[p])
+                row.append(page_to_version[p])
             csv_writer.writerow(row)
-
-
-def build_page_group_dict(spec):
-    # start with the id page
-    page_to_group = {spec["idPage"]: "id"}
-    # now any dnm
-    for pg in spec["doNotMarkPages"]:
-        page_to_group[pg] = "dnm"
-    # now the questions
-    for q in spec["question"]:
-        for pg in spec["question"][q]["pages"]:
-            page_to_group[pg] = f"q{q}"
-    return page_to_group
 
 
 def build_papers_backend(
     spec,
     global_question_version_map,
-    global_page_version_map,
     classlist,
     *,
     fakepdf=False,
@@ -97,8 +88,6 @@ def build_papers_backend(
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         global_question_version_map (dict): dict of dicts mapping first by
             paper number (int) then by question number (int) to version (int).
-        global_page_version_map (dict): dict of dicts mapping first by
-            paper number (int) then by page number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
 
     Keyword arguments:
@@ -128,7 +117,6 @@ def build_papers_backend(
                 )
             )
     # mapping from pages to groups for labelling top of pages
-    page_to_group = build_page_group_dict(spec)
     make_PDF_args = []
     if indexToMake is None:
         papersToMake = range(1, spec["numberToProduce"] + 1)
@@ -136,7 +124,6 @@ def build_papers_backend(
         papersToMake = [indexToMake]
     for paper_index in papersToMake:
         question_version_map = global_question_version_map[paper_index]
-        page_version_map = global_page_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
             student_info = {
                 "id": classlist[paper_index - 1][0],
@@ -146,14 +133,9 @@ def build_papers_backend(
             student_info = None
         make_PDF_args.append(
             (
-                spec["name"],
-                spec["publicCode"],
-                spec["numberOfPages"],
-                spec["numberOfVersions"],
+                spec,
                 paper_index,
                 question_version_map,
-                page_version_map,
-                page_to_group,
                 student_info,
                 no_qr,
                 fakepdf,
