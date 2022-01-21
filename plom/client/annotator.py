@@ -4,7 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
@@ -68,8 +68,8 @@ from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import (
     ErrorMessage,
-    SimpleMessage,
-    SimpleMessageCheckBox,
+    SimpleQuestion,
+    SimpleQuestionCheckBox,
     NoAnswerBox,
 )
 
@@ -1476,7 +1476,8 @@ class Annotator(QWidget):
             and (0 < self.getScore() < self.maxMark)
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
-            msg = SimpleMessageCheckBox(
+            msg = SimpleQuestionCheckBox(
+                self,
                 "<p>You have given neither comments nor detailed annotations "
                 "(other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>\n"
                 "<p>This may make it difficult for students to learn from this "
@@ -1543,11 +1544,13 @@ class Annotator(QWidget):
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
-                msg = SimpleMessage(msg)
+                msg = SimpleQuestion(self, msg)
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
-                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                msg = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
@@ -1585,11 +1588,13 @@ class Annotator(QWidget):
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
-                msg = SimpleMessage(msg)
+                msg = SimpleQuestion(self, msg)
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
-                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                msg = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
@@ -1639,9 +1644,10 @@ class Annotator(QWidget):
 
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene and self.scene.areThereAnnotations():
-            msg = SimpleMessage(
+            msg = SimpleQuestion(
+                self,
                 "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>"
+                "<p>Do you want to discard them and close the annotator?</p>",
             )
             if msg.exec_() == QMessageBox.No:
                 event.ignore()

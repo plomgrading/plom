@@ -195,6 +195,7 @@ class Chooser(QDialog):
 
         if user == "manager":
             msg = SimpleQuestion(
+                self,
                 "<p>You are not allowed to mark or ID papers while logged-in as &ldquo;manager&rdquo;.</p>",
                 "Would you instead like to run the Server Management tool?",
             )
@@ -213,6 +214,7 @@ class Chooser(QDialog):
                 server_ver_str = self.messenger.start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
+                    self,
                     "SSL error: cannot verify the identity of the server.",
                     "Do you want to disable SSL certificate verification?  Not recommended.",
                     details=f"{e}",
@@ -246,13 +248,14 @@ class Chooser(QDialog):
             return
         except PlomExistingLoginException:
             msg = WarningQuestion(
+                self,
                 "You appear to be already logged in!\n\n"
                 "  * Perhaps a previous session crashed?\n"
                 "  * Do you have another client running,\n"
                 "    e.g., on another computer?\n\n"
                 "Should I force-logout the existing authorisation?"
                 " (and then you can try to log in again)\n\n"
-                "The other client will likely crash."
+                "The other client will likely crash.",
             )
             if msg.exec_() == QMessageBox.Yes:
                 self.messenger.clearAuthorisation(user, pwd)
@@ -271,6 +274,7 @@ class Chooser(QDialog):
         srv_ver = server_ver_str.split()[3]
         if Version(__version__) < Version(srv_ver):
             msg = WarningQuestion(
+                self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
                 " you may want to consider upgrading.",
                 question="Do you want to continue?",
@@ -427,6 +431,7 @@ class Chooser(QDialog):
                 server_ver_str = self.messenger.start()
             except PlomSSLError as e:
                 msg = WarningQuestion(
+                    self,
                     "SSL error: cannot verify the identity of the server.",
                     "Do you want to disable SSL certificate verification?  Not recommended.",
                     details=f"{e}",
