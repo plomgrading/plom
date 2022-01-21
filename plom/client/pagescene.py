@@ -356,6 +356,57 @@ def which_classic_shortest_corner_side(ghost, r):
     return path
 
 
+def get_intersection_bw_rect_line(rec, lin):
+    """Return the intersection between a line and rectangle or None."""
+    if isinstance(rec, QPointF):
+        return None
+    x, y, w, h = rec.getRect()
+    yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
+    if yes == QLineF.BoundedIntersection:
+        return pt
+    return None
+
+
+def which_centre_to_centre(ghost, r):
+    """Get approximately shortest line between two shapes "center-to-centre".
+
+    args:
+        ghost (QRect/QPointF):
+        r (QRect):
+
+    returns:
+        QPainterPath
+    """
+    if isinstance(ghost, QPointF):
+        A = ghost
+    else:
+        x, y, w, h = ghost.getRect()
+        A = QPointF(x + w / 2, y + h / 2)
+    if isinstance(r, QPointF):
+        B = r
+    else:
+        x, y, w, h = r.getRect()
+        B = QPointF(x + w / 2, y + h / 2)
+    CtoC = QLineF(A, B)
+    A = get_intersection_bw_rect_line(ghost, CtoC)
+    B = get_intersection_bw_rect_line(r, CtoC)
+    if A is None or B is None:
+        # probably inside
+        return which_classic_shortest_corner_side(ghost, r)
+    path = QPainterPath(A)
+    path.lineTo(B)
+    return path
+
+
 def whichLineToDraw(g_rect, b_rect):
     # direct line from the box-rect to the ghost-rect
     directLine = shortestLine(g_rect, b_rect)
@@ -1158,7 +1209,7 @@ class PageScene(QGraphicsScene):
             self.boxLineStampState = 4
 
     def whichLineToDraw_init(self):
-        witches = [whichLineToDraw, which_classic_shortest_corner_side]
+        witches = [whichLineToDraw, which_classic_shortest_corner_side, which_centre_to_centre]
         self._witches = cycle(witches)
         self._whichLineToDraw = next(self._witches)
 
