@@ -159,7 +159,7 @@ def which_sticky_corners(g, r):
         g = QRectF(g, g)
 
     # slope parameter > 1, determines the angle before we unsnap from corners
-    slurp = 4
+    slurp = 3
 
     def transf(t):
         """Transform function for the box.
@@ -328,9 +328,10 @@ def which_horizontal_step(g_rect, b_rect):
 
     # iteration 3
     # as #2 but steeper diagonal
+    slope = 3
     sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if abs(directLine.dy()) < 3 * abs(directLine.dx()):  # end in horizontal
-        sx = directLine.dy() / 3
+    if abs(directLine.dy()) < slope * abs(directLine.dx()):  # end in horizontal
+        sx = directLine.dy() / slope
         if sg < 0:  # flip sign if gradient negative
             sx = -sx
         thePath.lineTo(directLine.x1() + sx, directLine.y2())
