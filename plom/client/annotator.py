@@ -794,6 +794,9 @@ class Annotator(QWidget):
         self.setEnabled(True)
         return
 
+    def experimental_cycle(self):
+        self.scene.whichLineToDraw_next()
+
     def keyPopUp(self):
         """Sets KeyPress shortcuts."""
         kp = KeyHelp()
@@ -1139,6 +1142,9 @@ class Annotator(QWidget):
 
         self.twisterShortCut = QShortcut(QKeySequence("Ctrl+r"), self)
         self.twisterShortCut.activated.connect(self.rearrangePages)
+
+        self.sekritShortCut = QShortcut(QKeySequence("Ctrl+Shift+o"), self)
+        self.sekritShortCut.activated.connect(self.experimental_cycle)
 
         # pan shortcuts
         self.panShortCut = QShortcut(QKeySequence("space"), self)

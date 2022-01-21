@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+from itertools import cycle
 import logging
 
 from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
@@ -339,6 +340,22 @@ def shortestLine(g_rect, b_rect):
     return QLineF(bp, gp)
 
 
+def which_classic_shortest_corner_side(ghost, r):
+    """Get approximately shortest line between corners/midpoints of two rectangles.
+
+    args:
+        ghost (QRect/QPointF): considers the midpoints only.
+        r (QRect): uses the midpoints and corners.
+
+    returns:
+        QPainterPath
+    """
+    line = shortestLine(ghost, r)
+    path = QPainterPath(line.p1())
+    path.lineTo(line.p2())
+    return path
+
+
 def whichLineToDraw(g_rect, b_rect):
     # direct line from the box-rect to the ghost-rect
     directLine = shortestLine(g_rect, b_rect)
@@ -415,6 +432,7 @@ class PageScene(QGraphicsScene):
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.src_img_data)
+        self.whichLineToDraw_init()
         # and an underlyingrect for the margin.
         margin_rect = QRectF(self.underImage.boundingRect())
         marg = 512  # at some point in future make some function of image width/height
@@ -1051,7 +1069,7 @@ class PageScene(QGraphicsScene):
                 ghost_rect = QRectF(
                     self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
                 )
-            connectingPath = whichLineToDraw(
+            connectingPath = self.whichLineToDraw(
                 ghost_rect,
                 self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
             )
@@ -1093,7 +1111,7 @@ class PageScene(QGraphicsScene):
                     self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
                 )
             self.pathItem.setPath(
-                whichLineToDraw(
+                self.whichLineToDraw(
                     ghost_rect,
                     self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
                 )
@@ -1138,6 +1156,19 @@ class PageScene(QGraphicsScene):
                 self.addItem(self.pathItem)
         else:  # we should not be here, so (?->4)
             self.boxLineStampState = 4
+
+    def whichLineToDraw_init(self):
+        witches = [whichLineToDraw, which_classic_shortest_corner_side]
+        self._witches = cycle(witches)
+        self._whichLineToDraw = next(self._witches)
+
+    def whichLineToDraw_next(self):
+        self._whichLineToDraw = next(self._witches)
+        print(f"Changing rubric-line to: {self._whichLineToDraw}")
+        # TODO: can we generate a fake mouseMove event to force redraw?
+
+    def whichLineToDraw(self, A, B):
+        return self._whichLineToDraw(A, B)
 
     def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
