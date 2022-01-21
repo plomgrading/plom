@@ -1128,13 +1128,20 @@ class RubricWidget(QWidget):
             return
         msg = SimpleQuestion(
             self,
-            "<p>You did not create this rubric.</p>"
-            "<p>To edit it, the system will make a copy that you can edit.</p>"
-            "<p>Do you want to continue?</p>",
+            "<p>You did not create this rubric "
+            f"(it was created by &ldquo;{com['username']}&rdquo;).</p>",
+            "Do you want to make a copy and edit that instead?",
         )
         if msg.exec_() == QMessageBox.No:
             return
         com = com.copy()  # don't muck-up the original
+        newmeta = [com["meta"]] if com["meta"] else []
+        newmeta.append(
+            'Forked from Rubric ID {}, created by user "{}".'.format(
+                com["id"], com["username"]
+            )
+        )
+        com["meta"] = "\n".join(newmeta)
         com["id"] = None
         com["username"] = self.username
         self._new_or_edit_rubric(com, edit=False)
