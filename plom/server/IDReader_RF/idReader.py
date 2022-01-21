@@ -28,12 +28,10 @@ def calc_log_likelihood(student_ID, prediction_probs):
             `prediction_probs[k][n]` is the probability that digit k of
             ID is n.
 
-        num_digits (int): Number of digits in the student ID.
-
     Returns:
-       numpy.float64: log likelihood.  Approx -log(prob), so more
-           probable means smaller.  Negative since we'll minimise
-           "cost" when we do the linear assignment problem later.
+        numpy.float64: log likelihood.  Approx -log(prob), so more
+            probable means smaller.  Negative since we'll minimise
+            "cost" when we do the linear assignment problem later.
     """
     num_digits = len(student_ID)
     if len(prediction_probs) != num_digits:

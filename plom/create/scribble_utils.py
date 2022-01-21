@@ -88,13 +88,10 @@ def scribble_name_and_id(
     Returns:
         None: but modifies the open document as a side effect.
     """
-    # Number of digits in the student ID.
-    student_number_length = 8
-
     # load the digit images
     digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
-    # how many of each digit were collected
-    number_of_digits = len(digit_array) // 10
+    # array is organized in blocks of each digit with this many samples of each
+    num_samples = len(digit_array) // 10
     assert len(digit_array) % 10 == 0
 
     if seed is not None:
@@ -104,7 +101,7 @@ def scribble_name_and_id(
     id_page = pdf_doc[pagenum]
     width = 28
     border = 8
-    for n in range(student_number_length):
+    for n, digit in enumerate(student_number):
         rect1 = fitz.Rect(
             220 + border * n + width * n,
             265,
@@ -112,15 +109,12 @@ def scribble_name_and_id(
             265 + width,
         )
         # uu-encoded png
-        uuImg = digit_array[
-            int(student_number[n]) * number_of_digits
-            + random.randrange(number_of_digits)
-        ]
+        uuImg = digit_array[int(digit) * num_samples + random.randrange(num_samples)]
         img_BString = base64.b64decode(uuImg)
         id_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
-        # TODO - there should be an assert or something here?
+        # TODO - there should be an assert or something here after insert?
 
-    # TODO: use ejx_handwriting here too
+    # TODO: use ejx_handwriting here too: Issue #1888
     digit_rectangle = fitz.Rect(228, 335, 550, 450)
     excess = id_page.insert_textbox(
         digit_rectangle,
@@ -151,17 +145,17 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
     # Write some random answers on the pages
     for page_index, pdf_page in enumerate(pdf_doc):
-        random_answer_rect = fitz.Rect(
+        answer_rect = fitz.Rect(
             100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
         )
-        random_answer_text = random.choice(possible_answers)
+        answer_text = random.choice(possible_answers)
 
         if page_index in exclude:
             continue
         with resources.path(plom.create.fonts, ttf) as fontfile:
             excess = pdf_page.insert_textbox(
-                random_answer_rect,
-                random_answer_text,
+                answer_rect,
+                answer_text,
                 fontsize=answer_font_size,
                 color=blue,
                 fontname=fontname,
