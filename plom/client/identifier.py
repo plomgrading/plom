@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
 The Plom Identifier client
 """
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -45,7 +45,8 @@ from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
 from .examviewwindow import ImageViewWidget
-from .useful_classes import ErrorMessage, SimpleMessage, BlankIDBox, SNIDBox
+from .useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
+from .useful_classes import BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
 
@@ -505,7 +506,7 @@ class IDClient(QWidget):
         index = self.ui.tableView.selectedIndexes()
         status = self.exM.data(index[1])
         if status != "unidentified":
-            msg = SimpleMessage("Do you want to change the ID?")
+            msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
             if msg.exec_() == QMessageBox.No:
                 return
@@ -624,7 +625,7 @@ class IDClient(QWidget):
         # If the paper is already ID'd ask the user if they want to
         # change it - set the alreadyIDd flag to true.
         if status == "identified":
-            msg = SimpleMessage("Do you want to change the ID?")
+            msg = SimpleQuestion(self, "Do you want to change the ID?")
             # Put message popup on top-corner of idenfier window
             if msg.exec_() == QMessageBox.No:
                 return
@@ -634,8 +635,10 @@ class IDClient(QWidget):
         # Check if the entered SNID (student name and id) is in the list from the classlist.
         if self.ui.idEdit.text() in self.snid_to_student_id:
             # Ask user to confirm ID/Name
-            msg = SimpleMessage(
-                'Student "{}". Save and move to next?'.format(self.ui.idEdit.text())
+            msg = SimpleQuestion(
+                self,
+                f'Student "<b>{self.ui.idEdit.text()}</b>".',
+                "Save and move to next?",
             )
             # Put message popup in its last location
             if self.msgGeometry is not None:
@@ -652,12 +655,10 @@ class IDClient(QWidget):
             sname = self.snid_to_student_name[snid]
 
         else:
-            # Number is not in class list - ask user if they really want to
-            # enter that number.
-            msg = SimpleMessage(
-                'Student "{}" not found in classlist. Do you want to input the ID and name manually?'.format(
-                    self.ui.idEdit.text()
-                )
+            msg = WarningQuestion(
+                self,
+                f'Student "{self.ui.idEdit.text()}" not found in classlist.',
+                "Do you want to input the ID and name manually?",
             )
             # Put message popup on top-corner of idenfier window
             msg.move(self.pos())
