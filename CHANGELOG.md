@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
 * JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
+* Improved disc-space usage due to JPEG use in more places.
 * Removing or adding pages is more selective about which annotations are invalidated.
 * A large number of modal dialog fixes.
 * Other misc changes.
