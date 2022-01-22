@@ -744,7 +744,7 @@ class UploadHandler:
 
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
-                401 for authenication, or 403 is not manager.  409 if we
+                401 for authentication, or 403 is not manager.  409 if we
                 can't do the move due to users logged in.  406 in all other
                 situations, including paper not scanned (so cannot attach
                 extra page), and paper number not found.
