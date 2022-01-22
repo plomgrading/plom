@@ -143,7 +143,7 @@ def create_exam_and_insert_QR(
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
         exam[page_index].clean_contents()
         # papernum.page-name.pagenum stamp in top-centre of page
-        rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 44)
+        rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 46)
         # name of the group to which page belongs
         group = page_to_group[page_index + 1]
         text = "{} {} p{}".format(
