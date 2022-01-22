@@ -1182,7 +1182,8 @@ class Manager(QWidget):
                         self.collideModel.item(r, 4).text(),
                         self.collideModel.item(r, 5).text(),
                     )
-                except PlomOwnersLoggedInException as err:
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
+
                     ErrorMessage(f"{err}").exec_()
             else:
                 pass
