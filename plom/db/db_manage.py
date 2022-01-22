@@ -206,17 +206,14 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:
         return (False, "notfound", f"Cannot find question {question}")
-    if 42 == 42:
-        # TODO: need logic here for paper being "ready" or "scanned" or something
-        # TODO: if aref.has_some_pages()?
-        # TODO: (i.e., does not matter what other groups have or have not?)
+    version = qref.version
+    gref = qref.group  # and the parent group
+    if not gref.scanned:
         return (
             False,
             "unscanned",
-            f"Cannot attach extra page to unscanned test {test_number}",
+            f"Cannot attach extra page to test {test_number}: it is missing pages",
         )
-    version = qref.version
-    gref = qref.group  # and the parent group
     # find the last expage in that group - if there are expages
     if gref.expages.count() == 0:
         order = 1
