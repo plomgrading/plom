@@ -401,66 +401,66 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
-        # doesn't like ints, so convert ints to strings
-        param = {
-            "user": self.user,
-            "token": self.token,
-            "pg": str(pg),
-            "ver": str(ver),
-            "score": str(score),
-            "mtime": str(mtime),
-            "rubrics": rubrics,
-            "md5sum": hashlib.md5(open(annotated_img, "rb").read()).hexdigest(),
-            "integrity_check": integrity_check,
-            "image_md5s": image_md5_list,
-        }
         # Python 3.6 fails on pathlib.Path. remove `str` when we drop Python 3.6
-        mime_type = mimetypes.guess_type(str(annotated_img))[0]
-        dat = MultipartEncoder(
-            fields={
-                "param": json.dumps(param),
-                "annotated": (annotated_img.name, open(annotated_img, "rb"), mime_type),
-                "plom": (plomfile.name, open(plomfile, "rb"), "text/plain"),
-            }
-        )
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                f"/MK/tasks/{code}",
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-                timeout=(10, 120),
-            )
-            response.raise_for_status()
-            ret = response.json()
-        except (requests.ConnectionError, requests.Timeout) as e:
-            raise PlomTimeoutError(
-                "Upload timeout/connect error: {}\n\n".format(e)
-                + "Retries are NOT YET implemented: as a workaround,"
-                + "you can re-open the Annotator on '{}'.\n\n".format(code)
-                + "We will now process any remaining upload queue."
-            ) from None
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 406:
-                if response.text == "integrity_fail":
-                    raise PlomConflict(
-                        "Integrity fail: can happen if manager altered task while you annotated"
-                    ) from None
-                raise PlomSeriousException(response.text) from None
-            if response.status_code == 409:
-                raise PlomTaskChangedError("Task ownership has changed.") from None
-            if response.status_code == 410:
-                raise PlomTaskDeletedError(
-                    "No such task - it has been deleted from server."
+        img_mime_type = mimetypes.guess_type(str(annotated_img))[0]
+        with self.SRmutex:
+            try:
+                with open(annotated_img, "rb") as fh, open(plomfile, "rb") as f2:
+                    # doesn't like ints, so convert ints to strings
+                    param = {
+                        "user": self.user,
+                        "token": self.token,
+                        "pg": str(pg),
+                        "ver": str(ver),
+                        "score": str(score),
+                        "mtime": str(mtime),
+                        "rubrics": rubrics,
+                        "md5sum": hashlib.md5(fh.read()).hexdigest(),
+                        "integrity_check": integrity_check,
+                        "image_md5s": image_md5_list,
+                    }
+                    # reset stream position to start before reading again
+                    fh.seek(0)
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "annotated": (annotated_img.name, fh, img_mime_type),
+                            "plom": (plomfile.name, f2, "text/plain"),
+                        }
+                    )
+                    response = self.put(
+                        f"/MK/tasks/{code}",
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                        timeout=(10, 120),
+                    )
+                response.raise_for_status()
+                return response.json()
+            except (requests.ConnectionError, requests.Timeout) as e:
+                raise PlomTimeoutError(
+                    "Upload timeout/connect error: {}\n\n".format(e)
+                    + "Retries are NOT YET implemented: as a workaround,"
+                    + "you can re-open the Annotator on '{}'.\n\n".format(code)
+                    + "We will now process any remaining upload queue."
                 ) from None
-            if response.status_code == 400:
-                raise PlomSeriousException(response.text) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return ret
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 406:
+                    if response.text == "integrity_fail":
+                        raise PlomConflict(
+                            "Integrity fail: can happen if manager altered task while you annotated"
+                        ) from None
+                    raise PlomSeriousException(response.text) from None
+                if response.status_code == 409:
+                    raise PlomTaskChangedError("Task ownership has changed.") from None
+                if response.status_code == 410:
+                    raise PlomTaskDeletedError(
+                        "No such task - it has been deleted from server."
+                    ) from None
+                if response.status_code == 400:
+                    raise PlomSeriousException(response.text) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MrequestWholePaper(self, code, questionNumber=0):
         self.SRmutex.acquire()

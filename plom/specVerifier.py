@@ -121,6 +121,47 @@ def isContiguousListPosInt(l, lastPage):
     return True
 
 
+def build_page_to_group_dict(spec):
+    """Given a valid spec return a dict that translates each page to its containing group.
+
+    args:
+        spec (dict): A validated test spec
+    returns:
+        (dict): A dict mapping page numbers to groups: 'ID', 'DNM', or 'Q7'
+    """
+    # start with the id page
+    page_to_group = {spec["idPage"]: "ID"}
+    # now any dnm
+    for pg in spec["doNotMarkPages"]:
+        page_to_group[pg] = "DNM"
+    # now the questions
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            page_to_group[pg] = f"Q{q}"
+    return page_to_group
+
+
+def build_page_to_version_dict(spec, question_versions):
+    """Given the spec and the question-version dict, produce a dict that maps pages to versions.
+
+    args:
+        spec (dict): A validated test spec
+        question_versions (dict): A dict mapping question numbers to version numbers.
+        Note that typically each exam has a different qv-map.
+    returns:
+        (dict): A dict mapping page numbers to versions. Note idpages and dnm pages have version 1.
+    """
+    # idpage and dnm pages always from version 1
+    page_to_version = {spec["idPage"]: 1}
+    for pg in spec["doNotMarkPages"]:
+        page_to_version[pg] = 1
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            # be careful, the qv-map keys are ints, while those in the spec are strings
+            page_to_version[pg] = question_versions[int(q)]
+    return page_to_version
+
+
 class SpecVerifier:
     """Verify Plom exam specifications.
 
@@ -137,7 +178,7 @@ class SpecVerifier:
     ... 'privateSeed': '1001378822317872',
     ... 'publicCode': '270385',
     ... 'idPage': 1,
-    ... 'doNotMark': {'pages': [2]},
+    ... 'doNotMarkPages': [2],
     ... 'question': {
     ...     '1': {'pages': [3], 'mark': 5, 'select': 'shuffle'},
     ...     '2': {'pages': [4], 'mark': 10, 'select': 'fix'},
@@ -342,7 +383,7 @@ class SpecVerifier:
                 ),
                 "Number of pages = {}".format(self.spec["numberOfPages"]),
                 "IDpage = {}".format(self.spec["idPage"]),
-                "Do not mark pages = {}".format(self.spec["doNotMark"]["pages"]),
+                "Do not mark pages = {}".format(self.spec["doNotMarkPages"]),
                 f"Number of questions to mark = {N}",
             )
         )
@@ -396,7 +437,7 @@ class SpecVerifier:
         self.check_name_and_production_numbers(print=prnt)
         lastPage = self.spec["numberOfPages"]
         self.check_IDPage(lastPage, print=prnt)
-        self.check_doNotMark(lastPage, print=prnt)
+        self.check_doNotMarkPages(lastPage, print=prnt)
         prnt("Checking question groups")
         self.check_questions(print=prnt)
         # Note: enable all-or-none check for labels
@@ -481,7 +522,7 @@ class SpecVerifier:
             )
         print('  contains at least one question (ie "question.1"){}'.format(chk))
         print("Checking optional specification keys")
-        for x in ["doNotMark", "totalMarks", "numberOfQuestions"]:
+        for x in ["doNotMarkPages", "totalMarks", "numberOfQuestions"]:
             if x in self.spec:
                 print(f'  contains "{x}"{chk}')
 
@@ -594,15 +635,12 @@ class SpecVerifier:
                 + warn_mark
             )
 
-    def check_doNotMark(self, lastPage, print=print):
+    def check_doNotMarkPages(self, lastPage, print=print):
         print("Checking DoNotMark-pages")
-        if "doNotMark" not in self.spec:
+        if "doNotMarkPages" not in self.spec:
             print("    DoNotMark pages is missing: defaulting to empty" + chk)
-            self.spec["doNotMark"] = {"pages": []}
-        if "pages" not in self.spec["doNotMark"]:
-            print("    DoNotMark pages is missing: defaulting to empty" + chk)
-            self.spec["doNotMark"]["pages"] = []
-        pages = self.spec["doNotMark"]["pages"]
+            self.spec["doNotMarkPages"] = []
+        pages = self.spec["doNotMarkPages"]
         if type(pages) is not list:
             raise ValueError(
                 f'DoNotMark pages "{pages}" is not a list of positive integers'
@@ -617,7 +655,7 @@ class SpecVerifier:
                     f"DoNotMark page {n} is out of range: larger than lastPage={lastPage}"
                 )
 
-        if not self.spec["doNotMark"]["pages"]:
+        if not self.spec["doNotMarkPages"]:
             print("    DoNotMark pages is empty" + chk)
         else:
             print("    DoNotMark pages is list of positive integers" + chk)
@@ -672,8 +710,8 @@ class SpecVerifier:
         print("Checking all pages used exactly once:")
         pageUse = {k + 1: 0 for k in range(self.spec["numberOfPages"])}
         pageUse[self.spec["idPage"]] += 1
-        if self.spec.get("doNotMark"):
-            for p in self.spec["doNotMark"]["pages"]:
+        if self.spec.get("doNotMarkPages"):
+            for p in self.spec["doNotMarkPages"]:
                 pageUse[p] += 1
         for g in range(self.spec["numberOfQuestions"]):
             for p in self.spec["question"][str(g + 1)]["pages"]:

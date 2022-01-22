@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import json
 import mimetypes
@@ -164,39 +164,38 @@ class ScanMessenger(BaseMessenger):
         Returns:
             tuple/list: `(bool, reason, message)`, the bool indicates success.
         """
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "fileName": f.name,
-                "test": test,
-                "page": page,
-                "version": version,
-                "md5sum": md5sum,
-                "bundle": bundle,
-                "bundle_order": bundle_order,
-            }
-            mime_type = mimetypes.guess_type(f.name)[0]
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "originalImage": (f.name, open(f, "rb"), mime_type),
+        with self.SRmutex:
+            try:
+                param = {
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": f.name,
+                    "test": test,
+                    "page": page,
+                    "version": version,
+                    "md5sum": md5sum,
+                    "bundle": bundle,
+                    "bundle_order": bundle_order,
                 }
-            )
-            response = self.put(
-                f"/admin/testPages/{code}",
-                json={"user": self.user, "token": self.token},
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+                mime_type = mimetypes.guess_type(f.name)[0]
+                with open(f, "rb") as fh:
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "originalImage": (f.name, fh, mime_type),
+                        }
+                    )
+                    response = self.put(
+                        f"/admin/testPages/{code}",
+                        json={"user": self.user, "token": self.token},
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
 
@@ -233,111 +232,108 @@ class ScanMessenger(BaseMessenger):
             list/tuple: a bool indicating success/failure and an error
                message.
         """
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "fileName": f.name,
-                "sid": sid,
-                "question": question,
-                "order": order,
-                "md5sum": md5sum,
-                "bundle": bundle,
-                "bundle_order": bundle_order,
-            }
-            mime_type = mimetypes.guess_type(f.name)[0]
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "originalImage": (f.name, open(f, "rb"), mime_type),
+        with self.SRmutex:
+            try:
+                param = {
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": f.name,
+                    "sid": sid,
+                    "question": question,
+                    "order": order,
+                    "md5sum": md5sum,
+                    "bundle": bundle,
+                    "bundle_order": bundle_order,
                 }
-            )
-            response = self.put(
-                "/admin/hwPages",
-                json={"user": self.user, "token": self.token},
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+                mime_type = mimetypes.guess_type(f.name)[0]
+                with open(f, "rb") as fh:
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "originalImage": (f.name, fh, mime_type),
+                        }
+                    )
+                    response = self.put(
+                        "/admin/hwPages",
+                        json={"user": self.user, "token": self.token},
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
 
     def uploadUnknownPage(self, f, order, md5sum, bundle, bundle_order):
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "fileName": f.name,
-                "order": order,
-                "md5sum": md5sum,
-                "bundle": bundle,
-                "bundle_order": bundle_order,
-            }
-            mime_type = mimetypes.guess_type(f.name)[0]
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "originalImage": (f.name, open(f, "rb"), mime_type),
+        with self.SRmutex:
+            try:
+                param = {
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": f.name,
+                    "order": order,
+                    "md5sum": md5sum,
+                    "bundle": bundle,
+                    "bundle_order": bundle_order,
                 }
-            )
-            response = self.put(
-                "/admin/unknownPages",
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+                mime_type = mimetypes.guess_type(f.name)[0]
+                with open(f, "rb") as fh:
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "originalImage": (f.name, fh, mime_type),
+                        }
+                    )
+                    response = self.put(
+                        "/admin/unknownPages",
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
 
     def uploadCollidingPage(
         self, code, test, page, version, f, md5sum, bundle, bundle_order
     ):
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "fileName": f.name,
-                "test": test,
-                "page": page,
-                "version": version,
-                "md5sum": md5sum,
-                "bundle": bundle,
-                "bundle_order": bundle_order,
-            }
-            mime_type = mimetypes.guess_type(f.name)[0]
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "originalImage": (f.name, open(f, "rb"), mime_type),
+        with self.SRmutex:
+            try:
+                param = {
+                    "user": self.user,
+                    "token": self.token,
+                    "fileName": f.name,
+                    "test": test,
+                    "page": page,
+                    "version": version,
+                    "md5sum": md5sum,
+                    "bundle": bundle,
+                    "bundle_order": bundle_order,
                 }
-            )
-            response = self.put(
-                f"/admin/collidingPages/{code}",
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+                mime_type = mimetypes.guess_type(f.name)[0]
+                with open(f, "rb") as fh:
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "originalImage": (f.name, fh, mime_type),
+                        }
+                    )
+                    response = self.put(
+                        f"/admin/collidingPages/{code}",
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
         return response.json()
 

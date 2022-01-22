@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Forest Kobayashi
@@ -11,10 +11,7 @@ import logging
 from textwrap import shorten
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import (
-    QPalette,
-    QCursor,
-)
+from PyQt5.QtGui import QPalette, QCursor
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QAction,
@@ -44,7 +41,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.misc_utils import next_in_longest_subsequence
-from .useful_classes import ErrorMessage, SimpleMessage
+from .useful_classes import ErrorMessage, SimpleQuestion
 from .rubric_wrangler import RubricWrangler
 
 log = logging.getLogger("annotr")
@@ -254,9 +251,10 @@ class RubricTable(QTableWidget):
         def _local_delete_thyself():
             # TODO: can we put all this in some close event?
             # TODO: I don't like that we're hardcoding the parent structure here
-            msg = SimpleMessage(
+            msg = SimpleQuestion(
+                self,
                 f"<p>Are you sure you want to delete the tab &ldquo;{self.shortname}&rdquo;?</p>"
-                "<p>(The rubrics themselves will not be deleted).<p>"
+                "<p>(The rubrics themselves will not be deleted).<p>",
             )
             if msg.exec_() == QMessageBox.No:
                 return
@@ -1128,10 +1126,11 @@ class RubricWidget(QWidget):
         if com["username"] == self.username:
             self._new_or_edit_rubric(com, edit=True, index=index)
             return
-        msg = SimpleMessage(
+        msg = SimpleQuestion(
+            self,
             "<p>You did not create this rubric.</p>"
             "<p>To edit it, the system will make a copy that you can edit.</p>"
-            "<p>Do you want to continue?</p>"
+            "<p>Do you want to continue?</p>",
         )
         if msg.exec_() == QMessageBox.No:
             return

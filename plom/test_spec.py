@@ -184,33 +184,24 @@ def test_spec_overused_page():
 
 def test_spec_donotmark_default():
     r = deepcopy(raw)
-    r.pop("doNotMark")
+    r.pop("doNotMarkPages")
     r["question"]["1"]["pages"] = [2, 3]
     s = SpecVerifier(r)
     s.verify()
-    assert s["doNotMark"]["pages"] == []
-
-
-def test_spec_donotmark_default2():
-    r = deepcopy(raw)
-    r["doNotMark"].pop("pages")
-    r["question"]["1"]["pages"] = [2, 3]
-    s = SpecVerifier(r)
-    s.verify()
-    assert s["doNotMark"]["pages"] == []
+    assert s["doNotMarkPages"] == []
 
 
 def test_spec_invalid_donotmark():
     r = deepcopy(raw)
-    r["doNotMark"]["pages"] = "Fragments of a Hologram Rose"
+    r["doNotMarkPages"] = "Fragments of a Hologram Rose"
     with raises(ValueError) as e:
         SpecVerifier(r).verify()
     assert "not a list" in e.value.args[0]
-    r["doNotMark"]["pages"] = [2, -17]
+    r["doNotMarkPages"] = [2, -17]
     with raises(ValueError) as e:
         SpecVerifier(r).verify()
     assert "not a positive integer" in e.value.args[0]
-    r["doNotMark"]["pages"] = [2, 42]
+    r["doNotMarkPages"] = [2, 42]
     with raises(ValueError) as e:
         SpecVerifier(r).verify()
     assert "larger than" in e.value.args[0]

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Nicholas J H Lai
@@ -45,8 +45,7 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-# TODO: client references to be avoided, refactor to common utils?
-from plom.client.useful_classes import ErrorMessage, SimpleMessage
+from plom.client.useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
 from plom.client.origscanviewer import WholeTestView, GroupView
 from plom.client.examviewwindow import ImageViewWidget
 
@@ -492,14 +491,15 @@ class Manager(QWidget):
             return
         except PlomExistingLoginException:
             if (
-                SimpleMessage(
+                SimpleQuestion(
+                    self,
                     "You appear to be already logged in!\n\n"
                     "  * Perhaps a previous session crashed?\n"
                     "  * Do you have another client running,\n"
                     "    e.g., on another computer?\n\n"
                     "Should I force-logout the existing authorisation?"
                     " (and then you can try to log in again)\n\n"
-                    "The other client will likely crash."
+                    "The other client will likely crash.",
                 ).exec_()
                 == QMessageBox.Yes
             ):
@@ -561,7 +561,7 @@ class Manager(QWidget):
         self.numberOfVersions = info["numberOfVersions"]
         # which test pages are which type "id", "dnm", or "qN"
         self.testPageTypes = {info["idPage"]: "id"}
-        for pg in info["doNotMark"]["pages"]:
+        for pg in info["doNotMarkPages"]:
             self.testPageTypes[pg] = "dnm"
         for q in range(1, info["numberOfQuestions"] + 1):
             for pg in info["question"][str(q)]["pages"]:
@@ -698,8 +698,10 @@ class Manager(QWidget):
         if pvi[0].childCount() == 0:
             test_number = int(pvi[0].parent().text(0))
             page_name = pvi[0].text(1)
-            msg = SimpleMessage(
-                f"Will remove the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
+            msg = WarningQuestion(
+                self,
+                f"Will remove the selected page {page_name} from the selected test {test_number}.",
+                "Are you sure you wish to do this? (not reversible)",
             )
             if msg.exec_() == QMessageBox.No:
                 return
@@ -714,10 +716,10 @@ class Manager(QWidget):
                 ).exec_()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
-            msg = SimpleMessage(
-                "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
-                    test_number
-                )
+            msg = WarningQuestion(
+                self,
+                f"Will remove all scanned pages from the selected test - test number {test_number}.",
+                "Are you sure you wish to do this? (not reversible)",
             )
             if msg.exec_() == QMessageBox.No:
                 return
@@ -735,8 +737,10 @@ class Manager(QWidget):
         self.refreshIList()
 
     def substituteTestQuestionPage(self, test_number, page_number, question, version):
-        msg = SimpleMessage(
-            f'Are you sure you want to substitute a "Missing Page" blank for tpage {page_number} of question {question} test {test_number}?'
+        msg = SimpleQuestion(
+            self,
+            'Are you sure you want to substitute a "Missing Page" blank for '
+            f"tpage {page_number} of question {question} test {test_number}?",
         )
         if msg.exec_() == QMessageBox.No:
             return
@@ -751,8 +755,10 @@ class Manager(QWidget):
             ).exec_()
 
     def substituteTestDNMPage(self, test_number, page_number):
-        msg = SimpleMessage(
-            f'Are you sure you want to substitute a "Missing Page" blank for tpage {page_number} of test {test_number} - it is a Do Not Mark page?'
+        msg = SimpleQuestion(
+            self,
+            'Are you sure you want to substitute a "Missing Page" blank for '
+            f"tpage {page_number} of test {test_number} - it is a Do Not Mark page?",
         )
         if msg.exec_() == QMessageBox.No:
             return
@@ -767,8 +773,10 @@ class Manager(QWidget):
             ).exec_()
 
     def autogenerateIDPage(self, test_number):
-        msg = SimpleMessage(
-            f"Are you sure you want to generate an ID for test {test_number}? You can only do this for homeworks or pre-named tests."
+        msg = SimpleQuestion(
+            self,
+            f"Are you sure you want to generate an ID for test {test_number}? "
+            "You can only do this for homeworks or pre-named tests.",
         )
         if msg.exec_() == QMessageBox.No:
             return
@@ -801,10 +809,10 @@ class Manager(QWidget):
         self.refreshIList()
 
     def substituteHWQuestion(self, test_number, question):
-        msg = SimpleMessage(
-            'Are you sure you want to substitute a "Missing Page" blank for question {} of test {}?'.format(
-                question, test_number
-            )
+        msg = SimpleQuestion(
+            self,
+            'Are you sure you want to substitute a "Missing Page" blank for '
+            f"question {question} of test {test_number}?",
         )
         if msg.exec_() == QMessageBox.No:
             return
@@ -859,8 +867,10 @@ class Manager(QWidget):
         if pvi[0].childCount() == 0:
             test_number = int(pvi[0].parent().text(0))
             page_name = pvi[0].text(1)
-            msg = SimpleMessage(
-                f"Will remove the selected page {page_name} from the selected test {test_number}. Are you sure you wish to do this? (not reversible)"
+            msg = WarningQuestion(
+                self,
+                f"Will remove the selected page {page_name} from the selected test {test_number}.",
+                "Are you sure you wish to do this? (not reversible)",
             )
             if msg.exec_() == QMessageBox.No:
                 return
@@ -875,10 +885,10 @@ class Manager(QWidget):
                 ).exec_()
         else:
             test_number = int(pvi[0].text(0))  # grab test number
-            msg = SimpleMessage(
-                "Will remove all scanned pages from the selected test - test number {}. Are you sure you wish to do this? (not reversible)".format(
-                    test_number
-                )
+            msg = WarningQuestion(
+                self,
+                f"Will remove all scanned pages from the selected test - test number {test_number}.",
+                "Are you sure you wish to do this? (not reversible)",
             )
             if msg.exec_() == QMessageBox.No:
                 return
@@ -1435,8 +1445,10 @@ class Manager(QWidget):
             ErrorMessage(txt).exec_()
             return
         else:  # not running because we found a timestamp = rmsg[1]
-            sm = SimpleMessage(
-                "IDReader was last run at {}. Do you want to rerun it?".format(rmsg[1])
+            sm = SimpleQuestion(
+                self,
+                f"IDReader was last run at {rmsg[1]}",
+                "Do you want to rerun it?",
             )
             if sm.exec_() == QMessageBox.No:
                 return
@@ -1459,7 +1471,7 @@ class Manager(QWidget):
             msg += f"\n\nCurrently is {sid}: {sname}"
         else:
             msg += "\n\nCan't find current ID - is likely not ID'd yet."
-        if SimpleMessage(msg).exec_() == QMessageBox.No:
+        if SimpleQuestion(self, msg).exec_() == QMessageBox.No:
             return
         # self.msgr.id_paper(test, "", "")
         self.msgr.un_id_paper(test)
@@ -1493,8 +1505,10 @@ class Manager(QWidget):
             r += 1
 
     def deletePredictions(self):
-        msg = SimpleMessage(
-            "Are you sure you want the server to delete predicted IDs? (note that this does not delete user-inputted IDs)"
+        msg = SimpleQuestion(
+            self,
+            "Are you sure you want the server to delete predicted IDs?"
+            " (note that this does not delete user-inputted IDs)",
         )
         if msg.exec_() == QMessageBox.No:
             return
@@ -1694,8 +1708,9 @@ class Manager(QWidget):
         # check if ID was computed automatically
         if self.ui.reviewIDTW.item(r, 1).text() == "automatic":
             if (
-                SimpleMessage(
-                    "This paper was ID'd automatically, are you sure you wish to review it?"
+                SimpleQuestion(
+                    self,
+                    "This paper was ID'd automatically, are you sure you wish to review it?",
                 ).exec_()
                 != QMessageBox.Yes
             ):
@@ -1789,10 +1804,11 @@ class Manager(QWidget):
 
     def deleteCurrentSolution(self):
         if (
-            SimpleMessage(
-                "Are you sure that you want to delete solution to question {} version {}.".format(
-                    self.ui.solnQSB.value(), self.ui.solnVSB.value()
-                )
+            SimpleQuestion(
+                self,
+                "Are you sure that you want to delete solution to"
+                " question {self.ui.solnQSB.value()}"
+                " version {self.ui.solnVSB.value()}.",
             ).exec_()
             == QMessageBox.Yes
         ):
@@ -1872,8 +1888,9 @@ class Manager(QWidget):
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
         if (
-            SimpleMessage(
-                'Are you sure you want to force-logout user "{}"?'.format(user)
+            SimpleQuestion(
+                self,
+                'Are you sure you want to force-logout user "{}"?'.format(user),
             ).exec_()
             == QMessageBox.Yes
         ):
@@ -1890,8 +1907,9 @@ class Manager(QWidget):
             ErrorMessage("You cannot disable the manager.").exec_()
             return
         if (
-            SimpleMessage(
-                'Are you sure you want to toggle enable/disable user "{}"?'.format(user)
+            SimpleQuestion(
+                self,
+                f'Are you sure you want to toggle enable/disable user "{user}"?',
             ).exec_()
             == QMessageBox.Yes
         ):
