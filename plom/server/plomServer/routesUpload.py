@@ -786,7 +786,9 @@ class UploadHandler:
                 can't do the move due to users logged in.   409 if paper
                 number or question number do not exist (e.g., out of range).
                 Also, 409 is question not scanned (so cannot attach extra
-                page).
+                page).  This is important as otherwise we can bipass the
+                scanned mechanism and a test of only extra pages could be
+                overlooked (not graded nor returned).
         """
         data = await request.json()
         if not validate_required_fields(
