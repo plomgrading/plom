@@ -339,17 +339,17 @@ def unknownToTestPage(self, file_name, test, page, rotation):
         )
         if len(val) == 4:
             # existing page in place - create a colliding page
-            if self.DB.moveUnknownToCollision(file_name, test, page)[0]:
+            # TODO:better return, general error return path
+            rval = self.DB.moveUnknownToCollision(file_name, test, page)
+            if rval[0]:
                 return [True, "collision"]
-            else:
-                return [False, "HUH?"]  # this should not happen
+            return rval  # triple
         else:
             msg = self.DB.moveUnknownToTPage(file_name, test, page)
-            # returns [True] or [False, reason] or [False, "owners", owner_list]
             if msg[0]:
                 return [True, "testPage"]
             else:
-                return msg
+                return msg  # triple
 
     else:  # some sort of problem occurred
         return val
