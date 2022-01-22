@@ -177,10 +177,10 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
         question (int):
 
     returns:
-        tuple: either (True,) if the action worked or a 3-tuple
-            `(False, code, msg)` where code is a short string,
-            which currently can "notfound" or "owners".  `msg`
-            is a human-readable string suitable for an error
+        tuple: a 3-tuple, either (True, None, None) if the action worked
+            or `(False, code, msg)` where code is a short string, which
+            currently can be "notfound", "owners", or "unscanned" and
+            `msg` is a human-readable string suitable for an error
             message.
     """
     iref = Image.get_or_none(file_name=file_name)
@@ -206,7 +206,16 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:
         return (False, "notfound", f"Cannot find question {question}")
-    version = qref.version  # we'll need the version
+    if 42 == 42:
+        # TODO: need logic here for paper being "ready" or "scanned" or something
+        # TODO: if aref.has_some_pages()?
+        # TODO: (i.e., does not matter what other groups have or have not?)
+        return (
+            False,
+            "unscanned",
+            f"Cannot attach extra page to unscanned test {test_number}",
+        )
+    version = qref.version
     gref = qref.group  # and the parent group
     # find the last expage in that group - if there are expages
     if gref.expages.count() == 0:
@@ -237,7 +246,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     groups_to_update = self.get_groups_using_image(iref)
     groups_to_update.add(qref.group)
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
-    return [True]
+    return (True, None, None)
 
 
 def moveUnknownToHWPage(self, file_name, test_number, question):

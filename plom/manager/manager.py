@@ -58,10 +58,11 @@ from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
-    PlomBenignException,
     PlomAPIException,
-    PlomExistingLoginException,
     PlomAuthenticationException,
+    PlomBenignException,
+    PlomConflict,
+    PlomExistingLoginException,
     PlomOwnersLoggedInException,
     PlomUnidentifiedPaperException,
     PlomTakenException,
@@ -998,9 +999,11 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                         self.unknownModel.item(r, 3).text(),
                     )
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(f"{err}").exec_()
-                except PlomSeriousException as err:
+                except (
+                    PlomOwnersLoggedInException,
+                    PlomConflict,
+                    PlomSeriousException,
+                ) as err:
                     ErrorMessage(f"{err}").exec_()
             elif self.unknownModel.item(r, 2).text() == "test":
                 try:

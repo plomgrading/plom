@@ -743,9 +743,11 @@ class UploadHandler:
                         metadata rotations (Issue #1879).
 
         returns:
-            web.Response: 200 if all went well.  409 if we can't do the
-                move due to users logged in.  404 in all other situations.
-                TODO: rework the 404.
+            web.Response: 200 if all went well.  400 for incorrect fields,
+                401 for authenication, or 403 is not manager.  409 if we
+                can't do the move due to users logged in.  406 in all other
+                situations, including paper not scanned (so cannot attach
+                extra page), and paper number not found.
         """
         data = await request.json()
         if not validate_required_fields(
@@ -755,22 +757,24 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I can only speak to the manager")
 
-        rval = self.server.unknownToExtraPage(
+        status, code, msg = self.server.unknownToExtraPage(
             data["fileName"], data["test"], data["question"], data["rotation"]
         )
-        if rval[0]:
-            return web.Response(status=200)  # all fine
-        status, code, msg = rval  # have more info on failure
+        if status:
+            return web.Response(status=200)
         if code == "owners":
             log.warn(msg)
-            raise web.HTTPConflict(reason=msg)
-        elif code == "notfound":
+            raise web.HTTPNotAcceptable(reason=msg)
+        if code == "notfound":
             log.warn(msg)
-            raise web.HTTPNotFound(reason=msg)
+            raise web.HTTPConflict(reason=msg)
+        if code == "unscanned":
+            log.warn(msg)
+            raise web.HTTPConflict(reason=msg)
         log.warn("Unexpected situation: %s", msg)
-        raise web.HTTPNotFound(reason=f"Unexpected situation: {msg}")
+        raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     async def collidingToTestPage(self, request):
         """The group containing the tpage is reset when it is replaced.
