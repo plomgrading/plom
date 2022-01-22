@@ -388,6 +388,20 @@ class Messenger(BaseMessenger):
     ):
         """Upload annotated image and associated data to the server.
 
+        Args:
+            code (str): e.g., "q0003g1"
+            pg (int): question number.
+            ver (int): which version.
+            mtime (int): number of seconds spend on grading the paper.
+            annotated_img (pathlib.Path): the annotated image, either a
+                png or a jpeg.
+            plomfile (pathlib.Path): machine-readable json of annotations
+                on the page.
+            rubrics (list): list of rubric IDs used on the page.
+            integrity_check (str): a blob that the server expects to get
+                back.
+            image_md5_list (list): the md5sums of the backing images.
+
         Returns:
             list: a 2-list of the form `[#done, #total]`.
 
