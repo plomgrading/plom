@@ -999,11 +999,7 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                         self.unknownModel.item(r, 3).text(),
                     )
-                except (
-                    PlomOwnersLoggedInException,
-                    PlomConflict,
-                    PlomSeriousException,
-                ) as err:
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
             elif self.unknownModel.item(r, 2).text() == "test":
                 try:
