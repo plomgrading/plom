@@ -1031,12 +1031,8 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                         self.unknownModel.item(r, 3).text(),
                     )
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move unknown {} to hw page - owners of tasks in that test are logged in: {}".format(
-                            self.unknownModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                    ErrorMessage(f"{err}").exec_()
 
             else:
                 pass
