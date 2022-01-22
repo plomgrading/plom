@@ -115,7 +115,7 @@ def create_exam_and_insert_QR(
     # Instead, do a run-length encoding of the page version then copy multiple
     # pages at a time.  In single-version case, we do a single block of copying.
     # [1] https://gitlab.com/plom/plom/-/issues/1795
-    # ver_runs = run_length_encoding([v for p, v in page_versions.items()])
+    # ver_runs = run_length_encoding([v for p, v in page_to_version.items()])
     # for run in ver_runs:
     #     ver, start, end = run
     #     exam.insert_pdf(
@@ -143,11 +143,11 @@ def create_exam_and_insert_QR(
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
         exam[page_index].clean_contents()
         # papernum.page-name.pagenum stamp in top-centre of page
-        rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 44)
+        rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 46)
         # name of the group to which page belongs
         group = page_to_group[page_index + 1]
-        text = "{} {} p{}".format(
-            f"{papernum:04}", group.ljust(5), str(page_index + 1).zfill(2)
+        text = "{} {} {}".format(
+            f"{papernum:04}", group.ljust(5), f"p. {page_index + 1}"
         )
         excess = exam[page_index].insert_textbox(
             rect,

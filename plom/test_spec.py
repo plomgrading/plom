@@ -264,3 +264,17 @@ def test_spec_dupe_question_fails_to_load(tmpdir):
         f.writelines(lines)
     with raises(TomlDecodeError):
         SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
+
+
+def test_spec_page_to_group_label():
+    s = SpecVerifier.demo()
+    s.group_label_from_page(1) == "ID"
+    s.group_label_from_page(2) == "DNM"
+    s.group_label_from_page(3) == "Q.1"
+    s.group_label_from_page(4) in ("Q.2", "Q(2)")
+    s.group_label_from_page(5) in ("Q.3", "Ex.3")
+    s.group_label_from_page(6) in ("Q.3", "Ex.3")
+    with raises(KeyError):
+        s.group_label_from_page(100)
+    with raises(KeyError):
+        s.group_label_from_page("3")

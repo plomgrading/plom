@@ -407,6 +407,9 @@ class SpecVerifier:
         d.pop("privateSeed", None)
         return d
 
+    def group_label_from_page(self, pagenum):
+        return build_page_to_group_dict(self)[pagenum]
+
     def verify(self, verbose=False):
         """Check that spec contains required attributes and insert default values."""
         self.verifySpec(verbose=verbose)
