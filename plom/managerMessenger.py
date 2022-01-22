@@ -1041,6 +1041,9 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
+
             if response.status_code == 404:
                 raise PlomSeriousException(
                     "Cannot find test/question {}/{}.".format(test, question)

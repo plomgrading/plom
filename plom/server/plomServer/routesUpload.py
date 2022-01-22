@@ -715,7 +715,7 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I can only speak to the manager")
 
         rval = self.server.unknownToHWPage(
             data["fileName"], data["test"], data["question"], data["rotation"]
