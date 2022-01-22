@@ -197,6 +197,8 @@ class MarkHandler:
                 PUT /MK/tasks/`question code` which includes a multipart
                 object indication the marked test data. This request will
                 include 3 parts including [metadata, image, plom-file].
+                `image` must the the bytes of a png or jpeg file, although
+                other formats might be accepted in the future.
 
         Returns:
             aiohttp.web_response.Response: Responses with a list including

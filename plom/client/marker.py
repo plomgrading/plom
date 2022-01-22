@@ -352,8 +352,8 @@ def upload(
 
     if not (
         task.startswith("q")
-        and os.path.basename(aname) == "G{}.png".format(task[1:])
-        and os.path.basename(pname) == "G{}.plom".format(task[1:])
+        and aname.stem == f"G{task[1:]}"
+        and pname.name == f"G{task[1:]}.plom"
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}] - this should not happen".format(

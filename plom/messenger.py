@@ -10,10 +10,11 @@ __copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
-import json
 import hashlib
-import logging
 from io import StringIO, BytesIO
+import json
+import logging
+import mimetypes
 
 import requests
 from requests_toolbelt import MultipartEncoder, MultipartDecoder
@@ -414,6 +415,8 @@ class Messenger(BaseMessenger):
             PlomTaskDeletedError
             PlomSeriousException
         """
+        # Python 3.6 fails on pathlib.Path. remove `str` when we drop Python 3.6
+        img_mime_type = mimetypes.guess_type(str(annotated_img))[0]
         with self.SRmutex:
             try:
                 with open(annotated_img, "rb") as fh, open(plomfile, "rb") as f2:
@@ -435,8 +438,8 @@ class Messenger(BaseMessenger):
                     dat = MultipartEncoder(
                         fields={
                             "param": json.dumps(param),
-                            "annotated": (annotated_img, fh, "image/png"),
-                            "plom": (plomfile, f2, "text/plain"),
+                            "annotated": (annotated_img.name, fh, img_mime_type),
+                            "plom": (plomfile.name, f2, "text/plain"),
                         }
                     )
                     response = self.put(

@@ -31,13 +31,14 @@ with open(os.path.join(dir_setup, "plom", "version.py")) as f:
 client_install_requires = [
     "appdirs>=1.4.3",
     "arrow>=1.1.1",
-    "toml>=0.10.0",
     "packaging",
     "passlib",
+    "Pillow>=7.0.0",
     "PyQt5",
     "requests",
     "requests-toolbelt",
     "stdiomask>=0.0.6",
+    "toml>=0.10.0",
 ]
 
 server_install_requires = [
