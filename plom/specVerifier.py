@@ -137,7 +137,8 @@ def build_page_to_group_dict(spec):
     # now the questions
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
-            page_to_group[pg] = f"Q{q}"
+            page_to_group[pg] = get_question_label(spec, q)
+
     return page_to_group
 
 
