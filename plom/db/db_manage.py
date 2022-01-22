@@ -323,10 +323,14 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # should not happen
         return [False, "Cannot find that test"]
+
     # check if all owners of tasks in that test are logged out.
     owners = self.testOwnersLoggedIn(tref)
     if owners:
-        return [False, "owners", owners]
+        msg = f"Cannot move unknown {file_name} to Test Page b/c"
+        msg += " owners of tasks in that test are logged in: "
+        msg += ", ".join(owners)
+        return (False, "owners", msg)
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:  # should not happen

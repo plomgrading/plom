@@ -682,8 +682,26 @@ class UploadHandler:
 
     async def unknownToTestPage(self, request):
         """The unknown page is moved to the indicated tpage.
+
         The minimal set of groups are reset when this happens
         - namely the group containing the new tpage.
+
+        args:
+            request (aiohttp.web_request.Request): This has the usual "user"
+                and "token" fields but also:
+                    fileName (str): identifies the UnknownPage.
+                    test (str): paper number to map onto (int passed as str).
+                    page (str): page number (again, an int)
+                    rotation (str): an integer, presumably a multiple of 90
+                        0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
+                        to support immutable server side images (with in-DB
+                        metadata rotations (Issue #1879).
+
+        returns:
+            web.Response: 200 if all went well.  400 for incorrect fields,
+                401 for authentication, or 403 is not manager.  406 if we
+                can't do the move due to users logged in.  409 in other
+                such as test number or page number do not exist.
         """
         data = await request.json()
         if not validate_required_fields(
@@ -693,18 +711,18 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I can only speak to the manager")
 
         rval = self.server.unknownToTestPage(
             data["fileName"], data["test"], data["page"], data["rotation"]
         )
         if rval[0]:
             return web.json_response(rval[1], status=200)  # all fine
-        else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)
+        if rval[1] == "owners":
+            raise web.HTTPNotAcceptable(reason=rval[2])
+        if rval[1].startswith("no such"):
+            raise web.HTTPConflict(reason=rval[1])
+        raise web.HTTPBadRequest(reasons=str(rval[1:]))
 
     async def unknownToHWPage(self, request):
         """Map an unknown page onto a HomeworkPage.
@@ -723,9 +741,8 @@ class UploadHandler:
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
                 401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.  406 in all other
-                situations, including paper not scanned (so cannot attach
-                extra page), and paper number not found.
+                can't do the move due to users logged in.  409 if paper
+                number or question number do not exist (e.g., out of range).
         """
         data = await request.json()
         if not validate_required_fields(
@@ -766,9 +783,10 @@ class UploadHandler:
         returns:
             web.Response: 200 if all went well.  400 for incorrect fields,
                 401 for authentication, or 403 is not manager.  406 if we
-                can't do the move due to users logged in.  409 in all other
-                situations, including paper not scanned (so cannot attach
-                extra page), and paper number not found.
+                can't do the move due to users logged in.   409 if paper
+                number or question number do not exist (e.g., out of range).
+                Also, 409 is question not scanned (so cannot attach extra
+                page).
         """
         data = await request.json()
         if not validate_required_fields(
