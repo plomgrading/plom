@@ -115,7 +115,7 @@ def create_exam_and_insert_QR(
     # Instead, do a run-length encoding of the page version then copy multiple
     # pages at a time.  In single-version case, we do a single block of copying.
     # [1] https://gitlab.com/plom/plom/-/issues/1795
-    # ver_runs = run_length_encoding([v for p, v in page_versions.items()])
+    # ver_runs = run_length_encoding([v for p, v in page_to_version.items()])
     # for run in ver_runs:
     #     ver, start, end = run
     #     exam.insert_pdf(
