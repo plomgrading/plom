@@ -760,8 +760,10 @@ class UploadHandler:
         if status:
             return web.Response(status=200)  # all fine
         if code == "owners":
+            log.warn(msg)
             raise web.HTTPNotAcceptable(reason=msg)
         if code == "notfound":
+            log.warn(msg)
             raise web.HTTPConflict(reason=msg)
         log.warn("Unexpected situation: %s", msg)
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
@@ -829,18 +831,21 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I can only speak to the manager")
 
-        rval = self.server.collidingToTestPage(
+        status, code, msg = self.server.collidingToTestPage(
             data["fileName"], data["test"], data["page"], data["version"]
         )
-        if rval[0]:
+        if status:
             return web.Response(status=200)  # all fine
-        else:
-            if rval[1] == "owners":  # [False, "owners", owner_list]
-                return web.json_response(rval[2], status=409)
-            else:
-                return web.Response(status=404)
+        if code == "owners":
+            log.warn(msg)
+            raise web.HTTPNotAcceptable(reason=msg)
+        if code == "notfound":
+            log.warn(msg)
+            raise web.HTTPConflict(reason=msg)
+        log.warn("Unexpected situation: %s", msg)
+        raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     async def discardToUnknown(self, request):
         data = await request.json()

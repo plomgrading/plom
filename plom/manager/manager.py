@@ -1183,11 +1183,7 @@ class Manager(QWidget):
                         self.collideModel.item(r, 5).text(),
                     )
                 except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move collision {} to test page - owners of tasks in that test are logged in: {}".format(
-                            self.collideModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                    ErrorMessage(f"{err}").exec_()
             else:
                 pass
                 # print(

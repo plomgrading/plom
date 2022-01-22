@@ -485,32 +485,38 @@ def removeCollidingImage(self, file_name):
 
 
 def moveCollidingToTPage(self, file_name, test_number, page_number, version):
+    """Move the collision into a TPage and move the original TPage to discards.
+
+    return:
+        triple: (True, None, None), or (status, code, error_msg) where the last
+            field is human-readable.
+    """
     # this really just confirms that the file_name belongs to an collidingpage
     iref = Image.get_or_none(file_name=file_name)
     if iref is None:
-        return [False, "Cannot find image with name {}".format(file_name)]
+        return (False, "notfound", f"Cannot find image {file_name}")
     cref = iref.collisions[0]
     if cref is None:
-        return [False, "Cannot find collision with name {}".format(file_name)]
+        return (False, "notfound", f"Cannot find collision with name {file_name}")
 
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False, "Cannot find test number {}".format(test_number)]
+        return (False, "notfound", f"Cannot find test {test_number}")
 
     pref = TPage.get_or_none(
         TPage.test == tref, TPage.page_number == page_number, TPage.version == version
     )
     if pref is None:
-        return [
-            False,
-            "Cannot find page {} of test {}".format(page_number, test_number),
-        ]
+        return (False, "notfound", f"Cannot find p.{page_number} of test {test_number}")
     oref = pref.image  # the original page image for this tpage.
 
     # check if all owners of tasks in that test are logged out.
     owners = self.testOwnersLoggedIn(tref)
     if owners:
-        return [False, "owners", owners]
+        msg = f"Cannot move colliding {file_name} to Test Page b/c"
+        msg += " owners of tasks in that test are logged in: "
+        msg += ", ".join(owners)
+        return (False, "owners", msg)
 
     # now create a discardpage with oref, and put iref into the tpage, delete the collision.
     with plomdb.atomic():
@@ -535,4 +541,4 @@ def moveCollidingToTPage(self, file_name, test_number, page_number, version):
     groups_to_update.add(pref.group)
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
 
-    return [True]
+    return (True, None, None)

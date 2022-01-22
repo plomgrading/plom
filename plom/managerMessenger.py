@@ -1069,12 +1069,12 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find test/page {}/{}.".format(test, page)
-                ) from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomOwnersLoggedInException(response.reason) from None
             if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
