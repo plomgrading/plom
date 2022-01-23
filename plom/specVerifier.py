@@ -48,6 +48,7 @@ def get_question_label(spec, n):
     raises:
         ValueError: `n` is out of range.
     """
+    n = int(n)
     if n < 1 or n > spec["numberOfQuestions"]:
         raise ValueError(f'n={n} out of range [1, {spec["numberOfQuestions"] + 1}]')
     label = spec["question"][str(n)].get("label", None)
@@ -137,7 +138,8 @@ def build_page_to_group_dict(spec):
     # now the questions
     for q in spec["question"]:
         for pg in spec["question"][q]["pages"]:
-            page_to_group[pg] = f"Q{q}"
+            page_to_group[pg] = get_question_label(spec, q)
+
     return page_to_group
 
 
