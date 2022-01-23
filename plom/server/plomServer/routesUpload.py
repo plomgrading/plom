@@ -722,7 +722,7 @@ class UploadHandler:
             raise web.HTTPNotAcceptable(reason=rval[2])
         if rval[1].startswith("no such"):
             raise web.HTTPConflict(reason=rval[1])
-        raise web.HTTPBadRequest(reasons=str(rval[1:]))
+        raise web.HTTPBadRequest(reason=str(rval[1:]))
 
     async def unknownToHWPage(self, request):
         """Map an unknown page onto a HomeworkPage.
