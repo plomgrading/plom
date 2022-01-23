@@ -1139,32 +1139,24 @@ class PageScene(QGraphicsScene):
         else:  # we should not be here, so (?->4)
             self.boxLineStampState = 4
 
-    def stampCrossQMarkTick(self, event):
+    def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            command = CommandTick(self, pt)
+            if cross:
+                command = CommandTick(self, pt)
+            else:
+                command = CommandCross(self, pt)
         elif (event.button() == Qt.MiddleButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
         ):
             command = CommandQMark(self, pt)
         else:
-            command = CommandCross(self, pt)
-        self.undoStack.push(command)  # push onto the stack.
-
-    def stampTickQMarkCross(self, event):
-        pt = event.scenePos()  # Grab the click's location and create command.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            command = CommandCross(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            command = CommandQMark(self, pt)
-        else:
-            command = CommandTick(self, pt)
+            if cross:
+                command = CommandCross(self, pt)
+            else:
+                command = CommandTick(self, pt)
         self.undoStack.push(command)  # push onto the stack.
 
     def mousePressCross(self, event):
@@ -1188,7 +1180,7 @@ class PageScene(QGraphicsScene):
         self.boxStampPress(event)
         # only have to do something if in states 3 or 4
         if self.boxLineStampState == 3:  # means we are ready to stamp!
-            self.stampCrossQMarkTick(event)
+            self.stampCrossQMarkTick(event, cross=True)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
                 f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
@@ -1201,7 +1193,7 @@ class PageScene(QGraphicsScene):
         self.boxStampPress(event)
         # only have to do something if in states 3 or 4
         if self.boxLineStampState == 3:  # means we are ready to stamp!
-            self.stampTickQMarkCross(event)
+            self.stampCrossQMarkTick(event, cross=False)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
                 f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
@@ -1232,7 +1224,7 @@ class PageScene(QGraphicsScene):
         self.boxStampRelease(event)
         # only have to do something if in states 3 or 4
         if self.boxLineStampState == 3:  # means we are ready to stamp!
-            self.stampCrossQMarkTick(event)
+            self.stampCrossQMarkTick(event, cross=True)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
                 f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
@@ -1245,7 +1237,7 @@ class PageScene(QGraphicsScene):
         self.boxStampRelease(event)
         # only have to do something if in states 3 or 4
         if self.boxLineStampState == 3:  # means we are ready to stamp!
-            self.stampTickQMark(event)
+            self.stampCrossQMarkTick(event, cross=False)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
                 f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
