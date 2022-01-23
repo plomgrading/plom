@@ -286,9 +286,12 @@ def which_sticky_corners(g, r):
         path.lineTo(QPointF(g.right(), gy))
         return path
 
-    return which_classic_shortest_corner_side(g, r)
-    # TODO: Issue #1892, or should we return None?
-    # return QPainterPath()
+    # return which_classic_shortest_corner_side(g, r)
+    # TODO: Issue #1892, for now, just a degenerate path
+    path = QPainterPath(QPointF(r.left(), r.top()))
+    # ... or extend to a degenerate line?
+    # path.lineTo(QPointF(r.left(), r.top()))
+    return path
 
 
 def which_horizontal_step(g_rect, b_rect):
