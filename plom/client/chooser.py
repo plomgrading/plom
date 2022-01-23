@@ -41,7 +41,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from plom.client import MarkerClient, IDClient
 from .uiFiles.ui_chooser import Ui_Chooser
-from .useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
+from .useful_classes import ErrorMsg, WarnMsg, InfoMsg, SimpleQuestion, WarningQuestion
 from .useful_classes import ClientSettingsDialog
 
 from plom.messenger import ManagerMessenger
@@ -84,11 +84,12 @@ def writeLastTime(lastTime):
         with open(cfgfile, "w") as fh:
             fh.write(toml.dumps(lastTime))
     except PermissionError as e:
-        ErrorMessage(
+        ErrorMsg(
+            None,  # TODO: O Rly?
             "Cannot write config file:\n"
             "    {}\n\n"
             "Any settings will not be saved for future sessions.\n\n"
-            "Error msg: {}.".format(cfgfile, e)
+            "Error msg: {}.".format(cfgfile, e),
         ).exec_()
 
 
@@ -226,8 +227,8 @@ class Chooser(QDialog):
                 self.messenger.force_ssl_unverified()
                 server_ver_str = self.messenger.start()
         except PlomBenignException as e:
-            ErrorMessage(
-                "Could not connect to server:", info=f"{e}", info_preformatted=False
+            WarnMsg(
+                self, "Could not connect to server:", info=f"{e}", info_pre=False
             ).exec_()
             self.messenger = None
             return
@@ -235,15 +236,16 @@ class Chooser(QDialog):
         try:
             self.messenger.requestAndSaveToken(user, pwd)
         except PlomAPIException as e:
-            ErrorMessage(
-                "Could not authenticate due to API mismatch."
-                "Your client version is {}.\n\n"
-                "Error was: {}".format(__version__, e)
+            WarnMsg(
+                self,
+                "Could not authenticate due to API mismatch.",
+                info=f"Client version is {__version__}.  {e}",
+                info_pre=False,
             ).exec_()
             self.messenger = None
             return
         except PlomAuthenticationException as e:
-            ErrorMessage(f"Could not authenticate: {e}").exec_()
+            InfoMsg(self, f"Could not authenticate: {e}").exec_()
             self.messenger = None
             return
         except PlomExistingLoginException:
@@ -263,9 +265,10 @@ class Chooser(QDialog):
             return
 
         except PlomSeriousException as e:
-            ErrorMessage(
+            ErrorMsg(
+                self,
                 "Could not get authentication token.\n\n"
-                "Unexpected error: {}".format(e)
+                "Unexpected error: {}".format(e),
             ).exec_()
             self.messenger = None
             return
@@ -443,8 +446,8 @@ class Chooser(QDialog):
                 self.messenger.force_ssl_unverified()
                 server_ver_str = self.messenger.start()
         except PlomBenignException as e:
-            ErrorMessage(
-                "Could not connect to server:", info=f"{e}", info_preformatted=False
+            WarnMsg(
+                self, "Could not connect to server:", info=f"{e}", info_pre=False
             ).exec_()
             self.messenger = None
             return
@@ -454,7 +457,8 @@ class Chooser(QDialog):
         srv_ver = server_ver_str.split()[3]
         if Version(__version__) < Version(srv_ver):
             self.ui.infoLabel.setText(server_ver_str + "\nWARNING: old client!")
-            ErrorMessage(
+            WarnMsg(
+                self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
                 "you may want to consider upgrading.",
                 details=(
@@ -467,7 +471,7 @@ class Chooser(QDialog):
         try:
             spec = self.messenger.get_spec()
         except PlomException as e:
-            ErrorMessage("Could not connect to server", info=str(e)).exec_()
+            WarnMsg(self, "Could not connect to server", info=str(e)).exec_()
             self.messenger = None
             return
 
