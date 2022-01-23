@@ -155,6 +155,13 @@ def test_spec_question_label_printer_errors():
         get_question_label(s, 0)
 
 
+def test_spec_question_string():
+    s = SpecVerifier.demo()
+    with raises(ValueError):
+        get_question_label(s, "c")
+    assert get_question_label(s, "1") == get_question_label(s, 1)
+
+
 def test_spec_unique_labels():
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "ExA"

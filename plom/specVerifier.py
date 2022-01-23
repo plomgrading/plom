@@ -48,6 +48,7 @@ def get_question_label(spec, n):
     raises:
         ValueError: `n` is out of range.
     """
+    n = int(n)
     if n < 1 or n > spec["numberOfQuestions"]:
         raise ValueError(f'n={n} out of range [1, {spec["numberOfQuestions"] + 1}]')
     label = spec["question"][str(n)].get("label", None)
