@@ -76,23 +76,6 @@ def readLastTime():
     return lastTime
 
 
-def writeLastTime(lastTime):
-    """Write the options to the config file."""
-    log.info("Saving config file %s", cfgfile)
-    try:
-        cfgfile.parent.mkdir(exist_ok=True)
-        with open(cfgfile, "w") as fh:
-            fh.write(toml.dumps(lastTime))
-    except PermissionError as e:
-        ErrorMsg(
-            None,  # TODO: O Rly?
-            "Cannot write config file:\n"
-            "    {}\n\n"
-            "Any settings will not be saved for future sessions.\n\n"
-            "Error msg: {}.".format(cfgfile, e),
-        ).exec_()
-
-
 class Chooser(QDialog):
     def __init__(self, Qapp):
         self.APIVersion = Plom_API_Version
@@ -344,6 +327,7 @@ class Chooser(QDialog):
         self.validate("Manager")
 
     def saveDetails(self):
+        """Write the options to the config file."""
         self.lastTime["user"] = self.ui.userLE.text().strip()
         self.lastTime["server"] = "{}:{}".format(
             self.ui.serverLE.text().strip(), self.ui.mportSB.value()
@@ -351,7 +335,19 @@ class Chooser(QDialog):
         self.lastTime["question"] = self.getQuestion()
         self.lastTime["v"] = self.getv()
         self.lastTime["fontSize"] = self.ui.fontSB.value()
-        writeLastTime(self.lastTime)
+        log.info("Saving config file %s", cfgfile)
+        try:
+            cfgfile.parent.mkdir(exist_ok=True)
+            with open(cfgfile, "w") as fh:
+                fh.write(toml.dumps(self.lastTime))
+        except OSError as e:
+            WarnMsg(
+                self,
+                "Cannot write config file:\n"
+                "    {}\n\n"
+                "Any settings will not be saved for future sessions.\n\n"
+                "Error msg: {}.".format(cfgfile, e),
+            ).exec_()
 
     def closeWindow(self):
         self.saveDetails()
