@@ -98,7 +98,6 @@ def build_papers(
             build_papers_backend(
                 spec,
                 qvmap,
-                pvmap,
                 classlist,
                 fakepdf=fakepdf,
                 no_qr=no_qr,

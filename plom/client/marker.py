@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
 """
 The Plom Marker client
 """
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPL-3.0-or-later"
 
@@ -70,7 +70,7 @@ from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import (
     AddRemoveTagDialog,
     ErrorMessage,
-    SimpleMessage,
+    SimpleQuestion,
 )
 
 if platform.system() == "Darwin":
@@ -352,8 +352,8 @@ def upload(
 
     if not (
         task.startswith("q")
-        and os.path.basename(aname) == "G{}.png".format(task[1:])
-        and os.path.basename(pname) == "G{}.plom".format(task[1:])
+        and aname.stem == f"G{task[1:]}"
+        and pname.name == f"G{task[1:]}.plom"
     ):
         raise PlomSeriousException(
             "Upload file names mismatch [{}, {}] - this should not happen".format(
@@ -1346,7 +1346,7 @@ class MarkerClient(QWidget):
 
         If available, download stuff, add to list, update view.
         """
-        s = f"<p>Which paper number would you like to get?</p>"
+        s = "<p>Which paper number would you like to get?</p>"
         s += f"<p>Note: you are marking question {self.question}.</p>"
         max_papernum = self.exam_spec["numberToProduce"]
         n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, max_papernum)
@@ -1565,10 +1565,11 @@ class MarkerClient(QWidget):
                 if (count % 10) == 0:
                     log.info("waiting for downloader to fill table...")
                 if count >= 100:
-                    msg = SimpleMessage(
+                    msg = SimpleQuestion(
+                        self,
                         "Still waiting for downloader to get the next image.  "
                         "Do you want to wait a few more seconds?\n\n"
-                        "(It is safe to choose 'no': the Annotator will simply close)"
+                        "(It is safe to choose 'no': the Annotator will simply close)",
                     )
                     if msg.exec_() == QMessageBox.No:
                         return False
@@ -1683,7 +1684,7 @@ class MarkerClient(QWidget):
         remarkFlag = False
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
-            msg = SimpleMessage("Continue marking paper?")
+            msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
             remarkFlag = True
@@ -1713,8 +1714,9 @@ class MarkerClient(QWidget):
                 if (count % 10) == 0:
                     log.info("waiting for downloader: {}".format(fnames))
                 if count >= 40:
-                    msg = SimpleMessage(
-                        "Still waiting for download.  Do you want to wait a bit longer?"
+                    msg = SimpleQuestion(
+                        self,
+                        "Still waiting for download.  Do you want to wait a bit longer?",
                     )
                     if msg.exec_() == QMessageBox.No:
                         return
@@ -1800,7 +1802,7 @@ class MarkerClient(QWidget):
             with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
-        except PlomNoSolutionException as err:
+        except PlomNoSolutionException:
             # if a residual file is there, delete it
             if os.path.isfile(soln):
                 os.remove(soln)
@@ -1899,7 +1901,8 @@ class MarkerClient(QWidget):
         # TODO: sort this out whether task is "q00..." or "00..."?!
         task = "q" + task
 
-        stat = self.examModel.getStatusByTask(task)
+        # TODO: this was unused?  comment out for now...
+        # stat = self.examModel.getStatusByTask(task)
 
         # Copy the mark, annotated filename and the markingtime into the table
         self.examModel.markPaperByTask(
@@ -2250,13 +2253,6 @@ class MarkerClient(QWidget):
         # Start caching.
         c = 0
         pd.setValue(c)
-        n = int(self.question)
-
-        # TODO: I don't think we need this anymore
-        exam_name = self.exam_spec["name"]
-
-        # Here we will get the username
-        username = self.msgr.whoami()
 
         for X in clist:
             if X["text"][:4].upper() == "TEX:":

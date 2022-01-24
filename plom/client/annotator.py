@@ -4,13 +4,14 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
 __license__ = "AGPLv3"
 
 from copy import deepcopy
 import json
 import logging
+from pathlib import Path
 import os
 import re
 import sys
@@ -68,8 +69,8 @@ from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
 from .useful_classes import (
     ErrorMessage,
-    SimpleMessage,
-    SimpleMessageCheckBox,
+    SimpleQuestion,
+    SimpleQuestionCheckBox,
     NoAnswerBox,
 )
 
@@ -384,7 +385,8 @@ class Annotator(QWidget):
                 there is an integer for precise usage.
             testName (str): Test Name
             paperdir (dir): Working directory for the current task
-            saveName (str): name the tgv is saved as
+            saveName (str/pathlib.Path): file name (and dir, optionally)
+                of the basename to save things (no .png/.jpg extension)
             maxMark (int): maximum possible score for that test question
             plomDict (dict): a dictionary of annotation information.
                 Contains sufficient information to recreate the annotation
@@ -405,7 +407,7 @@ class Annotator(QWidget):
         self.setWindowTitle("{} - Plom Annotator".format(s))
         log.info("Annotating {}".format(s))
         self.paperDir = paperdir
-        self.saveName = saveName
+        self.saveName = Path(saveName)
         self.integrity_check = integrity_check
         self.src_img_data = src_img_data
 
@@ -819,7 +821,6 @@ class Annotator(QWidget):
         self.scene = PageScene(
             self,
             self.src_img_data,
-            self.saveName,
             self.maxMark,
             self.question_label,
         )
@@ -1482,7 +1483,8 @@ class Annotator(QWidget):
             and (0 < self.getScore() < self.maxMark)
             and self.scene.hasOnlyTicksCrossesDeltas()
         ):
-            msg = SimpleMessageCheckBox(
+            msg = SimpleQuestionCheckBox(
+                self,
                 "<p>You have given neither comments nor detailed annotations "
                 "(other than &#x2713; &#x2717; &plusmn;<i>n</i>).</p>\n"
                 "<p>This may make it difficult for students to learn from this "
@@ -1496,9 +1498,8 @@ class Annotator(QWidget):
                 # Note: these are only saved if we ultimately accept
                 self.rubricWarn = False
 
-        self.scene.save()
+        aname, plomfile = self.pickleIt()
         rubrics = self.scene.get_rubrics_from_page()
-        self.pickleIt()  # Pickle the scene as a plom-file
 
         # TODO: we should assume its dead?  Or not... let it be and fix scene?
         self.view.setHidden(True)
@@ -1510,13 +1511,12 @@ class Annotator(QWidget):
         tim = self.timer.elapsed() // 1000
 
         # some things here hardcoded elsewhere too, and up in marker
-        plomFile = self.saveName[:-3] + "plom"
         stuff = [
             self.getScore(),
             tim,
             self.paperDir,
-            self.saveName,
-            plomFile,
+            aname,
+            plomfile,
             rubrics,
             self.integrity_check,
             self.src_img_data,
@@ -1549,11 +1549,13 @@ class Annotator(QWidget):
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
-                msg = SimpleMessage(msg)
+                msg = SimpleQuestion(self, msg)
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
-                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                msg = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
@@ -1591,11 +1593,13 @@ class Annotator(QWidget):
             msg += "  Please confirm, or consider using comments to clarify.</p>"
             msg += "\n<p>Do you wish to submit?</p>"
             if forceWarn:
-                msg = SimpleMessage(msg)
+                msg = SimpleQuestion(self, msg)
                 if msg.exec_() == QMessageBox.No:
                     return False
             elif self.markWarn:
-                msg = SimpleMessageCheckBox(msg, "Don't ask me again this session.")
+                msg = SimpleQuestionCheckBox(
+                    self, msg, "Don't ask me again this session."
+                )
                 if msg.exec_() == QMessageBox.No:
                     return False
                 if msg.cb.checkState() == Qt.Checked:
@@ -1645,9 +1649,10 @@ class Annotator(QWidget):
 
         # We are here b/c of cancel button, titlebar close, or related
         if self.scene and self.scene.areThereAnnotations():
-            msg = SimpleMessage(
+            msg = SimpleQuestion(
+                self,
                 "<p>There are annotations on the page.</p>\n"
-                "<p>Do you want to discard them and close the annotator?</p>"
+                "<p>Do you want to discard them and close the annotator?</p>",
             )
             if msg.exec_() == QMessageBox.No:
                 event.ignore()
@@ -1672,24 +1677,28 @@ class Annotator(QWidget):
         return self.parentMarkerUI.latexAFragment(*args, **kwargs)
 
     def pickleIt(self):
-        """
-        Pickles the current page and saves it as a .plom file.
-        1. Retrieves current scene items
-        2. Reverses list such that newest items show last
-        3. Saves pickled file as a .plom file
-        4. Adds a dictionary of current Plom Data to the .plom file.
+        """Capture the annotated pages as a bitmap and a .plom file.
 
-        Returns:
-            None: builds a .plom file.
+        1. Renders the current scene as a static bitmap.
+        2. Retrieves current annotations in reverse chronological order.
+        3. Adds varous other metadata.
+        4. Writes JSON into the .plom file.
 
+        Note: called "pickle" for historical reasons: it is neither a
+        Python pickle nor a real-life pickle.
+
+        Return:
+            tuple: two pathlib.Path, one for the rendered image and one
+                for the .plom file.
         """
+        aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first
         lst.reverse()  # so newest items last
         # TODO: consider saving colour only if not red?
         # TODO: someday src_img_data may have other images not used
         plomData = {
             "base_images": self.src_img_data,
-            "saveName": os.path.basename(self.saveName),
+            "saveName": str(aname),
             "markState": self.getMarkingState(),
             "maxMark": self.maxMark,
             "currentMark": self.getScore(),
@@ -1697,11 +1706,11 @@ class Annotator(QWidget):
             "annotationColor": self.scene.ink.color().getRgb()[:3],
             "sceneItems": lst,
         }
-        # save pickled file as <blah>.plom
-        plomFile = self.saveName[:-3] + "plom"
-        with open(plomFile, "w") as fh:
+        plomfile = self.saveName.with_suffix(".plom")
+        with open(plomfile, "w") as fh:
             json.dump(plomData, fh, indent="  ")
             fh.write("\n")
+        return aname, plomfile
 
     def unpickleIt(self, plomData):
         """

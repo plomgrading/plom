@@ -4,7 +4,11 @@
 # Copyright (C) 2020 Victoria Schuster
 
 from itertools import cycle
+from pathlib import Path
 import logging
+import random
+
+import PIL.Image
 
 from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
 from PyQt5.QtGui import (
@@ -301,7 +305,7 @@ class PageScene(QGraphicsScene):
     QTextItems.
     """
 
-    def __init__(self, parent, src_img_data, saveName, maxMark, question_label):
+    def __init__(self, parent, src_img_data, maxMark, question_label):
         """
         Initialize a new PageScene.
 
@@ -312,7 +316,6 @@ class PageScene(QGraphicsScene):
             src_img_data (list[dict]): metadata for the underlying
                 source images.  Each dict has (at least) keys for
                `filename` and `orientation`.
-            saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
             question_label (str/None): how to display this question, for
                 example a string like "Q7", or `None` if not relevant.
@@ -320,7 +323,6 @@ class PageScene(QGraphicsScene):
         super().__init__(parent)
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
-        self.saveName = saveName
         self.maxMark = maxMark
         # Initially both score is None and markingState is neutral
         self.score = None
@@ -403,7 +405,9 @@ class PageScene(QGraphicsScene):
         self.addItem(self.scoreBox)
 
         # make a box around the scorebox where mouse-press-event won't work.
-        self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
+        # make it fairly wide so that items pasted are not obscured when
+        # scorebox updated and becomes wider
+        self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
@@ -748,13 +752,17 @@ class PageScene(QGraphicsScene):
         self.setSceneRect(self.getSaveableRectangle())
         self.update()
 
-    def save(self):
+    def save(self, basename):
         """
         Save the annotated group-image.
 
-        Notes:
-        This overwrites the imagefile with a dump of the current
-        scene and all its graphics items.
+        args:
+            basename (str/pathlib.Path): where to save, we will add a png
+                or jpg extension to it.  If the file already exists, it
+                will be overwritten.
+
+        returns:
+            pathlib.Path: the file we just saved to, including jpg or png.
         """
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
@@ -773,21 +781,21 @@ class PageScene(QGraphicsScene):
             r = (1.0 * w) / (1.0 * h)
             w = MINWIDTH
             h = w / r
-            msg.append("Increasing png width because of minimum width constraint")
+            msg.append("Increasing bitmap width because of minimum width constraint")
             if h > MAXHEIGHT:
                 h = MAXHEIGHT
                 w = h * r
-                msg.append("Constraining png height by min width constraint")
+                msg.append("Constraining bitmap height by min width constraint")
         if w > num_pages * MAX_PER_PAGE_WIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = num_pages * MAX_PER_PAGE_WIDTH
             h = w / r
-            msg.append("Constraining png width by maximum per page width")
+            msg.append("Constraining bitmap width by maximum per page width")
         if w > MAXWIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = MAXWIDTH
             h = w / r
-            msg.append("Constraining png width by overall maximum width")
+            msg.append("Constraining bitmap width by overall maximum width")
         w = round(w)
         h = round(h)
         if msg:
@@ -799,8 +807,29 @@ class PageScene(QGraphicsScene):
         # Render the scene via the painter
         self.render(exporter)
         exporter.end()
-        # Save the result to file.
-        oimg.save(self.saveName)
+
+        basename = Path(basename)
+        pngname = basename.with_suffix(".png")
+        jpgname = basename.with_suffix(".jpg")
+        oimg.save(str(pngname))
+        # Sadly no control over chroma subsampling which mucks up thin red lines
+        # oimg.save(str(jpgname), quality=90)
+
+        # im = PIL.Image.fromqpixmap(oimg)
+        im = PIL.Image.open(pngname)
+        im.convert("RGB").save(jpgname, quality=90, optimize=True, subsampling=0)
+
+        jpgsize = jpgname.stat().st_size
+        pngsize = pngname.stat().st_size
+        log.debug("scene rendered: jpg/png sizes (%s, %s) bytes", jpgsize, pngsize)
+        # For testing
+        # if random.uniform(0, 1) < 0.5:
+        if jpgsize < 0.9 * pngsize:
+            pngname.unlink()
+            return jpgname
+        else:
+            jpgname.unlink()
+            return pngname
 
     def keyPressEvent(self, event):
         """
@@ -884,6 +913,12 @@ class PageScene(QGraphicsScene):
         # check if mouseclick inside the avoidBox
         if self.avoidBox.contains(event.scenePos()):
             return
+        # if there is a visible ghost then check its bounding box avoids the scorebox(+boundaries)
+        if self.ghostItem.isVisible():
+            if self.avoidBox.intersects(
+                self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
+            ):
+                return
 
         # Get the function name from the dictionary based on current mode.
         functionName = mousePress.get(self.mode, None)

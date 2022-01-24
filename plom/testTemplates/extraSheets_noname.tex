@@ -10,12 +10,7 @@
 \newcommand{\digitbox}{%
   \fbox{
   \rule[-1.5ex]{0pt}{4ex}
-  \hspace{2ex}}}
-
-\newcommand{\bigdigitbox}{%
-  \fbox{
-  \rule[-2ex]{0pt}{5ex}
-  \hspace{3ex}}}
+  \hspace{1.8ex}}}
 
 \pagestyle{empty}
 
@@ -23,17 +18,20 @@
 \begin{center}
   \textbf{Only 1 question per page!} \\[2ex]
 
+  \centerline{%
   \begin{tabular}{lll}
     Test \#  &
     Q.\#  &
     Student \#  \\
     \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
-    \qquad\qquad &
+    \hspace{1ex} &
     \fbox{\digitbox\,\digitbox}
-    \qquad\qquad &
+    \hspace{8ex} &
     \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
       \digitbox\,\digitbox\,\digitbox\,\digitbox}
-  \end{tabular}
+  \end{tabular}%
+  }
+
 \end{center}
 
 \hrule

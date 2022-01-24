@@ -48,6 +48,7 @@ def get_question_label(spec, n):
     raises:
         ValueError: `n` is out of range.
     """
+    n = int(n)
     if n < 1 or n > spec["numberOfQuestions"]:
         raise ValueError(f'n={n} out of range [1, {spec["numberOfQuestions"] + 1}]')
     label = spec["question"][str(n)].get("label", None)
@@ -119,6 +120,48 @@ def isContiguousListPosInt(l, lastPage):
             return False
     # all tests passed
     return True
+
+
+def build_page_to_group_dict(spec):
+    """Given a valid spec return a dict that translates each page to its containing group.
+
+    args:
+        spec (dict): A validated test spec
+    returns:
+        (dict): A dict mapping page numbers to groups: 'ID', 'DNM', or 'Q7'
+    """
+    # start with the id page
+    page_to_group = {spec["idPage"]: "ID"}
+    # now any dnm
+    for pg in spec["doNotMarkPages"]:
+        page_to_group[pg] = "DNM"
+    # now the questions
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            page_to_group[pg] = get_question_label(spec, q)
+
+    return page_to_group
+
+
+def build_page_to_version_dict(spec, question_versions):
+    """Given the spec and the question-version dict, produce a dict that maps pages to versions.
+
+    args:
+        spec (dict): A validated test spec
+        question_versions (dict): A dict mapping question numbers to version numbers.
+        Note that typically each exam has a different qv-map.
+    returns:
+        (dict): A dict mapping page numbers to versions. Note idpages and dnm pages have version 1.
+    """
+    # idpage and dnm pages always from version 1
+    page_to_version = {spec["idPage"]: 1}
+    for pg in spec["doNotMarkPages"]:
+        page_to_version[pg] = 1
+    for q in spec["question"]:
+        for pg in spec["question"][q]["pages"]:
+            # be careful, the qv-map keys are ints, while those in the spec are strings
+            page_to_version[pg] = question_versions[int(q)]
+    return page_to_version
 
 
 class SpecVerifier:
@@ -365,6 +408,9 @@ class SpecVerifier:
         d = self.spec.copy()
         d.pop("privateSeed", None)
         return d
+
+    def group_label_from_page(self, pagenum):
+        return build_page_to_group_dict(self)[pagenum]
 
     def verify(self, verbose=False):
         """Check that spec contains required attributes and insert default values."""

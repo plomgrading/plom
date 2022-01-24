@@ -37,7 +37,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .examviewwindow import ImageViewWidget
-from .useful_classes import ErrorMessage, SimpleMessage
+from .useful_classes import ErrorMessage, SimpleQuestion
 
 
 log = logging.getLogger("viewerdialog")
@@ -723,9 +723,10 @@ class RearrangementViewer(QDialog):
             msg.exec()
             return
         if self.need_to_confirm:
-            msg = SimpleMessage(
-                "Are you sure you want to save this page order? This will erase "
-                "all your annotations."
+            msg = SimpleQuestion(
+                self,
+                "This will erase all your annotations.",
+                "Are you sure you want to save this page order?",
             )
             if msg.exec() == QMessageBox.No:
                 return
