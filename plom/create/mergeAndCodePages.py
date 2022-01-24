@@ -63,7 +63,7 @@ def create_exam_and_insert_QR(
     spec,
     papernum,
     question_versions,
-    qr_file,
+    tmpdir,
     *,
     no_qr=False,
 ):
@@ -77,10 +77,7 @@ def create_exam_and_insert_QR(
         spec (dict): A validated test specification
         papernum (int): the paper/test number.
         question_versions (dict): version number for each question of this paper.
-        qr_file (dict): a dict of dicts.  The outer keys are integer
-            page numbers.  The inner keys index the corners, giving a
-            path to an image of the appropriate QR code.
-            TODO: consider calling the QR builder from here.
+        tmpdir (pathlib.Path): a place where we can make temporary files.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
@@ -136,18 +133,23 @@ def create_exam_and_insert_QR(
         even = page_index % 2 == 0
         if no_qr:
             even = None
-            qr_code = {}
+            qr_files = {}
         else:
-            # Grab the tpv QRcodes for current page
-            qr_code = {k : qr_file[page_index + 1][k] for k in range(1, 5)}
-        pdf_page_add_labels(exam[page_index], spec["name"], text, qr_code, even=even)
+            ver = page_to_version[page_index + 1]
+            qr_files = create_QR_codes(
+                papernum, page_index + 1, ver, spec["publicCode"], tmpdir
+            )
+
+        pdf_page_add_labels_QRs(
+            exam[page_index], spec["name"], text, qr_files, even=even
+        )
 
     for ver, pdf in pdf_version.items():
         pdf.close()
     return exam
 
 
-def pdf_page_add_labels(page, shortname, stamp, qr_code, even=True):
+def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, even=True):
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
     args:
@@ -398,9 +400,6 @@ def make_PDF(
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
-    # from spec get the mapping from page to version
-    page_to_version = build_page_to_version_dict(spec, question_versions)
-
     if extra:
         save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
@@ -413,16 +412,6 @@ def make_PDF(
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        # create QR codes for each test/page/version
-        qr_file = {}
-        if not no_qr:
-            for pg in range(1, spec["numberOfPages"] + 1):
-                ver = page_to_version[pg]
-                qr_file[pg] = create_QR_codes(
-                    papernum, pg, ver, spec["publicCode"], Path(tmp_dir)
-                )
-
-        # We then create the exam pdf while adding the QR codes to it
         exam = create_exam_and_insert_QR(
             spec,
             papernum,
