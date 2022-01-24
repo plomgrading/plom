@@ -207,13 +207,13 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     if qref is None:
         return (False, "notfound", f"Cannot find question {question}")
     version = qref.version
-    gref = qref.group  # and the parent group
+    gref = qref.group
+    # TODO: we may want to relax this restriction later, Issue #1900 et al
     if not gref.scanned:
-        return (
-            False,
-            "unscanned",
-            f"Cannot attach extra page to test {test_number}: it is missing pages",
-        )
+        msg = f"Cannot attach extra page to test {test_number}: it is missing pages."
+        msg += " (You need to upload all Test Pages or at least one HW Page before"
+        msg += " adding extra pages)."
+        return (False, "unscanned", msg)
     # find the last expage in that group - if there are expages
     if gref.expages.count() == 0:
         order = 1
