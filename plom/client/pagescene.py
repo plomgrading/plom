@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+from itertools import cycle
 import logging
 
 from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
@@ -66,6 +67,12 @@ from .tools import (
     CommandPen,
     CommandHighlight,
     CommandPenArrow,
+)
+from .elastics import (
+    which_horizontal_step,
+    which_sticky_corners,
+    which_classic_shortest_corner_side,
+    which_centre_to_centre,
 )
 
 
@@ -288,99 +295,6 @@ mouseRelease = {
 minimum_box_side_length = 24
 
 
-def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
-    """Return some points on the perimeter of a shape.
-
-    If the input is a point, just return that point.
-
-    If the input is a rectangle, dy default, list of vertices in the
-    middle of each side, but this can be adjusted.
-    """
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        if corners:
-            trange = range(0, N + 1)
-        else:
-            trange = range(1, N)
-        return [
-            *(QPointF(x + w * n / N, y) for n in trange),
-            *(QPointF(x + w * n / N, y + h) for n in trange),
-            *(QPointF(x, y + h * n / N) for n in range(1, N)),
-            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
-        ]
-    elif isinstance(shape, QPointF):
-        return [shape]
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
-def sqrDistance(vect):
-    """given a 2d-vector return l2 norm of that vector"""
-    return vect.x() * vect.x() + vect.y() * vect.y()
-
-
-def shortestLine(g_rect, b_rect):
-    """Get approximately shortest line between two shapes.
-
-    More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
-    """
-    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
-    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
-    gp = gvert[0]
-    bp = bvert[0]
-    dd = sqrDistance(gp - bp)
-    for p in gvert:
-        for q in bvert:
-            dst = sqrDistance(p - q)
-            if dst < dd:
-                gp = p
-                bp = q
-                dd = dst
-    return QLineF(bp, gp)
-
-
-def whichLineToDraw(g_rect, b_rect):
-    # direct line from the box-rect to the ghost-rect
-    directLine = shortestLine(g_rect, b_rect)
-    thePath = QPainterPath(directLine.p1())
-
-    # iteration 1
-    # draw a path as vertical and then horizontal components.
-    # thePath.lineTo(directLine.x1(), directLine.y2())
-    # thePath.lineTo(directLine.p2())
-
-    # iteration 2
-    # draw path as diagonal followed by flat
-    # sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    # if abs(directLine.dy()) < abs(directLine.dx()):  # end in horizontal
-    #     sx = directLine.dy()
-    #     if sg < 0:  # flip sign if gradient negative
-    #         sx = -sx
-    #     thePath.lineTo(directLine.x1() + sx, directLine.y2())
-    #     thePath.lineTo(directLine.p2())
-    # else:  # end in vertical
-    #     sy = directLine.dx()
-    #     if sg < 0:  # flip sign if gradient negative
-    #         sy = -sy
-    #     thePath.lineTo(directLine.x2(), directLine.y1() + sy)
-    #     thePath.lineTo(directLine.p2())
-
-    # iteration 3
-    # as #2 but steeper diagonal
-    sg = directLine.dy() * directLine.dx()  # get sign of gradient
-    if abs(directLine.dy()) < 3 * abs(directLine.dx()):  # end in horizontal
-        sx = directLine.dy() / 3
-        if sg < 0:  # flip sign if gradient negative
-            sx = -sx
-        thePath.lineTo(directLine.x1() + sx, directLine.y2())
-        thePath.lineTo(directLine.p2())
-    else:  # too steep - so draw single connecting line segment
-        thePath.lineTo(directLine.p2())
-
-    # now return the path
-    return thePath
-
-
 class PageScene(QGraphicsScene):
     """Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
@@ -415,6 +329,7 @@ class PageScene(QGraphicsScene):
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.src_img_data)
+        self.whichLineToDraw_init()
         # and an underlyingrect for the margin.
         margin_rect = QRectF(self.underImage.boundingRect())
         marg = 512  # at some point in future make some function of image width/height
@@ -1051,7 +966,7 @@ class PageScene(QGraphicsScene):
                 ghost_rect = QRectF(
                     self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
                 )
-            connectingPath = whichLineToDraw(
+            connectingPath = self.whichLineToDraw(
                 ghost_rect,
                 self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
             )
@@ -1093,7 +1008,7 @@ class PageScene(QGraphicsScene):
                     self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
                 )
             self.pathItem.setPath(
-                whichLineToDraw(
+                self.whichLineToDraw(
                     ghost_rect,
                     self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
                 )
@@ -1138,6 +1053,24 @@ class PageScene(QGraphicsScene):
                 self.addItem(self.pathItem)
         else:  # we should not be here, so (?->4)
             self.boxLineStampState = 4
+
+    def whichLineToDraw_init(self):
+        witches = [
+            which_horizontal_step,
+            which_sticky_corners,
+            which_classic_shortest_corner_side,
+            which_centre_to_centre,
+        ]
+        self._witches = cycle(witches)
+        self._whichLineToDraw = next(self._witches)
+
+    def whichLineToDraw_next(self):
+        self._whichLineToDraw = next(self._witches)
+        print(f"Changing rubric-line to: {self._whichLineToDraw}")
+        # TODO: can we generate a fake mouseMove event to force redraw?
+
+    def whichLineToDraw(self, A, B):
+        return self._whichLineToDraw(A, B)
 
     def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
