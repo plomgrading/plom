@@ -3,6 +3,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Elizabeth Xiao
 
 """Plom tools for scribbling fake answers on PDF files."""
 
@@ -22,6 +23,7 @@ else:
 import fitz
 
 import plom.create
+import plom.create.fonts
 from plom.create import paperdir as _paperdir
 from plom.misc_utils import working_directory
 from plom.create import start_messenger
@@ -75,7 +77,7 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     student_number_length = 8
     extra_page_probability = 0.2
     digit_font_size = 24
-    answer_font_size = 13
+    answer_font_size = 18  # font size should depend on font?
     extra_page_font_size = 18
 
     # load the digit images
@@ -87,6 +89,12 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
     # We create the path objects
     paper_dir_path = Path(paper_dir_path)
     out_file_path = Path(outfile)
+
+    # In principle you can put other fonts in plom.create.fonts
+    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+    font_dict = {
+        "ejx": "ejx_handwriting.ttf",
+    }
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
@@ -164,6 +172,8 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             assert excess > 0
             del front_page
 
+        fontname, ttf = random.choice(list(font_dict.items()))
+
         # Write some random answers on the pages
         for page_index, pdf_page in enumerate(pdf_document):
             random_answer_rect = fitz.Rect(
@@ -171,15 +181,17 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             )
             random_answer_text = random.choice(possible_answers)
 
-            # TODO: "helv" vs "Helvetica"
-            if page_index >= 1:
+            # TODO: should match the ID page and DNM pages settings
+            if page_index == 0:
+                continue
+            with resources.path(plom.create.fonts, ttf) as fontfile:
                 excess = pdf_page.insert_textbox(
                     random_answer_rect,
                     random_answer_text,
                     fontsize=answer_font_size,
                     color=blue,
-                    fontname="helv",
-                    fontfile=None,
+                    fontname=fontname,
+                    fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
                     align=0,
                 )
                 assert excess > 0
