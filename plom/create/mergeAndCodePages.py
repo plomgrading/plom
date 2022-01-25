@@ -31,22 +31,21 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
         dur (pathlib.Path): a directory to save the QR codes.
 
     Returns:
-        dict: The keys index the corners and each value is a
-            `pathlib.Path` for a PNG file for that corner's QR code.
-            The corners are indexed counterclockwise by:
+        list: of ``pathlib.Path` for PNG files for each corner's QR code.
+            The corners are indexed counterclockwise from the top-right:
 
             index | meaning
             ------|--------
-            1     | top-right
-            2     | top-left
-            3     | bottom-left
-            4     | bottom-right
+            0     | top-right
+            1     | top-left
+            2     | bottom-left
+            3     | bottom-right
     """
-    qr_file = {}
-
-    for corner_index in range(1, 5):
-        tpv = encodeTPV(papernum, pagenum, ver, corner_index, code)
-        filename = dur / f"qr_{papernum:04}_pg{pagenum}_{corner_index}.png"
+    qr_file = []
+    for corner_index in range(4):
+        # Note: TPV indexes corners from 1
+        tpv = encodeTPV(papernum, pagenum, ver, corner_index + 1, code)
+        filename = dur / f"qr_{papernum:04}_pg{pagenum}_{corner_index + 1}.png"
 
         # qr_code = pyqrcode.create(tpv, error="H")
         # qr_code.png(filename, scale=4)
@@ -54,7 +53,7 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
         qr_code = segno.make(tpv, error="H")
         qr_code.save(filename, scale=4)
 
-        qr_file[corner_index] = filename
+        qr_file.append(filename)
 
     return qr_file
 
@@ -228,13 +227,13 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     # we always have a corner section for staples and such
     # Note: draw png first so it doesn't occlude the outline
     if odd:
-        page.insert_image(TR, pixmap=fitz.Pixmap(qr_code[1]), overlay=True)
+        page.insert_image(TR, pixmap=fitz.Pixmap(qr_code[0]), overlay=True)
         page.draw_rect(TR, color=[0, 0, 0], width=0.5)
     else:
-        page.insert_image(TL, pixmap=fitz.Pixmap(qr_code[2]), overlay=True)
+        page.insert_image(TL, pixmap=fitz.Pixmap(qr_code[1]), overlay=True)
         page.draw_rect(TL, color=[0, 0, 0], width=0.5)
-    page.insert_image(BL, pixmap=fitz.Pixmap(qr_code[3]), overlay=True)
-    page.insert_image(BR, pixmap=fitz.Pixmap(qr_code[4]), overlay=True)
+    page.insert_image(BL, pixmap=fitz.Pixmap(qr_code[2]), overlay=True)
+    page.insert_image(BR, pixmap=fitz.Pixmap(qr_code[3]), overlay=True)
     page.draw_rect(BL, color=[0, 0, 0], width=0.5)
     page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
