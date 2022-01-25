@@ -18,24 +18,26 @@ from .model_utils import download_or_train_model
 from .predictStudentID import compute_probabilities
 
 
-def calc_log_likelihood(student_ID, prediction_probs, num_digits):
+def calc_log_likelihood(student_ID, prediction_probs):
     """Calculate the log likelihood that an ID prediction matches the student ID.
 
     Args:
         student_ID (str): Student ID as a string.
-        prediction_probs (list): A list of the probabilities predicted by the model.
-        num_digits (int): Number of digits in the student ID.
+        prediction_probs (list): A list of the probabilities predicted
+            by the model.
+            `prediction_probs[k][n]` is the probability that digit k of
+            ID is n.
 
     Returns:
-       numpy.float64: log likelihood.
+        numpy.float64: log likelihood.  Approx -log(prob), so more
+            probable means smaller.  Negative since we'll minimise
+            "cost" when we do the linear assignment problem later.
     """
+    num_digits = len(student_ID)
+    if len(prediction_probs) != num_digits:
+        raise ValueError("Wrong length")
 
-    # pass in the student ID-digits and the prediction_probs
-    # prediction_probs = scans[fn]
-    # prediction_probs[k][n] = approx prob that digit k of ID is n.
     log_likelihood = 0
-    # log_likelihood will be the approx -log(prob) - so more probable means smaller logP.
-    # make it negative since we'll minimise "cost" when we do the linear assignment problem stuff below.
     for digit_index in range(0, num_digits):
         digit_predicted = int(student_ID[digit_index])
         log_likelihood -= np.log(
@@ -55,10 +57,12 @@ def run_id_reader(files_dict, rectangle, student_IDs):
             [top_left_x_coord, top_left_y_coord, x_width, y_height] for the
             cropped rectangle.
         student_IDs (list): A list of student ID numbers
-    """
 
+    Returns:
+        list: pairs of (`paper_number`, `student_ID`).
+    """
     # Number of digits in the student ID.
-    num_digits = 8
+    student_number_length = 8
 
     # convert rectangle to "top" and "bottom"
     # IDrectangle is a 4-tuple top_left_x, top_left_y, width, height - floats, but we'll need ints.
@@ -78,7 +82,7 @@ def run_id_reader(files_dict, rectangle, student_IDs):
     # pass in the list of files to check, top /bottom of image-region to check.
     print("Computing probabilities")
     probabilities = compute_probabilities(
-        files_dict, top_coordinate, bottom_coordinate, num_digits
+        files_dict, top_coordinate, bottom_coordinate, student_number_length
     )
 
     # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.
@@ -91,7 +95,7 @@ def run_id_reader(files_dict, rectangle, student_IDs):
         test_numbers_used.append(test)
         row = []
         for student_ID in student_IDs:
-            row.append(calc_log_likelihood(student_ID, probabilities[test], num_digits))
+            row.append(calc_log_likelihood(student_ID, probabilities[test]))
         costs.append(row)
 
     # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm

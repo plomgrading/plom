@@ -8,9 +8,7 @@
 """Plom tools for scribbling fake answers on PDF files."""
 
 import base64
-from glob import glob
 import json
-import os
 from pathlib import Path
 import random
 import sys
@@ -25,7 +23,6 @@ import fitz
 import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
-from plom.misc_utils import working_directory
 from plom.create import start_messenger
 
 
@@ -58,11 +55,121 @@ possible_answers = [
 ]
 
 
-def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
+# In principle you can put other fonts in plom.create.fonts
+# Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+font_dict = {
+    "ejx": "ejx_handwriting.ttf",
+}
+
+
+# Customizable data
+blue = [0, 0, 0.75]
+digit_font_size = 24
+answer_font_size = 18
+
+
+def scribble_name_and_id(
+    pdf_doc, student_number, student_name, *, pagenum=0, seed=None
+):
+    """Write name/number on coverpage of fitz pdf_doc.
+
+    Arguments:
+        pdf_doc (fitz.Document): an open pdf file, we'll modify it
+            implicitly but not close it.
+        student_number (str)
+        student_name (str)
+
+    Keyword Args:
+        pagenum (int): which page is the coverpage, default 0 (1st page).
+        seed (None/int): seed the random number generator with this value.
+            Default of None means don't.  This can be used to ensure the
+            same digit images are chosen each time, useful for testing.
+
+    Returns:
+        None: but modifies the open document as a side effect.
+    """
+    # load the digit images
+    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
+    # array is organized in blocks of each digit with this many samples of each
+    num_samples = len(digit_array) // 10
+    assert len(digit_array) % 10 == 0
+
+    if seed is not None:
+        random.seed(seed)
+
+    # insert digit images into rectangles - some hackery required to get correct positions.
+    id_page = pdf_doc[pagenum]
+    width = 28
+    border = 8
+    for n, digit in enumerate(student_number):
+        rect1 = fitz.Rect(
+            220 + border * n + width * n,
+            265,
+            220 + border * n + width * (n + 1),
+            265 + width,
+        )
+        # uu-encoded png
+        uuImg = digit_array[int(digit) * num_samples + random.randrange(num_samples)]
+        img_BString = base64.b64decode(uuImg)
+        id_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
+        # TODO - there should be an assert or something here after insert?
+
+    # TODO: use ejx_handwriting here too: Issue #1888
+    digit_rectangle = fitz.Rect(228, 335, 550, 450)
+    excess = id_page.insert_textbox(
+        digit_rectangle,
+        student_name,
+        fontsize=digit_font_size,
+        color=blue,
+        fontname="Helvetica",
+        fontfile=None,
+        align=0,
+    )
+    assert excess > 0
+    del id_page
+
+
+def scribble_pages(pdf_doc, exclude=(0, 1)):
+    """Scribble on most pages of fitz pdf_doc.
+
+    Arguments:
+        pdf_doc (fitz.Document): an open pdf file, we'll modify it
+            implicitly but not close it.
+
+    Returns:
+        None: but modifies the open document as a side effect.
+
+    By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
+    """
+    fontname, ttf = random.choice(list(font_dict.items()))
+
+    # Write some random answers on the pages
+    for page_index, pdf_page in enumerate(pdf_doc):
+        answer_rect = fitz.Rect(
+            100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
+        )
+        answer_text = random.choice(possible_answers)
+
+        if page_index in exclude:
+            continue
+        with resources.path(plom.create.fonts, ttf) as fontfile:
+            excess = pdf_page.insert_textbox(
+                answer_rect,
+                answer_text,
+                fontsize=answer_font_size,
+                color=blue,
+                fontname=fontname,
+                fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
+                align=0,
+            )
+            assert excess > 0
+
+
+def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     """Fill-in exams with fake data for demo or testing.
 
     Arguments:
-        paper_dir_path (str/pathlib.Path): Directory containing the blank exams.
+        paper_dir (str/pathlib.Path): Directory containing the blank exams.
         classlist (list): list of dicts with keys `id` and `studentName`.
             See also Issue #1646: maybe will use `student_number` someday.
         outfile (str/pathlib.Path): write results into this concatenated PDF file.
@@ -73,133 +180,54 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
             subset. (default: `None`)
     """
     # Customizable data
-    blue = [0, 0, 0.75]
-    student_number_length = 8
     extra_page_probability = 0.2
-    digit_font_size = 24
-    answer_font_size = 18  # font size should depend on font?
     extra_page_font_size = 18
 
-    # load the digit images
-    digit_array = json.loads(resources.read_text(plom.create, "digits.json"))
-    # how many of each digit were collected
-    number_of_digits = len(digit_array) // 10
-    assert len(digit_array) % 10 == 0
-
-    # We create the path objects
-    paper_dir_path = Path(paper_dir_path)
-    out_file_path = Path(outfile)
-
-    # In principle you can put other fonts in plom.create.fonts
-    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
-    font_dict = {
-        "ejx": "ejx_handwriting.ttf",
-    }
+    paper_dir = Path(paper_dir)
+    outfile = Path(outfile)
 
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
-        named_papers_paths = glob(
-            str(paper_dir_path / "exam_*_*.pdf")
-        )  # those with an ID number
-        papers_paths = sorted(glob(str(paper_dir_path / "exam_*.pdf")))  # everything
+        # those with an ID number
+        named_papers_paths = paper_dir.glob("exam_*_*.pdf")
+        # everything
+        papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
     else:
-        papers_paths = sorted(
-            [
-                paper_dir_path / "exam_{}.pdf".format(str(index).zfill(4))
-                for index in which
-            ]
-        )
+        papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
 
-    used_id_list = []
-    # need to avoid any student numbers already used to name papers - look at file names
-    for index, file_name in enumerate(named_papers_paths):
-        used_id_list.append(os.path.split(file_name)[1].split(".")[0].split("_")[-1])
+    # extract student numbers used in prenaming
+    used_ids = [f.stem.split("_")[-1] for f in named_papers_paths]
     # get those students not used in the the prename
-    available_classlist = [x for x in classlist if x["id"] not in used_id_list]
+    available_classlist = [x for x in classlist if x["id"] not in used_ids]
     random.shuffle(available_classlist)
 
     # A complete collection of the pdfs created
     all_pdf_documents = fitz.open()
 
-    for index, file_name in enumerate(papers_paths):
-        if file_name in named_papers_paths:
-            print("{} - prenamed paper - scribbled".format(os.path.basename(file_name)))
+    for index, f in enumerate(papers_paths):
+        if f in named_papers_paths:
+            print(f"{f.name} - prenamed paper - scribbled")
         else:
             x = available_classlist.pop()
             # TODO: Issue #1646: check for "student_number" fallback to id
             student_number = x["id"]
             student_name = x["studentName"]
-            print(
-                "{} - scribbled using {} {}".format(
-                    os.path.basename(file_name), student_number, student_name
-                )
-            )
+            print(f"{f.name} - scribbled using {student_number} {student_name}")
 
-        # TODO: could do `with fitz.open(file_name) as pdf_document:`
-        pdf_document = fitz.open(file_name)
+        # TODO: could do `with fitz.open(f) as pdf_document:`
+        pdf_document = fitz.open(f)
 
-        # First we input the student names
-        if file_name not in named_papers_paths:  # can draw on front page
-            # insert digit images into rectangles - some hackery required to get correct positions.
-            front_page = pdf_document[0]
-            width = 28
-            border = 8
-            for digit_index in range(student_number_length):
-                rect1 = fitz.Rect(
-                    220 + border * digit_index + width * digit_index,
-                    265,
-                    220 + border * digit_index + width * (digit_index + 1),
-                    265 + width,
-                )
-                uuImg = digit_array[
-                    int(student_number[digit_index]) * number_of_digits
-                    + random.randrange(number_of_digits)
-                ]  # uu-encoded png
-                img_BString = base64.b64decode(uuImg)
-                front_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
-                # TODO - there should be an assert or something here?
+        if f not in named_papers_paths:
+            # TODO: use spec.IDpage
+            scribble_name_and_id(pdf_document, student_number, student_name)
 
-            digit_rectangle = fitz.Rect(228, 335, 550, 450)
-            excess = front_page.insert_textbox(
-                digit_rectangle,
-                student_name,
-                fontsize=digit_font_size,
-                color=blue,
-                fontname="Helvetica",
-                fontfile=None,
-                align=0,
-            )
-            assert excess > 0
-            del front_page
+        # TODO: should match the ID page and DNM pages from spec settings
+        scribble_pages(pdf_document)
 
-        fontname, ttf = random.choice(list(font_dict.items()))
-
-        # Write some random answers on the pages
-        for page_index, pdf_page in enumerate(pdf_document):
-            random_answer_rect = fitz.Rect(
-                100 + 30 * random.random(), 150 + 20 * random.random(), 500, 500
-            )
-            random_answer_text = random.choice(possible_answers)
-
-            # TODO: should match the ID page and DNM pages settings
-            if page_index == 0:
-                continue
-            with resources.path(plom.create.fonts, ttf) as fontfile:
-                excess = pdf_page.insert_textbox(
-                    random_answer_rect,
-                    random_answer_text,
-                    fontsize=answer_font_size,
-                    color=blue,
-                    fontname=fontname,
-                    fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
-                    align=0,
-                )
-                assert excess > 0
-
-        # delete last page from the zeroth test.
+        # delete last page from the first test
         if index == 0:
             pdf_document.delete_page(-1)
-            print("Deleting last page of test {}".format(file_name))
+            print(f"Deleting last page of test {f}")
 
         # We then add the pdfs into the document collection
         all_pdf_documents.insert_pdf(pdf_document)
@@ -208,14 +236,10 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
         # For a comprehensive test, we will add some extrapages with low probability
         if random.random() < extra_page_probability:
             # folder_name/exam_XXXX.pdf or folder_name/exam_XXXX_YYYYYYY.pdf,
-            # file_pdf_name drops the folder name and the .pdf parts
-            file_pdf_name = os.path.splitext(os.path.basename(file_name))[0]
-
-            # Then we get the test number and sid from the file name
-            test_number = file_pdf_name.split("_")[1]
-            if file_name in named_papers_paths:
-                # file_pdf_name is exam_XXXX_YYYYYYY.pdf
-                student_number = file_pdf_name.split("_")[2]
+            test_number = f.stem.split("_")[1]
+            if f in named_papers_paths:
+                # exam_XXXX_YYYYYYY.pdf
+                student_number = f.stem.split("_")[2]
 
             print(
                 f"  making an extra page for test {test_number} and id {student_number}"
@@ -227,9 +251,9 @@ def fill_in_fake_data_on_exams(paper_dir_path, classlist, outfile, which=None):
                 color=blue,
             )
 
-    all_pdf_documents.save(out_file_path)
+    all_pdf_documents.save(outfile)
     all_pdf_documents.close()
-    print('Assembled in "{}"'.format(out_file_path))
+    print(f'Assembled in "{outfile}"')
 
 
 def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
@@ -238,7 +262,7 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     Used for testing.
 
     Arguments:
-        out_file_path (pathlib.Path/str): a pdf file we add pages to.
+        pdf_file (pathlib.Path): a pdf file we add pages to.
 
     Keyword Arguments:
         number_of_garbage_pages (int): how many junk pages to add (default: 2)
@@ -249,7 +273,7 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     print("Doc has {} pages".format(len(doc)))
     for _ in range(number_of_garbage_pages):
         garbage_page_index = random.randint(-1, len(doc))
-        print("Insert garbage page at garbage_page_index={}".format(garbage_page_index))
+        print(f"Insert garbage page at garbage_page_index={garbage_page_index}")
         doc.insert_page(
             garbage_page_index, text="This is a garbage page", fontsize=18, color=green
         )
@@ -257,24 +281,24 @@ def make_garbage_pages(pdf_file, number_of_garbage_pages=2):
     doc.close()
 
 
-def make_colliding_pages(paper_dir_path, outfile):
+def make_colliding_pages(paper_dir, outfile):
     """Build two colliding pages - last pages of papers 2 and 3.
 
     Arguments:
-        paper_dir_path (str/pathlib.Path): Directory containing the blank exams.
-        out_file_path (str/pathlib.Path): write results into this concatenated PDF file.
+        paper_dir (str/pathlib.Path): Directory containing the blank exams.
+        outfile (pathlib.Path): modify this pdf file, appending the
+            colliding pages.
 
     Purely used for testing.
     """
-    paper_dir_path = Path(paper_dir_path)
-    out_file_path = Path(outfile)
+    paper_dir = Path(paper_dir)
+    outfile = Path(outfile)
 
-    all_pdf_documents = fitz.open(out_file_path)
+    all_pdf_documents = fitz.open(outfile)
     # Customizable data
-    blue = [0, 0, 0.75]
     colliding_page_font_size = 18
 
-    papers_paths = sorted(glob(str(paper_dir_path / "exam_*.pdf")))
+    papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
     for file_name in papers_paths[1:3]:  # just grab papers 2 and 3.
         pdf_document = fitz.open(file_name)
         test_length = len(pdf_document)
@@ -306,12 +330,12 @@ def make_colliding_pages(paper_dir_path, outfile):
     all_pdf_documents.close()
 
 
-def splitFakeFile(out_file_path):
+def splitFakeFile(outfile):
     """Split the scribble pdf into three files"""
 
+    outfile = Path(outfile)
     print("Splitting PDF into 3 in order to test bundles.")
-    originalPDF = fitz.open(out_file_path)
-    newPDFName = os.path.splitext(out_file_path)[0]
+    originalPDF = fitz.open(outfile)
     length = len(originalPDF) // 3
 
     doc1 = fitz.open()
@@ -322,9 +346,9 @@ def splitFakeFile(out_file_path):
     doc2.insert_pdf(originalPDF, from_page=length + 1, to_page=2 * length)
     doc3.insert_pdf(originalPDF, from_page=2 * length + 1)
 
-    doc1.save(newPDFName + "1.pdf")
-    doc2.save(newPDFName + "2.pdf")
-    doc3.save(newPDFName + "3.pdf")
+    doc1.save(outfile.with_name(outfile.stem + "1.pdf"))
+    doc2.save(outfile.with_name(outfile.stem + "2.pdf"))
+    doc3.save(outfile.with_name(outfile.stem + "3.pdf"))
     doc1.close()
     doc2.close()
     doc3.close()
@@ -355,21 +379,21 @@ def make_scribbles(server, password, basedir=Path(".")):
         password (str): the "manager" password.
         basedir (str/pathlib.Path): the blank tests (for scribbling) will
             be taken from `basedir/papersToPrint`.  The pdf files with
-            scribbles will be created in `basedir`.
+            scribbles will be created in `basedir`.  Defaults to current
+            directory.
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
-    3. Do somethings to make the data unpleasant.  Randomly remove pages?
-       Documentation could be improved here...
+    3. Do some things to make the data unpleasant.
+        * delete the last page of the first test.
+        * Randomly add some extra pages
     """
-    # TODO: probably not difficult to adjust everything to avoid CWD stuff here
-    # out_file_path = Path(basedir) / "fake_scribbled_exams.pdf"
-    out_file_path = "fake_scribbled_exams.pdf"
+    basedir = Path(basedir)
+    outfile = basedir / "fake_scribbled_exams.pdf"
     classlist = download_classlist(server, password)
 
-    with working_directory(Path(basedir)):
-        fill_in_fake_data_on_exams(_paperdir, classlist, out_file_path)
-        make_garbage_pages(out_file_path)
-        make_colliding_pages(_paperdir, out_file_path)
-        splitFakeFile(out_file_path)
-        os.unlink(out_file_path)
+    fill_in_fake_data_on_exams(basedir / _paperdir, classlist, outfile)
+    make_garbage_pages(outfile)
+    make_colliding_pages(basedir / _paperdir, outfile)
+    splitFakeFile(outfile)
+    outfile.unlink()
