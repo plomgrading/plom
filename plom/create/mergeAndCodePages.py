@@ -130,9 +130,9 @@ def create_exam_and_insert_QR(
         text = "{} {} {}".format(
             f"{papernum:04}", group.ljust(5), f"p. {page_index + 1}"
         )
-        even = page_index % 2 == 0
+        odd = page_index % 2 == 0
         if no_qr:
-            even = None
+            odd = None
             qr_files = {}
         else:
             ver = page_to_version[page_index + 1]
@@ -140,16 +140,14 @@ def create_exam_and_insert_QR(
                 papernum, page_index + 1, ver, spec["publicCode"], tmpdir
             )
 
-        pdf_page_add_labels_QRs(
-            exam[page_index], spec["name"], text, qr_files, even=even
-        )
+        pdf_page_add_labels_QRs(exam[page_index], spec["name"], text, qr_files, odd=odd)
 
     for ver, pdf in pdf_version.items():
         pdf.close()
     return exam
 
 
-def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, even=True):
+def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
     args:
@@ -157,8 +155,9 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, even=True):
         shortname (str):
         stamp (str): text for the top-middle
         qr_code (dict): QR images, if empty, don't do corner work.
-        even (bool/None): True for an even page, False for an odd page,
-            None if you don't want to draw a staple corner.
+        odd (bool/None): True for an odd page number (counting from 1),
+            False for an even page, and None if you don't want to draw a
+            staple corner.
 
     returns:
         None: but modifies page as a side-effect.
@@ -192,15 +191,15 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, even=True):
     page.draw_rect(rect, color=[0, 0, 0])
 
     # special code to skip staple mark and QR codes
-    if even is None:
+    if odd is None:
         return
 
     # stamp DNW near staple: even/odd pages different
-    # Top Left for even pages, Top Right for odd pages
-    rDNW = rDNW_TL if even else rDNW_TR
+    # Top Left for odd pages (1 is 1st), Top Right for even
+    rDNW = rDNW_TL if odd else rDNW_TR
     shape = page.new_shape()
     shape.draw_line(rDNW.top_left, rDNW.top_right)
-    if even:
+    if odd:
         shape.draw_line(rDNW.top_right, rDNW.bottom_left)
     else:
         shape.draw_line(rDNW.top_right, rDNW.bottom_right)
@@ -208,7 +207,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, even=True):
     shape.commit()
     # offset by trial-and-error
     diaglabel_rect = rDNW + (-10, 26, 10, -33)
-    mat = fitz.Matrix(45 if even else -45)
+    mat = fitz.Matrix(45 if odd else -45)
     pivot = rDNW.tr / 2 + rDNW.bl / 2
     morph = (pivot, mat)
     excess = page.insert_textbox(
@@ -232,7 +231,7 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, even=True):
     # Remember that we only add 3 of the 4 QR codes for each page since
     # we always have a corner section for staples and such
     # Note: draw png first so it doesn't occlude the outline
-    if even:
+    if odd:
         page.insert_image(TR, pixmap=fitz.Pixmap(qr_code[1]), overlay=True)
         page.draw_rect(TR, color=[0, 0, 0], width=0.5)
     else:
