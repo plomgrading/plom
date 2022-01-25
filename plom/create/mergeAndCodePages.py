@@ -146,8 +146,9 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     """Add top-middle stamp, QR codes and staple indicator to a PDF page.
 
     args:
-        page (fitz.TODO):
-        shortname (str):
+        page (fitz.Page): a particular page of a PDF file.
+        shortname (str): a short string that we will write on the staple
+            indicator.
         stamp (str): text for the top-middle
         qr_code (dict): QR images, if empty, don't do corner work.
         odd (bool/None): True for an odd page number (counting from 1),
@@ -410,7 +411,7 @@ def make_PDF(
             spec,
             papernum,
             question_versions,
-            qr_file,
+            Path(tmp_dir),
             no_qr=no_qr,
         )
 
