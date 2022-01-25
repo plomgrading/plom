@@ -57,10 +57,11 @@ from .reviewview import ReviewViewWindow
 from .selectrectangle import SelectRectangleWindow, IDViewWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
-    PlomBenignException,
     PlomAPIException,
-    PlomExistingLoginException,
     PlomAuthenticationException,
+    PlomBenignException,
+    PlomConflict,
+    PlomExistingLoginException,
     PlomOwnersLoggedInException,
     PlomUnidentifiedPaperException,
     PlomTakenException,
@@ -1008,12 +1009,8 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                         self.unknownModel.item(r, 3).text(),
                     )
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move unknown {} to extra page - owners of tasks in that test are logged in: {}".format(
-                            self.unknownModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                    ErrorMessage(f"{err}").exec_()
             elif self.unknownModel.item(r, 2).text() == "test":
                 try:
                     if (
@@ -1030,12 +1027,8 @@ class Manager(QWidget):
                                 self.unknownModel.item(r, 4).text()
                             )
                         ).exec_()
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move unknown {} to test page - owners of tasks in that test are logged in: {}".format(
-                            self.unknownModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                    ErrorMessage(f"{err}").exec_()
             elif self.unknownModel.item(r, 2).text() == "homework":
                 try:
                     self.msgr.unknownToHWPage(
@@ -1044,12 +1037,8 @@ class Manager(QWidget):
                         self.unknownModel.item(r, 5).text(),
                         self.unknownModel.item(r, 3).text(),
                     )
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move unknown {} to hw page - owners of tasks in that test are logged in: {}".format(
-                            self.unknownModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
+                    ErrorMessage(f"{err}").exec_()
 
             else:
                 pass
@@ -1203,12 +1192,9 @@ class Manager(QWidget):
                         self.collideModel.item(r, 4).text(),
                         self.collideModel.item(r, 5).text(),
                     )
-                except PlomOwnersLoggedInException as err:
-                    ErrorMessage(
-                        "Cannot move collision {} to test page - owners of tasks in that test are logged in: {}".format(
-                            self.collideModel.item(r, 0).text(), err.args[-1]
-                        )
-                    ).exec_()
+                except (PlomOwnersLoggedInException, PlomConflict) as err:
+
+                    ErrorMessage(f"{err}").exec_()
             else:
                 pass
                 # print(

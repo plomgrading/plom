@@ -357,7 +357,6 @@ def unknownToTestPage(self, file_name, test, page, rotation):
 
 def unknownToExtraPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToExtraPage(fname, test, question)
-    # returns [True] or [False, reason]
     if rval[0]:
         # moved successfully. now rotate the page
         subprocess.run(
@@ -366,14 +365,11 @@ def unknownToExtraPage(self, fname, test, question, rotation):
             shell=False,
             check=True,
         )
-    else:
-        return rval
-    return [True]
+    return rval
 
 
 def unknownToHWPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToHWPage(fname, test, question)
-    # returns [True] or [False, reason]
     if rval[0]:
         # moved successfully. now rotate the page
         subprocess.run(
@@ -382,9 +378,7 @@ def unknownToHWPage(self, fname, test, question, rotation):
             shell=False,
             check=True,
         )
-    else:
-        return rval
-    return [True]
+    return rval
 
 
 def removeAllScannedPages(self, test_number):
