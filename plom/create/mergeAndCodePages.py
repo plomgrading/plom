@@ -122,25 +122,21 @@ def create_exam_and_insert_QR(
     #         start_at=-1,
     #     )
 
-    for page_index in range(spec["numberOfPages"]):
+    for p in range(1, spec["numberOfPages"] + 1):
         # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
-        exam[page_index].clean_contents()
+        exam[p - 1].clean_contents()
         # name of the group to which page belongs
-        group = page_to_group[page_index + 1]
-        text = "{} {} {}".format(
-            f"{papernum:04}", group.ljust(5), f"p. {page_index + 1}"
-        )
-        odd = page_index % 2 == 0
+        group = page_to_group[p]
+        text = "{} {} {}".format(f"{papernum:04}", group.ljust(5), f"p. {p}")
+        odd = (p - 1) % 2 == 0
         if no_qr:
             odd = None
             qr_files = {}
         else:
-            ver = page_to_version[page_index + 1]
-            qr_files = create_QR_codes(
-                papernum, page_index + 1, ver, spec["publicCode"], tmpdir
-            )
+            ver = page_to_version[p]
+            qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
 
-        pdf_page_add_labels_QRs(exam[page_index], spec["name"], text, qr_files, odd=odd)
+        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], text, qr_files, odd=odd)
 
     for ver, pdf in pdf_version.items():
         pdf.close()
