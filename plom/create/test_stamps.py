@@ -8,6 +8,10 @@ import fitz
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
+from plom.scan import QRextract
+
+# TODO: import this just from plom.scan, and elsewhere
+from plom.scan.scansToImages import processFileToBitmaps
 
 
 def test_staple_marker_diagname_too_long(tmpdir):
@@ -48,6 +52,10 @@ def test_stamp_QRs(tmpdir):
     # 4 distinct QR codes
     assert len(set(qr)) == 4
 
+    # QR list too short to place on page
+    with raises(IndexError):
+        pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr[:3])
+
     # place them on the page
     pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr, odd=(p % 2))
 
@@ -58,7 +66,26 @@ def test_stamp_QRs(tmpdir):
         assert qr[k] != qr2[k]
     pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr2, odd=(p % 2))
 
-    # QR list too short
-    with raises(IndexError):
-        pdf_page_add_labels_QRs(d[p - 1], "foo", f"0006 Q1 p. {p}", qr[:3])
-    d.save("debug_QR_codes.pdf")  # uncomment for debugging
+    out = tmpdir / "debug_QR_codes.pdf"
+    d.save(out)
+
+    # Now let's try to read it back, some overlap with test_qr_reads
+    files = processFileToBitmaps(out, tmpdir)
+
+    p = QRextract(files[0], write_to_file=False)
+    for k, v in p.items():
+        print(k)
+        print(v)
+        assert len(v) == 0
+
+    p = QRextract(files[2], write_to_file=False)
+    assert not p["NW"]
+    assert p["NE"] == ["00000603011123456"]
+    assert p["SW"] == ["00000603013123456"]
+    assert p["SE"] == ["00000603014123456"]
+
+    p = QRextract(files[3], write_to_file=False)
+    assert not p["NE"]
+    assert p["NW"] == ["00000604012123456"]
+    assert p["SW"] == ["00000604013123456"]
+    assert p["SE"] == ["00000604014123456"]
