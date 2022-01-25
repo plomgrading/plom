@@ -8,8 +8,11 @@ import fitz
 
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
+from plom.create.mergeAndCodePages import create_exam_and_insert_QR
 from plom.scan import QRextract
 from plom.scan import processFileToBitmaps
+from plom import SpecVerifier
+from plom.misc_utils import working_directory
 
 
 def test_staple_marker_diagname_too_long(tmpdir):
@@ -87,3 +90,15 @@ def test_stamp_QRs(tmpdir):
     assert p["NW"] == ["00000604012123456"]
     assert p["SW"] == ["00000604013123456"]
     assert p["SE"] == ["00000604014123456"]
+
+
+def test_qr_stamp_all_pages(tmpdir):
+    tmpdir = Path(tmpdir)
+    assert buildDemoSourceFiles(basedir=tmpdir)
+    spec = SpecVerifier.demo()
+    spec.checkCodes()
+    with working_directory(tmpdir):
+        ex = create_exam_and_insert_QR(spec, 5, {1: 1, 2: 1, 3: 2}, tmpdir)
+    # each page has three images: will break if we add images to the demo
+    for p in ex.pages():
+        assert len(p.get_images()) == 3
