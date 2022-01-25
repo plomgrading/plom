@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
 
 import os
 from pathlib import Path
@@ -11,7 +12,7 @@ import toml
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
-from plom.scan.scansToImages import processFileToBitmaps
+from plom.scan import processFileToBitmaps
 from plom.specVerifier import checkSolutionSpec
 
 source_path = Path("sourceVersions")

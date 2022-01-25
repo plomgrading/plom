@@ -20,7 +20,7 @@ from .model_utils import (
 )
 from .predictStudentID import get_digit_box, get_digit_prob
 from plom.create.demotools import buildDemoSourceFiles
-from plom.scan.scansToImages import processFileToBitmaps
+from plom.scan import processFileToBitmaps
 from plom.create.scribble_utils import scribble_name_and_id
 
 

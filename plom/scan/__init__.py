@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
 Plom tools associated with scanning papers
 """
 
-__copyright__ = "Copyright (C) 2018-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
@@ -22,6 +22,13 @@ from .listBundles import print_bundle_list
 from .frontend_scan import processScans, uploadImages
 from .frontend_hwscan import processHWScans, processMissing
 from .frontend_hwscan import processAllHWByQ
+from .scansToImages import processFileToBitmaps
 
 # what you get from "from plom.scan import *"
-__all__ = ["processScans", "uploadImages", "processHWScans", "processMissing"]
+__all__ = [
+    "processScans",
+    "uploadImages",
+    "processHWScans",
+    "processMissing",
+    "processFileToBitmaps",
+]

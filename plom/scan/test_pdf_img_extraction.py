@@ -10,7 +10,7 @@ from PIL import Image
 
 from plom.misc_utils import working_directory
 from plom import ScenePixelHeight
-from plom.scan.scansToImages import processFileToBitmaps
+from plom.scan import processFileToBitmaps
 
 
 def test_pdf_extract_img_height(tmpdir):

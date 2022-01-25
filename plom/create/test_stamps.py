@@ -9,9 +9,7 @@ import fitz
 from plom.create.demotools import buildDemoSourceFiles
 from plom.create.mergeAndCodePages import pdf_page_add_labels_QRs, create_QR_codes
 from plom.scan import QRextract
-
-# TODO: import this just from plom.scan, and elsewhere
-from plom.scan.scansToImages import processFileToBitmaps
+from plom.scan import processFileToBitmaps
 
 
 def test_staple_marker_diagname_too_long(tmpdir):
