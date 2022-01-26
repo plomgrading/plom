@@ -410,9 +410,6 @@ class Annotator(QWidget):
         self.saveName = Path(saveName)
         self.integrity_check = integrity_check
         self.src_img_data = src_img_data
-
-        if getattr(self, "maxMark", None) != maxMark:
-            log.warning("Is changing maxMark supported?  we just did it...")
         self.maxMark = maxMark
         del maxMark
 
