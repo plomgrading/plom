@@ -324,12 +324,8 @@ def removeCollidingImage(self, file_name):
 
 
 def unknownToTestPage(self, file_name, test, page, rotation):
-    # checkpage returns
-    # -- [False, reason] no such page exists, or owners logged in
-    # -- [True, 'unscanned', version] page exists but hasn't been scanned
-    # -- or [True, 'collision', version, image] page exists and has been scanned
-    val = self.DB.checkTPage(test, page)
-    if val[0]:
+    status, code, msg = self.DB.moveUnknownToTPage(file_name, test, page)
+    if status:
         # rotate the page
         subprocess.run(
             ["mogrify", "-quiet", "-rotate", rotation, file_name],
@@ -337,22 +333,23 @@ def unknownToTestPage(self, file_name, test, page, rotation):
             shell=False,
             check=True,
         )
-        if len(val) == 4:
-            # existing page in place - create a colliding page
-            if self.DB.moveUnknownToCollision(file_name, test, page)[0]:
-                return [True, "collision"]
-            else:
-                return [False, "HUH?"]  # this should not happen
-        else:
-            msg = self.DB.moveUnknownToTPage(file_name, test, page)
-            # returns [True] or [False, reason] or [False, "owners", owner_list]
-            if msg[0]:
-                return [True, "testPage"]
-            else:
-                return msg
+        return (True, "testPage", None)
 
-    else:  # some sort of problem occurred
-        return val
+    if not status and code != "scanned":
+        return (status, code, msg)
+
+    # existing page in place - create a colliding page
+    status, code, msg = self.DB.moveUnknownToCollision(file_name, test, page)
+    if status:
+        # rotate the page
+        subprocess.run(
+            ["mogrify", "-quiet", "-rotate", rotation, file_name],
+            stderr=subprocess.STDOUT,
+            shell=False,
+            check=True,
+        )
+        return (True, "collision", None)
+    return (status, code, msg)
 
 
 def unknownToExtraPage(self, fname, test, question, rotation):

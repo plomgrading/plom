@@ -315,15 +315,15 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
 
 def moveUnknownToTPage(self, file_name, test_number, page_number):
     iref = Image.get_or_none(file_name=file_name)
-    if iref is None:  # should not happen
-        return [False, "Cannot find image"]
+    if iref is None:
+        return (False, "notfound", f"Cannot find image {file_name}")
     uref = iref.upages[0]
-    if uref is None:  # should not happen
-        return [False, "Cannot find unknown page for that image."]
+    if uref is None:
+        return (False, "notfound", f"There is no UnknownPage with image {file_name}")
 
     tref = Test.get_or_none(Test.test_number == test_number)
-    if tref is None:  # should not happen
-        return [False, "Cannot find that test"]
+    if tref is None:
+        return (False, "notfound", f"Cannot find test {test_number}")
 
     # check if all owners of tasks in that test are logged out.
     owners = self.testOwnersLoggedIn(tref)
@@ -334,14 +334,15 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
         return (False, "owners", msg)
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
-    if pref is None:  # should not happen
-        return [False, "Cannot find that page."]
+    if pref is None:
+        return (False, "notfound", f"Cannot find p.{page_number} of test {test_number}")
 
     if pref.scanned:
-        return [
+        return (
             False,
-            "Page {} of test {} is already scanned.".format(page_number, test_number),
-        ]
+            "scanned",
+            "Page {page_number} of test {page_number} is already scanned",
+        )
 
     self.attachImageToTPage(tref, pref, iref)
     uref.delete_instance()
@@ -355,7 +356,7 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
     groups_to_update.add(pref.group)
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
 
-    return [True]
+    return (True, None, None)
 
 
 def checkTPage(self, test_number, page_number):
@@ -421,20 +422,20 @@ def moveDiscardToUnknown(self, file_name):
 
 def moveUnknownToCollision(self, file_name, test_number, page_number):
     iref = Image.get_or_none(file_name=file_name)
-    if iref is None:  # should not happen
-        return [False, "Cannot find image"]
+    if iref is None:
+        return (False, "notfound", f"Cannot find image {file_name}")
     uref = iref.upages[0]
-    if uref is None:  # should not happen
-        return [False, "Cannot find unknown page for that image."]
+    if uref is None:
+        return (False, "notfound", f"There is no UnknownPage with image {file_name}")
 
     # find the test and the tpage
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return (False, "notfound", f"Cannot find test {test_number}")
 
     pref = TPage.get_or_none(TPage.test == tref, TPage.page_number == page_number)
     if pref is None:
-        return [False, "Cannot find that page"]
+        return (False, "notfound", f"Cannot find p.{page_number} of test {test_number}")
     with plomdb.atomic():
         CollidingPage.create(image=iref, tpage=pref)
         uref.delete_instance()
@@ -443,7 +444,7 @@ def moveUnknownToCollision(self, file_name, test_number, page_number):
             file_name, test_number, page_number
         )
     )
-    return [True]
+    return (True, None, None)
 
 
 def getCollidingImage(self, file_name):

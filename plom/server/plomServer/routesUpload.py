@@ -713,16 +713,20 @@ class UploadHandler:
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="I can only speak to the manager")
 
-        rval = self.server.unknownToTestPage(
+        status, code, msg = self.server.unknownToTestPage(
             data["fileName"], data["test"], data["page"], data["rotation"]
         )
-        if rval[0]:
-            return web.json_response(rval[1], status=200)  # all fine
-        if rval[1] == "owners":
-            raise web.HTTPNotAcceptable(reason=rval[2])
-        if rval[1].startswith("no such"):
-            raise web.HTTPConflict(reason=rval[1])
-        raise web.HTTPBadRequest(reason=str(rval[1:]))
+        if status:
+            assert msg is None
+            return web.json_response(code, status=200)  # all fine
+        if code == "owners":
+            log.warn(msg)
+            raise web.HTTPNotAcceptable(reason=msg)
+        if code == "notfound":
+            log.warn(msg)
+            raise web.HTTPConflict(reason=msg)
+        log.warn("Unexpected situation: %s", msg)
+        raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     async def unknownToHWPage(self, request):
         """Map an unknown page onto a HomeworkPage.
