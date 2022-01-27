@@ -45,7 +45,8 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
+from plom.client.useful_classes import ErrorMessage, ErrorMsg, WarnMsg, InfoMsg
+from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.origscanviewer import WholeTestView, GroupView
 from plom.client.examviewwindow import ImageViewWidget
 
@@ -433,7 +434,8 @@ class Manager(QWidget):
         self.ui.predictButton.clicked.connect(self.runPredictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
-        self.ui.enabDisabB.clicked.connect(self.toggleEnableDisable)
+        self.ui.enableUserB.clicked.connect(self.enableUsers)
+        self.ui.disableUserB.clicked.connect(self.disableUsers)
         self.ui.changePassB.clicked.connect(self.changeUserPassword)
         self.ui.newUserB.clicked.connect(self.createUser)
 
@@ -1833,7 +1835,7 @@ class Manager(QWidget):
             ]
         )
         self.ui.userListTW.setSortingEnabled(True)
-        self.ui.userListTW.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.ui.userListTW.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.ui.userListTW.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     def initProgressQUTabs(self):
@@ -1871,44 +1873,69 @@ class Manager(QWidget):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
-        r = ri[0].row()
-        user = self.ui.userListTW.item(r, 0).text()
+
+        selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
+
+        if "manager" in selectedUsers:
+            ErrorMessage(
+                "You cannot force-logout the manager. To logout, click on the Quit button."
+            ).exec_()
+            return
         if (
             SimpleQuestion(
                 self,
-                'Are you sure you want to force-logout user "{}"?'.format(user),
+                "Are you sure you want to force-logout users {}?".format(selectedUsers)
+                # do something about this formatting, right now it's just a python list
             ).exec_()
             == QMessageBox.Yes
         ):
-            self.msgr.clearAuthorisationUser(user)
+            for user in selectedUsers:
+                self.msgr.clearAuthorisationUser(user)
             self.refreshUserList()
 
-    def toggleEnableDisable(self):
+    def enableUsers(self):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
-        r = ri[0].row()
-        user = self.ui.userListTW.item(r, 0).text()
-        if user == "manager":
-            ErrorMessage("You cannot disable the manager.").exec_()
+
+        selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
+
+        for user in selectedUsers:
+            try:
+                self.msgr.enableUser(user)
+            except PlomConflict as e:
+                WarnMsg(self, str(e)).exec_()
+        self.refreshUserList()
+
+    def disableUsers(self):
+        ri = self.ui.userListTW.selectedIndexes()
+        if len(ri) == 0:
             return
-        if (
-            SimpleQuestion(
-                self,
-                f'Are you sure you want to toggle enable/disable user "{user}"?',
-            ).exec_()
-            == QMessageBox.Yes
-        ):
-            if self.ui.userListTW.item(r, 1).text() == "True":
-                self.msgr.setUserEnable(user, False)
-            else:
-                self.msgr.setUserEnable(user, True)
-            self.refreshUserList()
+
+        selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
+
+        msg = "Are you sure you want to disable "
+        msg += "users " if len(selectedUsers) > 1 else "user "
+        msg += ", ".join(f'"{x}"' for x in selectedUsers)
+        if SimpleQuestion(self, msg).exec_() != QMessageBox.Yes:
+            return
+        for user in selectedUsers:
+            try:
+                self.msgr.disableUser(user)
+            except PlomConflict as e:
+                WarnMsg(self, str(e)).exec_()
+        self.refreshUserList()
 
     def changeUserPassword(self):
         ri = self.ui.userListTW.selectedIndexes()
         if len(ri) == 0:
             return
+        if len(ri) > 7:
+            ErrorMessage(
+                "You can only change the password of one user at a time."
+            ).exec()
+            return
+
         r = ri[0].row()
         user = self.ui.userListTW.item(r, 0).text()
         cpwd = UserDialog(name=user)
