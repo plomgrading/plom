@@ -11,6 +11,10 @@ def RgetIncompleteTests(self):
     return self.DB.RgetIncompleteTests()
 
 
+def RgetDanglingPages(self):
+    return self.DB.RgetDanglingPages()
+
+
 def RgetMissingHWQ(self):
     return self.DB.RgetMissingHWQ()
 

@@ -6,7 +6,7 @@
 
 from aiohttp import web
 
-from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
+from .routeutils import authenticate_by_token_required_fields
 
 
 class ReportHandler:
@@ -57,6 +57,33 @@ class ReportHandler:
         # {test_number: [[test string, TODO: Version number ?, True/False for page incomplete or not], ...], ...}
         # Ex: {1: [['t.1', 1, True], ['t.2', 1, True], ['t.3', 2, True], ['t.4', 1, True], ['t.5', 2, True], ['t.6', 2, False]]}
         return web.json_response(self.server.RgetIncompleteTests(), status=200)
+
+        # @routes.get("/REP/dangling")
+
+    @authenticate_by_token_required_fields(["user"])
+    def RgetDanglingPages(self, data, request):
+        """Respond with the list of dangling pages - pages attached to groups that are not complete.
+
+        Responds with status 200/401.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request): Request of type GET /REP/incomplete.
+
+        Returns:
+            aiohttp.web_response.Response: A response which includes a list of dictionaries of pages that belong
+            to incomplete groups (ie not completely scanned, and not ID'd or marked)
+        """
+
+        if not data["user"] in ("manager", "scanner"):
+            return web.Response(status=401)
+        # The response is a list of dictionaries of the form:
+        # [
+        # {'test': number, 'type': 'tpage', 'page': number},
+        # {'test': number, 'type': 'hwpage', 'order': number},
+        # {'test': number, 'type': 'expage', 'order': number}
+        # ]
+        return web.json_response(self.server.RgetDanglingPages(), status=200)
 
     # @routes.get("/REP/completeHW")
     @authenticate_by_token_required_fields(["user"])
@@ -426,6 +453,7 @@ class ReportHandler:
         """
         router.add_get("/REP/scanned", self.RgetScannedTests)
         router.add_get("/REP/incomplete", self.RgetIncompleteTests)
+        router.add_get("/REP/dangling", self.RgetDanglingPages)
         router.add_get("/REP/completeHW", self.RgetCompleteHW)
         router.add_get("/REP/missingHW", self.RgetMissingHWQ)
         router.add_get("/REP/unused", self.RgetUnusedTests)

@@ -185,6 +185,7 @@ class Server:
         RgetUnusedTests,
         RgetScannedTests,
         RgetIncompleteTests,
+        RgetDanglingPages,
         RgetCompleteHW,
         RgetMissingHWQ,
         RgetProgress,

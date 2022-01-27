@@ -308,6 +308,26 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
+    def RgetDanglingPages(self):
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                "/REP/dangling",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 404:
+                raise PlomSeriousException(
+                    "Server could not find the spec - this should not happen!"
+                ) from None
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+
     def IDprogressCount(self):
         self.SRmutex.acquire()
         try:
