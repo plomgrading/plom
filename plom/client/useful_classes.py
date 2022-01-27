@@ -28,30 +28,36 @@ from PyQt5.QtWidgets import (
 from plom import isValidStudentNumber
 
 
-class ErrorMessage(QMessageBox):
-    """A simple error message pop-up
+class ErrorMsg(QMessageBox):
+    """A simple error message pop-up.
+
+    See also subclasses ``WarnMsg`` and ``InfoMsg``, in order of
+    decreasing implied severity.
 
     args:
+        parent (QWidget): the parent of this dialog.  If you think you
+            should pass ``None`` you should think again very carefully.
         txt (str): the main error message.
 
     kw-args:
-        details (str/None): a potentially large amount of details.  Might be
-            hidden by default.  Should be copy-pastable.
+        details (str/None): a potentially large amount of details.  Might
+            be hidden by default.  Should be copy-pastable.  Generally
+            pre-formatted.
         info (str/None): some more details, like an error message or part
             of an error message.  Will be presented smaller or otherwise
             deemphasized.
-        info_preformatted (bool): True by default which means the info text
+        info_pre (bool): True by default which means the info text
             is assumed to be preformatted (whitespace, newlines etc will be
             preserved).  Long lines will be wrapped.
     """
 
-    def __init__(self, txt, details=None, info=None, info_preformatted=True):
-        super().__init__()
+    def __init__(self, parent, txt, details=None, info=None, info_pre=True):
+        super().__init__(parent)
         self.setText(txt)
         if details:
             self.setDetailedText(details)
         if info:
-            if info_preformatted:
+            if info_pre:
                 self.setInformativeText(
                     f'<small><pre style="white-space: pre-wrap;">\n{info}\n</pre></small>'
                 )
@@ -59,6 +65,34 @@ class ErrorMessage(QMessageBox):
                 self.setInformativeText(f"<small>{info}</small>")
         self.setStandardButtons(QMessageBox.Ok)
         self.setDefaultButton(QMessageBox.Ok)
+        self.setIcon(QMessageBox.Critical)
+
+
+class WarnMsg(ErrorMsg):
+    """A simple warning message pop-up."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setIcon(QMessageBox.Warning)
+
+
+class InfoMsg(ErrorMsg):
+    """A simple warning message pop-up."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setIcon(QMessageBox.Information)
+
+
+class ErrorMessage(ErrorMsg):
+    """A simple error message pop-up
+
+    Deprecated: new code should not use me!
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(None, *args, **kwargs)
+        self.setIcon(QMessageBox.NoIcon)
 
 
 class SimpleQuestion(QMessageBox):
@@ -242,12 +276,13 @@ class SNIDBox(QDialog):
         self.sid = self.sidLE.text().strip()
         self.sname = self.snameLE.text().strip()
         if not isValidStudentNumber(self.sid):
-            ErrorMessage("Not a valid student number.").exec_()
+            ErrorMsg(self, "Not a valid student number.").exec_()
             return
         if not self.sname:
-            ErrorMessage(
+            ErrorMsg(
+                self,
                 "<p>Student name should not be blank.</p>"
-                "<p>(If you cannot read it, use &ldquo;Unknown&rdquo;.)</p>"
+                "<p>(If you cannot read it, use &ldquo;Unknown&rdquo;.)</p>",
             ).exec_()
             return
         self.accept()
