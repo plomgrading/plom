@@ -530,6 +530,44 @@
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="dangleTab">
+          <attribute name="title">
+           <string>Dan&amp;gling Pages</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_30">
+           <item>
+            <widget class="QTableView" name="danglingTV">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_22">
+             <item>
+              <spacer name="horizontalSpacer_16">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="pushButton">
+               <property name="text">
+                <string>Remove page</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
        <item>
@@ -572,7 +610,7 @@
           <bool>true</bool>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="overallTab">
           <property name="enabled">
@@ -631,8 +669,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>98</width>
-                <height>28</height>
+                <width>968</width>
+                <height>462</height>
                </rect>
               </property>
              </widget>
