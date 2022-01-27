@@ -1906,11 +1906,13 @@ class Manager(QWidget):
         if len(selectedUsers) == 0:
             return
 
+        # TODO: do we need to confirm on enable?  just do it...?
         if (
             SimpleQuestion(
                 self,
-                "Are you sure you want to enable user(s) {}?".format(selectedUsers)
-                # do something about this formatting, right now it's just a python list
+                "Are you sure you want to enable user(s) {}?".format(
+                    ", ".join(selectedUsers)
+                ),
             ).exec_()
             == QMessageBox.Yes
         ):
@@ -1936,9 +1938,10 @@ class Manager(QWidget):
             return
 
         if (
-            SimpleMessage(
-                "Are you sure you want to disable user(s) {}?".format(selectedUsers)
-                # do something about this formatting, right now it's just a python list
+            SimpleQuestion(
+                "Are you sure you want to disable user(s) {}?".format(
+                    ", ".join(selectedUsers)
+                )
             ).exec_()
             == QMessageBox.Yes
         ):
