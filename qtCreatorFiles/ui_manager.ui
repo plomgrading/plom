@@ -558,7 +558,7 @@
               </spacer>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton">
+              <widget class="QPushButton" name="removeDanglingB">
                <property name="text">
                 <string>Remove page</string>
                </property>

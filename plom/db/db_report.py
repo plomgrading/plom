@@ -107,24 +107,29 @@ def RgetDanglingPages(self):
                         "group": gref.gid,
                         "type": "tpage",
                         "page": pref.page_number,
+                        "code": f"t.{pref.page_number}"
                     }
                 )
         for pref in gref.hwpages:
+            q = gref.qgroups[0].question
             dangling.append(
                 {
                     "test": pref.test.test_number,
                     "group": gref.gid,
                     "type": "hwpage",
                     "order": pref.order,
+                    "code": f"h.{q}.{pref.order}"
                 }
             )
         for pref in gref.expages:
+            q = gref.qgroups[0].question
             dangling.append(
                 {
                     "test": pref.test.test_number,
                     "group": gref.gid,
                     "type": "expage",
                     "order": pref.order,
+                    "code": f"e.{q}.{pref.order}"
                 }
             )
     # return list sorted by test-number

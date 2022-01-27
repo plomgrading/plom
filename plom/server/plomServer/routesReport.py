@@ -79,9 +79,9 @@ class ReportHandler:
             return web.Response(status=401)
         # The response is a list of dictionaries of the form:
         # [
-        # {'test': number, 'type': 'tpage', 'page': number},
-        # {'test': number, 'type': 'hwpage', 'order': number},
-        # {'test': number, 'type': 'expage', 'order': number}
+        # {'test': number, 'type': 'tpage', 'page': number, 'code': blah, 'group': blah},
+        # {'test': number, 'type': 'hwpage', 'order': number, 'code': blah, 'group': blah},
+        # {'test': number, 'type': 'expage', 'order': number, 'code': blah, 'group': blah}
         # ]
         return web.json_response(self.server.RgetDanglingPages(), status=200)
 
