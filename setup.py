@@ -86,7 +86,7 @@ server_install_requires = [
 setup(
     name="plom",
     version=__version__,  # noqa: F821
-    description="Plom is PaperLess Open Marking",
+    description="Plom is Paperless Open Marking",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://plomgrading.org",
