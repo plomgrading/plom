@@ -210,11 +210,8 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
         qref_list.append(qref)
 
     for question, qref in zip(questions, qref_list):
-        # TODO: version not here?
-        version = qref.version
-        gref = qref.group
         # TODO: we may want to relax this restriction later, Issue #1900 et al
-        if not gref.scanned:
+        if not qref.group.scanned:
             msg = f"Cannot attach extra page to test {test_number} "
             msg += f"question {question} b/c it is missing pages. "
             msg += "You must upload all Test Pages of a question "
