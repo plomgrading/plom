@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
 
-from plom.db.tables import Group, IDGroup, QGroup, Test, TPage, User
+from plom.db.tables import EXPage, Group, HWPage, IDGroup, QGroup, Test, TPage, User
 
 
 log = logging.getLogger("DB")
@@ -563,3 +563,64 @@ def RgetUserFullProgress(self, user_name):
 
 
 ###
+
+
+def RgetDanglingPages(self):
+    """Find all pages that belong to groups that are not marked/IDd"""
+    # define aux function for checking the group status
+    def isGroupComplete(gref):
+        """Check to see if the given group is complete. More precisely, it should be scanned, and
+        * if it is an ID-group, then it should be identified
+        * if it is a DNM-group then all pages should be scanned
+        * if it is a Q-Group then all pages should be scanned and it should be marked
+        """
+        # first make sure the group is scanned
+        if gref.scanned is False:
+            return False
+        # now check
+        if gref.group_type == "i":
+            stat = gref.idgroups[0].status
+        elif gref.group_type == "q":
+            stat = gref.qgroups[0].status
+        else:  # must be a dnm group - so if scanned it is done.
+            stat = "done"
+
+        # if status is done - then all is good.
+        if stat == "done":
+            return True
+        else:
+            return False
+
+    # now make a list of dangling pages
+    dangling = []
+    for pref in TPage.select().where(Test.scanned == True):  # noqa: E712
+        if isGroupComplete(pref.group) is False:
+            dangling.append(
+                {
+                    "test": pref.test.test_number,
+                    "group": pref.group.gid,
+                    "type": "tpage",
+                    "page": pref.page_number,
+                }
+            )
+    for pref in HWPage.select():
+        if isGroupComplete(pref.group) is False:
+            dangling.append(
+                {
+                    "test": pref.test.test_number,
+                    "group": pref.group.gid,
+                    "type": "hwpage",
+                    "order": pref.order,
+                }
+            )
+    for pref in EXPage.select():
+        if isGroupComplete(pref.group) is False:
+            dangling.append(
+                {
+                    "test": pref.test.test_number,
+                    "group": pref.group.gid,
+                    "type": "expage",
+                    "order": pref.order,
+                }
+            )
+    return dangling
