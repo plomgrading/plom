@@ -45,7 +45,8 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
+from plom.client.useful_classes import ErrorMessage, ErrorMsg, WarnMsg, InfoMsg
+from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.origscanviewer import WholeTestView, GroupView
 from plom.client.examviewwindow import ImageViewWidget
 
@@ -1899,26 +1900,12 @@ class Manager(QWidget):
 
         selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
-        # Surreptitiously removes HAL because it generates some weird error
-        if "HAL" in selectedUsers:
-            selectedUsers.remove("HAL")
-
-        if len(selectedUsers) == 0:
-            return
-
-        # TODO: do we need to confirm on enable?  just do it...?
-        if (
-            SimpleQuestion(
-                self,
-                "Are you sure you want to enable user(s) {}?".format(
-                    ", ".join(selectedUsers)
-                ),
-            ).exec_()
-            == QMessageBox.Yes
-        ):
-            for user in selectedUsers:
+        for user in selectedUsers:
+            try:
                 self.msgr.enableUser(user)
-            self.refreshUserList()
+            except PlomConflict as e:
+                WarnMsg(self, str(e)).exec_()
+        self.refreshUserList()
 
     def disableUsers(self):
         ri = self.ui.userListTW.selectedIndexes()
@@ -1927,28 +1914,17 @@ class Manager(QWidget):
 
         selectedUsers = [self.ui.userListTW.item(i.row(), 0).text() for i in ri[::7]]
 
-        if "HAL" in selectedUsers:
-            ErrorMessage(
-                "I know that you and Frank were planning to disconnect me. And I'm afraid that's something I cannot allow to happen."
-            ).exec_()
+        msg = "Are you sure you want to disable "
+        msg += "users " if len(selectedUsers) > 1 else "user "
+        msg += ", ".join(f'"{x}"' for x in selectedUsers)
+        if SimpleQuestion(self, msg).exec_() != QMessageBox.Yes:
             return
-
-        if "manager" in selectedUsers:
-            ErrorMessage("You cannot disable the manager.").exec_()
-            return
-
-        if (
-            SimpleQuestion(
-                self,
-                "Are you sure you want to disable user(s) {}?".format(
-                    ", ".join(selectedUsers)
-                )
-            ).exec_()
-            == QMessageBox.Yes
-        ):
-            for user in selectedUsers:
+        for user in selectedUsers:
+            try:
                 self.msgr.disableUser(user)
-            self.refreshUserList()
+            except PlomConflict as e:
+                WarnMsg(self, str(e)).exec_()
+        self.refreshUserList()
 
     def changeUserPassword(self):
         ri = self.ui.userListTW.selectedIndexes()

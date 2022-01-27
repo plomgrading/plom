@@ -94,14 +94,11 @@ class UserInitHandler:
         log_request("enableUser", request)
         data = await request.json()
         if not data["user"] == "manager":
-            return web.Response(status=400)  # malformed request.
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
         theuser = request.match_info["user"]
-        if theuser in [
-            "manager",
-            "HAL",
-        ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
-            return web.Response(status=400)  # malformed request.
-        log.info('Enable user "{}"'.format(theuser))
+        if theuser in ("manager", "HAL"):
+            raise web.HTTPBadRequest(reason="HAL/manager cannot be enabled/disabled")
+        log.info('Enabling user "%s"', theuser)
         self.server.setUserEnable(theuser, True)
         return web.Response(status=200)
 
@@ -110,14 +107,15 @@ class UserInitHandler:
         log_request("disableUser", request)
         data = await request.json()
         if not data["user"] == "manager":
-            return web.Response(status=400)  # malformed request.
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
         theuser = request.match_info["user"]
-        if theuser in [
-            "manager",
-            "HAL",
-        ]:  # cannot switch manager off... Just what do you think you're doing, Dave?
-            return web.Response(status=400)  # malformed request.
-        log.info('Disable user "{}"'.format(theuser))
+        if theuser == "manager":
+            raise web.HTTPBadRequest(reason="Cannot disable the manager account")
+        if theuser == "HAL":
+            raise web.HTTPBadRequest(
+                reason="Just what do you think you're doing, Dave?"
+            )
+        log.info('Disabling user "%s"', theuser)
         self.server.setUserEnable(theuser, False)
         return web.Response(status=200)
 
