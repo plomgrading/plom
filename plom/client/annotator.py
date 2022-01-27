@@ -672,7 +672,7 @@ class Annotator(QWidget):
             ErrorMessage(
                 "Warning: duplicate pages detected!",
                 info=info,
-                info_preformatted=False,
+                info_pre=False,
                 details=f"Annotator's image_md5_list is\n  {image_md5_list}\n"
                 "The src_img_data is\n  {self.src_img_data}\n"
                 "Include this info if you think this is a bug!",

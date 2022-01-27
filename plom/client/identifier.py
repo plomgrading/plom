@@ -44,7 +44,8 @@ from plom import isValidStudentNumber
 from plom.rules import censorStudentName as censorName
 
 from .examviewwindow import ImageViewWidget
-from .useful_classes import ErrorMessage, SimpleQuestion, WarningQuestion
+from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
+from .useful_classes import SimpleQuestion, WarningQuestion
 from .useful_classes import BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
 from .origscanviewer import WholeTestView
@@ -385,7 +386,7 @@ class IDClient(QWidget):
             imageDat = self.msgr.request_ID_image(test)
         except PlomBenignException as e:
             log.error("Somewhat unexpected error getting image for %s: %s", test, e)
-            ErrorMessage(f'Unexpected but benign exception:\n"{e}"').exec_()
+            WarnMsg(self, f'Unexpected but benign exception:\n"{e}"').exec_()
             # self.exM.removePaper(r)
             return
 
@@ -445,7 +446,7 @@ class IDClient(QWidget):
         if m == 0:
             v, m = (0, 1)  # avoid (0, 0) indeterminate animation
             self.ui.idProgressBar.setFormat("No papers to identify")
-            ErrorMessage("No papers to identify.").exec_()
+            InfoMsg(self, "No papers to identify.").exec_()
         else:
             self.ui.idProgressBar.resetFormat()
         self.ui.idProgressBar.setMaximum(m)
@@ -468,12 +469,13 @@ class IDClient(QWidget):
             try:
                 test = self.msgr.IDaskNextTask()
                 if not test:  # no tasks left
-                    ErrorMessage("No more tasks left on server.").exec_()
+                    InfoMsg(self, "No more tasks left on server.").exec_()
                     return False
             except PlomSeriousException as err:
                 log.exception("Unexpected error getting next task: %s", err)
-                ErrorMessage(
-                    f"Unexpected error getting next task:\n{err}\nClient will now crash!"
+                ErrorMsg(
+                    self,
+                    f"Unexpected error getting next task:\n{err}\nClient will now crash!",
                 ).exec_()
                 raise
 
@@ -574,7 +576,7 @@ class IDClient(QWidget):
             self.msgr.IDreturnIDdTask(code, sid, sname)
         except PlomBenignException as err:
             log.error("Somewhat unexpected error when returning %s: %s", code, err)
-            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
+            WarnMsg(self, f'Unexpected but benign exception:\n"{err}"').exec_()
             # If an error, revert the student and clear things.
             self.exM.revertStudent(index)
             return False
@@ -604,8 +606,10 @@ class IDClient(QWidget):
         """
         # check that the student name / id line-edit has some text.
         if len(self.ui.idEdit.text()) == 0:
-            ErrorMessage(
-                'Please use the "blank page" button if student has not given their name or ID.'
+            InfoMsg(
+                self,
+                'Please use the "Blank page" button if student has not '
+                "given their name or ID.",
             ).exec_()
             return
 
@@ -682,10 +686,12 @@ class IDClient(QWidget):
 
             # check if SID is actually in classlist.
             if sid in self.student_id_to_snid:
-                ErrorMessage(
-                    'ID "{}" is in class list as "{}"'.format(
-                        sid, self.student_id_to_snid[sid]
-                    )
+                WarnMsg(
+                    self,
+                    f"<p>ID &ldquo;{sid}&rdquo; is in classlist as "
+                    f"&ldquo;{self.student_id_to_snid[sid]}&rdquo;.</p>"
+                    "<p>Cannot enter them into the classlist without "
+                    "a unique ID.</p>",
                 ).exec_()
                 return
             snid = f"{sid}: {sname}"
@@ -715,7 +721,7 @@ class IDClient(QWidget):
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(testNumber)
         except PlomBenignException as err:
             log.error("Somewhat unexpected error when viewing %s: %s", testNumber, err)
-            ErrorMessage(f'Unexpected but benign exception:\n"{err}"').exec_()
+            WarnMsg(self, f'Unexpected but benign exception:\n"{err}"').exec_()
             return
 
         labels = [x[0] for x in pageData]
