@@ -167,14 +167,14 @@ def testOwnersLoggedIn(self, tref):
     return logged_in_list
 
 
-def moveUnknownToExtraPage(self, file_name, test_number, question):
+def moveUnknownToExtraPage(self, file_name, test_number, questions):
     """Map an unknown page onto an extra page.
 
     args:
         file_name (str): a path and filename to a an image, e.g.,
             "pages/unknownPages/unk.16d85240.jpg"
         test_number (int):
-        question (int):
+        questions (list): list of ints to map this page onto.
 
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
@@ -202,46 +202,56 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
         msg += ", ".join(owners)
         return (False, "owners", msg)
 
-    # find the qgroup to which the new page should belong
-    qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:
-        return (False, "notfound", f"Cannot find question {question}")
-    version = qref.version
-    gref = qref.group
-    # TODO: we may want to relax this restriction later, Issue #1900 et al
-    if not gref.scanned:
-        msg = f"Cannot attach extra page to test {test_number} question {question}: "
-        msg += "it is missing pages. "
-        msg += "You must upload all Test Pages of a question "
-        msg += "(or at least one HW Page) before adding extra pages."
-        return (False, "unscanned", msg)
-    # find the last expage in that group - if there are expages
-    if gref.expages.count() == 0:
-        order = 1
-    else:
-        order = (
-            EXPage.select()
-            .where(EXPage.group == gref)
-            .order_by(EXPage.order.desc())
-            .get()
-            .order
-            + 1
-        )
+    qref_list = []
+    for question in questions:
+        qref = QGroup.get_or_none(test=tref, question=question)
+        if qref is None:
+            return (False, "notfound", f"Cannot find question {question}")
+        qref_list.append(qref)
 
-    # now create the expage, delete upage
+    for question, qref in zip(questions, qref_list):
+        # TODO: version not here?
+        version = qref.version
+        gref = qref.group
+        # TODO: we may want to relax this restriction later, Issue #1900 et al
+        if not gref.scanned:
+            msg = f"Cannot attach extra page to test {test_number} "
+            msg += f"question {question} b/c it is missing pages. "
+            msg += "You must upload all Test Pages of a question "
+            msg += "(or at least one HW Page) before adding extra pages."
+            return (False, "unscanned", msg)
+
     with plomdb.atomic():
-        EXPage.create(
-            test=tref, group=qref.group, version=version, order=order, image=iref
-        )
-        uref.delete_instance()
-        log.info(
-            "Moving unknown page {} to extra page {} of question {} of test {}".format(
-                file_name, order, question, test_number
+        groups_to_update = self.get_groups_using_image(iref)
+        for question, qref in zip(questions, qref_list):
+            version = qref.version
+            # find the last expage in that group - if there are expages
+            if qref.group.expages.count() == 0:
+                order = 1
+            else:
+                order = (
+                    EXPage.select()
+                    .where(EXPage.group == qref.group)
+                    .order_by(EXPage.order.desc())
+                    .get()
+                    .order
+                    + 1
+                )
+
+            EXPage.create(
+                test=tref, group=qref.group, version=version, order=order, image=iref
             )
-        )
-    # update the groups containing the new extra-page
-    groups_to_update = self.get_groups_using_image(iref)
-    groups_to_update.add(qref.group)
+            log.info(
+                "Moving unknown page %s to extra page %s of test %s question %s",
+                file_name,
+                order,
+                test_number,
+                question,
+            )
+            groups_to_update.add(qref.group)
+        log.info("Removing %s from UnknownPages", file_name)
+        uref.delete_instance()
+    # update the groups containing the new extra-pages
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return (True, None, None)
 
