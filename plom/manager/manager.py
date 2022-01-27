@@ -1939,6 +1939,7 @@ class Manager(QWidget):
 
         if (
             SimpleQuestion(
+                self,
                 "Are you sure you want to disable user(s) {}?".format(
                     ", ".join(selectedUsers)
                 )
