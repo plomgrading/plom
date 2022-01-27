@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """Plom's frontend scanning routines for self-scanned work.
 
@@ -29,7 +29,7 @@ from plom.scan.sendPagesToServer import (
 )
 from plom.scan.bundle_utils import (
     get_bundle_dir,
-    make_bundle_dir,
+    # make_bundle_dir,
     bundle_name_and_md5_from_file,
     archiveHWBundle,
 )
@@ -57,6 +57,9 @@ def canonicalize_question_list(s, pages, numquestions):
         pages (int): how many pages, used for checking input.
         numquestins (int): how many questions total, used for checking
             input.
+
+    returns:
+        A list of lists.
     """
     s = _parse_questions(s)
     if s == "all":

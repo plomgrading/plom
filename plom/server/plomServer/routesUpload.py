@@ -168,16 +168,12 @@ class UploadHandler:
         question is somewhat known too, at least within its upload bundle.
 
         Args:
-            request (aiohttp.web_request.Request)
+            request (aiohttp.web_request.Request): a multipart thing
+                The ``questions`` field is a list of questions.
 
         Returns:
             aiohttp.web_response.Response: JSON data directly from the
                 database call.
-
-        The requests data has a `question` field, which can be a scalar
-        or a list of questions we wish to upload too.  Maybe the scalar
-        is deprecated?
-        TODO: force it to always be a list?
 
         Note: this uses the `status=200` success return code for some
         kinds of failures: it simply returns whatever data the DB gave
@@ -197,7 +193,7 @@ class UploadHandler:
                 "user",
                 "token",
                 "sid",
-                "question",
+                "questions",
                 "order",
                 "fileName",
                 "md5sum",
@@ -218,7 +214,7 @@ class UploadHandler:
         # file it away.
         rmsg = self.server.addHWPage(
             param["sid"],
-            param["question"],
+            param["questions"],
             param["order"],
             param["fileName"],
             image,

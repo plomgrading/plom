@@ -264,8 +264,6 @@ def uploadHWPage(
             ),
         ]
 
-    if not isinstance(questions, list):
-        questions = [questions]
     if len(questions) >= 1:
         log.info(
             'upload: tef={} going to loop over questions="{}"'.format(tref, questions)

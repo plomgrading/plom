@@ -199,7 +199,7 @@ class ScanMessenger(BaseMessenger):
 
         return response.json()
 
-    def uploadHWPage(self, sid, question, order, f, md5sum, bundle, bundle_order):
+    def uploadHWPage(self, sid, questions, order, f, md5sum, bundle, bundle_order):
         """Upload a homework page: self-scanned, known student, and known(-ish) questions.
 
         This is intended for "homework pages", often self-scanned or
@@ -214,7 +214,7 @@ class ScanMessenger(BaseMessenger):
 
         args:
             sid (str): which student to attach this image to.
-            question (list): a list of questions (ints) to attach to.
+            questions (list): a list of questions (ints) to attach to.
             order (int): something like "page number" except that HWPages
                 do not map directly onto page numbers.  It is used to order these page
                 images in the marker UI for example: pages with smaller order
@@ -239,7 +239,7 @@ class ScanMessenger(BaseMessenger):
                     "token": self.token,
                     "fileName": f.name,
                     "sid": sid,
-                    "question": question,
+                    "questions": questions,
                     "order": order,
                     "md5sum": md5sum,
                     "bundle": bundle,
