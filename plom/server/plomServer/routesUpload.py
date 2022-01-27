@@ -168,16 +168,12 @@ class UploadHandler:
         question is somewhat known too, at least within its upload bundle.
 
         Args:
-            request (aiohttp.web_request.Request)
+            request (aiohttp.web_request.Request): a multipart thing
+                The ``questions`` field is a list of questions.
 
         Returns:
             aiohttp.web_response.Response: JSON data directly from the
                 database call.
-
-        The requests data has a `question` field, which can be a scalar
-        or a list of questions we wish to upload too.  Maybe the scalar
-        is deprecated?
-        TODO: force it to always be a list?
 
         Note: this uses the `status=200` success return code for some
         kinds of failures: it simply returns whatever data the DB gave
@@ -197,7 +193,7 @@ class UploadHandler:
                 "user",
                 "token",
                 "sid",
-                "question",
+                "questions",
                 "order",
                 "fileName",
                 "md5sum",
@@ -218,7 +214,7 @@ class UploadHandler:
         # file it away.
         rmsg = self.server.addHWPage(
             param["sid"],
-            param["question"],
+            param["questions"],
             param["order"],
             param["fileName"],
             image,
@@ -729,14 +725,14 @@ class UploadHandler:
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     async def unknownToHWPage(self, request):
-        """Map an unknown page onto a HomeworkPage.
+        """Map an unknown page onto one or more HomeworkPages.
 
         args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
                     fileName (str): identifies the UnknownPage.
                     test (str): paper number to map onto (int passed as str).
-                    question (str): question number (again, an int)
+                    questions (list): question numbers, ints.
                     rotation (str): an integer, presumably a multiple of 90
                         0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
                         to support immutable server side images (with in-DB
@@ -750,7 +746,7 @@ class UploadHandler:
         """
         data = await request.json()
         if not validate_required_fields(
-            data, ["user", "token", "fileName", "test", "question", "rotation"]
+            data, ["user", "token", "fileName", "test", "questions", "rotation"]
         ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
@@ -758,8 +754,11 @@ class UploadHandler:
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="I can only speak to the manager")
 
+        if len(data["questions"]) > 1:
+            raise web.HTTPBadRequest(reason="list of questions not implemented yet!")
+
         status, code, msg = self.server.unknownToHWPage(
-            data["fileName"], data["test"], data["question"], data["rotation"]
+            data["fileName"], data["test"], data["questions"][0], data["rotation"]
         )
         if status:
             return web.Response(status=200)  # all fine
@@ -773,14 +772,14 @@ class UploadHandler:
         raise web.HTTPBadRequest(reason=f"Unexpected situation: {msg}")
 
     async def unknownToExtraPage(self, request):
-        """Map an unknown page onto an extra page.
+        """Map an unknown page onto one or more extra pages.
 
         args:
             request (aiohttp.web_request.Request): This has the usual "user"
                 and "token" fields but also:
                     fileName (str): identifies the UnknownPage.
                     test (str): paper number to map onto (int passed as str).
-                    question (str): question number (again, an int)
+                    questions (list): question numbers, a list of integers.
                     rotation (str): an integer, presumably a multiple of 90
                         0, 90, -90, 180, 270, etc.  TODO: needs an overhaul
                         to support immutable server side images (with in-DB
@@ -791,14 +790,14 @@ class UploadHandler:
                 401 for authentication, or 403 is not manager.  406 if we
                 can't do the move due to users logged in.   409 if paper
                 number or question number do not exist (e.g., out of range).
-                Also, 409 is question not scanned (so cannot attach extra
-                page).  This is important as otherwise we can bipass the
-                scanned mechanism and a test of only extra pages could be
-                overlooked (not graded nor returned).
+                Also, 409 if one or more questions not scanned (so cannot
+                attach extra page).  This is important as otherwise we can
+                bypass the scanned mechanism and a test of only extra pages
+                could be overlooked (not graded nor returned).
         """
         data = await request.json()
         if not validate_required_fields(
-            data, ["user", "token", "fileName", "test", "question", "rotation"]
+            data, ["user", "token", "fileName", "test", "questions", "rotation"]
         ):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
@@ -806,8 +805,11 @@ class UploadHandler:
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="I can only speak to the manager")
 
+        if len(data["questions"]) > 1:
+            raise web.HTTPBadRequest(reason="list of questions not implemented yet!")
+
         status, code, msg = self.server.unknownToExtraPage(
-            data["fileName"], data["test"], data["question"], data["rotation"]
+            data["fileName"], data["test"], data["questions"][0], data["rotation"]
         )
         if status:
             return web.Response(status=200)

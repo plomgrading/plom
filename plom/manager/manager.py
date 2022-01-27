@@ -1008,7 +1008,7 @@ class Manager(QWidget):
                     self.msgr.unknownToExtraPage(
                         self.unknownModel.item(r, 0).text(),
                         self.unknownModel.item(r, 4).text(),
-                        self.unknownModel.item(r, 5).text(),
+                        [int(self.unknownModel.item(r, 5).text())],
                         self.unknownModel.item(r, 3).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
@@ -1036,7 +1036,7 @@ class Manager(QWidget):
                     self.msgr.unknownToHWPage(
                         self.unknownModel.item(r, 0).text(),
                         self.unknownModel.item(r, 4).text(),
-                        self.unknownModel.item(r, 5).text(),
+                        [int(self.unknownModel.item(r, 5).text())],
                         self.unknownModel.item(r, 3).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
