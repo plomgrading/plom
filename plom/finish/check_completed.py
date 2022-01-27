@@ -73,13 +73,16 @@ def print_still_out(outToDo):
 
 def print_dangling(dangling):
     if len(dangling) == 0:
-        print("*******************************")
-        print('** No dangling pages         **')
+        print("***********************")
+        print('** No dangling pages **')
         return
-    print("*********************")
-    print("** Dangling pages **")
+    print("******************************")
+    print("** WARNING - Dangling pages **")
     for x in dangling:
-        print(x)
+        if x['type'] == 'tpage':
+            print(". tpage: t{} p{} of group {}".format(x['test'], x['page'], x['group']))
+        else:
+            print(". {}: t{} o{} of group {}]".format(x['type'], x['test'], x['order'], x['group']))
 
 
 def main(server=None, password=None):
