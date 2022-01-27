@@ -1,91 +1,97 @@
 \documentclass[12pt,letterpaper]{article}
 
-\usepackage[letterpaper,left=28mm,right=22mm,top=8mm,bottom=7mm]{geometry}
-\usepackage{graphicx}
+\usepackage[letterpaper,left=28mm,right=28mm,top=10mm,bottom=2mm]{geometry}
 \usepackage{color}
 \usepackage{amsmath}
+\usepackage{tikz}
 
 %%%%%%%%%%%%%
 
 \newcommand{\digitbox}{%
   \fbox{
   \rule[-1.5ex]{0pt}{4ex}
-  \hspace{2ex}}}
+  \hspace{1.8ex}}}
 
-\newcommand{\bigdigitbox}{%
-  \fbox{
-  \rule[-2ex]{0pt}{5ex}
-  \hspace{3ex}}}
+\pagestyle{empty}
+
+\newcommand{\extraextra}{
+\begin{center}
+  \textbf{Only 1 question per page!} \\[2ex]
+
+  \centerline{%
+  \begin{tabular}{lll}
+    Test \#  &
+    Q.\#  &
+    Student \#  \\
+    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
+    \hspace{1ex} &
+    \fbox{\digitbox\,\digitbox}
+    \hspace{8ex} &
+    \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
+      \digitbox\,\digitbox\,\digitbox\,\digitbox}
+  \end{tabular}%
+  }
+
+  \bigskip
+
+  \hfill\quad
+  Name: \fbox{ \rule[-2.5ex]{0pt}{6ex}\hspace{38.2ex} }
+\end{center}
+
+\hrule
+
+\vfill
+
+\hrule
+\begin{center}
+  \textbf{If you need more space, use back or another sheet.}
+\end{center}
+
+
+\begin{tikzpicture}[remember picture, overlay]
+  \node[anchor=north west, xshift=4mm, yshift=-4mm] at (current page.north west) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (2.5,0);
+      \coordinate (c) at (0,-2.5);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+  \node[anchor=north east, xshift=-4mm, yshift=-4mm] at (current page.north east) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (-2.5,0);
+      \coordinate (c) at (0,-2.5);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+  \node[anchor=south west, xshift=4mm, yshift=4mm] at (current page.south west) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (2.5,0);
+      \coordinate (c) at (0,2.5);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+  \node[anchor=south east, xshift=-4mm, yshift=4mm] at (current page.south east) {
+    \begin{tikzpicture}
+      \coordinate (a) at (0,0);
+      \coordinate (b) at (-2.5,0);
+      \coordinate (c) at (0,2.5);
+      \filldraw[draw=black, fill=gray!30] (a)--(b)--(c)--(a);
+    \end{tikzpicture}
+  };
+\end{tikzpicture}
+}
 
 
 \begin{document}
 
-
-% \begin{flushleft}
-%   \begin{tabular}{rlrl}
-%     Test \# & \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
-%     &
-%     Student \#:& \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
-%                     \digitbox\,\digitbox\,\digitbox\,\digitbox} \\[4ex]
-%     Q.\# & \fbox{\bigdigitbox\,\bigdigitbox} &
-%     Name: & \fbox{ \rule[-2ex]{0pt}{5ex}\hspace{40ex} }
-%     \end{tabular}
-% \end{flushleft}
-
-
-\begin{flushleft}
-\noindent
-Test \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
-  \quad
-Student \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
-                    \digitbox\,\digitbox\,\digitbox\,\digitbox}
-   \\[4ex]
-\noindent
-\phantom{est}Q.\#  \fbox{\bigdigitbox\,\bigdigitbox}
-\quad
-Name: \fbox{ \rule[-2.5ex]{0pt}{6ex}\hspace{52ex} }
-\end{flushleft}
-
-\begin{center}
-  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
-\end{center}
-
-\hrule
-
-\vfill
-
-\hrule
-
-
-
+\extraextra
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 % Now same again to help ensure people print it double-sided
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\begin{flushleft}
-\noindent
-Test \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox}
-  \quad
-Student \# \fbox{\digitbox\,\digitbox\,\digitbox\,\digitbox\,%
-                    \digitbox\,\digitbox\,\digitbox\,\digitbox}
-   \\[4ex]
-\noindent
-\phantom{est}Q.\#  \fbox{\bigdigitbox\,\bigdigitbox}
-\quad
-Name: \fbox{ \rule[-2.5ex]{0pt}{6ex}\hspace{52ex} }
-\end{flushleft}
-
-\begin{center}
-  \textbf{Only 1 question per page! If you need more space, use back or another sheet.}
-\end{center}
-
-\hrule
-
-\vfill
-
-\hrule
-
+\extraextra
 
 \end{document}

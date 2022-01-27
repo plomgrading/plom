@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 import csv
 from pathlib import Path
@@ -42,7 +42,8 @@ def test_empty_prediction_list(tmpdir):
     create_blank_predictions(tmpdir)
     pl = Path(tmpdir) / "predictionlist.csv"
     assert pl.exists()
-    count = len(open(pl, "r").readlines())
+    with open(pl, "r") as f:
+        count = len(f.readlines())
     assert count == 1
 
 

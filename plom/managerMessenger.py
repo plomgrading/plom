@@ -43,8 +43,6 @@ class ManagerMessenger(BaseMessenger):
             str: a big block of largely useless status or summary info
                 from the database commands.
 
-        TODO: would be more symmetric to use PUT:/admin/pageVersionMap
-
         Raises:
             PlomExistingDatabase: already has a populated database.
             PlomServerNotReady: e.g., has no spec.
@@ -983,12 +981,12 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find test/page {}/{}.".format(test, page)
-                ) from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomOwnersLoggedInException(response.reason) from None
             if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1013,12 +1011,12 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomOwnersLoggedInException(response.reason) from None
             if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find test/question {}/{}.".format(test, question)
-                ) from None
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1041,12 +1039,12 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find test/question {}/{}.".format(test, question)
-                ) from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomOwnersLoggedInException(response.reason) from None
             if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1069,12 +1067,12 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find test/page {}/{}.".format(test, page)
-                ) from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomOwnersLoggedInException(response.reason) from None
             if response.status_code == 409:
-                raise PlomOwnersLoggedInException(response.json()) from None
+                raise PlomConflict(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1460,35 +1458,35 @@ class ManagerMessenger(BaseMessenger):
         return img
 
     def putSolutionImage(self, question, version, fileName):
-        self.SRmutex.acquire()
-        try:
-            param = {
-                "user": self.user,
-                "token": self.token,
-                "question": question,
-                "version": version,
-                "md5sum": hashlib.md5(open(fileName, "rb").read()).hexdigest(),
-            }
-
-            dat = MultipartEncoder(
-                fields={
-                    "param": json.dumps(param),
-                    "image": open(fileName, "rb"),  # image
-                }
-            )
-            response = self.put(
-                "/admin/solution",
-                json={"user": self.user, "token": self.token},
-                data=dat,
-                headers={"Content-Type": dat.content_type},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+        with self.SRmutex:
+            try:
+                with open(fileName, "rb") as fh:
+                    param = {
+                        "user": self.user,
+                        "token": self.token,
+                        "question": question,
+                        "version": version,
+                        "md5sum": hashlib.md5(fh.read()).hexdigest(),
+                    }
+                    # reset stream position to start before reading again
+                    fh.seek(0)
+                    dat = MultipartEncoder(
+                        fields={
+                            "param": json.dumps(param),
+                            "image": fh,
+                        }
+                    )
+                    response = self.put(
+                        "/admin/solution",
+                        json={"user": self.user, "token": self.token},
+                        data=dat,
+                        headers={"Content-Type": dat.content_type},
+                    )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def deleteSolutionImage(self, question, version):
         self.SRmutex.acquire()

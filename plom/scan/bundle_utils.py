@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
 from pathlib import Path
@@ -92,21 +92,23 @@ def bundle_name_and_md5_from_file(filename):
     if not filename.is_file():
         raise FileNotFoundError("not found or not a file/symlink")
     bundle_name = bundle_name_from_file(filename)
-    md5 = hashlib.md5(open(filename, "rb").read()).hexdigest()
+    with open(filename, "rb") as fh:
+        md5 = hashlib.md5(fh.read()).hexdigest()
     return (bundle_name, md5)
 
 
-def _archiveBundle(file_name, *, basedir=Path("."), subdir=Path(".")):
+def _archiveBundle(filename, *, basedir=Path("."), subdir=Path(".")):
     """Archive the bundle pdf.
 
     The bundle.pdf is moved into the archive directory, or a subdir
     The archive.toml file is updated with the file name and md5sum.
     """
-    md5 = hashlib.md5(open(file_name, "rb").read()).hexdigest()
+    with open(filename, "rb") as fh:
+        md5 = hashlib.md5(fh.read()).hexdigest()
     (basedir / archivedir).mkdir(exist_ok=True)
     (basedir / archivedir / subdir).mkdir(exist_ok=True)
-    move_to = subdir / Path(file_name).name
-    shutil.move(file_name, basedir / archivedir / move_to)
+    move_to = subdir / Path(filename).name
+    shutil.move(filename, basedir / archivedir / move_to)
     try:
         arch = toml.load(basedir / archivedir / "archive.toml")
     except FileNotFoundError:

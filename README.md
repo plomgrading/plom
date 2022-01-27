@@ -1,4 +1,4 @@
-# PaperLess Open Marking - [Plom](https://plomgrading.org)
+# Paperless Open Marking - [Plom](https://plomgrading.org)
 
   * Plom is a system for large-scale marking by humans of handwritten work.
   * Designed for giving consistent, meaningful feedback to students.
@@ -16,7 +16,7 @@
   * Easy multi-versioned tests -- designed to handle crowded classrooms
     and multi-section courses over multiple days.
   * Simplify logistics and minimizes paper-handling.
-  * Free -- Plom is both [Libre](https://en.wikipedia.org/wiki/Gratis_versus_libre#Libre)
+  * Free -- Plom is [Libre](https://en.wikipedia.org/wiki/Gratis_versus_libre#Libre)
     and [Gratis](https://en.wikipedia.org/wiki/Gratis_versus_libre#Gratis).
     No software to buy, and no subscriptions to pay.
 
@@ -29,9 +29,9 @@ Take a look at the [plomgrading.org](https://plomgrading.org).
 ## Translations
 
 If you'd like to help translate Plom into another language,
-please if you can help at https://gitlab.com/plom/plom/-/issues/1725
+please help at https://gitlab.com/plom/plom/-/issues/1725
 
-The AppStream metainfo and `.desktop` files (used for example on
+The metainfo files (used for example on
 [Flathub](https://flathub.org/apps/details/org.plomgrading.PlomClient))
 can be translated by editing
 [here](https://gitlab.com/plom/plom/-/blob/main/org.plomgrading.PlomClient.metainfo.xml)

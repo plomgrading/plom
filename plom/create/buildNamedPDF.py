@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2019-2020 Andrew Rechnitzer
+# Copyright (C) 2019-2022 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -12,6 +12,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 from plom.create import paperdir as paperdir_name
+from plom.specVerifier import build_page_to_version_dict
 from .mergeAndCodePages import make_PDF
 
 
@@ -34,15 +35,6 @@ def outputProductionCSV(spec, make_PDF_args):
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
         make_PDF_args (list): a list of tuples of info for each paper
     """
-    # a tuple in make_pdf_args is a tuple
-    # 0 - spec["name"],
-    # 1 - spec["publicCode"],
-    # 2 - spec["numberOfPages"],
-    # 3 - spec["numberOfVersions"],
-    # 4 - paper_index,
-    # 5 - page_version = dict(page:version)
-    # 6 - student_info = dict(id:sid ,name:sname)
-    # we only need the last 3 of these
     numberOfPages = spec["numberOfPages"]
     numberOfQuestions = spec["numberOfQuestions"]
 
@@ -51,26 +43,31 @@ def outputProductionCSV(spec, make_PDF_args):
         header.append("q{}.version".format(q))
     for p in range(1, numberOfPages + 1):
         header.append("p{}.version".format(p))
+    # start writing to the csv
     with open("produced_papers.csv", "w") as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(header)
         for paper in make_PDF_args:
-            if paper[6]:  # if named paper then give id and name
-                row = [paper[4], paper[6]["id"], paper[6]["name"]]
+            # args = spec, paper_index, qv-map, student-info, no-qr, fakepdf, xcoord, ycoord
+            # we need only a few bits of the tuple - paper_index, qvmap and student-info
+            idx, qver, student_info = paper[1:4]
+            # make page to version from the qvmap
+            page_to_version = build_page_to_version_dict(spec, qver)
+            # print the student info if there.
+            if student_info:
+                row = [idx, student_info["id"], student_info["name"]]
             else:  # just skip those columns
-                row = [paper[4], None, None]
+                row = [idx, None, None]
             for q in range(1, numberOfQuestions + 1):
-                # get first page of question to infer version
-                p = spec["question"]["{}".format(q)]["pages"][0]
-                row.append(paper[5][p])
+                row.append(qver[q])
             for p in range(1, numberOfPages + 1):
-                row.append(paper[5][p])
+                row.append(page_to_version[p])
             csv_writer.writerow(row)
 
 
 def build_papers_backend(
     spec,
-    global_page_version_map,
+    global_question_version_map,
     classlist,
     *,
     fakepdf=False,
@@ -89,8 +86,8 @@ def build_papers_backend(
 
     Arguments:
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        global_page_version_map (dict): dict of dicts mapping first by
-            paper number (int) then by page number (int) to version (int).
+        global_question_version_map (dict): dict of dicts mapping first by
+            paper number (int) then by question number (int) to version (int).
         classlist (list, None): ordered list of (sid, sname) pairs.
 
     Keyword arguments:
@@ -119,13 +116,14 @@ def build_papers_backend(
                     spec["numberToName"]
                 )
             )
+    # mapping from pages to groups for labelling top of pages
     make_PDF_args = []
     if indexToMake is None:
         papersToMake = range(1, spec["numberToProduce"] + 1)
     else:
         papersToMake = [indexToMake]
     for paper_index in papersToMake:
-        page_version = global_page_version_map[paper_index]
+        question_version_map = global_question_version_map[paper_index]
         if paper_index <= spec["numberToName"]:
             student_info = {
                 "id": classlist[paper_index - 1][0],
@@ -135,12 +133,9 @@ def build_papers_backend(
             student_info = None
         make_PDF_args.append(
             (
-                spec["name"],
-                spec["publicCode"],
-                spec["numberOfPages"],
-                spec["numberOfVersions"],
+                spec,
                 paper_index,
-                page_version,
+                question_version_map,
                 student_info,
                 no_qr,
                 fakepdf,
@@ -154,7 +149,7 @@ def build_papers_backend(
     #     make_PDF(*x)
     num_PDFs = len(make_PDF_args)
     with Pool() as pool:
-        r = list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
+        list(tqdm(pool.imap_unordered(_make_PDF, make_PDF_args), total=num_PDFs))
     # output CSV with all this info in it
     print("Writing produced_papers.csv.")
     outputProductionCSV(spec, make_PDF_args)

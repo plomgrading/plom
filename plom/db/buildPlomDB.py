@@ -132,7 +132,7 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
             status += " Error creating idgroup"
             ok = False
 
-        if db.createDNMGroup(t, spec["doNotMark"]["pages"]):
+        if db.createDNMGroup(t, spec["doNotMarkPages"]):
             status += " DNM"
         else:
             status += "Error creating DoNotMark-group"

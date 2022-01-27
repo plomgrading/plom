@@ -155,6 +155,13 @@ def test_spec_question_label_printer_errors():
         get_question_label(s, 0)
 
 
+def test_spec_question_string():
+    s = SpecVerifier.demo()
+    with raises(ValueError):
+        get_question_label(s, "c")
+    assert get_question_label(s, "1") == get_question_label(s, 1)
+
+
 def test_spec_unique_labels():
     r = deepcopy(raw)
     r["question"]["1"]["label"] = "ExA"
@@ -184,33 +191,24 @@ def test_spec_overused_page():
 
 def test_spec_donotmark_default():
     r = deepcopy(raw)
-    r.pop("doNotMark")
+    r.pop("doNotMarkPages")
     r["question"]["1"]["pages"] = [2, 3]
     s = SpecVerifier(r)
     s.verify()
-    assert s["doNotMark"]["pages"] == []
-
-
-def test_spec_donotmark_default2():
-    r = deepcopy(raw)
-    r["doNotMark"].pop("pages")
-    r["question"]["1"]["pages"] = [2, 3]
-    s = SpecVerifier(r)
-    s.verify()
-    assert s["doNotMark"]["pages"] == []
+    assert s["doNotMarkPages"] == []
 
 
 def test_spec_invalid_donotmark():
     r = deepcopy(raw)
-    r["doNotMark"]["pages"] = "Fragments of a Hologram Rose"
+    r["doNotMarkPages"] = "Fragments of a Hologram Rose"
     with raises(ValueError) as e:
         SpecVerifier(r).verify()
     assert "not a list" in e.value.args[0]
-    r["doNotMark"]["pages"] = [2, -17]
+    r["doNotMarkPages"] = [2, -17]
     with raises(ValueError) as e:
         SpecVerifier(r).verify()
     assert "not a positive integer" in e.value.args[0]
-    r["doNotMark"]["pages"] = [2, 42]
+    r["doNotMarkPages"] = [2, 42]
     with raises(ValueError) as e:
         SpecVerifier(r).verify()
     assert "larger than" in e.value.args[0]
@@ -273,3 +271,17 @@ def test_spec_dupe_question_fails_to_load(tmpdir):
         f.writelines(lines)
     with raises(TomlDecodeError):
         SpecVerifier.from_toml_file(tmpdir / "Fawlty.toml")
+
+
+def test_spec_page_to_group_label():
+    s = SpecVerifier.demo()
+    s.group_label_from_page(1) == "ID"
+    s.group_label_from_page(2) == "DNM"
+    s.group_label_from_page(3) == "Q.1"
+    s.group_label_from_page(4) in ("Q.2", "Q(2)")
+    s.group_label_from_page(5) in ("Q.3", "Ex.3")
+    s.group_label_from_page(6) in ("Q.3", "Ex.3")
+    with raises(KeyError):
+        s.group_label_from_page(100)
+    with raises(KeyError):
+        s.group_label_from_page("3")

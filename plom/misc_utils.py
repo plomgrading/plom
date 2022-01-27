@@ -55,6 +55,34 @@ def _flatten_2len_runs(L):
     return L2
 
 
+def run_length_encoding(L):
+    """Do a run-length-encoding of a list, producing triplets value, start, end.
+
+    Examples:
+
+    >>> run_length_encoding([7, 2, 2, 2, 9, 3, 3, 3])
+    [(7, 0, 1), (2, 1, 4), (9, 4, 5), (3, 5, 8)]
+
+    >>> run_length_encoding(["a", "a", "a", "a"])
+    [('a', 0, 4)]
+
+    >>> run_length_encoding([])
+    []
+    """
+    runs = []
+    if not L:
+        return runs
+    prev = L[0]
+    start = 0
+    for i, x in enumerate(L):
+        if x != prev:
+            runs.append((prev, start, i))
+            start = i
+            prev = x
+    runs.append((prev, start, i + 1))
+    return runs
+
+
 def next_in_longest_subsequence(items):
     """Guess next entry in the longest unordered contiguous subsequence.
 

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
 import tempfile
@@ -43,7 +43,6 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
 
     for img_name in [*id_images, *marked_pages]:
         img_name = Path(img_name)
-        png_size = img_name.stat().st_size
         im = Image.open(img_name)
 
         # Rotate page not the image: we want landscape on screen
@@ -54,6 +53,13 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         pg = exam.new_page(width=w, height=h)
         rec = fitz.Rect(margin, margin, w - margin, h - margin)
 
+        pg.insert_image(rec, filename=img_name)
+
+        # TODO: useful bit of transcoding-in-memory code here: move somewhere!
+        # Its not currently useful here b/c clients try jpeg themeselves now
+        continue
+
+        png_size = img_name.stat().st_size
         # Make a jpeg in memory, and use that if its significantly smaller
         with tempfile.SpooledTemporaryFile(mode="w+b", suffix=".jpg") as jpeg_file:
             im.convert("RGB").save(

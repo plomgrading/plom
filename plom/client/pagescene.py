@@ -1,9 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2021 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+from itertools import cycle
+from pathlib import Path
 import logging
+import random
+
+import PIL.Image
 
 from PyQt5.QtCore import QEvent, QRectF, QLineF, QPointF
 from PyQt5.QtGui import (
@@ -66,6 +71,12 @@ from .tools import (
     CommandPen,
     CommandHighlight,
     CommandPenArrow,
+)
+from .elastics import (
+    which_horizontal_step,
+    which_sticky_corners,
+    which_classic_shortest_corner_side,
+    which_centre_to_centre,
 )
 
 
@@ -254,15 +265,18 @@ mousePress = {
 }
 mouseMove = {
     "box": "mouseMoveBox",
+    "cross": "mouseMoveCross",
     "delete": "mouseMoveDelete",
     "line": "mouseMoveLine",
     "pen": "mouseMovePen",
     "rubric": "mouseMoveRubric",
     "text": "mouseMoveText",
+    "tick": "mouseMoveTick",
     "zoom": "mouseMoveZoom",
 }
 mouseRelease = {
     "box": "mouseReleaseBox",
+    "cross": "mouseReleaseCross",
     "delete": "mouseReleaseDelete",
     "line": "mouseReleaseLine",
     "move": "mouseReleaseMove",
@@ -271,6 +285,7 @@ mouseRelease = {
     "zoom": "mouseReleaseZoom",
     "rubric": "mouseReleaseRubric",
     "text": "mouseReleaseText",
+    "tick": "mouseReleaseTick",
 }
 
 # things for nice rubric/text drag-box tool
@@ -284,246 +299,13 @@ mouseRelease = {
 minimum_box_side_length = 24
 
 
-def shape_to_sample_points_on_boundary(shape, N=2, corners=False):
-    """Return some points on the perimeter of a shape.
-
-    If the input is a point, just return that point.
-
-    If the input is a rectangle, dy default, list of vertices in the
-    middle of each side, but this can be adjusted.
-    """
-    if isinstance(shape, QRectF):
-        x, y, w, h = shape.getRect()
-        if corners:
-            trange = range(0, N + 1)
-        else:
-            trange = range(1, N)
-        return [
-            *(QPointF(x + w * n / N, y) for n in trange),
-            *(QPointF(x + w * n / N, y + h) for n in trange),
-            *(QPointF(x, y + h * n / N) for n in range(1, N)),
-            *(QPointF(x + w, y + h * n / N) for n in range(1, N)),
-        ]
-    elif isinstance(shape, QPointF):
-        return [shape]
-    else:
-        raise ValueError(f"Don't know how find points on perimeter of {shape}")
-
-
-def sqrDistance(vect):
-    """given a 2d-vector return l2 norm of that vector"""
-    return vect.x() * vect.x() + vect.y() * vect.y()
-
-
-def whichLineToDraw_original(g_rect, b_rect):
-    """Get approximately shortest line between two shapes.
-
-    More precisely, given two rectangles, return shortest line between the midpoints of their sides. A single-vertex is treated as a rectangle of height/width=0 for this purpose.
-    """
-    gvert = shape_to_sample_points_on_boundary(g_rect, 2, corners=False)
-    bvert = shape_to_sample_points_on_boundary(b_rect, 2, corners=True)
-    gp = gvert[0]
-    bp = bvert[0]
-    dd = sqrDistance(gp - bp)
-    for p in gvert:
-        for q in bvert:
-            dst = sqrDistance(p - q)
-            if dst < dd:
-                gp = p
-                bp = q
-                dd = dst
-    return QLineF(bp, gp)
-
-
-def get_intersection_bw_rect_line(rec, lin):
-    """Return the intersection between a line and rectangle or None."""
-    if isinstance(rec, QPointF):
-        return None
-    x, y, w, h = rec.getRect()
-    yes, pt = lin.intersects(QLineF(QPointF(x, y), QPointF(x + w, y)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x + w, y), QPointF(x + w, y + h)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x + w, y + h), QPointF(x, y + h)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    yes, pt = lin.intersects(QLineF(QPointF(x, y + h), QPointF(x, y)))
-    if yes == QLineF.BoundedIntersection:
-        return pt
-    return None
-
-
-def whichLineToDraw_centre(ghost, r):
-    """Get approximately shortest line between two shapes using a "center-to-centre construction.
-
-    args:
-        ghost (QRect/QPointF):
-        r (QRect):
-
-    returns:
-        QLineF
-    """
-    if isinstance(ghost, QPointF):
-        A = ghost
-    else:
-        x, y, w, h = ghost.getRect()
-        A = QPointF(x + w / 2, y + h / 2)
-    if isinstance(r, QPointF):
-        B = r
-    else:
-        x, y, w, h = r.getRect()
-        B = QPointF(x + w / 2, y + h / 2)
-    CtoC = QLineF(A, B)
-    A = get_intersection_bw_rect_line(ghost, CtoC)
-    B = get_intersection_bw_rect_line(r, CtoC)
-    if A is None or B is None:
-        # probably inside
-        return whichLineToDraw_original(ghost, r)
-    return QLineF(A, B)
-
-
-def whichLineToDraw(g, r):
-    """Choose an aesthetically-pleasing line between the rectangle and the ghost.
-
-    args:
-        g (QRect/QPointF): The ghost, can be rect or a point.
-        r (QRect):
-
-    returns:
-        QLineF
-    """
-    if isinstance(g, QPointF):
-        g = QRectF(g, g)
-
-    # slope parameter > 1, determines the angle before we unsnap from corners
-    slurp = 4
-
-    def transf(t):
-        """Transform function for the box.
-
-        Each side is mapped to t in [0, 1] which is used for a linear
-        interpolation, but we can pass t through a transform.  Some overlap
-        between this and the slurp parameter.
-
-        Here we implement a p.w. linear regularized double-step.
-        """
-        p = 0.15
-        assert p < 0.25
-        if t <= p:
-            return 0.0
-        if t <= 0.5 - p:
-            return (0.5 / (0.5 - p - p)) * (t - p)
-        if t <= 0.5 + p:
-            return 0.5
-        if t <= 1 - p:
-            return (0.5 / (0.5 - p - p)) * (t - (0.5 + p)) + 0.5
-        else:
-            return 1.0
-
-    def capped_ramp(crit1, crit2, x):
-        """Map x into [crit1, crit2] returning a scalar in [0, 1]."""
-        t = (x - crit1) / (crit2 - crit1)
-        t = min(t, 1)
-        t = max(0, t)
-        # comment out for non-sticky midpoints
-        t = transf(t)
-        return t
-
-    def ramble(a, b, left, right):
-        """Some kind of soft thresholding of an interval near two points a and b.
-
-        Consider sliding the little figure ``l-m-r`` through two values a and b.
-        We want to return a value ``{r, a, m, b, l}`` depending where ``l-m-r``
-        lies compared to ``[a, b]``.  Roughly, if m is in ``[A, B]`` then we
-        return m, otherwise, some soft thresholding near a and b.
-
-        The capital letters in the follow diagram illustrate the return value::
-
-                              a                   b
-                              |     return M      |
-                     ⎧  l-m-R |                   | L-m-r  ⎫
-              return ⎪   l-m-R|                   |L-m-r   ⎪ return
-              R or A ⎨    l-m-A                   B-m-r    ⎬ B or L
-                     ⎪     l-mAr                 lBm r     ⎪
-                     ⎩      l-A-r               l-Br       ⎭
-                             l|M-r             l-M|r
-                              l-M-r           l-M-r
-                              |l-M-r  l-M-r  l-M-r|
-                              |                   |
-        """
-        mid = (left + right) / 2
-        if right <= a:
-            return right
-        elif mid <= a:
-            return a
-        elif left >= b:
-            return left
-        elif mid >= b:
-            return b
-        return mid
-
-    # We cut up the space around "r" into four regions by the eikonal solution
-    # shocks.  Then we process each of those 4 regions.  For example the "top"
-    # region looks like this, showing also two ghosts that should be considered
-    # "in" this region.
-    #                  /
-    # \            +----+
-    # +---+       g| /  |
-    # | \ |g       +----+
-    # +---+        /
-    #     \       /
-    #      +-----+
-    #      |  r  |
-    #      +-----+
-    if (
-        g.bottom() <= r.top()
-        and g.bottom() <= r.top() - (g.left() - r.right())
-        and g.bottom() <= r.top() - (r.left() - g.right())
-    ):
-        crit1 = r.left() - (r.top() - g.bottom()) / slurp
-        crit2 = r.right() + (r.top() - g.bottom()) / slurp
-        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
-        gx = ramble(crit1, crit2, g.left(), g.right())
-        return QLineF(r.left() + t * r.width(), r.top(), gx, g.bottom())
-
-    if (
-        g.top() >= r.bottom()
-        and g.top() >= r.bottom() + g.left() - r.right()
-        and g.top() >= r.bottom() + r.left() - g.right()
-    ):
-        crit1 = r.left() - (g.top() - r.bottom()) / slurp
-        crit2 = r.right() + (g.top() - r.bottom()) / slurp
-        t = capped_ramp(crit1, crit2, (g.left() + g.right()) / 2)
-        gx = ramble(crit1, crit2, g.left(), g.right())
-        return QLineF(r.left() + t * r.width(), r.bottom(), gx, g.top())
-
-    if g.left() >= r.right():
-        crit1 = r.top() - (g.left() - r.right()) / slurp
-        crit2 = r.bottom() + (g.left() - r.right()) / slurp
-        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
-        gy = ramble(crit1, crit2, g.top(), g.bottom())
-        return QLineF(r.right(), r.top() + t * r.height(), g.left(), gy)
-
-    if g.right() <= r.left():
-        crit1 = r.top() - (r.left() - g.right()) / slurp
-        crit2 = r.bottom() + (r.left() - g.right()) / slurp
-        t = capped_ramp(crit1, crit2, (g.top() + g.bottom()) / 2)
-        gy = ramble(crit1, crit2, g.top(), g.bottom())
-        return QLineF(r.left(), r.top() + t * r.height(), g.right(), gy)
-
-    # TODO: maybe return None?  but needs reworking
-    return whichLineToDraw_original(g, r)
-
-
 class PageScene(QGraphicsScene):
     """Extend the graphics scene so that it knows how to translate
     mouse-press/move/release into operations on QGraphicsItems and
     QTextItems.
     """
 
-    def __init__(self, parent, src_img_data, saveName, maxMark, question_label):
+    def __init__(self, parent, src_img_data, maxMark, question_label):
         """
         Initialize a new PageScene.
 
@@ -534,7 +316,6 @@ class PageScene(QGraphicsScene):
             src_img_data (list[dict]): metadata for the underlying
                 source images.  Each dict has (at least) keys for
                `filename` and `orientation`.
-            saveName (str): Name of the annotated image files.
             maxMark(int): maximum possible mark.
             question_label (str/None): how to display this question, for
                 example a string like "Q7", or `None` if not relevant.
@@ -542,7 +323,6 @@ class PageScene(QGraphicsScene):
         super().__init__(parent)
         # Grab filename of groupimage
         self.src_img_data = src_img_data  # TODO: do we need this saved?
-        self.saveName = saveName
         self.maxMark = maxMark
         # Initially both score is None and markingState is neutral
         self.score = None
@@ -551,6 +331,7 @@ class PageScene(QGraphicsScene):
         self.mode = "move"
         # build pixmap and graphicsitemgroup.
         self.underImage = UnderlyingImages(self.src_img_data)
+        self.whichLineToDraw_init()
         # and an underlyingrect for the margin.
         margin_rect = QRectF(self.underImage.boundingRect())
         marg = 512  # at some point in future make some function of image width/height
@@ -586,9 +367,8 @@ class PageScene(QGraphicsScene):
         # 1 = drawing the box
         # 2 = drawing the line
         # 3 = drawing the rubric - this should only be very briefly mid function.
-        self.rubricFlag = 0
-        # similar for text tool
-        self.textFlag = 0
+        # 4 = some sort of error
+        self.boxLineStampState = 0
 
         # Will need origin, current position, last position points.
         self.originPos = QPointF(0, 0)
@@ -625,7 +405,9 @@ class PageScene(QGraphicsScene):
         self.addItem(self.scoreBox)
 
         # make a box around the scorebox where mouse-press-event won't work.
-        self.avoidBox = self.scoreBox.boundingRect().adjusted(0, 0, 24, 24)
+        # make it fairly wide so that items pasted are not obscured when
+        # scorebox updated and becomes wider
+        self.avoidBox = self.scoreBox.boundingRect().adjusted(-16, -16, 64, 24)
         # holds the path images uploaded from annotator
         self.tempImagePath = None
 
@@ -970,13 +752,17 @@ class PageScene(QGraphicsScene):
         self.setSceneRect(self.getSaveableRectangle())
         self.update()
 
-    def save(self):
+    def save(self, basename):
         """
         Save the annotated group-image.
 
-        Notes:
-        This overwrites the imagefile with a dump of the current
-        scene and all its graphics items.
+        args:
+            basename (str/pathlib.Path): where to save, we will add a png
+                or jpg extension to it.  If the file already exists, it
+                will be overwritten.
+
+        returns:
+            pathlib.Path: the file we just saved to, including jpg or png.
         """
         # Make sure the ghostComment is hidden
         self.ghostItem.hide()
@@ -995,21 +781,21 @@ class PageScene(QGraphicsScene):
             r = (1.0 * w) / (1.0 * h)
             w = MINWIDTH
             h = w / r
-            msg.append("Increasing png width because of minimum width constraint")
+            msg.append("Increasing bitmap width because of minimum width constraint")
             if h > MAXHEIGHT:
                 h = MAXHEIGHT
                 w = h * r
-                msg.append("Constraining png height by min width constraint")
+                msg.append("Constraining bitmap height by min width constraint")
         if w > num_pages * MAX_PER_PAGE_WIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = num_pages * MAX_PER_PAGE_WIDTH
             h = w / r
-            msg.append("Constraining png width by maximum per page width")
+            msg.append("Constraining bitmap width by maximum per page width")
         if w > MAXWIDTH:
             r = (1.0 * w) / (1.0 * h)
             w = MAXWIDTH
             h = w / r
-            msg.append("Constraining png width by overall maximum width")
+            msg.append("Constraining bitmap width by overall maximum width")
         w = round(w)
         h = round(h)
         if msg:
@@ -1021,8 +807,29 @@ class PageScene(QGraphicsScene):
         # Render the scene via the painter
         self.render(exporter)
         exporter.end()
-        # Save the result to file.
-        oimg.save(self.saveName)
+
+        basename = Path(basename)
+        pngname = basename.with_suffix(".png")
+        jpgname = basename.with_suffix(".jpg")
+        oimg.save(str(pngname))
+        # Sadly no control over chroma subsampling which mucks up thin red lines
+        # oimg.save(str(jpgname), quality=90)
+
+        # im = PIL.Image.fromqpixmap(oimg)
+        im = PIL.Image.open(pngname)
+        im.convert("RGB").save(jpgname, quality=90, optimize=True, subsampling=0)
+
+        jpgsize = jpgname.stat().st_size
+        pngsize = pngname.stat().st_size
+        log.debug("scene rendered: jpg/png sizes (%s, %s) bytes", jpgsize, pngsize)
+        # For testing
+        # if random.uniform(0, 1) < 0.5:
+        if jpgsize < 0.9 * pngsize:
+            pngname.unlink()
+            return jpgname
+        else:
+            jpgname.unlink()
+            return pngname
 
     def keyPressEvent(self, event):
         """
@@ -1061,7 +868,7 @@ class PageScene(QGraphicsScene):
         if event.key() == Qt.Key_Escape:
             self.clearFocus()
             # also if in box,line,pen,rubric,text - stop mid-draw
-            if self.mode in ["box", "line", "pen", "rubric", "text"]:
+            if self.mode in ["box", "line", "pen", "rubric", "text", "cross", "tick"]:
                 self.stopMidDraw()
         else:
             super().keyPressEvent(event)
@@ -1106,6 +913,12 @@ class PageScene(QGraphicsScene):
         # check if mouseclick inside the avoidBox
         if self.avoidBox.contains(event.scenePos()):
             return
+        # if there is a visible ghost then check its bounding box avoids the scorebox(+boundaries)
+        if self.ghostItem.isVisible():
+            if self.avoidBox.intersects(
+                self.ghostItem.mapRectToScene(self.ghostItem.boundingRect())
+            ):
+                return
 
         # Get the function name from the dictionary based on current mode.
         functionName = mousePress.get(self.mode, None)
@@ -1144,6 +957,17 @@ class PageScene(QGraphicsScene):
     # and then destroyed (on release) and replaced with the
     # more permanent graphics item.
 
+    def textUnderneathPoint(self, pt):
+        """Check to see if any text-like object under point"""
+        for under in self.items(pt):
+            if (
+                isinstance(under, DeltaItem)
+                or isinstance(under, TextItem)
+                or isinstance(under, GroupDeltaTextItem)
+            ):
+                return True
+        return False
+
     def textUnderneathGhost(self):
         """Check to see if any text-like object under current ghost-text"""
         for under in self.ghostItem.collidingItems():
@@ -1154,6 +978,240 @@ class PageScene(QGraphicsScene):
             ):
                 return True
         return False
+
+    def boxStampPress(self, event, ghost_rect=None):
+        # flag can be in 4 states
+        # 0 = initial state - we aren't doing anything
+        # 1 = box drawing started
+        # 2 = box finished, path started
+        # 3 = path finished, ready to stamp final object
+        # 4 = error state - clean things up.
+
+        if self.boxLineStampState == 0:
+            # start the drag-box so (0->1)
+            self.boxLineStampState = 1
+            self.originPos = event.scenePos()
+            self.currentPos = self.originPos
+            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
+            self.boxItem.setPen(self.ink)
+            self.boxItem.setBrush(self.lightBrush)
+            self.addItem(self.boxItem)
+        elif self.boxLineStampState == 2:  # finish the connecting line
+            if ghost_rect is None:
+                ghost_rect = QRectF(
+                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                )
+            connectingPath = self.whichLineToDraw(
+                ghost_rect,
+                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+            )
+            command = CommandPen(self, connectingPath)
+            self.undoStack.push(command)
+            self.removeItem(self.pathItem)
+            self.boxLineStampState = 3  # get ready to stamp things.
+        else:
+            # this shouldn't happen, so (??->4)
+            self.boxLineStampState = 4
+        return
+
+    def boxStampMove(self, event, ghost_rect=None):
+        # flag can be in 4 states
+        # 0 = initial state - we aren't doing anything
+        # 1 = box drawing started
+        # 2 = box finished, path started
+        # 3 = path finished, ready to stamp final object
+        # 4 = error state - clean things up.
+        if self.boxLineStampState == 0:  # not doing anything, just moving mouse (0->0)
+            return
+        elif self.boxLineStampState == 1:  # mid box draw - keep drawing it. (1->1)
+            self.currentPos = event.scenePos()
+            if self.boxItem is None:
+                # oops - it isn't there yet, so start it
+                self.boxItem = QGraphicsRectItem(
+                    QRectF(self.originPos, self.currentPos)
+                )
+            else:  # update the box
+                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
+            return
+        elif (
+            self.boxLineStampState == 2
+        ):  # mid draw of connecting path - keep drawing it
+            # update the connecting path
+            self.currentPos = event.scenePos()
+            if ghost_rect is None:
+                ghost_rect = QRectF(
+                    self.currentPos.x() - 16, self.currentPos.y() - 8, 16, 16
+                )
+            self.pathItem.setPath(
+                self.whichLineToDraw(
+                    ghost_rect,
+                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
+                )
+            )
+        else:  # in some other state - should not happen, so (?->4)
+            self.boxLineStampState = 4
+        return
+
+    def boxStampRelease(self, event):
+        # flag can be in 4 states
+        # 0 = initial state - we aren't doing anything
+        # 1 = box drawing started
+        # 2 = box finished, path started
+        # 3 = path finished, ready to stamp final object
+        # 4 = error state - clean things up.
+        if self.boxLineStampState == 0:  # not in the middle of anything so do nothing.
+            return
+        elif (
+            self.boxLineStampState == 1
+        ):  # are mid-box draw, so time to finish it and move onto path-drawing.
+            # remove the temporary drawn box
+            self.removeItem(self.boxItem)
+            # make sure box is large enough
+            if (
+                abs(self.boxItem.rect().width()) < minimum_box_side_length
+                or abs(self.boxItem.rect().height()) < minimum_box_side_length
+            ):
+                # is small box, so ignore it and draw no connecting path, just stamp final object
+                self.boxLineStampState = 3
+                return
+            else:
+                # start a macro and push the drawn box onto undo stack
+                self.undoStack.beginMacro("Click-Drag composite object")
+                command = CommandBox(self, self.boxItem.rect())
+                self.undoStack.push(command)
+                # now start drawing connecting path
+                self.boxLineStampState = 2
+                self.originPos = event.scenePos()
+                self.currentPos = self.originPos
+                self.pathItem = QGraphicsPathItem(QPainterPath(self.originPos))
+                self.pathItem.setPen(self.ink)
+                self.addItem(self.pathItem)
+        else:  # we should not be here, so (?->4)
+            self.boxLineStampState = 4
+
+    def whichLineToDraw_init(self):
+        witches = [
+            which_horizontal_step,
+            which_sticky_corners,
+            which_classic_shortest_corner_side,
+            which_centre_to_centre,
+        ]
+        self._witches = cycle(witches)
+        self._whichLineToDraw = next(self._witches)
+
+    def whichLineToDraw_next(self):
+        self._whichLineToDraw = next(self._witches)
+        print(f"Changing rubric-line to: {self._whichLineToDraw}")
+        # TODO: can we generate a fake mouseMove event to force redraw?
+
+    def whichLineToDraw(self, A, B):
+        return self._whichLineToDraw(A, B)
+
+    def stampCrossQMarkTick(self, event, cross=True):
+        pt = event.scenePos()  # Grab the click's location and create command.
+        if (event.button() == Qt.RightButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
+        ):
+            if cross:
+                command = CommandTick(self, pt)
+            else:
+                command = CommandCross(self, pt)
+        elif (event.button() == Qt.MiddleButton) or (
+            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
+        ):
+            command = CommandQMark(self, pt)
+        else:
+            if cross:
+                command = CommandCross(self, pt)
+            else:
+                command = CommandTick(self, pt)
+        self.undoStack.push(command)  # push onto the stack.
+
+    def mousePressCross(self, event):
+        """
+        Selects the proper cross/?-mark/tick based on which mouse button or
+        mouse/key combination was pressed.
+
+        Notes:
+            tick = right-click or shift+click.
+            question mark = middle-click or control+click.
+            cross = left-click or any combination other than the above.
+
+        Args:
+            event (QMouseEvent): the mouse press.
+
+        Returns:
+            None.
+
+        """
+        # use the boxStampPress function to update things
+        self.boxStampPress(event)
+        # only have to do something if in states 3 or 4
+        if self.boxLineStampState == 3:  # means we are ready to stamp!
+            self.stampCrossQMarkTick(event, cross=True)
+        if self.boxLineStampState >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxLineStampState = 0
+
+    def mousePressTick(self, event):
+        # use the boxStampPress function to update things
+        self.boxStampPress(event)
+        # only have to do something if in states 3 or 4
+        if self.boxLineStampState == 3:  # means we are ready to stamp!
+            self.stampCrossQMarkTick(event, cross=False)
+        if self.boxLineStampState >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxLineStampState = 0
+
+    def mouseMoveCross(self, event):
+        self.boxStampMove(event)
+        if self.boxLineStampState >= 4:  # error has occurred
+            log.debug(
+                f"flag = {self.boxLineStampState} some sort of boxStamp error has occurred, so finish the macro"
+            )
+            self.boxLineStampState = 0
+            self.undoStack.endMacro()
+
+    def mouseMoveTick(self, event):
+        self.boxStampMove(event)
+        if self.boxLineStampState >= 4:  # error has occurred
+            log.debug(
+                f"flag = {self.boxLineStampState} some sort of boxStamp error has occurred, so finish the macro"
+            )
+            self.boxLineStampState = 0
+            self.undoStack.endMacro()
+
+    def mouseReleaseCross(self, event):
+        # update things
+        self.boxStampRelease(event)
+        # only have to do something if in states 3 or 4
+        if self.boxLineStampState == 3:  # means we are ready to stamp!
+            self.stampCrossQMarkTick(event, cross=True)
+        if self.boxLineStampState >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxLineStampState = 0
+
+    def mouseReleaseTick(self, event):
+        # update things
+        self.boxStampRelease(event)
+        # only have to do something if in states 3 or 4
+        if self.boxLineStampState == 3:  # means we are ready to stamp!
+            self.stampCrossQMarkTick(event, cross=False)
+        if self.boxLineStampState >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxLineStampState = 0
 
     def mousePressRubric(self, event):
         """Mouse press while holding rubric tool.
@@ -1174,49 +1232,22 @@ class PageScene(QGraphicsScene):
         if not self.isLegalRubric(self.rubricKind, self.rubricDelta):
             return
 
-        # rubric flag explained
-        # 0 = initial state - before rubric click-drag-release-click started
-        # 1 = started drawing box
-        # 2 = started drawing line
-
-        # in rubric mode the ghost is activated, so look for objects that intersect the ghost.
-        # if they are delta, text or GDT then do nothing.
-
-        # check if anything underneath when trying to start / finish
-        if self.textUnderneathGhost() and self.rubricFlag in [0, 2]:
-            return  # intersection - so don't stamp anything.
-
-        # check the rubricFlag
-        # is a rubric drag event.
-        if isinstance(event, QGraphicsSceneDragDropEvent):
-            pass  # no rectangle-drag-rubric, only rubric-stamp
-        elif self.rubricFlag == 0:
-            # check if drag event
-            self.rubricFlag = 1
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-            self.boxItem.setPen(self.ink)
-            self.boxItem.setBrush(self.lightBrush)
-            self.addItem(self.boxItem)
+        # check if anything underneath when trying to start/finish
+        if self.boxLineStampState in [0, 2] and self.textUnderneathGhost():
             return
-        elif self.rubricFlag == 2:
-            connectingLine = whichLineToDraw(
-                self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
-                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
-            )
-            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
-            self.undoStack.push(command)
-            self.removeItem(self.lineItem)
-            self.rubricFlag = 3
 
-        pt = event.scenePos()  # grab the location of the mouse-click
-
-        if not self.isLegalRubric(self.rubricKind, self.rubricDelta):
-            # cannot paste illegal delta
-            # still need to reset rubricFlag below.
-            pass
+        # update state flag appropriately - but be careful of rubric-drag event
+        if isinstance(event, QGraphicsSceneDragDropEvent):
+            self.boxLineStampState = 3  # we just stamp things
         else:
+            # pass in the bounding rect of the ghost text so can draw connecting path correctly
+            self.boxStampPress(
+                event,
+                ghost_rect=self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
+            )
+
+        if self.boxLineStampState == 3:  # time to stamp the rubric!
+            pt = event.scenePos()  # grab the location of the mouse-click
             command = CommandGroupDeltaText(
                 self,
                 pt,
@@ -1226,46 +1257,19 @@ class PageScene(QGraphicsScene):
                 self.rubricText,
             )
             log.debug(
-                "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
+                "Making a GroupDeltaText: boxLineStampState is {}".format(
+                    self.boxLineStampState
+                )
             )
             self.undoStack.push(command)  # push the delta onto the undo stack.
             self.refreshStateAndScore()  # and now refresh the markingstate and score
-        if self.rubricFlag > 0:
+
+        if self.boxLineStampState >= 3:
             log.debug(
-                "rubricFlag > 0 so we must be finishing a click-drag rubric: finalizing macro"
+                "boxLineStampState > 0 so we must be finishing a click-drag rubric: finalizing macro"
             )
-            self.rubricFlag = 0
+            self.boxLineStampState = 0
             self.undoStack.endMacro()
-
-    def mousePressCross(self, event):
-        """
-        Selects the proper cross/?-mark/tick based on which mouse button or
-        mouse/key combination was pressed.
-
-        Notes:
-            tick = right-click or shift+click.
-            question mark = middle-click or control+click.
-            cross = left-click or any combination other than the above.
-
-        Args:
-            event (QMouseEvent): the mouse press.
-
-        Returns:
-            None.
-
-        """
-        pt = event.scenePos()  # Grab the click's location and create command.
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            command = CommandTick(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            command = CommandQMark(self, pt)
-        else:
-            command = CommandCross(self, pt)
-        self.undoStack.push(command)  # push onto the stack.
 
     def mousePressMove(self, event):
         """
@@ -1318,11 +1322,6 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        # text flag explained
-        # 0 = initial state - before text click-drag-release-click started
-        # 1 = started drawing box
-        # 2 = started drawing line
-
         # Find the object under the click.
         # since there might be a line right under the point during stage2, offset the test point by a couple of pixels to the right.
         # note - chose to the right since when we start typing text it will extend rightwards
@@ -1336,7 +1335,7 @@ class PageScene(QGraphicsScene):
             # If it is a textitem then fire up the editor.
             if isinstance(under, TextItem):
                 if (
-                    self.textFlag == 2
+                    self.boxLineStampState == 2
                 ):  # make sure not trying to start text on top of text
                     return
                 under.setTextInteractionFlags(Qt.TextEditorInteraction)
@@ -1348,16 +1347,10 @@ class PageScene(QGraphicsScene):
             if isinstance(under, TextItem):
                 under.clearFocus()
 
-        if self.textFlag == 0:  # time to start drawing a box
-            self.textFlag = 1
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.boxItem = QGraphicsRectItem(QRectF(self.originPos, self.currentPos))
-            self.boxItem.setPen(self.ink)
-            self.boxItem.setBrush(self.lightBrush)
-            self.addItem(self.boxItem)
-            return
-        elif self.textFlag == 2:
+        # now use the boxstamp code to update things
+        self.boxStampPress(event)
+
+        if self.boxLineStampState == 3:
             # Construct empty text object, give focus to start editor
             ept = event.scenePos()
             command = CommandText(self, ept, "")
@@ -1367,18 +1360,10 @@ class PageScene(QGraphicsScene):
             command.blurb.enable_interactive()
             command.blurb.setFocus()
             self.undoStack.push(command)
-            # connect up line
-            connectingLine = whichLineToDraw(
-                ept,
-                self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
-            )
-            command = CommandLine(self, connectingLine.p1(), connectingLine.p2())
-            self.undoStack.push(command)
-            self.removeItem(self.lineItem)
+
             log.debug(
-                "textFlag > 0 so we must be finishing a click-drag text: finalizing macro"
+                "boxLineStampState > 0 so we must be finishing a click-drag text: finalizing macro"
             )
-            self.textFlag = 0
             self.undoStack.endMacro()
 
     def mouseMoveText(self, event):
@@ -1391,87 +1376,36 @@ class PageScene(QGraphicsScene):
         Returns:
             None
         """
-        if self.textFlag == 1:
-            self.currentPos = event.scenePos()
-            if self.boxItem is None:
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-        elif self.textFlag == 2:
-            self.currentPos = event.scenePos()
-            self.lineItem.setLine(
-                whichLineToDraw(
-                    self.currentPos,
-                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
-                )
-            )
+        self.boxStampMove(event)
 
     def mouseReleaseText(self, event):
-        if self.textFlag == 0:
+        # if haven't started drawing, or are mid draw of line be careful of what is underneath
+        # if there is text under the ghost then do not stamp anything - ignore the event.
+        if self.textUnderneathPoint(event.scenePos()) and self.boxLineStampState in [
+            0,
+            2,
+        ]:
             return
-        elif self.textFlag == 1:
-            self.removeItem(self.boxItem)
-            # check if rect has some area
-            # needs abs since rect is not normalised
-            if (
-                abs(self.boxItem.rect().width()) > minimum_box_side_length
-                and abs(self.boxItem.rect().height()) > minimum_box_side_length
-            ):
-                self.undoStack.beginMacro("Click-Drag composite object")
-                command = CommandBox(self, self.boxItem.rect())
-                self.undoStack.push(command)
-            else:
-                # small box, so build the text item
-                if self.textUnderneathGhost():
-                    self.textFlag = 0  # reset the rubric flag
-                    return  # can't paste it here.
 
-                # Construct empty text object, give focus to start editor
-                pt = event.scenePos()
-                command = CommandText(self, pt, "")
-                # move so centred under cursor   TODO: move into class!
-                pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
-                command.blurb.setPos(pt)
-                command.blurb.enable_interactive()
-                command.blurb.setFocus()
-                self.undoStack.push(command)
-                self.textFlag = 0  # reset the text flag
-                return
+        self.boxStampRelease(event)
 
-            self.textFlag = 2
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
-            self.lineItem.setPen(self.ink)
-            self.addItem(self.lineItem)
+        if self.boxLineStampState == 3:
+            # Construct empty text object, give focus to start editor
+            pt = event.scenePos()
+            command = CommandText(self, pt, "")
+            # move so centred under cursor   TODO: move into class!
+            pt -= QPointF(0, command.blurb.boundingRect().height() / 2)
+            command.blurb.setPos(pt)
+            command.blurb.enable_interactive()
+            command.blurb.setFocus()
+            self.undoStack.push(command)
 
-    def mousePressTick(self, event):
-        """
-        Create a tick/?-mark/cross object under the click based on which
-            mouse button (left/middle/right) was pressed.
-
-        Args:
-            event (QMouseEvent): Given mouse press.
-
-        Returns:
-            None
-
-        """
-        # See mouse press cross function.
-        pt = event.scenePos()
-        if (event.button() == Qt.RightButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
-        ):
-            command = CommandCross(self, pt)
-        elif (event.button() == Qt.MiddleButton) or (
-            QGuiApplication.queryKeyboardModifiers() == Qt.ControlModifier
-        ):
-            command = CommandQMark(self, pt)
-        else:
-            command = CommandTick(self, pt)
-        self.undoStack.push(command)
+        if self.boxLineStampState >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxLineStampState = 0
 
     def mouseReleaseMove(self, event):
         """
@@ -2185,47 +2119,45 @@ class PageScene(QGraphicsScene):
             self.undoStack.push(command)
 
     def mouseReleaseRubric(self, event):
-        if self.rubricFlag == 0:
+        # if haven't started drawing, or are mid draw of line be careful of what is underneath
+        # if there is text under the ghost then do not stamp anything - ignore the event.
+        if self.textUnderneathGhost() and self.boxLineStampState in [0, 2]:
             return
-        elif self.rubricFlag == 1:
-            self.removeItem(self.boxItem)
-            # check if rect has some area
-            # this needs abs - see #977 - since rectangle is not normalized
-            if (
-                abs(self.boxItem.rect().width()) > minimum_box_side_length
-                and abs(self.boxItem.rect().height()) > minimum_box_side_length
-            ):
-                self.undoStack.beginMacro("Click-Drag composite object")
-                command = CommandBox(self, self.boxItem.rect())
-                self.undoStack.push(command)
-            else:
-                # small box, so just stamp the rubric
-                if self.textUnderneathGhost():
-                    self.rubricFlag = 0  # reset the rubric flag
-                    return  # can't paste it here.
-                command = CommandGroupDeltaText(
-                    self,
-                    event.scenePos(),
-                    self.rubricID,
-                    self.rubricKind,
-                    self.rubricDelta,
-                    self.rubricText,
-                )
-                log.debug(
-                    "Making a GroupDeltaText: rubricFlag is {}".format(self.rubricFlag)
-                )
-                # push the delta onto the undo stack.
-                self.undoStack.push(command)
-                self.refreshStateAndScore()  # and now refresh the markingstate and score
-                self.rubricFlag = 0  # reset the rubric flag
-                return
 
-            self.rubricFlag = 2
-            self.originPos = event.scenePos()
-            self.currentPos = self.originPos
-            self.lineItem = QGraphicsLineItem(QLineF(self.originPos, self.currentPos))
-            self.lineItem.setPen(self.ink)
-            self.addItem(self.lineItem)
+        # update things
+        self.boxStampRelease(event)
+        # only have to do something if in states 3 or 4
+        if self.boxLineStampState == 3:  # means is small box and we are ready to stamp!
+            # if text under ghost then ignore this event
+            if self.textUnderneathGhost():  # text under here - not safe to stamp
+                self.undoStack.endMacro()
+                self.undoStack.undo()
+                self.boxLineStampState = 0
+                return
+            # small box, so just stamp the rubric
+            command = CommandGroupDeltaText(
+                self,
+                event.scenePos(),
+                self.rubricID,
+                self.rubricKind,
+                self.rubricDelta,
+                self.rubricText,
+            )
+            log.debug(
+                "Making a GroupDeltaText: boxLineStampState is {}".format(
+                    self.boxLineStampState
+                )
+            )
+            # push the delta onto the undo stack.
+            self.undoStack.push(command)
+            self.refreshStateAndScore()  # and now refresh the markingstate and score
+
+        if self.boxLineStampState >= 3:  # stamp is done
+            log.debug(
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+            )
+            self.undoStack.endMacro()
+            self.boxLineStampState = 0
 
     def mouseReleaseDelete(self, event):
         """
@@ -2404,22 +2336,11 @@ class PageScene(QGraphicsScene):
             self.ghostItem.setVisible(True)
         self.ghostItem.setPos(event.scenePos())
 
-        if self.rubricFlag == 1:
-            self.currentPos = event.scenePos()
-            if self.boxItem is None:
-                self.boxItem = QGraphicsRectItem(
-                    QRectF(self.originPos, self.currentPos)
-                )
-            else:
-                self.boxItem.setRect(QRectF(self.originPos, self.currentPos))
-        elif self.rubricFlag == 2:
-            self.currentPos = event.scenePos()
-            self.lineItem.setLine(
-                whichLineToDraw(
-                    self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
-                    self.boxItem.mapRectToScene(self.boxItem.boundingRect()),
-                )
-            )
+        # pass in the bounding rect of the ghost text so can draw connecting path correctly
+        self.boxStampMove(
+            event,
+            ghost_rect=self.ghostItem.mapRectToScene(self.ghostItem.boundingRect()),
+        )
 
     def setTheMark(self, newMark):
         """
@@ -2566,7 +2487,7 @@ class PageScene(QGraphicsScene):
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
-        # the flags are arrowFlag, boxFlag, penFlag, rubricFlag
+        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState
         # note - only one should be non-zero at a given time
         log.debug(
             "Flags = {}".format(
@@ -2574,9 +2495,8 @@ class PageScene(QGraphicsScene):
                     self.arrowFlag,
                     self.boxFlag,
                     self.penFlag,
-                    self.rubricFlag,
-                    self.textFlag,
                     self.zoomFlag,
+                    self.boxLineStampState,
                 ]
             )
         )
@@ -2593,34 +2513,25 @@ class PageScene(QGraphicsScene):
         if self.boxFlag == 2:  # midway through drawing an ellipse
             self.boxFlag = 0
             self.removeItem(self.ellipseItem)
-        # rubric flag needs care - uses undo-macro - need to clean that up
+        # box-stamp flag needs care - uses undo-macro - need to clean that up
         # 1 = drawing the box
         # 2 = drawing the line
-        # 3 = pasting the rubric - this should only be very briefly mid function.
-        if self.rubricFlag == 1:  # drawing the box
+        # 3 = pasting the object - this should only be very briefly mid function.
+        if self.boxLineStampState == 1:  # drawing the box
             self.removeItem(self.boxItem)
-            self.rubricFlag = 0
-        if self.rubricFlag == 2:  # undo-macro started, box drawn, mid draw of line
-            self.removeItem(self.lineItem)
-            self.undoStack.endMacro()
-            self.undo()  # removes the drawn box
-            self.rubricFlag = 0
+            self.boxLineStampState = 0
         if (
-            self.rubricFlag == 3
-        ):  # Should be very hard to reach here - end macro and undo
+            self.boxLineStampState == 2
+        ):  # undo-macro started, box drawn, mid draw of path
+            self.removeItem(self.pathItem)
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
-        # text flag needs care - uses undo-macro - need to clean that up
-        # 1 = drawing the box
-        # 2 = drawing the line
-        if self.textFlag == 1:  # drawing the box
-            self.removeItem(self.boxItem)
-            self.textFlag = 0
-        if self.textFlag == 2:  # undo-macro started, box drawn, mid draw of line
-            self.removeItem(self.lineItem)
+            self.boxLineStampState = 0
+        if self.boxLineStampState == 3:
+            # Should be very hard to reach here - end macro and undo
             self.undoStack.endMacro()
             self.undo()  # removes the drawn box
-            self.textFlag = 0
+
         # check if mid-zoom-box draw:
         if self.zoomFlag == 2:
             self.removeItem(self.zoomBoxItem)

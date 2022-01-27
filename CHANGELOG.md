@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Solutions - can now optionally watermark solutions with the SID.
 * SSL verification enabled by default for releases.
 * Client Marker window can request any paper number with a long press on "Get next".
+* Mild warnings when user gives 0 but there are some ticks on page. sSimilar mild warnings when user gives full but there are crosses.
 
 ### Changed
 * Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.
@@ -23,12 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deprecated "LoosePages" have been removed.
 * Tests have exactly one ID page (before they could have more than one).
 * Spec files have more sanity checks and some keys are now optional.
+   - Do not mark pages now specified directly as list "doNotMarkPages = [1,2,3]"
 * Misc plom-manager improvements.
 * API calls have a default 10s timeout (and 2 retries), so semi-inevitable failures fail faster.
+* Top-middle "stamp" on pages now shows the group label (question number, DNM, etc)
+   - and extra sheet templates have been updated to match.
+
 
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
 * JPEG support is no longer restricted to sizes in multiples of 16, better rotation support.
+* Improved disc-space usage due to JPEG use in more places.
 * Removing or adding pages is more selective about which annotations are invalidated.
 * A large number of modal dialog fixes.
 * Other misc changes.
