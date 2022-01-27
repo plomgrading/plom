@@ -210,9 +210,10 @@ def moveUnknownToExtraPage(self, file_name, test_number, question):
     gref = qref.group
     # TODO: we may want to relax this restriction later, Issue #1900 et al
     if not gref.scanned:
-        msg = f"Cannot attach extra page to test {test_number}: it is missing pages."
-        msg += " (You need to upload all Test Pages or at least one HW Page before"
-        msg += " adding extra pages)."
+        msg = f"Cannot attach extra page to test {test_number} question {question}: "
+        msg += "it is missing pages. "
+        msg += "You must upload all Test Pages of a question "
+        msg += "(or at least one HW Page) before adding extra pages."
         return (False, "unscanned", msg)
     # find the last expage in that group - if there are expages
     if gref.expages.count() == 0:
