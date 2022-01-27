@@ -993,7 +993,7 @@ class ManagerMessenger(BaseMessenger):
 
         return collisionTest  # "collision" if colliding page created.
 
-    def unknownToExtraPage(self, fname, test, question, theta):
+    def unknownToExtraPage(self, fname, test, questions, theta):
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -1003,7 +1003,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "fileName": fname,
                     "test": test,
-                    "question": question,
+                    "questions": questions,
                     "rotation": theta,
                 },
             )
@@ -1021,7 +1021,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def unknownToHWPage(self, fname, test, question, theta):
+    def unknownToHWPage(self, fname, test, questions, theta):
         self.SRmutex.acquire()
         try:
             response = self.put(
@@ -1031,7 +1031,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "fileName": fname,
                     "test": test,
-                    "question": question,
+                    "questions": questions,
                     "rotation": theta,
                 },
             )
