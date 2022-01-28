@@ -31,22 +31,21 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
         dur (pathlib.Path): a directory to save the QR codes.
 
     Returns:
-        dict: The keys index the corners and each value is a
-            `pathlib.Path` for a PNG file for that corner's QR code.
-            The corners are indexed counterclockwise by:
+        list: of ``pathlib.Path` for PNG files for each corner's QR code.
+            The corners are indexed counterclockwise from the top-right:
 
             index | meaning
             ------|--------
-            1     | top-right
-            2     | top-left
-            3     | bottom-left
-            4     | bottom-right
+            0     | top-right
+            1     | top-left
+            2     | bottom-left
+            3     | bottom-right
     """
-    qr_file = {}
-
-    for corner_index in range(1, 5):
-        tpv = encodeTPV(papernum, pagenum, ver, corner_index, code)
-        filename = dur / f"qr_{papernum:04}_pg{pagenum}_{corner_index}.png"
+    qr_file = []
+    for corner_index in range(4):
+        # Note: TPV indexes corners from 1
+        tpv = encodeTPV(papernum, pagenum, ver, corner_index + 1, code)
+        filename = dur / f"qr_{papernum:04}_pg{pagenum}_{corner_index + 1}.png"
 
         # qr_code = pyqrcode.create(tpv, error="H")
         # qr_code.png(filename, scale=4)
@@ -54,7 +53,7 @@ def create_QR_codes(papernum, pagenum, ver, code, dur):
         qr_code = segno.make(tpv, error="H")
         qr_code.save(filename, scale=4)
 
-        qr_file[corner_index] = filename
+        qr_file.append(filename)
 
     return qr_file
 
@@ -63,7 +62,7 @@ def create_exam_and_insert_QR(
     spec,
     papernum,
     question_versions,
-    qr_file,
+    tmpdir,
     *,
     no_qr=False,
 ):
@@ -77,10 +76,7 @@ def create_exam_and_insert_QR(
         spec (dict): A validated test specification
         papernum (int): the paper/test number.
         question_versions (dict): version number for each question of this paper.
-        qr_file (dict): a dict of dicts.  The outer keys are integer
-            page numbers.  The inner keys index the corners, giving a
-            path to an image of the appropriate QR code.
-            TODO: consider calling the QR builder from here.
+        tmpdir (pathlib.Path): a place where we can make temporary files.
 
     Keyword Arguments:
         no_qr (bool): whether to paste in QR-codes (default: False)
@@ -125,8 +121,45 @@ def create_exam_and_insert_QR(
     #         start_at=-1,
     #     )
 
-    page_width = exam[0].bound().width
-    page_height = exam[0].bound().height
+    for p in range(1, spec["numberOfPages"] + 1):
+        # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
+        exam[p - 1].clean_contents()
+        # name of the group to which page belongs
+        group = page_to_group[p]
+        text = "{} {} {}".format(f"{papernum:04}", group.ljust(5), f"p. {p}")
+        odd = (p - 1) % 2 == 0
+        if no_qr:
+            odd = None
+            qr_files = {}
+        else:
+            ver = page_to_version[p]
+            qr_files = create_QR_codes(papernum, p, ver, spec["publicCode"], tmpdir)
+
+        pdf_page_add_labels_QRs(exam[p - 1], spec["name"], text, qr_files, odd=odd)
+
+    for ver, pdf in pdf_version.items():
+        pdf.close()
+    return exam
+
+
+def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
+    """Add top-middle stamp, QR codes and staple indicator to a PDF page.
+
+    args:
+        page (fitz.Page): a particular page of a PDF file.
+        shortname (str): a short string that we will write on the staple
+            indicator.
+        stamp (str): text for the top-middle
+        qr_code (dict): QR images, if empty, don't do corner work.
+        odd (bool/None): True for an odd page number (counting from 1),
+            False for an even page, and None if you don't want to draw a
+            staple corner.
+
+    returns:
+        None: but modifies page as a side-effect.
+    """
+    page_width = page.bound().width
+    page_height = page.bound().height
 
     # create two "do not write" (DNW) rectangles accordingly with TL (top left) and TR (top right)
     rDNW_TL = fitz.Rect(15, 15, 90, 90)
@@ -139,86 +172,71 @@ def create_exam_and_insert_QR(
     BL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
     BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
 
-    for page_index in range(spec["numberOfPages"]):
-        # Workaround Issue #1347: unnecessary for pymupdf>=1.18.7
-        exam[page_index].clean_contents()
-        # papernum.page-name.pagenum stamp in top-centre of page
-        rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 46)
-        # name of the group to which page belongs
-        group = page_to_group[page_index + 1]
-        text = "{} {} {}".format(
-            f"{papernum:04}", group.ljust(5), f"p. {page_index + 1}"
-        )
-        excess = exam[page_index].insert_textbox(
-            rect,
-            text,
-            fontsize=18,
-            color=[0, 0, 0],
-            fontname="Helvetica",
-            fontfile=None,
-            align=1,
-        )
-        assert excess > 0, "Text didn't fit: is paper number label too long?"
-        exam[page_index].draw_rect(rect, color=[0, 0, 0])
+    # papernum-question-page stamp in top-centre of page
+    rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 46)
+    excess = page.insert_textbox(
+        rect,
+        stamp,
+        fontsize=18,
+        color=[0, 0, 0],
+        fontname="Helvetica",
+        fontfile=None,
+        align=1,
+    )
+    assert excess > 0, "Text didn't fit: is paper number label too long?"
+    page.draw_rect(rect, color=[0, 0, 0])
 
-        if no_qr:
-            # no more processing of this page if QR codes unwanted
-            continue
+    # special code to skip staple mark and QR codes
+    if odd is None:
+        return
 
-        # stamp DNW near staple: even/odd pages different
-        # Top Left for even pages, Top Right for odd pages
-        # TODO: Perhaps this process could be improved by putting
-        # into functions
-        rDNW = rDNW_TL if page_index % 2 == 0 else rDNW_TR
-        shape = exam[page_index].new_shape()
-        shape.draw_line(rDNW.top_left, rDNW.top_right)
-        if page_index % 2 == 0:
-            shape.draw_line(rDNW.top_right, rDNW.bottom_left)
-        else:
-            shape.draw_line(rDNW.top_right, rDNW.bottom_right)
-        shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
-        shape.commit()
-        if page_index % 2 == 0:
-            # offset by trial-and-error, could be improved
-            rDNW = rDNW + (19, 19, 19, 19)
-        else:
-            rDNW = rDNW + (-19, 19, -19, 19)
-        mat = fitz.Matrix(45 if page_index % 2 == 0 else -45)
-        pivot = rDNW.tr / 2 + rDNW.bl / 2
-        morph = (pivot, mat)
-        excess = exam[page_index].insert_textbox(
-            rDNW,
-            spec["name"],
-            fontsize=8,
-            fontname="Helvetica",
-            fontfile=None,
-            align=1,
-            morph=morph,
-        )
-        assert excess > 0, "Text didn't fit: shortname too long? font issue?"
+    # stamp DNW near staple: even/odd pages different
+    # Top Left for odd pages (1 is 1st), Top Right for even
+    rDNW = rDNW_TL if odd else rDNW_TR
+    shape = page.new_shape()
+    shape.draw_line(rDNW.top_left, rDNW.top_right)
+    if odd:
+        shape.draw_line(rDNW.top_right, rDNW.bottom_left)
+    else:
+        shape.draw_line(rDNW.top_right, rDNW.bottom_right)
+    shape.finish(width=0.5, color=[0, 0, 0], fill=[0.75, 0.75, 0.75])
+    shape.commit()
+    # offset by trial-and-error
+    diaglabel_rect = rDNW + (-10, 26, 10, -33)
+    mat = fitz.Matrix(45 if odd else -45)
+    pivot = rDNW.tr / 2 + rDNW.bl / 2
+    morph = (pivot, mat)
+    excess = page.insert_textbox(
+        diaglabel_rect,
+        shortname,
+        fontsize=8,
+        fontname="Helvetica",
+        fontfile=None,
+        align=1,
+        morph=morph,
+    )
+    assert excess > 0, "Text didn't fit: shortname too long? font issue?"
+    # debugging
+    # page.draw_rect(diaglabel_rect, color=[1, 0, 0], morph=morph)
 
-        # paste in the QR-codes
-        # Grab the tpv QRcodes for current page and put them on the pdf
-        # Remember that we only add 3 of the 4 QR codes for each page since
-        # we always have a corner section for staples and such
-        qr_code = {}
-        for corner_index in range(1, 5):
-            qr_code[corner_index] = fitz.Pixmap(qr_file[page_index + 1][corner_index])
-        # Note: draw png first so it doesn't occlude the outline
-        if page_index % 2 == 0:
-            exam[page_index].insert_image(TR, pixmap=qr_code[1], overlay=True)
-            exam[page_index].draw_rect(TR, color=[0, 0, 0], width=0.5)
-        else:
-            exam[page_index].insert_image(TL, pixmap=qr_code[2], overlay=True)
-            exam[page_index].draw_rect(TL, color=[0, 0, 0], width=0.5)
-        exam[page_index].insert_image(BL, pixmap=qr_code[3], overlay=True)
-        exam[page_index].insert_image(BR, pixmap=qr_code[4], overlay=True)
-        exam[page_index].draw_rect(BL, color=[0, 0, 0], width=0.5)
-        exam[page_index].draw_rect(BR, color=[0, 0, 0], width=0.5)
+    if not qr_code:
+        # no more processing of this page if QR codes unwanted
+        return
 
-    for ver, pdf in pdf_version.items():
-        pdf.close()
-    return exam
+    # paste in the QR-codes
+    # Remember that we only add 3 of the 4 QR codes for each page since
+    # we always have a corner section for staples and such
+    # Note: draw png first so it doesn't occlude the outline
+    if odd:
+        page.insert_image(TR, pixmap=fitz.Pixmap(qr_code[0]), overlay=True)
+        page.draw_rect(TR, color=[0, 0, 0], width=0.5)
+    else:
+        page.insert_image(TL, pixmap=fitz.Pixmap(qr_code[1]), overlay=True)
+        page.draw_rect(TL, color=[0, 0, 0], width=0.5)
+    page.insert_image(BL, pixmap=fitz.Pixmap(qr_code[2]), overlay=True)
+    page.insert_image(BR, pixmap=fitz.Pixmap(qr_code[3]), overlay=True)
+    page.draw_rect(BL, color=[0, 0, 0], width=0.5)
+    page.draw_rect(BR, color=[0, 0, 0], width=0.5)
 
 
 def is_possible_to_encode_as(s, encoding):
@@ -377,9 +395,6 @@ def make_PDF(
     Raises:
         ValueError: Raise error if the student name and number is not encodable
     """
-    # from spec get the mapping from page to version
-    page_to_version = build_page_to_version_dict(spec, question_versions)
-
     if extra:
         save_name = paperdir / f"exam_{papernum:04}_{extra['id']}.pdf"
     else:
@@ -392,21 +407,11 @@ def make_PDF(
 
     # Build all relevant pngs in a temp directory
     with tempfile.TemporaryDirectory() as tmp_dir:
-        # create QR codes for each test/page/version
-        qr_file = {}
-        if not no_qr:
-            for pg in range(1, spec["numberOfPages"] + 1):
-                ver = page_to_version[pg]
-                qr_file[pg] = create_QR_codes(
-                    papernum, pg, ver, spec["publicCode"], Path(tmp_dir)
-                )
-
-        # We then create the exam pdf while adding the QR codes to it
         exam = create_exam_and_insert_QR(
             spec,
             papernum,
             question_versions,
-            qr_file,
+            Path(tmp_dir),
             no_qr=no_qr,
         )
 
