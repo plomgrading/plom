@@ -71,6 +71,26 @@ def print_still_out(outToDo):
         print("[{}, {}, {}]".format(x[0], x[1], x[2]))
 
 
+def print_dangling(dangling):
+    if len(dangling) == 0:
+        print("***********************")
+        print("** No dangling pages **")
+        return
+    print("******************************")
+    print("** WARNING - Dangling pages **")
+    for x in dangling:
+        if x["type"] == "tpage":
+            print(
+                ". tpage: t{} p{} of group {}".format(x["test"], x["page"], x["group"])
+            )
+        else:
+            print(
+                ". {}: t{} o{} of group {}]".format(
+                    x["type"], x["test"], x["order"], x["group"]
+                )
+            )
+
+
 def main(server=None, password=None):
     msgr = start_messenger(server, password)
     try:
@@ -79,6 +99,7 @@ def main(server=None, password=None):
         numberOfQuestions = spec["numberOfQuestions"]
         completions = msgr.RgetCompletionStatus()
         outToDo = msgr.RgetOutToDo()
+        dangling = msgr.RgetDanglingPages()
     finally:
         msgr.closeUser()
         msgr.stop()
@@ -92,6 +113,7 @@ def main(server=None, password=None):
     print("{} complete of {} scanned".format(numberComplete, numScanned))
 
     print_still_out(outToDo)
+    print_dangling(dangling)
 
     if len(partMarked) > numberComplete:
         print("*********************")

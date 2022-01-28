@@ -45,7 +45,7 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, ErrorMsg, WarnMsg, InfoMsg
+from plom.client.useful_classes import ErrorMessage, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.origscanviewer import WholeTestView, GroupView
 from plom.client.examviewwindow import ImageViewWidget
@@ -426,6 +426,7 @@ class Manager(QWidget):
         self.ui.removePagesB.clicked.connect(self.removePages)
         self.ui.subsPageB.clicked.connect(self.substitutePage)
         self.ui.removePartScanB.clicked.connect(self.removePagesFromPartScan)
+        self.ui.removeDanglingB.clicked.connect(self.removeDanglingPage)
 
         self.ui.actionUButton.clicked.connect(self.doUActions)
         self.ui.actionCButton.clicked.connect(self.doCActions)
@@ -579,6 +580,7 @@ class Manager(QWidget):
         self.initUnknownTab()
         self.initCollideTab()
         self.initDiscardTab()
+        self.initDanglingTab()
 
     def refreshScanTab(self):
         self.refreshIList()
@@ -586,6 +588,7 @@ class Manager(QWidget):
         self.refreshUList()
         self.refreshCList()
         self.refreshDList()
+        self.refreshDangList()
 
     def initScanStatusTab(self):
         self.ui.scanTW.setHeaderLabels(["Test number", "Page number", "Version"])
@@ -1282,7 +1285,70 @@ class Manager(QWidget):
                 # )
         self.refreshDList()
 
-    ####################
+    def initDanglingTab(self):
+        self.danglingModel = QStandardItemModel(0, 5)
+        self.ui.danglingTV.setModel(self.danglingModel)
+        self.ui.danglingTV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.ui.danglingTV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.danglingModel.setHorizontalHeaderLabels(
+            ["Type", "Test", "Group", "Code", "Page / Order"]
+        )
+        self.ui.danglingTV.activated.connect(self.viewDanglingPage)
+        self.refreshDangList()
+
+    def refreshDangList(self):
+        self.danglingModel.removeRows(0, self.danglingModel.rowCount())
+        # list of dicts
+        dangList = self.msgr.RgetDanglingPages()
+        r = 0
+        for dang in dangList:
+            it0 = QStandardItem(f"{dang['type']}")
+            it1 = QStandardItem(f"{dang['test']}")
+            it2 = QStandardItem(f"{dang['group']}")
+            it3 = QStandardItem(f"{dang['code']}")
+            if dang["type"] == "tpage":
+                it4 = QStandardItem(f"{dang['page']}")
+            else:
+                it4 = QStandardItem(f"{dang['order']}")
+            self.danglingModel.insertRow(r, [it0, it1, it2, it3, it4])
+            r += 1
+        self.ui.danglingTV.resizeRowsToContents()
+        self.ui.danglingTV.resizeColumnsToContents()
+
+    def viewDanglingPage(self):
+        pvi = self.ui.danglingTV.selectedIndexes()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        test_number = int(self.danglingModel.item(r, 1).text())
+        self.viewWholeTest(test_number)
+
+    def removeDanglingPage(self):
+        pvi = self.ui.danglingTV.selectedIndexes()
+        if len(pvi) == 0:
+            return
+        r = pvi[0].row()
+        # recreate the page name
+        test_number = int(self.danglingModel.item(r, 1).text())
+        page_name = self.danglingModel.item(r, 3).text()
+        msg = WarningQuestion(
+            self,
+            f"Will remove the selected page {page_name} from the selected test {test_number}.",
+            "Are you sure you wish to do this? (not reversible)",
+        )
+        if msg.exec_() == QMessageBox.No:
+            return
+        try:
+            rval = self.msgr.removeSinglePage(test_number, page_name)
+            ErrorMessage("{}".format(rval)).exec_()
+        except PlomOwnersLoggedInException as err:
+            ErrorMessage(
+                "Cannot remove scanned pages from that test - owners of tasks in that test are logged in: {}".format(
+                    err.args[-1]
+                )
+            ).exec_()
+
+    # ###################
     # Progress tab stuff
     def initProgressTab(self):
         self.initOverallTab()

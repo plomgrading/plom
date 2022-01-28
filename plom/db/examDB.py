@@ -180,6 +180,7 @@ class PlomDB:
         RgetMarkReview,
         RgetIDReview,
         RgetUserFullProgress,
+        RgetDanglingPages,
     )
 
     from plom.db.db_identify import (
