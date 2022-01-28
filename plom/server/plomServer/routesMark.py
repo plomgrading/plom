@@ -143,14 +143,14 @@ class MarkHandler:
             return web.json_response(status=406, text=value)
 
     # @routes.patch("/MK/tasks/{task}")
-    @authenticate_by_token_required_fields(["user"])
+    @authenticate_by_token_required_fields(["user", "version"])
     def MclaimThisTask(self, data, request):
         """Take task number in request and return the task/question's image data as a response.
 
         Respond with status 200/204.
 
         Args:
-            data (dict): A dictionary having the user/token.
+            data (dict): A dictionary having the user/token and the version.
             request (aiohttp.web_request.Request): PATCH /MK/tasks/`question code` request object.
                 This request object will include the task code.
 
@@ -159,14 +159,14 @@ class MarkHandler:
                task with status 200, or 409 if someone else has claimed this
                task, or a 404 if there it not yet such a task (not scanned yet)
                or 410 if there will never be such a task, or 400/401 for
-               other or authentication problems.
+               other or authentication problems. Also 417 when the version requested does not match the version of the task.
         """
 
         task_code = request.match_info["task"]
         # returns either
         #   [True, image_metadata, [tag text list], integrity_check]
         #   [False, code, msg]
-        retvals = self.server.MclaimThisTask(data["user"], task_code)
+        retvals = self.server.MclaimThisTask(data["user"], task_code, data["version"])
 
         if not retvals[0]:
             code, errmsg = retvals[1:]
@@ -174,6 +174,8 @@ class MarkHandler:
                 raise web.HTTPConflict(reason=errmsg)
             elif code == "not_todo":
                 raise web.HTTPConflict(reason=errmsg)
+            elif code == "mismatch":
+                raise web.HTTPExpectationFailed(reason=errmsg)
             elif code == "no_such_task":
                 raise web.HTTPGone(reason=errmsg)
             elif code == "not_scanned":

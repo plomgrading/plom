@@ -55,6 +55,10 @@ class PlomRangeException(PlomBenignException):
     pass
 
 
+class PlomVersionMismatchException(PlomBenignException):
+    pass
+
+
 class PlomBadTagError(PlomBenignException):
     pass
 

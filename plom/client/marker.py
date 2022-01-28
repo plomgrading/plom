@@ -53,6 +53,7 @@ from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomBadTagError,
     PlomRangeException,
+    PlomVersionMismatchException,
     PlomSeriousException,
     PlomTakenException,
     PlomTaskChangedError,
@@ -155,7 +156,9 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(task)
+                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(
+                    task, version=self.version
+                )
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1347,7 +1350,7 @@ class MarkerClient(QWidget):
         If available, download stuff, add to list, update view.
         """
         s = "<p>Which paper number would you like to get?</p>"
-        s += f"<p>Note: you are marking question {self.question}.</p>"
+        s += f"<p>Note: you are marking version {self.version} of question {self.question}.</p>"
         max_papernum = self.exam_spec["numberToProduce"]
         n, ok = QInputDialog.getInt(self, "Which paper to get", s, 1, 1, max_papernum)
         if not ok:
@@ -1355,7 +1358,11 @@ class MarkerClient(QWidget):
         log.info("getting paper num %s", n)
         try:
             self.requestParticularPaper(n)
-        except (PlomTakenException, PlomRangeException) as err:
+        except (
+            PlomTakenException,
+            PlomRangeException,
+            PlomVersionMismatchException,
+        ) as err:
             ErrorMessage(f"Cannot get get paper {n}: {err}").exec_()
 
     def requestNext(self):
@@ -1403,9 +1410,12 @@ class MarkerClient(QWidget):
 
         Raises:
             PlomTakenException
+            PlomVersionMismatchException
         """
         task = f"q{papernum:04}g{self.question}"
-        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task)
+        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
+            task, version=self.version
+        )
         full_pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
         for r in full_pagedata:
             r["local_filename"] = None

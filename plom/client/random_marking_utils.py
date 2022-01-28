@@ -207,7 +207,9 @@ def do_random_marking_backend(question, version, *, messenger):
             break
         # print("Trying to claim next ask = ", task)
         try:
-            image_metadata, tags, integrity_check = messenger.MclaimThisTask(task)
+            image_metadata, tags, integrity_check = messenger.MclaimThisTask(
+                task, version=version
+            )
         except PlomTakenException:
             print("Another user got task {}. Trying again...".format(task))
             continue
