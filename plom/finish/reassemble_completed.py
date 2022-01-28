@@ -112,7 +112,7 @@ def _reassemble_one_paper(
         skip (bool): whether to skip existing pdf files.
 
     Returns:
-        outname (pathlib.Path): the path of the reassembled test pdf.
+        outname (pathlib.Path): the full path of the reassembled test pdf.
     """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
@@ -146,7 +146,7 @@ def reassemble_one_paper(
             we already have (Careful: without checking for changes!)
 
     Returns:
-        outname (pathlib.Path): the path of the reassembled test pdf.
+        outname (pathlib.Path): the full path of the reassembled test pdf.
 
     Raises:
         ValueError: does not exist, or not ready.
