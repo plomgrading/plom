@@ -722,7 +722,7 @@ class BaseMessenger:
             edition (int/None): which annotation set or None for latest.
 
         Returns:
-            dict: contents of the plom file.
+            BytesIO: contents of a bitmap file.
 
         Raises:
             PlomAuthenticationException
