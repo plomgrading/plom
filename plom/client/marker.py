@@ -1260,6 +1260,7 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         # TODO: use server filename from server_path_filename
         for i, row in enumerate(src_img_data):
+            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
             tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
             with open(tmp, "wb") as fh:
@@ -1271,11 +1272,14 @@ class MarkerClient(QWidget):
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
-        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        log.debug("create paperDir {} for already-graded download".format(paperDir))
-        self.examModel.setPaperDirByTask(task, paperDir)
-        aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
-        pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
+        paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
+        paperdir = Path(paperdir)
+        log.debug("create paperdir %s for already-graded download", paperdir)
+        self.examModel.setPaperDirByTask(task, paperdir)
+        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
+        ext = "image"
+        aname = paperdir / "G{}.{}".format(task[1:], ext)
+        pname = paperdir / "G{}.plom".format(task[1:])
         with open(aname, "wb") as fh:
             fh.write(annotated_image)
         with open(pname, "w") as f:

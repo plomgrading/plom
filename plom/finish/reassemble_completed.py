@@ -62,6 +62,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     """
     id_image_blob = msgr.request_ID_image(t)  # might be none - eg for hw.
     if id_image_blob is not None:
+        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
         id_page = tmpdir / f"img_{int(t):04}_id0.png"
         with open(id_page, "wb") as f:
             f.write(id_image_blob)
@@ -74,7 +75,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
-        # Hardcoded to PNG here (and elsewhere!)
+        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.png"
         marked_pages.append(filename)
         with open(filename, "wb") as f:
@@ -82,6 +83,7 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     dnm_image_blobs = msgr.request_donotmark_images(t)
     dnm_pages = []
     for i, obj in enumerate(dnm_image_blobs):
+        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
         filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.png"
         dnm_pages.append(filename)
         with open(filename, "wb") as f:
