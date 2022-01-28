@@ -107,7 +107,7 @@ def RgetDanglingPages(self):
                         "group": gref.gid,
                         "type": "tpage",
                         "page": pref.page_number,
-                        "code": f"t.{pref.page_number}"
+                        "code": f"t.{pref.page_number}",
                     }
                 )
         for pref in gref.hwpages:
@@ -118,7 +118,7 @@ def RgetDanglingPages(self):
                     "group": gref.gid,
                     "type": "hwpage",
                     "order": pref.order,
-                    "code": f"h.{q}.{pref.order}"
+                    "code": f"h.{q}.{pref.order}",
                 }
             )
         for pref in gref.expages:
@@ -129,11 +129,11 @@ def RgetDanglingPages(self):
                     "group": gref.gid,
                     "type": "expage",
                     "order": pref.order,
-                    "code": f"e.{q}.{pref.order}"
+                    "code": f"e.{q}.{pref.order}",
                 }
             )
     # return list sorted by test-number
-    return sorted(dangling, key=lambda p: p['test'])
+    return sorted(dangling, key=lambda p: p["test"])
 
 
 def RgetCompleteHW(self):

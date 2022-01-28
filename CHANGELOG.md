@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SSL verification enabled by default for releases.
 * Client Marker window can request any paper number with a long press on "Get next".
 * Mild warnings when user gives 0 but there are some ticks on page. sSimilar mild warnings when user gives full but there are crosses.
+* Manager and plom-finish now has list of "dangling" pages - ones which are attached to not-completely-scanned groups. Manager can remove those pages.
 
 ### Changed
 * Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.
