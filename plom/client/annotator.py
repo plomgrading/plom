@@ -1464,13 +1464,13 @@ class Annotator(QWidget):
             msg.exec_()
             return False
 
-        # do some checks when score is zero (and not marking down)
-        if self.getScore() == 0 and self.getMarkingState() != "down":
+        # do some checks when score is zero
+        if self.getScore() == 0:
             if not self._zeroMarksWarn():
                 return False
 
-        # do similar checks when score is full (and not marking up)
-        if self.getScore() == self.maxMark and self.getMarkingState() != "up":
+        # do similar checks when score is full
+        if self.getScore() == self.maxMark:
             if not self._fullMarksWarn():
                 return False
 
@@ -1570,10 +1570,9 @@ class Annotator(QWidget):
 
         """
         msg = "<p>You have given full {0}/{0},".format(self.maxMark)
+        warn = False
         forceWarn = False
-        if self.scene.hasOnlyTicks():
-            warn = False
-        elif self.scene.hasOnlyCrosses():
+        if self.scene.hasOnlyCrosses():
             warn = True
             forceWarn = True
             msg += " <em>but there are only crosses on the page!</em>"
