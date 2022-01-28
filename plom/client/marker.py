@@ -156,7 +156,9 @@ class BackgroundDownloader(QThread):
                 return
 
             try:
-                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(task, version=self.version)
+                page_metadata, tags, integrity_check = self._msgr.MclaimThisTask(
+                    task, version=self.version
+                )
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
@@ -1356,7 +1358,11 @@ class MarkerClient(QWidget):
         log.info("getting paper num %s", n)
         try:
             self.requestParticularPaper(n)
-        except (PlomTakenException, PlomRangeException, PlomVersionMismatchException) as err:
+        except (
+            PlomTakenException,
+            PlomRangeException,
+            PlomVersionMismatchException,
+        ) as err:
             ErrorMessage(f"Cannot get get paper {n}: {err}").exec_()
 
     def requestNext(self):
@@ -1407,7 +1413,9 @@ class MarkerClient(QWidget):
             PlomVersionMismatchException
         """
         task = f"q{papernum:04}g{self.question}"
-        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(task, version=self.version)
+        page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
+            task, version=self.version
+        )
         full_pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
         for r in full_pagedata:
             r["local_filename"] = None

@@ -166,7 +166,7 @@ class MarkHandler:
         # returns either
         #   [True, image_metadata, [tag text list], integrity_check]
         #   [False, code, msg]
-        retvals = self.server.MclaimThisTask(data["user"], task_code, data['version'])
+        retvals = self.server.MclaimThisTask(data["user"], task_code, data["version"])
 
         if not retvals[0]:
             code, errmsg = retvals[1:]
