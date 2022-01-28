@@ -1711,7 +1711,7 @@ class Manager(QWidget):
         version = int(self.ui.reviewTW.item(r, 2).text())
         img = self.msgr.get_annotations_image(test, question)
         with tempfile.NamedTemporaryFile() as fh:
-            # TODO: no extension here, maybe nice to append jpg/png
+            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
             fh.write(img)
             rvw = ReviewViewWindow(self, [fh.name])
             if rvw.exec() == QDialog.Accepted:
