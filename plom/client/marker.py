@@ -2213,6 +2213,7 @@ class MarkerClient(QWidget):
 
         viewFiles = []
         for iab in imagesAsBytes:
+            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
             tfn = tempfile.NamedTemporaryFile(
                 dir=self.workingDirectory, suffix=".image", delete=False
             ).name
