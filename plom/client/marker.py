@@ -557,19 +557,6 @@ class MarkerExamModel(QStandardItemModel):
         """
         self.setData(self.index(r, 1), stat)
 
-    def _getAnnotatedFile(self, r):
-        """
-        Returns the filename of the annotated image.
-
-        Args:
-            r (int): the row identifier of the paper.
-
-        Returns:
-            (str): the filename of the annotated image
-
-        """
-        return self.data(self.index(r, 6))
-
     def _setAnnotatedFile(self, r, aname, pname):
         """
         Set the file name for the annotated image.
@@ -699,6 +686,14 @@ class MarkerExamModel(QStandardItemModel):
     def getMTimeByTask(self, task):
         """Return total marking time (s) for task, (task(str), return (int).)"""
         return int(self._getDataByTask(task, 3))
+
+    def getAnnotatedFileByTask(self, task):
+        """Returns the filename of the annotated image."""
+        return Path(self._getDataByTask(task, 6))
+
+    def getPlomFileByTask(self, task):
+        """Returns the filename of the plom json data."""
+        return Path(self._getDataByTask(task, 7))
 
     def getPaperDirByTask(self, task):
         """Return temporary directory for this task, (task(str) defined above)"""
@@ -1685,28 +1680,21 @@ class MarkerClient(QWidget):
         """
         # Create annotated filename.
         assert task.startswith("q")
-        Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
-        log.debug("create paperdir {} for annotating".format(paperdir))
-        aname = os.path.join(paperdir, Gtask + ".png")
-        pname = os.path.join(paperdir, Gtask + ".plom")
-
-        remarkFlag = False
+        paperdir = Path(paperdir)
+        log.debug("create paperdir %s for annotating", paperdir)
+        Gtask = "G" + task[1:]
+        # note no extension yet
+        aname = paperdir / Gtask
+        pdict = None
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
-            remarkFlag = True
-            oldpaperdir = self.examModel.getPaperDirByTask(task)
-            log.debug("oldpaperdir is " + oldpaperdir)
-            assert oldpaperdir is not None
-            oldaname = os.path.join(oldpaperdir, Gtask + ".png")
-            oldpname = os.path.join(oldpaperdir, Gtask + ".plom")
-            # TODO: comment json file not downloaded
-            # https://gitlab.com/plom/plom/issues/415
-            shutil.copyfile(oldaname, aname)
-            shutil.copyfile(oldpname, pname)
+            oldpname = self.examModel.getPlomFileByTask(task)
+            with open(oldpname, "r") as fh:
+                pdict = json.load(fh)
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
@@ -1743,12 +1731,6 @@ class MarkerClient(QWidget):
         # stash the previous state, not ideal because makes column wider
         prevState = self.examModel.getStatusByTask(task)
         self.examModel.setStatusByTask(task, "ann:" + prevState)
-
-        if remarkFlag:
-            with open(pname, "r") as fh:
-                pdict = json.load(fh)
-        else:
-            pdict = None
 
         exam_name = self.exam_spec["name"]
 
