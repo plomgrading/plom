@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2018-2021 Colin B. Macdonald
+# Copyright (C) 2018-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 
+import imghdr
 import os
 from pathlib import Path
 import shutil
@@ -60,31 +61,28 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     Returns:
        tuple: (id_page_files, marked_page_files, dnm_page_files)
     """
-    id_image_blob = msgr.request_ID_image(t)  # might be none - eg for hw.
-    if id_image_blob is not None:
-        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        id_page = tmpdir / f"img_{int(t):04}_id0.png"
+    # empty list if no ID-page (return None) - eg for hw.
+    id_pages = []
+    id_image_blob = msgr.request_ID_image(t)
+    if id_image_blob:
+        im_type = imghdr.what(None, h=id_image_blob)
+        id_page = tmpdir / f"img_{int(t):04}_id0.{im_type}"
         with open(id_page, "wb") as f:
             f.write(id_image_blob)
         id_pages = [id_page]
-    else:
-        id_pages = []
-    # return id-page inside a list since then the 3 different page types
-    # are returned consistently inside lists.
-    # also - return an empty list if no ID-page - eg for hw.
     marked_pages = []
     for q in range(1, num_questions + 1):
         obj = msgr.get_annotations_image(t, q)
-        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        filename = tmpdir / f"img_{int(t):04}_q{q:02}.png"
+        im_type = imghdr.what(None, h=obj)
+        filename = tmpdir / f"img_{int(t):04}_q{q:02}.{im_type}"
         marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
     dnm_image_blobs = msgr.request_donotmark_images(t)
     dnm_pages = []
     for i, obj in enumerate(dnm_image_blobs):
-        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.png"
+        im_type = imghdr.what(None, h=obj)
+        filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.{im_type}"
         dnm_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)

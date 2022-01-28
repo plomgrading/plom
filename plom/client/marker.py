@@ -14,6 +14,7 @@ __license__ = "AGPL-3.0-or-later"
 
 
 from collections import defaultdict
+import imghdr
 import json
 import logging
 from math import ceil
@@ -1260,15 +1261,15 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         # TODO: use server filename from server_path_filename
         for i, row in enumerate(src_img_data):
-            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
+            im_type = imghdr.what(None, h=im_bytes)
+            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_type)
             with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
-            row["filename"] = tmp
+            row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    r["local_filename"] = str(tmp)
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1276,9 +1277,8 @@ class MarkerClient(QWidget):
         paperdir = Path(paperdir)
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
-        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        ext = "image"
-        aname = paperdir / "G{}.{}".format(task[1:], ext)
+        im_type = imghdr.what(None, h=annotated_image)
+        aname = paperdir / "G{}.{}".format(task[1:], im_type)
         pname = paperdir / "G{}.plom".format(task[1:])
         with open(aname, "wb") as fh:
             fh.write(annotated_image)
@@ -2213,9 +2213,9 @@ class MarkerClient(QWidget):
 
         viewFiles = []
         for iab in imagesAsBytes:
-            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
+            im_type = imghdr.what(None, h=iab)
             tfn = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".image", delete=False
+                dir=self.workingDirectory, suffix=f".{im_type}", delete=False
             ).name
             viewFiles.append(Path(tfn))
             with open(tfn, "wb") as fh:
