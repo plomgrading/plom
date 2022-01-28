@@ -32,6 +32,7 @@ from plom.plom_exceptions import (
     PlomNoMoreException,
     PlomNoSolutionException,
     PlomRangeException,
+    PlomVersionMismatchException,
     PlomLatexException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
@@ -292,7 +293,7 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MclaimThisTask(self, code):
+    def MclaimThisTask(self, code, version):
         """Claim a task from server and get back metadata.
 
         args:
@@ -304,6 +305,7 @@ class Messenger(BaseMessenger):
         raises:
             PlomTakenException: someone got it before you
             PlomRangeException: no such test number or not yet scanned
+        PlomVersionMismatchException: the version supplied does not match the task's version
             PlomAuthenticationException
             PlomSeriousException: generic unexpected error
         """
@@ -311,7 +313,7 @@ class Messenger(BaseMessenger):
             try:
                 response = self.patch(
                     f"/MK/tasks/{code}",
-                    json={"user": self.user, "token": self.token},
+                    json={"user": self.user, "token": self.token, "version": version},
                 )
                 response.raise_for_status()
                 return response.json()
@@ -320,6 +322,8 @@ class Messenger(BaseMessenger):
                     raise PlomAuthenticationException() from None
                 if response.status_code == 409:
                     raise PlomTakenException(response.reason) from None
+                if response.status_code == 417:
+                    raise PlomVersionMismatchException(response.reason) from None
                 if response.status_code == 404:
                     raise PlomRangeException(response.reason) from None
                 if response.status_code == 410:

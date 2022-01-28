@@ -125,16 +125,17 @@ def MgetNextTask(self, q, v):
         return qref.group.gid
 
 
-def MgiveTaskToClient(self, user_name, group_id):
+def MgiveTaskToClient(self, user_name, group_id, version):
     """Assign a marking task to a certain user, and give them back needed data.
 
     args:
         user_name (str): the user name who is claiming the task.
         group_id (TODO): somehow tells the task (?).
+        version (int): version requested - must match that in db.
 
     Return:
         list: On error, `[False, code, errmsg]` where `code` is a string:
-            `"other_claimed"`, `"not_known"`, `"not_scanned"`, `"unexpected"`
+            `"other_claimed"`, `"not_known"`, `"not_scanned"`, `"unexpected"`, `"mismatch"`
             and `errmsg` is a human-readable error message.
             Otherwise, the list is
                 `[True, metadata, [list of tag texts], integrity_check]`
@@ -169,7 +170,13 @@ def MgiveTaskToClient(self, user_name, group_id):
             msg = f'Task {group_id} previously claimed by user "{qref.user.name}"'
             log.info(msg)
             return [False, "other_claimed", msg]
-        # Can only ask for tasks on the todo-pile... not ones in other states.
+        # check the version matches that in the database
+        if qref.version != version:
+            msg = f"User asked for version {version} but task {group_id} has version {qref.version}."
+            log.info(msg)
+            return [False, "mismatch", msg]
+
+        # Can only ask for tasks on the todo-pile... not ones in other states
         if qref.status != "todo":
             msg = f"Task {group_id} is not on the todo pile - we cannot give you another copy."
             log.info(msg)
