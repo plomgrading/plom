@@ -189,7 +189,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     print("Annotating papers with fake student data and scribbling on pages...")
     if not which:
         # those with an ID number
-        named_papers_paths = paper_dir.glob("exam_*_*.pdf")
+        named_papers_paths = list(paper_dir.glob("exam_*_*.pdf"))
         # everything
         papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
     else:
