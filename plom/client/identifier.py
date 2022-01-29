@@ -731,7 +731,9 @@ class IDClient(QWidget):
         viewFiles = []
         for img_bytes in imagesAsBytes:
             img_ext = imghdr.what(None, h=img_bytes)
-            with tempfile.NamedTemporaryFile("wb", suffix=f".{img_ext}", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                "wb", suffix=f".{img_ext}", delete=False
+            ) as f:
                 f.write(img_bytes)
                 viewFiles.append(f.name)
         WholeTestView(testNumber, viewFiles, labels, parent=self).exec_()
