@@ -36,6 +36,6 @@ RUN APPIMAGE_EXTRACT_AND_RUN=1 appimage-builder --skip-tests
 
 # To get it out, something like:
 # docker create -ti --name dummy IMAGE_NAME bash
-# docker cp dummy:/path/to/file /dest/to/file
+# docker cp dummy:/app/PlomClient... .
 # docker rm -f dummy
 # https://stackoverflow.com/questions/22049212/docker-copying-files-from-docker-container-to-host

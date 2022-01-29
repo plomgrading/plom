@@ -29,6 +29,7 @@ AppDir:
     id: org.plomgrading.PlomClient
     name: PlomClient
     icon: org.plomgrading.PlomClient
+    # Note version hardcoded here!
     version: 0.8.0-dev
     exec: usr/bin/python3
     exec_args: -m plom.client $@

@@ -828,8 +828,9 @@ linuxbin_appimage:
   script:
     - docker build --tag appimagebuilder_tmp -f AppImageBuilder.Containerfile .
     - docker create -ti --name dummy appimagebuilder_tmp bash
-    # TODO: hardcoded version
-    - export NAME=PlomClient-0.8.0-dev-x86_64.AppImage
+    # export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
+    - export NAME=PlomClient-$VER-x86_64.AppImage
     - docker cp dummy:/app/$NAME .
     - docker rm -f dummy
     - md5sum $NAME > md5sum

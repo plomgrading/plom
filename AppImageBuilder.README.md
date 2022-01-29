@@ -32,4 +32,3 @@ Then continue as per the AppImageBuilder.Containerfile.
   * Exclude some stuff that ends up in AppDir/usr/bin/
   * Document what bits of our source code to put in: its not just the
     raw git checkout.
-  * TODO: version string properly pulled in
