@@ -50,7 +50,7 @@ def get_question_label(spec, n):
     """
     n = int(n)
     if n < 1 or n > spec["numberOfQuestions"]:
-        raise ValueError(f'n={n} out of range [1, {spec["numberOfQuestions"]}]')
+        raise ValueError(f'question={n} out of range [1, {spec["numberOfQuestions"]}]')
     label = spec["question"][str(n)].get("label", None)
     if label:
         return label

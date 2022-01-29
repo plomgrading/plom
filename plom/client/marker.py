@@ -68,11 +68,8 @@ from .annotator import Annotator
 from .examviewwindow import ImageViewWidget
 from .origscanviewer import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
-from .useful_classes import (
-    AddRemoveTagDialog,
-    ErrorMessage,
-    SimpleQuestion,
-)
+from .useful_classes import AddRemoveTagDialog
+from .useful_classes import ErrorMessage, SimpleQuestion
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -1106,7 +1103,10 @@ class MarkerClient(QWidget):
         self.setWindowTitle('Plom Marker: "{}"'.format(self.exam_spec["name"]))
         # Paste the username, question and version into GUI.
         self.ui.userLabel.setText(self.msgr.whoami())
-        question_label = get_question_label(self.exam_spec, self.question)
+        try:
+            question_label = get_question_label(self.exam_spec, self.question)
+        except (ValueError, KeyError):
+            question_label = "???"
         self.ui.infoBox.setTitle(
             "Marking {} (ver. {}) of “{}”".format(
                 question_label, self.version, self.exam_spec["name"]
@@ -2171,14 +2171,15 @@ class MarkerClient(QWidget):
             if msg.exec_() == QMessageBox.Cancel:
                 event.ignore()
                 return
-        # politely ask one more time
-        if self.backgroundUploader.isRunning():
-            self.backgroundUploader.quit()
-        if not self.backgroundUploader.wait(50):
-            log.info("Background downloader did stop cleanly in 50ms, terminating")
-        # then nuke it from orbit
-        if self.backgroundUploader.isRunning():
-            self.backgroundUploader.terminate()
+        if self.backgroundUploader is not None:
+            # politely ask one more time
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.quit()
+            if not self.backgroundUploader.wait(50):
+                log.info("Background downloader did stop cleanly in 50ms, terminating")
+            # then nuke it from orbit
+            if self.backgroundUploader.isRunning():
+                self.backgroundUploader.terminate()
 
         log.debug("Revoking login token")
         try:
