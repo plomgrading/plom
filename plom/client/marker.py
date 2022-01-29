@@ -1994,19 +1994,21 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         src_img_data = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
-        # TODO: something with tempfile instead
         # TODO: but why not keep using old name once they are static
-        rand6hex = secrets.token_hex(3)
         for i in range(len(imageList)):
-            tmp = os.path.join(
-                self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
-            )
+            with tempfile.NamedTemporaryFile(
+                dir=self.workingDirectory,
+                prefix="twist_{}_{}_".format(task, i),
+                suffix="_" + Path(imageList[i][1]).name,
+                delete=False,
+            ) as f:
+                tmp = Path(f.name)
             shutil.copyfile(imageList[i][1], tmp)
             src_img_data.append(
                 {
                     "id": imageList[i][3],
                     "md5": imageList[i][0],
-                    "filename": tmp,
+                    "filename": str(tmp),
                     "orientation": imageList[i][2],
                 }
             )
