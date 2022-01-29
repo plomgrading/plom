@@ -36,7 +36,7 @@ def test_ok_to_contain_unused_column_names(tmpdir):
 
 
 def test_only_one_name_column(tmpdir):
-    tmdir = Path(tmpdir)
+    tmpdir = Path(tmpdir)
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
