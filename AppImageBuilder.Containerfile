@@ -15,7 +15,11 @@ RUN apt-get -y update && \
     apt-get install -y python3-pip \
         python3-setuptools patchelf desktop-file-utils libgdk-pixbuf2.0-dev \
         fakeroot strace fuse \
-        gtk-update-icon-cache wget
+        gtk-update-icon-cache \
+        wget
+
+# too old?  errors on validating our file
+# RUN apt-get -y install appstream
 
 RUN wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool && \
     chmod +x /usr/local/bin/appimagetool

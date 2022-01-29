@@ -29,10 +29,7 @@ Then continue as per the AppImageBuilder.Containerfile.
 ### TODO
 
   * Try `python:3.9` or other image?
-  * And/or integrate into our CI
   * Exclude some stuff that ends up in AppDir/usr/bin/
   * Document what bits of our source code to put in: its not just the
     raw git checkout.
-  * WARNING:appimagetool:WARNING: AppStream upstream metadata is missing, please consider creating it
-    WARNING:appimagetool:in usr/share/metainfo/org.plomgrading.PlomClient.appdata.xml
   * TODO: version string properly pulled in
