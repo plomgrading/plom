@@ -834,7 +834,10 @@ linuxbin_ubuntu1804:
     - python3 -m pip install pyinstaller
     # On 18.04, for pip < 19 upgrading is nontrivial: need `python3 -m pip`
   script:
+    # disable the pinned pillow as Python 3.6 not supported
+    - sed -i "s/Pillow=/# Pillow=/" requirements.txt.client
     - python3 -m pip install -r requirements.txt.client
+    - python3 -m pip install Pillow
     - pyinstaller client.linux.spec
     - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
@@ -893,7 +896,10 @@ linuxbin_centos:
     - pip3 install --upgrade pip
     - python3 -m pip install pyinstaller
   script:
+    # disable the pinned pillow as Python 3.6 not supported
+    - sed -i "s/Pillow=/# Pillow=/" requirements.txt.client
     - python3 -m pip install -r requirements.txt.client
+    - python3 -m pip install Pillow
     - pyinstaller client.linux.spec
     - export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
     - echo "Extracted version string '$VER'"
