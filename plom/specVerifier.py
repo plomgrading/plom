@@ -2,16 +2,11 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
+import importlib.resources as resources
 import logging
 from math import ceil
 from pathlib import Path
 import random
-import sys
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import toml
 
