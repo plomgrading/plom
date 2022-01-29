@@ -1,15 +1,25 @@
+# SPDX-License-Identifier: FSFAP
+# Copyright (C) 2022 Colin B. Macdonald
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
 version: 1
 script:
   - rm -rf AppDir | true
   - mkdir -p AppDir/usr/src
   # TODO: maybe work from the .tar.gz instead or remove lots of stuff
-  - cp -ra plom.git AppDir/usr/src
+  - cp -ra src AppDir/usr/src
   - mkdir -p AppDir/usr/share/icons/hicolor/128x128/apps
-  - cp plom.git/org.plomgrading.PlomClient.png AppDir/usr/share/icons/hicolor/128x128/apps
+  - cp src/org.plomgrading.PlomClient.png AppDir/usr/share/icons/hicolor/128x128/apps
+  - mkdir -p AppDir/usr/share/metainfo
+  - cp src/org.plomgrading.PlomClient.metainfo.xml AppDir/usr/share/metainfo/
   - python3 -m pip install --upgrade pip
-  - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir -r plom.git/requirements.txt.client
-  # Plom itself: no-deps to avoid pulling in server deps
-  - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir --no-deps plom.git/
+  - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir -r src/requirements.txt.client
+  # Plom itself: but no-deps to avoid pulling in server deps
+  - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir --no-deps src/
 
 
 AppDir:
@@ -18,7 +28,7 @@ AppDir:
     id: org.plomgrading.PlomClient
     name: PlomClient
     icon: org.plomgrading.PlomClient
-    version: 0.8.0
+    version: 0.8.0-dev
     exec: usr/bin/python3
     exec_args: -m plom.client $@
   files:
@@ -46,13 +56,8 @@ AppDir:
 
   runtime:
     env:
-      # Set python home
-      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
       PYTHONHOME: '${APPDIR}/usr'
-      # Path to the site-packages dir or other modules dirs
-      # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
       PYTHONPATH: '${APPDIR}/usr/lib/python3.8/site-packages'
-       #:${APPDIR}/usr/lib/python3/site-packages'
 
   test:
     fedora-30:
