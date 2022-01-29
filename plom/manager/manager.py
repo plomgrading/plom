@@ -8,6 +8,7 @@
 
 from collections import defaultdict
 import csv
+import imghdr
 import os
 from pathlib import Path
 import sys
@@ -1060,10 +1061,11 @@ class Manager(QWidget):
             parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
-            for i in range(len(vt)):
-                iname = Path(td) / f"img.{i}.image"
+            for i, img_bytes in enumerate(vt):
+                img_ext = imghdr.what(None, h=img_bytes)
+                iname = Path(td) / f"img.{i}.{img_ext}"
                 with open(iname, "wb") as fh:
-                    fh.write(vt[i])
+                    fh.write(img_bytes)
                 inames.append(iname)
             WholeTestView(testNumber, inames, parent=parent).exec_()
 
@@ -1075,10 +1077,11 @@ class Manager(QWidget):
             parent = self
         with tempfile.TemporaryDirectory() as td:
             inames = []
-            for i in range(len(vq)):
-                iname = Path(td) / f"img.{i}.image"
+            for i, img_bytes in enumerate(vq):
+                img_ext = imghdr.what(None, h=img_bytes)
+                iname = Path(td) / f"img.{i}.{img_ext}"
                 with open(iname, "wb") as fh:
-                    fh.write(vq[i])
+                    fh.write(img_bytes)
                 inames.append(iname)
             GroupView(parent, inames).exec_()
 
@@ -1438,14 +1441,14 @@ class Manager(QWidget):
         except PlomNoMoreException as err:
             ErrorMessage(f"No unIDd images to show - {err}").exec_()
             return
-        # Image names = "i<testnumber>.<imagenumber>.<ext>"
-        inames = []
         with tempfile.TemporaryDirectory() as td:
-            for i in range(len(imageList)):
-                tmp = os.path.join(td, "id.{}.image".format(i))
-                inames.append(tmp)
+            inames = []
+            for i, img_bytes in enumerate(imageList):
+                img_ext = imghdr.what(None, h=img_bytes)
+                tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
-                    fh.write(imageList[i])
+                    fh.write(img_bytes)
+                inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
                 self.IDrectangle = srw.rectangle
@@ -1464,17 +1467,18 @@ class Manager(QWidget):
         test = int(self.ui.predictionTW.item(idi[0].row(), 0).text())
         sid = int(self.ui.predictionTW.item(idi[0].row(), 1).text())
         try:
-            imageDat = self.msgr.request_ID_image(test)
+            img_bytes = self.msgr.request_ID_image(test)
         except PlomException as err:
             ErrorMessage(err).exec_()
             return
 
-        if imageDat is None:
+        if not img_bytes:
             return
         with tempfile.TemporaryDirectory() as td:
-            imageName = os.path.join(td, "id.0.image")
+            img_ext = imghdr.what(None, h=img_bytes)
+            imageName = Path(td) / f"id.{img_ext}"
             with open(imageName, "wb") as fh:
-                fh.write(imageDat)
+                fh.write(img_bytes)
             IDViewWindow(self, imageName, sid).exec_()
 
     def runPredictor(self, ignoreStamp=False):
@@ -1711,6 +1715,7 @@ class Manager(QWidget):
         version = int(self.ui.reviewTW.item(r, 2).text())
         img = self.msgr.get_annotations_image(test, question)
         with tempfile.NamedTemporaryFile() as fh:
+            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
             fh.write(img)
             rvw = ReviewViewWindow(self, [fh.name])
             if rvw.exec() == QDialog.Accepted:
@@ -1771,11 +1776,12 @@ class Manager(QWidget):
                 return
 
         test = int(self.ui.reviewIDTW.item(r, 0).text())
-        imageDat = self.msgr.request_ID_image(test)
+        img_bytes = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
-            imageName = os.path.join(td, "id.0.image")
+            img_ext = imghdr.what(None, h=img_bytes)
+            imageName = Path(td) / f"id.0.{img_ext}"
             with open(imageName, "wb") as fh:
-                fh.write(imageDat)
+                fh.write(img_bytes)
             rvw = ReviewViewWindow(self, imageName, "ID pages")
             if rvw.exec() == QDialog.Accepted:
                 if rvw.action == "review":

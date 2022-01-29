@@ -3,8 +3,8 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
+import imghdr
 import json
-import os
 from pathlib import Path
 import random
 import sys
@@ -219,11 +219,12 @@ def do_random_marking_backend(question, version, *, messenger):
         ]
         with tempfile.TemporaryDirectory() as td:
             for i, r in enumerate(src_img_data):
-                obj = messenger.MrequestOneImage(r["id"], r["md5"])
-                tmp = os.path.join(td, f"{task}.{i}.image")
+                img_bytes = messenger.MrequestOneImage(r["id"], r["md5"])
+                img_ext = imghdr.what(None, h=img_bytes)
+                tmp = Path(td) / f"{task}.{i}.{img_ext}"
                 with open(tmp, "wb") as f:
-                    f.write(obj)
-                r["filename"] = tmp
+                    f.write(img_bytes)
+                r["filename"] = str(tmp)
             basefile = Path(td) / "argh"
             score, rubrics, aname, plomfile = annotatePaper(
                 question, maxMark, task, src_img_data, basefile, tags

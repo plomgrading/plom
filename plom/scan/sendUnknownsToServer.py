@@ -58,15 +58,20 @@ def bundle_has_nonuploaded_unknowns(bundle_dir):
 
 
 def list_bundle_nonuploaded_unknowns(bundle_dir):
-    """List any non-uploaded unknown pages does this bundle have.
+    """List any non-uploaded unknown pages that this bundle has.
 
     Args:
         bundle_dir (str, Path): path to a bundle.
 
     Return:
-        List(Path)
+        list: of ``pathlib.Path`` objects
     """
-    return list((Path(bundle_dir) / "unknownPages").glob("*.png"))
+    bundle_dir = Path(bundle_dir)
+    files = []
+    # Look for pages in unknowns
+    for ext in PlomImageExts:
+        files.extend((bundle_dir / "unknownPages").glob(f"*.{ext}"))
+    return files
 
 
 def count_bundle_nonuploaded_unknowns(bundle_dir):

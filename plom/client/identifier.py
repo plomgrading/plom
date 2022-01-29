@@ -13,6 +13,7 @@ __license__ = "AGPL-3.0-or-later"
 
 from collections import defaultdict
 import csv
+import imghdr
 import logging
 from pathlib import Path
 import tempfile
@@ -393,7 +394,8 @@ class IDClient(QWidget):
         if imageDat is None:  # means no image
             imageName = None
         else:
-            imageName = self.workingDirectory / f"i{test}.0.image"
+            image_ext = imghdr.what(None, h=imageDat)
+            imageName = self.workingDirectory / f"i{test}.0.{image_ext}"
             with open(imageName, "wb") as fh:
                 fh.write(imageDat)
 
@@ -488,7 +490,8 @@ class IDClient(QWidget):
         # Image names = "i<testnumber>.<imagenumber>.<ext>"
         inames = []
         for i in range(len(imageList)):
-            tmp = self.workingDirectory / "i{}.{}.image".format(test, i)
+            img_ext = imghdr.what(None, h=imageList[i])
+            tmp = self.workingDirectory / "i{}.{}.{}".format(test, i, img_ext)
             inames.append(tmp)
             with open(tmp, "wb") as fh:
                 fh.write(imageList[i])
@@ -726,11 +729,13 @@ class IDClient(QWidget):
 
         labels = [x[0] for x in pageData]
         viewFiles = []
-        for iab in imagesAsBytes:
-            tfn = tempfile.NamedTemporaryFile(delete=False).name
-            viewFiles.append(tfn)
-            with open(tfn, "wb") as fh:
-                fh.write(iab)
+        for img_bytes in imagesAsBytes:
+            img_ext = imghdr.what(None, h=img_bytes)
+            with tempfile.NamedTemporaryFile(
+                "wb", suffix=f".{img_ext}", delete=False
+            ) as f:
+                f.write(img_bytes)
+                viewFiles.append(f.name)
         WholeTestView(testNumber, viewFiles, labels, parent=self).exec_()
 
     def blankPaper(self):

@@ -14,13 +14,13 @@ __license__ = "AGPL-3.0-or-later"
 
 
 from collections import defaultdict
+import imghdr
 import json
 import logging
 from math import ceil
 import os
 from pathlib import Path
 import queue
-import secrets
 import shutil
 import tempfile
 from textwrap import shorten
@@ -188,10 +188,11 @@ class BackgroundDownloader(QThread):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
             im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            im_ext = imghdr.what(None, h=im_bytes)
+            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
             with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
-            row["filename"] = tmp
+            row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
@@ -557,19 +558,6 @@ class MarkerExamModel(QStandardItemModel):
         """
         self.setData(self.index(r, 1), stat)
 
-    def _getAnnotatedFile(self, r):
-        """
-        Returns the filename of the annotated image.
-
-        Args:
-            r (int): the row identifier of the paper.
-
-        Returns:
-            (str): the filename of the annotated image
-
-        """
-        return self.data(self.index(r, 6))
-
     def _setAnnotatedFile(self, r, aname, pname):
         """
         Set the file name for the annotated image.
@@ -699,6 +687,14 @@ class MarkerExamModel(QStandardItemModel):
     def getMTimeByTask(self, task):
         """Return total marking time (s) for task, (task(str), return (int).)"""
         return int(self._getDataByTask(task, 3))
+
+    def getAnnotatedFileByTask(self, task):
+        """Returns the filename of the annotated image."""
+        return Path(self._getDataByTask(task, 6))
+
+    def getPlomFileByTask(self, task):
+        """Returns the filename of the plom json data."""
+        return Path(self._getDataByTask(task, 7))
 
     def getPaperDirByTask(self, task):
         """Return temporary directory for this task, (task(str) defined above)"""
@@ -1265,22 +1261,25 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         # TODO: use server filename from server_path_filename
         for i, row in enumerate(src_img_data):
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
+            im_type = imghdr.what(None, h=im_bytes)
+            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_type)
             with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
-            row["filename"] = tmp
+            row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
-        paperDir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
-        log.debug("create paperDir {} for already-graded download".format(paperDir))
-        self.examModel.setPaperDirByTask(task, paperDir)
-        aname = os.path.join(paperDir, "G{}.png".format(task[1:]))
-        pname = os.path.join(paperDir, "G{}.plom".format(task[1:]))
+        paperdir = tempfile.mkdtemp(prefix=task + "_", dir=self.workingDirectory)
+        paperdir = Path(paperdir)
+        log.debug("create paperdir %s for already-graded download", paperdir)
+        self.examModel.setPaperDirByTask(task, paperdir)
+        im_type = imghdr.what(None, h=annotated_image)
+        aname = paperdir / "G{}.{}".format(task[1:], im_type)
+        pname = paperdir / "G{}.plom".format(task[1:])
         with open(aname, "wb") as fh:
             fh.write(annotated_image)
         with open(pname, "w") as f:
@@ -1436,10 +1435,11 @@ class MarkerClient(QWidget):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            im_ext = imghdr.what(None, h=im_bytes)
+            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
             with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
-            row["filename"] = tmp
+            row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
@@ -1685,28 +1685,21 @@ class MarkerClient(QWidget):
         """
         # Create annotated filename.
         assert task.startswith("q")
-        Gtask = "G" + task[1:]
         paperdir = tempfile.mkdtemp(prefix=task[1:] + "_", dir=self.workingDirectory)
-        log.debug("create paperdir {} for annotating".format(paperdir))
-        aname = os.path.join(paperdir, Gtask + ".png")
-        pname = os.path.join(paperdir, Gtask + ".plom")
-
-        remarkFlag = False
+        paperdir = Path(paperdir)
+        log.debug("create paperdir %s for annotating", paperdir)
+        Gtask = "G" + task[1:]
+        # note no extension yet
+        aname = paperdir / Gtask
+        pdict = None
 
         if self.examModel.getStatusByTask(task) in ("marked", "uploading...", "???"):
             msg = SimpleQuestion(self, "Continue marking paper?")
             if not msg.exec_() == QMessageBox.Yes:
                 return
-            remarkFlag = True
-            oldpaperdir = self.examModel.getPaperDirByTask(task)
-            log.debug("oldpaperdir is " + oldpaperdir)
-            assert oldpaperdir is not None
-            oldaname = os.path.join(oldpaperdir, Gtask + ".png")
-            oldpname = os.path.join(oldpaperdir, Gtask + ".plom")
-            # TODO: comment json file not downloaded
-            # https://gitlab.com/plom/plom/issues/415
-            shutil.copyfile(oldaname, aname)
-            shutil.copyfile(oldpname, pname)
+            oldpname = self.examModel.getPlomFileByTask(task)
+            with open(oldpname, "r") as fh:
+                pdict = json.load(fh)
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
@@ -1743,12 +1736,6 @@ class MarkerClient(QWidget):
         # stash the previous state, not ideal because makes column wider
         prevState = self.examModel.getStatusByTask(task)
         self.examModel.setStatusByTask(task, "ann:" + prevState)
-
-        if remarkFlag:
-            with open(pname, "r") as fh:
-                pdict = json.load(fh)
-        else:
-            pdict = None
 
         exam_name = self.exam_spec["name"]
 
@@ -2006,19 +1993,21 @@ class MarkerClient(QWidget):
         # Image names = "<task>.<imagenumber>.<extension>"
         src_img_data = []
         # TODO: This code was trying (badly) to overwrite the q0001 files...
-        # TODO: something with tempfile instead
         # TODO: but why not keep using old name once they are static
-        rand6hex = secrets.token_hex(3)
         for i in range(len(imageList)):
-            tmp = os.path.join(
-                self.workingDirectory, "twist_{}_{}.{}.image".format(rand6hex, task, i)
-            )
+            with tempfile.NamedTemporaryFile(
+                dir=self.workingDirectory,
+                prefix="twist_{}_{}_".format(task, i),
+                suffix="_" + Path(imageList[i][1]).name,
+                delete=False,
+            ) as f:
+                tmp = Path(f.name)
             shutil.copyfile(imageList[i][1], tmp)
             src_img_data.append(
                 {
                     "id": imageList[i][3],
                     "md5": imageList[i][0],
-                    "filename": tmp,
+                    "filename": str(tmp),
                     "orientation": imageList[i][2],
                 }
             )
@@ -2227,12 +2216,12 @@ class MarkerClient(QWidget):
 
         viewFiles = []
         for iab in imagesAsBytes:
-            tfn = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".image", delete=False
-            ).name
-            viewFiles.append(Path(tfn))
-            with open(tfn, "wb") as fh:
-                fh.write(iab)
+            im_type = imghdr.what(None, h=iab)
+            with tempfile.NamedTemporaryFile(
+                "wb", dir=self.workingDirectory, suffix=f".{im_type}", delete=False
+            ) as f:
+                f.write(iab)
+                viewFiles.append(Path(f.name))
 
         return (pageData, viewFiles)
 
@@ -2364,12 +2353,11 @@ class MarkerClient(QWidget):
             if cache_invalid:
                 self.commentCache[txt] = None
             return None
-        # a name for the fragment file
-        fragFile = tempfile.NamedTemporaryFile(
-            dir=self.workingDirectory, suffix=".png", delete=False
-        ).name
-        with open(fragFile, "wb") as fh:
-            fh.write(fragment)
+        with tempfile.NamedTemporaryFile(
+            "wb", dir=self.workingDirectory, suffix=".png", delete=False
+        ) as f:
+            f.write(fragment)
+            fragFile = f.name
         # add it to the cache
         self.commentCache[txt] = fragFile
         return fragFile
@@ -2462,12 +2450,13 @@ class MarkerClient(QWidget):
             msg.exec_()
             return
         ifilenames = []
-        for img in imageList:
-            ifile = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".image", delete=False
-            )
-            ifile.write(img)
-            ifilenames.append(ifile.name)
+        for img_bytes in imageList:
+            img_ext = imghdr.what(None, h=img_bytes)
+            with tempfile.NamedTemporaryFile(
+                "wb", dir=self.workingDirectory, suffix=f".{img_ext}", delete=False
+            ) as f:
+                f.write(img_bytes)
+                ifilenames.append(f.name)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()
