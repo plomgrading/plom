@@ -189,10 +189,11 @@ class BackgroundDownloader(QThread):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
             im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            im_ext = imghdr.what(None, h=im_bytes)
+            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
             with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
-            row["filename"] = tmp
+            row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
@@ -1269,7 +1270,7 @@ class MarkerClient(QWidget):
             row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = str(tmp)
+                    r["local_filename"] = tmp
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1435,10 +1436,11 @@ class MarkerClient(QWidget):
             # TODO: add a "aggressive download" option to get all.
             # try-except? how does this fail?
             im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            tmp = os.path.join(self.workingDirectory, "{}.{}.image".format(task, i))
+            im_ext = imghdr.what(None, h=im_bytes)
+            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
             with open(tmp, "wb") as fh:
                 fh.write(im_bytes)
-            row["filename"] = tmp
+            row["filename"] = str(tmp)
             for r in full_pagedata:
                 if r["md5"] == row["md5"]:
                     r["local_filename"] = tmp
@@ -2214,12 +2216,11 @@ class MarkerClient(QWidget):
         viewFiles = []
         for iab in imagesAsBytes:
             im_type = imghdr.what(None, h=iab)
-            tfn = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=f".{im_type}", delete=False
-            ).name
-            viewFiles.append(Path(tfn))
-            with open(tfn, "wb") as fh:
-                fh.write(iab)
+            with tempfile.NamedTemporaryFile(
+                "wb", dir=self.workingDirectory, suffix=f".{im_type}", delete=False
+            ) as f:
+                f.write(iab)
+                viewFiles.append(Path(f.name))
 
         return (pageData, viewFiles)
 
@@ -2351,12 +2352,11 @@ class MarkerClient(QWidget):
             if cache_invalid:
                 self.commentCache[txt] = None
             return None
-        # a name for the fragment file
-        fragFile = tempfile.NamedTemporaryFile(
-            dir=self.workingDirectory, suffix=".png", delete=False
-        ).name
-        with open(fragFile, "wb") as fh:
-            fh.write(fragment)
+        with tempfile.NamedTemporaryFile(
+            "wb", dir=self.workingDirectory, suffix=".png", delete=False
+        ) as f:
+            f.write(fragment)
+            fragFile = f.name
         # add it to the cache
         self.commentCache[txt] = fragFile
         return fragFile
@@ -2449,12 +2449,13 @@ class MarkerClient(QWidget):
             msg.exec_()
             return
         ifilenames = []
-        for img in imageList:
-            ifile = tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory, suffix=".image", delete=False
-            )
-            ifile.write(img)
-            ifilenames.append(ifile.name)
+        for img_bytes in imageList:
+            img_ext = imghdr.what(None, h=img_bytes)
+            with tempfile.NamedTemporaryFile(
+                "wb", dir=self.workingDirectory, suffix=f".{img_ext}", delete=False
+            ) as f:
+                f.write(img_bytes)
+                ifilenames.append(f.name)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()

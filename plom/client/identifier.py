@@ -726,11 +726,11 @@ class IDClient(QWidget):
 
         labels = [x[0] for x in pageData]
         viewFiles = []
-        for iab in imagesAsBytes:
-            tfn = tempfile.NamedTemporaryFile(delete=False).name
-            viewFiles.append(tfn)
-            with open(tfn, "wb") as fh:
-                fh.write(iab)
+        for img_bytes in imagesAsBytes:
+            img_ext = imghdr.what(None, h=img_bytes)
+            with tempfile.NamedTemporaryFile("wb", suffix=f".{img_ext}", delete=False) as f:
+                f.write(img_bytes)
+                viewFiles.append(f.name)
         WholeTestView(testNumber, viewFiles, labels, parent=self).exec_()
 
     def blankPaper(self):

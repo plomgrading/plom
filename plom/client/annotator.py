@@ -9,6 +9,7 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPLv3"
 
 from copy import deepcopy
+import imghdr
 import json
 import logging
 from pathlib import Path
@@ -714,25 +715,23 @@ class Annotator(QWidget):
                 continue
             md5 = pg["md5"]
             image_id = pg["id"]
-            tmp = self.parentMarkerUI.downloadOneImage(image_id, md5)
+            img_bytes = self.parentMarkerUI.downloadOneImage(image_id, md5)
+            img_ext = imghdr.what(None, h=img_bytes)
             # TODO: wrong to put these in the paperdir (?)
             # Maybe Marker should be doing this downloading
-            workdir = self.parentMarkerUI.workingDirectory
-            fname = tempfile.NamedTemporaryFile(
-                dir=workdir,
+            with tempfile.NamedTemporaryFile(
+                "wb",
+                dir=self.parentMarkerUI.workingDirectory,
                 prefix="adj_pg_{}_".format(i),
-                suffix=".image",
+                suffix=f".{img_ext}",
                 delete=False,
-            ).name
-            log.info(
-                'adjustpages: writing "{}" from id={}, md5={}'.format(
-                    fname, image_id, md5
+            ) as f:
+                log.info(
+                    'adjustpages: write "%s" from id=%s, md5=%s', f.name, image_id, md5
                 )
-            )
-            with open(fname, "wb") as f:
-                f.write(tmp)
-            page_adjuster_downloads.append(fname)
-            pg["local_filename"] = fname
+                f.write(img_bytes)
+                page_adjuster_downloads.append(f.name)
+                pg["local_filename"] = f.name
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
