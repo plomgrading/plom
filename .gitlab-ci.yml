@@ -822,7 +822,7 @@ binary_upload:
 # Build Client Binaries
 # These are run once tests pass: to change re-add `needs: []`
 # TODO: interesting/useful to use our Docker image $IM?
-linuxbin_appimage:
+linux_client_appimage:
   stage: packaging
   needs: []
   script:

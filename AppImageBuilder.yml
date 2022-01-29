@@ -6,6 +6,16 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
+# How to build this
+# -----------------
+#
+# See the associated .Containerfile, which is run and the .AppImage extracted
+# by our CI job `linux_client_appimage`.
+#
+# Has been tested manually on:
+#   * Ubuntu 18.04, Ubuntu 20.04 and Fedora 35.
+
+
 version: 1
 script:
   - rm -rf AppDir | true

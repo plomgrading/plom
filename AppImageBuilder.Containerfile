@@ -7,6 +7,14 @@
 # without any warranty.
 
 # This container builds Plom's AppImage, a portable single-file for GNU/Linux
+#
+# I first tried `FROM appimage-builder` but failed with fontconfig errors.
+#
+# Instead of running this file you can execute the commands interactively,
+# e.g., inside `podman run -it --rm -v ./:/media:z ubuntu:20.04`.
+#
+# TODO: what bits of our source code to put in src?
+
 
 FROM ubuntu:20.04
 RUN apt-get -y update && \
