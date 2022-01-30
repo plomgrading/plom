@@ -28,7 +28,7 @@ def is_z_padded_integer(n):
 
     Input must be a string that when z's (or Z's) are removed gives a non-negative integer. We may require this for debugging with 'fake' student numbers which are constructed from some other id by padding with z's. Must have correct length - as per StudentIDLength
     """
-    de_z = n.replace("z", '0').replace("Z", '0')
+    de_z = n.replace("z", "0").replace("Z", "0")
     if len(de_z) != StudentIDLength:
         return False
     try:
