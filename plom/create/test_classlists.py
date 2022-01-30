@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 from pytest import raises
 from pathlib import Path
@@ -44,7 +44,7 @@ def test_only_one_name_column(tmpdir):
             f.write('12345678,"Doe"\n')
         assert not check_is_non_canvas_csv(foo)
         with raises(ValueError):
-            df = clean_non_canvas_csv(foo)
+            _ = clean_non_canvas_csv(foo)
 
 
 def test_no_ID_column_fails(tmpdir):
@@ -56,4 +56,4 @@ def test_no_ID_column_fails(tmpdir):
             f.write('12345678,"Doe"\n')
         assert not check_is_non_canvas_csv(foo)
         with raises(ValueError):
-            df = clean_non_canvas_csv(foo)
+            _ = clean_non_canvas_csv(foo)
