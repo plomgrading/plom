@@ -24,7 +24,7 @@
 * get "/ID/predictions" - return prediction-list file
 * get "/ID/tasks/complete" - return list of tasks completed by that user
 * get "/ID/images/{tgv}" - return the image-file for that TGV
-* patch "/ID/tasks/{task}" - claim task (if still available) - return imagefile
+* patch "/ID/tasks/{task}" - claim task (if still available)
 * put "/ID/tasks/{task}" - update the ID/Name of the task (ie test)
 * delete "/ID/tasks/{task}" - reserved but currently not implemented
 

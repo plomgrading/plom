@@ -28,7 +28,7 @@ def do_rando_identifying_backend(messenger):
             break
         try:
             print("Identifying task ", task)
-            imageList = messenger.IDclaimThisTask(task)
+            messenger.IDclaimThisTask(task)
         except PlomTakenException:
             # task already taken.
             continue

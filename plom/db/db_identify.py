@@ -81,26 +81,29 @@ def IDgetNextTask(self):
 
 
 def IDgiveTaskToClient(self, user_name, test_number):
-    """Assign test #test_number as a task to the given user. Provided that task has not already been taken by another user, we return [True, image]."""
+    """Assign test #test_number as a task to the given user if available.
+
+    Returns:
+        2-tuple: (True, image_file) if available else (False, msg) where
+             msg is a short message: "NoTest", "NotScanned", "NotOwner".
+    """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.
     with plomdb.atomic():
         # get that test
         tref = Test.get_or_none(Test.test_number == test_number)
-        if (
-            tref is None
-        ):  # should not happen - user should not be asking for nonexistent tests
-            log.info("ID task - That test number {} not known".format(test_number))
-            return [False]
+        if tref is None:
+            log.info("ID task - test number %s not known", test_number)
+            return (False, "NoTest")
         # grab the ID group of that test
         iref = tref.idgroups[0]
         # verify the id-group has been scanned - it should be if we got here.
         if not iref.group.scanned:
-            return [False]
+            return (False, "NotScanned")
         if not (iref.user is None or iref.user == uref):
             # has been claimed by someone else.
             # see also #1811 - if a task is "todo" then its user should be None.
-            return [False]
+            return (False, "NotOwner")
         # update status, owner of task, time
         iref.status = "out"
         iref.user = uref
@@ -110,11 +113,8 @@ def IDgiveTaskToClient(self, user_name, test_number):
         uref.last_action = "Took ID task {}".format(test_number)
         uref.last_activity = datetime.now()
         uref.save()
-        # return [true, page1]
-        rval = [True, iref.idpages[0].image.file_name]
-
         log.debug("Giving ID task {} to user {}".format(test_number, user_name))
-        return rval
+        return (True, iref.idpages[0].image.file_name)
 
 
 def IDgetDoneTasks(self, user_name):

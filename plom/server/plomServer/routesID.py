@@ -291,39 +291,30 @@ class IDHandler:
     # @routes.patch("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user"])
     def IDclaimThisTask(self, data, request):
-        """Claims this identifying task and returns images of the ID pages.
-
-        Responds with status 200/204/404.
+        """Claims this identifying task for the user.
 
         Args:
             data (dict): A (str:str) dictionary having keys `user` and `token`.
             request (aiohttp.web_request.Request): PATCH /ID/tasks request object.
 
         Returns:
-            aiohttp.web_response.Response: A response including a aiohttp object which
-                includes a multipart object with the images.
+            aiohttp.web_response.Response: Success or failure.  Can be:
+                200: success, you have claimed the task.
+                401: authentication problem.
+                409: someone else claimed it before you.
+                404/410: no such paper or not scanned.
         """
-
         testNumber = request.match_info["task"]
-        image_path = self.server.IDclaimThisTask(
-            data["user"], testNumber
-        )  # returns [True, IMG_path] or [False]
-
-        allow_access = image_path[0]
-
-        # user allowed access - returns [true, fname0, fname1,...]
-        if allow_access:
-            with MultipartWriter("images") as writer:
-                image_paths = image_path[1:]
-
-                for file_name in image_paths:
-                    if os.path.isfile(file_name):
-                        writer.append(open(file_name, "rb"))
-                    else:
-                        return web.Response(status=404)
-                return web.Response(body=writer, status=200)
-        else:
-            return web.Response(status=204)  # that task already taken.
+        status, output = self.server.IDclaimThisTask(data["user"], testNumber)
+        if status:
+            return web.Response(status=200)
+        if output == "NotOwner":
+            raise web.HTTPConflict(reason="Someone else took the task before you")
+        if output == "NotScanned":
+            raise web.HTTPGone(reason="Paper (or at least ID page) not yet scanned")
+        if output == "NoTest":
+            raise web.HTTPNotFound(reason="No such paper")
+        raise web.HTTPBadRequest(reason=f'Unexpected database response: "{output}"')
 
     # @routes.put("/ID/tasks/{task}")
     @authenticate_by_token_required_fields(["user", "sid", "sname"])
@@ -566,6 +557,3 @@ class IDHandler:
         # be careful with this one - since is such a general route
         # put it last
         router.add_put("/ID/{papernum}", self.IdentifyPaper)
-
-
-##

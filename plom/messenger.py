@@ -143,31 +143,20 @@ class Messenger(BaseMessenger):
 
     # ------------------------
 
-    # TODO - API needs improve. Both of these throw a put/patch to same url = /ID/tasks/{tgv}
-    # One only updates the user claim, while the other actually ID's it.
-    # Think of better url structure for this?
     def IDclaimThisTask(self, code):
-        self.SRmutex.acquire()
-        try:
-            response = self.patch(
-                f"/ID/tasks/{code}",
-                json={"user": self.user, "token": self.token},
-            )
-            if response.status_code == 204:
-                raise PlomTakenException("Task taken by another user.")
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        imageList = []
-        for img in MultipartDecoder.from_response(response).parts:
-            # pass back images as bytes
-            imageList.append(BytesIO(img.content).getvalue())
-        return imageList
+        with self.SRmutex:
+            try:
+                response = self.patch(
+                    f"/ID/tasks/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 409:
+                    raise PlomTakenException(response.reason)
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def IDreturnIDdTask(self, code, studentID, studentName):
         """Return a completed IDing task: identify a paper.
