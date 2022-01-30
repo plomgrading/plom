@@ -214,14 +214,22 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
         failed_questions = ', '.join(str(q) for q in fails)
         return (False, "notfound", f"Cannot find question(s) {failed_questions}")
 
+    fails = []
     for question, qref in zip(questions, qref_list):
         # TODO: we may want to relax this restriction later, Issue #1900 et al
         if not qref.group.scanned:
-            msg = f"Cannot attach extra page to test {test_number} "
-            msg += f"question {question} b/c it is missing pages. "
-            msg += "You must upload all Test Pages of a question "
-            msg += "(or at least one HW Page) before adding extra pages."
-            return (False, "unscanned", msg)
+            fails.append(question)
+    if fails:
+        if len(fails) == 1:
+            is_are = "that question is"
+        else:
+            is_are = "those questions are"
+        failed_questions = ', '.join(str(q) for q in fails)
+        msg = f"Cannot attach extra page to test {test_number}, question "
+        msg += f"{failed_questions} b/c {is_are} missing pages. "
+        msg += "You must upload all Test Pages of a question "
+        msg += "(or at least one HW Page) before adding extra pages."
+        return (False, "unscanned", msg)
 
     with plomdb.atomic():
         groups_to_update = self.get_groups_using_image(iref)
