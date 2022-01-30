@@ -203,11 +203,16 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
         return (False, "owners", msg)
 
     qref_list = []
+    fails = []
     for question in questions:
         qref = QGroup.get_or_none(test=tref, question=question)
         if qref is None:
-            return (False, "notfound", f"Cannot find question {question}")
-        qref_list.append(qref)
+            fails.append(question)
+        else:
+            qref_list.append(qref)
+    if fails:
+        failed_questions = ', '.join(str(q) for q in fails)
+        return (False, "notfound", f"Cannot find question(s) {failed_questions}")
 
     for question, qref in zip(questions, qref_list):
         # TODO: we may want to relax this restriction later, Issue #1900 et al
