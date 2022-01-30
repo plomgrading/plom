@@ -52,8 +52,8 @@ server_install_requires = [
     "passlib",
     "pymupdf>=1.18.15",
     "Pillow>=7.0.0",
-    "weasyprint<53",  # temp pin for Issue #1594
     "aiohttp>=3.7.2",
+    "weasyprint>=52.5",
     "pyzbar",
     "peewee>=3.13.3",
     "imutils",
