@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.7.12] - 2022-01-30
+
+### Fixed
+* Minor fixes.
+
+
 ## [0.7.11] - 2021-12-22
 
 ### Added
@@ -606,7 +612,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.7.11...main
+[0.7.12]: https://gitlab.com/plom/plom/compare/v0.7.11...v0.7.12
 [0.7.11]: https://gitlab.com/plom/plom/compare/v0.7.9...v0.7.11
 [0.7.9]: https://gitlab.com/plom/plom/compare/v0.7.7...v0.7.9
 [0.7.7]: https://gitlab.com/plom/plom/compare/v0.7.5...v0.7.7
