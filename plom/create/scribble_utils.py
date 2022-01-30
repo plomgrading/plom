@@ -55,13 +55,6 @@ possible_answers = [
 ]
 
 
-# In principle you can put other fonts in plom.create.fonts
-# Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
-font_dict = {
-    "ejx": "ejx_handwriting.ttf",
-}
-
-
 # Customizable data
 blue = [0, 0, 0.75]
 digit_font_size = 24
@@ -114,17 +107,18 @@ def scribble_name_and_id(
         id_page.insert_image(rect1, stream=img_BString, keep_proportion=True)
         # TODO - there should be an assert or something here after insert?
 
-    # TODO: use ejx_handwriting here too: Issue #1888
+    fontname, ttf = "ejx", "ejx_handwriting.ttf"
     digit_rectangle = fitz.Rect(228, 335, 550, 450)
-    excess = id_page.insert_textbox(
-        digit_rectangle,
-        student_name,
-        fontsize=digit_font_size,
-        color=blue,
-        fontname="Helvetica",
-        fontfile=None,
-        align=0,
-    )
+    with resources.path(plom.create.fonts, ttf) as fontfile:
+        excess = id_page.insert_textbox(
+            digit_rectangle,
+            student_name,
+            fontsize=digit_font_size,
+            color=blue,
+            fontname=fontname,
+            fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
+            align=0,
+        )
     assert excess > 0
     del id_page
 
@@ -141,7 +135,10 @@ def scribble_pages(pdf_doc, exclude=(0, 1)):
 
     By default exclude pages 0 and 1 (the ID page and DNM page in our demo data).
     """
-    fontname, ttf = random.choice(list(font_dict.items()))
+    # In principle you can put other fonts in plom.create.fonts
+    # Can also use "helv" (or "Helvetica"?) and `None` for the fontfile
+    # fontname, ttf = random.choice(...)
+    fontname, ttf = "ejx", "ejx_handwriting.ttf"
 
     # Write some random answers on the pages
     for page_index, pdf_page in enumerate(pdf_doc):
