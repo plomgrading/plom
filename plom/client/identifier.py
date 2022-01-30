@@ -61,7 +61,7 @@ class Paper:
     store the studentName and ID-numer.
     """
 
-    def __init__(self, test, fname=None, stat="unidentified", id="", name=""):
+    def __init__(self, test, fname=None, *, stat="unidentified", id="", name=""):
         # tgv = t0000p00v0
         # ... = 0123456789
         # The test number
@@ -71,7 +71,6 @@ class Paper:
         # no name or id-number yet.
         self.sname = name
         self.sid = id
-        # the filename of the image.
         self.originalFile = fname
 
     def setStatus(self, st):
@@ -490,12 +489,12 @@ class IDClient(QWidget):
 
         img_bytes = self.msgr.request_ID_image(test)
         img_ext = imghdr.what(None, h=img_bytes)
-        tmp = self.workingDirectory / f"i{test}.0.{img_ext}"
-        with open(tmp, "wb") as fh:
+        filename = self.workingDirectory / f"i{test}.0.{img_ext}"
+        with open(filename, "wb") as fh:
             fh.write(img_bytes)
 
         # Add the paper [code, filename, etc] to the list
-        self.addPaperToList(Paper(test, inames))
+        self.addPaperToList(Paper(test, filename))
 
         # Clean up table - and set focus on the ID-lineedit so user can
         # just start typing in the next ID-number.
