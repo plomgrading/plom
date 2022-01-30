@@ -770,22 +770,27 @@ binary_upload:
     - md5sum PlomClient* >> "release_desc.md"
     - export VER=${CI_COMMIT_TAG:1}
     - echo $VER
-    - export LINKNAME1="Compiled client for GNU/Linux (compiled on Ubuntu 18.04)"
-    - export LINKNAME2="Compiled client for GNU/Linux (compiled on CentOS 7)"
+    - export LINKNAME0="Compiled client for GNU/Linux (AppImage)"
+    - export LINKNAME1="Compiled client for GNU/Linux (deprecated, compiled on Ubuntu 18.04)"
+    - export LINKNAME2="Compiled client for GNU/Linux (deprecated, compiled on CentOS 7)"
     - export LINKNAME3="Compiled client for Windows"
     - export LINKNAME4="Compiled client for macOS (for macOS ≥ 11)"
     - export LINKNAME5="Compiled client for macOS (for macOS ≥ 10.13.6)"
+    - export FILENAME0="PlomClient-$VER-x86_64.AppImage"
     - export FILENAME1="PlomClient-$VER-linux-ubuntu1804.bin"
     - export FILENAME2="PlomClient-$VER-linux-centos7.bin"
     - export FILENAME3="PlomClient-$VER.exe"
     - export FILENAME4="PlomClient-$VER-macos11.zip"
     - export FILENAME5="PlomClient-$VER-macos10.zip"
+    - export URL0="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME0"
     - export URL1="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME1"
     - export URL2="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-linux/$VER/$FILENAME2"
     - export URL3="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-windows/$VER/$FILENAME3"
     - export URL4="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME4"
     - export URL5="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/PlomClient-macos/$VER/$FILENAME5"
     # actually do the uploads
+    - |
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME0 "$URL0"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME1 "$URL1"
     - |
@@ -801,6 +806,7 @@ binary_upload:
     - echo "" >> release_desc.md
     - echo "*TODO* copy-paste these links as release assets, type \"Package\"" >> release_desc.md
     - echo "" >> release_desc.md
+    - echo "$URL0  $LINKNAME0" >> release_desc.md
     - echo "$URL1  $LINKNAME1" >> release_desc.md
     - echo "$URL2  $LINKNAME2" >> release_desc.md
     - echo "$URL3  $LINKNAME3" >> release_desc.md
@@ -821,6 +827,27 @@ binary_upload:
 
 # Build Client Binaries
 # These are run once tests pass: to change re-add `needs: []`
+
+linux_client_appimage:
+  stage: packaging
+  script:
+    - docker build --tag appimagebuilder_tmp -f AppImageBuilder.Containerfile .
+    - docker create -ti --name dummy appimagebuilder_tmp bash
+    # export VER=$(python3 -c "exec(open('plom/version.py').read()); print(__version__)")
+    - export VER=`sed -nr 's/^__version__ = \"(.+)\"/\1/p' plom/version.py`
+    - export NAME=PlomClient-$VER-x86_64.AppImage
+    - docker cp dummy:/app/$NAME .
+    - docker rm -f dummy
+    - md5sum $NAME > md5sum
+    - ls $NAME
+    - cat md5sum
+  artifacts:
+    paths:
+    - PlomClient*.AppImage
+    - md5sum
+    expire_in: 16 days
+
+
 linuxbin_ubuntu1804:
   stage: packaging
   image: ubuntu:18.04
