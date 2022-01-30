@@ -62,7 +62,7 @@ def IDgetImage(self, username, test_number):
         test_number (str): Test number.
 
     Returns:
-        2-tuple: True/False plus a list of the image paths or a short error code.
+        2-tuple: True/False plus the image paths or a short error code.
     """
     return self.DB.IDgetImage(username, test_number)
 
@@ -80,17 +80,15 @@ def ID_get_donotmark_images(self, paper_number):
 
 
 def IDclaimThisTask(self, username, test_number):
-    """Assign claimed task in database and send the images paths for claimed task.
+    """Assign claimed task in database if possible.
 
     Args:
         username (str): Username claiming the task.
         test_number (str): Test ID number.
 
     Returns:
-        list: True/False plus paths to the claimed task's images in the list.
+        2-tuple: True/False plus the image paths or a short error code.
     """
-    # return [true, image-filename1, name2,...]
-    # or return [false]
     return self.DB.IDgiveTaskToClient(username, test_number)
 
 

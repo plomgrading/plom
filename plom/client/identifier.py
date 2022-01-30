@@ -482,19 +482,17 @@ class IDClient(QWidget):
                 raise
 
             try:
-                imageList = self.msgr.IDclaimThisTask(test)
+                self.msgr.IDclaimThisTask(test)
                 break
             except PlomTakenException as err:
                 log.info("will keep trying as task already taken: {}".format(err))
                 continue
-        # Image names = "i<testnumber>.<imagenumber>.<ext>"
-        inames = []
-        for i in range(len(imageList)):
-            img_ext = imghdr.what(None, h=imageList[i])
-            tmp = self.workingDirectory / "i{}.{}.{}".format(test, i, img_ext)
-            inames.append(tmp)
-            with open(tmp, "wb") as fh:
-                fh.write(imageList[i])
+
+        img_bytes = self.msgr.request_ID_image(test)
+        img_ext = imghdr.what(None, h=img_bytes)
+        tmp = self.workingDirectory / f"i{test}.0.{img_ext}"
+        with open(tmp, "wb") as fh:
+            fh.write(img_bytes)
 
         # Add the paper [code, filename, etc] to the list
         self.addPaperToList(Paper(test, inames))
