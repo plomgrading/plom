@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2018 Elvis Cai
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2021 Forest Kobayashi
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.finish import start_messenger
@@ -11,9 +12,9 @@ from plom.finish import start_messenger
 def proc_everything(comps, numberOfQuestions):
     scannedList = []
     idList = []
-    mList = [0 for j in range(numberOfQuestions + 1)]
-    histList = [[] for j in range(numberOfQuestions + 1)]
-    cList = []
+    mList = [0 for j in range(numberOfQuestions + 1)]  # marked
+    histList = [[] for j in range(numberOfQuestions + 1)]  # test numbers
+    cList = []  # completed
     partMarked = []
     # each comps item = [Scanned, IDed, #Marked]
     for t, v in comps.items():
@@ -91,15 +92,56 @@ def print_dangling(dangling):
             )
 
 
+def print_classlist_db_xor(classlist, pns_to_ids, max_papers):
+    """Find and print things in classlist or database (but not both)."""
+
+    # Note: note all rows of pns_to_ids are identified: does this matter?
+
+    students_from_cl = {(s["id"], s["studentName"]) for s in classlist}
+    students_from_db = {(s["sid"], s["sname"]) for n, s in pns_to_ids.items()}
+    students_to_papernum = {(s["sid"], s["sname"]): n for n, s in pns_to_ids.items()}
+
+    cl_not_db = students_from_cl - students_from_db
+    db_not_cl = students_from_db - students_from_cl
+
+    if cl_not_db:
+        print(
+            f"There were {len(cl_not_db)} students listed in `classlist.csv` "
+            "who do not seem to have submissions in the Plom database."
+        )
+        # classlist too long, than this is not useful info
+        if len(classlist) > max_papers:
+            print(f"  (omitted list b/c only {max_papers} entries in the database)")
+        else:
+            for sid, sname in cl_not_db:
+                print(f"  ID: {sid}\tName: {sname}")
+
+    if db_not_cl:
+        print(
+            f"There were {len(db_not_cl)} students present in the Plom "
+            "database who do not seem to be listed in `classlist.csv`."
+        )
+        for s in db_not_cl:
+            try:
+                testnum = students_to_papernum[s]
+            except KeyError:
+                print(f"WARNING: could not find testnum for {s}!")
+                print("Continuing, but this is very likely a bug!")
+            else:
+                print(f"  Test no.: {testnum}\tID: {s[0]}\tName: {s[1]}")
+
+
 def main(server=None, password=None):
     msgr = start_messenger(server, password)
     try:
         spec = msgr.get_spec()
+        classlist = msgr.IDrequestClasslist()
         max_papers = spec["numberToProduce"]
         numberOfQuestions = spec["numberOfQuestions"]
         completions = msgr.RgetCompletionStatus()
         outToDo = msgr.RgetOutToDo()
         dangling = msgr.RgetDanglingPages()
+        paper_nums_to_ids = msgr.RgetSpreadsheet()
     finally:
         msgr.closeUser()
         msgr.stop()
@@ -111,6 +153,8 @@ def main(server=None, password=None):
     )
     numberComplete = len(cList)
     print("{} complete of {} scanned".format(numberComplete, numScanned))
+
+    print_classlist_db_xor(classlist, paper_nums_to_ids, max_papers)
 
     print_still_out(outToDo)
     print_dangling(dangling)
