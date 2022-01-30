@@ -132,25 +132,24 @@ def main(server=None, password=None):
         if (pns_to_ids[papernum]["sid"], pns_to_ids[papernum]["sname"]) in db_not_cl
     }
 
-    # these print statements should be padded with spaces to make
-    # columns align
     if cl_not_db:
         print(
-            f"There were {len(cl_not_db)} students listed in `classlist.csv` Who do not seem to have submissions in the plom database."
+            f"There were {len(cl_not_db)} students listed in `classlist.csv` "
+            "who do not seem to have submissions in the Plom database."
         )
-        # silly hack for getting some "pretty" printing
-        [print(f"ID: {sid}    Name: {sname}") for (sid, sname) in cl_not_db]
+        if len(classlist) > max_papers:
+            print(f"  (omitted list b/c only {max_papers} entries in the database")
+        else:
+            for sid, sname in cl_not_db:
+                print(f"  ID: {sid}\tName: {sname}")
 
     if db_not_cl:
         print(
-            f"There were {len(db_not_cl)} students present in the plom database who do not seem to be listed in `classlist.csv`."
+            f"There were {len(db_not_cl)} students present in the Plom "
+            "database who do not seem to be listed in `classlist.csv`."
         )
-        [
-            print(
-                f"Test no.: {db_not_cl_tests[stud]}    ID: {stud[0]}    Name: {stud[1]}"
-            )
-            for stud in db_not_cl
-        ]
+        for s in db_not_cl:
+            print(f"  Test no.: {db_not_cl_tests[s]}\tID: {s[0]}\tName: {s[1]}")
 
     print_still_out(outToDo)
     print_dangling(dangling)
