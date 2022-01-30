@@ -112,7 +112,7 @@ def _reassemble_one_paper(
         skip (bool): whether to skip existing pdf files.
 
     Returns:
-        None
+        outname (pathlib.Path): the full path of the reassembled test pdf.
     """
     if sid is None:
         # Note this is distinct from simply not yet ID'd
@@ -125,6 +125,7 @@ def _reassemble_one_paper(
     coverfile = download_data_build_cover_page(msgr, tmpdir, t, max_marks)
     file_lists = download_page_images(msgr, tmpdir, num_questions, t, sid)
     reassemble(outname, short_name, sid, coverfile, *file_lists)
+    return outname
 
 
 def reassemble_one_paper(
@@ -143,6 +144,9 @@ def reassemble_one_paper(
             It will be created if it does not exist.
         skip_existing (bool): Default False, but if True, skip any pdf files
             we already have (Careful: without checking for changes!)
+
+    Returns:
+        outname (pathlib.Path): the full path of the reassembled test pdf.
 
     Raises:
         ValueError: does not exist, or not ready.
@@ -174,7 +178,7 @@ def reassemble_one_paper(
         sid = identifiedTests[t][0]
         # TODO: will a context manager delete content too? helpful here!
         tmpdir = Path(tempfile.mkdtemp(prefix="tmp_images_", dir=os.getcwd()))
-        _reassemble_one_paper(
+        outname = _reassemble_one_paper(
             msgr,
             tmpdir,
             outdir,
@@ -189,6 +193,7 @@ def reassemble_one_paper(
     finally:
         msgr.closeUser()
         msgr.stop()
+        return outname
 
 
 def reassemble_all_papers(
