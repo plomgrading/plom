@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Solutions - can now optionally watermark solutions with the SID.
 * SSL verification enabled by default for releases.
 * Client Marker window can request any paper number with a long press on "Get next".
-* Mild warnings when user gives 0 but there are some ticks on page. sSimilar mild warnings when user gives full but there are crosses.
+* Mild warnings when user gives 0 but there are some ticks on page. Similar mild warnings when user gives full but there are crosses.
 * Manager and plom-finish now has list of "dangling" pages - ones which are attached to not-completely-scanned groups. Manager can remove those pages.
+* GNU/Linux binaries now using AppImage which should be more portable.
+* More sanity checks especially around finishing and uploading.
 
 ### Changed
 * Command line tool `plom-build` has been renamed to `plom-create` and/or `python3 -m plom.create`.
@@ -30,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * API calls have a default 10s timeout (and 2 retries), so semi-inevitable failures fail faster.
 * Top-middle "stamp" on pages now shows the group label (question number, DNM, etc)
    - and extra sheet templates have been updated to match.
-
+* Work in progress on updating annotation styles.
+* The history of connections between rubrics is tracked in their metadata.
 
 ### Fixed
 * Potential memory leaks in Annotator, Manager, and dialogs.
