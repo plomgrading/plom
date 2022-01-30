@@ -6,8 +6,10 @@
 import tempfile
 from pathlib import Path
 
-from PIL import Image
+import exif
 import fitz
+import PIL.Image
+
 
 from plom import __version__
 
@@ -43,17 +45,23 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
 
     for img_name in [*id_images, *marked_pages]:
         img_name = Path(img_name)
-        im = Image.open(img_name)
+        im = PIL.Image.open(img_name)
 
         # Rotate page not the image: we want landscape on screen
         if im.width > im.height:
             w, h = papersize_landscape
         else:
             w, h = papersize_portrait
+
+        # but if image has a exif metadata rotation, then swap
+        angle = rot_angle_from_jpeg_exif_tag(img_name)
+        if angle in (90, -90):
+            w, h = h, w
+
         pg = exam.new_page(width=w, height=h)
         rec = fitz.Rect(margin, margin, w - margin, h - margin)
 
-        pg.insert_image(rec, filename=img_name)
+        pg.insert_image(rec, filename=img_name, rotate=angle)
 
         # TODO: useful bit of transcoding-in-memory code here: move somewhere!
         # Its not currently useful here b/c clients try jpeg themeselves now
@@ -82,9 +90,10 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
         W = (w - 2 * margin) // len(dnm_images)
         header_bottom = margin + h // 10
         offset = margin
-        for f in dnm_images:
+        for img_name in dnm_images:
             rect = fitz.Rect(offset, header_bottom, offset + W, h - margin)
-            pg.insert_image(rect, filename=f)
+            rot = rot_angle_from_jpeg_exif_tag(img_name)
+            pg.insert_image(rect, filename=img_name, rotate=rot)
             offset += W
         if len(dnm_images) > 1:
             text = 'These pages were flagged "Do No Mark" by the instructor.'
@@ -112,3 +121,30 @@ def reassemble(outname, shortName, sid, coverfile, id_images, marked_pages, dnm_
     exam.save(outname, deflate=True)
     # https://gitlab.com/plom/plom/-/issues/1777
     exam.close()
+
+
+def rot_angle_from_jpeg_exif_tag(img_name):
+    """If we have a jpeg and it has exif orientation data, return angle.
+
+    If not a jpeg, then return 0.
+    """
+    if img_name.suffix not in (".jpg", ".jpeg"):
+        return 0
+    with open(img_name, "rb") as f:
+        im = exif.Image(f)
+    if not im.has_exif:
+        return 0
+    o = im.get("orientation")
+    if o is None:
+        return 0
+    # print(f"{img_name} has exif orientation: {o}")
+    if o == exif.Orientation.TOP_LEFT:
+        return 0
+    elif o == exif.Orientation.RIGHT_TOP:
+        return -90
+    elif o == exif.Orientation.BOTTOM_RIGHT:
+        return 180
+    elif o == exif.Orientation.LEFT_BOTTOM:
+        return 90
+    else:
+        raise NotImplementedError(f"Unexpected exif orientation: {o}")
