@@ -41,4 +41,4 @@ stdiomask==0.0.6
 toml==0.10.2
 tqdm==4.62.3
 urllib3==1.26.8
-weasyprint==53.0
+weasyprint==54.0
