@@ -37,6 +37,7 @@ def writeSpreadsheet(spreadSheetDict, labels):
             csvfile,
             fieldnames=head,
             quotechar='"',
+            quoting=csv.QUOTE_NONNUMERIC,
         )
         testWriter.writeheader()
         existsUnmarked = False
