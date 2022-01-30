@@ -14,7 +14,7 @@ numberOfVersions = 2
 # how many pages
 numberOfPages = 6
 # sum of marks for all questions, for sanity checking (omit to live dangerously)
-totalMarks = 25
+totalMarks = 20
 # how many questions to mark
 numberOfQuestions = 3
 
@@ -48,7 +48,7 @@ mark = 5
 [question.2]
 label = "Q(2)"
 pages = [4]
-mark = 10
+mark = 5
 select = "fix"
 
 [question.3]
