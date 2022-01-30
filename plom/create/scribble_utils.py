@@ -57,7 +57,7 @@ possible_answers = [
 
 # Customizable data
 blue = [0, 0, 0.75]
-digit_font_size = 24
+name_font_size = 26
 answer_font_size = 18
 
 
@@ -108,12 +108,12 @@ def scribble_name_and_id(
         # TODO - there should be an assert or something here after insert?
 
     fontname, ttf = "ejx", "ejx_handwriting.ttf"
-    digit_rectangle = fitz.Rect(228, 335, 550, 450)
+    rect = fitz.Rect(220 + random.randrange(0, 16), 345, 600, 450)
     with resources.path(plom.create.fonts, ttf) as fontfile:
         excess = id_page.insert_textbox(
-            digit_rectangle,
+            rect,
             student_name,
-            fontsize=digit_font_size,
+            fontsize=name_font_size,
             color=blue,
             fontname=fontname,
             fontfile=str(fontfile),  # remove str once PyMuPDF >= 1.19.5
