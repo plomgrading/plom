@@ -6,7 +6,6 @@
 from itertools import cycle
 from pathlib import Path
 import logging
-import random
 
 import PIL.Image
 
@@ -1105,7 +1104,13 @@ class PageScene(QGraphicsScene):
         # TODO: can we generate a fake mouseMove event to force redraw?
 
     def whichLineToDraw(self, A, B):
-        return self._whichLineToDraw(A, B)
+        if A.intersects(B):
+            # if boxes intersect then return a trivial path
+            path = QPainterPath(A.topRight())
+            path.lineTo(A.topRight())
+            return path
+        else:
+            return self._whichLineToDraw(A, B)
 
     def stampCrossQMarkTick(self, event, cross=True):
         pt = event.scenePos()  # Grab the click's location and create command.
