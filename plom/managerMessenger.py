@@ -1014,6 +1014,8 @@ class ManagerMessenger(BaseMessenger):
         return collisionTest  # "collision" if colliding page created.
 
     def unknownToExtraPage(self, fname, test, questions, theta):
+        # TODO: uncomment for very questionable testing
+        # questions.append(3)
         self.SRmutex.acquire()
         try:
             response = self.put(

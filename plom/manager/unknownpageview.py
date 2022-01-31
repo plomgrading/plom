@@ -5,11 +5,13 @@
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (
+    QCheckBox,
     QCompleter,
     QDialog,
     QFrame,
     QFormLayout,
     QGridLayout,
+    QGroupBox,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -20,6 +22,7 @@ from PyQt5.QtWidgets import (
 )
 
 from plom.client.examviewwindow import ExamView
+from plom.client.useful_classes import ErrorMessage
 
 
 class ActionTab(QWidget):
@@ -86,17 +89,22 @@ class ExtraTab(QWidget):
         self.frm = QFrame()
         self.ob = QPushButton("Return to other options")
         self.tsb = QSpinBox()
-        self.qsb = QSpinBox()
         self.tsb.setMinimum(1)
         self.tsb.setMaximum(maxT)
-        self.qsb.setMinimum(1)
-        self.qsb.setMaximum(maxQ)
+        # a group of checkboxes for questions
+        # TODO these labels should be from spec
+        self.qgb = QGroupBox()
+        self.qcbd = {}
+        vb2 = QVBoxLayout()
+        for q in range(1, maxQ + 1):
+            self.qcbd[q] = QCheckBox(f"Q{q}")
+            vb2.addWidget(self.qcbd[q])
+        self.qgb.setLayout(vb2)
+        # put in other widgets
         self.cb = QPushButton("Click to confirm")
-        self.vqb = QPushButton("View that question")
         self.vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Test number:"), self.tsb)
-        fl.addRow(QLabel("Question number:"), self.qsb)
-        fl.addRow(self.vqb)
+        fl.addRow(QLabel("Question numbers:"), self.qgb)
         fl.addRow(self.vwb)
         fl.addRow(self.cb)
         self.frm.setLayout(fl)
@@ -104,19 +112,22 @@ class ExtraTab(QWidget):
         vb.addStretch(1)
         vb.addWidget(self.ob)
         self.setLayout(vb)
-        self.vqb.clicked.connect(self.viewQuestion)
+
         self.vwb.clicked.connect(self.viewWholeTest)
         self.cb.clicked.connect(self.confirm)
         self.ob.clicked.connect(self.other)
 
     def confirm(self):
+        # make sure at least one question is checked
+        checked = [q for q in self.qcbd if self.qcbd[q].isChecked()]
+        if not checked:
+            ErrorMessage("You must select at least one question.").exec_()
+            return
         self._parent.action = "extra"
         self._parent.test = self.tsb.value()
-        self._parent.pq = self.qsb.value()
+        # store list of questions as comma-delimited string
+        self._parent.pq = ",".join([str(q) for q in checked])
         self._parent.accept()
-
-    def viewQuestion(self):
-        self._parent.viewQuestion(self.tsb.value(), self.qsb.value())
 
     def viewWholeTest(self):
         self._parent.viewWholeTest(self.tsb.value())
@@ -182,7 +193,7 @@ class HWTab(QWidget):
             return
         self._parent.action = "homework"
         self._parent.sid = self.sidle.text()
-        self._parent.pq = self.qsb.value()
+        self._parent.pq = f"{self.qsb.value()}"
         self._parent.test = int(self.testl.text())
         self._parent.accept()
 
@@ -237,7 +248,7 @@ class TestTab(QWidget):
     def confirm(self):
         self._parent.action = "test"
         self._parent.test = self.tsb.value()
-        self._parent.pq = self.psb.value()
+        self._parent.pq = f"{self.psb.value()}"
         self._parent.accept()
 
     def checkTPage(self):
@@ -262,7 +273,7 @@ class UnknownViewWindow(QDialog):
 
         self.action = ""
         self.test = 0
-        self.pq = 0
+        self.pq = ""
         self.sid = ""
 
         self.view = ExamView(fnames, dark_background=True)

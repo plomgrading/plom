@@ -977,6 +977,7 @@ class Manager(QWidget):
                 self.unknownModel.item(r, 2).setText(uvw.action)
                 self.unknownModel.item(r, 3).setText("{}".format(uvw.theta))
                 self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
+                # questions is now of the form "1" or "1,2" or "1,2,3" etc
                 self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
                 if uvw.action == "discard":
                     pm = QPixmap()
@@ -1009,10 +1010,14 @@ class Manager(QWidget):
                 self.msgr.removeUnknownImage(self.unknownModel.item(r, 0).text())
             elif self.unknownModel.item(r, 2).text() == "extra":
                 try:
+                    # have to convert "1,2,3" into [1,2,3]
+                    question_list = [
+                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                    ]
                     self.msgr.unknownToExtraPage(
                         self.unknownModel.item(r, 0).text(),
                         self.unknownModel.item(r, 4).text(),
-                        [int(self.unknownModel.item(r, 5).text())],
+                        question_list,
                         self.unknownModel.item(r, 3).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
