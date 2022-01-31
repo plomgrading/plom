@@ -754,11 +754,8 @@ class UploadHandler:
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="I can only speak to the manager")
 
-        if len(data["questions"]) > 1:
-            raise web.HTTPBadRequest(reason="list of questions not implemented yet!")
-
         status, code, msg = self.server.unknownToHWPage(
-            data["fileName"], data["test"], data["questions"][0], data["rotation"]
+            data["fileName"], data["test"], data["questions"], data["rotation"]
         )
         if status:
             return web.Response(status=200)  # all fine
