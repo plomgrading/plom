@@ -109,10 +109,7 @@ def make_toml(assignment, marks, *, server_dir="."):
         numberToProduce = {numberToProduce}
         numberToName = {numberToName}
         numberOfQuestions = {numberOfQuestions}
-        [idPages]
-        pages = [1]
-        [doNotMark]
-        pages = []
+        idPage = 1
         """
     ).lstrip()
     for i, mark in enumerate(marks):
