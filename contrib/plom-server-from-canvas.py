@@ -416,7 +416,7 @@ if __name__ == "__main__":
     else:
         assignment = interactively_get_assignment(user, course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
-    print(f"Ok uploading to Assignment: {assignment}")
+    print(f"Ok downloading from Assignment: {assignment}")
 
     o_dir = os.getcwd()
 
