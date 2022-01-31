@@ -257,13 +257,6 @@ class PlomServer:
         Returns
             bool: False if we cannot get a minimal response from the server.
         """
-        # TODO: for some reason getting CI failures, try hardcode verify=False
-        # TODO: is the env var not getting through?
-        import os
-
-        print("=" * 80)
-        print(os.environ.get("PLOM_NO_SSL_VERIFY"))
-        print("=" * 80)
         m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
         count = 0
         while True:
