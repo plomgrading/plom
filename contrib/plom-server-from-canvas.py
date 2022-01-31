@@ -147,7 +147,7 @@ def initialize(course, assignment, marks, *, server_dir="."):
         print("Running `plom-server init`...")
         subprocess.check_call(["plom-server", "init"])
         print("Autogenerating users...")
-        subprocess.check_call(["plom-server", "users", "--auto", "1"])
+        subprocess.check_call(["plom-server", "users", "--auto", "12"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
 
