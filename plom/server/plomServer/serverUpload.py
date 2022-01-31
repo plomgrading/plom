@@ -362,8 +362,8 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     return rval
 
 
-def unknownToHWPage(self, fname, test, question, rotation):
-    rval = self.DB.moveUnknownToHWPage(fname, test, question)
+def unknownToHWPage(self, fname, test, questions, rotation):
+    rval = self.DB.moveUnknownToHWPage(fname, test, questions)
     if rval[0]:
         # moved successfully. now rotate the page
         subprocess.run(
