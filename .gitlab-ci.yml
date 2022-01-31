@@ -32,6 +32,7 @@ variables:
   DOCKER_DRIVER: overlay2
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
+  PLOM_NO_SSL_VERIFY: 1
 
 stages:
   - static_analysis
