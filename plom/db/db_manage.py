@@ -211,7 +211,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
         else:
             qref_list.append(qref)
     if fails:
-        failed_questions = ', '.join(str(q) for q in fails)
+        failed_questions = ", ".join(str(q) for q in fails)
         return (False, "notfound", f"Cannot find question(s) {failed_questions}")
 
     fails = []
@@ -224,7 +224,7 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
             is_are = "that question is"
         else:
             is_are = "those questions are"
-        failed_questions = ', '.join(str(q) for q in fails)
+        failed_questions = ", ".join(str(q) for q in fails)
         msg = f"Cannot attach extra page to test {test_number}, question "
         msg += f"{failed_questions} b/c {is_are} missing pages. "
         msg += "You must upload all Test Pages of a question "

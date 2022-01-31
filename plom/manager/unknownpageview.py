@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
 from plom.client.examviewwindow import ExamView
 from plom.client.useful_classes import ErrorMessage
 
+
 class ActionTab(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -95,7 +96,7 @@ class ExtraTab(QWidget):
         self.qgb = QGroupBox()
         self.qcbd = {}
         vb2 = QVBoxLayout()
-        for q in range(1, maxQ+1):
+        for q in range(1, maxQ + 1):
             self.qcbd[q] = QCheckBox(f"Q{q}")
             vb2.addWidget(self.qcbd[q])
         self.qgb.setLayout(vb2)
