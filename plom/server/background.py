@@ -264,9 +264,7 @@ class PlomServer:
         print("=" * 80)
         print(os.environ.get("PLOM_NO_SSL_VERIFY"))
         print("=" * 80)
-        m = Messenger(
-            s=self.server_info["server"], port=self.server_info["port"], verify=False
-        )
+        m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
         count = 0
         while True:
             if not self.process_is_running():

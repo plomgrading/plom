@@ -9,9 +9,8 @@ from plom.server import PlomLiteDemoServer
 
 
 def setup_module(module):
-    print("=^=" * 80)
-    print(os.environ.get("PLOM_NO_SSL_VERIFY"))
-    print("=v=" * 80)
+    # Our CI specifies the env var so why needed?
+    os.environ["PLOM_NO_SSL_VERIFY"] = "1"
     # TODO: get a random port from OS instead?
     module.Test.server = PlomLiteDemoServer(
         port=41981, scans=False, backend="multiprocessing"
