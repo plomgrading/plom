@@ -154,18 +154,22 @@ class HWTab(QWidget):
         self.sidcompleter.setFilterMode(Qt.MatchContains)
         self.sidcompleter.setModel(self.sidlist)
         self.sidle.setCompleter(self.sidcompleter)
+        # a group of checkboxes for questions
+        # TODO these labels should be from spec
+        self.qgb = QGroupBox()
+        self.qcbd = {}
+        vb2 = QVBoxLayout()
+        for q in range(1, maxQ + 1):
+            self.qcbd[q] = QCheckBox(f"Q{q}")
+            vb2.addWidget(self.qcbd[q])
+        self.qgb.setLayout(vb2)
         # now set up other gui elements
-        self.qsb = QSpinBox()
-        self.qsb.setMinimum(1)
-        self.qsb.setMaximum(maxQ)
         self.testl = QLabel("")
         self.cb = QPushButton("Click to confirm")
-        self.vqb = QPushButton("View that question")
         self.vwb = QPushButton("View whole test")
         fl.addRow(QLabel("Student ID / Name:"), self.sidle)
-        fl.addRow(QLabel("Question number:"), self.qsb)
         fl.addRow(QLabel("Test number:"), self.testl)
-        fl.addRow(self.vqb)
+        fl.addRow(QLabel("Question numbers:"), self.qgb)
         fl.addRow(self.vwb)
         fl.addRow(self.cb)
         self.frm.setLayout(fl)
@@ -173,7 +177,6 @@ class HWTab(QWidget):
         vb.addStretch(1)
         vb.addWidget(self.ob)
         self.setLayout(vb)
-        self.vqb.clicked.connect(self.viewQuestion)
         self.vwb.clicked.connect(self.viewWholeTest)
         self.cb.clicked.connect(self.confirm)
         self.ob.clicked.connect(self.other)
@@ -191,17 +194,17 @@ class HWTab(QWidget):
     def confirm(self):
         if self.testl.text() == "":
             return
+        # make sure at least one question is checked
+        checked = [q for q in self.qcbd if self.qcbd[q].isChecked()]
+        if not checked:
+            ErrorMessage("You must select at least one question.").exec_()
+            return
         self._parent.action = "homework"
         self._parent.sid = self.sidle.text()
-        self._parent.pq = f"{self.qsb.value()}"
+        # store list of questions as comma-delimited string
+        self._parent.pq = ",".join([str(q) for q in checked])
         self._parent.test = int(self.testl.text())
         self._parent.accept()
-
-    def viewQuestion(self):
-        if self.testl.text() == "":
-            return
-        else:
-            self._parent.viewQuestion(int(self.testl.text()), self.qsb.value())
 
     def viewWholeTest(self):
         if self.testl.text() == "":
