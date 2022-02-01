@@ -266,14 +266,14 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
     return (True, None, None)
 
 
-def moveUnknownToHWPage(self, file_name, test_number, question):
+def moveUnknownToHWPage(self, file_name, test_number, questions):
     """Map an unknown page onto an extra page.
 
     args:
         file_name (str): a path and filename to a an image, e.g.,
             "pages/unknownPages/unk.16d85240.jpg"
         test_number (int):
-        question (int):
+        questions (list): a list of ints.
 
     returns:
         tuple: a 3-tuple, either (True, None, None) if the action worked
@@ -300,35 +300,45 @@ def moveUnknownToHWPage(self, file_name, test_number, question):
         msg += ", ".join(owners)
         return (False, "owners", msg)
 
-    # find the qgroup to which the new page should belong
-    qref = QGroup.get_or_none(test=tref, question=question)
-    if qref is None:
-        return (False, "notfound", f"Cannot find question {question}")
-    # version = qref.version  - we don't use the version below
-    gref = qref.group  # and the parent group
-    # find the last expage in that group - if there are expages
-    if gref.hwpages.count() == 0:
-        order = 1
-    else:
-        pref = (
-            HWPage.select()
-            .where(HWPage.group == gref)
-            .order_by(HWPage.order.desc())
-            .get()  # there will be at least one
-        )
-        order = pref.order + 1
+    qref_list = []
+    fails = []
+    for question in questions:
+        qref = QGroup.get_or_none(test=tref, question=question)
+        if qref is None:
+            fails.append(question)
+        else:
+            qref_list.append(qref)
+    if fails:
+        failed_questions = ", ".join(str(q) for q in fails)
+        return (False, "notfound", f"Cannot find question(s) {failed_questions}")
 
-    # now create the hwpage, delete upage
-    pref = self.createNewHWPage(tref, qref, order, iref)
-    uref.delete_instance()
-    log.info(
-        "Moving unknown page {} to hw page {} of question {} of test {}".format(
-            file_name, order, question, test_number
-        )
-    )
-    # update groups associated to the image and page
-    groups_to_update = self.get_groups_using_image(iref)
-    groups_to_update.add(gref)
+    with plomdb.atomic():
+        groups_to_update = self.get_groups_using_image(iref)
+        for question, qref in zip(questions, qref_list):
+            # find the last expage in that group - if there are expages
+            if qref.group.hwpages.count() == 0:
+                order = 1
+            else:
+                pref = (
+                    HWPage.select()
+                    .where(HWPage.group == qref.group)
+                    .order_by(HWPage.order.desc())
+                    .get()  # there will be at least one
+                )
+                order = pref.order + 1
+
+            pref = self.createNewHWPage(tref, qref, order, iref)
+            log.info(
+                "Moving unknown page %s to HW page %s of test %s question %s",
+                file_name,
+                order,
+                test_number,
+                question,
+            )
+            groups_to_update.add(qref.group)
+        log.info("Removing %s from UnknownPages", file_name)
+        uref.delete_instance()
+    # update groups associated to the image and new HW pages
     self.updateTestAfterChange(tref, group_refs=groups_to_update)
     return (True, None, None)
 
