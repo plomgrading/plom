@@ -111,7 +111,7 @@ def main():
         if sys.argv[1] == "solutions":
             soln_flag = True
     if not buildDemoSourceFiles(solutions=soln_flag):
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ __copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald e
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+import sys
 import argparse
 import os
 from pathlib import Path
@@ -347,7 +348,7 @@ def main():
                 "DEMO MODE: building source files: version1.pdf, version2.pdf, solution1.pdf, solutions2.pdf"
             )
             if not buildDemoSourceFiles(solutions=True):
-                exit(1)
+                sys.exit(1)
             print('DEMO MODE: continuing as if "parse" command was run...')
             parse_verify_save_spec(fname)
     elif args.command == "parse":
