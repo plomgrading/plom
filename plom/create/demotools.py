@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2022 Joey Shi
 
 """Build pdf files for a demo test and provide demo classlists"""
 

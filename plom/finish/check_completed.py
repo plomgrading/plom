@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Forest Kobayashi
+# Copyright (C) 2022 Joey Shi
 
 import sys
 

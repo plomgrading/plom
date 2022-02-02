@@ -6,6 +6,7 @@
 # Copyright (C) 2021 Nicholas J H Lai
 # Copyright (C) 2021 Peter Lee
 # Copyright (C) 2021 Elizabeth Xiao
+# Copyright (C) 2022 Joey Shi
 
 """Plom tools related to producing papers, and setting up servers.
 
