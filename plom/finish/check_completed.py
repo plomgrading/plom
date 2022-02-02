@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Forest Kobayashi
+import sys
 
 from plom.misc_utils import format_int_list_with_runs
 from plom.finish import start_messenger
@@ -169,12 +170,12 @@ def main(server=None, password=None):
         print("*********************")
 
     if numberComplete == numScanned:
-        exit(0)
+        sys.exit(0)
     elif numberComplete < numScanned:
-        exit(numScanned - numberComplete)
+        sys.exit(numScanned - numberComplete)
     else:
         print("Something terrible has happened")
-        exit(-42)
+        sys.exit(-42)
 
 
 if __name__ == "__main__":
