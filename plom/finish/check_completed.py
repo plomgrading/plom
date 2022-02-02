@@ -4,6 +4,7 @@
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Forest Kobayashi
+
 import sys
 
 from plom.misc_utils import format_int_list_with_runs
