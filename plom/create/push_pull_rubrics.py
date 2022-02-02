@@ -116,12 +116,16 @@ def upload_demo_rubrics(msgr, numquestions=3):
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
     """
-    try:
-        server, password = msgr
-    except TypeError:
+    if not isinstance(msgr, tuple):
         return _upload_demo_rubrics(msgr, numquestions)
 
-    msgr = start_messenger(server, password)
+    if len(msgr) == 3:
+        server, password, verify = msgr
+        msgr = start_messenger(server, password, verify=verify)
+    else:
+        server, password = msgr
+        msgr = start_messenger(server, password)
+
     try:
         return _upload_demo_rubrics(msgr, numquestions)
     finally:

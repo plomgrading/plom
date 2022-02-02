@@ -6,12 +6,12 @@ from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
-def start_messenger(server=None, pwd=None):
+def start_messenger(server=None, pwd=None, verify=True):
     if server and ":" in server:
         s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
+        msgr = ManagerMessenger(s, port=p, verify=verify)
     else:
-        msgr = ManagerMessenger(server)
+        msgr = ManagerMessenger(server, verify=verify)
     msgr.start()
 
     try:
