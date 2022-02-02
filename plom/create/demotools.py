@@ -2,6 +2,7 @@
 # Copyright (C) 2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
+# Copyright (C) 2022 Joey Shi
 
 """Build pdf files for a demo test and provide demo classlists"""
 
@@ -111,7 +112,7 @@ def main():
         if sys.argv[1] == "solutions":
             soln_flag = True
     if not buildDemoSourceFiles(solutions=soln_flag):
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
