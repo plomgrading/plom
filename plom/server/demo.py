@@ -126,7 +126,7 @@ class PlomDemoServer(PlomServer):
         s = f"localhost:{self.port}"
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        plom.create.upload_demo_classlist(s, pwd)
+        plom.create.upload_demo_classlist(s, pwd, ssl_verify=False)
         # plom-create make: build_database and build_papers
         status = plom.create.build_database(s, pwd)
         print("Database built with output:")

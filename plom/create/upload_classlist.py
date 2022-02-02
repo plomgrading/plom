@@ -11,7 +11,7 @@ from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
 
 
-def upload_classlist(classlist, server, password):
+def upload_classlist(classlist, server, password, *, ssl_verify=True):
     """Uploads a classlist file to the server.
 
     Arguments:
@@ -20,7 +20,7 @@ def upload_classlist(classlist, server, password):
         msgr (ManagerMessenger): an already-connected messenger object for
             talking to the server.
     """
-    msgr = start_messenger(server, password)
+    msgr = start_messenger(server, password, verify=ssl_verify)
     _raw_upload_classlist(classlist, msgr)
 
 
@@ -56,9 +56,9 @@ def _raw_upload_classlist(classlist, msgr):
         msgr.stop()
 
 
-def upload_demo_classlist(server=None, password=None):
+def upload_demo_classlist(server=None, password=None, *, ssl_verify=True):
     """Uploads the demo classlist file to the server."""
 
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist()
-    upload_classlist(classlist, server, password)
+    upload_classlist(classlist, server, password, ssl_verify=ssl_verify)
