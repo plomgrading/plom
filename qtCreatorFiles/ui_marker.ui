@@ -91,7 +91,7 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>Paper list</string>
+          <string>Your paper list</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>

@@ -180,7 +180,7 @@ class Ui_MarkerWindow(object):
         self.infoBox.setTitle(_translate("MarkerWindow", "Question Info"))
         self.label_2.setText(_translate("MarkerWindow", "Username "))
         self.label_5.setText(_translate("MarkerWindow", "Max score"))
-        self.tableBox.setTitle(_translate("MarkerWindow", "Paper list"))
+        self.tableBox.setTitle(_translate("MarkerWindow", "Your paper list"))
         self.annButton.setText(_translate("MarkerWindow", "&Annotate && mark"))
         self.deferButton.setText(_translate("MarkerWindow", "&Defer"))
         self.tagButton.setText(_translate("MarkerWindow", "&Tags"))
