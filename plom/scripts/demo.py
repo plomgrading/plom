@@ -109,6 +109,10 @@ def main():
         else:
             subprocess.check_call(split("plom-create new --demo"))
 
+    # TODO: maybe later; first fix Issue #1919 for PlomServer objects.
+    # the demo should work even if self-signed keys are used
+    # os.environ["PLOM_NO_SSL_VERIFY"] = "1"
+
     background_server = PlomServer(basedir=args.server_dir)
 
     assert background_server.process_is_running(), "has the server died?"
