@@ -33,10 +33,9 @@ from plom.scan.bundle_utils import (
     bundle_name_and_md5_from_file,
     archiveHWBundle,
 )
-from plom.scan.checkScanStatus import get_number_of_questions
 from plom.scan.hwSubmissionsCheck import IDQorIDorBad
 from plom.scan.scansToImages import process_scans
-from plom.scan import checkScanStatus
+from plom.scan import with_scanner_messenger
 
 
 def _parse_questions(s):
@@ -100,13 +99,13 @@ def canonicalize_question_list(s, pages, numquestions):
     return s
 
 
+@with_scanner_messenger
 def processHWScans(
-    server,
-    password,
     pdf_fname,
     student_id,
     questions,
     *,
+    msgr,
     gamma=False,
     extractbmp=False,
     basedir=Path("."),
@@ -115,8 +114,6 @@ def processHWScans(
     """Process the given PDF bundle into images, upload, then archive the pdf.
 
     args:
-        server (str)
-        password (str)
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
         student_id (str)
@@ -135,6 +132,8 @@ def processHWScans(
             TODO: Currently `dict` are not supported, subject to change.
 
     keyword args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         basedir (pathlib.Path): where on the file system do we perform
             the work.  By default, the current working directory is used.
             Subdirectories "archivePDFs" and "bundles" will be created.
@@ -179,12 +178,12 @@ def processHWScans(
         )
     )
 
-    N = get_number_of_questions(server, password)
+    N = msgr.get_spec()["numberOfQuestions"]
     with fitz.open(pdf_fname) as pdf:
         num_pages = len(pdf)
     questions = canonicalize_question_list(questions, pages=num_pages, numquestions=N)
 
-    test_number = checkTestHasThatSID(student_id, server, password)
+    test_number = checkTestHasThatSID(student_id, msgr=msgr)
     if test_number is None:
         raise ValueError(f"No test has student ID {student_id}")
     else:
@@ -193,7 +192,7 @@ def processHWScans(
     _, md5 = bundle_name_and_md5_from_file(pdf_fname)
     if not bundle_name:
         bundle_name = _
-    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
+    exists, reason = does_bundle_exist_on_server(bundle_name, md5, msgr=msgr)
     if exists:
         if reason == "name":
             raise ValueError(
@@ -219,7 +218,7 @@ def processHWScans(
     files = process_scans(pdf_fname, bundledir, not gamma, not extractbmp)
 
     print(f'Trying to create bundle "{pdf_fname}" on server')
-    exists, extra = createNewBundle(bundle_name, md5, server, password)
+    exists, extra = createNewBundle(bundle_name, md5, msgr=msgr)
     if exists:
         skip_list = extra
         if len(skip_list) > 0:
@@ -240,7 +239,7 @@ def processHWScans(
     assert len(skip_list) == 0, "TODO: we don't really support skiplist for HW pages"
 
     # send the images to the server
-    upload_HW_pages(file_list, bundle_name, bundledir, student_id, server, password)
+    upload_HW_pages(file_list, bundle_name, bundledir, student_id, msgr=msgr)
     # now archive the PDF
     archiveHWBundle(pdf_fname, basedir=basedir)
 
@@ -286,7 +285,8 @@ def processAllHWByQ(server, password, yes_flag):
             processHWScans(server, password, file_name, sid, [int(question)])
 
 
-def processMissing(server, password, *, yes_flag):
+@with_scanner_messenger
+def processMissing(*, msgr, yes_flag):
     """Replace missing questions with 'not submitted' pages
 
     Student may not upload pages for questions they don't answer. This function
@@ -295,11 +295,10 @@ def processMissing(server, password, *, yes_flag):
     have neither hw-pages nor t-pages - so any partially scanned tests with
     tpages are avoided.
 
-
     For each remaining test we replace each missing question with a 'question not submitted' page.
     The user will be prompted in each case unless the 'yes_flag' is set.
     """
-    missingHWQ = checkScanStatus.checkMissingHWQ(server, password)
+    missingHWQ = msgr.getMissingHW()
     # returns list for each test [sid, list of missing hwq]
     for t in missingHWQ:
         print(f"Student {missingHWQ[t][0]}'s paper is missing questions")
@@ -318,4 +317,5 @@ def processMissing(server, password, *, yes_flag):
         sid = missingHWQ[t][0]
         for q in missingHWQ[t][1:]:
             print("Replacing q{} of sid {}".format(q, sid))
-            checkScanStatus.replaceMissingHWQ(server, password, sid, q)
+            # this call can replace by SID or by test-number
+            msgr.replaceMissingHWQuestion(student_id=sid, test=None, question=q)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from collections import defaultdict
 import json
@@ -18,8 +18,7 @@ from plom.tpv_utils import (
     getCode,
     getPosition,
 )
-from plom.messenger import ScanMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.scan import with_scanner_messenger
 from plom.scan import QRextract
 from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
@@ -309,33 +308,11 @@ def moveScansIntoPlace(examsScannedNow):
         )
 
 
-def processBitmaps(bundle, server=None, password=None):
+@with_scanner_messenger
+def processBitmaps(bundle, *, msgr):
     examsScannedNow = defaultdict(list)
 
-    if server and ":" in server:
-        s, p = server.split(":")
-        scanMessenger = ScanMessenger(s, port=p)
-    else:
-        scanMessenger = ScanMessenger(server)
-    scanMessenger.start()
-
-    try:
-        scanMessenger.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-scan clear"'
-        )
-        raise
-
-    try:
-        spec = scanMessenger.get_spec()
-    finally:
-        scanMessenger.closeUser()
-        scanMessenger.stop()
+    spec = msgr.get_spec()
 
     decode_QRs_in_image_files(bundle / "pageImages")
     checkQRsValid(bundle, spec, examsScannedNow)

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Peter Lee
 
 from collections import defaultdict
@@ -8,8 +8,7 @@ import glob
 import os
 
 from plom.rules import isValidStudentNumber
-from plom.messenger import ScanMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.scan import with_scanner_messenger
 
 
 def IDQorIDorBad(fullfname):
@@ -74,35 +73,12 @@ def whoSubmittedWhatOnDisc():
         print("Please check them before proceeding. They will not be processed.")
 
 
-def whoSubmittedWhatOnServer(server, password):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p)
-    else:
-        msgr = ScanMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
-        )
-        raise
-
-    try:
-        # passes back dict {t: [sid, missing1, missing2, etc]}
-        missingHWQ = msgr.getMissingHW()
-        # passes back list of pairs [test_number, sid]
-        completeHW = msgr.getCompleteHW()
-
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+@with_scanner_messenger
+def whoSubmittedWhatOnServer(*, msgr):
+    # passes back dict {t: [sid, missing1, missing2, etc]}
+    missingHWQ = msgr.getMissingHW()
+    # passes back list of pairs [test_number, sid]
+    completeHW = msgr.getCompleteHW()
 
     print(">> Checking hw submissions on server <<")
     print("The following students have complete submissions (each question present)")
@@ -115,7 +91,8 @@ def whoSubmittedWhatOnServer(server, password):
         print(f"\t{val[0]} is missing {val[1:]}")
 
 
-def print_who_submitted_what(server=None, password=None, directory_check=False):
+@with_scanner_messenger
+def print_who_submitted_what(directory_check=False, *, msgr):
     """Prints lists of HW and other submissions on server and/or local.
 
     * Prints list of hw-submissions already uploaded to server
@@ -125,37 +102,14 @@ def print_who_submitted_what(server=None, password=None, directory_check=False):
     if directory_check:
         whoSubmittedWhatOnDisc()
     else:
-        whoSubmittedWhatOnServer(server, password)
+        whoSubmittedWhatOnServer(msgr=msgr)
 
 
-def verifiedComplete(server=None, password=None):
-
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p)
-    else:
-        msgr = ScanMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-hwscan clear"'
-        )
-        raise
-
-    try:
-        # grab number of questions - so we can work out what is missing
-        spec = msgr.get_spec()
-        numberOfQuestions = spec["numberOfQuestions"]
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+# TODO: dead code, no callers?
+@with_scanner_messenger
+def verifiedComplete(*, msgr):
+    spec = msgr.get_spec()
+    numberOfQuestions = spec["numberOfQuestions"]
 
     hwByQ = defaultdict(list)
     for fn in glob.glob("submittedHWByQ/*.pdf"):

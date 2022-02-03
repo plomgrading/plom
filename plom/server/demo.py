@@ -140,9 +140,14 @@ class PlomDemoServer(PlomServer):
             msgr.closeUser()
             msgr.stop()
         with working_directory(self.basedir):
-            for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
-                plom.scan.processScans(s, scan_pwd, f, gamma=False)
-                plom.scan.uploadImages(s, scan_pwd, f, do_unknowns=True)
+            msgr = plom.scan.start_messenger(s, scan_pwd, verify=False)
+            try:
+                for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
+                    plom.scan.processScans(f, gamma=False, msgr=msgr)
+                    plom.scan.uploadImages(f, do_unknowns=True, msgr=msgr)
+            finally:
+                msgr.closeUser()
+                msgr.stop()
 
     def stop(self, erase_dir=True):
         """Take down the Plom server.

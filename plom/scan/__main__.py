@@ -199,25 +199,23 @@ def main():
 
     if args.command == "process":
         processScans(
-            args.server,
-            args.password,
             args.scanPDF,
             gamma=args.gamma,
             extractbmp=args.extractbmp,
             demo=args.demo,
+            msgr=(args.server, args.password),
         )
     elif args.command == "upload":
         uploadImages(
-            args.server,
-            args.password,
             args.bundleName,
             do_unknowns=args.unknowns,
             do_collisions=args.collisions,
+            msgr=(args.server, args.password),
         )
     elif args.command == "status":
-        check_and_print_scan_status(args.server, args.password)
+        check_and_print_scan_status(msgr=(args.server, args.password))
     elif args.command == "bundles":
-        print_bundle_list(args.server, args.password)
+        print_bundle_list(mstr=(args.server, args.password))
     elif args.command == "clear":
         clear_login(args.server, args.password)
     else:

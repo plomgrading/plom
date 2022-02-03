@@ -8,8 +8,7 @@ from pathlib import Path
 import shutil
 from textwrap import dedent
 
-from plom.messenger import ScanMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.scan import with_scanner_messenger
 from plom import PlomImageExts
 from plom.scan.sendPagesToServer import extract_order
 
@@ -133,36 +132,12 @@ def print_collision_warning(bundle_dir):
     )
 
 
-def upload_collisions(bundleDir, server=None, password=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        scanMessenger = ScanMessenger(s, port=p)
-    else:
-        scanMessenger = ScanMessenger(server)
-    scanMessenger.start()
+@with_scanner_messenger
+def upload_collisions(bundle_dir, *, msgr):
+    if not bundle_dir.is_dir():
+        raise ValueError("should've been a directory!")
 
-    try:
-        scanMessenger.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-scan clear"'
-        )
-        raise
-
-    try:
-        if not bundleDir.is_dir():
-            raise ValueError("should've been a directory!")
-
-        files = []
-        for ext in PlomImageExts:
-            files.extend(
-                (bundleDir / "uploads/collidingPages").glob("*.{}".format(ext))
-            )
-        sendCollidingFiles(scanMessenger, bundleDir.name, files)
-    finally:
-        scanMessenger.closeUser()
-        scanMessenger.stop()
+    files = []
+    for ext in PlomImageExts:
+        files.extend((bundle_dir / "uploads/collidingPages").glob("*.{}".format(ext)))
+    sendCollidingFiles(msgr, bundle_dir.name, files)

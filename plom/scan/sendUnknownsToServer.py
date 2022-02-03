@@ -6,8 +6,7 @@ import hashlib
 import shutil
 from pathlib import Path
 
-from plom.messenger import ScanMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.scan import with_scanner_messenger
 from plom import PlomImageExts
 from plom.scan.sendPagesToServer import extract_order
 
@@ -109,34 +108,12 @@ def print_unknowns_warning(bundle_dir):
     print("look in {}\n".format(bundle_dir / "unknownPages"))
 
 
-def upload_unknowns(bundle_dir, server=None, password=None):
-    if server and ":" in server:
-        s, p = server.split(":")
-        scanMessenger = ScanMessenger(s, port=p)
-    else:
-        scanMessenger = ScanMessenger(server)
-    scanMessenger.start()
-
-    try:
-        scanMessenger.requestAndSaveToken("scanner", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another scanner-script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-scan clear"'
-        )
-        raise
-
-    try:
-        if not bundle_dir.is_dir():
-            raise ValueError("should've been a directory!")
-        files = []
-        # Look for pages in unknowns
-        for ext in PlomImageExts:
-            files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
-        sendUnknownFiles(scanMessenger, bundle_dir.name, files)
-    finally:
-        scanMessenger.closeUser()
-        scanMessenger.stop()
+@with_scanner_messenger
+def upload_unknowns(bundle_dir, *, msgr):
+    if not bundle_dir.is_dir():
+        raise ValueError("should've been a directory!")
+    files = []
+    # Look for pages in unknowns
+    for ext in PlomImageExts:
+        files.extend((bundle_dir / "unknownPages").glob("*.{}".format(ext)))
+    sendUnknownFiles(msgr, bundle_dir.name, files)
