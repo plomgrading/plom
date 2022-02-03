@@ -51,7 +51,7 @@ def with_messenger(f):
         if kwargs.get("msgr"):
             raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
         msgr = start_messenger(*cred)
-        kwargs[msgr] = msgr
+        kwargs["msgr"] = msgr
         try:
             return f(*args, **kwargs)
         finally:
