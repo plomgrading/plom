@@ -117,7 +117,13 @@ class PlomDemoServer(PlomServer):
         super().__init__(basedir=tmpdir, **kwargs)
         s = f'{self.server_info["server"]}:{self.port}'
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        plom.create.upload_demo_rubrics((s, pwd, False))
+        # TODO: probably want `with Messenger(...) as msgr:` here
+        msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
+        try:
+            plom.create.upload_demo_rubrics(msgr=msgr)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
         if scans:
             self.fill_with_fake_scribbled_tests()
 
@@ -126,8 +132,8 @@ class PlomDemoServer(PlomServer):
         s = f'{self.server_info["server"]}:{self.port}'
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
         # TODO: probably want `with Messenger(...) as msgr:` here
+        msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
         try:
             plom.create.upload_demo_classlist(msgr=msgr)
             # cmdline: "plom-create makedb" and "plom-create make"

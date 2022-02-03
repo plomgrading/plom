@@ -24,6 +24,7 @@ from .buildDatabaseAndPapers import build_database, build_papers
 from .buildClasslist import process_classlist_file, get_demo_classlist
 from .upload_classlist import upload_classlist, upload_demo_classlist
 
+from .push_pull_rubrics import upload_rubrics, download_rubrics
 from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
@@ -41,6 +42,8 @@ __all__ = [
     "upload_demo_classlist",
     "make_scribbles",
     "make_hw_scribbles",
+    "upload_rubrics",
+    "download_rubrics",
     "upload_demo_rubrics",
     "upload_rubrics_from_file",
     "download_rubrics_to_file",

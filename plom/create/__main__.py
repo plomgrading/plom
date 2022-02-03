@@ -403,12 +403,12 @@ def main():
         msgr = start_messenger(args.server, args.password)
         try:
             if args.demo:
-                N = upload_demo_rubrics(msgr)
+                N = upload_demo_rubrics(msgr=msgr)
                 print(f"Uploaded {N} demo rubrics")
             elif args.dump:
-                download_rubrics_to_file(msgr, Path(args.dump))
+                download_rubrics_to_file(Path(args.dump), msgr=msgr)
             else:
-                upload_rubrics_from_file(msgr, Path(args.rubric_file))
+                upload_rubrics_from_file(Path(args.rubric_file), msgr=msgr)
         finally:
             msgr.closeUser()
             msgr.stop()
