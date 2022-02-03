@@ -6,6 +6,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
+from plom.create.start_messenger import with_messenger
 from plom.create import start_messenger
 from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
@@ -26,6 +27,15 @@ def upload_classlist(classlist, server, password, *, ssl_verify=True):
 
 def _raw_upload_classlist(classlist, msgr):
     # TODO: does this distinct only exist for the mock test?  Maybe not worth it!
+    try:
+        _ultra_raw_upload_classlist(classlist, msgr)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+
+
+def _ultra_raw_upload_classlist(classlist, msgr):
+    # TODO: clean up this chain viz the mock test
     try:
         msgr.upload_classlist(classlist)
         print(f"Uploaded classlist of length {len(classlist)}.")
@@ -51,14 +61,18 @@ def _raw_upload_classlist(classlist, msgr):
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")
         raise
-    finally:
-        msgr.closeUser()
-        msgr.stop()
 
 
-def upload_demo_classlist(server=None, password=None, *, ssl_verify=True):
-    """Uploads the demo classlist file to the server."""
+@with_messenger
+def upload_demo_classlist(*, msgr):
+    """Uploads the demo classlist file to the server.
 
+    Keyword Args:
+        msgr (plom.Messenger/tuple): you can pass either a open connected
+            Messenger, in which case you will need to close it youself.
+            TODO: or you can pass a tuple of credentials appropriate for
+            authenticating with a server.
+    """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist()
-    upload_classlist(classlist, server, password, ssl_verify=ssl_verify)
+    _ultra_raw_upload_classlist(classlist, msgr)

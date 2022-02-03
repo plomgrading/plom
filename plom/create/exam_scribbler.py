@@ -38,7 +38,7 @@ def main():
     if not args.password:
         args.password = getpass('Please enter the "manager" password: ')
 
-    make_scribbles(args.server, args.password)
+    make_scribbles(cred=(args.server, args.password))
 
 
 if __name__ == "__main__":

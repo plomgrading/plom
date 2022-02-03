@@ -23,7 +23,7 @@ import fitz
 import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
-from plom.create import start_messenger
+from plom.create.start_messenger import with_messenger
 
 
 possible_answers = [
@@ -352,7 +352,8 @@ def splitFakeFile(outfile):
     originalPDF.close()
 
 
-def make_scribbles(*args, **kwargs):
+@with_messenger
+def make_scribbles(basedir=Path("."), *, msgr):
     """Fake exam writing by scribbling on the pages of the blank exams.
 
     After Plom exam PDF files have been generated, this can be used to
@@ -383,22 +384,6 @@ def make_scribbles(*args, **kwargs):
         * delete the last page of the first test.
         * Randomly add some extra pages
     """
-    cred = kwargs.pop("cred", None)
-    if not cred:
-        return _make_scribbles(*args, **kwargs)
-
-    if kwargs.get("msgr"):
-        raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
-    msgr = start_messenger(*cred)
-    kwargs[msgr] = msgr
-    try:
-        return _make_scribbles(*args, **kwargs)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-
-
-def _make_scribbles(basedir=Path("."), *, msgr):
     basedir = Path(basedir)
     outfile = basedir / "fake_scribbled_exams.pdf"
     classlist = msgr.IDrequestClasslist()

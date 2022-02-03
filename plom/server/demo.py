@@ -67,7 +67,7 @@ class PlomDemoServer(PlomServer):
 
     We can also simulate some nonsense student work:
     >>> from plom.create import make_scribbles
-    >>> make_scribbles(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
+    >>> make_scribbles(cred=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Annotating papers with fake student data and scribbling on pages...
 
     This can also be run from the command line using
@@ -126,11 +126,10 @@ class PlomDemoServer(PlomServer):
         s = f'{self.server_info["server"]}:{self.port}'
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        # todo: move inside too
-        plom.create.upload_demo_classlist(s, pwd, ssl_verify=False)
         msgr = plom.create.start_messenger(s, pwd, verify=False)
         # TODO: probably want `with Messenger(...) as msgr:` here
         try:
+            plom.create.upload_demo_classlist(msgr=msgr)
             # cmdline: "plom-create makedb" and "plom-create make"
             status = plom.create.build_database(msgr=msgr)
             print("Database built with output:")
