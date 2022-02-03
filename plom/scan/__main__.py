@@ -215,7 +215,7 @@ def main():
     elif args.command == "status":
         check_and_print_scan_status(msgr=(args.server, args.password))
     elif args.command == "bundles":
-        print_bundle_list(mstr=(args.server, args.password))
+        print_bundle_list(msgr=(args.server, args.password))
     elif args.command == "clear":
         clear_login(args.server, args.password)
     else:
