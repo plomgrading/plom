@@ -69,7 +69,7 @@ def upload_demo_classlist(*, msgr):
 
     Keyword Args:
         msgr (plom.Messenger/tuple): you can pass either a open connected
-            Messenger, in which case you will need to close it youself.
+            Messenger, in which case you will need to close it yourself.
             TODO: or you can pass a tuple of credentials appropriate for
             authenticating with a server.
     """
