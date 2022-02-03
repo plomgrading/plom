@@ -282,7 +282,7 @@ def processAllHWByQ(server, password, yes_flag):
     for sid in submissions:
         print("Processing id {}:".format(sid))
         for question, file_name in submissions[sid]:
-            processHWScans(server, password, file_name, sid, [int(question)])
+            processHWScans(file_name, sid, [int(question)], msgr=(server, password))
 
 
 @with_scanner_messenger
