@@ -10,11 +10,20 @@ from plom.misc_utils import working_directory
 from plom.create.buildNamedPDF import build_papers_backend
 from plom.create.buildNamedPDF import check_pdf_and_id_if_needed
 from plom.create import paperdir as paperdir_name
-from plom.create import start_messenger
+from plom.create.start_messenger import with_messenger
 
 
-# TODO: I think this can become a decorator
-def build_papers(*args, **kwargs):
+@with_messenger
+def build_papers(
+    *,
+    basedir=Path("."),
+    fakepdf=False,
+    no_qr=False,
+    indexToMake=None,
+    xcoord=None,
+    ycoord=None,
+    msgr=None,
+):
     """Build the blank papers using version information from server and source PDFs.
 
     Keyword Args:
@@ -43,35 +52,6 @@ def build_papers(*args, **kwargs):
         PlomConflict: server does not yet have a version map database, say
             b/c build_database has not yet been called.
     """
-    msgr = kwargs.get("msgr")
-    cred = kwargs.pop("cred", None)
-    if msgr:
-        if cred:
-            raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
-        return _build_papers(*args, **kwargs)
-
-    if not cred:
-        raise ValueError("You must provide either 'cred=' or a 'msgr=' parameter")
-
-    msgr = start_messenger(*cred)
-
-    kwargs["msgr"] = msgr
-    try:
-        return _build_papers(*args, **kwargs)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-
-
-def _build_papers(
-    basedir=Path("."),
-    fakepdf=False,
-    no_qr=False,
-    indexToMake=None,
-    xcoord=None,
-    ycoord=None,
-    msgr=None,
-):
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
     paperdir.mkdir(exist_ok=True)
@@ -136,8 +116,8 @@ def _build_papers(
         )
 
 
-# Again, decorate this, move the docs to what is currently _build_database
-def build_database(*args, **kwargs):
+@with_messenger
+def build_database(*, msgr, vermap={}):
     """Build the database from a pre-set version map.
 
     Keyword Args:
@@ -159,22 +139,6 @@ def build_database(*args, **kwargs):
         PlomExistingDatabase
         PlomServerNotReady
     """
-    cred = kwargs.pop("cred", None)
-    if not cred:
-        return _build_database(*args, **kwargs)
-
-    if kwargs.get("msgr"):
-        raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
-    msgr = start_messenger(*cred)
-    kwargs[msgr] = msgr
-    try:
-        return _build_database(*args, **kwargs)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-
-
-def _build_database(*, msgr, vermap={}):
     check_version_map(vermap)
 
     status = msgr.TriggerPopulateDB(vermap)

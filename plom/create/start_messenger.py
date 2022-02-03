@@ -2,6 +2,8 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2018-2022 Colin B. Macdonald
 
+import functools
+
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
@@ -26,3 +28,34 @@ def start_messenger(server=None, pwd=None, verify=True):
         )
         raise
     return msgr
+
+
+def with_messenger(f):
+    """Decorator for flexible credentials or open messenger.
+
+    Arguments:
+        f (function):
+
+    Returns:
+        function: the original wrapped with logging.
+    """
+
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        cred = kwargs.pop("cred", None)
+        if not cred:
+            if not kwargs.get("msgr"):
+                raise ValueError("Must provide 'cred=' or 'msgr='")
+            return f(*args, **kwargs)
+
+        if kwargs.get("msgr"):
+            raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
+        msgr = start_messenger(*cred)
+        kwargs[msgr] = msgr
+        try:
+            return f(*args, **kwargs)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+    return wrapped
