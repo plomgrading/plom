@@ -39,7 +39,7 @@ COPY AppImageBuilder.yml /app/
 COPY . /app/src/
 WORKDIR /app
 
-# TODO: do we have to skip tests?
+# Note tests require a display and an user to click close the app
 RUN APPIMAGE_EXTRACT_AND_RUN=1 appimage-builder --skip-tests
 
 # To get it out, something like:
