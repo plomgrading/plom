@@ -41,15 +41,15 @@ class BaseMessenger:
     other features.
     """
 
-    def __init__(self, s=None, port=Default_Port, verify=True):
+    def __init__(self, s=None, port=Default_Port, verify_ssl=True):
         """Initialize a new BaseMessenger.
 
         Args:
 
         Keyword Arguments:
-            verify (True/False/str): controls where SSL certs are
-                checked, see `requests` lib which ultimately receives
-                this.
+            verify_ssl (True/False/str): controls where SSL certs are
+                checked, see the `requests` library parameter `verify`
+                which ultimately receives this.
         """
         self.session = None
         self.user = None
@@ -62,8 +62,8 @@ class BaseMessenger:
         self.server = "{}:{}".format(server, port)
         self.SRmutex = threading.Lock()
         # base = "https://{}:{}/".format(s, mp)
-        self.verify = verify
-        if not self.verify:
+        self.verify_ssl = verify_ssl
+        if not self.verify_ssl:
             self._shutup_urllib3()
 
     def _shutup_urllib3(self):
@@ -78,7 +78,11 @@ class BaseMessenger:
         In particular, we have our own mutex.
         """
         log.debug("cloning a messeger, but building new session...")
-        x = cls(s=m.server.split(":")[0], port=m.server.split(":")[1], verify=m.verify)
+        x = cls(
+            s=m.server.split(":")[0],
+            port=m.server.split(":")[1],
+            verify_ssl=m.verify_ssl,
+        )
         x.start()
         log.debug("copying user/token into cloned messenger")
         x.user = m.user
@@ -87,7 +91,7 @@ class BaseMessenger:
 
     def force_ssl_unverified(self):
         """This connection (can be open) does not need to verify cert SSL going forward"""
-        self.verify = False
+        self.verify_ssl = False
         if self.session:
             self.session.verify = False
         self._shutup_urllib3()
@@ -130,7 +134,7 @@ class BaseMessenger:
             # TODO: not clear retries help: e.g., requests will not redo PUTs.
             # More likely, just delays inevitable failures.
             self.session.mount("https://", requests.adapters.HTTPAdapter(max_retries=2))
-            self.session.verify = self.verify
+            self.session.verify = self.verify_ssl
 
         try:
             try:

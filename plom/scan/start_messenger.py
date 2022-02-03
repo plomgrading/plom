@@ -8,12 +8,12 @@ from plom.messenger import ScanMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
-def start_messenger(server=None, pwd=None, verify=True):
+def start_messenger(server=None, pwd=None, verify_ssl=True):
     if server and ":" in server:
         s, p = server.split(":")
-        msgr = ScanMessenger(s, port=p, verify=verify)
+        msgr = ScanMessenger(s, port=p, verify_ssl=verify_ssl)
     else:
-        msgr = ScanMessenger(server, verify=verify)
+        msgr = ScanMessenger(server, verify_ssl=verify_ssl)
     msgr.start()
 
     try:

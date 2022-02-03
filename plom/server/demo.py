@@ -126,7 +126,7 @@ class PlomDemoServer(PlomServer):
         s = f'{self.server_info["server"]}:{self.port}'
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        msgr = plom.create.start_messenger(s, pwd, verify=False)
+        msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
         # TODO: probably want `with Messenger(...) as msgr:` here
         try:
             plom.create.upload_demo_classlist(msgr=msgr)
@@ -140,7 +140,7 @@ class PlomDemoServer(PlomServer):
             msgr.closeUser()
             msgr.stop()
         with working_directory(self.basedir):
-            msgr = plom.scan.start_messenger(s, scan_pwd, verify=False)
+            msgr = plom.scan.start_messenger(s, scan_pwd, verify_ssl=False)
             try:
                 for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                     plom.scan.processScans(f, gamma=False, msgr=msgr)

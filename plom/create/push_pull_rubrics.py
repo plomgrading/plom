@@ -121,7 +121,7 @@ def upload_demo_rubrics(msgr, numquestions=3):
 
     if len(msgr) == 3:
         server, password, verify = msgr
-        msgr = start_messenger(server, password, verify=verify)
+        msgr = start_messenger(server, password, verify_ssl=verify)
     else:
         server, password = msgr
         msgr = start_messenger(server, password)

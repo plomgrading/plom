@@ -7,22 +7,21 @@ from plom.plom_exceptions import (
     PlomRangeException,
 )
 from plom.create import with_manager_messenger
-from plom.create import start_messenger
 from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
 
 
-def upload_classlist(classlist, server, password, *, ssl_verify=True):
+@with_manager_messenger
+def upload_classlist(classlist, *, msgr):
     """Uploads a classlist file to the server.
 
     Arguments:
         classdict (list): list of dict, each has at least keys `"id"` and
             `"studentName"`, optionally other fields too.
-        msgr (ManagerMessenger): an already-connected messenger object for
-            talking to the server.
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
     """
-    msgr = start_messenger(server, password, verify=ssl_verify)
-    _raw_upload_classlist(classlist, msgr)
+    _ultra_raw_upload_classlist(classlist, msgr)
 
 
 def _raw_upload_classlist(classlist, msgr):

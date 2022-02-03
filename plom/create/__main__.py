@@ -374,7 +374,7 @@ def main():
             classlist = get_demo_classlist()
         else:
             classlist = process_classlist_file(args.classlist)
-        upload_classlist(classlist, args.server, args.password)
+        upload_classlist(classlist, msgr=(args.server, args.password))
 
     elif args.command == "make-db":
         if args.from_file is None:

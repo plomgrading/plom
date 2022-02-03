@@ -260,7 +260,7 @@ class PlomServer:
         m = Messenger(
             s=self.server_info["server"],
             port=self.server_info["port"],
-            verify=False,
+            verify_ssl=False,
         )
 
         count = 0
