@@ -13,24 +13,18 @@ from plom.create import paperdir as paperdir_name
 from plom.create import start_messenger
 
 
-def build_papers(
-    server=None,
-    password=None,
-    *,
-    basedir=Path("."),
-    fakepdf=False,
-    no_qr=False,
-    indexToMake=None,
-    xcoord=None,
-    ycoord=None,
-):
+# TODO: I think this can become a decorator
+def build_papers(*args, **kwargs):
     """Build the blank papers using version information from server and source PDFs.
 
-    Args:
-        server (str): server name and optionally port.
-        password (str): the manager password.
-
     Keyword Args:
+        cred (None/tuple): two strings, TODO and more?
+            server (str): server name and optionally port.
+            password (str): the manager password.
+            These will be used to open a temporary connection to the server
+            which will be discarded before we return.
+        msgr (plom.Messenger): a connected messenger.  You are responsible
+            for closing it later.
         basedir (pathlib.Path/str): Look for the source version PDF files
             in `basedir/sourceVersions`.  Produce the printable PDF files
             in `basedir/papersToPrint`.
@@ -49,13 +43,41 @@ def build_papers(
         PlomConflict: server does not yet have a version map database, say
             b/c build_database has not yet been called.
     """
-    msgr = start_messenger(server, password)
+    msgr = kwargs.get("msgr")
+    cred = kwargs.pop("cred", None)
+    if msgr:
+        if cred:
+            raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
+        return _build_papers(*args, **kwargs)
 
+    if not cred:
+        raise ValueError("You must provide either 'cred=' or a 'msgr=' parameter")
+
+    msgr = start_messenger(*cred)
+
+    kwargs["msgr"] = msgr
+    try:
+        return _build_papers(*args, **kwargs)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+
+
+def _build_papers(
+    basedir=Path("."),
+    fakepdf=False,
+    no_qr=False,
+    indexToMake=None,
+    xcoord=None,
+    ycoord=None,
+    msgr=None,
+):
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
     paperdir.mkdir(exist_ok=True)
 
-    try:
+    # TODO: temporarily avoid changing indent
+    if True:
         spec = msgr.get_spec()
         pvmap = msgr.getGlobalPageVersionMap()
         qvmap = msgr.getGlobalQuestionVersionMap()
@@ -112,17 +134,20 @@ def build_papers(
         check_pdf_and_id_if_needed(
             spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
         )
-    finally:
-        msgr.closeUser()
-        msgr.stop()
 
 
-def build_database(server=None, password=None, vermap={}):
+# Again, decorate this, move the docs to what is currently _build_database
+def build_database(*args, **kwargs):
     """Build the database from a pre-set version map.
 
-    args:
-        server (str): server name and optionally port.
-        password (str): the manager password.
+    Keyword Args:
+        cred (None/tuple): two strings, TODO and more?
+            server (str): server name and optionally port.
+            password (str): the manager password.
+            These will be used to open a temporary connection to the server
+            which will be discarded before we return.
+        msgr (plom.Messenger): a connected messenger.  You are responsible
+            for closing it later.
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
             :func:`plom.finish.make_random_version_map`.
@@ -134,16 +159,27 @@ def build_database(server=None, password=None, vermap={}):
         PlomExistingDatabase
         PlomServerNotReady
     """
-    check_version_map(vermap)
+    cred = kwargs.pop("cred", None)
+    if not cred:
+        return _build_database(*args, **kwargs)
 
-    msgr = start_messenger(server, password)
+    if kwargs.get("msgr"):
+        raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
+    msgr = start_messenger(*cred)
+    kwargs[msgr] = msgr
     try:
-        status = msgr.TriggerPopulateDB(vermap)
-        # sanity check the version map
-        qvmap = msgr.getGlobalQuestionVersionMap()
-        if vermap:
-            assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
-        return status
+        return _build_database(*args, **kwargs)
     finally:
         msgr.closeUser()
         msgr.stop()
+
+
+def _build_database(*, msgr, vermap={}):
+    check_version_map(vermap)
+
+    status = msgr.TriggerPopulateDB(vermap)
+    # sanity check the version map
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    if vermap:
+        assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
+    return status

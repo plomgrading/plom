@@ -59,10 +59,10 @@ class PlomDemoServer(PlomServer):
 
     Build papers
     >>> from plom.create import build_database, build_papers
-    >>> print(build_database(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]))   # doctest: +ELLIPSIS
+    >>> print(build_database(cred=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])))   # doctest: +ELLIPSIS
     DB entry for test 0001: ...
 
-    >>> build_papers(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
+    >>> build_papers(cred=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Building 2 pre-named papers and 3 blank papers in ...
 
     We can also simulate some nonsense student work:
@@ -123,15 +123,22 @@ class PlomDemoServer(PlomServer):
 
     def fill_with_fake_scribbled_tests(self):
         """Simulate the writing of a test by random scribbling and push to the server."""
-        s = f"localhost:{self.port}"
+        s = f'{self.server_info["server"]}:{self.port}'
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
+        # todo: move inside too
         plom.create.upload_demo_classlist(s, pwd, ssl_verify=False)
-        # plom-create make: build_database and build_papers
-        status = plom.create.build_database(s, pwd)
-        print("Database built with output:")
-        print(status)
-        plom.create.build_papers(s, pwd, basedir=self.basedir)
+        msgr = plom.create.start_messenger(s, pwd, verify=False)
+        # TODO: probably want `with Messenger(...) as msgr:` here
+        try:
+            # cmdline: "plom-create makedb" and "plom-create make"
+            status = plom.create.build_database(msgr=msgr)
+            print("Database built with output:")
+            print(status)
+            plom.create.build_papers(basedir=self.basedir, msgr=msgr)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
         plom.create.make_scribbles(s, pwd, basedir=self.basedir)
         with working_directory(self.basedir):
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:

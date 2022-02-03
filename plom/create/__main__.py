@@ -378,21 +378,20 @@ def main():
 
     elif args.command == "make-db":
         if args.from_file is None:
-            status = build_database(args.server, args.password)
+            status = build_database(cred=(args.server, args.password))
         else:
             qvmap = version_map_from_csv(args.from_file)
-            status = build_database(args.server, args.password, vermap=qvmap)
+            status = build_database(cred=(args.server, args.password), vermap=qvmap)
         print(status)
 
     elif args.command == "make":
         try:
-            status = build_database(args.server, args.password)
+            status = build_database(cred=(args.server, args.password))
             print(status)
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
         build_papers(
-            args.server,
-            args.password,
+            cred=(args.server, args.password),
             fakepdf=args.no_pdf,
             no_qr=args.without_qr,
             indexToMake=args.number,
