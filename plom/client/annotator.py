@@ -3,6 +3,7 @@
 # Copyright (C) 2018 Elvis Cai
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2022 Joey Shi
 
 __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Schuster"]
@@ -1161,6 +1162,7 @@ class Annotator(QWidget):
         """Undoes the last action in the UI."""
         if not self.scene:
             return
+        self.scene.stopMidDraw()
         self.scene.undo()
 
     def toRedo(self):
