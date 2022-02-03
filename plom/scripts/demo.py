@@ -18,6 +18,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+import os
 from pathlib import Path
 from shlex import split
 import subprocess
@@ -109,9 +110,8 @@ def main():
         else:
             subprocess.check_call(split("plom-create new --demo"))
 
-    # TODO: maybe later; first fix Issue #1919 for PlomServer objects.
     # the demo should work even if self-signed keys are used
-    # os.environ["PLOM_NO_SSL_VERIFY"] = "1"
+    os.environ["PLOM_NO_SSL_VERIFY"] = "1"
 
     background_server = PlomServer(basedir=args.server_dir)
 

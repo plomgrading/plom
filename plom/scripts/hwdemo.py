@@ -17,6 +17,7 @@ __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 import argparse
+import os
 from pathlib import Path
 from random import randint
 from shlex import split
@@ -101,6 +102,9 @@ def main():
     assert background_server.process_is_running(), "has the server died?"
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"
     print("Server seems to be running, so we move on to uploading")
+
+    # the demo should work even if self-signed keys are used
+    os.environ["PLOM_NO_SSL_VERIFY"] = "1"
 
     if args.port:
         server = f"localhost:{args.port}"
