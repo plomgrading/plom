@@ -10,12 +10,11 @@ from plom.misc_utils import working_directory
 from plom.create.buildNamedPDF import build_papers_backend
 from plom.create.buildNamedPDF import check_pdf_and_id_if_needed
 from plom.create import paperdir as paperdir_name
-from plom.create import start_messenger
+from plom.create import with_manager_messenger
 
 
+@with_manager_messenger
 def build_papers(
-    server=None,
-    password=None,
     *,
     basedir=Path("."),
     fakepdf=False,
@@ -23,14 +22,13 @@ def build_papers(
     indexToMake=None,
     xcoord=None,
     ycoord=None,
+    msgr=None,
 ):
     """Build the blank papers using version information from server and source PDFs.
 
-    Args:
-        server (str): server name and optionally port.
-        password (str): the manager password.
-
     Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         basedir (pathlib.Path/str): Look for the source version PDF files
             in `basedir/sourceVersions`.  Produce the printable PDF files
             in `basedir/papersToPrint`.
@@ -49,13 +47,12 @@ def build_papers(
         PlomConflict: server does not yet have a version map database, say
             b/c build_database has not yet been called.
     """
-    msgr = start_messenger(server, password)
-
     basedir = Path(basedir)
     paperdir = basedir / paperdir_name
     paperdir.mkdir(exist_ok=True)
 
-    try:
+    # TODO: temporarily avoid changing indent
+    if True:
         spec = msgr.get_spec()
         pvmap = msgr.getGlobalPageVersionMap()
         qvmap = msgr.getGlobalQuestionVersionMap()
@@ -112,17 +109,15 @@ def build_papers(
         check_pdf_and_id_if_needed(
             spec, msgr, classlist, paperdir=paperdir, indexToCheck=indexToMake
         )
-    finally:
-        msgr.closeUser()
-        msgr.stop()
 
 
-def build_database(server=None, password=None, vermap={}):
+@with_manager_messenger
+def build_database(*, msgr, vermap={}):
     """Build the database from a pre-set version map.
 
-    args:
-        server (str): server name and optionally port.
-        password (str): the manager password.
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
             :func:`plom.finish.make_random_version_map`.
@@ -136,14 +131,9 @@ def build_database(server=None, password=None, vermap={}):
     """
     check_version_map(vermap)
 
-    msgr = start_messenger(server, password)
-    try:
-        status = msgr.TriggerPopulateDB(vermap)
-        # sanity check the version map
-        qvmap = msgr.getGlobalQuestionVersionMap()
-        if vermap:
-            assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
-        return status
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+    status = msgr.TriggerPopulateDB(vermap)
+    # sanity check the version map
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    if vermap:
+        assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
+    return status

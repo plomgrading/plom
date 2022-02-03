@@ -376,42 +376,41 @@ def main():
             classlist = get_demo_classlist()
         else:
             classlist = process_classlist_file(args.classlist)
-        upload_classlist(classlist, args.server, args.password)
+        upload_classlist(classlist, msgr=(args.server, args.password))
 
     elif args.command == "make-db":
         if args.from_file is None:
-            status = build_database(args.server, args.password)
+            status = build_database(msgr=(args.server, args.password))
         else:
             qvmap = version_map_from_csv(args.from_file)
-            status = build_database(args.server, args.password, vermap=qvmap)
+            status = build_database(vermap=qvmap, msgr=(args.server, args.password))
         print(status)
 
     elif args.command == "make":
         try:
-            status = build_database(args.server, args.password)
+            status = build_database(msgr=(args.server, args.password))
             print(status)
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
         build_papers(
-            args.server,
-            args.password,
             fakepdf=args.no_pdf,
             no_qr=args.without_qr,
             indexToMake=args.number,
             xcoord=args.namebox_xpos,
             ycoord=args.namebox_ypos,
+            msgr=(args.server, args.password),
         )
 
     elif args.command == "rubric":
         msgr = start_messenger(args.server, args.password)
         try:
             if args.demo:
-                N = upload_demo_rubrics(msgr)
+                N = upload_demo_rubrics(msgr=msgr)
                 print(f"Uploaded {N} demo rubrics")
             elif args.dump:
-                download_rubrics_to_file(msgr, Path(args.dump))
+                download_rubrics_to_file(Path(args.dump), msgr=msgr)
             else:
-                upload_rubrics_from_file(msgr, Path(args.rubric_file))
+                upload_rubrics_from_file(Path(args.rubric_file), msgr=msgr)
         finally:
             msgr.closeUser()
             msgr.stop()

@@ -45,18 +45,16 @@ from plom.scan.scansToImages import process_scans
 from plom.scan import readQRCodes
 
 
-def processScans(
-    server, password, pdf_fname, *, gamma=False, extractbmp=False, demo=False
-):
+def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
     """Process PDF file into images and read QRcodes
 
     args:
-        server (str)
-        password (str)
         pdf_fname (pathlib.Path/str): path to a PDF file.  Need not be in
             the current working directory.
 
     keyword args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         bundle_name (str/None): Override the bundle name (which is by
             default is generated from the PDF filename).
         gamma (bool):
@@ -82,7 +80,7 @@ def processScans(
     bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
 
     print(f'Checking if bundle "{bundle_name}" already exists on server')
-    exists, reason = does_bundle_exist_on_server(bundle_name, md5, server, password)
+    exists, reason = does_bundle_exist_on_server(bundle_name, md5, msgr=msgr)
     if exists:
         if reason == "name":
             print(
@@ -109,16 +107,14 @@ def processScans(
     print("Processing PDF {} to images".format(pdf_fname))
     process_scans(pdf_fname, bundledir, not gamma, not extractbmp, demo=demo)
     print("Read QR codes")
-    readQRCodes.processBitmaps(bundledir, server, password)
+    readQRCodes.processBitmaps(bundledir, msgr=msgr)
     # TODO: can collisions warning be written here too?
     if bundle_has_nonuploaded_unknowns(bundledir):
         print_unknowns_warning(bundledir)
         print('You can upload these by passing "--unknowns" to the upload command')
 
 
-def uploadImages(
-    server, password, bundle_name, *, do_unknowns=False, do_collisions=False
-):
+def uploadImages(bundle_name, *, msgr, do_unknowns=False, do_collisions=False):
     """Upload processed images from bundle.
 
     args:
@@ -128,6 +124,8 @@ def uploadImages(
             whatever string was used to define a bundle.
 
     keyword args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         do_unknowns (bool):
         do_collisions (bool):
 
@@ -149,7 +147,7 @@ def uploadImages(
     md5 = info["md5"]
 
     print(f'Trying to create bundle "{bundle_name}" on server')
-    exists, extra = createNewBundle(bundle_name, md5, server, password)
+    exists, extra = createNewBundle(bundle_name, md5, msgr=msgr)
     # should be (True, skip_list) or (False, reason)
     if exists:
         skip_list = extra
@@ -169,7 +167,7 @@ def uploadImages(
         return
 
     print("Upload images to server")
-    TPN = uploadTPages(bundledir, skip_list, server, password)
+    TPN = uploadTPages(bundledir, skip_list, msgr=msgr)
     print(
         "Tests were uploaded to the following studentIDs: {}".format(
             ", ".join(TPN.keys())
@@ -200,7 +198,7 @@ def uploadImages(
         if bundle_has_nonuploaded_unknowns(bundledir):
             print_unknowns_warning(bundledir)
             print("Unknowns upload flag present: uploading...")
-            upload_unknowns(bundledir, server, password)
+            upload_unknowns(bundledir, msgr=msgr)
         else:
             print(
                 "Unknowns upload flag present: but no unknowns - so no actions required."
@@ -218,7 +216,7 @@ def uploadImages(
             yn = input("Are you sure you want to upload these colliding pages? [y/N] ")
             if yn.lower() == "y":
                 print("Proceeding.")
-                upload_collisions(bundledir, server, password)
+                upload_collisions(bundledir, msgr=msgr)
         else:
             print(
                 "Collisions upload flag present: but no collisions - so no actions required."

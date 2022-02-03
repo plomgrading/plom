@@ -199,29 +199,28 @@ def main():
         args.password = getpass('Please enter the "scanner" password: ')
 
     if args.command == "submitted":
-        print_who_submitted_what(args.server, args.password, args.directory)
+        print_who_submitted_what(args.directory, msgr=(args.server, args.password))
     elif args.command == "process":
         questions = args.question[0]
         # args passes '[q]' rather than just 'q'
         processHWScans(
-            args.server,
-            args.password,
             args.hwPDF,
             args.studentid,
             questions,
             gamma=args.gamma,
             extractbmp=args.extractbmp,
             bundle_name=args.bundle_name,
+            msgr=(args.server, args.password),
         )
     elif args.command == "allbyq":
         # TODO: gamma and extractbmp?
         processAllHWByQ(args.server, args.password, args.yes)
     elif args.command == "missing":
-        processMissing(args.server, args.password, yes_flag=args.yes)
+        processMissing(yes_flag=args.yes, msgr=(args.server, args.password))
     elif args.command == "status":
-        check_and_print_scan_status(args.server, args.password)
+        check_and_print_scan_status(msgr=(args.server, args.password))
     elif args.command == "bundles":
-        print_bundle_list(args.server, args.password)
+        print_bundle_list(msgr=(args.server, args.password))
     elif args.command == "clear":
         clear_login(args.server, args.password)
     else:

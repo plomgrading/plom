@@ -23,7 +23,7 @@ import fitz
 import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
-from plom.create import start_messenger
+from plom.create import with_manager_messenger
 
 
 possible_answers = [
@@ -352,18 +352,8 @@ def splitFakeFile(outfile):
     originalPDF.close()
 
 
-def download_classlist(server=None, password=None):
-    """Download list of student IDs/names from server."""
-    msgr = start_messenger(server, password)
-    try:
-        classlist = msgr.IDrequestClasslist()
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-    return classlist
-
-
-def make_scribbles(server, password, basedir=Path(".")):
+@with_manager_messenger
+def make_scribbles(basedir=Path("."), *, msgr):
     """Fake exam writing by scribbling on the pages of the blank exams.
 
     After Plom exam PDF files have been generated, this can be used to
@@ -379,6 +369,10 @@ def make_scribbles(server, password, basedir=Path(".")):
             scribbles will be created in `basedir`.  Defaults to current
             directory.
 
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
     3. Do some things to make the data unpleasant.
@@ -387,7 +381,7 @@ def make_scribbles(server, password, basedir=Path(".")):
     """
     basedir = Path(basedir)
     outfile = basedir / "fake_scribbled_exams.pdf"
-    classlist = download_classlist(server, password)
+    classlist = msgr.IDrequestClasslist()
 
     fill_in_fake_data_on_exams(basedir / _paperdir, classlist, outfile)
     make_garbage_pages(outfile)

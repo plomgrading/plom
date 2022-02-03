@@ -257,7 +257,12 @@ class PlomServer:
         Returns
             bool: False if we cannot get a minimal response from the server.
         """
-        m = Messenger(s=self.server_info["server"], port=self.server_info["port"])
+        m = Messenger(
+            s=self.server_info["server"],
+            port=self.server_info["port"],
+            verify_ssl=False,
+        )
+
         count = 0
         while True:
             if not self.process_is_running():

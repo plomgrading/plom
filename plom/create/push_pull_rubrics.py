@@ -14,14 +14,16 @@ else:
 import pandas
 import toml
 
-from plom.create import start_messenger
+from plom.create import with_manager_messenger
 
 
-def download_rubrics(msgr):
+@with_manager_messenger
+def download_rubrics(*, msgr):
     """Download a list of rubrics from a server.
 
-    Args:
-        msgr (Messenger): a connected Messenger.
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
 
     Returns:
         list: list of dicts, possibly an empty list if server has no rubrics.
@@ -29,15 +31,19 @@ def download_rubrics(msgr):
     return msgr.MgetRubrics()
 
 
-def download_rubrics_to_file(msgr, filename, *, verbose=True):
+@with_manager_messenger
+def download_rubrics_to_file(filename, *, msgr, verbose=True):
     """Download the rubrics from a server and save tem to a file.
 
     Args:
-        msgr (Messenger): a connected Messenger.
         filename (pathlib.Path): A filename to save to.  The extension is
             used to determine what format, supporting:
             `.json`, `.toml`, and `.csv`.
             If no extension is included, default to `.toml`.
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
 
     Returns:
         None: but saves a file as a side effect.
@@ -48,7 +54,7 @@ def download_rubrics_to_file(msgr, filename, *, verbose=True):
 
     if verbose:
         print(f'Saving server\'s current rubrics to "{filename}"')
-    rubrics = download_rubrics(msgr)
+    rubrics = download_rubrics(msgr=msgr)
 
     with open(filename, "w") as f:
         if suffix == ".json":
@@ -62,14 +68,17 @@ def download_rubrics_to_file(msgr, filename, *, verbose=True):
             raise NotImplementedError(f'Don\'t know how to export to "{filename}"')
 
 
-def upload_rubrics_from_file(msgr, filename, *, verbose=True):
+def upload_rubrics_from_file(filename, *, msgr, verbose=True):
     """Load rubrics from a file and upload them to a server.
 
     Args:
-        msgr (Messenger): a connected Messenger.
         filename (pathlib.Path): A filename to load from.  Types  `.json`,
             `.toml`, and `.csv` are supported.  If no suffix is included
             we'll try to append `.toml`.
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
     """
     if filename.suffix.casefold() not in (".json", ".toml", ".csv"):
         filename = filename.with_suffix(filename.suffix + ".toml")
@@ -90,10 +99,11 @@ def upload_rubrics_from_file(msgr, filename, *, verbose=True):
 
     if verbose:
         print(f'Adding {len(rubrics)} rubrics from file "{filename}"')
-    upload_rubrics(msgr, rubrics)
+    upload_rubrics(rubrics, msgr=msgr)
 
 
-def upload_rubrics(msgr, rubrics):
+@with_manager_messenger
+def upload_rubrics(rubrics, *, msgr):
     """Upload a list of rubrics to a server."""
     for rub in rubrics:
         # TODO: some autogen ones are also made by manager?
@@ -104,36 +114,16 @@ def upload_rubrics(msgr, rubrics):
         msgr.McreateRubric(rub)
 
 
-def upload_demo_rubrics(msgr, numquestions=3):
+@with_manager_messenger
+def upload_demo_rubrics(*, msgr, numquestions=3):
     """Load some demo rubrics and upload to server.
 
-    Args:
-        msgr (Messenger/tuple): a connected Messenger object or a tuple
-            of `(str, str)` for server/password.
-
-    TODO: get number of questions from the server spec.
-
-    The demo data is a bit sparse: we fill in missing pieces and
-    multiply over questions.
-    """
-    try:
-        server, password = msgr
-    except TypeError:
-        return _upload_demo_rubrics(msgr, numquestions)
-
-    msgr = start_messenger(server, password)
-    try:
-        return _upload_demo_rubrics(msgr, numquestions)
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-
-
-def _upload_demo_rubrics(msgr, numquestions=3):
-    """Load some demo rubrics and upload to server.
-
-    Args:
-        msgr (Messenger): a connected Messenger object.
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+        numquestions (int): how many questions should we build for.
+            TODO: get number of questions from the server spec if
+            omitted.
 
     The demo data is a bit sparse: we fill in missing pieces and
     multiply over questions.
@@ -157,5 +147,5 @@ def _upload_demo_rubrics(msgr, numquestions=3):
                 rubrics.append(r)
         else:
             rubrics.append(rub)
-    upload_rubrics(msgr, rubrics)
+    upload_rubrics(rubrics, msgr=msgr)
     return len(rubrics)

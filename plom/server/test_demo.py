@@ -36,7 +36,7 @@ class Test:
         assert self.demo.process_is_running()
 
     def test_random_IDing(self):
-        subprocess.check_call(split(f"python3 -m plom.client.randoIDer"), env=self.env)
+        subprocess.check_call(split("python3 -m plom.client.randoIDer"), env=self.env)
 
     def test_get_rubrics_default_extension_is_toml(self, tmpdir):
         f = Path(tmpdir) / "foo"
@@ -56,7 +56,7 @@ class Test:
 
     def test_put_rubrics_demo(self, tmpdir):
         subprocess.check_call(
-            split(f"python3 -m plom.create rubric --demo"),
+            split("python3 -m plom.create rubric --demo"),
             env=self.env,
         )
         f = Path(tmpdir) / "foo.json"

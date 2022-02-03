@@ -59,15 +59,15 @@ class PlomDemoServer(PlomServer):
 
     Build papers
     >>> from plom.create import build_database, build_papers
-    >>> print(build_database(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]))   # doctest: +ELLIPSIS
+    >>> print(build_database(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])))   # doctest: +ELLIPSIS
     DB entry for test 0001: ...
 
-    >>> build_papers(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
+    >>> build_papers(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Building 2 pre-named papers and 3 blank papers in ...
 
     We can also simulate some nonsense student work:
     >>> from plom.create import make_scribbles
-    >>> make_scribbles(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"], basedir=demo.basedir)   # doctest: +ELLIPSIS
+    >>> make_scribbles(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Annotating papers with fake student data and scribbling on pages...
 
     This can also be run from the command line using
@@ -115,28 +115,45 @@ class PlomDemoServer(PlomServer):
         self.__class__.add_demo_spec(tmpdir, num_to_produce=self._numpapers)
         kwargs.pop("basedir", True)
         super().__init__(basedir=tmpdir, **kwargs)
-        server_loc = f'{self.server_info["server"]}:{self.port}'
+        s = f'{self.server_info["server"]}:{self.port}'
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        plom.create.upload_demo_rubrics((server_loc, pwd))
+        # TODO: probably want `with Messenger(...) as msgr:` here
+        msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
+        try:
+            plom.create.upload_demo_rubrics(msgr=msgr)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
         if scans:
             self.fill_with_fake_scribbled_tests()
 
     def fill_with_fake_scribbled_tests(self):
         """Simulate the writing of a test by random scribbling and push to the server."""
-        s = f"localhost:{self.port}"
+        s = f'{self.server_info["server"]}:{self.port}'
         scan_pwd = self.get_env_vars()["PLOM_SCAN_PASSWORD"]
         pwd = self.get_env_vars()["PLOM_MANAGER_PASSWORD"]
-        plom.create.upload_demo_classlist(s, pwd)
-        # plom-create make: build_database and build_papers
-        status = plom.create.build_database(s, pwd)
-        print("Database built with output:")
-        print(status)
-        plom.create.build_papers(s, pwd, basedir=self.basedir)
-        plom.create.make_scribbles(s, pwd, basedir=self.basedir)
+        # TODO: probably want `with Messenger(...) as msgr:` here
+        msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
+        try:
+            plom.create.upload_demo_classlist(msgr=msgr)
+            # cmdline: "plom-create makedb" and "plom-create make"
+            status = plom.create.build_database(msgr=msgr)
+            print("Database built with output:")
+            print(status)
+            plom.create.build_papers(basedir=self.basedir, msgr=msgr)
+            plom.create.make_scribbles(basedir=self.basedir, msgr=msgr)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
         with working_directory(self.basedir):
-            for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
-                plom.scan.processScans(s, scan_pwd, f, gamma=False)
-                plom.scan.uploadImages(s, scan_pwd, f, do_unknowns=True)
+            msgr = plom.scan.start_messenger(s, scan_pwd, verify_ssl=False)
+            try:
+                for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
+                    plom.scan.processScans(f, gamma=False, msgr=msgr)
+                    plom.scan.uploadImages(f, do_unknowns=True, msgr=msgr)
+            finally:
+                msgr.closeUser()
+                msgr.stop()
 
     def stop(self, erase_dir=True):
         """Take down the Plom server.

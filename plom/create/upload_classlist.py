@@ -6,26 +6,35 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
-from plom.create import start_messenger
+from plom.create import with_manager_messenger
 from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
 
 
-def upload_classlist(classlist, server, password):
+@with_manager_messenger
+def upload_classlist(classlist, *, msgr):
     """Uploads a classlist file to the server.
 
     Arguments:
         classdict (list): list of dict, each has at least keys `"id"` and
             `"studentName"`, optionally other fields too.
-        msgr (ManagerMessenger): an already-connected messenger object for
-            talking to the server.
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
     """
-    msgr = start_messenger(server, password)
-    _raw_upload_classlist(classlist, msgr)
+    _ultra_raw_upload_classlist(classlist, msgr)
 
 
 def _raw_upload_classlist(classlist, msgr):
     # TODO: does this distinct only exist for the mock test?  Maybe not worth it!
+    try:
+        _ultra_raw_upload_classlist(classlist, msgr)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+
+
+def _ultra_raw_upload_classlist(classlist, msgr):
+    # TODO: clean up this chain viz the mock test
     try:
         msgr.upload_classlist(classlist)
         print(f"Uploaded classlist of length {len(classlist)}.")
@@ -51,14 +60,16 @@ def _raw_upload_classlist(classlist, msgr):
     except PlomConflict:
         print("Error: Server already has a classlist, see help (TODO: add force?).")
         raise
-    finally:
-        msgr.closeUser()
-        msgr.stop()
 
 
-def upload_demo_classlist(server=None, password=None):
-    """Uploads the demo classlist file to the server."""
+@with_manager_messenger
+def upload_demo_classlist(*, msgr):
+    """Uploads the demo classlist file to the server.
 
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+    """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist()
-    upload_classlist(classlist, server, password)
+    _ultra_raw_upload_classlist(classlist, msgr)
