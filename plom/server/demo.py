@@ -59,15 +59,15 @@ class PlomDemoServer(PlomServer):
 
     Build papers
     >>> from plom.create import build_database, build_papers
-    >>> print(build_database(cred=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])))   # doctest: +ELLIPSIS
+    >>> print(build_database(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])))   # doctest: +ELLIPSIS
     DB entry for test 0001: ...
 
-    >>> build_papers(cred=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
+    >>> build_papers(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Building 2 pre-named papers and 3 blank papers in ...
 
     We can also simulate some nonsense student work:
     >>> from plom.create import make_scribbles
-    >>> make_scribbles(cred=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
+    >>> make_scribbles(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
     Annotating papers with fake student data and scribbling on pages...
 
     This can also be run from the command line using

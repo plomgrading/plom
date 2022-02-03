@@ -30,7 +30,7 @@ def start_messenger(server=None, pwd=None, verify=True):
     return msgr
 
 
-def with_messenger(f):
+def with_manager_messenger(f):
     """Decorator for flexible credentials or open messenger.
 
     Arguments:
@@ -42,15 +42,14 @@ def with_messenger(f):
 
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        cred = kwargs.pop("cred", None)
-        if not cred:
-            if not kwargs.get("msgr"):
-                raise ValueError("Must provide 'cred=' or 'msgr='")
+        # if we have a messenger, nothing special, just call function
+        msgr = kwargs.get("msgr")
+        if isinstance(msgr, ManagerMessenger):
             return f(*args, **kwargs)
 
-        if kwargs.get("msgr"):
-            raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
-        msgr = start_messenger(*cred)
+        # if not, we assume its appropriate args to make a messenger
+        credentials = kwargs.pop("msgr")
+        msgr = start_messenger(*credentials)
         kwargs["msgr"] = msgr
         try:
             return f(*args, **kwargs)

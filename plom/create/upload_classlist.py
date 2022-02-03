@@ -6,7 +6,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomRangeException,
 )
-from plom.create.start_messenger import with_messenger
+from plom.create import with_manager_messenger
 from plom.create import start_messenger
 from plom.rules import censorStudentName, censorStudentNumber
 from .buildClasslist import get_demo_classlist
@@ -63,15 +63,13 @@ def _ultra_raw_upload_classlist(classlist, msgr):
         raise
 
 
-@with_messenger
+@with_manager_messenger
 def upload_demo_classlist(*, msgr):
     """Uploads the demo classlist file to the server.
 
     Keyword Args:
-        msgr (plom.Messenger/tuple): you can pass either a open connected
-            Messenger, in which case you will need to close it yourself.
-            TODO: or you can pass a tuple of credentials appropriate for
-            authenticating with a server.
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
     """
     print("Using demo classlist - DO NOT DO THIS FOR A REAL TEST")
     classlist = get_demo_classlist()

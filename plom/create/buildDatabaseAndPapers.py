@@ -10,10 +10,10 @@ from plom.misc_utils import working_directory
 from plom.create.buildNamedPDF import build_papers_backend
 from plom.create.buildNamedPDF import check_pdf_and_id_if_needed
 from plom.create import paperdir as paperdir_name
-from plom.create.start_messenger import with_messenger
+from plom.create import with_manager_messenger
 
 
-@with_messenger
+@with_manager_messenger
 def build_papers(
     *,
     basedir=Path("."),
@@ -27,13 +27,8 @@ def build_papers(
     """Build the blank papers using version information from server and source PDFs.
 
     Keyword Args:
-        cred (None/tuple): two strings, TODO and more?
-            server (str): server name and optionally port.
-            password (str): the manager password.
-            These will be used to open a temporary connection to the server
-            which will be discarded before we return.
-        msgr (plom.Messenger): a connected messenger.  You are responsible
-            for closing it later.
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         basedir (pathlib.Path/str): Look for the source version PDF files
             in `basedir/sourceVersions`.  Produce the printable PDF files
             in `basedir/papersToPrint`.
@@ -116,18 +111,13 @@ def build_papers(
         )
 
 
-@with_messenger
+@with_manager_messenger
 def build_database(*, msgr, vermap={}):
     """Build the database from a pre-set version map.
 
     Keyword Args:
-        cred (None/tuple): two strings, TODO and more?
-            server (str): server name and optionally port.
-            password (str): the manager password.
-            These will be used to open a temporary connection to the server
-            which will be discarded before we return.
-        msgr (plom.Messenger): a connected messenger.  You are responsible
-            for closing it later.
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
             :func:`plom.finish.make_random_version_map`.

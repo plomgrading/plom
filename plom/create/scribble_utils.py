@@ -23,7 +23,7 @@ import fitz
 import plom.create
 import plom.create.fonts
 from plom.create import paperdir as _paperdir
-from plom.create.start_messenger import with_messenger
+from plom.create import with_manager_messenger
 
 
 possible_answers = [
@@ -352,7 +352,7 @@ def splitFakeFile(outfile):
     originalPDF.close()
 
 
-@with_messenger
+@with_manager_messenger
 def make_scribbles(basedir=Path("."), *, msgr):
     """Fake exam writing by scribbling on the pages of the blank exams.
 
@@ -370,13 +370,8 @@ def make_scribbles(basedir=Path("."), *, msgr):
             directory.
 
     Keyword Args:
-        cred (None/tuple): two strings, TODO and more?
-            server (str): server name and optionally port.
-            password (str): the manager password.
-            These will be used to open a temporary connection to the server
-            which will be discarded before we return.
-        msgr (plom.Messenger): a connected messenger.  You are responsible
-            for closing it later.
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
