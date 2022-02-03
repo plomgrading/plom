@@ -352,18 +352,7 @@ def splitFakeFile(outfile):
     originalPDF.close()
 
 
-def download_classlist(server=None, password=None):
-    """Download list of student IDs/names from server."""
-    msgr = start_messenger(server, password)
-    try:
-        classlist = msgr.IDrequestClasslist()
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-    return classlist
-
-
-def make_scribbles(server, password, basedir=Path(".")):
+def make_scribbles(*args, **kwargs):
     """Fake exam writing by scribbling on the pages of the blank exams.
 
     After Plom exam PDF files have been generated, this can be used to
@@ -379,15 +368,40 @@ def make_scribbles(server, password, basedir=Path(".")):
             scribbles will be created in `basedir`.  Defaults to current
             directory.
 
+    Keyword Args:
+        cred (None/tuple): two strings, TODO and more?
+            server (str): server name and optionally port.
+            password (str): the manager password.
+            These will be used to open a temporary connection to the server
+            which will be discarded before we return.
+        msgr (plom.Messenger): a connected messenger.  You are responsible
+            for closing it later.
+
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
     3. Do some things to make the data unpleasant.
         * delete the last page of the first test.
         * Randomly add some extra pages
     """
+    cred = kwargs.pop("cred", None)
+    if not cred:
+        return _make_scribbles(*args, **kwargs)
+
+    if kwargs.get("msgr"):
+        raise ValueError("Cannot provide both 'cred=' AND 'msgr='")
+    msgr = start_messenger(*cred)
+    kwargs[msgr] = msgr
+    try:
+        return _make_scribbles(*args, **kwargs)
+    finally:
+        msgr.closeUser()
+        msgr.stop()
+
+
+def _make_scribbles(basedir=Path("."), *, msgr):
     basedir = Path(basedir)
     outfile = basedir / "fake_scribbled_exams.pdf"
-    classlist = download_classlist(server, password)
+    classlist = msgr.IDrequestClasslist()
 
     fill_in_fake_data_on_exams(basedir / _paperdir, classlist, outfile)
     make_garbage_pages(outfile)

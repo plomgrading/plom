@@ -136,10 +136,10 @@ class PlomDemoServer(PlomServer):
             print("Database built with output:")
             print(status)
             plom.create.build_papers(basedir=self.basedir, msgr=msgr)
+            plom.create.make_scribbles(basedir=self.basedir, msgr=msgr)
         finally:
             msgr.closeUser()
             msgr.stop()
-        plom.create.make_scribbles(s, pwd, basedir=self.basedir)
         with working_directory(self.basedir):
             for f in [f"fake_scribbled_exams{n}.pdf" for n in (1, 2, 3)]:
                 plom.scan.processScans(s, scan_pwd, f, gamma=False)
