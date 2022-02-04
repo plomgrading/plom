@@ -63,17 +63,33 @@ Approx 7500 papers over 7 courses.
 Approx 8000 papers over 7 courses
 
 
-## Totals up to end of summer 2021
-
-  * Approx 22000 papers in 26 courses.
-
-
 
 ## 2021W1
 
 | Course  |  Tasks                  | # students |  Notes                      |
 |---------|-------------------------|:----------:|-----------------------------|
 | 253     | 3 quizzes + exam        | 680        |                             |
-| 102     | midterm + exam          | 1100       | 1st on-paper since Feb 2020 |
+| 102     | 2 midterms + exam       | 1100       | 1st on-paper since Feb 2020 |
+| 344     | midterm, exam           | 80         |                             |
+| 200     | exam                    | 1000       |                             |
+| 220     | exam                    | 350        |                             |
+| 302     | exam                    | 150        |                             |
+| 100     | midterm + exam          | 1700       |                             |
+| 405     | 5 HW, midterm + exam    | 40         |                             |
+| MICB302 | exam                    | 200        | 1st non-Maths affiliated    |
 
-Approx: 1800 as of oct 13)
+Approx: 11500 over 9 course
+
+
+## 2021W2 (2022 spring)
+
+| Course  |  Tasks                  | # students |  Notes                      |
+|---------|-------------------------|:----------:|-----------------------------|
+| BMEG220 |                         |            |                             |
+|         |                         |            |                             |
+
+
+
+## Totals up to Dec 31st 2021
+
+  * Approx 33500 papers in 35 courses.
