@@ -1,10 +1,16 @@
-\NeedsTeXFormat{LaTeX2e}[1994/06/01]
-\ProvidesPackage{mockplom}[2020/03/07 package MockPlom]
+\NeedsTeXFormat{LaTeX2e}[2020/02/02]
+\ProvidesPackage{mockplom}[2022/02/04 package MockPlom]
 
 \RequirePackage{graphicx}
 \RequirePackage{fmtcount}
 \RequirePackage{xcolor}
-\RequirePackage{tikz, changepage}
+\RequirePackage{tikz}
+\RequirePackage{changepage}
+
+\newcommand*\@ifmylatexlater{\@ifl@t@r\fmtversion}
+\@ifmylatexlater{2020/02/02}{}{%
+  \PackageError{mockplom}{Sorry this package requires a more recent TeX}{Suggest disabling the mockplom package}
+}
 
 \DeclareOption{final}{%
   \newcommand{\mockplomqr}{}%
