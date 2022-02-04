@@ -4,7 +4,13 @@
 \RequirePackage{graphicx}
 \RequirePackage{fmtcount}
 \RequirePackage{xcolor}
-\RequirePackage{tikz, changepage}
+\RequirePackage{tikz}
+\RequirePackage{changepage}
+
+\newcommand*\@ifmylatexlater{\@ifl@t@r\fmtversion}
+\@ifmylatexlater{2020/01/01}{}{%
+  \PackageError{mockplom}{Sorry this package requires a more recent TeX}{Suggest disabling the mockplom package}
+}
 
 \DeclareOption{final}{%
   \newcommand{\mockplomqr}{}%
