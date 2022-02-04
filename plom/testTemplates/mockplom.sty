@@ -40,16 +40,16 @@
 
 \AddToHook{shipout/background}{
   \begin{tikzpicture}[remember picture, overlay]
-    \node[anchor=south east, shift={(-14pt,14pt)}] at (current page.south east) {\mockplomqr};
-    \node[anchor=south west, shift={(14pt,14pt)}] at (current page.south west) {\mockplomqr};
-    \node[anchor=north, shift={(0,-14pt)}] at (current page.north) {\mockplompaperstamp};
+    \node[anchor=south east, shift={(-11pt,14pt)}] at (current page.south east) {\mockplomqr};
+    \node[anchor=south west, shift={(11pt,14pt)}] at (current page.south west) {\mockplomqr};
+    \node[anchor=north, shift={(0,-16pt)}] at (current page.north) {\mockplompaperstamp};
     \checkoddpage
     \ifoddpage
-      \node[anchor=north east, shift={(-14pt,-14pt)}] at (current page.north east) {\mockplomqr};
-      \node[anchor=north west, shift={(14pt, -14pt)}] at (current page.north west) {\mockplomlstaple};
+      \node[anchor=north east, shift={(-11pt,-16pt)}] at (current page.north east) {\mockplomqr};
+      \node[anchor=north west, shift={(10pt, -10pt)}] at (current page.north west) {\mockplomlstaple};
     \else
-      \node[anchor=north west, shift={(14pt,-14pt)}] at (current page.north west) {\mockplomqr};
-      \node[anchor=north east, shift={(-14pt, -14pt)}] at (current page.north east) {\mockplomrstaple};
+      \node[anchor=north west, shift={(11pt,-16pt)}] at (current page.north west) {\mockplomqr};
+      \node[anchor=north east, shift={(-10pt, -10pt)}] at (current page.north east) {\mockplomrstaple};
     \fi
   \end{tikzpicture}
 }
