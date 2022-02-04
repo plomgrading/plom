@@ -2,13 +2,9 @@
 \ProvidesPackage{mockplom}[2020/03/07 package MockPlom]
 
 \RequirePackage{graphicx}
-\RequirePackage{everypage}
-\RequirePackage{changepage}
 \RequirePackage{fmtcount}
 \RequirePackage{xcolor}
-
-%\RequirePackage[absolute,showboxes]{textpos}
-\RequirePackage[absolute]{textpos}
+\RequirePackage{tikz, changepage}
 
 \DeclareOption{final}{%
   \newcommand{\mockplomqr}{}%
@@ -22,17 +18,13 @@
   \renewcommand{\mockplomlstaple}{\includegraphics[width=1.1in]{dummy_left_staple_red}}%
   \renewcommand{\mockplomrstaple}{\includegraphics[width=1.1in]{dummy_right_staple_red}}%
   \renewcommand{\mockplompaperstamp}{%
-    %\fcolorbox{red}{red!10}{%
     \fbox{%
-      % strut:
       \rule[-3pt]{0pt}{19pt}%
-      %\textbf{
       \textsf{%
         \color{red}
           \LARGE \,DRAFT.%
           \padzeroes[2]{\decimal{page}}\,%
       }%
-      %}
     }%
   }%
 }
@@ -41,48 +33,20 @@
 
 \ProcessOptions\relax
 
-%\if@neverindent
-%\neverindent
-%\fi
-\AddEverypageHook{%s
-  \strictpagecheck
-  \checkoddpage
-  \ifoddpage
-    \TPReferencePosition{0,0}
-    \begin{textblock*}{1.5in}(14pt,14pt)   % size set above, 1.5 just a box
-      \mockplomlstaple
-    \end{textblock*}
-    \TPReferencePosition{1,0}
-    \begin{textblock*}{1.5in}(600pt,19pt)
-      \hfill\mockplomqr
-    \end{textblock*}
-  \else
-    \TPReferencePosition{0,0}
-    \begin{textblock*}{1.5in}(14pt,19pt)
-      \mockplomqr
-    \end{textblock*}
-    \TPReferencePosition{1,0}
-    \begin{textblock*}{1.5in}(601pt,14pt)   % 612-xy
-      \hfill\mockplomrstaple
-    \end{textblock*}
-    % \begin{picture}(0,0)
-    %   \put(-55,-10){\mockplomqr}
-    %   \put(455,-10){\mockplomrstaple}
-    % \end{picture}
-  \fi
-  \TPReferencePosition{0,1}
-  \begin{textblock*}{1.5in}(15pt,772pt)
-    \mockplomqr
-  \end{textblock*}
-  \TPReferencePosition{1,1}
-  \begin{textblock*}{1.5in}(597pt,772pt)  % 612-15
-    \hfill\mockplomqr
-  \end{textblock*}
-  \TPReferencePosition{0.5,0}
-  \begin{textblock*}{2in}(306pt,20pt)
-    \centering%
-    \mockplompaperstamp
-  \end{textblock*}
+\AddToHook{shipout/background}{
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, shift={(-14pt,14pt)}] at (current page.south east) {\mockplomqr};
+    \node[anchor=south west, shift={(14pt,14pt)}] at (current page.south west) {\mockplomqr};
+    \node[anchor=north, shift={(0,-14pt)}] at (current page.north) {\mockplompaperstamp};
+    \checkoddpage
+    \ifoddpage
+      \node[anchor=north east, shift={(-14pt,-14pt)}] at (current page.north east) {\mockplomqr};
+      \node[anchor=north west, shift={(14pt, -14pt)}] at (current page.north west) {\mockplomlstaple};
+    \else
+      \node[anchor=north west, shift={(14pt,-14pt)}] at (current page.north west) {\mockplomqr};
+      \node[anchor=north east, shift={(-14pt, -14pt)}] at (current page.north east) {\mockplomrstaple};
+    \fi
+  \end{tikzpicture}
 }
 
 \endinput
