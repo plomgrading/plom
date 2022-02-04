@@ -184,14 +184,13 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
     outfile = Path(outfile)
 
     print("Annotating papers with fake student data and scribbling on pages...")
-    if not which:
-        # those with an ID number
-        named_papers_paths = list(paper_dir.glob("exam_*_*.pdf"))
-        # everything
-        papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
-    else:
+    if which:
         papers_paths = sorted([paper_dir / f"exam_{i:04}.pdf" for i in which])
+    else:
+        papers_paths = sorted(paper_dir.glob("exam_*.pdf"))
 
+    # those with an ID number
+    named_papers_paths = list(paper_dir.glob("exam_*_*.pdf"))
     # extract student numbers used in prenaming
     used_ids = [f.stem.split("_")[-1] for f in named_papers_paths]
     # get those students not used in the the prename
