@@ -47,6 +47,28 @@ def test_spec_autocount_questions():
     assert s["numberOfQuestions"] == 3
 
 
+def test_spec_question_pages_non_positive():
+    r = deepcopy(raw)
+    r["question"]["1"]["pages"] = [-1]
+    with raises(ValueError, match="not a positive int"):
+        SpecVerifier(r).verify()
+
+
+def test_spec_question_pages_non_contiguous():
+    r = deepcopy(raw)
+    r["numberOfPages"] = 17
+    r["question"]["1"]["pages"] = [3, 17]
+    with raises(ValueError, match="contiguous"):
+        SpecVerifier(r).verify()
+
+
+def test_spec_question_pages_out_of_range():
+    r = deepcopy(raw)
+    r["question"]["1"]["pages"] = [14, 15, 16, 17]
+    with raises(ValueError, match="range"):
+        SpecVerifier(r).verify()
+
+
 def test_spec_wrong_total_marks():
     r = raw.copy()
     r["totalMarks"] += 1

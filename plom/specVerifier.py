@@ -93,32 +93,21 @@ def isListPosInt(l, lastPage):
     return True
 
 
-def isContiguousListPosInt(l, lastPage):
-    """Check given list is a contiguous list of pos-int, or string that can be converted to pos-ints, bounded below by 1 and above by lastPage.
+def isContiguous(l):
+    """Check input is a contiguous list of integers.
 
     args:
         l (list): a list of strings or ints
-        lastPage (int): no element of list can be greater.
 
     returns:
-        Bool
-
+        bool:
     """
-    # check it is a list
     if type(l) is not list:
         return False
-    # check each entry is 0<n<=lastPage
-    for n in l:
-        if not isPositiveInt(n):
-            return False
-        if n > lastPage:
-            return False
-    # check it is contiguous
     sl = set(l)
     for n in range(min(sl), max(sl) + 1):
         if n not in sl:
             return False
-    # all tests passed
     return True
 
 
@@ -676,18 +665,20 @@ class SpecVerifier:
         for k in self.spec["question"][g].keys():
             if k not in required_keys.union(optional_keys):
                 raise ValueError('Question error - unexpected extra key "{}"'.format(k))
-        # check pages is contiguous list of positive integers
-        if not isContiguousListPosInt(self.spec["question"][g]["pages"], lastPage):
-            raise ValueError(
-                "Question error - pages {} is not list of contiguous positive integers".format(
-                    self.spec["question"][g]["pages"]
+        pages = self.spec["question"][g]["pages"]
+        # check each entry is integer 0 < n <= lastPage
+        for n in pages:
+            if not isPositiveInt(n):
+                raise ValueError(f"Question error - page {n} is not a positive integer")
+            if n > lastPage:
+                raise ValueError(
+                    f"Question error - page {n} out of range [1, {lastPage}]"
                 )
+        if not isContiguous(pages):
+            raise ValueError(
+                f"Question error - {pages} is not a contiguous list of pages"
             )
-        print(
-            "    pages {} is list of contiguous positive integers{}".format(
-                self.spec["question"][g]["pages"], chk
-            )
-        )
+        print("    pages {pages} is list of contiguous positive integers{chk}")
         # check mark is positive integer
         if not isPositiveInt(self.spec["question"][g]["mark"]):
             raise ValueError(
