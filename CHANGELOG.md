@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Unknowns can be mapped to multiple HW Pages.
 
 ### Fixed
 * Fix demos when used with invalid SSL certs.
+* Misc fixes.
 
 
 ## [0.8.0] - 2022-02-01
