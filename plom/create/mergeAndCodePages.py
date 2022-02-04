@@ -84,6 +84,9 @@ def create_exam_and_insert_QR(
 
     Returns:
         fitz.Document: PDF document.
+
+    Raises:
+        RuntimeError: one or more of your versionN.pdf files not found.
     """
     # from spec get the mapping from page to group
     page_to_group = build_page_to_group_dict(spec)
