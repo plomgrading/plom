@@ -143,7 +143,7 @@ for f in Path(dir_from_zip).glob("*.pdf"):
         continue
     questions = [1]  # Many more options here
     plom.scan.processHWScans(
-        f, sid, questions, basedir=serverdir, msgr=("localhost", pwds["scanner"]),
+        f, sid, questions, basedir=serverdir, msgr=("localhost", pwds["scanner"])
     )
     # TODO: do some logging here
     # TODO: be more robust, try catch and move the baddies to SEP
