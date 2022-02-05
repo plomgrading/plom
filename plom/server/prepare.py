@@ -104,24 +104,24 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
     )
 
 
-def initialise_server(basedir, port, server_name, make_self_signed_keys=True):
+def initialise_server(basedir, *, port=None, name=None, make_selfsigned_keys=True):
     """Setup various files needed before a Plom server can be started.
 
     args:
         basedir (pathlib.Path/str/None): the directory to prepare.  If
             `None` use the current working directory.
-        port (int/None): the port to use, None for a default value.
-        server_name (str/None): None for a default value.
 
     keyword args:
-        make_self_signed_keys (bool): Defaults to True.
+        port (int/None): the port to use, None for a default value.
+        name (str/None): None for a default value.
+        make_selfsigned_keys (bool): Defaults to True.
     """
     if not basedir:
         basedir = Path(".")
     basedir = Path(basedir)
     print("Build required directories")
     build_server_directories(basedir)
-    if make_self_signed_keys:
+    if make_selfsigned_keys:
         print("Building self-signed SSL key for server")
         try:
             build_self_signed_SSL_keys(basedir / confdir)
@@ -130,11 +130,11 @@ def initialise_server(basedir, port, server_name, make_self_signed_keys=True):
 
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config(basedir / confdir, port=port, server_name=server_name)
+        create_server_config(basedir / confdir, port=port, name=name)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:
-        if not server_name:
+        if not name:
             print(
                 "You may want to update '{}' with the correct name (or IP) and "
                 "port of your server.".format(confdir / "serverDetails.toml")

@@ -76,7 +76,7 @@ class PlomServer:
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
         port = port if port else Default_Port
-        initialise_server(basedir, port)
+        initialise_server(basedir, port=port)
 
     initialize_server = initialise_server
 

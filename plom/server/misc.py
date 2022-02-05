@@ -74,7 +74,7 @@ def check_server_fully_configured(basedir):
         )
 
 
-def create_server_config(dur=confdir, *, port=None, server_name=None):
+def create_server_config(dur=confdir, *, port=None, name=None):
     """Create a default server configuration file.
 
     args:
@@ -82,7 +82,7 @@ def create_server_config(dur=confdir, *, port=None, server_name=None):
 
     keyword args:
         port (int/None): port on which to run the server.
-        server_name (str/None): the name of your server such as
+        name (str/None): the name of your server such as
             "plom.example.com" or an IP address.  Defaults to
             "localhost" which is usually fine but may cause trouble
             with SSL certificates.
@@ -94,8 +94,8 @@ def create_server_config(dur=confdir, *, port=None, server_name=None):
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
     template = resources.read_text(plom, "serverDetails.toml")
-    if server_name:
-        template = template.replace("localhost", server_name)
+    if name:
+        template = template.replace("localhost", name)
     if port:
         template = template.replace(f"{Default_Port}", str(port))
     with open(sd, "w") as fh:

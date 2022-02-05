@@ -249,7 +249,12 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(args.dir, args.port, args.server_name, args.selfsigned)
+        initialise_server(
+            args.dir,
+            port=args.port,
+            name=args.server_name,
+            make_selfsigned_keys=args.selfsigned,
+        )
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
