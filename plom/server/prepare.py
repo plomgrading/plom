@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Morgan Arnold
 # Copyright (C) 2021 Nicholas J H Lai
@@ -104,13 +104,14 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
     )
 
 
-def initialise_server(basedir, port):
+def initialise_server(basedir, port, server_name):
     """Setup various files needed before a Plom server can be started.
 
     args:
         basedir (pathlib.Path/str/None): the directory to prepare.  If
             `None` use the current working directory.
         port (int/None): the port to use, None for a default value.
+        server_name (str/None): None for a default value.
     """
     if not basedir:
         basedir = Path(".")
@@ -125,14 +126,15 @@ def initialise_server(basedir, port):
 
     print("Copy server networking configuration template into place.")
     try:
-        create_server_config(basedir / confdir, port=port)
+        create_server_config(basedir / confdir, port=port, server_name=server_name)
     except FileExistsError as err:
         print(f"Skipping server config - {err}")
     else:
-        print(
-            "You may want to update '{}' with the correct name (or IP) and "
-            "port of your server.".format(confdir / "serverDetails.toml")
-        )
+        if not server_name:
+            print(
+                "You may want to update '{}' with the correct name (or IP) and "
+                "port of your server.".format(confdir / "serverDetails.toml")
+            )
 
     print("Build blank predictionlist for identifying.")
     try:

@@ -151,6 +151,16 @@ def get_parser():
         type=int,
         help=f"Use alternative port (defaults to {Default_Port} if omitted)",
     )
+    spI.add_argument(
+        "--server-name",
+        metavar="NAME",
+        type=str,
+        help="""
+            The server name such as "plom.example.com" or an IP address.
+            Defaults to something like "localhost" if omitted, but
+            you may, e.g., want to match your SSL certificate.
+        """,
+    )
 
     spU = sub.add_parser(
         "users",
@@ -230,7 +240,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(args.dir, args.port)
+        initialise_server(args.dir, args.port, args.server_name)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":
