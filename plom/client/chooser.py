@@ -456,7 +456,7 @@ class Chooser(QDialog):
             WarnMsg(
                 self,
                 f"Your client version {__version__} is older than the server {srv_ver}:"
-                "you may want to consider upgrading.",
+                " you may want to consider upgrading.",
                 details=(
                     f"You have Plom Client {__version__} with API {self.APIVersion}"
                     f"\nServer version string: “{server_ver_str}”\n"
