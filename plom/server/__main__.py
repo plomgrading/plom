@@ -161,6 +161,15 @@ def get_parser():
             you may, e.g., want to match your SSL certificate.
         """,
     )
+    spI.add_argument(
+        "--no-self-signed",
+        action="store_false",
+        dest="selfsigned",
+        help="""
+            Do not build self-signed SSL cert and key.  You will need to
+            provide plom-custom.key and plom-custom.cert in this case.
+        """,
+    )
 
     spU = sub.add_parser(
         "users",
@@ -240,7 +249,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(args.dir, args.port, args.server_name)
+        initialise_server(args.dir, args.port, args.server_name, args.selfsigned)
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":

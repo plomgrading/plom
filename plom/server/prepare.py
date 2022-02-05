@@ -104,7 +104,7 @@ def build_not_submitted_and_do_latex_checks(basedir=Path(".")):
     )
 
 
-def initialise_server(basedir, port, server_name):
+def initialise_server(basedir, port, server_name, make_self_signed_keys=True):
     """Setup various files needed before a Plom server can be started.
 
     args:
@@ -112,17 +112,21 @@ def initialise_server(basedir, port, server_name):
             `None` use the current working directory.
         port (int/None): the port to use, None for a default value.
         server_name (str/None): None for a default value.
+
+    keyword args:
+        make_self_signed_keys (bool): Defaults to True.
     """
     if not basedir:
         basedir = Path(".")
     basedir = Path(basedir)
     print("Build required directories")
     build_server_directories(basedir)
-    print("Building self-signed SSL key for server")
-    try:
-        build_self_signed_SSL_keys(basedir / confdir)
-    except FileExistsError as err:
-        print(f"Skipped SSL keygen - {err}")
+    if make_self_signed_keys:
+        print("Building self-signed SSL key for server")
+        try:
+            build_self_signed_SSL_keys(basedir / confdir)
+        except FileExistsError as err:
+            print(f"Skipped SSL keygen - {err}")
 
     print("Copy server networking configuration template into place.")
     try:
