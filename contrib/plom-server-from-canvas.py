@@ -326,7 +326,9 @@ def scan_submissions(num_questions, *, server_dir="."):
             # ... otherwise push each page to all questionsa.
             q = [x for x in range(1, num_questions + 1)]
         # TODO: capture output and put it all in a log file?  (capture_output=True?)
-        plom.scan.processHWScans(pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd))
+        plom.scan.processHWScans(
+            pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
+        )
 
     # Clean up any missing submissions
     plom.scan.processMissing(msgr=("localhost", scan_pwd), yes_flag=True)
