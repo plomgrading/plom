@@ -142,12 +142,13 @@ def initialize(course, assignment, marks, *, server_dir="."):
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
+        # TODO: we should replace all these with functions not cmdline?
         # TODO: capture and log all this output with capture_output=True?
         subprocess.check_call(["plom-create", "parse", "canvasSpec.toml"])
         print("Running `plom-server init`...")
         subprocess.check_call(["plom-server", "init"])
         print("Autogenerating users...")
-        subprocess.check_call(["plom-server", "users", "--auto", "12"])
+        subprocess.check_call(["plom-server", "users", "--auto", "12", "--numbered"])
         print("Processing userlist...")
         subprocess.check_call(["plom-server", "users", "userListRaw.csv"])
 
