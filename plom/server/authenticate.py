@@ -10,7 +10,24 @@ import uuid
 from passlib.context import CryptContext
 
 
-def basic_user_password_check(username, password):
+def basic_username_check(username):
+    """Sanity check for potential usernames.
+
+    Arguments:
+        username (str)
+
+    Returns:
+        tuple: (True, "") if valid, (False, msg) otherwise, where msg
+            is a string explaining why not.
+    """
+    if len(username) < 3:
+        return False, "Username too short, should be at least 3 chars"
+    if not (username.isalnum() and username[0].isalpha()):
+        return False, "Username should be alphanumeric and start with a letter"
+    return True, ""
+
+
+def basic_username_password_check(username, password):
     """Sanity check for potential usernames and passwords.
 
     Arguments:
@@ -18,20 +35,20 @@ def basic_user_password_check(username, password):
         password (str)
 
     Returns:
-        bool: True if valid, false otherwise.
+        tuple: (True, "") if valid, (False, msg) otherwise, where msg
+            is a string explaining why not.
 
     This does only very basic checking of passwords: not too short
     and not identically equal the username.  You may want additional
     checks!
     """
-    if len(username) < 3:
-        return False, "Username too short, should be at least 3 chars"
-    if not (username.isalnum() and username[0].isalpha()):
-        return False, "Username should be alphanumeric and start with a letter"
+    r = basic_username_check(username)
+    if not r[0]:
+        return r
     if len(password) < 4:
         return False, "Password too short, should be at least 4 chars"
     if password == username:
-        return False, f"Password is too close to the username"
+        return False, "Password is too close to the username"
     return True, ""
 
 
@@ -161,13 +178,16 @@ class Authority:
             bool: True if input is a valid universally unique identifier.
         """
         try:
-            token = uuid.UUID(tau)
+            _ = uuid.UUID(tau)
         except ValueError:
             return False
         return True
 
-    def basic_user_password_check(self, username, password):
-        return basic_user_password_check(username, password)
+    def basic_username_check(self, username):
+        return basic_username_check(username)
+
+    def basic_username_password_check(self, username, password):
+        return basic_username_password_check(username, password)
 
     def create_password_hash(self, password):
         """Creates a hash of a string password.

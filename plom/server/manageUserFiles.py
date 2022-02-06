@@ -2,7 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 import csv
 import json
@@ -16,7 +16,7 @@ else:
 
 import plom
 from plom.server import confdir
-from plom.server.authenticate import basic_user_password_check
+from plom.server.authenticate import basic_username_password_check
 from plom.server.authenticate import SimpleAuthorityHasher
 from plom.aliceBob import (
     simple_password,
@@ -89,7 +89,7 @@ def check_username_password_format(username_password_dict):
         boolean: also prints to screen as a side effect.
     """
     for username, password in username_password_dict.items():
-        r, msg = basic_user_password_check(username, password)
+        r, msg = basic_username_password_check(username, password)
         if not r:
             print(f"Username '{username}': {msg}")
             return False

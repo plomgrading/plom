@@ -173,7 +173,7 @@ def setUserEnable(self, user, enableFlag):
 
 
 def createModifyUser(self, username, password):
-    r, msg = self.authority.basic_user_password_check(username, password)
+    r, msg = self.authority.basic_username_password_check(username, password)
     if not r:
         return [False, f"Username/Password fails basic checks: {msg}"]
     if username == "HAL":  # Don't mess with HAL
