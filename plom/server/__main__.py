@@ -151,6 +151,25 @@ def get_parser():
         type=int,
         help=f"Use alternative port (defaults to {Default_Port} if omitted)",
     )
+    spI.add_argument(
+        "--server-name",
+        metavar="NAME",
+        type=str,
+        help="""
+            The server name such as "plom.example.com" or an IP address.
+            Defaults to something like "localhost" if omitted, but
+            you may, e.g., want to match your SSL certificate.
+        """,
+    )
+    spI.add_argument(
+        "--no-self-signed",
+        action="store_false",
+        dest="selfsigned",
+        help="""
+            Do not build self-signed SSL cert and key.  You will need to
+            provide plom-custom.key and plom-custom.cert in this case.
+        """,
+    )
 
     spU = sub.add_parser(
         "users",
@@ -230,7 +249,12 @@ def main():
     args = parser.parse_args()
 
     if args.command == "init":
-        initialise_server(args.dir, args.port)
+        initialise_server(
+            args.dir,
+            port=args.port,
+            name=args.server_name,
+            make_selfsigned_keys=args.selfsigned,
+        )
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered)
     elif args.command == "launch":

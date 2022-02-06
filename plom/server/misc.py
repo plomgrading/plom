@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -74,12 +74,18 @@ def check_server_fully_configured(basedir):
         )
 
 
-def create_server_config(dur=confdir, *, port=None):
+def create_server_config(dur=confdir, *, port=None, name=None):
     """Create a default server configuration file.
 
     args:
-        port (int/None): port on which to run the server.
         dur (pathlib.Path): where to put the file.
+
+    keyword args:
+        port (int/None): port on which to run the server.
+        name (str/None): the name of your server such as
+            "plom.example.com" or an IP address.  Defaults to
+            "localhost" which is usually fine but may cause trouble
+            with SSL certificates.
 
     raises:
         FileExistsError: file is already there.
@@ -88,6 +94,8 @@ def create_server_config(dur=confdir, *, port=None):
     if sd.exists():
         raise FileExistsError("Config already exists in {}".format(sd))
     template = resources.read_text(plom, "serverDetails.toml")
+    if name:
+        template = template.replace("localhost", name)
     if port:
         template = template.replace(f"{Default_Port}", str(port))
     with open(sd, "w") as fh:
