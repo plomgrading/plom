@@ -153,8 +153,8 @@ def buildLaTeX(src, out):
     Returns:
         tuple containing
 
-        - (*int*): exit value from the subprocess call (zero good, non-zero bad)
-        - (*str*): stdout/stderr from the subprocess call
+        - (`int`): exit value from the subprocess call (zero good, non-zero bad)
+        - (`str`): stdout/stderr from the subprocess call
 
     TODO: this is more generally useful but how to handle the idBox2?
     """
