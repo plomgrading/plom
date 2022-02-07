@@ -1,8 +1,8 @@
 .. Copyright 2020 Colin B. Macdonald
    SPDX-License-Identifier: AGPL-3.0-or-later
 
-Installing Plom
-===============
+Installing Plom from Source
+===========================
 
 .. toctree::
    :maxdepth: 2

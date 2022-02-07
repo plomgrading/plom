@@ -11,6 +11,10 @@ Welcome to Plom's documentation!
 
    getting_started.rst
 
+   running_a_server.rst
+
+   preparing_an_exam.rst
+
    install.rst
 
    code.rst
