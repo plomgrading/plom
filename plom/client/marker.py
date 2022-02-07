@@ -1985,7 +1985,7 @@ class MarkerClient(QWidget):
                 rearranged.  Each row looks like `[md5, filename, angle]`.
 
         Returns:
-            tuple: initialData (as described by :func:`plom.client.marker.Marker.startTheAnnotator`.)
+            tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
