@@ -9,3 +9,4 @@ Installing Plom
 
    linux_installation.md
    macos_installation.md
+   wsl_installation.md
