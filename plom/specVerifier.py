@@ -586,7 +586,7 @@ class SpecVerifier:
         N = self.spec["numberOfQuestions"]
         if not isPositiveInt(N):
             raise ValueError(f'numberOfQuestions = "{N}" must be a positive integer.')
-            print(f'    "numberOfQuestions" = {N} is a positive integer{chk}')
+        print(f'    "numberOfQuestions" = {N} is a positive integer{chk}')
         for k in range(1, N + 1):
             # TODO: why not integers for key k?  See also elsewhere
             if not str(k) in self.spec["question"]:
