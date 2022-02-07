@@ -32,10 +32,10 @@ def test_spec_verify_quiet():
 def test_spec_wrong_number_questions():
     r = raw.copy()
     r["numberOfQuestions"] = 2
-    with raises(ValueError):
+    with raises(ValueError, match="not match"):
         SpecVerifier(r).verify()
     r["numberOfQuestions"] = 10
-    with raises(ValueError):
+    with raises(ValueError, match="not match"):
         SpecVerifier(r).verify()
 
 
@@ -202,13 +202,11 @@ def test_spec_label_too_long():
 def test_spec_overused_page():
     r = deepcopy(raw)
     r["question"]["1"]["pages"] = [1, 2, 3]
-    with raises(ValueError) as e:
+    with raises(ValueError, match="overused"):
         SpecVerifier(r).verify()
-    assert "overused" in e.value.args[0]
     r["question"]["1"]["pages"] = [2]
-    with raises(ValueError) as e:
+    with raises(ValueError, match="overused"):
         SpecVerifier(r).verify()
-    assert "overused" in e.value.args[0]
 
 
 def test_spec_donotmark_default():
