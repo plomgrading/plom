@@ -6,15 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
-
-### Added
-
-### Changed
+## [0.8.2] - 2022-02-07
 
 ### Fixed
 * Fix broken Windows client binary.
 * Fix few contrib scripts.
+* Fixed mockplom LaTeX style (for mocking up Plom's QR codes) on recent systems (which sadly breaks it on TexLive 2019 and earlier).
+* Misc fixes.
 
 
 ## [0.8.1] - 2022-02-03
@@ -670,7 +668,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.1...main
+[0.8.2]: https://gitlab.com/plom/plom/compare/v0.8.1...v0.8.2
 [0.8.1]: https://gitlab.com/plom/plom/compare/v0.8.0...v0.8.1
 [0.8.0]: https://gitlab.com/plom/plom/compare/v0.7.12...v0.8.0
 [0.7.12]: https://gitlab.com/plom/plom/compare/v0.7.11...v0.7.12
