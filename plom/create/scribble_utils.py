@@ -173,7 +173,7 @@ def fill_in_fake_data_on_exams(paper_dir, classlist, outfile, which=None):
 
     Keyword Arguments:
         which (iterable): By default we scribble on all exams or specify
-            something like `which=range(10, 16)` here to scribble on a
+            something like ``which=range(10, 16)`` here to scribble on a
             subset. (default: `None`)
     """
     # Customizable data
@@ -374,9 +374,10 @@ def make_scribbles(basedir=Path("."), *, msgr):
 
     1. Read in the existing papers.
     2. Create the fake data filled pdfs
-    3. Do some things to make the data unpleasant.
-        * delete the last page of the first test.
-        * Randomly add some extra pages
+    3. Do some things to make the data unpleasant:
+
+       * delete the last page of the first test.
+       * Randomly add some extra pages
     """
     basedir = Path(basedir)
     outfile = basedir / "fake_scribbled_exams.pdf"

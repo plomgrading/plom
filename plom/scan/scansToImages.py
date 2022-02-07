@@ -28,9 +28,10 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
     """Extract/convert each page of pdf into bitmap.
 
     We have various ways to do this, in rough order of preference:
-      1. Extract a scanned bitmap "as-is"
-      2. Render the page with PyMuPDF
-      3. Render the page with Ghostscript
+
+    1. Extract a scanned bitmap "as-is"
+    2. Render the page with PyMuPDF
+    3. Render the page with Ghostscript
 
     Args:
         file_name (str, Path): PDF file from which to extract bitmaps.

@@ -344,9 +344,8 @@ def upload(
         None
 
     Raises:
-        PlomSeriousException if elements in filenames do not correspond to
+        PlomSeriousException: elements in filenames do not correspond to
             the same exam.
-
     """
     # do name sanity checks here
     aname, pname = filenames
@@ -475,7 +474,7 @@ class MarkerExamModel(QStandardItemModel):
             paper (ExamQuestion): the paper to be added
 
         Returns:
-            r (int): the row identifier of the added paper.
+            int: the row identifier of the added paper.
 
         """
         # check if paper is already in model - if so, delete it and add it back with the new data.
@@ -523,7 +522,7 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the prefix of the image
+            str: the prefix of the image
 
         """
         return self.data(self.index(r, 0))
@@ -536,7 +535,7 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the status of the image
+            str: the status of the image
 
         """
         return self.data(self.index(r, 1))
@@ -603,7 +602,7 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (dir): a temporary directory for this paper.
+            dir: a temporary directory for this paper.
         """
         return self.data(self.index(r, 8))
 
@@ -886,7 +885,7 @@ class ProxyModel(QSortFilterProxyModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the prefix of the paper indicated by r.
+            str: the prefix of the paper indicated by r.
 
         """
         return self.data(self.index(r, 0))
@@ -899,7 +898,7 @@ class ProxyModel(QSortFilterProxyModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the status of the paper indicated by r.
+            str: the status of the paper indicated by r.
 
         """
         # Return the status of the image
@@ -913,7 +912,7 @@ class ProxyModel(QSortFilterProxyModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the file name of the annotated image of the paper in r.
+            str: the file name of the annotated image of the paper in r.
 
         """
         return self.data(self.index(r, 6))

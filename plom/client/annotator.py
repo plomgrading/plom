@@ -1245,7 +1245,7 @@ class Annotator(QWidget):
             aux (int) : the row of the current rubric if applicable.
 
         Returns:
-
+            None
         """
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
