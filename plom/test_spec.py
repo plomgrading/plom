@@ -32,10 +32,10 @@ def test_spec_verify_quiet():
 def test_spec_wrong_number_questions():
     r = raw.copy()
     r["numberOfQuestions"] = 2
-    with raises(ValueError):
+    with raises(ValueError, match="not match"):
         SpecVerifier(r).verify()
     r["numberOfQuestions"] = 10
-    with raises(ValueError):
+    with raises(ValueError, match="not match"):
         SpecVerifier(r).verify()
 
 
