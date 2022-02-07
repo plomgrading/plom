@@ -64,26 +64,24 @@ Some stuff from the package manager:
         python3-dev python3-pip python3-setuptools python3-wheel \
         python3-requests-toolbelt texlive-latex-extra \
         latexmk texlive-fonts-recommended python3-pil \
-        python3-tqdm libpango-1.0-0 libpangocairo-1.0-0
+        python3-tqdm libpango-1.0-0 libpangocairo-1.0-0 \
+        python3-defusedxml python3-jsmin python3-cairosvg
 ```
-The pango stuff is needed for weasyprint.
+The pango stuff was (is?) needed for weasyprint.
 
-These (and others) should work from the package manager but pip pulls them
-in anyway, not sure why.
-```
-  # sudo apt install python3-defusedxml python3-jsmin python3-cairosvg
-```
-
-Other stuff we get from pip:
+Now upgrade pip (your local copy, not the system one)
 ```
   # pip3 install --upgrade --user pip
   # python3 -m pip install --upgrade --user setuptools
-  # python3 -m pip install --upgrade --user pymupdf weasyprint imutils toml \
-        aiohttp pyzbar jpegtran-cffi peewee
-  # python3 -m pip install --user imutils lapsolver opencv-python-headless
-  # python3 -m pip install --user scikit-learn
+  # python3 -m pip --version
+  # pip3 --version
+  # pip --version
 ```
-Note `python3 -m pip` uses the newly upgraded pip (necessary at least on Ubuntu 18.04).
+Note `python3 -m pip` uses the newly upgraded pip (necessary on Ubuntu 18.04).
+On Ubuntu 20.04, you should be able to just use "pip", but inspect output to be sure.
+
+At this point `pip install --user .` from inside the Plom source tree should pull
+in the remaining dependencies.
 
 If you're building a production server you may want to ignore some of the above
 and instead use pinned versions:
@@ -102,6 +100,7 @@ comment out the `pattern="PDF"` part:
 +  <!--<policy domain="coder" rights="none" pattern="PDF" />-->
    <policy domain="coder" rights="none" pattern="XPS" />
 ```
+TODO: this may not be necessary on Ubuntu 20.04 with Plom>=0.8.0?
 
 Another thing to watch out for (at least on Ubuntu 18.04) is that
 `pip install --user ...` commands will install binaries in
