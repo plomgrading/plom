@@ -813,7 +813,7 @@ class ProxyModel(QSortFilterProxyModel):
 
         Returns:
             bool: if both can be converted to int, compare as ints.
-                Otherwise, convert to strings and compare.
+            Otherwise, convert to strings and compare.
         """
         # try to compare as integers
         try:
@@ -2106,8 +2106,8 @@ class MarkerClient(QWidget):
 
         Returns:
             int: The number of papers waiting to upload, possibly but
-                not certainly including the current upload-in-progress.
-                Value might also be approximate.
+            not certainly including the current upload-in-progress.
+            Value might also be approximate.
         """
         if not self.backgroundUploader:
             return 0
@@ -2200,8 +2200,8 @@ class MarkerClient(QWidget):
 
         Returns:
             tuple: containing pageData and viewFiles.  You are responsible
-                for deleting the files when done with them, in particular
-                these may include duplicate images.
+            for deleting the files when done with them, in particular
+            these may include duplicate images.
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
@@ -2304,10 +2304,10 @@ class MarkerClient(QWidget):
                 try to to render again.
 
         Returns:
-            (pathlib.Path/str/None): a path and filename to a `.png` of
-                the rendered TeX.  Or None if there was an error: callers
-                will need to decide how to handle that, typically by
-                displaying the raw code instead.
+            pathlib.Path/str/None: a path and filename to a ``.png`` of
+            the rendered TeX.  Or None if there was an error: callers
+            will need to decide how to handle that, typically by
+            displaying the raw code instead.
         """
         txt = txt.strip()
         # If we already latex'd this text, return the cached image
