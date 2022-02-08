@@ -24,6 +24,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
+import sys
 
 from stdiomask import getpass
 
@@ -91,12 +92,6 @@ def print_more_help():
     print(longerHelp)
 
 
-def uploadSolutionImage(server, password, question, version, imageName):
-    rv = putSolutionImage(question, version, imageName, server, password)
-    if rv[0]:
-        print(f"Success - {rv[1]}")
-    else:
-        print(f"Failure - {rv[1]}")
 
 
 def deleteSolutionImage_frontend(server, password, question, version):
@@ -131,13 +126,13 @@ def solutionStatus(server, password):
             print("q {} v {} = solution with md5sum {}".format(qvm[0], qvm[1], qvm[2]))
 
 
-def extractSolutions(server, password, solutionSpec=None, upload=False):
+def extractSolutions(solutionSpec=None, upload=False, *, msgr):
     if upload:
         print("Uploading extracted solution images extracted")
-        putExtractedSolutionImages(server, password)
+        putExtractedSolutionImages(msgr=msgr)
         return
 
-    if extractSolutionImages(server, password, solutionSpec):
+    if extractSolutionImages(solutionSpec, msgr=msgr):
         print("Solution images extracted")
     else:
         print("Could not extract solution images - see messages above.")
@@ -261,7 +256,13 @@ def main():
             args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "upload":
-        uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
+        ok, msg = putSolutionImage(args.q, args.v, args.image, msgr=(args.server, args.password))
+        if ok:
+            print(f"Success: {msg}")
+        else:
+            print(f"Failure: {msg}")
+            sys.exit(1)
+
     elif args.command == "get":
         getSolutionImageFromServer(args.server, args.password, args.q, args.v)
     elif args.command == "delete":
@@ -269,7 +270,9 @@ def main():
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "extract":
-        extractSolutions(args.server, args.password, args.solutionSpec, args.upload)
+        extractSolutions(
+            args.solutionSpec, args.upload, msgr=(args.server, args.password)
+        )
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     elif args.command == "info":
