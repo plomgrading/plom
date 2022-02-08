@@ -344,9 +344,8 @@ def upload(
         None
 
     Raises:
-        PlomSeriousException if elements in filenames do not correspond to
+        PlomSeriousException: elements in filenames do not correspond to
             the same exam.
-
     """
     # do name sanity checks here
     aname, pname = filenames
@@ -475,7 +474,7 @@ class MarkerExamModel(QStandardItemModel):
             paper (ExamQuestion): the paper to be added
 
         Returns:
-            r (int): the row identifier of the added paper.
+            int: the row identifier of the added paper.
 
         """
         # check if paper is already in model - if so, delete it and add it back with the new data.
@@ -523,7 +522,7 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the prefix of the image
+            str: the prefix of the image
 
         """
         return self.data(self.index(r, 0))
@@ -536,7 +535,7 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the status of the image
+            str: the status of the image
 
         """
         return self.data(self.index(r, 1))
@@ -603,7 +602,7 @@ class MarkerExamModel(QStandardItemModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (dir): a temporary directory for this paper.
+            dir: a temporary directory for this paper.
         """
         return self.data(self.index(r, 8))
 
@@ -814,7 +813,7 @@ class ProxyModel(QSortFilterProxyModel):
 
         Returns:
             bool: if both can be converted to int, compare as ints.
-                Otherwise, convert to strings and compare.
+            Otherwise, convert to strings and compare.
         """
         # try to compare as integers
         try:
@@ -886,7 +885,7 @@ class ProxyModel(QSortFilterProxyModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the prefix of the paper indicated by r.
+            str: the prefix of the paper indicated by r.
 
         """
         return self.data(self.index(r, 0))
@@ -899,7 +898,7 @@ class ProxyModel(QSortFilterProxyModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the status of the paper indicated by r.
+            str: the status of the paper indicated by r.
 
         """
         # Return the status of the image
@@ -913,7 +912,7 @@ class ProxyModel(QSortFilterProxyModel):
             r (int): the row identifier of the paper.
 
         Returns:
-            (str): the file name of the annotated image of the paper in r.
+            str: the file name of the annotated image of the paper in r.
 
         """
         return self.data(self.index(r, 6))
@@ -1986,7 +1985,7 @@ class MarkerClient(QWidget):
                 rearranged.  Each row looks like `[md5, filename, angle]`.
 
         Returns:
-            tuple: initialData (as described by :func:`plom.client.marker.Marker.startTheAnnotator`.)
+            tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
         # we know the list of image-refs and files. copy files into place
@@ -2107,8 +2106,8 @@ class MarkerClient(QWidget):
 
         Returns:
             int: The number of papers waiting to upload, possibly but
-                not certainly including the current upload-in-progress.
-                Value might also be approximate.
+            not certainly including the current upload-in-progress.
+            Value might also be approximate.
         """
         if not self.backgroundUploader:
             return 0
@@ -2201,8 +2200,8 @@ class MarkerClient(QWidget):
 
         Returns:
             tuple: containing pageData and viewFiles.  You are responsible
-                for deleting the files when done with them, in particular
-                these may include duplicate images.
+            for deleting the files when done with them, in particular
+            these may include duplicate images.
         """
         try:
             pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
@@ -2305,10 +2304,10 @@ class MarkerClient(QWidget):
                 try to to render again.
 
         Returns:
-            (pathlib.Path/str/None): a path and filename to a `.png` of
-                the rendered TeX.  Or None if there was an error: callers
-                will need to decide how to handle that, typically by
-                displaying the raw code instead.
+            pathlib.Path/str/None: a path and filename to a ``.png`` of
+            the rendered TeX.  Or None if there was an error: callers
+            will need to decide how to handle that, typically by
+            displaying the raw code instead.
         """
         txt = txt.strip()
         # If we already latex'd this text, return the cached image

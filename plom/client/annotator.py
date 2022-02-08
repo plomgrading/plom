@@ -1245,7 +1245,7 @@ class Annotator(QWidget):
             aux (int) : the row of the current rubric if applicable.
 
         Returns:
-
+            None
         """
         self.loadModes = {
             "box": lambda: self.ui.boxButton.animateClick(),
@@ -1680,14 +1680,14 @@ class Annotator(QWidget):
         1. Renders the current scene as a static bitmap.
         2. Retrieves current annotations in reverse chronological order.
         3. Adds varous other metadata.
-        4. Writes JSON into the .plom file.
+        4. Writes JSON into the ``.plom`` file.
 
         Note: called "pickle" for historical reasons: it is neither a
         Python pickle nor a real-life pickle.
 
         Return:
-            tuple: two pathlib.Path, one for the rendered image and one
-                for the .plom file.
+            tuple: two `pathlib.Path`, one for the rendered image and
+            one for the ``.plom`` file.
         """
         aname = self.scene.save(self.saveName)
         lst = self.scene.pickleSceneItems()  # newest items first

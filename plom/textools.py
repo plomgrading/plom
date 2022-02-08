@@ -29,9 +29,9 @@ def texFragmentToPNG(fragment, *, dpi=225):
             the dots-per-inch.  Defaults: 225.
 
     Return:
-        tuple: `(True, imgdata)` or `(False, error_msg)` where imgdata
-            is the raw contents of a PNG file, and error_msg is
-            (currently) a string, but this could change in the future.
+        tuple: `(True, imgdata)` or `(False, error_msg)` where `imgdata`
+        is the raw contents of a PNG file, and `error_msg` is
+        (currently) a string, but this could change in the future.
     """
 
     head = dedent(
@@ -153,8 +153,8 @@ def buildLaTeX(src, out):
     Returns:
         tuple containing
 
-        - (*int*): exit value from the subprocess call (zero good, non-zero bad)
-        - (*str*): stdout/stderr from the subprocess call
+        - (`int`): exit value from the subprocess call (zero good, non-zero bad)
+        - (`str`): stdout/stderr from the subprocess call
 
     TODO: this is more generally useful but how to handle the idBox2?
     """

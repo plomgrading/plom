@@ -5,11 +5,14 @@ __copyright__ = "Copyright (C) 2019-2020 Matthew Coles"
 __license__ = "AGPL-3.0-or-later"
  -->
 
-Installing on Popular GNU/Linux Distros
-=======================================
+Installing from source on GNU/Linux
+===================================
 
 For production use of Plom we recommend using Docker.  These instructions below
-are mainly for developers to configure their systems.
+are mainly for developers, packagers, etc.
+If you only want to grade some papers, then you don't need any of this; instead
+go to [plomgrading.org](https://plomgrading.org) and follow instructions for getting started with
+a **Plom Client**.
 
 
 Fedora
@@ -35,8 +38,9 @@ Tested on Fedora 35.  Some stuff from the package manager:
         tex-preview tex-charter tex-exam tex-preprint \
         python3-myst-parser python3-sphinx python3-sphinx_rtd_theme
 ```
-At this point `pip install --user .` from inside the Plom source tree should pull
-in the remaining dependencies.  Alternatively, you can do something like:
+At this point `pip install plom` (or `pip install --user .` from inside
+the Plom source tree) should pull in the remaining dependencies.
+Alternatively, you can do something like:
 ```
   # pip install --upgrade --user pyzbar jpegtran-cffi
 ```
