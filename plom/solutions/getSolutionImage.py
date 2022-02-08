@@ -22,7 +22,7 @@ def getSolutionImage(
 
     try:
         msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException as e:
+    except PlomExistingLoginException:
         print(
             "You appear to be already logged in!\n\n"
             "  * Perhaps a previous session crashed?\n"
