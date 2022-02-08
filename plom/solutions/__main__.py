@@ -92,21 +92,6 @@ def print_more_help():
     print(longerHelp)
 
 
-def deleteSolutionImage_frontend(server, password, question, version):
-    if deleteSolutionImage(question, version, server, password):
-        print(
-            "Successfully removed solution to question {} version {}".format(
-                question, version
-            )
-        )
-    else:
-        print(
-            "There was no solution to question {} version {} to remove".format(
-                question, version
-            )
-        )
-
-
 def getSolutionImageFromServer(server, password, question, version):
     img = getSolutionImage(question, version, msgr=(server, password))
     if img is not None:
@@ -266,7 +251,16 @@ def main():
     elif args.command == "get":
         getSolutionImageFromServer(args.server, args.password, args.q, args.v)
     elif args.command == "delete":
-        deleteSolutionImage_frontend(args.server, args.password, args.q, args.v)
+        if deleteSolutionImage(args.q, args.v, msgr=(args.server, args.password)):
+            print(
+                f"Successfully removed solution to question {args.q} version {args.v}"
+            )
+        else:
+            print(
+                "There was no solution to question {args.q} version {args.v} to remove"
+            )
+            sys.exit(1)
+
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "extract":

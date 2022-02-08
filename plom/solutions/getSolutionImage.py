@@ -19,9 +19,9 @@ def getSolutionImage(question, version, *, msgr):
             tuple appropriate for credientials.
 
     Return:
-        bytes: the bitmap of the solution.
+        bytes/None: the bitmap of the solution or None if there was no
+        solution.  TODO: consider using an exception instead.
     """
-    # TODO: consider just letting the error bubble up
     try:
         return msgr.getSolutionImage(question, version)
     except PlomNoSolutionException as err:
