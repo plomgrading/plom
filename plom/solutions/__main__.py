@@ -100,7 +100,7 @@ def getSolutionImageFromServer(server, password, question, version):
 
 
 def solutionStatus(server, password):
-    solutionList = checkStatus(server, password)
+    solutionList = checkStatus(msgr=(server, password))
     # will be a list of triples [q,v,md5sum] or [q,v,""]
     for qvm in solutionList:
         if qvm[2] == "":

@@ -2,38 +2,20 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
+from plom.solutions import with_manager_messenger
 
 
-def checkStatus(server=None, pwd=None):
+@with_manager_messenger
+def checkStatus(*, msgr):
     """Checks the status of solutions on a server.
 
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
     Returns:
-        list: TODO doc me.
+        list: each entry is a list of triples ``[q, v, md5sum]`` or
+        ``[q, v, ""]``.  TODO: explain more.
+
     """
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", pwd)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-solutions clear"'
-        )
-        raise
-
-    try:
-        solutionList = msgr.getSolutionStatus()
-        return solutionList
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+    return msgr.getSolutionStatus()
