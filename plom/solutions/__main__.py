@@ -149,7 +149,7 @@ def get_parser():
     )
     sub = parser.add_subparsers(dest="command")
 
-    spI = sub.add_parser(
+    sub.add_parser(
         "info",
         help="Print more information on extracting, uploading and returning solutions.",
         description="Print more information on extracting, uploading and returning solutions.",
