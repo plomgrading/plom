@@ -92,8 +92,6 @@ def print_more_help():
     print(longerHelp)
 
 
-
-
 def deleteSolutionImage_frontend(server, password, question, version):
     if deleteSolutionImage(question, version, server, password):
         print(
@@ -256,7 +254,9 @@ def main():
             args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "upload":
-        ok, msg = putSolutionImage(args.q, args.v, args.image, msgr=(args.server, args.password))
+        ok, msg = putSolutionImage(
+            args.q, args.v, args.image, msgr=(args.server, args.password)
+        )
         if ok:
             print(f"Success: {msg}")
         else:
