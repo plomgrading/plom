@@ -13,12 +13,14 @@ __license__ = "AGPL-3.0-or-later"
 from plom import __version__
 
 from plom.finish import clear_manager_login
+from .msgr_utils import with_manager_messenger
 from plom.solutions.deleteSolutionImage import deleteSolutionImage
 from plom.solutions.putSolutionImage import putSolutionImage
 from plom.solutions.putSolutionImage import putExtractedSolutionImages
 from plom.solutions.getSolutionImage import getSolutionImage
 from plom.solutions.checkSolutionStatus import checkStatus
 from plom.solutions.extractSolutions import extractSolutionImages
+
 
 # what you get from "from plom.solutions import *"
 __all__ = [

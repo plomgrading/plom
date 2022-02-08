@@ -2,42 +2,28 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomNoSolutionException
+from plom.plom_exceptions import PlomNoSolutionException
+from plom.solutions import with_manager_messenger
 
 
-def getSolutionImage(
-    question,
-    version,
-    server=None,
-    password=None,
-):
-    """TODO document me."""
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
+@with_manager_messenger
+def getSolutionImage(question, version, *, msgr):
+    """Get a solution image from the server.
 
+    Args:
+        question (int): which question.
+        version (int): which version.
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
+    Return:
+        bytes: the bitmap of the solution.
+    """
+    # TODO: consider just letting the error bubble up
     try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-solutions clear"'
-        )
-        raise
-
-    try:
-        img = msgr.getSolutionImage(question, version)
+        return msgr.getSolutionImage(question, version)
     except PlomNoSolutionException as err:
         print(err)
         return None
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-    return img

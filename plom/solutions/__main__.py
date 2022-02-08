@@ -115,7 +115,7 @@ def deleteSolutionImage_frontend(server, password, question, version):
 
 
 def getSolutionImageFromServer(server, password, question, version):
-    img = getSolutionImage(question, version, server, password)
+    img = getSolutionImage(question, version, msgr=(server, password))
     if img is not None:
         with open("solution.{}.{}.png".format(question, version), "wb") as fh:
             fh.write(img)
