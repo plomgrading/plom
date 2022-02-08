@@ -6,7 +6,7 @@ from plom.plom_exceptions import PlomNoSolutionException
 from plom.solutions import with_manager_messenger
 
 
-@with_manager_messsenger
+@with_manager_messenger
 def deleteSolutionImage(question, version, *, msgr):
     """Delete one of the solution images on the server.
 
