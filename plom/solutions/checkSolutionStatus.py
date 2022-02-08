@@ -1,12 +1,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException
 
 
 def checkStatus(server=None, pwd=None):
+    """Checks the status of solutions on a server.
+
+    Returns:
+        list: TODO doc me.
+    """
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)

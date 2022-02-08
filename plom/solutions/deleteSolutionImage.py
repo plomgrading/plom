@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
 
 from plom.messenger import ManagerMessenger
 from plom.plom_exceptions import PlomExistingLoginException, PlomNoSolutionException
@@ -11,6 +12,7 @@ def deleteSolutionImage(
     server=None,
     password=None,
 ):
+    """TODO doc me"""
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)

@@ -96,6 +96,7 @@ def loadSolutionSpec(spec_filename):
 
 
 def extractSolutionImages(server, password, solution_spec_filename=None):
+    """TODO doc me."""
     testSpec = getSpec(server, password)
 
     if solution_spec_filename is None:

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 from pathlib import Path
 
@@ -17,6 +17,7 @@ def putSolutionImage(
     server=None,
     password=None,
 ):
+    """TODO: doc me"""
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
@@ -57,6 +58,7 @@ def putSolutionImage(
 
 
 def putExtractedSolutionImages(server=None, password=None):
+    """TODO: doc me"""
     if server and ":" in server:
         s, p = server.split(":")
         msgr = ManagerMessenger(s, port=p)
