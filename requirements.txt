@@ -31,7 +31,7 @@ peewee==3.14.8
 Pillow==9.0.1
 # note: pycparser also in Dockerfile
 pycparser==2.21
-pymupdf==1.19.3
+pymupdf==1.19.5
 pyzbar==0.1.8
 requests==2.27.1
 requests-toolbelt==0.9.1
