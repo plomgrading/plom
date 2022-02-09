@@ -39,3 +39,21 @@ Preparing solutions for students
 As part of a digital return, ``plom-finish`` can construct individual
 PDF files for each student based on the question-versions used in
 their test.  See :doc:`returning`.
+
+
+
+..
+    TODO: can we use sphinx-argparse to put the cmdline tool docs here?
+
+
+Technical documentation
+-----------------------
+
+For scripting or other advanced usage, you can ``import plom.solutions``.
+
+
+The ``plom.solutions`` module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: plom.solutions
+    :members:

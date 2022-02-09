@@ -27,7 +27,10 @@ class SolutionHandler:
         if solutionFile is not None:
             return web.FileResponse(solutionFile, status=200)
         else:
-            return web.Response(status=204)
+            return web.Response(
+                text="Server has no solution for question {q} version {v}",
+                status=204,
+            )
 
     @authenticate_by_token_required_fields(["user", "question", "version"])
     def deleteSolutionImage(self, data, request):

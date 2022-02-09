@@ -1,41 +1,33 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2021 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
 
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException, PlomNoSolutionException
+from plom.solutions import with_manager_messenger
+from plom.plom_exceptions import PlomNoSolutionException
 
 
-def deleteSolutionImage(
-    question,
-    version,
-    server=None,
-    password=None,
-):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
+@with_manager_messenger
+def deleteSolutionImage(question, version, *, msgr):
+    """Delete one of the solution images on the server.
 
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-solutions clear"'
-        )
-        raise
+    Args:
+        question (int): which question.
+        version (int): which version.
 
-    try:
-        success = msgr.deleteSolutionImage(question, version)
-        return success
-    except PlomNoSolutionException:
-        print("No solution for question {} version {}".format(question, version))
-        return None
-    finally:
-        msgr.closeUser()
-        msgr.stop()
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
+    Return:
+        None
+
+    Raises:
+        PlomNoSolutionException: the question/version asked for does
+            not have a solution image on the server.  This is also
+            raised if the values are out of range.
+    """
+    if msgr.deleteSolutionImage(question, version):
+        return
+    raise PlomNoSolutionException(
+        f"Server has no solution to question {question} version {version} to remove"
+    )
