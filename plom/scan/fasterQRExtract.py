@@ -115,12 +115,11 @@ def QRextract(image, write_to_file=True, try_harder=True):
             if cnr in cornerQR.keys():
                 s = qr.data.decode()
                 if s not in cornerQR[cnr]:
-                    # TODO: log instead of printing
-                    print(
-                        'Found QR-code "{}" at {} on reduced image, not found at original size'.format(
-                            s, cnr
-                        )
-                    )
+                    # TODO: log these failures?
+                    # print(
+                    #     f'Found QR-code "{s}" at {cnr} on reduced image, '
+                    #     "not found at original size"
+                    # )
                     cornerQR[cnr].append(s)
 
     if write_to_file:
