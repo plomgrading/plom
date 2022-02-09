@@ -48,6 +48,10 @@ class ManagerMessenger(BaseMessenger):
             PlomServerNotReady: e.g., has no spec.
             PlomAuthenticationException: login troubles.
             PlomSeriousException: unexpected errors.
+
+        TODO: currently this call can take quite a long time (for a
+        large number of papers).  Timeout set longer as a workaround.
+        See Issue #1929 for a future proper fix.
         """
         self.SRmutex.acquire()
         try:
@@ -58,6 +62,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "version_map": version_map,
                 },
+                timeout=180,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
