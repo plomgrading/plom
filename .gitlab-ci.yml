@@ -243,6 +243,7 @@ demoserver:
     - plom-server init
     - plom-server users --demo
     - plom-create new --demo
+    - plom-create parse demoSpec.toml
     # Start server
     - ip addr
     - plom-server launch &
@@ -288,6 +289,7 @@ hwdemoserver:
     - plom-server init
     - plom-server users --demo
     - plom-create new --demo
+    - plom-create parse demoSpec.toml
     # Start server
     - ip addr
     - plom-server launch &
