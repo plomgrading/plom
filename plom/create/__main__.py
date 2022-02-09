@@ -126,11 +126,16 @@ def get_parser():
         help="How many fake exam papers for the demo (defaults to 20 if omitted)",
     )
 
-    # TODO: is saving deprecated?
     spP = sub.add_parser(
         "parse",
-        help="Parse spec file",
-        description="Parse, verify and save the test-specification toml file.",
+        help="Parse spec file (DEPRECATED)",
+        description="""
+            Parse, verify and save the test-specification toml file.
+            This is (probably) DEPRECATED: consider using
+            "plom-create uploadspec" to push spec to an already-running
+            server instead.  However, the old workflow still works for
+            the time being.
+        """,
     )
     spP.add_argument(
         "specFile",
