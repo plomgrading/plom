@@ -102,13 +102,13 @@ def main():
 
     with working_directory(args.server_dir):
         subprocess.check_call(split("plom-server users --demo"))
-
         if args.num_papers:
             subprocess.check_call(
                 split(f"plom-create new --demo --demo-num-papers {args.num_papers}")
             )
         else:
             subprocess.check_call(split("plom-create new --demo"))
+        subprocess.check_call(split("plom-create parse demoSpec.toml"))
 
     # the demo should work even if self-signed keys are used
     os.environ["PLOM_NO_SSL_VERIFY"] = "1"

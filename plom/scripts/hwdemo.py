@@ -96,6 +96,7 @@ def main():
     with working_directory(args.server_dir):
         subprocess.check_call(split("plom-server users --demo"))
         subprocess.check_call(split("plom-create new --demo"))
+        subprocess.check_call(split("plom-create parse plomDemo.spec"))
 
     background_server = PlomServer(basedir=args.server_dir)
 

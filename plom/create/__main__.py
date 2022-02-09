@@ -329,11 +329,11 @@ def main():
         if args.demo_num_papers:
             assert args.demo, "cannot specify number of demo paper outside of demo mode"
         if args.demo:
-            print("DEMO MODE: creating demo test specification file")
+            print("DEMO: creating demo test specification file")
             SpecVerifier.create_demo_template(
                 fname, num_to_produce=args.demo_num_papers
             )
-            print("DEMO MODE: creating demo solution specification file")
+            print("DEMO: creating demo solution specification file")
             SpecVerifier.create_demo_solution_template("solutionSpec.toml")
 
         else:
@@ -351,12 +351,14 @@ def main():
             print("  * Please copy your test in as version1.pdf, version2.pdf, etc.")
         if args.demo:
             print(
-                "DEMO MODE: building source files: version1.pdf, version2.pdf, solution1.pdf, solutions2.pdf"
+                "DEMO: building source files: version1.pdf, version2.pdf, solution1.pdf, solutions2.pdf"
             )
             if not buildDemoSourceFiles(solutions=True):
                 sys.exit(1)
-            print('DEMO MODE: continuing as if "parse" command was run...')
-            parse_verify_save_spec(fname)
+            print(
+                f'DEMO: please upload the spec to a server using "plom-create uploadspec {fname}"'
+            )
+
     elif args.command == "parse":
         fname = ensure_toml_extension(args.specFile)
         parse_verify_save_spec(fname, not args.no_save)
