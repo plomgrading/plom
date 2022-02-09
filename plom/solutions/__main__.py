@@ -35,6 +35,7 @@ from plom.solutions import getSolutionImage
 from plom.solutions import checkStatus
 from plom.solutions import putExtractedSolutionImages
 from plom.solutions import extractSolutionImages
+from plom.plom_exceptions import PlomNoSolutionException
 
 
 longerHelp = """
@@ -90,13 +91,6 @@ longerHelp = """
 
 def print_more_help():
     print(longerHelp)
-
-
-def getSolutionImageFromServer(server, password, question, version):
-    img = getSolutionImage(question, version, msgr=(server, password))
-    if img is not None:
-        with open("solution.{}.{}.png".format(question, version), "wb") as fh:
-            fh.write(img)
 
 
 def solutionStatus(server, password):
@@ -249,16 +243,18 @@ def main():
             sys.exit(1)
 
     elif args.command == "get":
-        getSolutionImageFromServer(args.server, args.password, args.q, args.v)
+        img = getSolutionImage(args.q, args.v, msgr=(args.server, args.password))
+        with open("solution.{}.{}.png".format(args.q, args.v), "wb") as fh:
+            fh.write(img)
+
     elif args.command == "delete":
-        if deleteSolutionImage(args.q, args.v, msgr=(args.server, args.password)):
+        try:
+            deleteSolutionImage(args.q, args.v, msgr=(args.server, args.password))
             print(
                 f"Successfully removed solution to question {args.q} version {args.v}"
             )
-        else:
-            print(
-                "There was no solution to question {args.q} version {args.v} to remove"
-            )
+        except PlomNoSolutionException as e:
+            print(e)
             sys.exit(1)
 
     elif args.command == "status":

@@ -2,8 +2,8 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2022 Colin B. Macdonald
 
-from plom.plom_exceptions import PlomNoSolutionException
 from plom.solutions import with_manager_messenger
+from plom.plom_exceptions import PlomNoSolutionException
 
 
 @with_manager_messenger
@@ -19,11 +19,15 @@ def deleteSolutionImage(question, version, *, msgr):
             tuple appropriate for credientials.
 
     Return:
-        bool/None: `True` on success, `None` on failure b/c no solution.
-        TODO: change and/or consider using exception on failure.
+        None
+
+    Raises:
+        PlomNoSolutionException: the question/version asked for does
+            not have a solution image on the server.  This is also
+            raised if the values are out of range.
     """
-    try:
-        return msgr.deleteSolutionImage(question, version)
-    except PlomNoSolutionException:
-        print("No solution for question {} version {}".format(question, version))
-        return None
+    if msgr.deleteSolutionImage(question, version):
+        return
+    raise PlomNoSolutionException(
+        f"Server has no solution to question {question} version {version} to remove"
+    )

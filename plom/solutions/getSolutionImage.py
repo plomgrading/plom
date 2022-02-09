@@ -2,7 +2,6 @@
 # Copyright (C) 2021 Andrew Rechnitzer
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
-from plom.plom_exceptions import PlomNoSolutionException
 from plom.solutions import with_manager_messenger
 
 
@@ -19,11 +18,13 @@ def getSolutionImage(question, version, *, msgr):
             tuple appropriate for credientials.
 
     Return:
-        bytes/None: the bitmap of the solution or None if there was no
-        solution.  TODO: consider using an exception instead.
+        bytes: the bitmap of the solution or None if there was no
+        solution.  If you wish to know what sort of image it is,
+        consider using :py:mod:`imghdr` in the Python standard library.
+
+    Raises:
+        PlomNoSolutionException: the question/version asked for does
+            not have a solution image on the server.  This is also
+            returned if the values are out of range.
     """
-    try:
-        return msgr.getSolutionImage(question, version)
-    except PlomNoSolutionException as err:
-        print(err)
-        return None
+    return msgr.getSolutionImage(question, version)
