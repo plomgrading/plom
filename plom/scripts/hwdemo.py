@@ -95,8 +95,6 @@ def main():
 
     with working_directory(args.server_dir):
         subprocess.check_call(split("plom-server users --demo"))
-        subprocess.check_call(split("plom-create new --demo"))
-        subprocess.check_call(split("plom-create parse plomDemo.spec"))
 
     background_server = PlomServer(basedir=args.server_dir)
 
@@ -108,36 +106,37 @@ def main():
     os.environ["PLOM_NO_SSL_VERIFY"] = "1"
 
     if args.port:
-        server = f"localhost:{args.port}"
+        os.environ["PLOM_SERVER"] = f"localhost:{args.port}"
     else:
-        server = "localhost"
-    subprocess.check_call(split(f"plom-create class --demo -w 1234 -s {server}"))
-    subprocess.check_call(split(f"plom-create rubric --demo -w 1234 -s {server}"))
+        os.environ["PLOM_SERVER"] = "localhost"
+    os.environ["PLOM_MANAGER_PASSWORD"] = "1234"
+    os.environ["PLOM_SCAN_PASSWORD"] = "4567"
+
     with working_directory(args.server_dir):
-        subprocess.check_call(split(f"plom-create make -w 1234 -s {server}"))
+        subprocess.check_call(split("plom-create new --demo"))
+        subprocess.check_call(split("plom-create uploadspec demoSpec.toml"))
+
+    subprocess.check_call(split("plom-create class --demo"))
+    subprocess.check_call(split("plom-create rubric --demo"))
+    with working_directory(args.server_dir):
+        subprocess.check_call(split("plom-create make"))
 
     # extract solution images
     with working_directory(args.server_dir):
         print("Extract solution images from pdfs")
-        subprocess.check_call(
-            split(f"plom-solutions extract solutionSpec.toml -w 1234 -s {server}")
-        )
+        subprocess.check_call(split("plom-solutions extract solutionSpec.toml"))
 
     # upload solution images
     with working_directory(args.server_dir):
         print("Upload solutions to server")
-        subprocess.check_call(
-            split(f"plom-solutions extract --upload -w 1234 -s {server}")
-        )
+        subprocess.check_call(split("plom-solutions extract --upload"))
 
     print("Uploading fake scanned data to the server")
 
     print("Creating fake-scan data")
     with working_directory(args.server_dir):
         # this creates two batches of fake hw - prefixes = hwA and hwB
-        subprocess.check_call(
-            split(f"python3 -m plom.create.homework_scribbler -w 1234 -s {server}")
-        )
+        subprocess.check_call(split("python3 -m plom.create.homework_scribbler"))
 
         # TODO: this is fragile, should not hardcode these student numbers!
         A = "semiloose.10433917._.pdf"

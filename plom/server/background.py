@@ -104,6 +104,8 @@ class PlomServer:
 
         TODO: add features or other class methods?
 
+        TODO: perhaps soon deprecated?
+
         Args:
             basedir (Path-like/str): the base directory for the server.
             num_to_produce (int): the number of papers in the demo,
@@ -283,6 +285,7 @@ class PlomServer:
                 return False
         if not self.process_is_running():
             return False
+        # TODO: sus!
         specfile = SpecVerifier.load_verified(
             fname=self.basedir / specdirname / "verifiedSpec.toml"
         )
