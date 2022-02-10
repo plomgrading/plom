@@ -62,7 +62,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "version_map": version_map,
                 },
-                timeout=180,
+                timeout=(10, 180),
             )
             response.raise_for_status()
         except requests.HTTPError as e:

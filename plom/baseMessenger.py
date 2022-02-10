@@ -54,7 +54,7 @@ class BaseMessenger:
         self.session = None
         self.user = None
         self.token = None
-        self.default_timeout = 12
+        self.default_timeout = (10, 60)
         if s:
             server = s
         else:
