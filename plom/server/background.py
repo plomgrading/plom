@@ -286,13 +286,17 @@ class PlomServer:
         if not self.process_is_running():
             return False
         # TODO: sus!
-        specfile = SpecVerifier.load_verified(
-            fname=self.basedir / specdirname / "verifiedSpec.toml"
-        )
-        spec = m.get_spec()
-        if spec["publicCode"] != specfile["publicCode"]:
-            print("Server's publicCode doesn't match: wrong server? wrong address?")
-            return False
+        try:
+            specfile = SpecVerifier.load_verified(
+                fname=self.basedir / specdirname / "verifiedSpec.toml"
+            )
+        except FileNotFoundError:
+            print("cannot check public code: server does not yet have spec")
+        else:
+            spec = m.get_spec()
+            if spec["publicCode"] != specfile["publicCode"]:
+                print("Server's publicCode doesn't match: wrong server? wrong address?")
+                return False
         m.stop()
         return self.process_is_running()
 
