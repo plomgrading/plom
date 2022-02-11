@@ -893,6 +893,57 @@ class UploadHandler:
         else:
             raise web.HTTPInternalServerError(text=summary)
 
+    @authenticate_by_token_required_fields(["user", "version_map"])
+    def initialiseExamDatabase(self, data, request):
+        """Instruct the server to generate paper data in the database.
+
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
+
+        # TODO this should really be called from the server intead of here
+        from plom.db import initialiseExamDatabaseFromSpec
+
+        if len(data["version_map"]) == 0:
+            vmap = None
+        else:
+            vmap = undo_json_packing_of_version_map(data["version_map"])
+
+        try:
+            new_vmap = initialiseExamDatabaseFromSpec(spec, self.server.DB, vmap)
+        except ValueError:
+            raise web.HTTPConflict(
+                reason="Database already present: not overwriting"
+            ) from None
+
+        return web.json_response(new_vmap, status=200)
+
+    @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
+    def appendTestToExamDatabase(self, data, request):
+        """Append given test to database using given version map.
+
+        TODO: maybe the api call should just be for one row of the database.
+        """
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
+
+        # explicitly cast incoming vmap to ints
+        vmap = {int(q): int(v) for q, v in data["vmap_for_test"].items()}
+
+        try:
+            r, summary = self.server.appendTestToExamDatabase(data["test_number"], vmap)
+        except ValueError:
+            raise web.HTTPConflict(
+                reason="Attempt to build tests without contiguous numbers"
+            ) from None
+        if r:
+            return web.Response(text=summary, status=200)
+        else:
+            raise web.HTTPInternalServerError(text=summary)
+
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):
         """Get the mapping between page number and version for all tests.
@@ -1055,6 +1106,8 @@ class UploadHandler:
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
         router.add_put("/admin/populateDB", self.populateExamDatabase)
+        router.add_put("/admin/initialiseDB", self.initialiseExamDatabase)
+        router.add_put("/admin/appendTestToDB", self.appendTestToExamDatabase)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
             "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap

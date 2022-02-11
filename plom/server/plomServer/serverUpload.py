@@ -460,6 +460,11 @@ def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
 
 
-##
+# def initialiseExamDatabase(self, version_map):
+#     return self.DB.initialiseExamDatabaseFromSpec(self.testSpec, version_map)
+
+
+def appendTestToExamDatabase(self, t, vmap_for_test):
+    return self.DB.addSingleTestToDB(self.testSpec, t, vmap_for_test)
 
 ##

@@ -54,7 +54,7 @@ def build_papers(
     # TODO: temporarily avoid changing indent
     if True:
         spec = msgr.get_spec()
-        pvmap = msgr.getGlobalPageVersionMap()
+        # pvmap = msgr.getGlobalPageVersionMap()
         qvmap = msgr.getGlobalQuestionVersionMap()
         if spec["numberToName"] > 0:
             _classlist = msgr.IDrequestClasslist()
@@ -131,9 +131,22 @@ def build_database(*, msgr, vermap={}):
     """
     check_version_map(vermap)
 
-    status = msgr.TriggerPopulateDB(vermap)
-    # sanity check the version map
-    qvmap = msgr.getGlobalQuestionVersionMap()
+    # status = msgr.TriggerPopulateDB(vermap)
+    new_vmap = msgr.InitialiseDB(vermap)
+    # sanity check the version maps
     if vermap:
-        assert qvmap == vermap, RuntimeError("Report a bug in version_map code!")
+        assert new_vmap == vermap, RuntimeError(
+            "Report a bug in version_map code - difference betweeen one you gave me and one server gave back at build!"
+        )
+    # now build the tests one at a time
+    status = ""
+    for t in sorted(new_vmap):
+        status += msgr.appendTestToDB(t, new_vmap[t])
+        print(f"Built test number {t}")
+
+    # more version map sanity checks
+    qvmap = msgr.getGlobalQuestionVersionMap()
+    assert qvmap == new_vmap, RuntimeError(
+        "Report a bug in version_map code - difference between one you gave me and one server gave back after build!"
+    )
     return status

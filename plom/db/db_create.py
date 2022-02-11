@@ -128,12 +128,12 @@ def nextqueue_position(self):
 # to create one test of the db at a time
 
 
-def buildSingleTestInDB(self, t, spec, vmap_for_test):
+def addSingleTestToDB(self, spec, t, vmap_for_test):
     """Build a single test in the data base from spc and version_map
 
     Arguments:
-        t (int): the test number to build
         spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        t (int): the test number to build
         vmap_for_test (dict): version map indexed by question number for
             the given test. It is a slice of the global version_map
 
@@ -141,12 +141,18 @@ def buildSingleTestInDB(self, t, spec, vmap_for_test):
         bool: True if succuess.
         str: a status string, one line per test, ending with an error if failure.
 
-    Raises:
-        ValueError: if database already populated.
-        KeyError: invalid question selection scheme in spec.
+    Raises: 
+        KeyError: invalid question selection scheme in spec,
+        ValueError: attempt to create test n without test n-1.
+
     """
     ok = True
     status = ""
+
+    # make sure test numbers are contiguous. Cannot create test n before test n-1.
+    if t > 1:
+        if Test.get_or_none(test_number=t-1) is None:
+            raise ValueError(f"Error creating test {t} without test {t-1}")
 
     if self.createTest(t):
         status += "DB entry for test {:04}:".format(t)

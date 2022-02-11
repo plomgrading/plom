@@ -9,4 +9,4 @@ __license__ = "AGPL-3.0-or-later"
 
 
 from .examDB import PlomDB
-from .buildPlomDB import buildExamDatabaseFromSpec
+from .buildPlomDB import buildExamDatabaseFromSpec, initialiseExamDatabaseFromSpec
