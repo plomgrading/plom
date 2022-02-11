@@ -102,16 +102,6 @@ def main():
 
     with working_directory(args.server_dir):
         subprocess.check_call(split("plom-server users --demo"))
-        if args.num_papers:
-            subprocess.check_call(
-                split(f"plom-create new --demo --demo-num-papers {args.num_papers}")
-            )
-        else:
-            subprocess.check_call(split("plom-create new --demo"))
-        subprocess.check_call(split("plom-create parse demoSpec.toml"))
-
-    # the demo should work even if self-signed keys are used
-    os.environ["PLOM_NO_SSL_VERIFY"] = "1"
 
     background_server = PlomServer(basedir=args.server_dir)
 
@@ -119,33 +109,42 @@ def main():
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"
     print("Server seems to be running, so we move on to building tests and uploading")
 
+    # the demo should work even if self-signed keys are used
+    os.environ["PLOM_NO_SSL_VERIFY"] = "1"
+
     if args.port:
-        server = f"localhost:{args.port}"
+        os.environ["PLOM_SERVER"] = f"localhost:{args.port}"
     else:
-        server = "localhost"
-    subprocess.check_call(split(f"plom-create class --demo -w 1234 -s {server}"))
-    subprocess.check_call(split(f"plom-create rubric --demo -w 1234 -s {server}"))
+        os.environ["PLOM_SERVER"] = "localhost"
+    os.environ["PLOM_MANAGER_PASSWORD"] = "1234"
+    os.environ["PLOM_SCAN_PASSWORD"] = "4567"
+
     with working_directory(args.server_dir):
-        subprocess.check_call(split(f"plom-create make -w 1234 -s {server}"))
+        if args.num_papers:
+            subprocess.check_call(
+                split(f"plom-create new --demo --demo-num-papers {args.num_papers}")
+            )
+        else:
+            subprocess.check_call(split("plom-create new --demo"))
+        subprocess.check_call(split("plom-create uploadspec demoSpec.toml"))
+    subprocess.check_call(split("plom-create class --demo"))
+    subprocess.check_call(split("plom-create rubric --demo"))
+    with working_directory(args.server_dir):
+        subprocess.check_call(split("plom-create make"))
     # extract solution images
+    print("Extract solution images from pdfs")
     with working_directory(args.server_dir):
-        print("Extract solution images from pdfs")
-        subprocess.check_call(
-            split(f"plom-solutions extract solutionSpec.toml -w 1234 -s {server}")
-        )
+        subprocess.check_call(split("plom-solutions extract solutionSpec.toml"))
 
     # upload solution images
     with working_directory(args.server_dir):
         print("Upload solutions to server")
-        subprocess.check_call(
-            split(f"plom-solutions extract --upload -w 1234 -s {server}")
-        )
+        subprocess.check_call(split("plom-solutions extract --upload"))
 
     print("Creating fake-scan data")
     with working_directory(args.server_dir):
-        subprocess.check_call(
-            split(f"python3 -m plom.create.exam_scribbler -w 1234 -s {server}")
-        )
+        subprocess.check_call(split("python3 -m plom.create.exam_scribbler"))
+
     if args.no_scans:
         print(
             "Have not uploaded fake scan data - you will need to run plom-scan manually."
@@ -159,12 +158,8 @@ def main():
                 "fake_scribbled_exams2.pdf",
                 "fake_scribbled_exams3.pdf",
             ):
-                subprocess.check_call(
-                    split(f"plom-scan process -w 4567 -s {server} {opts} --demo {f}")
-                )
-                subprocess.check_call(
-                    split(f"plom-scan upload -w 4567 -s {server} -u {f}")
-                )
+                subprocess.check_call(split(f"plom-scan process {opts} --demo {f}"))
+                subprocess.check_call(split(f"plom-scan upload -u {f}"))
 
     assert background_server.process_is_running(), "has the server died?"
     assert background_server.ping_server(), "cannot ping server, something gone wrong?"
