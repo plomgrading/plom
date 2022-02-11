@@ -163,19 +163,19 @@ release_job:
     assets:
       links:
         - name: $LINKNAME0
-          filepath: $FILENAME0
+          filepath: "/$FILENAME0"
           url: $URL0
           link_type: "package"
         - name: $LINKNAME3
-          filepath: $FILENAME3
+          filepath: "/$FILENAME3"
           url: $URL3
           link_type: "package"
         - name: $LINKNAME4
-          filepath: $FILENAME4
+          filepath: "/$FILENAME4"
           url: $URL4
           link_type: "package"
         - name: $LINKNAME5
-          filepath: $FILENAME5
+          filepath: "/$FILENAME5"
           url: $URL5
           link_type: "package"
 

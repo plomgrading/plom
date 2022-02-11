@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.8.4] - 2022-02-11
+## [0.8.5] - 2022-02-11
 
 ### Changed
 * Increase read default read timeouts.
@@ -675,7 +675,7 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[0.8.4]: https://gitlab.com/plom/plom/compare/v0.8.2...v0.8.4
+[0.8.5]: https://gitlab.com/plom/plom/compare/v0.8.2...v0.8.5
 [0.8.2]: https://gitlab.com/plom/plom/compare/v0.8.1...v0.8.2
 [0.8.1]: https://gitlab.com/plom/plom/compare/v0.8.0...v0.8.1
 [0.8.0]: https://gitlab.com/plom/plom/compare/v0.7.12...v0.8.0
