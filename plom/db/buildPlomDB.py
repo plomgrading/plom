@@ -8,7 +8,7 @@ import logging
 import random
 
 from plom import check_version_map, make_random_version_map
-from plom.db import PlomDB
+# from plom.db import PlomDB
 
 
 log = logging.getLogger("DB")
@@ -103,14 +103,6 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
 
     ok = True
     status = ""
-    # build bundles for annotation images
-    # for q in range(1, 1 + spec["numberOfQuestions"]):
-    # for v in range(1, 1 + spec["numberOfVersions"]):
-    # pass
-    # if not db.createAnnotationBundle(q, v):
-    #     ok = False
-    #     status += "Error making bundle for q.v={}.{}".format(q, v)
-    # build bundle for replacement pages (for page-not-submitted images)
 
     if not db.createReplacementBundle():
         ok = False
@@ -120,47 +112,8 @@ def buildExamDatabaseFromSpec(spec, db, version_map=None):
         log.info(
             "Creating DB entry for test {} of {}.".format(t, spec["numberToProduce"])
         )
-        if db.createTest(t):
-            status += "DB entry for test {:04}:".format(t)
-        else:
-            status += " Error creating"
+        success, stat = db.buildSingleTestInDB(t, spec, version_map[t])
+        if success is False:
             ok = False
-
-        if db.createIDGroup(t, [spec["idPage"]]):
-            status += " ID"
-        else:
-            status += " Error creating idgroup"
-            ok = False
-
-        if db.createDNMGroup(t, spec["doNotMarkPages"]):
-            status += " DNM"
-        else:
-            status += "Error creating DoNotMark-group"
-            ok = False
-
-        for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
-            gs = str(g + 1)  # now a str and 1,2,3,...
-            v = version_map[t][g + 1]
-            assert v in range(1, spec["numberOfVersions"] + 1)
-            if spec["question"][gs]["select"] == "fix":
-                vstr = "f{}".format(v)
-                assert v == 1
-            elif spec["question"][gs]["select"] == "shuffle":
-                vstr = "v{}".format(v)
-            # elif spec["question"][gs]["select"] == "param":
-            #     vstr = "p{}".format(v)
-            else:
-                raise KeyError(
-                    'Invalid spec: question {} "select" of "{}" is unexpected'.format(
-                        gs, spec["question"][gs]["select"]
-                    )
-                )
-            # if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"], int(spec["question"][gs]["mark"])):
-            if db.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
-                status += " Q{}{}".format(gs, vstr)
-            else:
-                status += "Error creating Question {} ver {}".format(gs, vstr)
-                ok = False
-        status += "\n"
-
+        status += stat
     return ok, status
