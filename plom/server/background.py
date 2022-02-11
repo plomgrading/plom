@@ -162,6 +162,8 @@ class PlomServer:
         # if not any(self.basedir.iterdir()):
         #     print(f"PlomServer directory {dir} is empty: preparing demo")
 
+        oldloglen = len(self.get_logfiles_lines())
+
         with open(self.basedir / confdir / "serverDetails.toml") as f:
             self.server_info = toml.load(f)
 
@@ -177,9 +179,25 @@ class PlomServer:
         assert self.process_is_running(), "The server did not start successfully"
         time.sleep(0.2)
         assert self.process_is_running(), "The server did not start successfully"
+
         if not self.ping_server():
             # TODO: try to kill it?
             raise RuntimeError("The server did not successfully start")
+
+        # Check logs but only the newew log lines
+        newlog = self.get_logfiles_lines()[oldloglen:]
+        saw_start = False
+        for line in newlog:
+            if "Start the server!" in line:
+                saw_start = True
+            if "error" in line:
+                # TODO: don't break above, in case error after that!
+                raise RuntimeError(
+                    "The server did not successfully start: error in logs"
+                )
+        if not saw_start:
+            raise RuntimeError("The server did not successfully start")
+
         assert self.process_is_running(), "The server did not start successfully"
 
     def process_is_running(self):
@@ -234,6 +252,19 @@ class PlomServer:
     def logfile(self):
         return self.basedir / "server.log"
 
+    def get_logfiles_lines(self):
+        """Get a list of lines of the contents of the logfile
+
+        If not logfile yet, return empty.
+        """
+        try:
+            with open(self.logfile, "r") as f:
+                s = f.readlines()
+            return s
+        except FileNotFoundError:
+            print("no log file (yet)")
+            return []
+
     def _brief_wait(self, how_long=0.1):
         """Wait briefly on the subprocess, which should not have stopped.
 
@@ -285,7 +316,6 @@ class PlomServer:
                 return False
         if not self.process_is_running():
             return False
-        # TODO: sus!
         try:
             specfile = SpecVerifier.load_verified(
                 fname=self.basedir / specdirname / "verifiedSpec.toml"
