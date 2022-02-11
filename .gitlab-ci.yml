@@ -33,6 +33,8 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
+  MYVER: '${CI_PROJECT_NAME:1}'
+  MYVERTAG: '${CI_COMMIT_TAG:1}'
 
 stages:
   - static_analysis
@@ -82,6 +84,9 @@ codespell:
   before_script:
     - python3 -m pip install codespell
   script:
+    - echo $CI_PROJECT_NAME
+    - echo $MYVERTAG
+    - echo $MYVER
     - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
 
