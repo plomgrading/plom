@@ -895,9 +895,7 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields(["user", "version_map"])
     def initialiseExamDatabase(self, data, request):
-        """Instruct the server to generate paper data in the database.
-
-        """
+        """Instruct the server to generate paper data in the database."""
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
