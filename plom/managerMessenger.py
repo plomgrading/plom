@@ -141,7 +141,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.put(
-                    "/ID/{code}",
+                    f"/ID/{code}",
                     json={
                         "user": self.user,
                         "token": self.token,
