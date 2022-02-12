@@ -1722,6 +1722,105 @@ class PageScene(QGraphicsScene):
         for k in range(c):
             print(k, self.undoStack.text(k))
 
+    def is_user_placed_YUCK(self, item):
+        """Tell me if the user placed it or if its some autogen junk.
+
+        Let's try to isolate this unpleasantness in one place.
+        """
+        if getattr(item, "saveable", None):
+            return False
+        # TODO: copy pasted from deleteIfLegal()
+        if item in [
+            self.underImage,
+            self.scoreBox,
+            self.delBoxItem,
+            self.ghostItem,
+            self.ghostItem.di,
+            self.ghostItem.blurb,
+            self.underRect,
+        ]:
+            return False
+        if isinstance(item, UnderlyingImages):
+            # doesn't seem to catch anything?!  Some kind of group versus object
+            return False
+        if isinstance(item, UnderlyingRect):
+            # is this any different than self.underRect?
+            return False
+        if isinstance(item, QGraphicsPixmapItem):
+            # TODO: this is probably too general, just want the underlying images
+            # TODO: how does this trap tick and cross?!  those are not pixmaps?
+            return False
+        return True
+
+    def is_user_placed(self, item):
+        """Tell me if the user placed it or if its some autogen junk.
+
+        Let's try to isolate this unpleasantness in one place.
+        """
+        from plom.client.tools import (
+            CrossItem,
+            DeltaItem,
+            ImageItem,
+            TextItem,
+            TickItem,
+        )
+        from plom.client.tools.ellipse import EllipseItem
+        from plom.client.tools.highlight import HighlightItem
+        from plom.client.tools.line import LineItem
+        from plom.client.tools.arrow import ArrowItem, ArrowDoubleItem
+        from plom.client.tools.pen import PenItem
+        from plom.client.tools.penArrow import PenArrowItem
+        from plom.client.tools.questionMark import QMarkItem
+
+        if getattr(item, "saveable", None):
+            return False
+        if item in (
+            CrossItem,
+            DeltaItem,
+            ImageItem,
+            TextItem,
+            TickItem,
+            EllipseItem,
+            HighlightItem,
+            LineItem,
+            ArrowItem,
+            ArrowDoubleItem,
+            PenItem,
+            PenArrowItem,
+            QMarkItem,
+        ):
+            return False
+        # TODO more special cases?  I notice a naked QGraphicsLineItem used in elastic box...
+        return True
+
+    def move_some_items(self, I, dx, dy):
+        """Translate some of the objects in the scene.
+
+        args:
+            I (list): which objects to move.  TODO: not quite sure yet
+                what is admissible here but we will try to filter out
+                non-user-created stuff.
+            dx (float): translation delta in the horizontal direction.
+            dy (float): translation delta in the vertical direction.
+
+        Wraps the movement of all objects in a compount undo item.
+        """
+        import random
+        from plom.client.tools import CommandMoveItem
+
+        print(I)
+        if not I:
+            print("HACK: empty I input so randomly moving half the things")
+            I = list(random.sample(self.items(), k=len(self.items()) // 2))
+        self.undoStack.beginMacro("Speak at once while taking turns")
+        for item in I:
+            if self.is_user_placed(item):
+                continue
+            print(f"got one: {item}")
+            command = CommandMoveItem(item, QPointF(dx, dy))
+            self.undoStack.push(command)
+        self.undoStack.endMacro()
+
     def pickleSceneItems(self):
         """
         Pickles the saveable annotation items in the scene.
