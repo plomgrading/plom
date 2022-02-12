@@ -19,6 +19,7 @@ Welcome to Plom's documentation!
 
    code.rst
 
+   faq.md
 
 .. automodule:: plom
 
