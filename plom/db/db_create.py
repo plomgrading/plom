@@ -360,9 +360,8 @@ def id_paper(self, paper_num, user_name, sid, sname):
         try:
             iref.save()
         except pw.IntegrityError:
-            msg = "student id {} already entered elsewhere".format(censorID(sid))
-            log.error("{} but {}".format(logbase, msg))
-            return False, 409, msg
+            log.error(f"{logbase} but student id {censorID(sid)} in use elsewhere")
+            return False, 409, f"student id {sid} in use elsewhere"
         tref.identified = True
         tref.save()
         log.info(
