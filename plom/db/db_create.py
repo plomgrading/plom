@@ -322,6 +322,8 @@ def id_paper(self, paper_num, user_name, sid, sname):
     """Associate student name and id with a paper in the database.
 
     See also :func:`plom.db.db_identify.ID_id_paper` which is similar.
+    This one is typically called by manager, although this is not
+    enforced at the database level.  TODO: dedupe these two.
 
     Args:
         paper_num (int)
@@ -331,14 +333,7 @@ def id_paper(self, paper_num, user_name, sid, sname):
 
     Returns:
         tuple: `(True, None, None)` if successful, `(False, 409, msg)`
-            means `sid` is in use elsewhere, a serious problem for
-            the caller to deal with.  `(False, int, msg)` covers all
-            other errors.  `msg` gives details about errors.  Some
-            of these should not occur, and indicate possible bugs.
-            `int` gives a hint of suggested HTTP status code,
-            currently it can be 404 or 409.
-
-    TODO: perhaps several sorts of exceptions would be better.
+        or `(False, 404, msg)` on error.  See docs in other function.
     """
     uref = User.get(name=user_name)  # TODO: or hardcode HAL like before
     # since user authenticated, this will always return legit ref.

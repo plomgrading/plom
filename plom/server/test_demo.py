@@ -56,6 +56,9 @@ class Test:
             # paper 2 is not ID'd but we expect an error if we ID it to Fink
             with raises(PlomConflict, match="elsewhere"):
                 msgr.id_paper("2", sid, name)
+            # Issue 1944: not yet an error to unid the unid'd
+            # with raises(...):
+            # msgr.un_id_paper(2)
 
             msgr.un_id_paper(1)
             # now paper 1 is unid'd
