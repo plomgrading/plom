@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* "UnID" feature of manager was broken.
+* Other minor fixes.
 
 
 ## [0.8.5] - 2022-02-11
