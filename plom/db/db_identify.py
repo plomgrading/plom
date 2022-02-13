@@ -228,8 +228,10 @@ def IDgetImagesOfNotAutoIdentified(self):
 def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
     """Associate student name and id with a paper in the database.
 
+    Used by the normal users for identifying papers.
+
     See also :func:`plom.db.db_create.id_paper` which is just this with
-    `checks=False`.
+    `checks=False`, and is used by manager.  Likely want to consolidate.
 
     Args:
         paper_num (int)
@@ -244,15 +246,15 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
             owner (e.g., during automated IDing of prenamed papers.)
 
     Returns:
-        tuple: `(True, None, None)` if successful, `(False, 409, msg)`
-            means `sid` is in use elsewhere, a serious problem for
-            the caller to deal with.  `(False, int, msg)` covers all
-            other errors.  `msg` gives details about errors.  Some
-            of these should not occur, and indicate possible bugs.
-            `int` gives a hint of suggested HTTP status code,
-            currently it can be 404, 403, or 409.
-
-    TODO: perhaps several sorts of exceptions would be better.
+        tuple: `(True, None, None)` if successful or `(False, int, msg)`
+        on errors, where `msg` gives details about the error.  Some of
+        of these should not occur, and indicate possible bugs.  `int`
+        gives a hint of suggested HTTP status code, currently it can be
+        404, 403, or 409.
+        (False, 403, msg) for ID tasks belongs to a different user,
+        only tested for when ``checks=True``.
+        (False, 404, msg) for paper not found or not scanned yet.
+        (False, 409, msg) means `sid` is in use elsewhere.
     """
     uref = User.get(name=user_name)
     # since user authenticated, this will always return legit ref.

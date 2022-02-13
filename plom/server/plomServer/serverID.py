@@ -94,50 +94,12 @@ def IDclaimThisTask(self, username, test_number):
 
 # TODO: These two functions seem the same.
 def id_paper(self, *args, **kwargs):
-    """Assign a student name/id combination to a paper in the database.
-
-    Used by the HAL user for papers that are preidentified by the system.
-        TODO: Correct ?
-
-    Args:
-        args (tuple): A tuple including (test_number, user_identifying_paper,
-            matched_student_id, matched_student_name).
-        kwargs (dict): Empty dict, not sure why TODO: Assuming this is
-            here only to match ID_id_paper.
-
-    Returns:
-        list: A list including the results of the identification of
-            the paper on database. Examples are:
-            (True, None, None) for success.
-            (False, 409, msg) for failure.
-    """
-
+    """Assign a student name/id combination to a paper in the database, manager only."""
     return self.DB.id_paper(*args, **kwargs)
 
 
 def ID_id_paper(self, *args, **kwargs):
-    """Assign a student name/id combination to a paper in the database.
-
-    Used by the normal users for identifying papers. Call ID_id_paper which
-        does additional checks.
-
-    Args:
-        args (tuple): A tuple including (test_number, user_identifying_paper,
-            matched_student_id, matched_student_name).
-        kwargs (dict): Empty dict, not sure why TODO: Assuming this is a
-            True/False parameter (defaults to True if empty dict) which
-            indicates whether checks need to be applied ie the additional
-            404,403 error on top of what id_paper would return.
-
-    Returns:
-        list: A list including the results of the identification of
-            the paper on database. Examples are:
-            (True, None, None) for success.
-            (False, 403, msg) for belong to different user failure.
-            (False, 404, msg) for paper not found or not scanned yet.
-            (False, 409, msg) for already entered failure.
-    """
-
+    """Assign a student name/id combination to a paper in the database."""
     return self.DB.ID_id_paper(*args, **kwargs)
 
 
