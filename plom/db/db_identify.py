@@ -231,7 +231,7 @@ def ID_id_paper(self, paper_num, user_name, sid, sname, checks=True):
     Used by the normal users for identifying papers.
 
     See also :func:`plom.db.db_create.id_paper` which is just this with
-    `checks=False`, and is used by manager.  Likely want to consolodate.
+    `checks=False`, and is used by manager.  Likely want to consolidate.
 
     Args:
         paper_num (int)
