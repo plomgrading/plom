@@ -48,11 +48,12 @@ class Test:
         try:
             iDict = msgr.getIdentified()
             assert "1" in iDict
+            # need not be 2, any unID'd paper
             assert "2" not in iDict
             sid, name = iDict["1"]
             assert sid == "10050380"
             assert "Fink" in name
-            # paper 2 is not ID's and we expect an error if we try to ID it to Iris
+            # paper 2 is not ID'd but we expect an error if we ID it to Fink
             with raises(PlomConflict, match="entered elsewhere"):
                 msgr.id_paper("2", sid, name)
 
@@ -61,12 +62,13 @@ class Test:
             iDict = msgr.getIdentified()
             assert "1" not in iDict
 
-            # so now we can make paper 2 Iris, then unid paper 2
+            # so now we can ID paper 2 to Iris, then immediately unID it
             msgr.id_paper("2", sid, name)
             msgr.un_id_paper(2)
             # ID paper one back to Iris
             msgr.id_paper("1", sid, name)
 
+            # we leave the state hopefully as we found it
             iDict = msgr.getIdentified()
             assert "1" in iDict
             assert "2" not in iDict
