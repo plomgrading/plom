@@ -24,6 +24,7 @@ __license__ = "AGPL-3.0-or-later"
 
 import argparse
 import os
+import sys
 
 from stdiomask import getpass
 
@@ -34,6 +35,7 @@ from plom.solutions import getSolutionImage
 from plom.solutions import checkStatus
 from plom.solutions import putExtractedSolutionImages
 from plom.solutions import extractSolutionImages
+from plom.plom_exceptions import PlomNoSolutionException
 
 
 longerHelp = """
@@ -91,38 +93,8 @@ def print_more_help():
     print(longerHelp)
 
 
-def uploadSolutionImage(server, password, question, version, imageName):
-    rv = putSolutionImage(question, version, imageName, server, password)
-    if rv[0]:
-        print(f"Success - {rv[1]}")
-    else:
-        print(f"Failure - {rv[1]}")
-
-
-def deleteSolutionImage_frontend(server, password, question, version):
-    if deleteSolutionImage(question, version, server, password):
-        print(
-            "Successfully removed solution to question {} version {}".format(
-                question, version
-            )
-        )
-    else:
-        print(
-            "There was no solution to question {} version {} to remove".format(
-                question, version
-            )
-        )
-
-
-def getSolutionImageFromServer(server, password, question, version):
-    img = getSolutionImage(question, version, server, password)
-    if img is not None:
-        with open("solution.{}.{}.png".format(question, version), "wb") as fh:
-            fh.write(img)
-
-
 def solutionStatus(server, password):
-    solutionList = checkStatus(server, password)
+    solutionList = checkStatus(msgr=(server, password))
     # will be a list of triples [q,v,md5sum] or [q,v,""]
     for qvm in solutionList:
         if qvm[2] == "":
@@ -131,13 +103,13 @@ def solutionStatus(server, password):
             print("q {} v {} = solution with md5sum {}".format(qvm[0], qvm[1], qvm[2]))
 
 
-def extractSolutions(server, password, solutionSpec=None, upload=False):
+def extractSolutions(solutionSpec=None, upload=False, *, msgr):
     if upload:
         print("Uploading extracted solution images extracted")
-        putExtractedSolutionImages(server, password)
+        putExtractedSolutionImages(msgr=msgr)
         return
 
-    if extractSolutionImages(server, password, solutionSpec):
+    if extractSolutionImages(solutionSpec, msgr=msgr):
         print("Solution images extracted")
     else:
         print("Could not extract solution images - see messages above.")
@@ -154,7 +126,7 @@ def get_parser():
     )
     sub = parser.add_subparsers(dest="command")
 
-    spI = sub.add_parser(
+    sub.add_parser(
         "info",
         help="Print more information on extracting, uploading and returning solutions.",
         description="Print more information on extracting, uploading and returning solutions.",
@@ -261,15 +233,36 @@ def main():
             args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "upload":
-        uploadSolutionImage(args.server, args.password, args.q, args.v, args.image)
+        ok, msg = putSolutionImage(
+            args.q, args.v, args.image, msgr=(args.server, args.password)
+        )
+        if ok:
+            print(f"Success: {msg}")
+        else:
+            print(f"Failure: {msg}")
+            sys.exit(1)
+
     elif args.command == "get":
-        getSolutionImageFromServer(args.server, args.password, args.q, args.v)
+        img = getSolutionImage(args.q, args.v, msgr=(args.server, args.password))
+        with open("solution.{}.{}.png".format(args.q, args.v), "wb") as fh:
+            fh.write(img)
+
     elif args.command == "delete":
-        deleteSolutionImage_frontend(args.server, args.password, args.q, args.v)
+        try:
+            deleteSolutionImage(args.q, args.v, msgr=(args.server, args.password))
+            print(
+                f"Successfully removed solution to question {args.q} version {args.v}"
+            )
+        except PlomNoSolutionException as e:
+            print(e)
+            sys.exit(1)
+
     elif args.command == "status":
         solutionStatus(args.server, args.password)
     elif args.command == "extract":
-        extractSolutions(args.server, args.password, args.solutionSpec, args.upload)
+        extractSolutions(
+            args.solutionSpec, args.upload, msgr=(args.server, args.password)
+        )
     elif args.command == "clear":
         clear_manager_login(args.server, args.password)
     elif args.command == "info":

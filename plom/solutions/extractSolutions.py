@@ -10,42 +10,12 @@ import tempfile
 from PIL import Image
 import toml
 
-from plom.messenger import ManagerMessenger
-from plom.plom_exceptions import PlomExistingLoginException
 from plom.scan import processFileToBitmaps
 from plom.specVerifier import checkSolutionSpec
+from plom.solutions import with_manager_messenger
 
 source_path = Path("sourceVersions")
 solution_path = Path("solutionImages")
-
-
-def getSpec(server, password):
-    if server and ":" in server:
-        s, p = server.split(":")
-        msgr = ManagerMessenger(s, port=p)
-    else:
-        msgr = ManagerMessenger(server)
-    msgr.start()
-
-    try:
-        msgr.requestAndSaveToken("manager", password)
-    except PlomExistingLoginException:
-        print(
-            "You appear to be already logged in!\n\n"
-            "  * Perhaps a previous session crashed?\n"
-            "  * Do you have another script running,\n"
-            "    e.g., on another computer?\n\n"
-            'In order to force-logout the existing authorisation run "plom-solutions clear"'
-        )
-        raise
-
-    try:
-        spec = msgr.get_spec()
-    finally:
-        msgr.closeUser()
-        msgr.stop()
-
-    return spec
 
 
 def check_solution_files_present(numberOfVersions):
@@ -95,8 +65,28 @@ def loadSolutionSpec(spec_filename):
     return solutionSpec
 
 
-def extractSolutionImages(server, password, solution_spec_filename=None):
-    testSpec = getSpec(server, password)
+@with_manager_messenger
+def extractSolutionImages(solution_spec_filename=None, *, msgr):
+    """Extract solution images from PDF files in special location.
+
+    The PDF files need to be in a special place and have special names.
+    TODO: doc better.  Maybe the location could at least be a kwarg with
+    a default value.
+
+    Args:
+        solution_spec_filename (str/pathlib.Path/None): the spec of the
+            solution.  If None, it tries to autoconstruct from the
+            server's exam spec.
+
+    Keyword Args:
+        msgr (plom.Messenger/tuple): either a connected Messenger or a
+            tuple appropriate for credientials.
+
+    Return:
+        bytes: the bitmap of the solution.
+    """
+
+    testSpec = msgr.get_spec()
 
     if solution_spec_filename is None:
         solutionSpec = createSolutionSpec(testSpec)

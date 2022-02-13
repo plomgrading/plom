@@ -1518,10 +1518,7 @@ class ManagerMessenger(BaseMessenger):
             )
             response.raise_for_status()
             if response.status_code == 204:
-                raise PlomNoSolutionException(
-                    "No solution for {}.{} uploaded".format(question, version)
-                ) from None
-
+                raise PlomNoSolutionException(response.text) from None
             img = BytesIO(response.content).getvalue()
         except requests.HTTPError as e:
             if response.status_code == 401:
