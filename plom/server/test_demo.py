@@ -54,7 +54,7 @@ class Test:
             assert sid == "10050380"
             assert "Fink" in name
             # paper 2 is not ID'd but we expect an error if we ID it to Fink
-            with raises(PlomConflict, match="entered elsewhere"):
+            with raises(PlomConflict, match="elsewhere"):
                 msgr.id_paper("2", sid, name)
 
             msgr.un_id_paper(1)
