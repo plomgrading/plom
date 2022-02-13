@@ -1,5 +1,5 @@
 <!--
-__copyright__ = "Copyright (C) 2019-2021 Colin B. Macdonald"
+__copyright__ = "Copyright (C) 2019-2022 Colin B. Macdonald"
 __license__ = "AGPL-3.0-or-later"
  -->
 
@@ -33,6 +33,18 @@ Machine learning trained on the MNIST handwritten digit dataset.  A linear
 assignment problem solver then matches the results against the class list.
 For this reason the class list csv file should not contain large numbers
 of additional students that are not in your class.
+
+
+### Student wrote a different paper; I cannot ID their new paper.
+
+You must first "Unidentify" the prenamed paper.  For example suppose
+Isla's name was printed on paper 0120 but for wrote blank paper 1280
+instead.  In this case you should "UnID" paper 0120, and then you'll
+be able to identify paper 1280 to Isla.
+
+The UnID operation is exposed in the beta Manager Tool -> ID Progress
+tab.
+
 
 
 Test Preparation
