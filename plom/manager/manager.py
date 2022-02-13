@@ -2120,7 +2120,7 @@ class Manager(QWidget):
                         "",
                         str(qvn[0]).rjust(4),
                         str(qvn[1]).rjust(2),
-                        str(n).rjust(4),
+                        str(qvn[2]).rjust(4),
                         f"{qvn[3]}s",
                     ]
                 )
