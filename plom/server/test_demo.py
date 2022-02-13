@@ -6,7 +6,10 @@ from pathlib import Path
 from shlex import split
 import subprocess
 
+from pytest import raises
+
 from plom.server import PlomLiteDemoServer
+from plom.plom_exceptions import PlomConflict
 
 
 def setup_module(module):
@@ -34,6 +37,44 @@ class Test:
         # TODO: fix up this, seems erratic, perhaps even non-deterministic?
         assert r >= 0  # numScanned - numberComplete
         assert self.demo.process_is_running()
+
+    def test_unid(self):
+        # TODO: use connectmanager messenger, See MR !1275.
+        from plom.create import start_messenger
+
+        msgr = start_messenger(
+            self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
+        )
+        try:
+            iDict = msgr.getIdentified()
+            assert "1" in iDict
+            assert "2" not in iDict
+            sid, name = iDict["1"]
+            assert sid == "10050380"
+            assert "Fink" in name
+            # paper 2 is not ID's and we expect an error if we try to ID it to Iris
+            with raises(PlomConflict, match="entered elsewhere"):
+                msgr.id_paper("2", sid, name)
+
+            msgr.un_id_paper(1)
+            # now paper 1 is unid'd
+            iDict = msgr.getIdentified()
+            assert "1" not in iDict
+
+            # so now we can make paper 2 Iris, then unid paper 2
+            msgr.id_paper("2", sid, name)
+            msgr.un_id_paper(2)
+            # ID paper one back to Iris
+            msgr.id_paper("1", sid, name)
+
+            iDict = msgr.getIdentified()
+            assert "1" in iDict
+            assert "2" not in iDict
+            assert iDict["1"][0] == sid
+            assert iDict["1"][1] == name
+        finally:
+            msgr.closeUser()
+            msgr.stop()
 
     def test_random_IDing(self):
         subprocess.check_call(split("python3 -m plom.client.randoIDer"), env=self.env)
