@@ -682,7 +682,7 @@ class SpecVerifier:
             raise ValueError(
                 f"Question error - {pages} is not a contiguous list of pages"
             )
-        print("    pages {pages} is list of contiguous positive integers{chk}")
+        print(f"    pages {pages} is list of contiguous positive integers{chk}")
         # check mark is positive integer
         if not isPositiveInt(self.spec["question"][g]["mark"]):
             raise ValueError(
