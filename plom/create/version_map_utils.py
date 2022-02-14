@@ -13,7 +13,8 @@ from plom.create import with_manager_messenger
 
 
 def _version_map_from_json(f):
-    qvmap = json.load(f)
+    with open(f, "r") as fh:
+        qvmap = json.load(fh)
     qvmap = undo_json_packing_of_version_map(qvmap)
     check_version_map(qvmap)
     return qvmap
@@ -110,7 +111,7 @@ def _version_map_to_csv(qvmap, filename):
 
 
 @with_manager_messenger
-def download_question_version_map(*, msgr):
+def download_version_map(*, msgr):
     """Get the question-version map from a server.
 
     Keyword Args:
@@ -129,7 +130,7 @@ def download_question_version_map(*, msgr):
 
 
 @with_manager_messenger
-def save_question_version_map(filename=None, *, msgr):
+def save_version_map(filename=None, *, msgr):
     """Get the question-version map and save to a file.
 
     Args:
@@ -159,7 +160,7 @@ def save_question_version_map(filename=None, *, msgr):
         filename = filename.with_suffix(filename.suffix + ".csv")
     suffix = filename.suffix
 
-    qvmap = download_question_version_map(msgr=msgr)
+    qvmap = download_version_map(msgr=msgr)
     if suffix.casefold() == ".csv":
         _version_map_to_csv(qvmap, filename)
     elif suffix.casefold() == ".json":

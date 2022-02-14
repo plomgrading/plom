@@ -39,7 +39,7 @@ from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
 from plom.create import version_map_from_file
-from plom.create import save_question_version_map
+from plom.create import save_version_map
 
 
 def ensure_toml_extension(fname):
@@ -416,7 +416,7 @@ def main():
         print(status)
 
     elif args.command == "get-ver-map":
-        f = save_question_version_map(args.file, msgr=(args.server, args.password))
+        f = save_version_map(args.file, msgr=(args.server, args.password))
         print(f"Question-version map saved to {f}")
 
     elif args.command == "make":

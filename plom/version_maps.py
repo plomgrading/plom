@@ -43,7 +43,7 @@ def check_version_map(vm, spec=None):
                 assert v <= spec["numberOfQuestions"]
                 if spec["question"][str(q)]["select"] == "fix":
                     assert v == 1
-    assert len(rowlens) == 1, "Not all rows had same length"
+    assert len(rowlens) <= 1, "Not all rows had same length"
 
 
 def make_random_version_map(spec):
