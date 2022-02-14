@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
+
 import ast
 from pathlib import Path
 import re
