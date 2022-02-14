@@ -309,9 +309,8 @@ class BaseMessenger:
             converts them for us.
 
         Raises:
-            PlomConflict: server does not yet have a version map, e.g.,
-                b/c it has not been built yet, or server has no spec
-                (and thus is has not been built yet).
+            PlomServerNotReady: server does not yet have a version map,
+                e.g., b/c it has not been built, or server has no spec.
         """
         with self.SRmutex:
             try:
@@ -324,7 +323,7 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 elif response.status_code in (404, 409):
-                    raise PlomConflict(response.reason) from None
+                    raise PlomServerNotReady(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return {int(q): v for q, v in response.json().items()}
@@ -340,9 +339,8 @@ class BaseMessenger:
             this function converts them for us.
 
         Raises:
-            PlomConflict: server does not yet have a version map, e.g.,
-                b/c it has not been built yet, or server has no spec
-                (and thus is has not been built yet).
+            PlomServerNotReady: server does not yet have a version map,
+                e.g., b/c it has not been built, or server has no spec.
         """
         with self.SRmutex:
             try:
@@ -355,7 +353,7 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 elif response.status_code in (404, 409):
-                    raise PlomConflict(response.reason) from None
+                    raise PlomServerNotReady(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return undo_json_packing_of_version_map(response.json())

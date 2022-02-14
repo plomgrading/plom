@@ -39,6 +39,7 @@ from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
 from plom.create import version_map_from_csv
+from plom.create import save_question_version_map
 
 
 def ensure_toml_extension(fname):
@@ -218,6 +219,27 @@ def get_parser():
     spDB.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     spDB.add_argument("-w", "--password", type=str, help='for the "manager" user')
 
+    spQVM = sub.add_parser(
+        "get-ver-map",
+        help="Save question-version map from the database",
+        description="""
+            The question-version map shows which questions have which
+            version for each paper.
+            This map is created server-side by the 'make-db' command.
+            This .csv file can be used to reconstruct the database in
+            case of catastrophe: we recommend keeping a backup copy.
+        """,
+    )
+    spQVM.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    spQVM.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    spQVM.add_argument(
+        "file",
+        nargs="?",
+        help="""
+            Filename, csv or json format.  Default: 'question_version_map.csv'.
+        """,
+    )
+
     spB = sub.add_parser(
         "make",
         help="Make the PDFs",
@@ -392,6 +414,10 @@ def main():
             qvmap = version_map_from_csv(args.from_file)
             status = build_database(vermap=qvmap, msgr=(args.server, args.password))
         print(status)
+
+    elif args.command == "get-ver-map":
+        f = save_question_version_map(args.file, msgr=(args.server, args.password))
+        print(f"Question-version map saved to {f}")
 
     elif args.command == "make":
         try:
