@@ -56,13 +56,17 @@ class Test:
             msgr.stop()
 
         f = tmpdir / "foo.csv"
-        subprocess.check_call(split(f"python3 -m plom.create get-ver-map {f}"), env=self.env)
+        subprocess.check_call(
+            split(f"python3 -m plom.create get-ver-map {f}"), env=self.env
+        )
         assert f.exists()
         qvmap2 = version_map_from_file(f)
         assert qvmap == qvmap2
 
         f = tmpdir / "foo.json"
-        subprocess.check_call(split(f"python3 -m plom.create get-ver-map {f}"), env=self.env)
+        subprocess.check_call(
+            split(f"python3 -m plom.create get-ver-map {f}"), env=self.env
+        )
         assert f.exists()
         qvmap2 = version_map_from_file(f)
         assert qvmap == qvmap2
