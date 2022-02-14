@@ -1074,6 +1074,9 @@ class Manager(QWidget):
                 #     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
                 # )
         self.refreshUList()
+        self.refreshDList()
+        self.refreshIList()
+        self.refreshSList()
 
     def viewWholeTest(self, testNumber, parent=None):
         vt = self.msgr.getTestImages(testNumber)
