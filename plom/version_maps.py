@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 """Tools for manipulating version maps."""
 
@@ -27,11 +27,14 @@ def check_version_map(vm, spec=None):
     """
     if spec:
         assert len(vm) == spec["numberToProduce"]
+    rowlens = set()
     for t, qd in vm.items():
         assert isinstance(t, int)
         assert isinstance(qd, dict)
         if spec:
             assert len(qd) == spec["numberOfQuestions"]
+        # even if no spec we can ensure all rows the same
+        rowlens.add(len(qd))
         for q, v in qd.items():
             assert isinstance(q, int)
             assert isinstance(v, int)
@@ -40,6 +43,7 @@ def check_version_map(vm, spec=None):
                 assert v <= spec["numberOfQuestions"]
                 if spec["question"][str(q)]["select"] == "fix":
                     assert v == 1
+    assert len(rowlens) == 1, "Not all rows had same length"
 
 
 def make_random_version_map(spec):

@@ -38,7 +38,7 @@ from plom.create.demotools import buildDemoSourceFiles
 from plom.create import upload_rubrics_from_file, download_rubrics_to_file
 from plom.create import upload_demo_rubrics
 from plom.create import clear_manager_login
-from plom.create import version_map_from_csv
+from plom.create import version_map_from_file
 from plom.create import save_question_version_map
 
 
@@ -411,7 +411,7 @@ def main():
         if args.from_file is None:
             status = build_database(msgr=(args.server, args.password))
         else:
-            qvmap = version_map_from_csv(args.from_file)
+            qvmap = version_map_from_file(args.from_file)
             status = build_database(vermap=qvmap, msgr=(args.server, args.password))
         print(status)
 

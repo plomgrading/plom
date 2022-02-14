@@ -8,33 +8,38 @@ from warnings import warn
 
 import pandas
 
+from plom import undo_json_packing_of_version_map, check_version_map
 from plom.create import with_manager_messenger
 
 
-def version_map_from_csv(f):
+def _version_map_from_json(f):
+    qvmap = json.load(f)
+    qvmap = undo_json_packing_of_version_map(qvmap)
+    check_version_map(qvmap)
+    return qvmap
+
+
+def _version_map_from_csv(f):
     """Extract the version map from a csv file
 
     Args:
         f (pathlib.Path): a csv file, must have a `test_number` column
             and some `q{n}.version` columns.  The number of such columns
-            is autodetected.
+            is autodetected.  For example, this could be output of
+            :func:`save_question_version_map`.
 
-    Keyword Args:
-        server (str/None)
-        password (str/None)
+    Return:
+        dict: keys are the paper numbers (`int`) and each value is a row
+        of the version map: another dict with questions as question
+        number (`int`) and value version (`int`).
 
     TODO: `f` could have names in it: this routine makes no use of that
     information.  In particular, it does not try to verify that they match
     the current server's classlist.
     """
-    # TODO: we could get the number of versions from the spec
-    # msgr.start()
-    # spec = msgr.get_spec()
-    # msgr.stop()
-    # N = spec["numberOfVersions"]
-
     df = pandas.read_csv(f, dtype="object")
 
+    # autodetect number of questions from column headers
     N = 0
     while True:
         if f"q{N + 1}.version" not in df.columns:
@@ -53,6 +58,34 @@ def version_map_from_csv(f):
     return qvmap
 
 
+def version_map_from_from(f):
+    """Extract the version map from a csv or json file.
+
+    Args:
+        f (pathlib.Path): If ``.csv`` file, must have a `test_number`
+            column and some `q{n}.version` columns.  The number of such
+            columns is autodetected.  If ``.json`` file, its a dict of
+            dicts.  Either case could, for example, be the output of
+            :func:`save_question_version_map`.
+
+    Return:
+        dict: keys are the paper numbers (`int`) and each value is a row
+        of the version map: another dict with questions as question
+        number (`int`) and value version (`int`).
+    """
+    f = Path(f)
+    if f.suffix.casefold() not in (".json", ".csv"):
+        filename = f.with_suffix(f.suffix + ".csv")
+    suffix = f.suffix
+
+    if suffix.casefold() == ".json":
+        return _version_map_from_json(f)
+    elif suffix.casefold() == ".csv":
+        return _version_map_from_csv(f)
+    else:
+        raise NotImplementedError(f'Don\'t know how to import from "{filename}"')
+
+
 def _version_map_to_csv(qvmap, filename):
     """Output a csv of the question-version map.
 
@@ -64,7 +97,7 @@ def _version_map_to_csv(qvmap, filename):
         ValueError: some rows have differing numbers of questions.
     """
     # all rows should have same length: get than length or fail
-    N, = {len(v) for v in qvmap.values()}
+    (N,) = {len(v) for v in qvmap.values()}
 
     header = ["test_number"]
     for q in range(1, N + 1):
