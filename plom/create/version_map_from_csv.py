@@ -39,7 +39,7 @@ def version_map_from_csv(f):
         raise ValueError(f"Could not find q1.version column in {df.columns}")
 
     if "sID" in df.columns or "sname" in df.columns:
-        warn('Ignoring the "sID" and "sname" columns in {f}')
+        warn(f'Ignoring the "sID" and "sname" columns in {f}')
 
     qvmap = {}
     for i, r in df.iterrows():
