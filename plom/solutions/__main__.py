@@ -15,7 +15,7 @@ The plom-solutions command allows you to
 
 For further information on extracting & uploading solutions, and
 on returning solutions to students please run
-    `plom-solutions info`
+`plom-solutions info`
 """
 
 __copyright__ = "Copyright (C) 2021 Andrew Rechnitzer, Colin B. Macdonald et al"

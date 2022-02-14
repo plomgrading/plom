@@ -33,9 +33,6 @@ Tools for producing papers, scanning papers, and finishing the grading process.
 .. automodule:: plom.scan
     :members:
 
-.. automodule:: plom.finish
-    :members:
-
 
 Other supporting code
 ---------------------

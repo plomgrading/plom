@@ -41,19 +41,18 @@ PDF files for each student based on the question-versions used in
 their test.  See :doc:`returning`.
 
 
+``plom-solutions`` command line tool
+------------------------------------
 
-..
-    TODO: can we use sphinx-argparse to put the cmdline tool docs here?
+.. argparse::
+   :ref: plom.solutions.__main__.get_parser
+   :prog: plom-solutions
 
 
-Technical documentation
------------------------
+Python module: ``plom.solutions``
+---------------------------------
 
 For scripting or other advanced usage, you can ``import plom.solutions``.
-
-
-The ``plom.solutions`` module
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: plom.solutions
     :members:
