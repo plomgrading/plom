@@ -58,7 +58,7 @@ def _version_map_from_csv(f):
     return qvmap
 
 
-def version_map_from_from(f):
+def version_map_from_file(f):
     """Extract the version map from a csv or json file.
 
     Args:
