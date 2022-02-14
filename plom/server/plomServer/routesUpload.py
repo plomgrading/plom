@@ -922,14 +922,14 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields([])
     def getQuestionVersionMap(self, data, request):
-        """Get the mapping between questions and version for one tests.
+        """Get the mapping between questions and version for one test.
 
         Returns:
             dict: keyed by question number.  Note keys will be strings b/c
                 of json limitations; you may need to convert back to int.
-                Fails with 409 if that paper number no version map, which
-                could be because its out of range or because the database
-                version map has not yet been built.
+                Fails with 404/409 if there is no version map: 404 if
+                the server has no spec and 409 if the server has a spec
+                but the version map database has not been built yet.
         """
         paper_idx = request.match_info["papernum"]
         vers = self.server.DB.getQuestionVersions(paper_idx)
@@ -947,8 +947,9 @@ class UploadHandler:
             dict: dict of dicts, keyed first by paper index then by
                 question number.  Both keys will become strings b/c of
                 json limitations; you may need to convert back to int.
-                Fails with 409 if the version map database has not been
-                built yet.
+                Fails with 404/409 if there is no version map: 404 if
+                the server has no spec and 409 if the server has a spec
+                but the version map database has not been built yet.
         """
         spec = self.server.testSpec
         if not spec:

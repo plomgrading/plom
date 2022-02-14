@@ -300,6 +300,19 @@ class BaseMessenger:
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getQuestionVersionMap(self, papernum):
+        """Get the question-version map for one paper.
+
+        Returns:
+            dict: keys are question number (`int`) and values are their
+            version (`int`).  Note the raw API call uses strings for
+            keys b/c of JSON (transport) limitations but this function
+            converts them for us.
+
+        Raises:
+            PlomConflict: server does not yet have a version map, e.g.,
+                b/c it has not been built yet, or server has no spec
+                (and thus is has not been built yet).
+        """
         with self.SRmutex:
             try:
                 response = self.get(
@@ -310,13 +323,27 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                elif response.status_code == 409:
+                elif response.status_code in (404, 409):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
         return {int(q): v for q, v in response.json().items()}
 
     def getGlobalQuestionVersionMap(self):
+        """Get the question-version map for all papers.
+
+        Returns:
+            dict: keys are the paper numbers (`int`) and each value is a row
+            of the version map: another dict with questions as question
+            number (`int`) and value version (`int`).  Note the raw API call
+            uses strings for keys b/c of JSON (transport) limitations but
+            this function converts them for us.
+
+        Raises:
+            PlomConflict: server does not yet have a version map, e.g.,
+                b/c it has not been built yet, or server has no spec
+                (and thus is has not been built yet).
+        """
         with self.SRmutex:
             try:
                 response = self.get(
@@ -327,7 +354,7 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                elif response.status_code == 409:
+                elif response.status_code in (404, 409):
                     raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints
