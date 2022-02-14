@@ -620,6 +620,8 @@ class Manager(QWidget):
                     l0.addChild(it)
             self.ui.incompTW.addTopLevelItem(l0)
 
+        self.ui.groupBox_3.setTitle("Incomplete papers (total: {})".format(len(incomplete)))
+
     def refreshSList(self):
         # delete the children of each toplevel items
         root = self.ui.scanTW.invisibleRootItem()
@@ -644,6 +646,8 @@ class Manager(QWidget):
                     l0.setToolTip(1, "Has collisions")
                 l0.addChild(l1)
             self.ui.scanTW.addTopLevelItem(l0)
+
+        self.ui.groupBox.setTitle("Completely scanned papers (total: {})".format(len(scanned)))
 
     def viewPage(self, t, pdetails, v):
         if pdetails[0] == "t":  # is a test-page t.PPP
@@ -954,6 +958,8 @@ class Manager(QWidget):
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
 
+        self.ui.scanTabW.setTabText(self.ui.scanTabW.indexOf(self.ui.unknownTab), "&Unknown Pages ({})".format(len(unkList)))
+
     def viewUPage(self):
         pvi = self.ui.unknownTV.selectedIndexes()
         if len(pvi) == 0:
@@ -1153,6 +1159,7 @@ class Manager(QWidget):
             r += 1
         self.ui.collideTV.resizeRowsToContents()
         self.ui.collideTV.resizeColumnsToContents()
+        self.ui.scanTabW.setTabText(self.ui.scanTabW.indexOf(self.ui.collideTab), "&Colliding Pages ({})".format(len(colDict.keys())))
 
     def viewCPage(self):
         pvi = self.ui.collideTV.selectedIndexes()
@@ -1257,6 +1264,7 @@ class Manager(QWidget):
             r += 1
         self.ui.discardTV.resizeRowsToContents()
         self.ui.discardTV.resizeColumnsToContents()
+        self.ui.scanTabW.setTabText(self.ui.scanTabW.indexOf(self.ui.discardTab), "&Discarded Pages ({})".format(len(disList)))
 
     def viewDPage(self):
         pvi = self.ui.discardTV.selectedIndexes()
@@ -1326,6 +1334,8 @@ class Manager(QWidget):
             r += 1
         self.ui.danglingTV.resizeRowsToContents()
         self.ui.danglingTV.resizeColumnsToContents()
+
+        self.ui.scanTabW.setTabText(self.ui.scanTabW.indexOf(self.ui.dangleTab), "Dan&gling Pages ({})".format(len(dangList)))
 
     def viewDanglingPage(self):
         pvi = self.ui.danglingTV.selectedIndexes()
