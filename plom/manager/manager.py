@@ -1875,9 +1875,9 @@ class Manager(QWidget):
         if (
             SimpleQuestion(
                 self,
-                "Are you sure that you want to delete solution to"
-                " question {self.ui.solnQSB.value()}"
-                " version {self.ui.solnVSB.value()}.",
+                f"Are you sure that you want to delete solution to"
+                f" question {self.ui.solnQSB.value()}"
+                f" version {self.ui.solnVSB.value()}.",
             ).exec_()
             == QMessageBox.Yes
         ):

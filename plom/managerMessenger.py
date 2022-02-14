@@ -615,7 +615,7 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomOwnersLoggedInException(response.json()) from None
             if response.status_code == 406:
                 raise PlomSeriousException(
-                    "Page name '{page_name}' is invalid"
+                    f"Page name '{page_name}' is invalid"
                 ) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None

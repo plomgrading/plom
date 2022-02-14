@@ -371,7 +371,7 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
         return (
             False,
             "scanned",
-            "Page {page_number} of test {page_number} is already scanned",
+            f"Page {page_number} of test {page_number} is already scanned",
         )
 
     self.attachImageToTPage(tref, pref, iref)

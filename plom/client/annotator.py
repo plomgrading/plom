@@ -677,8 +677,8 @@ class Annotator(QWidget):
                 info=info,
                 info_pre=False,
                 details=f"Annotator's image_md5_list is\n  {image_md5_list}\n"
-                "The src_img_data is\n  {self.src_img_data}\n"
-                "Include this info if you think this is a bug!",
+                f"The src_img_data is\n  {self.src_img_data}\n"
+                f"Include this info if you think this is a bug!",
             ).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         # do a deep copy of this list of dict - else hit #1690

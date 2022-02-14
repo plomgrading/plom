@@ -28,7 +28,7 @@ class SolutionHandler:
             return web.FileResponse(solutionFile, status=200)
         else:
             return web.Response(
-                text="Server has no solution for question {q} version {v}",
+                text=f"Server has no solution for question {q} version {v}",
                 status=204,
             )
 
