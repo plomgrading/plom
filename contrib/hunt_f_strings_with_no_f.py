@@ -7,6 +7,7 @@ status = ""
 
 class StringPrinter(ast.NodeTransformer):
     """Prints all strings containing braces with some word-char in them"""
+
     def visit_Str(self, node):
         global status
         # note that this does not visit f-strings
@@ -27,6 +28,6 @@ for x in Path("./plom").glob("**/*.py"):
         status = ""
         StringPrinter().visit(tree)
         if status:
-            print("*"*20)
+            print("*" * 20)
             print(f"Checking '{x}'")
             print(status)
