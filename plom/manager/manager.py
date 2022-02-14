@@ -1317,6 +1317,7 @@ class Manager(QWidget):
                 #     "No action for file {}.".format(self.discardModel.item(r, 0).text())
                 # )
         self.refreshDList()
+        self.refreshUList()
 
     def initDanglingTab(self):
         self.danglingModel = QStandardItemModel(0, 5)
