@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from PyQt5.QtWidgets import (
     QDialog,
@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from plom.client.examviewwindow import ImageViewWidget
+from plom.client import ImageViewWidget
 
 
 class ActionTab(QWidget):

@@ -44,7 +44,7 @@ from plom import isValidStudentNumber
 # from plom.rules import censorStudentNumber as censorID
 from plom.rules import censorStudentName as censorName
 
-from .examviewwindow import ImageViewWidget
+from .image_view_widget import ImageViewWidget
 from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, WarningQuestion
 from .useful_classes import BlankIDBox, SNIDBox

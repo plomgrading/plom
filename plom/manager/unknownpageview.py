@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtGui import QPainter
@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from plom.client.examviewwindow import ExamView
+from plom.client import ExamView
 from plom.client.useful_classes import ErrorMessage
 
 

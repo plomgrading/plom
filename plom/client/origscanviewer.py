@@ -36,7 +36,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
 )
 
-from .examviewwindow import ImageViewWidget
+from .image_view_widget import ImageViewWidget
 from .useful_classes import ErrorMessage, SimpleQuestion
 
 
