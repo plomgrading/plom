@@ -9,12 +9,13 @@
 from collections import defaultdict
 import csv
 import imghdr
+import logging
 import os
 from pathlib import Path
 import sys
 import tempfile
-import arrow
 
+import arrow
 import urllib3
 
 if sys.version_info >= (3, 7):
@@ -75,6 +76,9 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
+
+
+log = logging.getLogger("manager")
 
 
 class UserDialog(QDialog):
@@ -413,7 +417,7 @@ class Manager(QWidget):
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
-        self.ui.closeButton.clicked.connect(self.closeWindow)
+        self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
@@ -441,10 +445,15 @@ class Manager(QWidget):
         self.ui.changePassB.clicked.connect(self.changeUserPassword)
         self.ui.newUserB.clicked.connect(self.createUser)
 
-    def closeWindow(self):
-        if self.msgr is not None:
+    def closeEvent(self, event):
+        log.debug("Something has triggered a shutdown event")
+        log.debug("Revoking login token")
+        try:
             self.msgr.closeUser()
-        self.close()
+        except PlomAuthenticationException:
+            log.warn("User tried to logout but was already logged out.")
+            pass
+        event.accept()
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
