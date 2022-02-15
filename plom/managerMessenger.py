@@ -16,7 +16,6 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomExistingDatabase,
     PlomNoMoreException,
-    PlomNoSolutionException,
     PlomOwnersLoggedInException,
     PlomServerNotReady,
     PlomRangeException,
@@ -1486,47 +1485,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
-
-    def getSolutionStatus(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/solutions",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
-    def getSolutionImage(self, question, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/solution",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "question": question,
-                    "version": version,
-                },
-            )
-            response.raise_for_status()
-            if response.status_code == 204:
-                raise PlomNoSolutionException(response.text) from None
-            img = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return img
 
     def putSolutionImage(self, question, version, fileName):
         with self.SRmutex:

@@ -16,16 +16,17 @@ from plom import __version__, Plom_API_Version, Default_Port
 from plom import undo_json_packing_of_version_map
 from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
-    PlomAuthenticationException,
     PlomAPIException,
+    PlomAuthenticationException,
+    PlomBadTagError,
     PlomConflict,
     PlomConnectionError,
-    PlomBadTagError,
     PlomExistingLoginException,
+    PlomNoSolutionException,
+    PlomServerNotReady,
     PlomSSLError,
     PlomTaskChangedError,
     PlomTaskDeletedError,
-    PlomServerNotReady,
 )
 
 log = logging.getLogger("messenger")
@@ -761,3 +762,40 @@ class BaseMessenger:
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
+
+    def getSolutionStatus(self):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/REP/solutions",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def getSolutionImage(self, question, version):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/MK/solution",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "question": question,
+                        "version": version,
+                    },
+                )
+                response.raise_for_status()
+                if response.status_code == 204:
+                    raise PlomNoSolutionException(
+                        f"Server has no solution for question {question} version {version}",
+                    ) from None
+                return BytesIO(response.content).getvalue()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None

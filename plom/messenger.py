@@ -653,30 +653,3 @@ class Messenger(BaseMessenger):
             ) from None
         finally:
             self.SRmutex.release()
-
-    def MgetSolutionImage(self, question, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/solution",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "question": question,
-                    "version": version,
-                },
-            )
-            response.raise_for_status()
-            if response.status_code == 204:
-                raise PlomNoSolutionException(
-                    "No solution for {}.{} uploaded".format(question, version)
-                ) from None
-
-            img = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return img
