@@ -19,6 +19,7 @@ from plom.plom_exceptions import (
     PlomAPIException,
     PlomAuthenticationException,
     PlomBadTagError,
+    PlomConflict,
     PlomConnectionError,
     PlomExistingLoginException,
     PlomNoSolutionException,
