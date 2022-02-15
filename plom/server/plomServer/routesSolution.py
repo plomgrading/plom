@@ -27,7 +27,7 @@ class SolutionHandler:
         if solutionFile is not None:
             return web.FileResponse(solutionFile, status=200)
         else:
-            # cannot pass explanation b/c 204 is literally NoContent, use 404?
+            # cannot pass reason b/c 204 is literally NoContent (consider 4xx here?)
             return web.Response(status=204)
 
     @authenticate_by_token_required_fields(["user", "question", "version"])
