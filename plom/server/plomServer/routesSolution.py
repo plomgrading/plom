@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2021 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
 from aiohttp import web, MultipartReader
 
-from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
+from .routeutils import authenticate_by_token_required_fields
 from .routeutils import validate_required_fields, log_request
 from .routeutils import log
 
@@ -27,10 +27,8 @@ class SolutionHandler:
         if solutionFile is not None:
             return web.FileResponse(solutionFile, status=200)
         else:
-            return web.Response(
-                text=f"Server has no solution for question {q} version {v}",
-                status=204,
-            )
+            # cannot pass explanation b/c 204 is literaly NoContent, use 404?
+            return web.Response(status=204)
 
     @authenticate_by_token_required_fields(["user", "question", "version"])
     def deleteSolutionImage(self, data, request):

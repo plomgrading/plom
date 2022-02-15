@@ -1794,7 +1794,7 @@ class MarkerClient(QWidget):
             "solution.{}.{}.png".format(self.question, self.version),
         )
         try:
-            im_bytes = self.msgr.MgetSolutionImage(self.question, self.version)
+            im_bytes = self.msgr.getSolutionImage(self.question, self.version)
             with open(soln, "wb") as fh:
                 fh.write(im_bytes)
             return soln
