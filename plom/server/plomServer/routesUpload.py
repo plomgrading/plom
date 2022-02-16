@@ -638,18 +638,15 @@ class UploadHandler:
         # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
         if not rmsg[0]:
             return web.Response(status=404)  # couldn't find that test/question
-        if len(rmsg) == 3:
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))
-                mpwriter.append("{}".format(rmsg[2]))
-                return web.Response(body=mpwriter, status=200)
-        assert len(rmsg) == 4
-        with open(rmsg[3], "rb") as fh:
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append("{}".format(rmsg[1]))
-                mpwriter.append("{}".format(rmsg[2]))
-                mpwriter.append(fh)
-                return web.Response(body=mpwriter, status=200)
+        with MultipartWriter("images") as mpwriter:
+            mpwriter.append("{}".format(rmsg[1]))
+            mpwriter.append("{}".format(rmsg[2]))
+            if len(rmsg) > 3:  # append the image.
+                assert len(rmsg) == 4
+                with open(rmsg[3], "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     async def removeUnknownImage(self, request):
         data = await request.json()
