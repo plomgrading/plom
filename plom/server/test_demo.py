@@ -38,6 +38,39 @@ class Test:
         assert r >= 0  # numScanned - numberComplete
         assert self.demo.process_is_running()
 
+    def test_get_ver_map(self, tmpdir):
+        tmpdir = Path(tmpdir)
+        from plom.create import download_version_map
+        from plom.create import version_map_from_file
+
+        # TODO: use connectmanager messenger, See MR !1275.
+        from plom.create import start_messenger
+
+        msgr = start_messenger(
+            self.env["PLOM_SERVER"], self.env["PLOM_MANAGER_PASSWORD"], verify_ssl=False
+        )
+        try:
+            qvmap = download_version_map(msgr=msgr)
+        finally:
+            msgr.closeUser()
+            msgr.stop()
+
+        f = tmpdir / "foo.csv"
+        subprocess.check_call(
+            split(f"python3 -m plom.create get-ver-map {f}"), env=self.env
+        )
+        assert f.exists()
+        qvmap2 = version_map_from_file(f)
+        assert qvmap == qvmap2
+
+        f = tmpdir / "foo.json"
+        subprocess.check_call(
+            split(f"python3 -m plom.create get-ver-map {f}"), env=self.env
+        )
+        assert f.exists()
+        qvmap2 = version_map_from_file(f)
+        assert qvmap == qvmap2
+
     def test_unid(self):
         # TODO: use connectmanager messenger, See MR !1275.
         from plom.create import start_messenger
