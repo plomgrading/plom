@@ -442,13 +442,11 @@ def MgetOriginalImages(self, task):
     with plomdb.atomic():
         gref = Group.get_or_none(Group.gid == task)
         if gref is None:  # should not happen
-            log.info("MgetOriginalImages - task {} not known".format(task))
-            return [False, "Task {} not known".format(task)]
+            log.info("MgetOriginalImages - task %s not known", task)
+            return (False, f"Task {task} not known")
         if not gref.scanned:
-            log.warning(
-                "MgetOriginalImages - task {} not completely scanned".format(task)
-            )
-            return [False, "Task {} is not completely scanned".format(task)]
+            log.warning("MgetOriginalImages - task %s not completely scanned", task)
+            return (False, f"Task {task} is not completely scanned")
         # get the first non-outdated annotation for the group
         aref = (
             gref.qgroups[0]
@@ -458,11 +456,10 @@ def MgetOriginalImages(self, task):
         )
         # this is the earliest non-outdated annotation = the original
 
-        # return [true, page1,..,page.n]
-        rval = [True]
+        rval = []
         for p in aref.apages.order_by(APage.order):
             rval.append(p.image.file_name)
-        return rval
+        return (True, rval)
 
 
 def MgetWholePaper(self, test_number, question):

@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
+from contextlib import ExitStack
+
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
@@ -454,18 +456,22 @@ class MarkHandler:
         """
 
         task = request.match_info["task"]
-        get_image_results = self.server.MgetOriginalImages(task)
-        # returns either [True, md5s, fname1, fname2,... ] or [False]
-        image_return_success = get_image_results[0]
+        ok, stuff = self.server.MgetOriginalImages(task)
 
-        if not image_return_success:
+        if not ok:
+            # TODO: "stuff" has an error message and there are several cases.
+            # This API soon-to-be-deprecated?  Worth fixing or not?  Issue #1953
             return web.Response(status=204)  # no content there
 
-        original_image_paths = get_image_results[1:]
-        with MultipartWriter("images") as multipart_writer:
-            for file_nam in original_image_paths:
-                multipart_writer.append(open(file_nam, "rb"))
-            return web.Response(body=multipart_writer, status=200)
+        filenames = stuff
+        # Context manager hackery for a list of open files, see Issue #1877 and
+        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
+        with ExitStack() as stack:
+            files = [stack.enter_context(open(f, "rb")) for f in filenames]
+            with MultipartWriter("images") as mpwriter:
+                for fh in files:
+                    mpwriter.append(fh)
+                return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
@@ -616,13 +622,17 @@ class MarkHandler:
         if not whole_paper_response[0]:
             return web.Response(status=404)
 
-        with MultipartWriter("images") as multipart_writer:
-            pages_data = whole_paper_response[1]
-            all_pages_paths = whole_paper_response[2:]
-            multipart_writer.append_json(pages_data)
-            for file_name in all_pages_paths:
-                multipart_writer.append(open(file_name, "rb"))
-            return web.Response(body=multipart_writer, status=200)
+        pages_data = whole_paper_response[1]
+        filenames = whole_paper_response[2:]
+        # Context manager hackery for a list of open files, see Issue #1877 and
+        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
+        with ExitStack() as stack:
+            files = [stack.enter_context(open(f, "rb")) for f in filenames]
+            with MultipartWriter("images") as mpwriter:
+                mpwriter.append_json(pages_data)
+                for fh in files:
+                    mpwriter.append(fh)
+                return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/MK/TMP/whole/{number}/{question}")
     @authenticate_by_token_required_fields([])
