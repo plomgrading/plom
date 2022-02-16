@@ -636,16 +636,20 @@ class UploadHandler:
 
         rmsg = self.server.checkTPage(data["test"], data["page"])
         # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
-        if rmsg[0]:
-            with MultipartWriter("images") as mpwriter:
-                # append "collision" or "scanned"
-                mpwriter.append("{}".format(rmsg[1]))
-                mpwriter.append("{}".format(rmsg[2]))  # append "version"
-                if len(rmsg) == 4:  # append the image.
-                    mpwriter.append(open(rmsg[3], "rb"))
-                return web.Response(body=mpwriter, status=200)
-        else:
+        if not rmsg[0]:
             return web.Response(status=404)  # couldn't find that test/question
+        if len(rmsg) == 3:
+            with MultipartWriter("images") as mpwriter:
+                mpwriter.append("{}".format(rmsg[1]))
+                mpwriter.append("{}".format(rmsg[2]))
+                return web.Response(body=mpwriter, status=200)
+        assert len(rmsg) == 4
+        with open(rmsg[3], "rb") as fh:
+            with MultipartWriter("images") as mpwriter:
+                mpwriter.append("{}".format(rmsg[1]))
+                mpwriter.append("{}".format(rmsg[2]))
+                mpwriter.append(fh)
+                return web.Response(body=mpwriter, status=200)
 
     async def removeUnknownImage(self, request):
         data = await request.json()
