@@ -449,7 +449,8 @@ class Manager(QWidget):
         log.debug("Something has triggered a shutdown event")
         log.debug("Revoking login token")
         try:
-            self.msgr.closeUser()
+            if self.msgr:
+                self.msgr.closeUser()
         except PlomAuthenticationException:
             log.warn("User tried to logout but was already logged out.")
             pass
