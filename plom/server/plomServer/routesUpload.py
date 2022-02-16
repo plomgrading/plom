@@ -595,7 +595,7 @@ class UploadHandler:
         if not ok:
             # 2nd return value is error message in this case
             raise web.HTTPNotFound(reason=filenames)
-        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
         with MultipartWriter("images") as mpwriter:
             for f in filenames:
                 with open(f, "rb") as fh:
@@ -613,7 +613,7 @@ class UploadHandler:
         if not ok:
             # 2nd return value is error message in this case
             raise web.HTTPNotFound(reason=filenames)
-        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
         with MultipartWriter("images") as mpwriter:
             for f in filenames:
                 with open(f, "rb") as fh:

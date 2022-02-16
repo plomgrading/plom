@@ -462,7 +462,7 @@ class MarkHandler:
             return web.Response(status=204)  # no content there
 
         filenames = stuff
-        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
         with MultipartWriter("images") as mpwriter:
             for f in filenames:
                 with open(f, "rb") as fh:
@@ -621,7 +621,7 @@ class MarkHandler:
 
         pages_data = whole_paper_response[1]
         filenames = whole_paper_response[2:]
-        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
         with MultipartWriter("images") as mpwriter:
             mpwriter.append_json(pages_data)
             for f in filenames:
