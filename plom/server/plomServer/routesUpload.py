@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
+from contextlib import ExitStack
+
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import undo_json_packing_of_version_map
@@ -591,17 +593,18 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.getQuestionImages(data["test"], data["question"])
-        # returns either [True, fname1,fname2,..,fname.n] or [False, error]
-        if rmsg[0]:
-            # insert number of parts [n, fn.1,fn.2,...fn.n]
+        ok, filenames = self.server.getQuestionImages(data["test"], data["question"])
+        if not ok:
+            # 2nd return value is error message in this case
+            raise web.HTTPNotFound(reason=filenames)
+        # Context manager hackery for a list of open files, see Issue #1877 and
+        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
+        with ExitStack() as stack:
+            files = [stack.enter_context(open(f, "rb")) for f in filenames]
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append(str(len(rmsg) - 1))
-                for fn in rmsg[1:]:
-                    mpwriter.append(open(fn, "rb"))
+                for fh in files:
+                    mpwriter.append(fh)
                 return web.Response(body=mpwriter, status=200)
-        else:
-            return web.Response(status=404)  # couldn't find that test/question
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
@@ -609,20 +612,18 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.getAllTestImages(data["test"])
-        # returns either [True, fname1,fname2,..,fname.n] or [False, error]
-        if rmsg[0]:
-            # insert number of parts [n, fn.1,fn.2,...fn.n]
+        ok, filenames = self.server.getAllTestImages(data["test"])
+        if not ok:
+            # 2nd return value is error message in this case
+            raise web.HTTPNotFound(reason=filenames)
+        # Context manager hackery for a list of open files, see Issue #1877 and
+        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
+        with ExitStack() as stack:
+            files = [stack.enter_context(open(f, "rb")) for f in filenames]
             with MultipartWriter("images") as mpwriter:
-                mpwriter.append(str(len(rmsg) - 1))
-                for fn in rmsg[1:]:
-                    if fn == "":
-                        mpwriter.append("")
-                    else:
-                        mpwriter.append(open(fn, "rb"))
+                for fh in files:
+                    mpwriter.append(fh)
                 return web.Response(body=mpwriter, status=200)
-        else:
-            return web.Response(status=404)  # couldn't find that test/question
 
     async def checkTPage(self, request):
         data = await request.json()
