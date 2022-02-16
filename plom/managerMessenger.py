@@ -900,24 +900,17 @@ class ManagerMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
-            # response is [n, image1, image2,... image.n]
+            # response is [image1, image2,... image.n]
             imageList = []
-            i = 0  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                if i > 0:
-                    imageList.append(BytesIO(img.content).getvalue())
-                i += 1
+                imageList.append(BytesIO(img.content).getvalue())
             return imageList
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}/{}.".format(
-                        testNumber, questionNumber
-                    )
-                ) from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -934,22 +927,17 @@ class ManagerMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
-            # response is [n, image1, image2,... image.n]
+            # response is [image1, image2,... image.n]
             imageList = []
-            i = 0  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                if i > 0:
-                    imageList.append(BytesIO(img.content).getvalue())
-                i += 1
+                imageList.append(BytesIO(img.content).getvalue())
             return imageList
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    f"Cannot find image file for {testNumber}."
-                ) from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

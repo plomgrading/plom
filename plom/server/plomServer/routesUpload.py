@@ -591,17 +591,17 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.getQuestionImages(data["test"], data["question"])
-        # returns either [True, fname1,fname2,..,fname.n] or [False, error]
-        if rmsg[0]:
-            # insert number of parts [n, fn.1,fn.2,...fn.n]
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append(str(len(rmsg) - 1))
-                for fn in rmsg[1:]:
-                    mpwriter.append(open(fn, "rb"))
-                return web.Response(body=mpwriter, status=200)
-        else:
-            return web.Response(status=404)  # couldn't find that test/question
+        ok, filenames = self.server.getQuestionImages(data["test"], data["question"])
+        if not ok:
+            # 2nd return value is error message in this case
+            raise web.HTTPNotFound(reason=filenames)
+        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
+        with MultipartWriter("images") as mpwriter:
+            for f in filenames:
+                with open(f, "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
@@ -609,20 +609,17 @@ class UploadHandler:
         if not data["user"] == "manager":
             return web.Response(status=401)
 
-        rmsg = self.server.getAllTestImages(data["test"])
-        # returns either [True, fname1,fname2,..,fname.n] or [False, error]
-        if rmsg[0]:
-            # insert number of parts [n, fn.1,fn.2,...fn.n]
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append(str(len(rmsg) - 1))
-                for fn in rmsg[1:]:
-                    if fn == "":
-                        mpwriter.append("")
-                    else:
-                        mpwriter.append(open(fn, "rb"))
-                return web.Response(body=mpwriter, status=200)
-        else:
-            return web.Response(status=404)  # couldn't find that test/question
+        ok, filenames = self.server.getAllTestImages(data["test"])
+        if not ok:
+            # 2nd return value is error message in this case
+            raise web.HTTPNotFound(reason=filenames)
+        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
+        with MultipartWriter("images") as mpwriter:
+            for f in filenames:
+                with open(f, "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     async def checkTPage(self, request):
         data = await request.json()
@@ -635,16 +632,17 @@ class UploadHandler:
 
         rmsg = self.server.checkTPage(data["test"], data["page"])
         # returns either [True, "collision", version, fname], [True, "scanned", version] or [False]
-        if rmsg[0]:
-            with MultipartWriter("images") as mpwriter:
-                # append "collision" or "scanned"
-                mpwriter.append("{}".format(rmsg[1]))
-                mpwriter.append("{}".format(rmsg[2]))  # append "version"
-                if len(rmsg) == 4:  # append the image.
-                    mpwriter.append(open(rmsg[3], "rb"))
-                return web.Response(body=mpwriter, status=200)
-        else:
+        if not rmsg[0]:
             return web.Response(status=404)  # couldn't find that test/question
+        with MultipartWriter("images") as mpwriter:
+            mpwriter.append("{}".format(rmsg[1]))
+            mpwriter.append("{}".format(rmsg[2]))
+            if len(rmsg) > 3:  # append the image.
+                assert len(rmsg) == 4
+                with open(rmsg[3], "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     async def removeUnknownImage(self, request):
         data = await request.json()

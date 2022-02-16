@@ -257,11 +257,13 @@ class IDHandler:
         with MultipartWriter("images") as writer:
             for file_name in output:
                 try:
-                    writer.append(open(file_name, "rb"))
+                    with open(file_name, "rb") as fh:
+                        raw_bytes = fh.read()
                 except OSError as e:  # file not found, permission, etc
                     raise web.HTTPInternalServerError(
                         reason=f"Problem reading image: {e}"
                     )
+                writer.append(raw_bytes)
             return web.Response(body=writer, status=200)
 
     # @routes.get("/ID/tasks/available")
@@ -409,15 +411,15 @@ class IDHandler:
         if allow_access is False:
             return web.Response(status=410)
 
-        log.debug("Appending file {}".format(random_image_paths))
+        image_paths = random_image_paths[1:]
+        log.debug("Appending files {}".format(image_paths))
         with MultipartWriter("images") as writer:
-            image_paths = random_image_paths[1:]
-
             for file_name in image_paths:
-                if os.path.isfile(file_name):
-                    writer.append(open(file_name, "rb"))
-                else:
+                if not os.path.isfile(file_name):
                     return web.Response(status=404)
+                with open(file_name, "rb") as fh:
+                    raw_bytes = fh.read()
+                writer.append(raw_bytes)
             return web.Response(body=writer, status=200)
 
     @authenticate_by_token_required_fields(["user"])
