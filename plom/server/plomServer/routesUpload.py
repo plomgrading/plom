@@ -3,8 +3,6 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-from contextlib import ExitStack
-
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from plom import undo_json_packing_of_version_map
@@ -597,14 +595,13 @@ class UploadHandler:
         if not ok:
             # 2nd return value is error message in this case
             raise web.HTTPNotFound(reason=filenames)
-        # Context manager hackery for a list of open files, see Issue #1877 and
-        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
-        with ExitStack() as stack:
-            files = [stack.enter_context(open(f, "rb")) for f in filenames]
-            with MultipartWriter("images") as mpwriter:
-                for fh in files:
-                    mpwriter.append(fh)
-                return web.Response(body=mpwriter, status=200)
+        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        with MultipartWriter("images") as mpwriter:
+            for f in filenames:
+                with open(f, "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/admin/testImages")
     @authenticate_by_token_required_fields(["user", "test"])
@@ -616,14 +613,13 @@ class UploadHandler:
         if not ok:
             # 2nd return value is error message in this case
             raise web.HTTPNotFound(reason=filenames)
-        # Context manager hackery for a list of open files, see Issue #1877 and
-        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
-        with ExitStack() as stack:
-            files = [stack.enter_context(open(f, "rb")) for f in filenames]
-            with MultipartWriter("images") as mpwriter:
-                for fh in files:
-                    mpwriter.append(fh)
-                return web.Response(body=mpwriter, status=200)
+        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        with MultipartWriter("images") as mpwriter:
+            for f in filenames:
+                with open(f, "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     async def checkTPage(self, request):
         data = await request.json()

@@ -3,8 +3,6 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
-from contextlib import ExitStack
-
 from aiohttp import web, MultipartWriter, MultipartReader
 
 from .routeutils import authenticate_by_token, authenticate_by_token_required_fields
@@ -464,14 +462,13 @@ class MarkHandler:
             return web.Response(status=204)  # no content there
 
         filenames = stuff
-        # Context manager hackery for a list of open files, see Issue #1877 and
-        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
-        with ExitStack() as stack:
-            files = [stack.enter_context(open(f, "rb")) for f in filenames]
-            with MultipartWriter("images") as mpwriter:
-                for fh in files:
-                    mpwriter.append(fh)
-                return web.Response(body=mpwriter, status=200)
+        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        with MultipartWriter("images") as mpwriter:
+            for f in filenames:
+                with open(f, "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
@@ -624,15 +621,14 @@ class MarkHandler:
 
         pages_data = whole_paper_response[1]
         filenames = whole_paper_response[2:]
-        # Context manager hackery for a list of open files, see Issue #1877 and
-        # https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack
-        with ExitStack() as stack:
-            files = [stack.enter_context(open(f, "rb")) for f in filenames]
-            with MultipartWriter("images") as mpwriter:
-                mpwriter.append_json(pages_data)
-                for fh in files:
-                    mpwriter.append(fh)
-                return web.Response(body=mpwriter, status=200)
+        # suboptimal read to bytes instead of appending handle (Issue #1877)
+        with MultipartWriter("images") as mpwriter:
+            mpwriter.append_json(pages_data)
+            for f in filenames:
+                with open(f, "rb") as fh:
+                    b = fh.read()
+                mpwriter.append(b)
+            return web.Response(body=mpwriter, status=200)
 
     # @routes.get("/MK/TMP/whole/{number}/{question}")
     @authenticate_by_token_required_fields([])
