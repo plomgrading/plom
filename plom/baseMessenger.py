@@ -322,7 +322,7 @@ class BaseMessenger:
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
-                elif response.status_code in (404, 409):
+                elif response.status_code == 409:
                     raise PlomServerNotReady(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
         # JSON casts dict keys to str, force back to ints

@@ -927,9 +927,7 @@ class UploadHandler:
         Returns:
             dict: keyed by question number.  Note keys will be strings b/c
                 of json limitations; you may need to convert back to int.
-                Fails with 404/409 if there is no version map: 404 if
-                the server has no spec and 409 if the server has a spec
-                but the version map database has not been built yet.
+                Fails with 409 if there is no version map.
         """
         paper_idx = request.match_info["papernum"]
         vers = self.server.DB.getQuestionVersions(paper_idx)
