@@ -230,28 +230,45 @@ def interactively_get_course(user):
     return course
 
 
-def interactively_get_section(course):
+def interactively_get_section(course, can_choose_none=True):
+    """Choose a section (or not choice) from a menu.
+
+    Returns:
+        None/canvasapi.section.Section: None or a section object.
+    """
     print(f"\nSelect a Section from {course}.\n")
     print("  Available Sections:")
     print("  --------------------------------------------------------------------")
 
+    if not can_choose_none:
+        raise NotImplementedError("Sorry, not implemented yet")
+
     sections = list(course.get_sections())
-    for (i, section) in enumerate(sections):
+    i = 0
+    if can_choose_none:
+        print(f"    {i}: Do not choose a section (None)")
+        i += 1
+    for section in sections:
         print(f"    {i}: {section.name} ({section.id})")
+        i += 1
 
     while True:
         choice = input("\n  Choice [0-n]: ")
         if not (set(choice) <= set(string.digits)):
             print("Please respond with a nonnegative integer.")
-        elif int(choice) >= len(sections):
+        elif int(choice) >= len(sections) + 1:
             print("Choice too large.")
         else:
             choice = int(choice)
             print(
                 "  --------------------------------------------------------------------"
             )
-            section = sections[choice]
-            print(f"  You selected {choice}: {section.name} ({section.id})")
+            if choice == 0:
+                section = None
+                print(f"  You selected {choice}: None")
+            else:
+                section = sections[choice - 1]
+                print(f"  You selected {choice}: {section.name} ({section.id})")
             confirmation = input("  Confirm choice? [y/n] ")
             if confirmation in ["", "\n", "y", "Y"]:
                 print("\n")
