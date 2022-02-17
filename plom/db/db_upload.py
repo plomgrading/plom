@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
-# Copyright (C) 2022 Joey Shi
 
 from datetime import datetime
 import logging
@@ -13,7 +12,6 @@ from plom.db.tables import plomdb
 from plom.db.tables import Bundle, IDGroup, Image, QGroup, Test, User
 from plom.db.tables import Annotation, APage, DNMPage, EXPage, HWPage, IDPage, TPage
 from plom.db.tables import CollidingPage, DiscardedPage, UnknownPage
-
 
 log = logging.getLogger("DB")
 
@@ -59,15 +57,15 @@ def attachImageToTPage(self, test_ref, page_ref, image_ref):
 
 
 def uploadTestPage(
-    self,
-    test_number,
-    page_number,
-    version,
-    original_name,
-    file_name,
-    md5,
-    bundle_name,
-    bundle_order,
+        self,
+        test_number,
+        page_number,
+        version,
+        original_name,
+        file_name,
+        md5,
+        bundle_name,
+        bundle_order,
 ):
     # return value is either [True, <success message>] or
     # [False, stuff] - but need to distinguish between "discard this image" and "you should perhaps keep this image"
@@ -138,7 +136,7 @@ def uploadTestPage(
 
 
 def replaceMissingTestPage(
-    self, test_number, page_number, version, original_name, file_name, md5
+        self, test_number, page_number, version, original_name, file_name, md5
 ):
     # make sure owners of tasks in that test not logged in
     tref = Test.get_or_none(Test.test_number == test_number)
@@ -186,9 +184,9 @@ def createNewHWPage(self, test_ref, qdata_ref, order, image_ref):
         # get the first non-outdated annotation for the group
         aref = (
             gref.qgroups[0]
-            .annotations.where(Annotation.outdated == False)  # noqa: E712
-            .order_by(Annotation.edition)
-            .get()
+                .annotations.where(Annotation.outdated == False)  # noqa: E712
+                .order_by(Annotation.edition)
+                .get()
         )
         # create image, hwpage, annotationpage and link.
         pref = HWPage.create(
@@ -230,15 +228,15 @@ def getMissingDNMPages(self, test_number):
 
 
 def uploadHWPage(
-    self,
-    sid,
-    questions,
-    order,
-    original_name,
-    file_name,
-    md5,
-    bundle_name,
-    bundle_order,
+        self,
+        sid,
+        questions,
+        order,
+        original_name,
+        file_name,
+        md5,
+        bundle_name,
+        bundle_order,
 ):
     # first of all find the test corresponding to that sid.
     iref = IDGroup.get_or_none(student_id=sid)
@@ -283,8 +281,8 @@ def uploadHWPage(
             # we found a page with that order, so we need to put the uploaded page at the end.
             lastOrder = (
                 HWPage.select(fn.MAX(HWPage.order))
-                .where(HWPage.test == tref, HWPage.group == gref)
-                .scalar()
+                    .where(HWPage.test == tref, HWPage.group == gref)
+                    .scalar()
             )
             log.info(
                 "hwpage order collision: question={}, order={}; changing to lastOrder+1={})".format(
@@ -394,7 +392,7 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
 
 
 def uploadUnknownPage(
-    self, original_name, file_name, order, md5, bundle_name, bundle_order
+        self, original_name, file_name, order, md5, bundle_name, bundle_order
 ):
     # TODO - remove 'order' here - it is superseded by 'bundle_order'
 
@@ -434,15 +432,15 @@ def uploadUnknownPage(
 
 
 def uploadCollidingPage(
-    self,
-    test_number,
-    page_number,
-    version,
-    original_name,
-    file_name,
-    md5,
-    bundle_name,
-    bundle_order,
+        self,
+        test_number,
+        page_number,
+        version,
+        original_name,
+        file_name,
+        md5,
+        bundle_name,
+        bundle_order,
 ):
     """Upload given file as a collision of tpage given by tpv.
 
@@ -1111,11 +1109,6 @@ def getPageFromBundle(self, bundle_name, bundle_order):
 
 
 def setImageRotation(self, file_name, rotation):
-    """Updates the rotation in the metadata of the image with the given name"""
     iref = Image.get_or_none(Image.file_name == file_name)
-    if iref is None:
-        return [False, "No image with that file name"]
-    else:
+    if iref is not None:
         iref.rotation = rotation
-        iref.save()
-        return [True, None]
