@@ -59,6 +59,8 @@ def download_classlist(course, section=None, server_dir="."):
 
     conversion = [("Internal Canvas ID", "Student", "SIS User ID")]
 
+    secnames = {}
+
     for stud in students:
         stud_name, stud_id, stud_sis_id, stud_sis_login_id = (
             stud.user["sortable_name"],
@@ -112,9 +114,11 @@ def download_classlist(course, section=None, server_dir="."):
             default_sis_login_id += 1
 
         # TODO: presumably this is just `section` when that is non-None?
-        # TODO: this is probably really slow to call get_section in a loop
-        tmp = stud.course_section_id
-        sec = course.get_section(tmp)
+        section_id = stud.course_section_id
+        if not secnames.get(section_id):
+            # caching section names
+            sec = course.get_section(section_id)
+            secnames[section_id] = sec.name
 
         # Add this information to the table we'll write out to the CSV
         classlist += [
@@ -123,7 +127,7 @@ def download_classlist(course, section=None, server_dir="."):
                 stud_id,
                 stud_sis_id,
                 stud_sis_login_id,
-                sec.name,
+                secnames[section_id],
                 stud_sis_id,
             )
         ]
