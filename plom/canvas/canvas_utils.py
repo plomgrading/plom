@@ -13,17 +13,23 @@ from canvasapi import Canvas
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 
-def download_classlist(course, server_dir="."):
+def download_classlist(course, section=None, server_dir="."):
     """
     Download and .csv of the classlist and various conversion stables.
 
     Args:
-        course (canvasapi.course.Course/canvasapi.section.Section): a
-            Course or Section object which we query for enrollment.
-        server_dir (str/pathlib.Path): where to save the file.
+        course (canvasapi.course.Course): we will query for enrollment.
+
+    Keyword Args:
+        server_dir (str/pathlib.Path): where to save the file.  Defaults
+            to current working directory.
+        section (None/canvasapi.section.Section): Which section should
+            we take enrollment from?  If None (default), take all
+            students directly from `course`.  Note at least in some cases
+            omitting `section` can lead to duplicate students.
 
     Returns:
-        None
+        None: But saves files into ``server_dir``.
 
     TODO: spreadsheet with entries of the form (student ID, student name)
     TODO: so is it the plom classlist or something else?
@@ -35,7 +41,10 @@ def download_classlist(course, server_dir="."):
     function needs a serious review.
     """
     server_dir = Path(server_dir)
-    enrollments_raw = course.get_enrollments()
+    if section:
+        enrollments_raw = section.get_enrollments()
+    else:
+        enrollments_raw = course.get_enrollments()
     students = [_ for _ in enrollments_raw if _.role == "StudentEnrollment"]
 
     # FIXME: This should probably contain checks to make sure we get
