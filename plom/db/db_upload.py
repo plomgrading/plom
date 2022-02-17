@@ -1114,3 +1114,4 @@ def setImageRotation(self, file_name, rotation):
     iref = Image.get_or_none(Image.file_name == file_name)
     if iref is not None:
         iref.rotation = rotation
+        iref.save()
