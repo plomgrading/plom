@@ -111,10 +111,10 @@ def download_classlist(course, section=None, server_dir="."):
             stud_sis_login_id = (12 - len(stud_sis_login_id)) * "0" + stud_sis_login_id
             default_sis_login_id += 1
 
-        # TODO: get the project section for each student
-        # tmp = stud.course_section_id
-        # TODO: if its a Course we can: so maybe this fcn should take both Course and Section
-        # sec = course.get_section(tmp)
+        # TODO: presumably this is just `section` when that is non-None?
+        # TODO: this is probably really slow to call get_section in a loop
+        tmp = stud.course_section_id
+        sec = course.get_section(tmp)
 
         # Add this information to the table we'll write out to the CSV
         classlist += [
@@ -123,7 +123,7 @@ def download_classlist(course, section=None, server_dir="."):
                 stud_id,
                 stud_sis_id,
                 stud_sis_login_id,
-                course.name,  # TODO: want section name here
+                sec.name,
                 stud_sis_id,
             )
         ]
