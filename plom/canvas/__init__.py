@@ -13,7 +13,9 @@ from .canvas_utils import (
     get_conversion_table,
     get_courses_teaching,
     get_course_by_id_number,
+    get_section_by_id_number,
     get_sis_id_to_canvas_id_table,
     interactively_get_assignment,
     interactively_get_course,
+    interactively_get_section,
 )

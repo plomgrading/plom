@@ -230,7 +230,35 @@ def interactively_get_course(user):
     return course
 
 
-def interactively_get_assignment(user, course):
+def interactively_get_section(course):
+    print(f"\nSelect a Section from {course}.\n")
+    print("  Available Sections:")
+    print("  --------------------------------------------------------------------")
+
+    sections = list(course.get_sections())
+    for (i, section) in enumerate(sections):
+        print(f"    {i}: {section.name} ({section.id})")
+
+    while True:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(sections):
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            section = sections[choice]
+            print(f"  You selected {choice}: {section.name} ({section.id})")
+            confirmation = input("  Confirm choice? [y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                print("\n")
+                return section
+
+
+def interactively_get_assignment(course):
     print(f"\nSelect an assignment for {course}.\n")
     print("  Available assignments:")
     print("  --------------------------------------------------------------------")
@@ -282,6 +310,13 @@ def get_assignment_by_id_number(course, num):
         if assignment.id == num:
             return assignment
     raise ValueError(f"Could not find assignment matching id={num}")
+
+
+def get_section_by_id_number(course, num):
+    for section in course.get_sections():
+        if section.id == num:
+            return section
+    raise ValueError(f"Could not find section matching id={num}")
 
 
 def canvas_login(api_url=None, api_key=None):

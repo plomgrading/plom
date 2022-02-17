@@ -55,8 +55,10 @@ from plom.canvas import (
     get_assignment_by_id_number,
     get_conversion_table,
     get_course_by_id_number,
+    get_section_by_id_number,
     interactively_get_assignment,
     interactively_get_course,
+    interactively_get_section,
 )
 import plom.scan
 
@@ -380,6 +382,16 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
+    "--section",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas Section ID (an integer N).
+        Interactively prompt from a list if omitted.
+    """,
+)
+parser.add_argument(
     "--assignment",
     type=int,
     metavar="M",
@@ -414,10 +426,17 @@ if __name__ == "__main__":
         course = get_course_by_id_number(args.course, user)
     print(f"Ok using course: {course}")
 
+    if args.section:
+        section = get_section_by_id_number(course, args.section)
+    else:
+        section = interactively_get_section(course)
+        print(f'Note: you can use "--section {section.id}" to reselect.\n')
+    print(f"Ok using course: {course}")
+
     if args.assignment:
         assignment = get_assignment_by_id_number(course, args.assignment)
     else:
-        assignment = interactively_get_assignment(user, course)
+        assignment = interactively_get_assignment(course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok downloading from Assignment: {assignment}")
 
