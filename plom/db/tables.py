@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Joey Shi
 
 import peewee as pw
 
