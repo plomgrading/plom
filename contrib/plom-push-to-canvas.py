@@ -178,7 +178,7 @@ if __name__ == "__main__":
     if args.assignment:
         assignment = get_assignment_by_id_number(course, args.assignment)
     else:
-        assignment = interactively_get_assignment(user, course)
+        assignment = interactively_get_assignment(course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
 
