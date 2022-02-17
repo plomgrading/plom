@@ -18,7 +18,8 @@ def download_classlist(course, server_dir="."):
     Download and .csv of the classlist and various conversion stables.
 
     Args:
-        course: A canvasapi course object.
+        course (canvasapi.course.Course/canvasapi.section.Section): a
+            Course or Section object which we query for enrollment.
         server_dir (str/pathlib.Path): where to save the file.
 
     Returns:
@@ -26,15 +27,17 @@ def download_classlist(course, server_dir="."):
 
     TODO: spreadsheet with entries of the form (student ID, student name)
     TODO: so is it the plom classlist or something else?
+
+    TODO: this code is filled with comments/TODOs about collisions...
+
+    Missing information doesn't reaaaaaaaaally matter to us so we'll
+    just fill it in as needed.  That is a questionable statement; this
+    function needs a serious review.
     """
     server_dir = Path(server_dir)
     enrollments_raw = course.get_enrollments()
     students = [_ for _ in enrollments_raw if _.role == "StudentEnrollment"]
 
-    # TODO: doc this in the docstring!
-    # Missing information doesn't reaaaaaaaaally matter to us so we'll
-    # just fill it in as needed.
-    #
     # FIXME: This should probably contain checks to make sure we get
     # no collisions.
     default_id = 0  # ? not sure how many digits this can be. I've seen 5-7
@@ -99,6 +102,11 @@ def download_classlist(course, server_dir="."):
             stud_sis_login_id = (12 - len(stud_sis_login_id)) * "0" + stud_sis_login_id
             default_sis_login_id += 1
 
+        # TODO: get the project section for each student
+        # tmp = stud.course_section_id
+        # TODO: if its a Course we can: so maybe this fcn should take both Course and Section
+        # sec = course.get_section(tmp)
+
         # Add this information to the table we'll write out to the CSV
         classlist += [
             (
@@ -106,7 +114,7 @@ def download_classlist(course, server_dir="."):
                 stud_id,
                 stud_sis_id,
                 stud_sis_login_id,
-                course.name,
+                course.name,  # TODO: want section name here
                 stud_sis_id,
             )
         ]
