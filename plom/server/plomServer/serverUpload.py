@@ -316,12 +316,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
     status, code, msg = self.DB.moveUnknownToTPage(file_name, test, page)
     if status:
         # rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, file_name],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        rotatePage(file_name, rotation)
         return (True, "testPage", None)
 
     if not status and code != "scanned":
@@ -331,12 +326,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
     status, code, msg = self.DB.moveUnknownToCollision(file_name, test, page)
     if status:
         # rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, file_name],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        rotatePage(file_name, rotation)
         return (True, "collision", None)
     return (status, code, msg)
 
@@ -345,12 +335,7 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToExtraPage(fname, test, question)
     if rval[0]:
         # moved successfully. now rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        rotatePage(fname, rotation)
     return rval
 
 
@@ -358,12 +343,7 @@ def unknownToHWPage(self, fname, test, questions, rotation):
     rval = self.DB.moveUnknownToHWPage(fname, test, questions)
     if rval[0]:
         # moved successfully. now rotate the page
-        subprocess.run(
-            ["mogrify", "-quiet", "-rotate", rotation, fname],
-            stderr=subprocess.STDOUT,
-            shell=False,
-            check=True,
-        )
+        rotatePage(fname, rotation)
     return rval
 
 
@@ -450,6 +430,15 @@ def getImagesInBundle(self, bundle_name):
 
 def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
+
+
+def rotatePage(file_name, rotation):
+    subprocess.run(
+        ["mogrify", "-quiet", "-rotate", rotation, file_name],
+        stderr=subprocess.STDOUT,
+        shell=False,
+        check=True,
+    )
 
 
 ##
