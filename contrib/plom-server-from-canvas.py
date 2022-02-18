@@ -478,7 +478,9 @@ if __name__ == "__main__":
     print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
     del pp
 
-    plom_server = initialize(course, section, assignment, args.marks, server_dir=basedir)
+    plom_server = initialize(
+        course, section, assignment, args.marks, server_dir=basedir
+    )
 
     print("\n\ngetting submissions from canvas...")
     get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
