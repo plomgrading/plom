@@ -69,6 +69,7 @@ from .origscanviewer import (
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
+from .useful_classes import WarnMsg
 from .useful_classes import (
     ErrorMessage,
     SimpleQuestion,
@@ -1454,10 +1455,11 @@ class Annotator(QWidget):
 
         # check annotations are inside the margins
         if not self.scene.checkAllObjectsInside():
-            msg = ErrorMessage(
-                "Some annotations are outside the margins. Please move or delete them before saving."
-            )
-            msg.exec_()
+            # TODO: add details somehow?
+            _msg = "Some annotations are outside the margins."
+            _msg += " Please move or delete them before saving."
+
+            WarnMsg(self, _msg, details="").exec_()
             return False
 
         # make sure not still in "neutral" marking-state = no score given
