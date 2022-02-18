@@ -15,7 +15,7 @@ from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 def download_classlist(course, *, section=None, server_dir="."):
     """
-    Download and .csv of the classlist and various conversion stables.
+    Download .csv of the classlist and various conversion tables.
 
     Args:
         course (canvasapi.course.Course): we will query for enrollment.

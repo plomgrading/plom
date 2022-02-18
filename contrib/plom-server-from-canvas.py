@@ -127,7 +127,7 @@ def make_toml(assignment, marks, *, server_dir="."):
         f.write(toml)
 
 
-def initialize(course, section=None, assignment, marks, *, server_dir="."):
+def initialize(course, section, assignment, marks, *, server_dir="."):
     """
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
