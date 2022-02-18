@@ -440,7 +440,7 @@ def setPageRotation(self, file_name, rotation):
     #     shell=False,
     #     check=True,
     # )
-    self.DB.setImageRotation(file_name, rotation)
+    return self.DB.setImageRotation(file_name, rotation)
 
 
 ##
