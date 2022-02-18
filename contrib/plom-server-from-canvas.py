@@ -136,7 +136,7 @@ def initialize(course, section=None, assignment, marks, *, server_dir="."):
     server_dir.mkdir(exist_ok=True)
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, section, server_dir=server_dir)
+    download_classlist(course, section=section, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, server_dir=server_dir)

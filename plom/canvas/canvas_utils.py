@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 """Misc utils for interacting with Canvas"""
 
@@ -13,7 +13,7 @@ from canvasapi import Canvas
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 
-def download_classlist(course, section=None, server_dir="."):
+def download_classlist(course, *, section=None, server_dir="."):
     """
     Download and .csv of the classlist and various conversion stables.
 
