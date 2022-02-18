@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * ``plom-create get-ver-map`` command to extract the version map from a running server.
+* Canvas utilities can now take student lists from Sections not just Courses.
 
 ### Changed
 
