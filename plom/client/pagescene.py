@@ -2286,6 +2286,7 @@ class PageScene(QGraphicsScene):
         Returns:
             True if all objects are within the page's bounds, false otherwise.
         """
+        out_objs = []
         for X in self.items():
             # check all items that are not the image or scorebox
             if (X is self.underImage) or (X is self.scoreBox):
@@ -2302,8 +2303,8 @@ class PageScene(QGraphicsScene):
                 continue
             # make sure is inside image
             if not self.itemWithinBounds(X):
-                return False
-        return True
+                out_objs.append(X)
+        return out_objs
 
     def updateGhost(self, dlt, txt, legal=True):
         """
