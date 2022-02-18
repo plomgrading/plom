@@ -94,3 +94,50 @@ Plom uses an SQLite database; it
 [should not be run on NFS storage](https://gitlab.com/plom/plom/issues/811).
 Apparently "people" know this but we were just as "thrilled" as you probably
 are to discover it on a production server.
+
+
+### How can I clone a server?
+
+For example, how can I make another copy of a running server?  One way
+is to copy the filesystem of the running server, then modify
+``serverDetails.toml`` to change the port.
+Its also possible to make a new server from scratch that accepts scans
+intended for the old server.  This is discussed next.
+
+
+### How do I reset my server to the pre-scanned state?
+
+You need two things: the ``question_version_map.csv`` file which you
+can get with the command line tools: ``plom-create get-ver-map``.
+This is important because Plom needs to know which versions to expect
+for which question.  You can upload this to your new server using
+``plom-create make-db --from-file old_qvmap.csv``.
+
+You will also need the ``verifiedSpec.toml`` which is harder to get:
+it can be extracted from the file system of your old server by copying
+``specAndDatabase/verifiedSpec.toml``.
+
+There are two fields in ``verifiedSpec.toml`` that are probably not
+in your original spec file:
+```
+privateSeed = "0052084227513987"
+publicCode = "302386"
+```
+Calling ``plom-create uploadspec verifiedSpec.toml`` to push this spec
+into the new server will (currently) populate those fields as-is,
+thus ensuring the server will be able to read in physical papers
+printed from the original server.  In future, this might require
+more effort such as passing a ``--force``.
+
+If you do not have access to the file system of your old server, it
+should be possible to extract the `publicCode` from the QR codes of
+the printed pages.  See the source code ``plom/tpv_utils.py`` for
+hints on how to do this.  The `privateSeed` should not be necessary
+for this procedure.
+
+<!-- todo: switch to ReST and use alert box here, and fix links -->
+
+One should be very carefully doing this sort of thing: the
+`publicCode` exists to make it difficult to accidentally upload the
+papers to the wrong server.  This question shows you how to defeat
+that mechanism.
