@@ -1110,7 +1110,11 @@ def getPageFromBundle(self, bundle_name, bundle_order):
 
 
 def setImageRotation(self, file_name, rotation):
+    """Updates the rotation in the metadata of the image with the given name"""
     iref = Image.get_or_none(Image.file_name == file_name)
-    if iref is not None:
+    if iref is None:
+        return [False, "No image with that file name"]
+    else:
         iref.rotation = rotation
         iref.save()
+        return [True, None]
