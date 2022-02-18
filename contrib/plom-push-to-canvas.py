@@ -44,18 +44,10 @@ from plom.canvas import (
     get_conversion_table,
     get_course_by_id_number,
     get_sis_id_to_canvas_id_table,
+    get_student_list,
     interactively_get_assignment,
     interactively_get_course,
 )
-
-
-def get_student_list(course):
-    students = []
-    for enrollee in course.get_enrollments():
-        # TODO: See if we also need to check for active enrollment
-        if enrollee.role == "StudentEnrollment":
-            students += [enrollee]
-    return students
 
 
 def sis_id_to_student_dict(student_list):

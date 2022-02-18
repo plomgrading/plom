@@ -13,6 +13,24 @@ from canvasapi import Canvas
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 
+def get_student_list(course_or_section):
+    """
+    Get the list of students in a Course or a Section.
+
+    Args:
+        course (canvasapi.course.Course/canvasapi.section.Section):
+
+    Returns:
+        list: of `canvasapi.student.Student`.
+    """
+    students = []
+    for enrollee in course_or_section.get_enrollments():
+        # TODO: See if we also need to check for active enrollment
+        if enrollee.role == "StudentEnrollment":
+            students += [enrollee]
+    return students
+
+
 def download_classlist(course, *, section=None, server_dir="."):
     """
     Download .csv of the classlist and various conversion tables.
