@@ -127,7 +127,7 @@ def make_toml(assignment, marks, *, server_dir="."):
         f.write(toml)
 
 
-def initialize(course, assignment, marks, *, server_dir="."):
+def initialize(course, section=None, assignment, marks, *, server_dir="."):
     """
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
@@ -136,7 +136,7 @@ def initialize(course, assignment, marks, *, server_dir="."):
     server_dir.mkdir(exist_ok=True)
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, server_dir=server_dir)
+    download_classlist(course, section, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, server_dir=server_dir)
@@ -478,7 +478,7 @@ if __name__ == "__main__":
     print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
     del pp
 
-    plom_server = initialize(course, assignment, args.marks, server_dir=basedir)
+    plom_server = initialize(course, section, assignment, args.marks, server_dir=basedir)
 
     print("\n\ngetting submissions from canvas...")
     get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
