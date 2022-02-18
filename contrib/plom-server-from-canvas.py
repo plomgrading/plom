@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
 # Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2022 Nicholas J H Lai
 
 """Build and populate a Plom server from a Canvas Assignment.
 
@@ -55,8 +56,10 @@ from plom.canvas import (
     get_assignment_by_id_number,
     get_conversion_table,
     get_course_by_id_number,
+    get_section_by_id_number,
     interactively_get_assignment,
     interactively_get_course,
+    interactively_get_section,
 )
 import plom.scan
 
@@ -125,7 +128,7 @@ def make_toml(assignment, marks, *, server_dir="."):
         f.write(toml)
 
 
-def initialize(course, assignment, marks, *, server_dir="."):
+def initialize(course, section, assignment, marks, *, server_dir="."):
     """
     Set up the test directory, get the classlist from canvas, make the
     .toml, etc
@@ -134,7 +137,7 @@ def initialize(course, assignment, marks, *, server_dir="."):
     server_dir.mkdir(exist_ok=True)
 
     print("\nGetting enrollment data from canvas and building `classlist.csv`...")
-    download_classlist(course, server_dir=server_dir)
+    download_classlist(course, section=section, server_dir=server_dir)
 
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, server_dir=server_dir)
@@ -380,6 +383,23 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
+    "--section",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas Section ID (an integer N).
+        Interactively prompt from a list if omitted.
+    """,
+)
+parser.add_argument(
+    "--no-section",
+    action="store_true",
+    help="""
+        Overwrites the --section flag to not use sections.
+    """,
+)
+parser.add_argument(
     "--assignment",
     type=int,
     metavar="M",
@@ -414,10 +434,23 @@ if __name__ == "__main__":
         course = get_course_by_id_number(args.course, user)
     print(f"Ok using course: {course}")
 
+    if args.no_section:
+        section = None
+    else:
+        if args.section is None:
+            section = get_section_by_id_number(course, args.section)
+        else:
+            section = interactively_get_section(course)
+            if section is None:
+                print('Note: you can use "--no-section" to omit selecting section.\n')
+            else:
+                print(f'Note: you can use "--section {section.id}" to reselect.\n')
+        print(f"Ok using section: {section}")
+
     if args.assignment:
         assignment = get_assignment_by_id_number(course, args.assignment)
     else:
-        assignment = interactively_get_assignment(user, course)
+        assignment = interactively_get_assignment(course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok downloading from Assignment: {assignment}")
 
@@ -452,7 +485,9 @@ if __name__ == "__main__":
     print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
     del pp
 
-    plom_server = initialize(course, assignment, args.marks, server_dir=basedir)
+    plom_server = initialize(
+        course, section, assignment, args.marks, server_dir=basedir
+    )
 
     print("\n\ngetting submissions from canvas...")
     get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)

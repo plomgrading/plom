@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
 
 """Misc utils for interacting with Canvas"""
 
@@ -13,28 +13,58 @@ from canvasapi import Canvas
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 
 
-def download_classlist(course, server_dir="."):
+def get_student_list(course_or_section):
     """
-    Download and .csv of the classlist and various conversion stables.
+    Get the list of students in a Course or a Section.
 
     Args:
-        course: A canvasapi course object.
-        server_dir (str/pathlib.Path): where to save the file.
+        course (canvasapi.course.Course/canvasapi.section.Section):
 
     Returns:
-        None
+        list: of `canvasapi.student.Student`.
+    """
+    students = []
+    for enrollee in course_or_section.get_enrollments():
+        # TODO: See if we also need to check for active enrollment
+        if enrollee.role == "StudentEnrollment":
+            students += [enrollee]
+    return students
+
+
+def download_classlist(course, *, section=None, server_dir="."):
+    """
+    Download .csv of the classlist and various conversion tables.
+
+    Args:
+        course (canvasapi.course.Course): we will query for enrollment.
+
+    Keyword Args:
+        server_dir (str/pathlib.Path): where to save the file.  Defaults
+            to current working directory.
+        section (None/canvasapi.section.Section): Which section should
+            we take enrollment from?  If None (default), take all
+            students directly from `course`.  Note at least in some cases
+            omitting `section` can lead to duplicate students.
+
+    Returns:
+        None: But saves files into ``server_dir``.
 
     TODO: spreadsheet with entries of the form (student ID, student name)
     TODO: so is it the plom classlist or something else?
+
+    TODO: this code is filled with comments/TODOs about collisions...
+
+    Missing information doesn't reaaaaaaaaally matter to us so we'll
+    just fill it in as needed.  That is a questionable statement; this
+    function needs a serious review.
     """
     server_dir = Path(server_dir)
-    enrollments_raw = course.get_enrollments()
+    if section:
+        enrollments_raw = section.get_enrollments()
+    else:
+        enrollments_raw = course.get_enrollments()
     students = [_ for _ in enrollments_raw if _.role == "StudentEnrollment"]
 
-    # TODO: doc this in the docstring!
-    # Missing information doesn't reaaaaaaaaally matter to us so we'll
-    # just fill it in as needed.
-    #
     # FIXME: This should probably contain checks to make sure we get
     # no collisions.
     default_id = 0  # ? not sure how many digits this can be. I've seen 5-7
@@ -46,6 +76,8 @@ def download_classlist(course, server_dir="."):
     ]
 
     conversion = [("Internal Canvas ID", "Student", "SIS User ID")]
+
+    secnames = {}
 
     for stud in students:
         stud_name, stud_id, stud_sis_id, stud_sis_login_id = (
@@ -99,6 +131,13 @@ def download_classlist(course, server_dir="."):
             stud_sis_login_id = (12 - len(stud_sis_login_id)) * "0" + stud_sis_login_id
             default_sis_login_id += 1
 
+        # TODO: presumably this is just `section` when that is non-None?
+        section_id = stud.course_section_id
+        if not secnames.get(section_id):
+            # caching section names
+            sec = course.get_section(section_id)
+            secnames[section_id] = sec.name
+
         # Add this information to the table we'll write out to the CSV
         classlist += [
             (
@@ -106,7 +145,7 @@ def download_classlist(course, server_dir="."):
                 stud_id,
                 stud_sis_id,
                 stud_sis_login_id,
-                course.name,
+                secnames[section_id],
                 stud_sis_id,
             )
         ]
@@ -209,7 +248,52 @@ def interactively_get_course(user):
     return course
 
 
-def interactively_get_assignment(user, course):
+def interactively_get_section(course, can_choose_none=True):
+    """Choose a section (or not choice) from a menu.
+
+    Returns:
+        None/canvasapi.section.Section: None or a section object.
+    """
+    print(f"\nSelect a Section from {course}.\n")
+    print("  Available Sections:")
+    print("  --------------------------------------------------------------------")
+
+    if not can_choose_none:
+        raise NotImplementedError("Sorry, not implemented yet")
+
+    sections = list(course.get_sections())
+    i = 0
+    if can_choose_none:
+        print(f"    {i}: Do not choose a section (None)")
+        i += 1
+    for section in sections:
+        print(f"    {i}: {section.name} ({section.id})")
+        i += 1
+
+    while True:
+        choice = input("\n  Choice [0-n]: ")
+        if not (set(choice) <= set(string.digits)):
+            print("Please respond with a nonnegative integer.")
+        elif int(choice) >= len(sections) + 1:
+            print("Choice too large.")
+        else:
+            choice = int(choice)
+            print(
+                "  --------------------------------------------------------------------"
+            )
+            if choice == 0:
+                section = None
+                print(f"  You selected {choice}: None")
+            else:
+                section = sections[choice - 1]
+                print(f"  You selected {choice}: {section.name} ({section.id})")
+            confirmation = input("  Confirm choice? [y/n] ")
+            if confirmation in ["", "\n", "y", "Y"]:
+                print("\n")
+                return section
+
+
+def interactively_get_assignment(course):
     print(f"\nSelect an assignment for {course}.\n")
     print("  Available assignments:")
     print("  --------------------------------------------------------------------")
@@ -261,6 +345,13 @@ def get_assignment_by_id_number(course, num):
         if assignment.id == num:
             return assignment
     raise ValueError(f"Could not find assignment matching id={num}")
+
+
+def get_section_by_id_number(course, num):
+    for section in course.get_sections():
+        if section.id == num:
+            return section
+    raise ValueError(f"Could not find section matching id={num}")
 
 
 def canvas_login(api_url=None, api_key=None):
