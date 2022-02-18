@@ -43,10 +43,12 @@ from plom.canvas import (
     get_assignment_by_id_number,
     get_conversion_table,
     get_course_by_id_number,
+    get_section_by_id_number,
     get_sis_id_to_canvas_id_table,
     get_student_list,
     interactively_get_assignment,
     interactively_get_course,
+    interactively_get_section,
 )
 
 
@@ -131,6 +133,17 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
+    "--section",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas Section ID (an integer N).
+        Interactively prompt from a list if omitted.
+        Pass "--section 0" to not use sections.
+    """,
+)
+parser.add_argument(
     "--assignment",
     type=int,
     metavar="M",
@@ -167,6 +180,19 @@ if __name__ == "__main__":
         course = get_course_by_id_number(args.course, user)
     print(f"Ok using course: {course}")
 
+    if args.section:
+        if args.section == 0:
+            section = None
+        else:
+            section = get_section_by_id_number(course, args.section)
+    else:
+        section = interactively_get_section(course)
+        if section is None:
+            print('Note: you can use "--section 0" to reselect.\n')
+        else:
+            print(f'Note: you can use "--section {section.id}" to reselect.\n')
+    print(f"Ok using section: {section}")
+
     if args.assignment:
         assignment = get_assignment_by_id_number(course, args.assignment)
     else:
@@ -193,8 +219,12 @@ if __name__ == "__main__":
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
-    print("  Getting student list...")
-    student_list = get_student_list(course)
+    if section:
+        print("  Getting student list from Section...")
+        student_list = get_student_list(section)
+    else:
+        print("  Getting student list from Course...")
+        student_list = get_student_list(course)
     print("    done.")
     print("  Getting canvasapi submission objects...")
     subs = assignment.get_submissions()
