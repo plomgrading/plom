@@ -393,7 +393,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--no-section",
-    action="store_false",
+    action="store_true",
     help="""
         Overwrites the --section flag to not use sections.
     """,
@@ -433,8 +433,9 @@ if __name__ == "__main__":
         course = get_course_by_id_number(args.course, user)
     print(f"Ok using course: {course}")
 
-    section = None
-    if not args.no_section:
+    if args.no_section:
+        section = None
+    else:
         if args.section is None:
             section = get_section_by_id_number(course, args.section)
         else:
