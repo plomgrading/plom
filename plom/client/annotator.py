@@ -1460,15 +1460,15 @@ class Annotator(QWidget):
             msg += " Please move or delete them before saving."
             info = "<p>Out-of-bounds objects are highlighted in orange.</p>"
             info += "<p><em>Note:</em> if you cannot see any such objects, "
-            info += "you might be experiencing "
-            info += '<a href="https://gitlab.com/plom/plom/-/issues/1792">Issue #1792</a>;'
-            info += " please help us fix it by copy-pasting the details below, "
+            info += "you may be experiencing "
+            info += '<a href="https://gitlab.com/plom/plom/-/issues/1792">Issue '
+            info += "#1792</a>; please help us by copy-pasting the details below, "
             info += "along with any details about how to make this happen!</p>"
-            details = "## Out of bounds objects\n  "
+            details = "## Out of bounds objects\n\n  "
             details += "\n  ".join(str(x) for x in out_objs)
-            details += "\n\n## All objects\n  "
+            details += "\n\n## All objects\n\n  "
             details += "\n  ".join(str(x) for x in self.scene.items())
-            details += "\n\n## Object serialization\n  "
+            details += "\n\n## Object serialization\n\n  "
             details += "\n  ".join(str(x) for x in self.scene.pickleSceneItems())
             WarnMsg(self, msg, info=info, info_pre=False, details=details).exec_()
             return False
