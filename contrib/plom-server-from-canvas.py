@@ -445,6 +445,16 @@ parser.add_argument(
         you'll need quotes around the list, as in `--marks "5, 10, 4"`.
     """,
 )
+parser.add_argument(
+    "--init",
+    action="store_true",
+    help="Initialize the plom server",
+)
+parser.add_argument(
+    "--upload",
+    action="store_true",
+    help="Run submission-grabbing from Canvas and uploading to plom server",
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -508,15 +518,21 @@ if __name__ == "__main__":
     print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
     del pp
 
-    plom_server = initialize(
-        course, section, assignment, args.marks, server_dir=basedir
-    )
+    if args.init:
+        print(f"Initializing a fresh plom server in {basedir}")
+        plom_server = initialize(
+            course, section, assignment, args.marks, server_dir=basedir
+        )
+    else:
+        print(f"Using an already-initialize plom server in {basedir}")
+        plom_server = PlomServer(basedir=basedir)
 
-    print("\n\ngetting submissions from canvas...")
-    get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
+    if args.upload:
+        print("\n\ngetting submissions from canvas...")
+        get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
 
-    print("scanning submissions...")
-    scan_submissions(len(args.marks), server_dir=basedir)
+        print("scanning submissions...")
+        scan_submissions(len(args.marks), server_dir=basedir)
 
     input("Press enter when you want to stop the server...")
     plom_server.stop()
