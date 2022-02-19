@@ -321,13 +321,27 @@ def scan_submissions(num_questions, *, server_dir="."):
     del pwds
 
     upload_dir = server_dir / "upload"
+    errors = []
 
     print("Applying `plom-hwscan` to pdfs...")
     for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
         # get 12345678 from blah_blah.blah_blah.12345678._.
         sid = pdf.stem.split(".")[-2]
-        assert len(sid) == 8
-        if len(fitz.open(pdf)) == num_questions:
+        try:
+            assert len(sid) == 8, "Student id has unexpected length, continuing"
+        except AssertionError:
+            errors.append(sid)
+            continue
+
+        # try to open pdf first, continue on error
+        try:
+            num_pages = len(fitz.open(pdf))
+        except RuntimeError:
+            print(f"Error processing student {sid} due to file error on {pdf}")
+            errors.append(sid)
+            continue
+
+        if num_pages == num_questions:
             # If number of pages precisely matches number of questions then
             # do a 1-1 mapping...
             q = [[x] for x in range(1, num_questions + 1)]
@@ -338,6 +352,9 @@ def scan_submissions(num_questions, *, server_dir="."):
         plom.scan.processHWScans(
             pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
         )
+
+    for sid in errors:
+        print(f"Error processing user_id {sid}")
 
     # Clean up any missing submissions
     plom.scan.processMissing(msgr=("localhost", scan_pwd), yes_flag=True)
