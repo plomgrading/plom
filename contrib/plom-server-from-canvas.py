@@ -65,7 +65,9 @@ import plom.scan
 
 
 def get_short_name(long_name):
-    """"""
+    """
+    Generate the short name of assignment
+    """
     short_name = ""
     push_letter = True
     while len(long_name):
@@ -141,6 +143,10 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
 
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, server_dir=server_dir)
+
+    input(
+        f"Please check and confirm the spec file {server_dir}/canvasSpec.toml before proceeding..."
+    )
 
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
