@@ -2202,39 +2202,6 @@ class MarkerClient(QWidget):
         event.accept()
         log.debug("Marker: goodbye!")
 
-    def downloadWholePaper(self, testNumber):
-        """Legacy method, yet another way of getting images.
-
-        Args:
-            testNumber (int): the test number.
-
-        Returns:
-            tuple: containing pageData and viewFiles.  You are responsible
-            for deleting the files when done with them, in particular
-            these may include duplicate images.
-        """
-        try:
-            pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
-                testNumber, self.question
-            )
-        except PlomTakenException as err:
-            log.exception("Taken exception while downloading whole paper %s", err)
-            ErrorMessage(
-                f"'Taken exception' while downloading whole paper:\n{err}"
-            ).exec_()
-            return ([], [])
-
-        viewFiles = []
-        for iab in imagesAsBytes:
-            im_type = imghdr.what(None, h=iab)
-            with tempfile.NamedTemporaryFile(
-                "wb", dir=self.workingDirectory, suffix=f".{im_type}", delete=False
-            ) as f:
-                f.write(iab)
-                viewFiles.append(Path(f.name))
-
-        return (pageData, viewFiles)
-
     def downloadAnyMissingPages(self, test_number):
         test_number = int(test_number)
         pagedata = self._full_pagedata[test_number]

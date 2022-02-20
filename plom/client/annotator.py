@@ -10,14 +10,12 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPLv3"
 
 from copy import deepcopy
-import imghdr
 import json
 import logging
 from pathlib import Path
 import os
 import re
 import sys
-import tempfile
 from textwrap import dedent
 
 if sys.version_info >= (3, 7):
@@ -618,9 +616,7 @@ class Annotator(QWidget):
         """
         Popup a dialog showing the entire paper.
 
-        TODO: this has significant duplication with RearrangePages.  Currently
-        this one does it own downloads (even though Marker may already have the
-        pages.
+        TODO: this has significant duplication with RearrangePages.
 
         Returns:
             None
@@ -629,13 +625,11 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        page_data, files = self.parentMarkerUI.downloadWholePaper(testnum)
-        if not files:
-            return
-        labels = [x[0] for x in page_data]
+        self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
+        pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
+        files = [x["local_filename"] for x in pagedata]
+        labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, files, labels, parent=self).exec_()
-        for f in files:
-            f.unlink()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
