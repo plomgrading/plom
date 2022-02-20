@@ -21,7 +21,6 @@ from math import ceil
 import os
 from pathlib import Path
 import queue
-import shutil
 import tempfile
 from textwrap import shorten
 import time
@@ -77,6 +76,38 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 log = logging.getLogger("marker")
+
+
+def download_pages(msgr, pagedata, src_img_data, basedir):
+    """Download all or some of the page images for a set of pagedata.
+
+    Args:
+        msgr: an open connected messageer.  TODO: decorator?
+        pagedata: typically the metadata for the set of all pages
+            involved in a paper.
+        src_img_data: includes some images we must download, if None, then
+            we download all of them.
+        basedir: paths relative to this.
+
+    Return:
+        list: the modified pagedata.  TODO: also modifies the
+        original as a side effect.  Should we deepcopy it first?
+    """
+    for row in pagedata:
+        row["local_filename"] = None
+        f = basedir / row["server_path"]
+        # if cache_do_we_have(row["id"]):
+        if f.exists():
+            row["local_filename"] = str(f)
+        else:
+            if not src_img_data or row["id"] in [r["id"] for r in src_img_data]:
+                f.parent.mkdir(exist_ok=True, parents=True)
+                im_bytes = msgr.MrequestOneImage(row["id"], row["md5"])
+                # im_type = imghdr.what(None, h=im_bytes)
+                with open(f, "wb") as fh:
+                    fh.write(im_bytes)
+                row["local_filename"] = str(f)
+    return pagedata
 
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
@@ -164,39 +195,28 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        num = int(task[1:5])
-        full_pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
-        for r in full_pagedata:
-            r["local_filename"] = None
-        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
-
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
+        num = int(task[1:5])
+        pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
+        pagedata = download_pages(
+            self._msgr, pagedata, src_img_data, self.workingDirectory
+        )
+        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
+
         # Populate the orientation keys from the full pagedata
-        for i, row in enumerate(src_img_data):
-            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+        for row in src_img_data:
+            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
             # There could easily be more than one: what if orientation is contradictory?
             row["orientation"] = ori[0]  # just take first one
 
-        # Image names = "<task>.<imagenumber>.<extension>"
-        # TODO: use server filename from server_path_filename
-        for i, row in enumerate(src_img_data):
-            # TODO: add a "aggressive download" option to get all.
-            # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
-            im_ext = imghdr.what(None, h=im_bytes)
-            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
-            with open(tmp, "wb") as fh:
-                fh.write(im_bytes)
-            row["filename"] = str(tmp)
-            for r in full_pagedata:
+        for row in src_img_data:
+            for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    row["filename"] = r["local_filename"]
 
-        self.downloadSuccess.emit(
-            task, src_img_data, full_pagedata, tags, integrity_check
-        )
+        self.downloadSuccess.emit(task, src_img_data, pagedata, tags, integrity_check)
         self.quit()
 
 
@@ -962,6 +982,7 @@ class MarkerClient(QWidget):
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
+        log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
@@ -1248,27 +1269,20 @@ class MarkerClient(QWidget):
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
-        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
-        for r in full_pagedata:
-            r["local_filename"] = None
-        self._full_pagedata[num] = full_pagedata
-
         log.info("importing source image data (orientations etc) from .plom file")
-        # filenames likely stale
+        # filenames likely stale: but have restarted client in meantime
         src_img_data = plomdata["base_images"]
 
-        # Image names = "<task>.<imagenumber>.<extension>"
-        # TODO: use server filename from server_path_filename
-        for i, row in enumerate(src_img_data):
-            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            im_type = imghdr.what(None, h=im_bytes)
-            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_type)
-            with open(tmp, "wb") as fh:
-                fh.write(im_bytes)
-            row["filename"] = str(tmp)
-            for r in full_pagedata:
+        pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+        pagedata = download_pages(
+            self.msgr, pagedata, src_img_data, self.workingDirectory
+        )
+        self._full_pagedata[num] = pagedata
+
+        for row in src_img_data:
+            for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    row["filename"] = r["local_filename"]
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1414,34 +1428,25 @@ class MarkerClient(QWidget):
         page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
-        full_pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
-        for r in full_pagedata:
-            r["local_filename"] = None
-        self._full_pagedata[papernum] = full_pagedata
-
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
-        # Populate the orientation keys from the full pagedata
-        for i, row in enumerate(src_img_data):
-            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+        pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
+        pagedata = download_pages(
+            self.msgr, pagedata, src_img_data, self.workingDirectory
+        )
+        self._full_pagedata[papernum] = pagedata
+
+        # Populate the orientation keys from the pagedata
+        for row in src_img_data:
+            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
             # There could easily be more than one: what if orientation is contradictory?
             row["orientation"] = ori[0]  # just take first one
 
-        # Image names = "<task>.<imagenumber>.<extension>"
-        # TODO: use server filename from server_path_filename
-        for i, row in enumerate(src_img_data):
-            # TODO: add a "aggressive download" option to get all.
-            # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            im_ext = imghdr.what(None, h=im_bytes)
-            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
-            with open(tmp, "wb") as fh:
-                fh.write(im_bytes)
-            row["filename"] = str(tmp)
-            for r in full_pagedata:
+        for row in src_img_data:
+            for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    row["filename"] = r["local_filename"]
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1492,7 +1497,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, full_pagedata, tags, integrity_check
+        self, task, src_img_data, pagedata, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1501,7 +1506,7 @@ class MarkerClient(QWidget):
             task (str): the task name for the next test.
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
-            full_pagedata (list): temporary hacks to merge with above?
+            pagedata (list): temporary hacks to merge with above?
             tags (list[str]): list of texts for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
@@ -1509,7 +1514,7 @@ class MarkerClient(QWidget):
             None
         """
         num = int(task[1:5])
-        self._full_pagedata[num] = full_pagedata
+        self._full_pagedata[num] = pagedata
         self.examModel.addPaper(
             ExamQuestion(
                 task,
