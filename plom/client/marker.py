@@ -1993,26 +1993,17 @@ class MarkerClient(QWidget):
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
-        # we know the list of image-refs and files. copy files into place
-        # Image names = "<task>.<imagenumber>.<extension>"
         src_img_data = []
-        # TODO: This code was trying (badly) to overwrite the q0001 files...
-        # TODO: but why not keep using old name once they are static
-        for i in range(len(imageList)):
-            with tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory,
-                prefix="twist_{}_{}_".format(task, i),
-                suffix="_" + Path(imageList[i][1]).name,
-                delete=False,
-            ) as f:
-                tmp = Path(f.name)
-            shutil.copyfile(imageList[i][1], tmp)
+        # this is a bit silly, just converting list to dict...  maybe refactor caller?
+        for row in imageList:
+            # TODO: do we need to let the cache know we want to keep these?
+            # TODO: see rearranger code in the annotator, which used to erase some
             src_img_data.append(
                 {
-                    "id": imageList[i][3],
-                    "md5": imageList[i][0],
-                    "filename": str(tmp),
-                    "orientation": imageList[i][2],
+                    "id": row[3],
+                    "md5": row[0],
+                    "filename": str(row[1]),
+                    "orientation": row[2],
                 }
             )
         task = "q" + task

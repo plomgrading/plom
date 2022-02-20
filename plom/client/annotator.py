@@ -683,6 +683,8 @@ class Annotator(QWidget):
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         # do a deep copy of this list of dict - else hit #1690
         # keep original readonly?
+        # TODO: but surely we want to update it, since we may be downloading files?
+        # TODO: maybe we want to deepcopy it just before we pass it to the rearranger, not now
         page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
         #
         for x in image_md5_list:
@@ -717,22 +719,15 @@ class Annotator(QWidget):
             md5 = pg["md5"]
             image_id = pg["id"]
             img_bytes = self.parentMarkerUI.downloadOneImage(image_id, md5)
-            img_ext = imghdr.what(None, h=img_bytes)
-            # TODO: wrong to put these in the paperdir (?)
-            # Maybe Marker should be doing this downloading
-            with tempfile.NamedTemporaryFile(
-                "wb",
-                dir=self.parentMarkerUI.workingDirectory,
-                prefix="adj_pg_{}_".format(i),
-                suffix=f".{img_ext}",
-                delete=False,
-            ) as f:
+            # img_ext = imghdr.what(None, h=img_bytes)
+            f = self.parentMarkerUI.workingDirectory / pg["server_path"]
+            with open(f, "wb") as fh:
                 log.info(
                     'adjustpages: write "%s" from id=%s, md5=%s', f.name, image_id, md5
                 )
-                f.write(img_bytes)
-                page_adjuster_downloads.append(f.name)
-                pg["local_filename"] = f.name
+                fh.write(img_bytes)
+            page_adjuster_downloads.append(f)
+            pg["local_filename"] = f
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
@@ -788,9 +783,12 @@ class Annotator(QWidget):
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
         # CAREFUL, wipe only those files we created
-        # TODO: consider a broader local caching system
+        # TODO: maybe the unused ones could get indicated as unused to cache system rather than deleted
         for f in page_adjuster_downloads:
-            os.unlink(f)
+            # TODO in particuular, if above code no longer copies...?
+            # log.warn("TODO: deleting something we might want to keep")
+            # os.unlink(f)
+            pass
         self.setEnabled(True)
         return
 
