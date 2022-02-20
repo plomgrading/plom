@@ -471,6 +471,7 @@ class Messenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def MrequestWholePaper(self, code, questionNumber=0):
+        """DEPRECATED"""
         self.SRmutex.acquire()
         # note - added default value for questionNumber so that this works correctly
         # when called from identifier. - Fixes #921

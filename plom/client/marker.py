@@ -69,6 +69,7 @@ from .origscanviewer import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMessage, SimpleQuestion
+from .pagecache import download_pages
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -76,52 +77,6 @@ if platform.system() == "Darwin":
     qt_set_sequence_auto_mnemonic(True)
 
 log = logging.getLogger("marker")
-
-
-def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
-    """Download all or some of the page images for a set of pagedata.
-
-    Args:
-        msgr: an open connected messageer.  TODO: decorator?
-        pagedata (list): typically the metadata for the set of all pages
-            involved in a paper.  A list of dicts where each dict must
-            have (at least) keys  ``id``, ``md5``, ``server_path``
-        basedir: paths relative to this.
-
-    Keyword Args:
-        get_all (bool): default: False
-        alt_get (None/list): aka ``src_img_data`` a subset of page images
-            we must download.  Use this to override the ``included``
-            field of the ``pagedata``.  It should also be a list of dicts
-            where only the key ``id`` is used.
-
-    Return:
-        list: the modified pagedata.  TODO: also modifies the
-        original as a side effect.  Should we deepcopy it first?
-    """
-    for row in pagedata:
-        row["local_filename"] = None
-        f = basedir / row["server_path"]
-        # if cache_do_we_have(row["id"]):
-        dl = False
-        if f.exists():
-            row["local_filename"] = str(f)
-        elif get_all:
-            dl = True
-        elif alt_get:
-            if row["id"] in [r["id"] for r in alt_get]:
-                dl = True
-        elif row["included"]:
-            dl = True
-
-        if dl:
-            f.parent.mkdir(exist_ok=True, parents=True)
-            im_bytes = msgr.MrequestOneImage(row["id"], row["md5"])
-            # im_type = imghdr.what(None, h=im_bytes)
-            with open(f, "wb") as fh:
-                fh.write(im_bytes)
-            row["local_filename"] = str(f)
-    return pagedata
 
 
 # Read https://mayaposch.wordpress.com/2011/11/01/how-to-really-truly-use-qthreads-the-full-explanation/
@@ -215,7 +170,7 @@ class BackgroundDownloader(QThread):
         num = int(task[1:5])
         pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
         pagedata = download_pages(
-            self._msgr, pagedata, self.workingDirectory, alt_get=src_img_data,
+            self._msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
         # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
 
@@ -1289,7 +1244,7 @@ class MarkerClient(QWidget):
 
         pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
         pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data,
+            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
         self._full_pagedata[num] = pagedata
 
@@ -1447,7 +1402,7 @@ class MarkerClient(QWidget):
 
         pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
         pagedata = download_pages(
-            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data,
+            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
         self._full_pagedata[papernum] = pagedata
 
@@ -2205,7 +2160,9 @@ class MarkerClient(QWidget):
     def downloadAnyMissingPages(self, test_number):
         test_number = int(test_number)
         pagedata = self._full_pagedata[test_number]
-        pagedata = download_pages(self.msgr, pagedata, self.workingDirectory, get_all=True)
+        pagedata = download_pages(
+            self.msgr, pagedata, self.workingDirectory, get_all=True
+        )
         self._full_pagedata[test_number] = pagedata
 
     def downloadOneImage(self, image_id, md5):
