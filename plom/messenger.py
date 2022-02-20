@@ -342,6 +342,7 @@ class Messenger(BaseMessenger):
             self.SRmutex.release()
 
     def MrequestOriginalImages(self, task):
+        """DEPRECATED, remove in 0.9.0."""
         self.SRmutex.acquire()
         try:
             response = self.get(

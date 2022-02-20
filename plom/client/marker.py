@@ -78,16 +78,22 @@ if platform.system() == "Darwin":
 log = logging.getLogger("marker")
 
 
-def download_pages(msgr, pagedata, src_img_data, basedir):
+def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
     """Download all or some of the page images for a set of pagedata.
 
     Args:
         msgr: an open connected messageer.  TODO: decorator?
-        pagedata: typically the metadata for the set of all pages
-            involved in a paper.
-        src_img_data: includes some images we must download, if None, then
-            we download all of them.
+        pagedata (list): typically the metadata for the set of all pages
+            involved in a paper.  A list of dicts where each dict must
+            have (at least) keys  ``id``, ``md5``, ``server_path``
         basedir: paths relative to this.
+
+    Keyword Args:
+        get_all (bool): default: False
+        alt_get (None/list): aka ``src_img_data`` a subset of page images
+            we must download.  Use this to override the ``included``
+            field of the ``pagedata``.  It should also be a list of dicts
+            where only the key ``id`` is used.
 
     Return:
         list: the modified pagedata.  TODO: also modifies the
@@ -97,16 +103,24 @@ def download_pages(msgr, pagedata, src_img_data, basedir):
         row["local_filename"] = None
         f = basedir / row["server_path"]
         # if cache_do_we_have(row["id"]):
+        dl = False
         if f.exists():
             row["local_filename"] = str(f)
-        else:
-            if not src_img_data or row["id"] in [r["id"] for r in src_img_data]:
-                f.parent.mkdir(exist_ok=True, parents=True)
-                im_bytes = msgr.MrequestOneImage(row["id"], row["md5"])
-                # im_type = imghdr.what(None, h=im_bytes)
-                with open(f, "wb") as fh:
-                    fh.write(im_bytes)
-                row["local_filename"] = str(f)
+        elif get_all:
+            dl = True
+        elif alt_get:
+            if row["id"] in [r["id"] for r in alt_get]:
+                dl = True
+        elif row["included"]:
+            dl = True
+
+        if dl:
+            f.parent.mkdir(exist_ok=True, parents=True)
+            im_bytes = msgr.MrequestOneImage(row["id"], row["md5"])
+            # im_type = imghdr.what(None, h=im_bytes)
+            with open(f, "wb") as fh:
+                fh.write(im_bytes)
+            row["local_filename"] = str(f)
     return pagedata
 
 
@@ -201,7 +215,7 @@ class BackgroundDownloader(QThread):
         num = int(task[1:5])
         pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
         pagedata = download_pages(
-            self._msgr, pagedata, src_img_data, self.workingDirectory
+            self._msgr, pagedata, self.workingDirectory, alt_get=src_img_data,
         )
         # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
 
@@ -1275,7 +1289,7 @@ class MarkerClient(QWidget):
 
         pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
         pagedata = download_pages(
-            self.msgr, pagedata, src_img_data, self.workingDirectory
+            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data,
         )
         self._full_pagedata[num] = pagedata
 
@@ -1433,7 +1447,7 @@ class MarkerClient(QWidget):
 
         pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
         pagedata = download_pages(
-            self.msgr, pagedata, src_img_data, self.workingDirectory
+            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data,
         )
         self._full_pagedata[papernum] = pagedata
 
@@ -2224,7 +2238,7 @@ class MarkerClient(QWidget):
     def downloadAnyMissingPages(self, test_number):
         test_number = int(test_number)
         pagedata = self._full_pagedata[test_number]
-        pagedata = download_pages(self.msgr, pagedata, None, self.workingDirectory)
+        pagedata = download_pages(self.msgr, pagedata, self.workingDirectory, get_all=True)
         self._full_pagedata[test_number] = pagedata
 
     def downloadOneImage(self, image_id, md5):
@@ -2441,27 +2455,17 @@ class MarkerClient(QWidget):
             self.prxM.filterTags()
 
     def view_testnum_question(self):
-        """shows the image."""
+        """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()
-        task = f"q{tn:04}g{gn}"
-        try:
-            imageList = self.msgr.MrequestOriginalImages(task)
-        except PlomNoMoreException:
-            msg = ErrorMessage(f"No image corresponding to task {task}")
-            msg.exec_()
-            return
-        ifilenames = []
-        for img_bytes in imageList:
-            img_ext = imghdr.what(None, h=img_bytes)
-            with tempfile.NamedTemporaryFile(
-                "wb", dir=self.workingDirectory, suffix=f".{img_ext}", delete=False
-            ) as f:
-                f.write(img_bytes)
-                ifilenames.append(f.name)
+
+        pagedata = self.msgr.MrequestWholePaperMetadata(tn, gn)
+        pagedata = download_pages(self.msgr, pagedata, self.workingDirectory)
+        self._full_pagedata[tn] = pagedata
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()
+        filenames = [r["local_filename"] for r in pagedata if r["included"]]
+        QuestionViewDialog(self, filenames, tn, gn, ver=ver, marker=self).exec_()
