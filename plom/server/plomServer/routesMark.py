@@ -435,41 +435,6 @@ class MarkHandler:
         filename = r[1]
         return web.FileResponse(filename, status=200)
 
-    # @routes.get("/MK/originalImage/{task}")
-    @authenticate_by_token_required_fields([])
-    def MgetOriginalImages(self, data, request):
-        """Return the non-graded original images for a task/question.
-
-        Respond with status 200/204.
-
-        Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type
-                GET /MK/originalImages/`task code` which the task code
-                is extracted from.
-
-        Returns:
-            aiohttp.web_response.Response: A response object with includes the multipart objects
-                which wrap this task/question's original (ungraded) images.
-        """
-
-        task = request.match_info["task"]
-        ok, stuff = self.server.MgetOriginalImages(task)
-
-        if not ok:
-            # TODO: "stuff" has an error message and there are several cases.
-            # This API soon-to-be-deprecated?  Worth fixing or not?  Issue #1953
-            return web.Response(status=204)  # no content there
-
-        filenames = stuff
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
     def get_tags_of_task(self, data, request):
@@ -817,7 +782,6 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
-        router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_get("/tags", self.get_all_tags)
         router.add_get("/tags/{task}", self.get_tags_of_task)
         router.add_patch("/tags/{task}", self.add_tag)

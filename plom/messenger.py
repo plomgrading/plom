@@ -341,33 +341,6 @@ class Messenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def MrequestOriginalImages(self, task):
-        """DEPRECATED, remove in 0.9.0."""
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                f"/MK/originalImages/{task}",
-                json={"user": self.user, "token": self.token},
-            )
-            if response.status_code == 204:
-                raise PlomNoMoreException("No task = {}.".format(task))
-            response.raise_for_status()
-            # response is [image1, image2,... image.n]
-            imageList = []
-            for img in MultipartDecoder.from_response(response).parts:
-                imageList.append(BytesIO(img.content).getvalue())
-            return imageList
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomNoMoreException(
-                    "Cannot find image file for {}".format(task)
-                ) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def MreturnMarkedTask(
         self,
         code,
