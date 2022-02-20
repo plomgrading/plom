@@ -2221,8 +2221,17 @@ class MarkerClient(QWidget):
 
         return (pageData, viewFiles)
 
+    def downloadAnyMissingPages(self, test_number):
+        test_number = int(test_number)
+        pagedata = self._full_pagedata[test_number]
+        pagedata = download_pages(self.msgr, pagedata, None, self.workingDirectory)
+        self._full_pagedata[test_number] = pagedata
+
     def downloadOneImage(self, image_id, md5):
-        """Download one image from server by its database id."""
+        """Download one image from server by its database id.
+
+        DEPRECATED?
+        """
         return self.msgr.MrequestOneImage(image_id, md5)
 
     def doneWithWholePaperFiles(self, viewFiles):
