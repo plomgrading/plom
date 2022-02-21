@@ -2165,12 +2165,6 @@ class MarkerClient(QWidget):
         )
         self._full_pagedata[test_number] = pagedata
 
-    def doneWithWholePaperFiles(self, viewFiles):
-        """Unlinks files in viewFiles to os."""
-        for f in viewFiles:
-            if os.path.isfile(f):
-                os.unlink(f)
-
     def cacheLatexComments(self):
         """Caches Latexed comments."""
         if True:
