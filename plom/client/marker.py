@@ -2165,13 +2165,6 @@ class MarkerClient(QWidget):
         )
         self._full_pagedata[test_number] = pagedata
 
-    def downloadOneImage(self, image_id, md5):
-        """Download one image from server by its database id.
-
-        DEPRECATED?
-        """
-        return self.msgr.MrequestOneImage(image_id, md5)
-
     def doneWithWholePaperFiles(self, viewFiles):
         """Unlinks files in viewFiles to os."""
         for f in viewFiles:
