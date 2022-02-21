@@ -702,21 +702,8 @@ class Annotator(QWidget):
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
-        # pull stuff out of dict (TODO: for now)
-        page_data_list = []
-        for d in page_data:
-            page_data_list.append(
-                [
-                    d["pagename"],
-                    d["md5"],
-                    d["included"],
-                    d["order"],
-                    d["id"],
-                    d["local_filename"],
-                ]
-            )
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data_list, is_dirty
+            self, testNumber, self.src_img_data, page_data, is_dirty
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
