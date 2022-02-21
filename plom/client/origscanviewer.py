@@ -529,9 +529,9 @@ class RearrangementViewer(QDialog):
         May not be completely well-posed.  Probably better to refactor before this.  E.g., factor out
         a dict of md5sum to filenames before we get here.
 
-        `"included"` (column 3): include these in the question or maybe server
-        originally had these in the question (TODO: maybe not, True/False
-        generated on API call).
+        `"included"` (column 3): server said these were ORIGINALLY included
+        in this question.  User might have changed this; see "current"
+        elsewhere.
 
         TODO: if order does not have `h1,1` first, should we move it first?
               that is, before the parenthetical?  Probably by re-ordering
@@ -556,8 +556,7 @@ class RearrangementViewer(QDialog):
             if other_names:
                 z["pagename"] = z["pagename"] + " (& {})".format(", ".join(other_names))
             # If any entry had True for "included", include this row
-            # TODO: or should we reorder the list, moving True to front?
-            # TODO: depends what is done with the other data
+            # Rearranger uses this to colour pages (originally) included
             z["included"] = any([_["included"] for _ in y])
             new_page_data.append(z)
 
