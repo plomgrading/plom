@@ -443,43 +443,6 @@ class Messenger(BaseMessenger):
                     raise PlomSeriousException(response.text) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def MrequestWholePaper(self, code, questionNumber=0):
-        """DEPRECATED"""
-        self.SRmutex.acquire()
-        # note - added default value for questionNumber so that this works correctly
-        # when called from identifier. - Fixes #921
-        try:
-            response = self.get(
-                f"/MK/whole/{code}/{questionNumber}",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-
-            # response should be multipart = [ pageData, f1,f2,f3..]
-            imagesAsBytes = MultipartDecoder.from_response(response).parts
-            images = []
-            i = 0
-            for iab in imagesAsBytes:
-                if i == 0:
-                    pageData = json.loads(iab.content)
-                else:
-                    images.append(
-                        BytesIO(iab.content).getvalue()
-                    )  # pass back image as bytes
-                i += 1
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            # TODO?
-            if response.status_code == 409:
-                raise PlomTakenException("Task taken by another user.") from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return [pageData, images]
-
     def MrequestWholePaperMetadata(self, code, questionNumber=0):
         """Get metadata about the images in this paper.
 

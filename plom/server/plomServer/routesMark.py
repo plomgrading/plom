@@ -556,45 +556,6 @@ class MarkHandler:
         tags = tags.split()
         return web.json_response(tags)
 
-    # @routes.get("/MK/whole/{number}")
-    @authenticate_by_token_required_fields([])
-    def MgetWholePaper(self, data, request):
-        """Return the entire paper which includes the given question.
-
-        Respond with status 200/404.
-
-        Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
-
-        Returns:
-            aiohttp.web_response.Response: Responds with a multipart
-                writer which includes all the images for the exam which
-                includes this question.
-        """
-        test_number = request.match_info["number"]
-        question_number = request.match_info["question"]
-
-        # return [True, pageData, f1, f2, f3, ...] or [False]
-        # 1. True/False for operation status.
-        # 2. A list of lists, documented elsewhere (TODO: I hope)
-        # 3. 3rd element onward: paths for each page of the paper in server.
-        whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
-
-        if not whole_paper_response[0]:
-            return web.Response(status=404)
-
-        pages_data = whole_paper_response[1]
-        filenames = whole_paper_response[2:]
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append_json(pages_data)
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
     # @routes.get("/MK/TMP/whole/{number}/{question}")
     @authenticate_by_token_required_fields([])
     def MgetWholePaperMetadata(self, data, request):
@@ -693,6 +654,7 @@ class MarkHandler:
         # this is used to determine the true/false "included" info
         question_number = request.match_info["question"]
 
+        # TODO: now that getWholePaper API is gone, we could refactor this
         # return [True, pageData, f1, f2, f3, ...] or [False]
         # 1. True/False for operation status.
         # 2. A list of lists, as doc'd above
@@ -787,7 +749,6 @@ class MarkHandler:
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_patch("/tags", self.create_new_tag)
-        router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
         router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
         router.add_get("/annotations/{number}/{question}", self.get_annotations_latest)
         router.add_get(
