@@ -2367,7 +2367,8 @@ class MarkerClient(QWidget):
 
         pagedata = self.msgr.MrequestWholePaperMetadata(tn, gn)
         pagedata = download_pages(self.msgr, pagedata, self.workingDirectory)
-        self._full_pagedata[tn] = pagedata
+        # don't cache this pagedata: "gn" might not be our question number
+        # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
         img_data = [
