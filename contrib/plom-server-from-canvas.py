@@ -390,13 +390,15 @@ parser.add_argument(
     help="""
         Specify a Canvas Section ID (an integer N).
         Interactively prompt from a list if omitted.
+        Pass "--no-section" to not use Sections at all.
     """,
 )
 parser.add_argument(
     "--no-section",
     action="store_true",
     help="""
-        Overwrites the --section flag to not use sections.
+        Overwrites the --section flag to not use sections (and take the
+        classlist directly from the Course).
     """,
 )
 parser.add_argument(
