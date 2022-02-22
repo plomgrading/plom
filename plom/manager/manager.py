@@ -51,6 +51,7 @@ from plom.client.useful_classes import ErrorMessage, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
+from plom.client.pagecache import download_pages
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -656,6 +657,7 @@ class Manager(QWidget):
             self.ui.scanTW.addTopLevelItem(l0)
 
     def viewPage(self, t, pdetails, v):
+        # TODO: needs rotate
         if pdetails[0] == "t":  # is a test-page t.PPP
             p = pdetails.split(".")[1]
             vp = self.msgr.getTPageImage(t, p, v)
@@ -677,6 +679,8 @@ class Manager(QWidget):
             GroupView(self, [fh.name]).exec_()
 
     def viewSPage(self):
+        print("HERE " * 15)
+        print("viewSPage")
         pvi = self.ui.scanTW.selectedItems()
         if len(pvi) == 0:
             return
@@ -691,6 +695,9 @@ class Manager(QWidget):
         self.viewPage(pt, pdetails, pv)
 
     def viewISTest(self):
+        # rotate support
+        print("HERE " * 15)
+        print("viewISTest")
         pvi = self.ui.incompTW.selectedItems()
         if len(pvi) == 0:
             return
@@ -1072,23 +1079,30 @@ class Manager(QWidget):
                 # )
         self.refreshUList()
 
-    def viewWholeTest(self, testNumber, parent=None):
-        vt = self.msgr.getTestImages(testNumber)
-        if vt is None:
-            return
+    def viewWholeTest(self, testnum, parent=None):
+        # TODO: used to get the ID page, and DNM etc, "just" need a new metadata
+
+        # TODO: what was this vt None case here?
+        # vt = self.msgr.getTestImages(testNumber)
+        # if vt is None:
+        #     return
+
         if parent is None:
             parent = self
+        # Ask for question one but force get_all=True later
+        pagedata = self.msgr.get_pagedata(testnum)
         with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i, img_bytes in enumerate(vt):
-                img_ext = imghdr.what(None, h=img_bytes)
-                iname = Path(td) / f"img.{i}.{img_ext}"
-                with open(iname, "wb") as fh:
-                    fh.write(img_bytes)
-                inames.append(iname)
-            WholeTestView(testNumber, inames, parent=parent).exec_()
+            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
+            labels = [x["pagename"] for x in pagedata]
+            # TODO: if we unified img_src_data and pagedata, could just pass onwards
+            img_data = [
+                {"filename": r["local_filename"], "orientation": r["orientation"]}
+                for r in pagedata
+            ]
+            WholeTestView(testnum, img_data, labels, parent=parent).exec_()
 
     def viewQuestion(self, testNumber, questionNumber, parent=None):
+        # todo: rotations
         vq = self.msgr.getQuestionImages(testNumber, questionNumber)
         if vq is None:
             return

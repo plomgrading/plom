@@ -626,8 +626,44 @@ class BaseMessenger:
         finally:
             self.SRmutex.release()
 
-    def MrequestWholePaperMetadata(self, code, questionNumber=0):
+    def get_pagedata(self, code):
         """Get metadata about the images in this paper.
+
+        TODO: returns 404/409, so why not raise that instead?
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_pagedata_question(self, code, questionNumber):
+        """Get metadata about the images in this paper and question.
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}/{questionNumber}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_pagedata_context_question(self, code, questionNumber=0):
+        """Get metadata about all non-ID page images in this paper, as related to a question.
 
         For now, questionNumber effects the "included" column...
 
@@ -638,7 +674,7 @@ class BaseMessenger:
         # when called from identifier. - Fixes #921
         try:
             response = self.get(
-                f"/MK/TMP/whole/{code}/{questionNumber}",
+                f"/pagedata/{code}/context/{questionNumber}",
                 json={"user": self.user, "token": self.token},
             )
             response.raise_for_status()

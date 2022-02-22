@@ -438,12 +438,16 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
 
 
 def MgetWholePaper(self, test_number, question):
-    """Send page images of whole paper back to user, highlighting which belong to the given question. Do not show ID pages."""
+    """All non-ID pages of a paper, highlighting which belong to a question.
 
-    # we can show show not totally scanned test.
+    Returns:
+        list: a list of lists, each "row" currently documented in the
+            caller's implementation.  TODO: consider moving the dict
+            stuff back to here.
+    """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # don't know that test - this shouldn't happen
-        return [False]
+        return [False]  # TODO
     pageData = []  # for each page append a 4-tuple [
     # page-code = t.pageNumber, h.questionNumber.order, 3.questionNumber.order, or l.order
     # image-md5sum,

@@ -217,7 +217,7 @@ def do_random_marking_backend(question, version, *, messenger):
 
         src_img_data = [{"id": r[0], "md5": r[1]} for r in image_metadata]
         papernum = int(task[1:5])
-        pagedata = messenger.MrequestWholePaperMetadata(papernum, question)
+        pagedata = messenger.get_pagedata_context_question(papernum, question)
         with tempfile.TemporaryDirectory() as td:
             pagedata = download_pages(messenger, pagedata, td, alt_get=src_img_data)
             # Populate the orientation keys from the full pagedata

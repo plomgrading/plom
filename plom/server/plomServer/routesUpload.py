@@ -604,25 +604,6 @@ class UploadHandler:
                 mpwriter.append(b)
             return web.Response(body=mpwriter, status=200)
 
-    # @routes.get("/admin/testImages")
-    @authenticate_by_token_required_fields(["user", "test"])
-    def getAllTestImages(self, data, request):
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        ok, filenames = self.server.getAllTestImages(data["test"])
-        if not ok:
-            # 2nd return value is error message in this case
-            raise web.HTTPNotFound(reason=filenames)
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append(str(len(filenames)))
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
     async def checkTPage(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token", "test", "page"]):
@@ -1044,7 +1025,6 @@ class UploadHandler:
         router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/questionImages", self.getQuestionImages)
-        router.add_get("/admin/testImages", self.getAllTestImages)
         router.add_get("/admin/checkTPage", self.checkTPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)

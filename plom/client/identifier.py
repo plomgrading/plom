@@ -718,11 +718,8 @@ class IDClient(QWidget):
         if len(index) == 0:
             return
         testnum = self.exM.data(index[0])
-        # Ask for question one but force get_all=True later
-        # TODO: investigate if None is supposed to DTRT here: I got 500 err
-        pagedata = self.msgr.MrequestWholePaperMetadata(testnum, 1)
-        # for r in pagedata:
-        #     print(r)
+        pagedata = self.msgr.get_pagedata(testnum)
+        # TODO: do we need to think this for "included"?
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )

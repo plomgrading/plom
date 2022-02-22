@@ -168,7 +168,7 @@ class BackgroundDownloader(QThread):
         del page_metadata
 
         num = int(task[1:5])
-        pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
+        pagedata = self._msgr.get_pagedata_context_question(num, self.question)
         pagedata = download_pages(
             self._msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
@@ -1234,7 +1234,7 @@ class MarkerClient(QWidget):
         # filenames likely stale: but have restarted client in meantime
         src_img_data = plomdata["base_images"]
 
-        pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
+        pagedata = self.msgr.get_pagedata_context_question(num, self.question)
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
@@ -1392,7 +1392,7 @@ class MarkerClient(QWidget):
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
-        pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
+        pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
         )
@@ -2365,15 +2365,17 @@ class MarkerClient(QWidget):
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()
 
-        pagedata = self.msgr.MrequestWholePaperMetadata(tn, gn)
-        pagedata = download_pages(self.msgr, pagedata, self.workingDirectory)
+        pagedata = self.msgr.get_pagedata_question(tn, gn)
+        pagedata = download_pages(
+            self.msgr, pagedata, self.workingDirectory, get_all=True
+        )
         # don't cache this pagedata: "gn" might not be our question number
         # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
+        # TODO: as elsewhere, this local_filename is annoying
         img_data = [
             {"filename": r["local_filename"], "orientation": r["orientation"]}
             for r in pagedata
-            if r["included"]
         ]
         QuestionViewDialog(self, img_data, tn, gn, ver=ver, marker=self).exec_()
