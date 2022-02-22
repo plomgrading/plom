@@ -22,6 +22,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomConnectionError,
     PlomExistingLoginException,
+    PlomNoMoreException,
     PlomNoSolutionException,
     PlomServerNotReady,
     PlomSSLError,
@@ -624,6 +625,68 @@ class BaseMessenger:
             ) from None
         finally:
             self.SRmutex.release()
+
+    def MrequestWholePaperMetadata(self, code, questionNumber=0):
+        """Get metadata about the images in this paper.
+
+        For now, questionNumber effects the "included" column...
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        self.SRmutex.acquire()
+        # note - added default value for questionNumber so that this works correctly
+        # when called from identifier. - Fixes #921
+        try:
+            response = self.get(
+                f"/MK/TMP/whole/{code}/{questionNumber}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            ret = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        return ret
+
+    def MrequestOneImage(self, image_id, md5sum):
+        """Download one image from server by its database id.
+
+        args:
+            image_id (int): TODO: int/str?  The key into the server's
+                database of images.
+            md5sum (str): the expected md5sum, just for sanity checks or
+                something I suppose.
+
+        return:
+            bytes: png/jpeg or whatever as bytes.
+
+        Errors/Exceptions
+            401: not authenticated
+            404: no such image
+            409: wrong md5sum provided
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/MK/images/{image_id}/{md5sum}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomConflict("Wrong md5sum provided") from None
+            if response.status_code == 404:
+                raise PlomNoMoreException("Cannot find image") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        return image
 
     def request_ID_image(self, code):
         self.SRmutex.acquire()
