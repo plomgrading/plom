@@ -627,7 +627,11 @@ class Annotator(QWidget):
         log.debug("wholePage: downloading files for testnum %s", testnum)
         self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
         pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
-        files = [x["local_filename"] for x in pagedata]
+        # TODO: if we unified img_src_data and pagedata, could just pass onwards
+        files = [
+            {"filename": x["local_filename"], "orientation": x["orientation"]}
+            for x in pagedata
+        ]
         labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, files, labels, parent=self).exec_()
 

@@ -698,14 +698,6 @@ class MarkerExamModel(QStandardItemModel):
         """
         self._setDataByTask(task, 8, tdir)
 
-    def getOriginalFiles(self, task):
-        """Return filenames for original un-annotated image as string.
-
-        Somewhat deprecated?
-        """
-        src_img_data = self.get_source_image_data(task)
-        return [x["filename"] for x in src_img_data]
-
     def _setImageData(self, task, src_img_data):
         """Set the md5sums etc of the original image files."""
         log.debug("Setting img data to {}".format(src_img_data))
@@ -1203,7 +1195,7 @@ class MarkerClient(QWidget):
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
         """
-        if len(self.examModel.getOriginalFiles(task)) > 0:
+        if len(self.examModel.get_source_image_data(task)) > 0:
             return True
 
         assert task[0] == "q"
@@ -1288,7 +1280,7 @@ class MarkerClient(QWidget):
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
-            self.testImg.updateImage(self.examModel.getOriginalFiles(task))
+            self.testImg.updateImage(self.examModel.get_source_image_data(task))
         self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
 
@@ -1676,7 +1668,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fnames = self.examModel.getOriginalFiles(task)
+        img_src_data = self.examModel.get_source_image_data(task)
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -1688,7 +1680,7 @@ class MarkerClient(QWidget):
                 count += 1
                 # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
                 if (count % 10) == 0:
-                    log.info("waiting for downloader: {}".format(fnames))
+                    log.info("waiting for downloader: {}".format(img_src_data))
                 if count >= 40:
                     msg = SimpleQuestion(
                         self,
@@ -1699,8 +1691,8 @@ class MarkerClient(QWidget):
                     count = 0
 
         # maybe the downloader failed for some (rare) reason
-        for fn in fnames:
-            if not os.path.exists(fn):
+        for data in img_src_data:
+            if not Path(data["filename"]).exists():
                 log.warning(
                     "some kind of downloader fail? (unexpected, but probably harmless"
                 )
@@ -2378,5 +2370,9 @@ class MarkerClient(QWidget):
         self._full_pagedata[tn] = pagedata
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        filenames = [r["local_filename"] for r in pagedata if r["included"]]
-        QuestionViewDialog(self, filenames, tn, gn, ver=ver, marker=self).exec_()
+        img_data = [
+            {"filename": r["local_filename"], "orientation": r["orientation"]}
+            for r in pagedata
+            if r["included"]
+        ]
+        QuestionViewDialog(self, img_data, tn, gn, ver=ver, marker=self).exec_()
