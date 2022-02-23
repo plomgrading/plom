@@ -329,16 +329,16 @@ def scan_submissions(num_questions, *, server_dir="."):
         sid = pdf.stem.split(".")[-2]
         try:
             assert len(sid) == 8, "Student id has unexpected length, continuing"
-        except AssertionError:
-            errors.append(sid)
+        except AssertionError as e:
+            errors.append((sid, e))
             continue
 
         # try to open pdf first, continue on error
         try:
             num_pages = len(fitz.open(pdf))
-        except RuntimeError:
+        except RuntimeError as e:
             print(f"Error processing student {sid} due to file error on {pdf}")
-            errors.append(sid)
+            errors.append((sid, e))
             continue
 
         if num_pages == num_questions:
@@ -353,8 +353,8 @@ def scan_submissions(num_questions, *, server_dir="."):
             pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
         )
 
-    for sid in errors:
-        print(f"Error processing user_id {sid}")
+    for sid, err in errors:
+        print(f"Error processing user_id {sid}: {str(err)}")
 
     # Clean up any missing submissions
     plom.scan.processMissing(msgr=("localhost", scan_pwd), yes_flag=True)
