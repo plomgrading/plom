@@ -132,7 +132,15 @@ class SourceList(QListWidget):
                 ci.setHidden(False)
 
     def viewImage(self, qi):
-        self._parent.viewImage(self.item_files[qi.text()])
+        """Shows a larger view of the currently selected page."""
+        self._parent.viewImage(
+            [
+                {
+                    "filename": self.item_files[qi.text()],
+                    "orientation": self.item_orientation[qi.text()],
+                }
+            ]
+        )
 
 
 class SinkList(QListWidget):
@@ -156,9 +164,8 @@ class SinkList(QListWidget):
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
-        self.item_belongs = (
-            {}
-        )  # whether or not the item 'officially' belongs to the question
+        # whether or not the item 'officially' belongs to the question
+        self.item_belongs = {}
         self.item_files = {}
         self.item_orientation = {}
         self.item_id = {}
@@ -297,7 +304,15 @@ class SinkList(QListWidget):
         # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
-        self._parent.viewImage(self.item_files[qi.text()])
+        """Shows a larger view of the currently selected page."""
+        self._parent.viewImage(
+            [
+                {
+                    "filename": self.item_files[qi.text()],
+                    "orientation": self.item_orientation[qi.text()],
+                }
+            ]
+        )
 
     def getNameList(self):
         nList = []
@@ -730,9 +745,9 @@ class RearrangementViewer(QDialog):
         """Rotates the currently selected page by 90 degrees."""
         self.listB.rotateSelectedImages(angle)
 
-    def viewImage(self, fname):
-        """Shows a larger view of the currently selected page."""
-        GroupView(self, [fname], bigger=True).exec_()
+    def viewImage(self, image_data):
+        """Shows a larger view of one or more pages."""
+        GroupView(self, image_data, bigger=True).exec_()
 
     def doShuffle(self):
         """
