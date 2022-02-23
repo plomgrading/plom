@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
 )
 
-from .useful_classes import ErrorMessage, SimpleQuestion
+from .useful_classes import WarnMsg, SimpleQuestion
 from .viewers import GroupView
 
 
@@ -751,8 +751,8 @@ class RearrangementViewer(QDialog):
             (where `iref` seems to be md5sum?  TODO).
         """
         if self.listB.count() == 0:
-            msg = ErrorMessage("You must have at least one page in the bottom list.")
-            msg.exec()
+            msg = "You must have at least one page in the bottom list."
+            WarnMsg(self, msg).exec()
             return
         if self.need_to_confirm:
             msg = SimpleQuestion(

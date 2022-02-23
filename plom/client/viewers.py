@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
 )
 
 from .image_view_widget import ImageViewWidget
-from .useful_classes import ErrorMessage
+from .useful_classes import InfoMsg, WarnMsg
 
 
 log = logging.getLogger("viewerdialog")
@@ -219,7 +219,7 @@ class SolutionViewer(QWidget):
         solnfile = self._annotr.refreshSolutionImage()
         self.sv.updateImage(solnfile)
         if solnfile is None:
-            ErrorMessage("Server no longer has a solution.  Try again later?").exec_()
+            WarnMsg(self, "Server no longer has a solution.  Try again later?").exec_()
 
 
 class CatViewer(QDialog):
@@ -290,7 +290,7 @@ class CatViewer(QDialog):
                 )
             logging.debug("Cat image refreshed")
         except Exception:
-            ErrorMessage("Cannot get cat picture.  Try again later?").exec_()
+            WarnMsg(self, "Cannot get cat picture.  Try again later?").exec_()
             self.catz = None
 
     def eraseImageFile(self):
@@ -312,5 +312,5 @@ class CatViewer(QDialog):
         self.getNewImageFile(msg=msg)
         self.img.updateImage(self.catz)
         if self.count > 5:
-            ErrorMessage("Enough break time").exec_()
+            InfoMsg(self, "Enough break time").exec_()
             self.close()
