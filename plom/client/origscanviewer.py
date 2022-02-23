@@ -86,7 +86,8 @@ class SourceList(QListWidget):
         pix = QPixmap(qir.read())
         rot = QTransform()
         rot.rotate(angle)
-        pix = pix.transformed(rot)
+        if angle != 0:
+            pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
         if belongs:
             it.setBackground(QBrush(Qt.darkGreen))
@@ -275,22 +276,23 @@ class SinkList(QListWidget):
             angle (int)
         """
         self.item_orientation[name] = angle
-        rot = QTransform()
-        rot.rotate(angle)
         # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
         qir = QImageReader(str(self.item_files[name]))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
-        npix = pix.transformed(rot)
+        rot = QTransform()
+        rot.rotate(angle)
+        if angle != 0:
+            pix = pix.transformed(rot)
         # ci = self.item(self.item_positions[name])
         # TODO: instead we get `ci` with a dumb loop
         for i in range(self.count()):
             ci = self.item(i)
             if ci.text() == name:
                 break
-        ci.setIcon(QIcon(npix))
+        ci.setIcon(QIcon(pix))
         # rotpixmap = ci.getIcon().pixmap().transformed(rot)
         # ci.setIcon(QIcon(rotpixmap))
 
