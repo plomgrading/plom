@@ -11,33 +11,19 @@ import tempfile
 import urllib.request
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QBrush, QIcon, QImageReader, QPixmap, QTransform
 from PyQt5.QtWidgets import (
-    QAbstractItemView,
     QDialog,
-    QFrame,
     QFormLayout,
     QGridLayout,
-    QHBoxLayout,
-    QListView,
-    QListWidget,
-    QListWidgetItem,
     QLabel,
-    QMessageBox,
     QPushButton,
-    QScrollArea,
-    QSplitter,
     QSpinBox,
     QTabWidget,
-    QVBoxLayout,
     QWidget,
-    QSpacerItem,
-    QSizePolicy,
-    QToolButton,
 )
 
 from .image_view_widget import ImageViewWidget
-from .useful_classes import ErrorMessage, SimpleQuestion
+from .useful_classes import ErrorMessage
 
 
 log = logging.getLogger("viewerdialog")
@@ -328,6 +314,3 @@ class CatViewer(QDialog):
         if self.count > 5:
             ErrorMessage("Enough break time").exec_()
             self.close()
-
-
-###
