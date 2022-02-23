@@ -651,9 +651,7 @@ class RearrangementViewer(QDialog):
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
-            if kv["orientation"] != 0:
-                log.info("Applying orientation of %s", kv["orientation"])
-                self.listB.rotateItemTo(match, kv["orientation"])
+            self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
         """
