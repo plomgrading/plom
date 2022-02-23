@@ -77,20 +77,23 @@ class SourceList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addImageItem(self, p, pfile, belongs):
+    def addImageItem(self, p, pfile, angle, belongs):
         current_row = self.count()
         name = str(p)
         qir = QImageReader(str(pfile))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        rot = QTransform()
+        rot.rotate(angle)
+        pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
         if belongs:
             it.setBackground(QBrush(Qt.darkGreen))
         self.addItem(it)  # item is added at current_row
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
-        self.item_orientation[name] = 0
+        self.item_orientation[name] = angle
 
     def hideItemByName(self, name=None):
         """Removes (hides) a single named item from source-list.
@@ -168,10 +171,10 @@ class SinkList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addPotentialItem(self, p, pfile, belongs, db_id=None):
+    def addPotentialItem(self, p, pfile, angle, belongs, db_id=None):
         name = str(p)
         self.item_files[name] = pfile
-        self.item_orientation[name] = 0  # TODO
+        self.item_orientation[name] = angle
         self.item_id[name] = db_id
         self.item_belongs[name] = belongs
 
@@ -590,11 +593,18 @@ class RearrangementViewer(QDialog):
             self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
             self.listA.addImageItem(
-                row["pagename"], row["local_filename"], row["included"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
             )
             # add the potential for every page to listB
             self.listB.addPotentialItem(
-                row["pagename"], row["local_filename"], row["included"], db_id=row["id"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+                db_id=row["id"],
             )
             # if position in current annot is non-null then add to list of pages to move between lists.
             if row["included"] and row["order"]:
@@ -619,11 +629,18 @@ class RearrangementViewer(QDialog):
             self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
             self.listA.addImageItem(
-                row["pagename"], row["local_filename"], row["included"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
             )
             # add the potential for every page to listB
             self.listB.addPotentialItem(
-                row["pagename"], row["local_filename"], row["included"], db_id=row["id"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+                db_id=row["id"],
             )
         for kv in current:
             match = [
@@ -636,8 +653,6 @@ class RearrangementViewer(QDialog):
             self.listB.appendItem(self.listA.hideItemByName(match))
             if kv["orientation"] != 0:
                 log.info("Applying orientation of %s", kv["orientation"])
-                # always display unrotated in source ListA
-                # TODO: should reflect server static info (currently always orientation = 0 but...)
                 self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
