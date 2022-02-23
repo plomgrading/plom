@@ -168,8 +168,6 @@ class ExamView(QGraphicsView):
                 pixmap.setTransformationMode(Qt.SmoothTransformation)
                 pixmap.setPos(x, 0)
                 pixmap.setVisible(True)
-                print(pix)
-                print(data["filename"])
                 sf = float(ScenePixelHeight) / float(pix.height())
                 pixmap.setScale(sf)
                 self.scene.addItem(pixmap)
