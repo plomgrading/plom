@@ -446,14 +446,16 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
-    "--init",
-    action="store_true",
-    help="Initialize the plom server",
+    "--no-init",
+    action="store_false",
+    dest="init",
+    help="Do not initialize the plom server",
 )
 parser.add_argument(
-    "--upload",
-    action="store_true",
-    help="Run submission-grabbing from Canvas and uploading to plom server",
+    "--no-upload",
+    action="store_false",
+    dest="upload",
+    help="Do not run submission-grabbing from Canvas and uploading to plom server",
 )
 
 if __name__ == "__main__":
