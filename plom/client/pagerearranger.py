@@ -28,9 +28,10 @@ from PyQt5.QtWidgets import (
 )
 
 from .useful_classes import ErrorMessage, SimpleQuestion
+from .viewers import GroupView
 
 
-log = logging.getLogger("viewerdialog")
+log = logging.getLogger("rearrange")
 
 
 class SourceList(QListWidget):

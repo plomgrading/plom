@@ -58,8 +58,8 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import (
-    RearrangementViewer,
+from .pagerearranger import RearrangementViewer
+from .viewers import (
     SolutionViewer,
     WholeTestView,
     CatViewer,

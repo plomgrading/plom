@@ -65,7 +65,7 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
-from .origscanviewer import QuestionViewDialog, SelectTestQuestion
+from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMessage, SimpleQuestion

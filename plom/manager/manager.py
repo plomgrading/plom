@@ -49,7 +49,7 @@ import plom.client.icons
 
 from plom.client.useful_classes import ErrorMessage, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
-from plom.client.origscanviewer import WholeTestView, GroupView
+from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager

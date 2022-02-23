@@ -49,7 +49,7 @@ from .useful_classes import ErrorMsg, WarnMsg, InfoMsg
 from .useful_classes import SimpleQuestion, WarningQuestion
 from .useful_classes import BlankIDBox, SNIDBox
 from .uiFiles.ui_identify import Ui_IdentifyWindow
-from .origscanviewer import WholeTestView
+from .viewers import WholeTestView
 from .pagecache import download_pages
 
 
