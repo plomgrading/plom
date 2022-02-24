@@ -597,6 +597,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason=filenames)
         # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
         with MultipartWriter("images") as mpwriter:
+            mpwriter.append(str(len(filenames)))
             for f in filenames:
                 with open(f, "rb") as fh:
                     b = fh.read()
@@ -615,6 +616,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason=filenames)
         # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
         with MultipartWriter("images") as mpwriter:
+            mpwriter.append(str(len(filenames)))
             for f in filenames:
                 with open(f, "rb") as fh:
                     b = fh.read()
