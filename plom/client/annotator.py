@@ -10,14 +10,12 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPLv3"
 
 from copy import deepcopy
-import imghdr
 import json
 import logging
 from pathlib import Path
 import os
 import re
 import sys
-import tempfile
 from textwrap import dedent
 
 if sys.version_info >= (3, 7):
@@ -60,8 +58,8 @@ from .key_wrangler import KeyWrangler, key_layouts
 # import the key-help popup window class
 from .key_help import KeyHelp
 
-from .origscanviewer import (
-    RearrangementViewer,
+from .pagerearranger import RearrangementViewer
+from .viewers import (
     SolutionViewer,
     WholeTestView,
     CatViewer,
@@ -619,9 +617,7 @@ class Annotator(QWidget):
         """
         Popup a dialog showing the entire paper.
 
-        TODO: this has significant duplication with RearrangePages.  Currently
-        this one does it own downloads (even though Marker may already have the
-        pages.
+        TODO: this has significant duplication with RearrangePages.
 
         Returns:
             None
@@ -630,13 +626,15 @@ class Annotator(QWidget):
             return
         testnum = self.tgvID[:4]
         log.debug("wholePage: downloading files for testnum %s", testnum)
-        page_data, files = self.parentMarkerUI.downloadWholePaper(testnum)
-        if not files:
-            return
-        labels = [x[0] for x in page_data]
+        self.parentMarkerUI.downloadAnyMissingPages(int(testnum))
+        pagedata = self.parentMarkerUI._full_pagedata[int(testnum)]
+        # TODO: if we unified img_src_data and pagedata, could just pass onwards
+        files = [
+            {"filename": x["local_filename"], "orientation": x["orientation"]}
+            for x in pagedata
+        ]
+        labels = [x["pagename"] for x in pagedata]
         WholeTestView(testnum, files, labels, parent=self).exec_()
-        for f in files:
-            f.unlink()
 
     def rearrangePages(self):
         """Rearranges pages in UI.
@@ -682,6 +680,8 @@ class Annotator(QWidget):
                 f"Include this info if you think this is a bug!",
             ).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
+        self.parentMarkerUI.downloadAnyMissingPages(testNumber)
+
         # do a deep copy of this list of dict - else hit #1690
         # keep original readonly?
         page_data = deepcopy(self.parentMarkerUI._full_pagedata[int(testNumber)])
@@ -704,54 +704,11 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec_()
-        # Crawl over the page_data, download any images we don't have
-        # TODO: could defer downloading to background thread of dialog
-        page_adjuster_downloads = []
-        for (i, pg) in enumerate(page_data):
-            if pg["local_filename"]:
-                log.info(
-                    "adjustpgs: already have image id={}: {}".format(
-                        pg["id"], pg["local_filename"]
-                    )
-                )
-                continue
-            md5 = pg["md5"]
-            image_id = pg["id"]
-            img_bytes = self.parentMarkerUI.downloadOneImage(image_id, md5)
-            img_ext = imghdr.what(None, h=img_bytes)
-            # TODO: wrong to put these in the paperdir (?)
-            # Maybe Marker should be doing this downloading
-            with tempfile.NamedTemporaryFile(
-                "wb",
-                dir=self.parentMarkerUI.workingDirectory,
-                prefix="adj_pg_{}_".format(i),
-                suffix=f".{img_ext}",
-                delete=False,
-            ) as f:
-                log.info(
-                    'adjustpages: write "%s" from id=%s, md5=%s', f.name, image_id, md5
-                )
-                f.write(img_bytes)
-                page_adjuster_downloads.append(f.name)
-                pg["local_filename"] = f.name
 
         is_dirty = self.scene.areThereAnnotations()
         log.debug("page_data is\n  {}".format("\n  ".join([str(x) for x in page_data])))
-        # pull stuff out of dict (TODO: for now)
-        page_data_list = []
-        for d in page_data:
-            page_data_list.append(
-                [
-                    d["pagename"],
-                    d["md5"],
-                    d["included"],
-                    d["order"],
-                    d["id"],
-                    d["local_filename"],
-                ]
-            )
         rearrangeView = RearrangementViewer(
-            self, testNumber, self.src_img_data, page_data_list, is_dirty
+            self, testNumber, self.src_img_data, page_data, is_dirty
         )
         self.parentMarkerUI.Qapp.restoreOverrideCursor()
         if rearrangeView.exec_() == QDialog.Accepted:
@@ -788,10 +745,6 @@ class Annotator(QWidget):
             # TODO: possibly md5 stuff broken here too?
             log.debug("permuted: new stuff is {}".format(stuff))
             self.loadNewTGV(*stuff)
-        # CAREFUL, wipe only those files we created
-        # TODO: consider a broader local caching system
-        for f in page_adjuster_downloads:
-            os.unlink(f)
         self.setEnabled(True)
         return
 
