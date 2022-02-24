@@ -310,7 +310,8 @@ class RearrangementViewer(QDialog):
         self.need_to_confirm = need_to_confirm
         self._setupUI()
         page_data = self.dedupe_by_md5sum(page_data)
-        self.pageData = page_data
+        # stored in an instance variable but only used on reset (and initial setup)
+        self.initial_page_data = page_data
         self.nameToIrefNFile = {}
         if current_pages:
             self.populateListWithCurrent(current_pages)
@@ -495,17 +496,17 @@ class RearrangementViewer(QDialog):
             lambda sel, unsel: self.singleSelect(self.listB, allPageWidgets)
         )
 
-    def dedupe_by_md5sum(self, pageData):
+    def dedupe_by_md5sum(self, page_data):
         """Collapse entries in the pagedata with duplicated md5sums.
 
-        In the future [1], pages will be shared between questions but we
-        only want to show one copy of each such duplicated page in the
-        "Adjust pages" dialog.
+        Pages are shared between questions but we only want to show one
+        copy of each such duplicated page in the "Adjust pages" dialog.
 
-        [1] https://gitlab.com/plom/plom/-/merge_requests/698
-
-        The data looks like the following.  We want to compress rows that
-        have duplicated md5sums:
+        The `page_data` is a list of dicts, each with keys `"pagename"`,
+        `"md5"`, `"included"`, `"order"`, `"id"`, `"local_filename"`, and
+        others (`"orientation"`, etc) not shown here.  These have
+        corresponding values like in the example below.  We want to
+        compress rows that have duplicated md5sums:
         ```
         ['h1.1', 'e224c22eda93456143fbac94beb0ffbd', True, 1, 40, '/tmp/plom_zq/tmpnqq.image]
         ['h1.2', '97521f4122df24ca012a12930391195a', True, 2, 41, '/tmp/plom_zq/tmp_om.image]
@@ -528,9 +529,9 @@ class RearrangementViewer(QDialog):
         May not be completely well-posed.  Probably better to refactor before this.  E.g., factor out
         a dict of md5sum to filenames before we get here.
 
-        "Included" (column 3): include these in the question or maybe server
-        originally had these in the question (TODO: maybe not, True/False
-        generated on API call).
+        `"included"` (column 3): server said these were ORIGINALLY included
+        in this question.  User might have changed this; see "current"
+        elsewhere.
 
         TODO: if order does not have `h1,1` first, should we move it first?
               that is, before the parenthetical?  Probably by re-ordering
@@ -538,30 +539,28 @@ class RearrangementViewer(QDialog):
         """
         # List of lists, preserving original order within each list
         tmp_data = []
-        for x in pageData:
-            md5 = x[1]
-            md5s_so_far = [y[0][1] for y in tmp_data]
-            if md5 in md5s_so_far:
-                i = md5s_so_far.index(md5)
-                tmp_data[i].append(x.copy())
+        for row in page_data:
+            md5s_so_far = [y[0]["md5"] for y in tmp_data]
+            if row["md5"] in md5s_so_far:
+                i = md5s_so_far.index(row["md5"])
+                tmp_data[i].append(row.copy())
             else:
-                tmp_data.append([x.copy()])
+                tmp_data.append([row.copy()])
 
         # Compress each list down to a single item, packing the names
-        new_pageData = []
+        new_page_data = []
         # warn/log if True not in first?
         for y in tmp_data:
             z = y[0].copy()
-            other_names = [_[0] for _ in y[1:]]
+            other_names = [_["pagename"] for _ in y[1:]]
             if other_names:
-                z[0] = z[0] + " (& {})".format(", ".join(other_names))
+                z["pagename"] = z["pagename"] + " (& {})".format(", ".join(other_names))
             # If any entry had True for "included", include this row
-            # TODO: or should we reorder the list, moving True to front?
-            # TODO: depends what is done with the other data
-            z[2] = any([_[2] for _ in y])
-            new_pageData.append(z)
+            # Rearranger uses this to colour pages (originally) included
+            z["included"] = any([_["included"] for _ in y])
+            new_page_data.append(z)
 
-        return new_pageData
+        return new_page_data
 
     def show_relevant_tools(self):
         """Hide/show tools based on current selections."""
@@ -587,15 +586,19 @@ class RearrangementViewer(QDialog):
         self.listA.clear()
         self.listB.clear()
         move_order = {}
-        for row in self.pageData:
-            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
+        for row in self.initial_page_data:
+            self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
-            self.listA.addImageItem(row[0], row[5], row[2])
+            self.listA.addImageItem(
+                row["pagename"], row["local_filename"], row["included"]
+            )
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
+            self.listB.addPotentialItem(
+                row["pagename"], row["local_filename"], row["included"], db_id=row["id"]
+            )
             # if position in current annot is non-null then add to list of pages to move between lists.
-            if row[2] and row[3]:
-                move_order[row[3]] = row[0]
+            if row["included"] and row["order"]:
+                move_order[row["order"]] = row["pagename"]
         for k in sorted(move_order.keys()):
             self.listB.appendItem(self.listA.hideItemByName(name=move_order[k]))
 
@@ -612,14 +615,22 @@ class RearrangementViewer(QDialog):
         self.nameToIrefNFile = {}
         self.listA.clear()
         self.listB.clear()
-        for row in self.pageData:
-            self.nameToIrefNFile[row[0]] = [row[1], row[5]]
+        for row in self.initial_page_data:
+            self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
-            self.listA.addImageItem(row[0], row[5], row[2])
+            self.listA.addImageItem(
+                row["pagename"], row["local_filename"], row["included"]
+            )
             # add the potential for every page to listB
-            self.listB.addPotentialItem(row[0], row[5], row[2], db_id=row[4])
+            self.listB.addPotentialItem(
+                row["pagename"], row["local_filename"], row["included"], db_id=row["id"]
+            )
         for kv in current:
-            match = [row[0] for row in self.pageData if row[1] == kv["md5"]]
+            match = [
+                row["pagename"]
+                for row in self.initial_page_data
+                if row["md5"] == kv["md5"]
+            ]
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
