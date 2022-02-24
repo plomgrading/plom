@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -u
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
@@ -15,7 +15,15 @@ Overview:
      ```
      my_key = "11224~AABBCCDDEEFF..."
      ```
-  4. Run this script.
+  4. Run this script and follow the interactive menus:
+     ```
+     ./plom-push-to-canvas.py --dry-run
+     ```
+     It will output what would be uploaded.
+  5. Run it again for real:
+     ```
+     ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx 2>&1 | tee push.log
+     ```
 
 This script traverses the files in `reassembled/` directory
 and tries to upload them.  It takes the corresponding grades
@@ -141,14 +149,15 @@ parser.add_argument(
     help="""
         Specify a Canvas Section ID (an integer N).
         Interactively prompt from a list if omitted.
-        Pass "--section 0" to not use sections.
+        Pass "--no-section" to not use Sections at all.
     """,
 )
 parser.add_argument(
     "--no-section",
     action="store_true",
     help="""
-        Overwrites the --section flag to not use sections.
+        Overrides the --section flag to not use Sections (and take the
+        classlist directly from the Course).
     """,
 )
 parser.add_argument(
@@ -190,16 +199,15 @@ if __name__ == "__main__":
 
     if args.no_section:
         section = None
+    elif args.section:
+        section = get_section_by_id_number(course, args.section)
     else:
-        if args.section is None:
-            section = get_section_by_id_number(course, args.section)
+        section = interactively_get_section(course)
+        if section is None:
+            print('Note: you can use "--no-section" to omit selecting section.\n')
         else:
-            section = interactively_get_section(course)
-            if section is None:
-                print('Note: you can use "--no-section" to omit selecting section.\n')
-            else:
-                print(f'Note: you can use "--section {section.id}" to reselect.\n')
-        print(f"Ok using section: {section}")
+            print(f'Note: you can use "--section {section.id}" to reselect.\n')
+    print(f"Ok using section: {section}")
 
     if args.assignment:
         assignment = get_assignment_by_id_number(course, args.assignment)

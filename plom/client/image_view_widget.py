@@ -144,6 +144,9 @@ class ExamView(QGraphicsView):
                 Can also be a list of `pathlib.Path` or `str` of image
                 filenames.  Can also be a single `str`/`pathlib.Path`,
                 for a single image.
+
+        Raises:
+            ValueError: an image did not load, for example if was empty.
         """
         if isinstance(image_data, (str, Path)):
             image_data = [image_data]
@@ -161,6 +164,8 @@ class ExamView(QGraphicsView):
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())
+                if pix.isNull():
+                    raise ValueError(f"Could not read an image from {data['filename']}")
                 rot = QTransform()
                 rot.rotate(data["orientation"])
                 pix = pix.transformed(rot)

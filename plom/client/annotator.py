@@ -67,6 +67,7 @@ from .viewers import (
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
+from .useful_classes import WarnMsg
 from .useful_classes import (
     ErrorMessage,
     SimpleQuestion,
@@ -1406,11 +1407,23 @@ class Annotator(QWidget):
             return False
 
         # check annotations are inside the margins
-        if not self.scene.checkAllObjectsInside():
-            msg = ErrorMessage(
-                "Some annotations are outside the margins. Please move or delete them before saving."
-            )
-            msg.exec_()
+        out_objs = self.scene.checkAllObjectsInside()
+        if out_objs:
+            msg = f"{len(out_objs)} annotations are outside the margins."
+            msg += " Please move or delete them before saving."
+            info = "<p>Out-of-bounds objects are highlighted in orange.</p>"
+            info += "<p><em>Note:</em> if you cannot see any such objects, "
+            info += "you may be experiencing "
+            info += '<a href="https://gitlab.com/plom/plom/-/issues/1792">Issue '
+            info += "#1792</a>; please help us by copy-pasting the details below, "
+            info += "along with any details about how to make this happen!</p>"
+            details = "## Out of bounds objects\n\n  "
+            details += "\n  ".join(str(x) for x in out_objs)
+            details += "\n\n## All objects\n\n  "
+            details += "\n  ".join(str(x) for x in self.scene.items())
+            details += "\n\n## Object serialization\n\n  "
+            details += "\n  ".join(str(x) for x in self.scene.pickleSceneItems())
+            WarnMsg(self, msg, info=info, info_pre=False, details=details).exec_()
             return False
 
         # make sure not still in "neutral" marking-state = no score given

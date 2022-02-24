@@ -900,9 +900,13 @@ class ManagerMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
-            # response is [image1, image2,... image.n]
+            # response is [n, image1, image2,... image.n]
             imageList = []
+            i = -1  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
+                i += 1
+                if i == 0:
+                    continue
                 imageList.append(BytesIO(img.content).getvalue())
             return imageList
 
@@ -927,9 +931,13 @@ class ManagerMessenger(BaseMessenger):
                 },
             )
             response.raise_for_status()
-            # response is [image1, image2,... image.n]
+            # response is [n, image1, image2,... image.n]
             imageList = []
+            i = -1  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
+                i += 1
+                if i == 0:
+                    continue
                 imageList.append(BytesIO(img.content).getvalue())
             return imageList
 
