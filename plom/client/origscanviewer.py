@@ -77,20 +77,24 @@ class SourceList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addImageItem(self, p, pfile, belongs):
+    def addImageItem(self, p, pfile, angle, belongs):
         current_row = self.count()
         name = str(p)
         qir = QImageReader(str(pfile))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        rot = QTransform()
+        rot.rotate(angle)
+        if angle != 0:
+            pix = pix.transformed(rot)
         it = QListWidgetItem(QIcon(pix), name)
         if belongs:
             it.setBackground(QBrush(Qt.darkGreen))
         self.addItem(it)  # item is added at current_row
         self.item_positions[name] = current_row
         self.item_files[name] = pfile
-        self.item_orientation[name] = 0
+        self.item_orientation[name] = angle
 
     def hideItemByName(self, name=None):
         """Removes (hides) a single named item from source-list.
@@ -128,7 +132,15 @@ class SourceList(QListWidget):
                 ci.setHidden(False)
 
     def viewImage(self, qi):
-        self._parent.viewImage(self.item_files[qi.text()])
+        """Shows a larger view of the currently selected page."""
+        self._parent.viewImage(
+            [
+                {
+                    "filename": self.item_files[qi.text()],
+                    "orientation": self.item_orientation[qi.text()],
+                }
+            ]
+        )
 
 
 class SinkList(QListWidget):
@@ -152,9 +164,8 @@ class SinkList(QListWidget):
         self.setIconSize(QSize(320, 320))
         self.setSpacing(8)
         self.setWrapping(False)
-        self.item_belongs = (
-            {}
-        )  # whether or not the item 'officially' belongs to the question
+        # whether or not the item 'officially' belongs to the question
+        self.item_belongs = {}
         self.item_files = {}
         self.item_orientation = {}
         self.item_id = {}
@@ -168,10 +179,10 @@ class SinkList(QListWidget):
         B = QSize(x - 50, x - 50)
         self.setIconSize(B)
 
-    def addPotentialItem(self, p, pfile, belongs, db_id=None):
+    def addPotentialItem(self, p, pfile, angle, belongs, db_id=None):
         name = str(p)
         self.item_files[name] = pfile
-        self.item_orientation[name] = 0  # TODO
+        self.item_orientation[name] = angle
         self.item_id[name] = db_id
         self.item_belongs[name] = belongs
 
@@ -272,27 +283,36 @@ class SinkList(QListWidget):
             angle (int)
         """
         self.item_orientation[name] = angle
-        rot = QTransform()
-        rot.rotate(angle)
         # TODO: instead of loading pixmap again, can we transform the QIcon?
         # Also, docs warned QPixmap.transformed() is slow
         qir = QImageReader(str(self.item_files[name]))
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
-        npix = pix.transformed(rot)
+        rot = QTransform()
+        rot.rotate(angle)
+        if angle != 0:
+            pix = pix.transformed(rot)
         # ci = self.item(self.item_positions[name])
         # TODO: instead we get `ci` with a dumb loop
         for i in range(self.count()):
             ci = self.item(i)
             if ci.text() == name:
                 break
-        ci.setIcon(QIcon(npix))
+        ci.setIcon(QIcon(pix))
         # rotpixmap = ci.getIcon().pixmap().transformed(rot)
         # ci.setIcon(QIcon(rotpixmap))
 
     def viewImage(self, qi):
-        self._parent.viewImage(self.item_files[qi.text()])
+        """Shows a larger view of the currently selected page."""
+        self._parent.viewImage(
+            [
+                {
+                    "filename": self.item_files[qi.text()],
+                    "orientation": self.item_orientation[qi.text()],
+                }
+            ]
+        )
 
     def getNameList(self):
         nList = []
@@ -590,11 +610,18 @@ class RearrangementViewer(QDialog):
             self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
             self.listA.addImageItem(
-                row["pagename"], row["local_filename"], row["included"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
             )
             # add the potential for every page to listB
             self.listB.addPotentialItem(
-                row["pagename"], row["local_filename"], row["included"], db_id=row["id"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+                db_id=row["id"],
             )
             # if position in current annot is non-null then add to list of pages to move between lists.
             if row["included"] and row["order"]:
@@ -619,11 +646,18 @@ class RearrangementViewer(QDialog):
             self.nameToIrefNFile[row["pagename"]] = [row["md5"], row["local_filename"]]
             # add every page image to list A
             self.listA.addImageItem(
-                row["pagename"], row["local_filename"], row["included"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
             )
             # add the potential for every page to listB
             self.listB.addPotentialItem(
-                row["pagename"], row["local_filename"], row["included"], db_id=row["id"]
+                row["pagename"],
+                row["local_filename"],
+                row["orientation"],
+                row["included"],
+                db_id=row["id"],
             )
         for kv in current:
             match = [
@@ -634,11 +668,7 @@ class RearrangementViewer(QDialog):
             assert len(match) == 1, "Oops, expected unique md5s in filtered pagedata"
             (match,) = match
             self.listB.appendItem(self.listA.hideItemByName(match))
-            if kv["orientation"] != 0:
-                log.info("Applying orientation of %s", kv["orientation"])
-                # always display unrotated in source ListA
-                # TODO: should reflect server static info (currently always orientation = 0 but...)
-                self.listB.rotateItemTo(match, kv["orientation"])
+            self.listB.rotateItemTo(match, kv["orientation"])
 
     def sourceToSink(self):
         """
@@ -715,9 +745,9 @@ class RearrangementViewer(QDialog):
         """Rotates the currently selected page by 90 degrees."""
         self.listB.rotateSelectedImages(angle)
 
-    def viewImage(self, fname):
-        """Shows a larger view of the currently selected page."""
-        GroupView(self, [fname], bigger=True).exec_()
+    def viewImage(self, image_data):
+        """Shows a larger view of one or more pages."""
+        GroupView(self, image_data, bigger=True).exec_()
 
     def doShuffle(self):
         """
