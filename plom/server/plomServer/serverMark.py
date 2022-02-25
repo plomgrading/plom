@@ -254,11 +254,6 @@ def MrecordMark(self, username, mark, annotated_filename, time_spent_marking):
         )
 
 
-# TODO: Have to figure this out.  Please needs documentation.
-def MgetOriginalImages(self, task):
-    return self.DB.MgetOriginalImages(task)
-
-
 # ==== tag stuff
 
 

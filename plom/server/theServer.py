@@ -160,7 +160,6 @@ class Server:
         MclaimThisTask,
         MrecordMark,
         MreturnMarkedTask,
-        MgetOriginalImages,
         checkTagTextValid,
         add_tag,
         remove_tag,

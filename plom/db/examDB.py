@@ -206,7 +206,6 @@ class PlomDB:
         MtakeTaskFromClient,
         Mget_annotations,
         MgetOneImageFilename,
-        MgetOriginalImages,
         MgetWholePaper,
         MreviewQuestion,
         MrevertTask,
