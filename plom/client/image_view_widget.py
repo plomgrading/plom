@@ -138,7 +138,8 @@ class ExamView(QGraphicsView):
         Args:
             image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
                 each dict has keys 'filename' and 'orientation' (and
-                possibly others).
+                possibly others that are unused).  If 'filename' isn't
+                present, we check for 'local_filename' instead.
                 Currently every image is used and the list order
                 determines the order.  That is subject to change.
                 Can also be a list of `pathlib.Path` or `str` of image
@@ -147,6 +148,7 @@ class ExamView(QGraphicsView):
 
         Raises:
             ValueError: an image did not load, for example if was empty.
+            KeyError: dict did not have appropriate keys.
         """
         if isinstance(image_data, (str, Path)):
             image_data = [image_data]
@@ -157,15 +159,22 @@ class ExamView(QGraphicsView):
 
         if image_data is not None:
             x = 0
-            for (n, data) in enumerate(image_data):
+            for data in image_data:
                 if not isinstance(data, dict):
                     data = {"filename": data, "orientation": 0}
-                qir = QImageReader(str(data["filename"]))
+                filename = data.get("filename")
+                if filename is None:
+                    filename = data.get("local_filename")
+                if filename is None:
+                    raise KeyError(
+                        f"Cannot find 'filename' nor 'local_filename' in {data}"
+                    )
+                qir = QImageReader(str(filename))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())
                 if pix.isNull():
-                    raise ValueError(f"Could not read an image from {data['filename']}")
+                    raise ValueError(f"Could not read an image from {filename}")
                 rot = QTransform()
                 rot.rotate(data["orientation"])
                 pix = pix.transformed(rot)

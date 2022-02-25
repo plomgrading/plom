@@ -724,12 +724,7 @@ class IDClient(QWidget):
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )
         labels = [x["pagename"] for x in pagedata]
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        img_data = [
-            {"filename": r["local_filename"], "orientation": r["orientation"]}
-            for r in pagedata
-        ]
-        WholeTestView(testnum, img_data, labels, parent=self).exec_()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec_()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing

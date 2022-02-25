@@ -2373,9 +2373,4 @@ class MarkerClient(QWidget):
         # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        # TODO: as elsewhere, this local_filename is annoying
-        img_data = [
-            {"filename": r["local_filename"], "orientation": r["orientation"]}
-            for r in pagedata
-        ]
-        QuestionViewDialog(self, img_data, tn, gn, ver=ver, marker=self).exec_()
+        QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec_()
