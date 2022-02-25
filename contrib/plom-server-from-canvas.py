@@ -65,7 +65,9 @@ import plom.scan
 
 
 def get_short_name(long_name):
-    """"""
+    """
+    Generate the short name of assignment
+    """
     short_name = ""
     push_letter = True
     while len(long_name):
@@ -315,13 +317,27 @@ def scan_submissions(num_questions, *, server_dir="."):
     del pwds
 
     upload_dir = server_dir / "upload"
+    errors = []
 
     print("Applying `plom-hwscan` to pdfs...")
     for pdf in tqdm((upload_dir / "submittedHWByQ").glob("*.pdf")):
         # get 12345678 from blah_blah.blah_blah.12345678._.
         sid = pdf.stem.split(".")[-2]
-        assert len(sid) == 8
-        if len(fitz.open(pdf)) == num_questions:
+        try:
+            assert len(sid) == 8, "Student id has unexpected length, continuing"
+        except AssertionError as e:
+            errors.append((sid, e))
+            continue
+
+        # try to open pdf first, continue on error
+        try:
+            num_pages = len(fitz.open(pdf))
+        except RuntimeError as e:
+            print(f"Error processing student {sid} due to file error on {pdf}")
+            errors.append((sid, e))
+            continue
+
+        if num_pages == num_questions:
             # If number of pages precisely matches number of questions then
             # do a 1-1 mapping...
             q = [[x] for x in range(1, num_questions + 1)]
@@ -332,6 +348,9 @@ def scan_submissions(num_questions, *, server_dir="."):
         plom.scan.processHWScans(
             pdf, sid, q, basedir=upload_dir, msgr=("localhost", scan_pwd)
         )
+
+    for sid, err in errors:
+        print(f"Error processing user_id {sid}: {str(err)}")
 
     # Clean up any missing submissions
     plom.scan.processMissing(msgr=("localhost", scan_pwd), yes_flag=True)
@@ -424,6 +443,18 @@ parser.add_argument(
         you'll need quotes around the list, as in `--marks "5, 10, 4"`.
     """,
 )
+parser.add_argument(
+    "--no-init",
+    action="store_false",
+    dest="init",
+    help="Do not initialize the plom server",
+)
+parser.add_argument(
+    "--no-upload",
+    action="store_false",
+    dest="upload",
+    help="Do not run submission-grabbing from Canvas and uploading to plom server",
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -486,15 +517,21 @@ if __name__ == "__main__":
     print(f"Ok, using {len(args.marks)} questions with breakdown {symsum} = {pp}")
     del pp
 
-    plom_server = initialize(
-        course, section, assignment, args.marks, server_dir=basedir
-    )
+    if args.init:
+        print(f"Initializing a fresh plom server in {basedir}")
+        plom_server = initialize(
+            course, section, assignment, args.marks, server_dir=basedir
+        )
+    else:
+        print(f"Using an already-initialize plom server in {basedir}")
+        plom_server = PlomServer(basedir=basedir)
 
-    print("\n\ngetting submissions from canvas...")
-    get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
+    if args.upload:
+        print("\n\ngetting submissions from canvas...")
+        get_submissions(assignment, dry_run=args.dry_run, server_dir=basedir)
 
-    print("scanning submissions...")
-    scan_submissions(len(args.marks), server_dir=basedir)
+        print("scanning submissions...")
+        scan_submissions(len(args.marks), server_dir=basedir)
 
     input("Press enter when you want to stop the server...")
     plom_server.stop()
