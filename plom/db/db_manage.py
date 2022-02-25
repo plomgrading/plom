@@ -40,44 +40,79 @@ def getCollidingPageNames(self):
 def getTPageImage(self, test_number, page_number, version):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
-    pref = TPage.get_or_none(
+        return (False, f"Paper {test_number} not found")
+    p = TPage.get_or_none(
         TPage.test == tref,
         TPage.page_number == page_number,
         TPage.version == version,
     )
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
+    if p is None:
+        return (
+            False,
+            f"Cannot find page {page_number} version {version} in paper {test_number}",
+        )
+    return (
+        True,
+        [
+            "t{}".format(p.page_number),
+            p.image.md5sum,
+            0,  # TODO #1879
+            p.image.id,
+            p.image.file_name,
+        ],
+    )
 
 
 def getHWPageImage(self, test_number, question, order):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return (False, f"Paper {test_number} not found")
     gref = QGroup.get(test=tref, question=question).group
-    pref = HWPage.get_or_none(
+    p = HWPage.get_or_none(
         HWPage.test == tref, HWPage.group == gref, HWPage.order == order
     )
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
+    if p is None:
+        return (
+            False,
+            f"Cannot find homework page question {question} order {order} in paper {test_number}",
+        )
+    assert p.order == p  # remove
+    return (
+        True,
+        [
+            "h{}.{}".format(question, p.order),
+            p.image.md5sum,
+            0,  # TODO #1879
+            p.image.id,
+            p.image.file_name,
+        ],
+    )
 
 
 def getEXPageImage(self, test_number, question, order):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return (False, f"Paper {test_number} not found")
     gref = QGroup.get(test=tref, question=question).group
-    pref = EXPage.get_or_none(
+    p = EXPage.get_or_none(
         EXPage.test == tref, EXPage.group == gref, EXPage.order == order
     )
-    if pref is None:
-        return [False]
-    else:
-        return [True, pref.image.file_name]
+    if p is None:
+        return (
+            False,
+            f"Cannot find extra page question {question} order {order} in paper {test_number}",
+        )
+    assert p.order == p  # remove
+    return (
+        True,
+        [
+            "e{}.{}".format(question, p.order),
+            p.image.md5sum,
+            0,  # TODO #1879
+            p.image.id,
+            p.image.file_name,
+        ],
+    )
 
 
 def getAllTestImages(self, test_number):

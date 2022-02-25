@@ -687,7 +687,7 @@ class BaseMessenger:
             self.SRmutex.release()
         return ret
 
-    def MrequestOneImage(self, image_id, md5sum):
+    def get_image(self, image_id, md5sum):
         """Download one image from server by its database id.
 
         args:

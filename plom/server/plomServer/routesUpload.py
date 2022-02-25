@@ -498,13 +498,15 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getTPageImage(data["test"], data["page"], data["version"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getTPageImage(data["test"], data["page"], data["version"])
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getHWPageImage(self, request):  # should this use version too?
         data = await request.json()
@@ -515,13 +517,16 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getHWPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getHWPageImage(
+            data["test"], data["question"], data["order"]
+        )
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getEXPageImage(self, request):
         data = await request.json()
@@ -532,13 +537,16 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getEXPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getEXPageImage(
+            data["test"], data["question"], data["order"]
+        )
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getUnknownImage(self, request):
         data = await request.json()

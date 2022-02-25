@@ -657,30 +657,27 @@ class Manager(QWidget):
             self.ui.scanTW.addTopLevelItem(l0)
 
     def viewPage(self, t, pdetails, v):
-        # TODO: needs rotate
         if pdetails[0] == "t":  # is a test-page t.PPP
             p = pdetails.split(".")[1]
-            vp = self.msgr.getTPageImage(t, p, v)
+            pagedata = self.msgr.getTPageImageData(t, p, v)
         elif pdetails[0] == "h":  # is a hw-page = h.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = self.msgr.getHWPageImage(t, q, o)
+            pagedata = self.msgr.getHWPageImageData(t, q, o)
         elif pdetails[0] == "e":  # is a extra-page = e.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = self.msgr.getEXPageImage(t, q, o)
+            pagedata = self.msgr.getEXPageImageData(t, q, o)
         else:
             return
 
-        if vp is None:
+        if not pagedata:
             return
-        with tempfile.NamedTemporaryFile() as fh:
-            fh.write(vp)
-            GroupView(self, [fh.name]).exec_()
+        with tempfile.TemporaryDirectory() as td:
+            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
+            GroupView(self, pagedata).exec_()
 
     def viewSPage(self):
-        print("HERE " * 15)
-        print("viewSPage")
         pvi = self.ui.scanTW.selectedItems()
         if len(pvi) == 0:
             return
@@ -695,9 +692,6 @@ class Manager(QWidget):
         self.viewPage(pt, pdetails, pv)
 
     def viewISTest(self):
-        # rotate support
-        print("HERE " * 15)
-        print("viewISTest")
         pvi = self.ui.incompTW.selectedItems()
         if len(pvi) == 0:
             return
@@ -1089,17 +1083,12 @@ class Manager(QWidget):
 
         if parent is None:
             parent = self
-        # Ask for question one but force get_all=True later
         pagedata = self.msgr.get_pagedata(testnum)
         with tempfile.TemporaryDirectory() as td:
+            # get_all=True should be default?
             pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
             labels = [x["pagename"] for x in pagedata]
-            # TODO: if we unified img_src_data and pagedata, could just pass onwards
-            img_data = [
-                {"filename": r["local_filename"], "orientation": r["orientation"]}
-                for r in pagedata
-            ]
-            WholeTestView(testnum, img_data, labels, parent=parent).exec_()
+            WholeTestView(testnum, pagedata, labels, parent=parent).exec_()
 
     def viewQuestion(self, testNumber, questionNumber, parent=None):
         # todo: rotations
@@ -1188,7 +1177,8 @@ class Manager(QWidget):
         page = int(self.collideModel.item(r, 4).text())
         version = int(self.collideModel.item(r, 5).text())
 
-        vop = self.msgr.getTPageImage(test, page, version)
+        (pagedata,) = self.msgr.getTPageImageData(test, page, version)
+        vop = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
