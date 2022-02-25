@@ -1090,23 +1090,6 @@ class Manager(QWidget):
             labels = [x["pagename"] for x in pagedata]
             WholeTestView(testnum, pagedata, labels, parent=parent).exec_()
 
-    def viewQuestion(self, testNumber, questionNumber, parent=None):
-        # todo: rotations
-        vq = self.msgr.getQuestionImages(testNumber, questionNumber)
-        if vq is None:
-            return
-        if parent is None:
-            parent = self
-        with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i, img_bytes in enumerate(vq):
-                img_ext = imghdr.what(None, h=img_bytes)
-                iname = Path(td) / f"img.{i}.{img_ext}"
-                with open(iname, "wb") as fh:
-                    fh.write(img_bytes)
-                inames.append(iname)
-            GroupView(parent, inames).exec_()
-
     def checkTPage(self, testNumber, pageNumber, parent=None):
         if parent is None:
             parent = self

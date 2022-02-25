@@ -887,38 +887,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
         return True
 
-    def getQuestionImages(self, testNumber, questionNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/questionImages",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": testNumber,
-                    "question": questionNumber,
-                },
-            )
-            response.raise_for_status()
-            # response is [n, image1, image2,... image.n]
-            imageList = []
-            i = -1  # we skip the first part
-            for img in MultipartDecoder.from_response(response).parts:
-                i += 1
-                if i == 0:
-                    continue
-                imageList.append(BytesIO(img.content).getvalue())
-            return imageList
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def checkTPage(self, testNumber, pageNumber):
         self.SRmutex.acquire()
         try:

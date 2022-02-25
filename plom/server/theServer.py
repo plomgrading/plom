@@ -121,7 +121,6 @@ class Server:
         getTPageImage,
         getHWPageImage,
         getEXPageImage,
-        getQuestionImages,
         checkTPage,
         removeUnknownImage,
         removeCollidingImage,
