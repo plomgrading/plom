@@ -144,10 +144,6 @@ def initialize(course, section, assignment, marks, *, server_dir="."):
     print("Generating `canvasSpec.toml`...")
     make_toml(assignment, marks, server_dir=server_dir)
 
-    input(
-        f"Please check and confirm the spec file {server_dir}/canvasSpec.toml before proceeding..."
-    )
-
     with working_directory(server_dir):
         print("\nSwitched into test server directory.\n")
         print("Parsing `canvasSpec.toml`...")
