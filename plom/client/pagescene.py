@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2022 Joey Shi
 
 from itertools import cycle
 from pathlib import Path
