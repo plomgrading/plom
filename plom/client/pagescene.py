@@ -2493,18 +2493,10 @@ class PageScene(QGraphicsScene):
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
-        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState
+        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState, zoomBox
         # note - only one should be non-zero at a given time
         log.debug(
-            "Flags = {}".format(
-                [
-                    self.arrowFlag,
-                    self.boxFlag,
-                    self.penFlag,
-                    self.zoomFlag,
-                    self.boxLineStampState,
-                ]
-            )
+            "Flags = {}".format(self.__getFlags())
         )
         if self.arrowFlag > 0:  # midway through drawing a line
             self.arrowFlag = 0
@@ -2542,3 +2534,15 @@ class PageScene(QGraphicsScene):
         if self.zoomFlag == 2:
             self.removeItem(self.zoomBoxItem)
             self.zoomFlag = 0
+
+    def isDrawing(self):
+        return any(flag > 0 for flag in self.__getFlags())
+
+    def __getFlags(self):
+        return [
+            self.arrowFlag,
+            self.boxFlag,
+            self.penFlag,
+            self.zoomFlag,
+            self.boxLineStampState,
+        ]

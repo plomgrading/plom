@@ -1163,8 +1163,10 @@ class Annotator(QWidget):
         """Undoes the last action in the UI."""
         if not self.scene:
             return
-        self.scene.stopMidDraw()
-        self.scene.undo()
+        if self.scene.isDrawing():
+            self.scene.stopMidDraw()
+        else:
+            self.scene.undo()
 
     def toRedo(self):
         self.ui.redoButton.animateClick()
