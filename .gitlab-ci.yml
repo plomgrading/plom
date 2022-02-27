@@ -33,8 +33,6 @@ variables:
   IM: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   IM_LATEST: $CI_REGISTRY_IMAGE:latest
   PLOM_NO_SSL_VERIFY: 1
-  MYVER: '${CI_PROJECT_NAME:1}'
-  MYVERTAG: '${CI_COMMIT_TAG:1}'
 
 stages:
   - static_analysis
@@ -84,12 +82,6 @@ codespell:
   before_script:
     - python3 -m pip install codespell
   script:
-    - echo $CI_PROJECT_NAME
-    - echo $MYVERTAG
-    - echo $MYVER
-    # temp testing stuff
-    - echo "MY_VAR_A=${CI_PROJECT_NAME:1}" >> release_info.env
-    - echo "MY_VAR_B=${CI_COMMITT_TAG:1}" >> release_info.env
     - codespell -S "*.png,*.po,.git,*.jpg,*.svg,*.csv" -f -H -x .codespell-ignorelines -I .codespell-ignorewords
   allow_failure: true
   artifacts:
@@ -138,8 +130,6 @@ release_job:
     - echo "Draft of release notes follows (newlines eaten)"
     - cat release_desc.md
     - echo "Just debugging:"
-    - echo $MY_VAR_A
-    - echo $MY_VAR_B
     - echo $LINKNAME0
     - echo $URL0
     - echo $FILENAME0
