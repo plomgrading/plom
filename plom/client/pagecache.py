@@ -56,7 +56,7 @@ def download_pages(msgr, pagedata, basedir, *, alt_get=None, get_all=False):
         if dl:
             log.debug("PageCache: downloading %s", f)
             f.parent.mkdir(exist_ok=True, parents=True)
-            im_bytes = msgr.MrequestOneImage(row["id"], row["md5"])
+            im_bytes = msgr.get_image(row["id"], row["md5"])
             # im_type = imghdr.what(None, h=im_bytes)
             with open(f, "wb") as fh:
                 fh.write(im_bytes)

@@ -718,21 +718,13 @@ class IDClient(QWidget):
         if len(index) == 0:
             return
         testnum = self.exM.data(index[0])
-        # Ask for question one but force get_all=True later
-        # TODO: investigate if None is supposed to DTRT here: I got 500 err
-        pagedata = self.msgr.MrequestWholePaperMetadata(testnum, 1)
-        # for r in pagedata:
-        #     print(r)
+        pagedata = self.msgr.get_pagedata(testnum)
+        # TODO: do we need to think this for "included"?
         pagedata = download_pages(
             self.msgr, pagedata, self.workingDirectory, get_all=True
         )
         labels = [x["pagename"] for x in pagedata]
-        # TODO: if we unified img_src_data and pagedata, could just pass onwards
-        img_data = [
-            {"filename": r["local_filename"], "orientation": r["orientation"]}
-            for r in pagedata
-        ]
-        WholeTestView(testnum, img_data, labels, parent=self).exec_()
+        WholeTestView(testnum, pagedata, labels, parent=self).exec_()
 
     def blankPaper(self):
         # first check currently selected paper is unidentified - else do nothing

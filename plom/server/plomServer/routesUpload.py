@@ -498,13 +498,15 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getTPageImage(data["test"], data["page"], data["version"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getTPageImage(data["test"], data["page"], data["version"])
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getHWPageImage(self, request):  # should this use version too?
         data = await request.json()
@@ -515,13 +517,16 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getHWPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getHWPageImage(
+            data["test"], data["question"], data["order"]
+        )
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getEXPageImage(self, request):
         data = await request.json()
@@ -532,13 +537,16 @@ class UploadHandler:
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
         if not data["user"] == "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I want to speak to the manager")
 
-        rval = self.server.getEXPageImage(data["test"], data["question"], data["order"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
+        ok, val = self.server.getEXPageImage(
+            data["test"], data["question"], data["order"]
+        )
+        if not ok:
+            raise web.HTTPBadRequest(reason=val)  # TODO: was 404
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pagedata = [{k: v for k, v in zip(rownames, val)}]
+        return web.json_response(pagedata, status=200)
 
     async def getUnknownImage(self, request):
         data = await request.json()
@@ -584,44 +592,6 @@ class UploadHandler:
             return web.FileResponse(rval[1], status=200)  # all fine
         else:
             return web.Response(status=404)
-
-    # @route.get("/admin/questionImages")
-    @authenticate_by_token_required_fields(["user", "test", "question"])
-    def getQuestionImages(self, data, request):
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        ok, filenames = self.server.getQuestionImages(data["test"], data["question"])
-        if not ok:
-            # 2nd return value is error message in this case
-            raise web.HTTPNotFound(reason=filenames)
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append(str(len(filenames)))
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
-    # @routes.get("/admin/testImages")
-    @authenticate_by_token_required_fields(["user", "test"])
-    def getAllTestImages(self, data, request):
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        ok, filenames = self.server.getAllTestImages(data["test"])
-        if not ok:
-            # 2nd return value is error message in this case
-            raise web.HTTPNotFound(reason=filenames)
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append(str(len(filenames)))
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
 
     async def checkTPage(self, request):
         data = await request.json()
@@ -1043,8 +1013,6 @@ class UploadHandler:
         router.add_get("/admin/unknownImage", self.getUnknownImage)
         router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
-        router.add_get("/admin/questionImages", self.getQuestionImages)
-        router.add_get("/admin/testImages", self.getAllTestImages)
         router.add_get("/admin/checkTPage", self.checkTPage)
         router.add_delete("/admin/unknownImage", self.removeUnknownImage)
         router.add_delete("/admin/collidingImage", self.removeCollidingImage)
