@@ -860,20 +860,6 @@ binary_upload:
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME2 "$URL2"
     - |
       curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file $FILENAME3 "$URL3"
-    # TODO: if the auto-asset push seems to be working, clean up this as we don't need to copy-paste
-    - echo "" >> release_desc.md
-    - echo "*TODO* still needed? copy-paste these links as release assets, type \"Package\"" >> release_desc.md
-    - echo "" >> release_desc.md
-    - echo "$URL0  $LINKNAME0" >> release_desc.md
-    - echo "$URL1  $LINKNAME1" >> release_desc.md
-    - echo "$URL2  $LINKNAME2" >> release_desc.md
-    - echo "$URL3  $LINKNAME3" >> release_desc.md
-    - echo "" >> release_desc.md
-    - echo "*TODO* still needed? copy-paste these links as release assets, type \"Other\"" >> release_desc.md
-    - echo "" >> release_desc.md
-    - echo "$OTHER_URL1  $OTHER_LINKNAME1" >> release_desc.md
-    - echo "$OTHER_URL2  $OTHER_LINKNAME2" >> release_desc.md
-    - echo "$OTHER_URL3  $OTHER_LINKNAME3" >> release_desc.md
     - cat release_desc.md
   artifacts:
     paths:
