@@ -808,7 +808,8 @@ binary_upload:
       #### md5sum of compiled clients and other artifacts
 
       *TODO* indent four spaces
-      *TODO* paste in pypi
+      *TODO* paste in pypi tar.gz file
+      *TODO* delete any binaries not currently official
       EOF
     - md5sum PlomClient* >> "release_desc.md"
     # strip the leading v in v0.x.y: don't see how to do this without dotenv
