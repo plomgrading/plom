@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
+# Copyright (C) 2022 Joey Shi
 
 from aiohttp import web, MultipartWriter, MultipartReader
 
@@ -757,7 +758,11 @@ class MarkHandler:
             pages_data.append({k: v for k, v in zip(rownames, row)})
             pages_data[i]["server_path"] = all_pages_paths[i]
             # For now, server has no orientation data but callers expect it
-            pages_data[i]["orientation"] = 0
+            rotation = self.server.DB.MgetOneImageRotation(
+                pages_data[i]["id"],
+                pages_data[i]["md5"]
+            )[1]
+            pages_data[i]["orientation"] = 0 if rotation is None else rotation
         return web.json_response(pages_data, status=200)
 
     # @routes.get("/MK/allMax")
