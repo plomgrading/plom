@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2022 Joey Shi
 
 from itertools import cycle
 from pathlib import Path
@@ -2493,19 +2494,9 @@ class PageScene(QGraphicsScene):
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
-        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState
+        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState, zoomBox
         # note - only one should be non-zero at a given time
-        log.debug(
-            "Flags = {}".format(
-                [
-                    self.arrowFlag,
-                    self.boxFlag,
-                    self.penFlag,
-                    self.zoomFlag,
-                    self.boxLineStampState,
-                ]
-            )
-        )
+        log.debug("Flags = {}".format(self.__getFlags()))
         if self.arrowFlag > 0:  # midway through drawing a line
             self.arrowFlag = 0
             self.removeItem(self.lineItem)
@@ -2542,3 +2533,15 @@ class PageScene(QGraphicsScene):
         if self.zoomFlag == 2:
             self.removeItem(self.zoomBoxItem)
             self.zoomFlag = 0
+
+    def isDrawing(self):
+        return any(flag > 0 for flag in self.__getFlags())
+
+    def __getFlags(self):
+        return [
+            self.arrowFlag,
+            self.boxFlag,
+            self.penFlag,
+            self.zoomFlag,
+            self.boxLineStampState,
+        ]
