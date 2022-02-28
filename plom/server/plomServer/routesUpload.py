@@ -453,17 +453,17 @@ class UploadHandler:
             else:
                 raise web.HTTPBadRequest()
 
-    async def getUnknownPageNames(self, request):
+    async def getUnknownPages(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getUnknownPageNames()
-        return web.json_response(rval, status=200)  # all fine
+        # TODO: restrict to scanner and manager only?
+        # if not data["user"] in ("scanner", "manager"):
+        #     raise web.HTTPForbidden(reason="Only manager and scanner can use tihs")
+        rval = self.server.getUnknownPages()
+        return web.json_response(rval, status=200)
 
     async def getDiscardNames(self, request):
         data = await request.json()
@@ -1007,7 +1007,7 @@ class UploadHandler:
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedEXPage", self.getEXPageImage)
-        router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
+        router.add_get("/admin/unknownPages", self.getUnknownPages)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
         router.add_get("/admin/unknownImage", self.getUnknownImage)

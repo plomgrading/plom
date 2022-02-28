@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
+from pathlib import Path
 import logging
 
 from plom.db.tables import plomdb
@@ -12,10 +13,28 @@ from plom.db.tables import EXPage, HWPage, Image, QGroup, Test, TPage
 log = logging.getLogger("DB")
 
 
-def getUnknownPageNames(self):
+def getUnknownPages(self):
+    """Get information about the unknown pages
+
+    Returns:
+        list: each entry is dict of information about an unknown page.
+        Keys include ``server_path``, ``orientation``, ``bundle_name``,
+        ``bundle_position``, ``md5sum``, ``id``.
+    """
     rval = []
     for uref in UnknownPage.select():
-        rval.append(uref.image.file_name)
+        rval.append(
+            {
+                "pagename": Path(uref.image.file_name).stem,
+                "md5sum": uref.image.md5sum,
+                "orientation": 0,  # Issue #1879
+                "id": uref.image.id,
+                "server_path": uref.image.file_name,
+                "original_name": uref.image.original_name,
+                "bundle_name": uref.image.bundle.name,
+                "bundle_position": uref.order,  # same as uref.image.bundle_order?
+            }
+        )
     return rval
 
 

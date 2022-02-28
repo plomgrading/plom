@@ -938,7 +938,8 @@ class Manager(QWidget):
 
     def refreshUList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
-        unkList = self.msgr.getUnknownPageNames()
+        unkList = self.msgr.getUnknownPages()
+        unkList = [x["server_path"] for x in unkList]
         r = 0
         for u in unkList:
             it0 = QStandardItem(os.path.split(u)[1])

@@ -112,7 +112,7 @@ class Server:
         autogenerateIDPage,
         removeAllScannedPages,
         removeSinglePage,
-        getUnknownPageNames,
+        getUnknownPages,
         getDiscardNames,
         getCollidingPageNames,
         getUnknownImage,

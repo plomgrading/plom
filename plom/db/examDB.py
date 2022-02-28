@@ -137,7 +137,7 @@ class PlomDB:
     )
 
     from plom.db.db_manage import (
-        getUnknownPageNames,
+        getUnknownPages,
         getDiscardNames,
         getCollidingPageNames,
         getTPageImage,

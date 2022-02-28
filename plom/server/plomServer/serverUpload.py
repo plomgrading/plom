@@ -284,8 +284,8 @@ def getCollidingImage(self, fname):
     return self.DB.getCollidingImage(fname)
 
 
-def getUnknownPageNames(self):
-    return self.DB.getUnknownPageNames()
+def getUnknownPages(self):
+    return self.DB.getUnknownPages()
 
 
 def getDiscardNames(self):
