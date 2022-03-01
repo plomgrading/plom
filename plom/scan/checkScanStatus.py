@@ -44,7 +44,7 @@ def check_and_print_scan_status(*, msgr):
             )
         )
     print("Number of scanned tests in the system: {}".format(len(ST)))
-    print("Incomplete scans - listed with their missing pages: ")
+    print(f"Incomplete scans: {len(IT)} - listed with their missing pages: ")
     for t in IT:
         missingPagesT = []
         missingPagesH = []
@@ -64,3 +64,8 @@ def check_and_print_scan_status(*, msgr):
                 format_int_list_with_runs(missingPagesH),
             )
         )
+    unknown_pagedata = msgr.getUnknownPages()
+    print(f"There are currently {len(unknown_pagedata)} unknown page(s):")
+    print("  Use the Manager tool to address those.")
+    for x in unknown_pagedata:
+        print(x)
