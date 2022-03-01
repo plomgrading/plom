@@ -1064,6 +1064,9 @@ class PageScene(QGraphicsScene):
         elif (
             self.boxLineStampState == 1
         ):  # are mid-box draw, so time to finish it and move onto path-drawing.
+            # start a macro - fix for #1961
+            self.undoStack.beginMacro("Click-Drag composite object")
+
             # remove the temporary drawn box
             self.removeItem(self.boxItem)
             # make sure box is large enough
@@ -1075,8 +1078,7 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 3
                 return
             else:
-                # start a macro and push the drawn box onto undo stack
-                self.undoStack.beginMacro("Click-Drag composite object")
+                # push the drawn box onto undo stack
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
                 # now start drawing connecting path
