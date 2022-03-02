@@ -5,14 +5,9 @@
 # Copyright (C) 2021-2022 Colin B. Macdonald
 
 import csv
+import importlib.resources as resources
 import json
 from pathlib import Path
-import sys
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import plom
 from plom.server import confdir

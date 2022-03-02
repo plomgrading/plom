@@ -5,14 +5,9 @@
 # Copyright (C) 2020 Dryden Wiebe
 
 import csv
+import importlib.resources as resources
 from pathlib import Path
-import sys
 import tempfile
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import pandas
 

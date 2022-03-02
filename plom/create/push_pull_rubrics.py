@@ -3,13 +3,8 @@
 
 """Tools for upload/downloading rubrics from Plom servers."""
 
+import importlib.resources as resources
 import json
-import sys
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import pandas
 import toml

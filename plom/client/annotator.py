@@ -10,18 +10,13 @@ __credits__ = ["Andrew Rechnitzer", "Elvis Cai", "Colin Macdonald", "Victoria Sc
 __license__ = "AGPLv3"
 
 from copy import deepcopy
+import importlib.resources as resources
 import json
 import logging
 from pathlib import Path
 import os
 import re
-import sys
 from textwrap import dedent
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 from PyQt5.QtCore import (
     Qt,

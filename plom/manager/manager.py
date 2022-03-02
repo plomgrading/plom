@@ -9,19 +9,14 @@
 from collections import defaultdict
 import csv
 import imghdr
+import importlib.resources as resources
 import logging
 import os
 from pathlib import Path
-import sys
 import tempfile
 
 import arrow
 import urllib3
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
