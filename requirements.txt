@@ -27,7 +27,7 @@ opencv-python-headless==4.5.5.62
 packaging==21.3
 pandas==1.3.5
 passlib==1.7.4
-peewee==3.14.8
+peewee==3.14.9
 Pillow==9.0.1
 # note: pycparser also in Dockerfile
 pycparser==2.21
@@ -39,6 +39,6 @@ scikit-learn==1.0.2
 segno==1.4.1
 stdiomask==0.0.6
 toml==0.10.2
-tqdm==4.62.3
+tqdm==4.63.0
 urllib3==1.26.8
-weasyprint==54.1
+weasyprint==54.2
