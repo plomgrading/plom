@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-
+* Fixed double-undoing during drag-box creation.
+* Fixes in Canvas utilities.
+* Various other fixes.
 
 
 ## [0.8.6] - 2022-02-13
