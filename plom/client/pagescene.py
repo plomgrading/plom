@@ -1064,6 +1064,9 @@ class PageScene(QGraphicsScene):
         elif (
             self.boxLineStampState == 1
         ):  # are mid-box draw, so time to finish it and move onto path-drawing.
+            # start a macro - fix for #1961
+            self.undoStack.beginMacro("Click-Drag composite object")
+
             # remove the temporary drawn box
             self.removeItem(self.boxItem)
             # make sure box is large enough
@@ -1075,8 +1078,7 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 3
                 return
             else:
-                # start a macro and push the drawn box onto undo stack
-                self.undoStack.beginMacro("Click-Drag composite object")
+                # push the drawn box onto undo stack
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
                 # now start drawing connecting path
@@ -1170,7 +1172,7 @@ class PageScene(QGraphicsScene):
             self.stampCrossQMarkTick(event, cross=False)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag tick: finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -1408,7 +1410,7 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag text: Finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -2159,8 +2161,9 @@ class PageScene(QGraphicsScene):
             self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:  # stamp is done
+            # TODO: how to get here?  In testing 2022-03-01, Colin could not make this code run
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag rubric: finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
