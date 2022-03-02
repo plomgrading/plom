@@ -1172,7 +1172,7 @@ class PageScene(QGraphicsScene):
             self.stampCrossQMarkTick(event, cross=False)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag tick: finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -1410,7 +1410,7 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag text: Finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -2161,8 +2161,9 @@ class PageScene(QGraphicsScene):
             self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:  # stamp is done
+            # TODO: how to get here?  In testing 2022-03-01, Colin could not make this code run
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag rubric: finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
