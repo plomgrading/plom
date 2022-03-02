@@ -1077,7 +1077,6 @@ macos11_client:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     when: never
   - if: $CI_PROJECT_PATH == "plom/plom"
-  needs: []
   stage: packaging
   script:
   - sw_vers
