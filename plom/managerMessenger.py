@@ -54,6 +54,8 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
+            # increase the timeout, see docs above
+            timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
             response = self.put(
                 "/admin/populateDB",
                 json={
@@ -61,7 +63,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "version_map": version_map,
                 },
-                timeout=(10, 180),
+                timeout=timeout,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
