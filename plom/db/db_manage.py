@@ -56,7 +56,7 @@ def getTPageImage(self, test_number, page_number, version):
         [
             "t{}".format(p.page_number),
             p.image.md5sum,
-            0,  # TODO #1879
+            p.image.rotation,
             p.image.id,
             p.image.file_name,
         ],
@@ -82,7 +82,7 @@ def getHWPageImage(self, test_number, question, order):
         [
             "h{}.{}".format(question, p.order),
             p.image.md5sum,
-            0,  # TODO #1879
+            p.image.rotation,
             p.image.id,
             p.image.file_name,
         ],
@@ -108,7 +108,7 @@ def getEXPageImage(self, test_number, question, order):
         [
             "e{}.{}".format(question, p.order),
             p.image.md5sum,
-            0,  # TODO #1879
+            p.image.rotation,
             p.image.id,
             p.image.file_name,
         ],
@@ -141,7 +141,7 @@ def getAllTestImages(self, test_number):
                 [
                     "id{}".format(p.page_number),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -156,7 +156,7 @@ def getAllTestImages(self, test_number):
                 [
                     "dnm{}".format(p.page_number),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -171,7 +171,7 @@ def getAllTestImages(self, test_number):
                     [
                         "t{}".format(p.page_number),
                         p.image.md5sum,
-                        0,  # TODO #1879
+                        p.image.rotation,
                         p.image.id,
                         p.image.file_name,
                     ]
@@ -181,7 +181,7 @@ def getAllTestImages(self, test_number):
                 [
                     "h{}.{}".format(qref.question, p.order),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -191,7 +191,7 @@ def getAllTestImages(self, test_number):
                 [
                     "e{}.{}".format(qref.question, p.order),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -227,7 +227,7 @@ def getQuestionImages(self, test_number, question):
                 [
                     "t{}".format(p.page_number),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -237,7 +237,7 @@ def getQuestionImages(self, test_number, question):
             [
                 "h{}.{}".format(qref.question, p.order),
                 p.image.md5sum,
-                0,  # TODO #1879
+                p.image.rotation,
                 p.image.id,
                 p.image.file_name,
             ]
@@ -247,7 +247,7 @@ def getQuestionImages(self, test_number, question):
             [
                 "e{}.{}".format(qref.question, p.order),
                 p.image.md5sum,
-                0,  # TODO #1879
+                p.image.rotation,
                 p.image.id,
                 p.image.file_name,
             ]

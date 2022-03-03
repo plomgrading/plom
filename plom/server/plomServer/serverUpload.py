@@ -317,7 +317,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
     status, code, msg = self.DB.moveUnknownToTPage(file_name, test, page)
     if status:
         # rotate the page
-        self.DB.setImageRotation(file_name, rotation)
+        self.DB.updateImageRotation(file_name, rotation)
         return (True, "testPage", None)
 
     if not status and code != "scanned":
@@ -327,7 +327,7 @@ def unknownToTestPage(self, file_name, test, page, rotation):
     status, code, msg = self.DB.moveUnknownToCollision(file_name, test, page)
     if status:
         # rotate the page
-        self.DB.setImageRotation(file_name, rotation)
+        self.DB.updateImageRotation(file_name, rotation)
         return (True, "collision", None)
     return (status, code, msg)
 
@@ -336,7 +336,7 @@ def unknownToExtraPage(self, fname, test, question, rotation):
     rval = self.DB.moveUnknownToExtraPage(fname, test, question)
     if rval[0]:
         # moved successfully. now rotate the page
-        self.DB.setImageRotation(fname, rotation)
+        self.DB.updateImageRotation(fname, rotation)
     return rval
 
 
@@ -344,7 +344,7 @@ def unknownToHWPage(self, fname, test, questions, rotation):
     rval = self.DB.moveUnknownToHWPage(fname, test, questions)
     if rval[0]:
         # moved successfully. now rotate the page
-        self.DB.setImageRotation(fname, rotation)
+        self.DB.updateImageRotation(fname, rotation)
     return rval
 
 

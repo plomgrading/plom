@@ -135,7 +135,7 @@ class PlomDB:
         getImagesInBundle,
         getBundleFromImage,
         getPageFromBundle,
-        setImageRotation,
+        updateImageRotation,
     )
 
     from plom.db.db_manage import (
