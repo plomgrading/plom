@@ -220,9 +220,9 @@ def MgetOneImageRotation(self, image_id, md5):
         md5: the md5sum of that image (as sanity check)
 
     Returns:
-        list: [True, file_name] or [False, error_msg] where
+        list: [True, rotation] or [False, error_msg] where
             error_msg is `"no such image"` or `"wrong md5sum"`.
-            file_name is a string.
+            rotation is a float.
     """
     with plomdb.atomic():
         iref = Image.get_or_none(id=image_id)
