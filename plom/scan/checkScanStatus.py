@@ -3,6 +3,8 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2021 Jed Yeo
 
+from pathlib import Path
+
 from plom.misc_utils import format_int_list_with_runs
 from plom.scan import with_scanner_messenger
 
@@ -65,7 +67,10 @@ def check_and_print_scan_status(*, msgr):
             )
         )
     unknown_pagedata = msgr.getUnknownPages()
-    print(f"There are currently {len(unknown_pagedata)} unknown page(s):")
-    print("  Use the Manager tool to address those.")
-    for x in unknown_pagedata:
-        print(x)
+    N = len(unknown_pagedata)
+    is_are = "is" if N == 1 else "are"
+    page_or_pages = "page" if N == 1 else "pages"
+    extra = "." if N == 0 else ": (use the Manager tool to address)"
+    print(f"There {is_are} currently {N} unknown {page_or_pages}{extra}")
+    for p in unknown_pagedata:
+        print(f'\t{p["pagename"]} (page {p["bundle_position"]} in bundle {p["bundle_name"]})')
