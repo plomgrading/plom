@@ -950,7 +950,7 @@ class Manager(QWidget):
             it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
             it1.setTextAlignment(Qt.AlignCenter)
-            it2 = QStandardItem("0")
+            it2 = QStandardItem(str(u["orientation"]))
             it2.setTextAlignment(Qt.AlignCenter)
             it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
