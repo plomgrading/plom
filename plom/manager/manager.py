@@ -9,12 +9,13 @@
 from collections import defaultdict
 import csv
 import imghdr
+import logging
 import os
 from pathlib import Path
 import sys
 import tempfile
-import arrow
 
+import arrow
 import urllib3
 
 if sys.version_info >= (3, 7):
@@ -49,7 +50,7 @@ import plom.client.icons
 from plom.client.useful_classes import ErrorMessage, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.origscanviewer import WholeTestView, GroupView
-from plom.client.examviewwindow import ImageViewWidget
+from plom.client import ImageViewWidget
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -75,6 +76,9 @@ from plom.messenger import ManagerMessenger
 from plom.aliceBob import simple_password
 
 from plom import __version__, Plom_API_Version, Default_Port
+
+
+log = logging.getLogger("manager")
 
 
 class UserDialog(QDialog):
@@ -413,7 +417,7 @@ class Manager(QWidget):
 
     def connectButtons(self):
         self.ui.loginButton.clicked.connect(self.login)
-        self.ui.closeButton.clicked.connect(self.closeWindow)
+        self.ui.closeButton.clicked.connect(self.close)
         self.ui.fontSB.valueChanged.connect(self.setFont)
         self.ui.scanRefreshB.clicked.connect(self.refreshScanTab)
         self.ui.progressRefreshB.clicked.connect(self.refreshProgressTab)
@@ -441,10 +445,16 @@ class Manager(QWidget):
         self.ui.changePassB.clicked.connect(self.changeUserPassword)
         self.ui.newUserB.clicked.connect(self.createUser)
 
-    def closeWindow(self):
-        if self.msgr is not None:
-            self.msgr.closeUser()
-        self.close()
+    def closeEvent(self, event):
+        log.debug("Something has triggered a shutdown event")
+        log.debug("Revoking login token")
+        try:
+            if self.msgr:
+                self.msgr.closeUser()
+        except PlomAuthenticationException:
+            log.warn("User tried to logout but was already logged out.")
+            pass
+        event.accept()
 
     def setServer(self, s):
         """Set the server and port UI widgets from a string.
@@ -1875,9 +1885,9 @@ class Manager(QWidget):
         if (
             SimpleQuestion(
                 self,
-                "Are you sure that you want to delete solution to"
-                " question {self.ui.solnQSB.value()}"
-                " version {self.ui.solnVSB.value()}.",
+                f"Are you sure that you want to delete solution to"
+                f" question {self.ui.solnQSB.value()}"
+                f" version {self.ui.solnVSB.value()}.",
             ).exec_()
             == QMessageBox.Yes
         ):
@@ -2120,7 +2130,7 @@ class Manager(QWidget):
                         "",
                         str(qvn[0]).rjust(4),
                         str(qvn[1]).rjust(2),
-                        str(n).rjust(4),
+                        str(qvn[2]).rjust(4),
                         f"{qvn[3]}s",
                     ]
                 )

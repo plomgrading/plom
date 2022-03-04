@@ -2,6 +2,7 @@
 # Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
+# Copyright (C) 2022 Joey Shi
 
 from itertools import cycle
 from pathlib import Path
@@ -1063,6 +1064,9 @@ class PageScene(QGraphicsScene):
         elif (
             self.boxLineStampState == 1
         ):  # are mid-box draw, so time to finish it and move onto path-drawing.
+            # start a macro - fix for #1961
+            self.undoStack.beginMacro("Click-Drag composite object")
+
             # remove the temporary drawn box
             self.removeItem(self.boxItem)
             # make sure box is large enough
@@ -1074,8 +1078,7 @@ class PageScene(QGraphicsScene):
                 self.boxLineStampState = 3
                 return
             else:
-                # start a macro and push the drawn box onto undo stack
-                self.undoStack.beginMacro("Click-Drag composite object")
+                # push the drawn box onto undo stack
                 command = CommandBox(self, self.boxItem.rect())
                 self.undoStack.push(command)
                 # now start drawing connecting path
@@ -1169,7 +1172,7 @@ class PageScene(QGraphicsScene):
             self.stampCrossQMarkTick(event, cross=False)
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag tick: finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -1407,7 +1410,7 @@ class PageScene(QGraphicsScene):
 
         if self.boxLineStampState >= 3:  # stamp is done
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag text: Finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -2158,8 +2161,9 @@ class PageScene(QGraphicsScene):
             self.refreshStateAndScore()  # and now refresh the markingstate and score
 
         if self.boxLineStampState >= 3:  # stamp is done
+            # TODO: how to get here?  In testing 2022-03-01, Colin could not make this code run
             log.debug(
-                f"flag = {self.boxLineStampState} so we must be finishing a click-drag cross: finalizing macro"
+                f"flag = {self.boxLineStampState} so we must be finishing a click-drag rubric: finalizing macro"
             )
             self.undoStack.endMacro()
             self.boxLineStampState = 0
@@ -2286,6 +2290,7 @@ class PageScene(QGraphicsScene):
         Returns:
             True if all objects are within the page's bounds, false otherwise.
         """
+        out_objs = []
         for X in self.items():
             # check all items that are not the image or scorebox
             if (X is self.underImage) or (X is self.scoreBox):
@@ -2302,8 +2307,8 @@ class PageScene(QGraphicsScene):
                 continue
             # make sure is inside image
             if not self.itemWithinBounds(X):
-                return False
-        return True
+                out_objs.append(X)
+        return out_objs
 
     def updateGhost(self, dlt, txt, legal=True):
         """
@@ -2492,19 +2497,9 @@ class PageScene(QGraphicsScene):
 
     def stopMidDraw(self):
         # look at all the mid-draw flags and cancel accordingly.
-        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState
+        # the flags are arrowFlag, boxFlag, penFlag, boxLineStampState, zoomBox
         # note - only one should be non-zero at a given time
-        log.debug(
-            "Flags = {}".format(
-                [
-                    self.arrowFlag,
-                    self.boxFlag,
-                    self.penFlag,
-                    self.zoomFlag,
-                    self.boxLineStampState,
-                ]
-            )
-        )
+        log.debug("Flags = {}".format(self.__getFlags()))
         if self.arrowFlag > 0:  # midway through drawing a line
             self.arrowFlag = 0
             self.removeItem(self.lineItem)
@@ -2541,3 +2536,15 @@ class PageScene(QGraphicsScene):
         if self.zoomFlag == 2:
             self.removeItem(self.zoomBoxItem)
             self.zoomFlag = 0
+
+    def isDrawing(self):
+        return any(flag > 0 for flag in self.__getFlags())
+
+    def __getFlags(self):
+        return [
+            self.arrowFlag,
+            self.boxFlag,
+            self.penFlag,
+            self.zoomFlag,
+            self.boxLineStampState,
+        ]

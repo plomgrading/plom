@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 import logging
 
@@ -83,11 +83,10 @@ def getEXPageImage(self, test_number, question, order):
 def getAllTestImages(self, test_number):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
-    rval = [True]
+        return (False, f"Cannot paper {test_number}")
 
     # give the pages as IDPages, DNMPages and then for each question
-
+    rval = []
     # grab the id group - only has tpages
     gref = tref.idgroups[0].group
     # give tpages if scanned.
@@ -113,17 +112,18 @@ def getAllTestImages(self, test_number):
         for p in gref.expages.order_by(EXPage.order):
             rval.append(p.image.file_name)
 
-    return rval
+    return (True, rval)
 
 
 def getQuestionImages(self, test_number, question):
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:
-        return [False]
+        return (False, f"Cannot paper {test_number}")
+
     qref = QGroup.get_or_none(QGroup.test == tref, QGroup.question == question)
     if qref is None:
-        return [False]
-    rval = [True]
+        return (False, f"Cannot find paper {test_number} question {question}")
+    rval = []
     # append tpages, hwpages and expages
     for p in qref.group.tpages.order_by(TPage.page_number):
         if p.scanned:
@@ -132,7 +132,7 @@ def getQuestionImages(self, test_number, question):
         rval.append(p.image.file_name)
     for p in qref.group.expages.order_by(EXPage.order):
         rval.append(p.image.file_name)
-    return rval
+    return (True, rval)
 
 
 def getUnknownImage(self, file_name):
@@ -371,7 +371,7 @@ def moveUnknownToTPage(self, file_name, test_number, page_number):
         return (
             False,
             "scanned",
-            "Page {page_number} of test {page_number} is already scanned",
+            f"Page {page_number} of test {page_number} is already scanned",
         )
 
     self.attachImageToTPage(tref, pref, iref)

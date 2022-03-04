@@ -37,16 +37,10 @@ class CommandImage(CommandTool):
             border (bool): True if the image has a border, false otherwise.
             data (str): Base64 data held in a string if the image had
                 previously been json serialized.
+                TODO: what does it mean to be `None`, consider refactoring.
         """
         super().__init__(scene)
-        self.width = image.width()
-        if data is None:
-            toMidpoint = QPointF(-image.width() / 2, -image.height() / 2)
-            self.midPt = pt + toMidpoint
-        else:
-            self.midPt = pt
-        self.image = image
-        self.obj = ImageItem(self.midPt, self.image, scale, border, data)
+        self.obj = ImageItem(pt, image, scale, border, data)
         self.do = DeleteObject(self.obj.shape())
         self.setText("Image")
 
@@ -71,7 +65,7 @@ class ImageItem(QGraphicsPixmapItem):
     An image added to a paper.
     """
 
-    def __init__(self, midPt, qImage, scale, border, data):
+    def __init__(self, pt, qImage, scale, border, data):
         """
         Initialize a new ImageItem.
 
@@ -87,7 +81,7 @@ class ImageItem(QGraphicsPixmapItem):
         self.qImage = qImage
         self.border = border
         self.setPixmap(QPixmap.fromImage(self.qImage))
-        self.setOffset(midPt)
+        self.setPos(pt)
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.saveable = True

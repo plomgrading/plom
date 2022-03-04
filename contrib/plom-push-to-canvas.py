@@ -1,8 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -u
 
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2020-2021 Forest Kobayashi
-# Copyright (C) 2021 Colin B. Macdonald
+# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2022 Nicholas J H Lai
 
 """Upload reassembled Plom papers and grades to Canvas.
 
@@ -14,7 +15,15 @@ Overview:
      ```
      my_key = "11224~AABBCCDDEEFF..."
      ```
-  4. Run this script.
+  4. Run this script and follow the interactive menus:
+     ```
+     ./plom-push-to-canvas.py --dry-run
+     ```
+     It will output what would be uploaded.
+  5. Run it again for real:
+     ```
+     ./plom-push-to-canvas.py --course xxxxxx --assignment xxxxxxx 2>&1 | tee push.log
+     ```
 
 This script traverses the files in `reassembled/` directory
 and tries to upload them.  It takes the corresponding grades
@@ -43,19 +52,13 @@ from plom.canvas import (
     get_assignment_by_id_number,
     get_conversion_table,
     get_course_by_id_number,
+    get_section_by_id_number,
     get_sis_id_to_canvas_id_table,
+    get_student_list,
     interactively_get_assignment,
     interactively_get_course,
+    interactively_get_section,
 )
-
-
-def get_student_list(course):
-    students = []
-    for enrollee in course.get_enrollments():
-        # TODO: See if we also need to check for active enrollment
-        if enrollee.role == "StudentEnrollment":
-            students += [enrollee]
-    return students
 
 
 def sis_id_to_student_dict(student_list):
@@ -139,6 +142,25 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
+    "--section",
+    type=int,
+    metavar="N",
+    action="store",
+    help="""
+        Specify a Canvas Section ID (an integer N).
+        Interactively prompt from a list if omitted.
+        Pass "--no-section" to not use Sections at all.
+    """,
+)
+parser.add_argument(
+    "--no-section",
+    action="store_true",
+    help="""
+        Overrides the --section flag to not use Sections (and take the
+        classlist directly from the Course).
+    """,
+)
+parser.add_argument(
     "--assignment",
     type=int,
     metavar="M",
@@ -175,10 +197,22 @@ if __name__ == "__main__":
         course = get_course_by_id_number(args.course, user)
     print(f"Ok using course: {course}")
 
+    if args.no_section:
+        section = None
+    elif args.section:
+        section = get_section_by_id_number(course, args.section)
+    else:
+        section = interactively_get_section(course)
+        if section is None:
+            print('Note: you can use "--no-section" to omit selecting section.\n')
+        else:
+            print(f'Note: you can use "--section {section.id}" to reselect.\n')
+    print(f"Ok using section: {section}")
+
     if args.assignment:
         assignment = get_assignment_by_id_number(course, args.assignment)
     else:
-        assignment = interactively_get_assignment(user, course)
+        assignment = interactively_get_assignment(course)
         print(f'Note: you can use "--assignment {assignment.id}" to reselect.\n')
     print(f"Ok uploading to Assignment: {assignment}")
 
@@ -201,8 +235,12 @@ if __name__ == "__main__":
 
     print("\nFetching data from canvas now...")
     print("  --------------------------------------------------------------------")
-    print("  Getting student list...")
-    student_list = get_student_list(course)
+    if section:
+        print("  Getting student list from Section...")
+        student_list = get_student_list(section)
+    else:
+        print("  Getting student list from Course...")
+        student_list = get_student_list(course)
     print("    done.")
     print("  Getting canvasapi submission objects...")
     subs = assignment.get_submissions()

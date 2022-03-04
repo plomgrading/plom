@@ -86,7 +86,7 @@ def clean_non_canvas_csv(csv_file_name):
             break
     for c in df.columns:
         if c.casefold() in (x.casefold() for x in possible_given_name_fields):
-            print('"{c}" column present')
+            print(f'"{c}" column present')
             lastname_column = c
             break
 

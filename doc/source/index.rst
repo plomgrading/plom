@@ -15,10 +15,15 @@ Welcome to Plom's documentation!
 
    preparing_an_exam.rst
 
+   solutions.rst
+
+   returning.rst
+
    install.rst
 
    code.rst
 
+   faq.md
 
 .. automodule:: plom
 

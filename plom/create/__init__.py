@@ -28,10 +28,13 @@ from .push_pull_rubrics import upload_rubrics, download_rubrics
 from .push_pull_rubrics import upload_demo_rubrics
 from .push_pull_rubrics import upload_rubrics_from_file, download_rubrics_to_file
 
-from .version_map_from_csv import version_map_from_csv
+from .version_map_utils import version_map_from_file
+from .version_map_utils import download_version_map
+from .version_map_utils import save_version_map
 
 from .scribble_utils import make_scribbles
 from .scribble_hw_utils import make_hw_scribbles
+
 
 # what you get from "from plom.create import *"
 __all__ = [
@@ -47,4 +50,7 @@ __all__ = [
     "upload_demo_rubrics",
     "upload_rubrics_from_file",
     "download_rubrics_to_file",
+    "version_map_from_file",
+    "download_version_map",
+    "save_version_map",
 ]

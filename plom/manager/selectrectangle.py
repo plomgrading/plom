@@ -25,9 +25,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
 )
 
-# TODO: client references to be avoided, refactor to common utils?
 from plom.client.useful_classes import ErrorMessage
-from plom.client.examviewwindow import ExamView
+from plom.client import ExamView
 
 
 class SelectRectangleWindow(QDialog):

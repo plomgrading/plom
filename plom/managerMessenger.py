@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 import hashlib
@@ -16,7 +16,6 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomExistingDatabase,
     PlomNoMoreException,
-    PlomNoSolutionException,
     PlomOwnersLoggedInException,
     PlomServerNotReady,
     PlomRangeException,
@@ -55,6 +54,8 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
+            # increase the timeout, see docs above
+            timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
             response = self.put(
                 "/admin/populateDB",
                 json={
@@ -62,7 +63,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "version_map": version_map,
                 },
-                timeout=(10, 180),
+                timeout=timeout,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -225,7 +226,7 @@ class ManagerMessenger(BaseMessenger):
         with self.SRmutex:
             try:
                 response = self.put(
-                    "/ID/{code}",
+                    f"/ID/{code}",
                     json={
                         "user": self.user,
                         "token": self.token,
@@ -699,7 +700,7 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomOwnersLoggedInException(response.json()) from None
             if response.status_code == 406:
                 raise PlomSeriousException(
-                    "Page name '{page_name}' is invalid"
+                    f"Page name '{page_name}' is invalid"
                 ) from None
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
@@ -987,22 +988,19 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             # response is [n, image1, image2,... image.n]
             imageList = []
-            i = 0  # we skip the first part
+            i = -1  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                if i > 0:
-                    imageList.append(BytesIO(img.content).getvalue())
                 i += 1
+                if i == 0:
+                    continue
+                imageList.append(BytesIO(img.content).getvalue())
             return imageList
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    "Cannot find image file for {}/{}.".format(
-                        testNumber, questionNumber
-                    )
-                ) from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1021,20 +1019,19 @@ class ManagerMessenger(BaseMessenger):
             response.raise_for_status()
             # response is [n, image1, image2,... image.n]
             imageList = []
-            i = 0  # we skip the first part
+            i = -1  # we skip the first part
             for img in MultipartDecoder.from_response(response).parts:
-                if i > 0:
-                    imageList.append(BytesIO(img.content).getvalue())
                 i += 1
+                if i == 0:
+                    continue
+                imageList.append(BytesIO(img.content).getvalue())
             return imageList
 
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
             if response.status_code == 404:
-                raise PlomSeriousException(
-                    f"Cannot find image file for {testNumber}."
-                ) from None
+                raise PlomSeriousException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()
@@ -1570,50 +1567,6 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
         return response.json()
-
-    def getSolutionStatus(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/REP/solutions",
-                json={"user": self.user, "token": self.token},
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-        return response.json()
-
-    def getSolutionImage(self, question, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/solution",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "question": question,
-                    "version": version,
-                },
-            )
-            response.raise_for_status()
-            if response.status_code == 204:
-                raise PlomNoSolutionException(
-                    "No solution for {}.{} uploaded".format(question, version)
-                ) from None
-
-            img = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return img
 
     def putSolutionImage(self, question, version, fileName):
         with self.SRmutex:

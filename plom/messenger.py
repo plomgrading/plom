@@ -435,11 +435,13 @@ class Messenger(BaseMessenger):
                             "plom": (plomfile.name, f2, "text/plain"),
                         }
                     )
+                    # increase read timeout relative to default: Issue #1575
+                    timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
                     response = self.put(
                         f"/MK/tasks/{code}",
                         data=dat,
                         headers={"Content-Type": dat.content_type},
-                        timeout=(10, 120),
+                        timeout=timeout,
                     )
                 response.raise_for_status()
                 return response.json()
@@ -653,30 +655,3 @@ class Messenger(BaseMessenger):
             ) from None
         finally:
             self.SRmutex.release()
-
-    def MgetSolutionImage(self, question, version):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/MK/solution",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "question": question,
-                    "version": version,
-                },
-            )
-            response.raise_for_status()
-            if response.status_code == 204:
-                raise PlomNoSolutionException(
-                    "No solution for {}.{} uploaded".format(question, version)
-                ) from None
-
-            img = BytesIO(response.content).getvalue()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-        return img

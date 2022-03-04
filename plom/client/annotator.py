@@ -69,6 +69,7 @@ from .origscanviewer import (
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
+from .useful_classes import ErrorMsg, WarnMsg
 from .useful_classes import (
     ErrorMessage,
     SimpleQuestion,
@@ -364,6 +365,8 @@ class Annotator(QWidget):
         self.paperDir = None
         self.src_img_data = None
         self.saveName = None
+        # feels like a bit of a kludge
+        self.view.setHidden(True)
 
     def loadNewTGV(
         self,
@@ -677,8 +680,8 @@ class Annotator(QWidget):
                 info=info,
                 info_pre=False,
                 details=f"Annotator's image_md5_list is\n  {image_md5_list}\n"
-                "The src_img_data is\n  {self.src_img_data}\n"
-                "Include this info if you think this is a bug!",
+                f"The src_img_data is\n  {self.src_img_data}\n"
+                f"Include this info if you think this is a bug!",
             ).exec_()
         log.debug("adjustpgs: downloading files for testnum {}".format(testNumber))
         # do a deep copy of this list of dict - else hit #1690
@@ -780,12 +783,20 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec_()
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.tgvID, perm)
-            # TODO: do we need to do this?
-            # TODO: before or after stuff = ...?
-            # closeCurrentTGV(self)
-            # TODO: possibly md5 stuff broken here too?
+            oldtgv = self.tgvID
+            self.closeCurrentTGV()
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(oldtgv, perm)
             log.debug("permuted: new stuff is {}".format(stuff))
+            if not stuff:
+                txt = """
+                    <p>Marker did not give us back the permuted material for
+                    marking.</p>
+                    <p>Probably you cancelled a download that we shouldn't be waiting
+                    on anyway&mdash;see
+                    <a href="https://gitlab.com/plom/plom/-/issues/1967">Issue #1967</a>.
+                    </p>
+                """
+                ErrorMsg(self, txt).exec_()
             self.loadNewTGV(*stuff)
         # CAREFUL, wipe only those files we created
         # TODO: consider a broader local caching system
@@ -1162,8 +1173,10 @@ class Annotator(QWidget):
         """Undoes the last action in the UI."""
         if not self.scene:
             return
-        self.scene.stopMidDraw()
-        self.scene.undo()
+        if self.scene.isDrawing():
+            self.scene.stopMidDraw()
+        else:
+            self.scene.undo()
 
     def toRedo(self):
         self.ui.redoButton.animateClick()
@@ -1453,11 +1466,23 @@ class Annotator(QWidget):
             return False
 
         # check annotations are inside the margins
-        if not self.scene.checkAllObjectsInside():
-            msg = ErrorMessage(
-                "Some annotations are outside the margins. Please move or delete them before saving."
-            )
-            msg.exec_()
+        out_objs = self.scene.checkAllObjectsInside()
+        if out_objs:
+            msg = f"{len(out_objs)} annotations are outside the margins."
+            msg += " Please move or delete them before saving."
+            info = "<p>Out-of-bounds objects are highlighted in orange.</p>"
+            info += "<p><em>Note:</em> if you cannot see any such objects, "
+            info += "you may be experiencing "
+            info += '<a href="https://gitlab.com/plom/plom/-/issues/1792">Issue '
+            info += "#1792</a>; please help us by copy-pasting the details below, "
+            info += "along with any details about how to make this happen!</p>"
+            details = "## Out of bounds objects\n\n  "
+            details += "\n  ".join(str(x) for x in out_objs)
+            details += "\n\n## All objects\n\n  "
+            details += "\n  ".join(str(x) for x in self.scene.items())
+            details += "\n\n## Object serialization\n\n  "
+            details += "\n  ".join(str(x) for x in self.scene.pickleSceneItems())
+            WarnMsg(self, msg, info=info, info_pre=False, details=details).exec_()
             return False
 
         # make sure not still in "neutral" marking-state = no score given
@@ -1499,9 +1524,6 @@ class Annotator(QWidget):
 
         aname, plomfile = self.pickleIt()
         rubrics = self.scene.get_rubrics_from_page()
-
-        # TODO: we should assume its dead?  Or not... let it be and fix scene?
-        self.view.setHidden(True)
 
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()

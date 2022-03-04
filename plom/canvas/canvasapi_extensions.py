@@ -3,6 +3,8 @@
 # Copyright (C) 2021 Colin B. Macdonald
 
 """Get information from all the canvas courses and such
+
+TODO: Currently unused, deprecated or WIP?
 """
 
 from pathlib import Path
@@ -98,6 +100,8 @@ class Course(capi.course.Course):
     def get_students(self):
         """
         Get a list of the students in the class
+
+        TODO: careful, does not consider which Section so possible to get duplicates.
         """
         students = [_ for _ in self.get_enrollments() if _.role == "StudentEnrollment"]
         self.students = students
