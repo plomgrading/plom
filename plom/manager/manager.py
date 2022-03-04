@@ -917,7 +917,7 @@ class Manager(QWidget):
         self.refreshIList()
 
     def initUnknownTab(self):
-        self.unknownModel = QStandardItemModel(0, 6)
+        self.unknownModel = QStandardItemModel(0, 8)
         self.ui.unknownTV.setModel(self.unknownModel)
         self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -925,6 +925,8 @@ class Manager(QWidget):
             [
                 "FullFile",
                 "File",
+                "Bundle name",
+                "Bundle position",
                 "Action to be taken",
                 "Rotation-angle",
                 "Test",
@@ -939,10 +941,9 @@ class Manager(QWidget):
     def refreshUList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
         unkList = self.msgr.getUnknownPages()
-        unkList = [x["server_path"] for x in unkList]
         r = 0
         for u in unkList:
-            it0 = QStandardItem(os.path.split(u)[1])
+            it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
             pm.loadFromData(
                 resources.read_binary(plom.client.icons, "manager_unknown.svg")
@@ -956,7 +957,20 @@ class Manager(QWidget):
             it3.setTextAlignment(Qt.AlignCenter)
             it4 = QStandardItem("")
             it4.setTextAlignment(Qt.AlignCenter)
-            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3, it4])
+            raw = QStandardItem(u["server_path"])
+            self.unknownModel.insertRow(
+                r,
+                [
+                    raw,
+                    it0,
+                    QStandardItem(u["bundle_name"]),
+                    QStandardItem(str(u["bundle_position"])),
+                    it1,
+                    it2,
+                    it3,
+                    it4,
+                ],
+            )
             r += 1
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
@@ -981,11 +995,12 @@ class Manager(QWidget):
                 iDict,
             )
             if uvw.exec_() == QDialog.Accepted:
-                self.unknownModel.item(r, 2).setText(uvw.action)
-                self.unknownModel.item(r, 3).setText("{}".format(uvw.theta))
-                self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
+                # Colin hates all these hardcoded integers!
+                self.unknownModel.item(r, 4).setText(uvw.action)
+                self.unknownModel.item(r, 5).setText("{}".format(uvw.theta))
+                self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
                 # questions is now of the form "1" or "1,2" or "1,2,3" etc
-                self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
+                self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
                 if uvw.action == "discard":
                     pm = QPixmap()
                     pm.loadFromData(
@@ -1013,51 +1028,51 @@ class Manager(QWidget):
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
-            if self.unknownModel.item(r, 2).text() == "discard":
+            if self.unknownModel.item(r, 4).text() == "discard":
                 self.msgr.removeUnknownImage(self.unknownModel.item(r, 0).text())
-            elif self.unknownModel.item(r, 2).text() == "extra":
+            elif self.unknownModel.item(r, 4).text() == "extra":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
-                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                        int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToExtraPage(
                         self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
+                        self.unknownModel.item(r, 6).text(),
                         question_list,
-                        self.unknownModel.item(r, 3).text(),
+                        self.unknownModel.item(r, 5).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 2).text() == "test":
+            elif self.unknownModel.item(r, 4).text() == "test":
                 try:
                     if (
                         self.msgr.unknownToTestPage(
                             self.unknownModel.item(r, 0).text(),
-                            self.unknownModel.item(r, 4).text(),
+                            self.unknownModel.item(r, 6).text(),
+                            self.unknownModel.item(r, 7).text(),
                             self.unknownModel.item(r, 5).text(),
-                            self.unknownModel.item(r, 3).text(),
                         )
                         == "collision"
                     ):
                         ErrorMessage(
                             "Collision created in test {}".format(
-                                self.unknownModel.item(r, 4).text()
+                                self.unknownModel.item(r, 6).text()
                             )
                         ).exec_()
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 2).text() == "homework":
+            elif self.unknownModel.item(r, 4).text() == "homework":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
-                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                        int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToHWPage(
                         self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
+                        self.unknownModel.item(r, 6).text(),
                         question_list,
-                        self.unknownModel.item(r, 3).text(),
+                        self.unknownModel.item(r, 5).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
