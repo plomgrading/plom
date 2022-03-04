@@ -212,6 +212,7 @@ def MgiveTaskToClient(self, user_name, group_id, version):
         )
         return [True, image_metadata, tag_list, aref.integrity_check]
 
+
 def MgetOneImageRotation(self, image_id, md5):
     """Get the rotation of one image.
 
@@ -237,6 +238,7 @@ def MgetOneImageRotation(self, image_id, md5):
             )
             return [False, "wrong md5sum"]
         return [True, iref.rotation]
+
 
 def MgetOneImageFilename(self, image_id, md5):
     """Get the filename of one image.
