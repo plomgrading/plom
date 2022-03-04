@@ -492,7 +492,7 @@ def uploadCollidingPage(
                 md5sum=md5,
                 bundle=bref,
                 bundle_order=bundle_order,
-                rotation=0
+                rotation=0 # TODO: replace with rotation from original UnknownPage
             )
         except PlomBundleImageDuplicationException:
             return [
