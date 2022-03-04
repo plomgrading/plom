@@ -941,8 +941,7 @@ class Manager(QWidget):
     def refreshUList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
         unkList = self.msgr.getUnknownPages()
-        r = 0
-        for u in unkList:
+        for r, u in enumerate(unkList):
             it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
             pm.loadFromData(
@@ -971,7 +970,6 @@ class Manager(QWidget):
                     it4,
                 ],
             )
-            r += 1
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
 
