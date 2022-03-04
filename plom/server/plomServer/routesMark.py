@@ -758,10 +758,10 @@ class MarkHandler:
             pages_data.append({k: v for k, v in zip(rownames, row)})
             pages_data[i]["server_path"] = all_pages_paths[i]
             # For now, server has no orientation data but callers expect it
-            rotation = self.server.DB.MgetOneImageRotation(
+            image_found, rotation = self.server.DB.MgetOneImageRotation(
                 pages_data[i]["id"], pages_data[i]["md5"]
-            )[1]
-            pages_data[i]["orientation"] = 0 if rotation is None else rotation
+            )
+            pages_data[i]["orientation"] = rotation if image_found else 0
         return web.json_response(pages_data, status=200)
 
     # @routes.get("/MK/allMax")
