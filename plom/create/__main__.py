@@ -620,6 +620,10 @@ def main():
             for user, stuff in user_dict.items():
                 if user != "HAL":
                     print(f"  {user}\t{stuff}")
+            if "scanner" not in user_dict:
+                print('WARNING: server has no "scanner" user')
+            if "reviewer" not in user_dict:
+                print('WARNING: server has no "reviewer" user')
             return
 
         if args.demo or args.auto is not None:
