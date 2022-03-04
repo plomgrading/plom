@@ -143,6 +143,8 @@ def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
         raise ValueError("Database already populated")
 
     buildSpecialRubrics(spec, db)
+    if not db.createReplacementBundle():
+        raise ValueError("Could not create bundle for replacement pages")
 
     if not version_map:
         # TODO: move reproducible random seed support to the make fcn?
