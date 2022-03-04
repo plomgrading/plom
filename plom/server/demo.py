@@ -60,6 +60,7 @@ class PlomDemoServer(PlomServer):
     Build papers
     >>> from plom.create import build_database, build_papers
     >>> print(build_database(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"])))   # doctest: +ELLIPSIS
+    Built test number ...
     DB entry for test 0001: ...
 
     >>> build_papers(msgr=(env["PLOM_SERVER"], env["PLOM_MANAGER_PASSWORD"]), basedir=demo.basedir)   # doctest: +ELLIPSIS
