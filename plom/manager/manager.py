@@ -933,7 +933,7 @@ class Manager(QWidget):
                 "Page or Question",
             ]
         )
-        self.ui.unknownTV.setIconSize(QSize(96, 96))
+        self.ui.unknownTV.setIconSize(QSize(32, 32))
         self.ui.unknownTV.activated.connect(self.viewUPage)
         self.ui.unknownTV.setColumnHidden(0, True)
         self.refreshUList()
