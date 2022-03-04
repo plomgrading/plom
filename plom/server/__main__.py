@@ -192,6 +192,14 @@ def get_parser():
             If omitted the current directory will be used.""",
     )
     spR.add_argument(
+        "--manager-pw",
+        metavar="STR",
+        help="""An initial password for the manager account.  If omitted and
+            the server does not yet have a manager account, a randomly
+            generated password will be echoed on the screen.
+        """,
+    )
+    spR.add_argument(
         "--mastertoken",
         metavar="HEX",
         help="""A 32 hex-digit string used to encrypt tokens in the database.
@@ -265,6 +273,7 @@ def main():
         check_server_fully_configured(args.dir)
         theServer.launch(
             args.dir,
+            manager_pw=args.manager_pw,
             master_token=args.mastertoken,
             logfile=args.logfile,
             logconsole=args.logconsole,

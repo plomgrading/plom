@@ -20,6 +20,7 @@ from plom import __version__
 from plom import Plom_API_Version as serverAPI
 from plom import Default_Port
 from plom import SpecVerifier
+from plom.aliceBob import simple_password
 from plom.db import PlomDB
 from plom.server import specdir, confdir, check_server_directories
 
@@ -37,7 +38,7 @@ from ..misc_utils import working_directory
 
 
 class Server:
-    def __init__(self, db, masterToken):
+    def __init__(self, db, masterToken, *, manager_pw=None):
         log = logging.getLogger("server")
         log.debug("Initialising server")
         try:
@@ -59,7 +60,19 @@ class Server:
         self.tempDirectory = tempfile.TemporaryDirectory()
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
+        # Deprecated?
         self.load_users()
+        if self.DB.doesUserExist("manager"):
+            if manager_pw:
+                log.info("Changing manager password")
+                hashpw = self.authority.create_password_hash(manager_pw)
+                assert self.DB.setUserPasswordHash("manager", hashpw)
+        else:  # do not yet have manager user
+            if not manager_pw:
+                manager_pw = simple_password(n=6)
+                print(f"Initial manager password: {manager_pw}")
+            hashpw = self.authority.create_password_hash(manager_pw)
+            assert self.DB.createUser("manager", hashpw)
 
     def load_users(self):
         """Load the users from json file, add them to the database and checks pwd hashes.
@@ -68,7 +81,8 @@ class Server:
         """
         log = logging.getLogger("server")
         if not (confdir / "userList.json").exists():
-            raise FileNotFoundError("Cannot find user/password file.")
+            log.info('"userList.json" not found: no problem as it is deprecated!')
+        log.warning('Loading users from deprecated "userList.json"')
         with open(confdir / "userList.json") as data_file:
             # load list of users + pwd hashes
             userList = json.load(data_file)
@@ -233,7 +247,14 @@ def get_server_info(basedir):
     return serverInfo
 
 
-def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=True):
+def launch(
+    basedir=Path("."),
+    *,
+    manager_pw=None,
+    master_token=None,
+    logfile=None,
+    logconsole=True,
+):
     """Launches the Plom server.
 
     args:
@@ -242,7 +263,11 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
         logfile (pathlib.Path/str/None): name-only then relative to basedir else
             If omitted, use a default name with date and time included.
         logconsole (bool): if True (default) then log to the stderr.
-        master_token (str): a 32 hex-digit string used to encrypt tokens
+        manager_pw (None/str): Initial password for the manager account.
+            If omitted, and server does not yet have a manager account,
+            generate a random password and echo to the screen (but not
+            to the log file).
+        master_token (None/str): a 32 hex-digit string used to encrypt tokens
             in the database.  Not needed on server unless you want to
             hot-restart the server without requiring users to log-off
             and log-in again.  If None, a new token is created.
@@ -280,7 +305,7 @@ def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=Tru
     else:
         log.info("Cannot find the classlist: we expect it later...")
     with working_directory(basedir):
-        peon = Server(examDB, master_token)
+        peon = Server(examDB, master_token, manager_pw=manager_pw)
         userIniter = UserInitHandler(peon)
         uploader = UploadHandler(peon)
         ider = IDHandler(peon)
