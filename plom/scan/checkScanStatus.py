@@ -46,7 +46,11 @@ def check_and_print_scan_status(*, msgr):
             )
         )
     print("Number of scanned tests in the system: {}".format(len(ST)))
-    print(f"Incomplete scans: {len(IT)} - listed with their missing pages: ")
+
+    if len(IT) == 0:
+        print(f"Incomplete scans: {len(IT)}")
+    else:
+        print(f"Incomplete scans: {len(IT)} - listed with their missing pages: ")
     for t in IT:
         missingPagesT = []
         missingPagesH = []
@@ -66,6 +70,7 @@ def check_and_print_scan_status(*, msgr):
                 format_int_list_with_runs(missingPagesH),
             )
         )
+
     unknown_pagedata = msgr.getUnknownPages()
     N = len(unknown_pagedata)
     is_are = "is" if N == 1 else "are"
