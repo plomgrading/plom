@@ -78,4 +78,6 @@ def check_and_print_scan_status(*, msgr):
     extra = "." if N == 0 else ": (use the Manager tool to address)"
     print(f"There {is_are} currently {N} unknown {page_or_pages}{extra}")
     for p in unknown_pagedata:
-        print(f'\t{p["pagename"]} (page {p["bundle_position"]} in bundle {p["bundle_name"]})')
+        print(
+            f'\t{p["pagename"]} (p. {p["bundle_position"]} in bundle {p["bundle_name"]})'
+        )
