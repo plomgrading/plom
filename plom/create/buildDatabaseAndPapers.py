@@ -136,7 +136,7 @@ def build_database(*, msgr, vermap={}):
     # sanity check the version maps
     if vermap:
         assert new_vmap == vermap, RuntimeError(
-            "Report a bug in version_map code - difference betweeen one you gave me and one server gave back at build!"
+            "Report a bug in version_map code - difference between one you gave me and one server gave back at build!"
         )
     # now build the tests one at a time
     status = ""

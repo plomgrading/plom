@@ -902,7 +902,7 @@ class UploadHandler:
         if not spec:
             raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
 
-        # TODO this should really be called from the server intead of here
+        # TODO this should really be called from the server instead of here
         from plom.db import initialiseExamDatabaseFromSpec
 
         if len(data["version_map"]) == 0:
