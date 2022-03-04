@@ -956,7 +956,10 @@ class Manager(QWidget):
             it3.setTextAlignment(Qt.AlignCenter)
             it4 = QStandardItem("")
             it4.setTextAlignment(Qt.AlignCenter)
+            # the displayed value in first column:
             raw = QStandardItem(u["server_path"])
+            # but store entire dict in first entry, may need wrapped in QVariant
+            raw.setData(u)
             self.unknownModel.insertRow(
                 r,
                 [
@@ -978,17 +981,16 @@ class Manager(QWidget):
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        fname = self.unknownModel.item(r, 0).text()
-        vp = self.msgr.getUnknownImage(fname)
-        if vp is None:
-            return
+        row = self.unknownModel.item(r, 0).data()  # .toPyObject?
+        vp = self.msgr.get_image(row["id"], row["md5sum"])
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
+            row["local_filename"] = fh.name
             uvw = UnknownViewWindow(
                 self,
-                [fh.name],
+                [row],
                 [self.max_papers, self.numberOfPages, self.numberOfQuestions],
                 iDict,
             )

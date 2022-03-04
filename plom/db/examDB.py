@@ -145,7 +145,6 @@ class PlomDB:
         getEXPageImage,
         getAllTestImages,
         getQuestionImages,
-        getUnknownImage,
         testOwnersLoggedIn,
         moveUnknownToExtraPage,
         moveUnknownToHWPage,

@@ -275,18 +275,6 @@ def getQuestionImages(self, test_number, question):
     return (True, rval)
 
 
-def getUnknownImage(self, file_name):
-    # this really just confirms that the file_name belongs to an unknmown
-    iref = Image.get_or_none(file_name=file_name)
-    if iref is None:
-        return [False]
-    uref = iref.upages[0]
-    if uref is None:
-        return [False]
-    else:
-        return [True, uref.image.file_name]
-
-
 def testOwnersLoggedIn(self, tref):
     """Returns list of logged in users who own tasks in given test.
 

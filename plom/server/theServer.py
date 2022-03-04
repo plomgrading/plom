@@ -115,7 +115,6 @@ class Server:
         getUnknownPages,
         getDiscardNames,
         getCollidingPageNames,
-        getUnknownImage,
         getCollidingImage,
         getDiscardImage,
         getTPageImage,
