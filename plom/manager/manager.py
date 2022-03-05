@@ -981,16 +981,16 @@ class Manager(QWidget):
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        row = self.unknownModel.item(r, 0).data()  # .toPyObject?
-        vp = self.msgr.get_image(row["id"], row["md5sum"])
+        pagedata = self.unknownModel.item(r, 0).data()  # .toPyObject?
+        vp = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
-            row["local_filename"] = fh.name
+            pagedata["local_filename"] = fh.name
             uvw = UnknownViewWindow(
                 self,
-                [row],
+                [pagedata],
                 [self.max_papers, self.numberOfPages, self.numberOfQuestions],
                 iDict,
             )
@@ -1028,27 +1028,29 @@ class Manager(QWidget):
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
-            if self.unknownModel.item(r, 4).text() == "discard":
-                self.msgr.removeUnknownImage(self.unknownModel.item(r, 0).text())
-            elif self.unknownModel.item(r, 4).text() == "extra":
+            action = self.unknownModel.item(r, 4).text()
+            pagedata = self.unknownModel.item(r, 0).data()
+            if action == "discard":
+                self.msgr.removeUnknownImage(pagedata["server_path"])
+            elif action == "extra":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
                         int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToExtraPage(
-                        self.unknownModel.item(r, 0).text(),
+                        pagedata["server_path"],
                         self.unknownModel.item(r, 6).text(),
                         question_list,
                         self.unknownModel.item(r, 5).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 4).text() == "test":
+            elif action == "test":
                 try:
                     if (
                         self.msgr.unknownToTestPage(
-                            self.unknownModel.item(r, 0).text(),
+                            pagedata["server_path"],
                             self.unknownModel.item(r, 6).text(),
                             self.unknownModel.item(r, 7).text(),
                             self.unknownModel.item(r, 5).text(),
@@ -1062,14 +1064,14 @@ class Manager(QWidget):
                         ).exec_()
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 4).text() == "homework":
+            elif action == "homework":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
                         int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToHWPage(
-                        self.unknownModel.item(r, 0).text(),
+                        pagedata["server_path"],
                         self.unknownModel.item(r, 6).text(),
                         question_list,
                         self.unknownModel.item(r, 5).text(),
@@ -1079,9 +1081,6 @@ class Manager(QWidget):
 
             else:
                 pass
-                # print(
-                #     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
-                # )
         self.refreshUList()
 
     def viewWholeTest(self, testnum, parent=None):
