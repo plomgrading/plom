@@ -961,7 +961,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.DB.getPageVersions(paper_idx)
+            ver = self.server.getPageVersions(paper_idx)
             if not ver:
                 _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)
@@ -979,7 +979,7 @@ class UploadHandler:
                 Fails with 409 if there is no version map.
         """
         paper_idx = request.match_info["papernum"]
-        vers = self.server.DB.getQuestionVersions(paper_idx)
+        vers = self.server.getQuestionVersions(paper_idx)
         if not vers:
             _msg = f"paper {paper_idx} does not (yet?) have a version map"
             log.warn(_msg)
@@ -1003,7 +1003,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.DB.getQuestionVersions(paper_idx)
+            ver = self.server.getQuestionVersions(paper_idx)
             if not ver:
                 _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)

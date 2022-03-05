@@ -468,4 +468,11 @@ def appendTestToExamDatabase(self, t, vmap_for_test):
     return self.DB.addSingleTestToDB(self.testSpec, t, vmap_for_test)
 
 
-##
+def getPageVersions(self, paper_idx):
+    return self.DB.getPageVersions(paper_idx)
+
+
+def getQuestionVersions(self, paper_idx):
+    return self.DB.getQuestionVersions(paper_idx)
+
+
