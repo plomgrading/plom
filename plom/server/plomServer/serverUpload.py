@@ -296,14 +296,6 @@ def getCollidingPageNames(self):
     return self.DB.getCollidingPageNames()
 
 
-def getQuestionImages(self, testNumber, questionNumber):
-    return self.DB.getQuestionImages(testNumber, questionNumber)
-
-
-def getAllTestImages(self, testNumber):
-    return self.DB.getAllTestImages(testNumber)
-
-
 def checkTPage(self, testNumber, pageNumber):
     return self.DB.checkTPage(testNumber, pageNumber)
 

@@ -36,6 +36,7 @@ from plom.client.tools import (
 )
 
 from plom.messenger import Messenger
+from .pagecache import download_pages
 
 
 # comments which will be made into rubrics by pushing them to server and getting back keys
@@ -214,17 +215,22 @@ def do_random_marking_backend(question, version, *, messenger):
             print("Another user got task {}. Trying again...".format(task))
             continue
 
-        src_img_data = [
-            {"id": r[0], "md5": r[1], "orientation": 0} for r in image_metadata
-        ]
+        src_img_data = [{"id": r[0], "md5": r[1]} for r in image_metadata]
+        papernum = int(task[1:5])
+        pagedata = messenger.get_pagedata_context_question(papernum, question)
         with tempfile.TemporaryDirectory() as td:
-            for i, r in enumerate(src_img_data):
-                img_bytes = messenger.MrequestOneImage(r["id"], r["md5"])
-                img_ext = imghdr.what(None, h=img_bytes)
-                tmp = Path(td) / f"{task}.{i}.{img_ext}"
-                with open(tmp, "wb") as f:
-                    f.write(img_bytes)
-                r["filename"] = str(tmp)
+            pagedata = download_pages(messenger, pagedata, td, alt_get=src_img_data)
+            # Populate the orientation keys from the full pagedata
+            for row in src_img_data:
+                ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
+                # There could easily be more than one: what if orientation is contradictory?
+                row["orientation"] = ori[0]  # just take first one
+
+            for row in src_img_data:
+                for r in pagedata:
+                    if r["md5"] == row["md5"]:
+                        row["filename"] = r["local_filename"]
+
             basefile = Path(td) / "argh"
             score, rubrics, aname, plomfile = annotatePaper(
                 question, maxMark, task, src_img_data, basefile, tags

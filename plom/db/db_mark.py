@@ -437,38 +437,17 @@ def Mget_annotations(self, number, question, edition=None, integrity=None):
     return (True, plom_data, img_file)
 
 
-def MgetOriginalImages(self, task):
-    """Return the original (unannotated) page images of the given task to the user."""
-    with plomdb.atomic():
-        gref = Group.get_or_none(Group.gid == task)
-        if gref is None:  # should not happen
-            log.info("MgetOriginalImages - task %s not known", task)
-            return (False, f"Task {task} not known")
-        if not gref.scanned:
-            log.warning("MgetOriginalImages - task %s not completely scanned", task)
-            return (False, f"Task {task} is not completely scanned")
-        # get the first non-outdated annotation for the group
-        aref = (
-            gref.qgroups[0]
-            .annotations.where(Annotation.outdated == False)  # noqa: E712
-            .order_by(Annotation.edition)
-            .get()
-        )
-        # this is the earliest non-outdated annotation = the original
-
-        rval = []
-        for p in aref.apages.order_by(APage.order):
-            rval.append(p.image.file_name)
-        return (True, rval)
-
-
 def MgetWholePaper(self, test_number, question):
-    """Send page images of whole paper back to user, highlighting which belong to the given question. Do not show ID pages."""
+    """All non-ID pages of a paper, highlighting which belong to a question.
 
-    # we can show show not totally scanned test.
+    Returns:
+        list: a list of lists, each "row" currently documented in the
+            caller's implementation.  TODO: consider moving the dict
+            stuff back to here.
+    """
     tref = Test.get_or_none(Test.test_number == test_number)
     if tref is None:  # don't know that test - this shouldn't happen
-        return [False]
+        return [False]  # TODO
     pageData = []  # for each page append a 4-tuple [
     # page-code = t.pageNumber, h.questionNumber.order, 3.questionNumber.order, or l.order
     # image-md5sum,

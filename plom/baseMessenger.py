@@ -22,6 +22,7 @@ from plom.plom_exceptions import (
     PlomConflict,
     PlomConnectionError,
     PlomExistingLoginException,
+    PlomNoMoreException,
     PlomNoSolutionException,
     PlomServerNotReady,
     PlomSSLError,
@@ -624,6 +625,102 @@ class BaseMessenger:
             ) from None
         finally:
             self.SRmutex.release()
+
+    def get_pagedata(self, code):
+        """Get metadata about the images in this paper.
+
+        TODO: returns 404/409, so why not raise that instead?
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_pagedata_question(self, code, questionNumber):
+        """Get metadata about the images in this paper and question.
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    f"/pagedata/{code}/{questionNumber}",
+                    json={"user": self.user, "token": self.token},
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def get_pagedata_context_question(self, code, questionNumber):
+        """Get metadata about all non-ID page images in this paper, as related to a question.
+
+        For now, questionNumber effects the "included" column...
+
+        TODO: returns 404, so why not raise that instead?
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/pagedata/{code}/context/{questionNumber}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            ret = response.json()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        return ret
+
+    def get_image(self, image_id, md5sum):
+        """Download one image from server by its database id.
+
+        args:
+            image_id (int): TODO: int/str?  The key into the server's
+                database of images.
+            md5sum (str): the expected md5sum, just for sanity checks or
+                something I suppose.
+
+        return:
+            bytes: png/jpeg or whatever as bytes.
+
+        Errors/Exceptions
+            401: not authenticated
+            404: no such image
+            409: wrong md5sum provided
+        """
+        self.SRmutex.acquire()
+        try:
+            response = self.get(
+                f"/MK/images/{image_id}/{md5sum}",
+                json={"user": self.user, "token": self.token},
+            )
+            response.raise_for_status()
+            image = BytesIO(response.content).getvalue()
+        except requests.HTTPError as e:
+            if response.status_code == 401:
+                raise PlomAuthenticationException() from None
+            if response.status_code == 409:
+                raise PlomConflict("Wrong md5sum provided") from None
+            if response.status_code == 404:
+                raise PlomNoMoreException("Cannot find image") from None
+            raise PlomSeriousException(f"Some other sort of error {e}") from None
+        finally:
+            self.SRmutex.release()
+        return image
 
     def request_ID_image(self, code):
         self.SRmutex.acquire()

@@ -785,80 +785,80 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getTPageImage(self, t, p, v):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/scannedTPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "page": p,
-                    "version": v,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def getTPageImageData(self, t, p, v):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/scannedTPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                        "page": p,
+                        "version": v,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 400:
+                    # TODO? do something else?
+                    return None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def getHWPageImage(self, t, q, o):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/scannedHWPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "question": q,
-                    "order": o,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def getHWPageImageData(self, t, q, o):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/scannedHWPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                        "question": q,
+                        "order": o,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 400:
+                    # TODO? do something else?
+                    return None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
-    def getEXPageImage(self, t, q, o):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/scannedEXPage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": t,
-                    "question": q,
-                    "order": o,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
+    def getEXPageImageData(self, t, q, o):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/scannedEXPage",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test": t,
+                        "question": q,
+                        "order": o,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 400:
+                    # TODO? do something else?
+                    return None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def getUnknownImage(self, fname):
         self.SRmutex.acquire()
@@ -972,69 +972,6 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
         return True
-
-    def getQuestionImages(self, testNumber, questionNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/questionImages",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": testNumber,
-                    "question": questionNumber,
-                },
-            )
-            response.raise_for_status()
-            # response is [n, image1, image2,... image.n]
-            imageList = []
-            i = -1  # we skip the first part
-            for img in MultipartDecoder.from_response(response).parts:
-                i += 1
-                if i == 0:
-                    continue
-                imageList.append(BytesIO(img.content).getvalue())
-            return imageList
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
-    def getTestImages(self, testNumber):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/testImages",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test": testNumber,
-                },
-            )
-            response.raise_for_status()
-            # response is [n, image1, image2,... image.n]
-            imageList = []
-            i = -1  # we skip the first part
-            for img in MultipartDecoder.from_response(response).parts:
-                i += 1
-                if i == 0:
-                    continue
-                imageList.append(BytesIO(img.content).getvalue())
-            return imageList
-
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                raise PlomSeriousException(response.reason) from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def checkTPage(self, testNumber, pageNumber):
         self.SRmutex.acquire()

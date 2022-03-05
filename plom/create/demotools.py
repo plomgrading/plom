@@ -6,17 +6,13 @@
 
 """Build pdf files for a demo test and provide demo classlists"""
 
-__copyright__ = "Copyright (C) 2020-2021 Andrew Rechnitzer, Colin B. Macdonald, et al"
+__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer, Colin B. Macdonald, et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
+import importlib.resources as resources
 from pathlib import Path
 import sys
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import pandas
 

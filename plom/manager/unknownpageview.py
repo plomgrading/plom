@@ -352,9 +352,6 @@ class UnknownViewWindow(QDialog):
             self.theta = 270
         self.view.rotateImage(-90)
 
-    def viewQuestion(self, testNumber, questionNumber):
-        self.parent().viewQuestion(testNumber, questionNumber, parent=self)
-
     def viewWholeTest(self, testNumber):
         self.parent().viewWholeTest(testNumber, parent=self)
 

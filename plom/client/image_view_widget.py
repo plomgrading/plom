@@ -5,7 +5,8 @@
 from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QGuiApplication, QBrush, QImageReader, QPainter, QPixmap
+from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtGui import QBrush, QImageReader, QPainter, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QGraphicsPixmapItem,
     QGraphicsItemGroup,
@@ -25,9 +26,15 @@ class ImageViewWidget(QWidget):
 
     args:
         parent (QWidget): the parent container for this widget.
-        fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
-            `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
-            for a single image.  Unclear whether the caller must maintain
+        image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
+            each dict has keys 'filename' and 'orientation' (and
+            possibly others).
+            Currently every image is used and the list order
+            determines the order.  That is subject to change.
+            Can also be a list of `pathlib.Path` or `str` of image
+            filenames.  Can also be a single `str`/`pathlib.Path`,
+            for a single image.
+            Unclear whether the caller must maintain
             these image files on disc or if the QPixmap will reads it once
             and stores it.  See Issue #1842.  For now, safest to assume
             you must maintain it.
@@ -38,10 +45,10 @@ class ImageViewWidget(QWidget):
             only cosmetic.
     """
 
-    def __init__(self, parent, fnames=None, has_reset_button=True, compact=True):
+    def __init__(self, parent, image_data=None, *, has_reset_button=True, compact=True):
         super().__init__(parent)
         # Grab an examview widget (QGraphicsView)
-        self.view = ExamView(fnames)
+        self.view = ExamView(image_data)
         # Render nicely
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
@@ -62,13 +69,13 @@ class ImageViewWidget(QWidget):
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
 
-    def updateImage(self, fnames):
+    def updateImage(self, image_data):
         """Pass file(s) to the view to update the image"""
         # first store the current view transform and scroll values
         self.viewTrans = self.view.transform()
         self.dx = self.view.horizontalScrollBar().value()
         self.dy = self.view.verticalScrollBar().value()
-        self.view.updateImages(fnames)
+        self.view.updateImages(image_data)
 
         # re-set the view transform and scroll values
         self.view.setTransform(self.viewTrans)
@@ -99,19 +106,20 @@ class ExamView(QGraphicsView):
     """Display images with some interaction: click-to-zoom/unzoom
 
     args:
-        fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
-            `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
-            for a single image.  Unclear whether the caller must maintain
-            these image files on disc or if the QPixmap will reads it once
-            and stores it.  See Issue #1842.  For now, safest to assume
-            you must maintain it.
+        image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
+            each dict has keys 'filename' and 'orientation' (and
+            possibly others).
+            Currently every image is used and the list order
+            determines the order.  That is subject to change.
+            Can also be a list of `pathlib.Path` or `str` of image
+            filenames.  Can also be a single `str`/`pathlib.Path`,
+            for a single image.
         dark_background (bool): default False which means follow theme,
             or pass true to force a darker coloured background.
     """
 
-    def __init__(self, fnames, dark_background=False):
+    def __init__(self, image_data, dark_background=False):
         super().__init__()
-        # set background
         if dark_background:
             self.setBackgroundBrush(QBrush(Qt.darkCyan))
         else:
@@ -122,35 +130,54 @@ class ExamView(QGraphicsView):
         self.scene = QGraphicsScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
-        self.updateImages(fnames)
+        self.updateImages(image_data)
 
-    def updateImages(self, fnames):
-        """Update the images new ones from filenames
+    def updateImages(self, image_data):
+        """Update the images new ones from filenames and optionally metadata.
 
         Args:
-            fnames (None/list/str/pathlib.Path): a list of `pathlib.Path` or
-                `str` of image filenames.  Can also be a `str`/`pathlib.Path`,
+            image_data (None/list[dict]/list[str/pathlib.Path]/str/pathlib.Path):
+                each dict has keys 'filename' and 'orientation' (and
+                possibly others that are unused).  If 'filename' isn't
+                present, we check for 'local_filename' instead.
+                Currently every image is used and the list order
+                determines the order.  That is subject to change.
+                Can also be a list of `pathlib.Path` or `str` of image
+                filenames.  Can also be a single `str`/`pathlib.Path`,
                 for a single image.
 
         Raises:
             ValueError: an image did not load, for example if was empty.
+            KeyError: dict did not have appropriate keys.
         """
-        if isinstance(fnames, (str, Path)):
-            fnames = [fnames]
+        if isinstance(image_data, (str, Path)):
+            image_data = [image_data]
         for img in self.imageGItem.childItems():
             self.imageGItem.removeFromGroup(img)
             self.scene.removeItem(img)
         img = None
 
-        if fnames is not None:
+        if image_data is not None:
             x = 0
-            for (n, fn) in enumerate(fnames):
-                qir = QImageReader(str(fn))
+            for data in image_data:
+                if not isinstance(data, dict):
+                    data = {"filename": data, "orientation": 0}
+                filename = data.get("filename")
+                if filename is None:
+                    filename = data.get("local_filename")
+                if filename is None:
+                    raise KeyError(
+                        f"Cannot find 'filename' nor 'local_filename' in {data}"
+                    )
+                qir = QImageReader(str(filename))
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())
                 if pix.isNull():
-                    raise ValueError(f"Could not read an image from {fn}")
+                    raise ValueError(f"Could not read an image from {filename}")
+                rot = QTransform()
+                rot.rotate(data["orientation"])
+                pix = pix.transformed(rot)
                 pixmap = QGraphicsPixmapItem(pix)
                 pixmap.setTransformationMode(Qt.SmoothTransformation)
                 pixmap.setPos(x, 0)

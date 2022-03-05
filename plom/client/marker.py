@@ -21,7 +21,6 @@ from math import ceil
 import os
 from pathlib import Path
 import queue
-import shutil
 import tempfile
 from textwrap import shorten
 import time
@@ -66,10 +65,11 @@ from plom.plom_exceptions import (
 from plom.messenger import Messenger
 from .annotator import Annotator
 from .image_view_widget import ImageViewWidget
-from .origscanviewer import QuestionViewDialog, SelectTestQuestion
+from .viewers import QuestionViewDialog, SelectTestQuestion
 from .uiFiles.ui_marker import Ui_MarkerWindow
 from .useful_classes import AddRemoveTagDialog
 from .useful_classes import ErrorMessage, SimpleQuestion
+from .pagecache import download_pages
 
 if platform.system() == "Darwin":
     from PyQt5.QtGui import qt_set_sequence_auto_mnemonic
@@ -164,39 +164,28 @@ class BackgroundDownloader(QThread):
                 self.downloadFail.emit(str(err))
                 self.quit()
 
-        num = int(task[1:5])
-        full_pagedata = self._msgr.MrequestWholePaperMetadata(num, self.question)
-        for r in full_pagedata:
-            r["local_filename"] = None
-        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
-
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
+        num = int(task[1:5])
+        pagedata = self._msgr.get_pagedata_context_question(num, self.question)
+        pagedata = download_pages(
+            self._msgr, pagedata, self.workingDirectory, alt_get=src_img_data
+        )
+        # don't save in _full_pagedata b/c we're in another thread: see downloadSuccess emitted below
+
         # Populate the orientation keys from the full pagedata
-        for i, row in enumerate(src_img_data):
-            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+        for row in src_img_data:
+            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
             # There could easily be more than one: what if orientation is contradictory?
             row["orientation"] = ori[0]  # just take first one
 
-        # Image names = "<task>.<imagenumber>.<extension>"
-        # TODO: use server filename from server_path_filename
-        for i, row in enumerate(src_img_data):
-            # TODO: add a "aggressive download" option to get all.
-            # try-except? how does this fail?
-            im_bytes = self._msgr.MrequestOneImage(row["id"], row["md5"])
-            im_ext = imghdr.what(None, h=im_bytes)
-            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
-            with open(tmp, "wb") as fh:
-                fh.write(im_bytes)
-            row["filename"] = str(tmp)
-            for r in full_pagedata:
+        for row in src_img_data:
+            for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    row["filename"] = r["local_filename"]
 
-        self.downloadSuccess.emit(
-            task, src_img_data, full_pagedata, tags, integrity_check
-        )
+        self.downloadSuccess.emit(task, src_img_data, pagedata, tags, integrity_check)
         self.quit()
 
 
@@ -709,14 +698,6 @@ class MarkerExamModel(QStandardItemModel):
         """
         self._setDataByTask(task, 8, tdir)
 
-    def getOriginalFiles(self, task):
-        """Return filenames for original un-annotated image as string.
-
-        Somewhat deprecated?
-        """
-        src_img_data = self.get_source_image_data(task)
-        return [x["filename"] for x in src_img_data]
-
     def _setImageData(self, task, src_img_data):
         """Set the md5sums etc of the original image files."""
         log.debug("Setting img data to {}".format(src_img_data))
@@ -962,6 +943,7 @@ class MarkerClient(QWidget):
         if not tmpdir:
             tmpdir = tempfile.mkdtemp(prefix="plom_")
         self.workingDirectory = Path(tmpdir)
+        log.debug("Working directory set to %s", self.workingDirectory)
 
         self.maxMark = -1  # temp value
         # TODO: a not-fully-thought-out datastore for immutable pagedata
@@ -1213,7 +1195,7 @@ class MarkerClient(QWidget):
         Raises:
             Uses error dialogs; not currently expected to throw exceptions
         """
-        if len(self.examModel.getOriginalFiles(task)) > 0:
+        if len(self.examModel.get_source_image_data(task)) > 0:
             return True
 
         assert task[0] == "q"
@@ -1248,27 +1230,20 @@ class MarkerClient(QWidget):
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
-        full_pagedata = self.msgr.MrequestWholePaperMetadata(num, self.question)
-        for r in full_pagedata:
-            r["local_filename"] = None
-        self._full_pagedata[num] = full_pagedata
-
         log.info("importing source image data (orientations etc) from .plom file")
-        # filenames likely stale
+        # filenames likely stale: but have restarted client in meantime
         src_img_data = plomdata["base_images"]
 
-        # Image names = "<task>.<imagenumber>.<extension>"
-        # TODO: use server filename from server_path_filename
-        for i, row in enumerate(src_img_data):
-            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            im_type = imghdr.what(None, h=im_bytes)
-            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_type)
-            with open(tmp, "wb") as fh:
-                fh.write(im_bytes)
-            row["filename"] = str(tmp)
-            for r in full_pagedata:
+        pagedata = self.msgr.get_pagedata_context_question(num, self.question)
+        pagedata = download_pages(
+            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
+        )
+        self._full_pagedata[num] = pagedata
+
+        for row in src_img_data:
+            for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    row["filename"] = r["local_filename"]
 
         self.examModel.setOriginalFilesAndData(task, src_img_data)
 
@@ -1305,7 +1280,7 @@ class MarkerClient(QWidget):
         else:
             # Colin doesn't understand this proxy: just pull task and query examModel
             task = self.prxM.getPrefix(pr)
-            self.testImg.updateImage(self.examModel.getOriginalFiles(task))
+            self.testImg.updateImage(self.examModel.get_source_image_data(task))
         self.testImg.forceRedrawOrSomeBullshit()
         self.ui.tableView.setFocus()
 
@@ -1414,34 +1389,25 @@ class MarkerClient(QWidget):
         page_metadata, tags, integrity_check = self.msgr.MclaimThisTask(
             task, version=self.version
         )
-        full_pagedata = self.msgr.MrequestWholePaperMetadata(papernum, self.question)
-        for r in full_pagedata:
-            r["local_filename"] = None
-        self._full_pagedata[papernum] = full_pagedata
-
         src_img_data = [{"id": x[0], "md5": x[1]} for x in page_metadata]
         del page_metadata
 
-        # Populate the orientation keys from the full pagedata
-        for i, row in enumerate(src_img_data):
-            ori = [r["orientation"] for r in full_pagedata if r["id"] == row["id"]]
+        pagedata = self.msgr.get_pagedata_context_question(papernum, self.question)
+        pagedata = download_pages(
+            self.msgr, pagedata, self.workingDirectory, alt_get=src_img_data
+        )
+        self._full_pagedata[papernum] = pagedata
+
+        # Populate the orientation keys from the pagedata
+        for row in src_img_data:
+            ori = [r["orientation"] for r in pagedata if r["id"] == row["id"]]
             # There could easily be more than one: what if orientation is contradictory?
             row["orientation"] = ori[0]  # just take first one
 
-        # Image names = "<task>.<imagenumber>.<extension>"
-        # TODO: use server filename from server_path_filename
-        for i, row in enumerate(src_img_data):
-            # TODO: add a "aggressive download" option to get all.
-            # try-except? how does this fail?
-            im_bytes = self.msgr.MrequestOneImage(row["id"], row["md5"])
-            im_ext = imghdr.what(None, h=im_bytes)
-            tmp = self.workingDirectory / "{}.{}.{}".format(task, i, im_ext)
-            with open(tmp, "wb") as fh:
-                fh.write(im_bytes)
-            row["filename"] = str(tmp)
-            for r in full_pagedata:
+        for row in src_img_data:
+            for r in pagedata:
                 if r["md5"] == row["md5"]:
-                    r["local_filename"] = tmp
+                    row["filename"] = r["local_filename"]
 
         self.examModel.addPaper(
             ExamQuestion(
@@ -1492,7 +1458,7 @@ class MarkerClient(QWidget):
         self.backgroundDownloader.start()
 
     def _requestNextInBackgroundFinished(
-        self, task, src_img_data, full_pagedata, tags, integrity_check
+        self, task, src_img_data, pagedata, tags, integrity_check
     ):
         """
         Adds paper to exam model once it's been requested.
@@ -1501,7 +1467,7 @@ class MarkerClient(QWidget):
             task (str): the task name for the next test.
             src_img_data (list[dict]): the md5sums, filenames, etc for
                 the underlying images.
-            full_pagedata (list): temporary hacks to merge with above?
+            pagedata (list): temporary hacks to merge with above?
             tags (list[str]): list of texts for tags for the TGV.
             integrity_check (str): integrity check string for the underlying images (concat of their md5sums)
 
@@ -1509,7 +1475,7 @@ class MarkerClient(QWidget):
             None
         """
         num = int(task[1:5])
-        self._full_pagedata[num] = full_pagedata
+        self._full_pagedata[num] = pagedata
         self.examModel.addPaper(
             ExamQuestion(
                 task,
@@ -1702,7 +1668,7 @@ class MarkerClient(QWidget):
 
         # Yes do this even for a regrade!  We will recreate the annotations
         # (using the plom file) on top of the original file.
-        fnames = self.examModel.getOriginalFiles(task)
+        img_src_data = self.examModel.get_source_image_data(task)
         if self.backgroundDownloader:
             count = 0
             # Notes: we could check using `while not os.path.exists(fname):`
@@ -1714,7 +1680,7 @@ class MarkerClient(QWidget):
                 count += 1
                 # if .remainder(count, 10) == 0: # this is only python3.7 and later. - see #509
                 if (count % 10) == 0:
-                    log.info("waiting for downloader: {}".format(fnames))
+                    log.info("waiting for downloader: {}".format(img_src_data))
                 if count >= 40:
                     msg = SimpleQuestion(
                         self,
@@ -1725,8 +1691,8 @@ class MarkerClient(QWidget):
                     count = 0
 
         # maybe the downloader failed for some (rare) reason
-        for fn in fnames:
-            if not os.path.exists(fn):
+        for data in img_src_data:
+            if not Path(data["filename"]).exists():
                 log.warning(
                     "some kind of downloader fail? (unexpected, but probably harmless"
                 )
@@ -1988,26 +1954,17 @@ class MarkerClient(QWidget):
             tuple: initialData (as described by :meth:`startTheAnnotator`.)
         """
         log.info("Rearranging image list for task {} = {}".format(task, imageList))
-        # we know the list of image-refs and files. copy files into place
-        # Image names = "<task>.<imagenumber>.<extension>"
         src_img_data = []
-        # TODO: This code was trying (badly) to overwrite the q0001 files...
-        # TODO: but why not keep using old name once they are static
-        for i in range(len(imageList)):
-            with tempfile.NamedTemporaryFile(
-                dir=self.workingDirectory,
-                prefix="twist_{}_{}_".format(task, i),
-                suffix="_" + Path(imageList[i][1]).name,
-                delete=False,
-            ) as f:
-                tmp = Path(f.name)
-            shutil.copyfile(imageList[i][1], tmp)
+        # this is a bit silly, just converting list to dict...  maybe refactor caller?
+        for row in imageList:
+            # TODO: do we need to let the cache know we want to keep these?
+            # TODO: see rearranger code in the annotator, which used to erase some
             src_img_data.append(
                 {
-                    "id": imageList[i][3],
-                    "md5": imageList[i][0],
-                    "filename": str(tmp),
-                    "orientation": imageList[i][2],
+                    "id": row[3],
+                    "md5": row[0],
+                    "filename": str(row[1]),
+                    "orientation": row[2],
                 }
             )
         task = "q" + task
@@ -2192,48 +2149,13 @@ class MarkerClient(QWidget):
         event.accept()
         log.debug("Marker: goodbye!")
 
-    def downloadWholePaper(self, testNumber):
-        """Legacy method, yet another way of getting images.
-
-        Args:
-            testNumber (int): the test number.
-
-        Returns:
-            tuple: containing pageData and viewFiles.  You are responsible
-            for deleting the files when done with them, in particular
-            these may include duplicate images.
-        """
-        try:
-            pageData, imagesAsBytes = self.msgr.MrequestWholePaper(
-                testNumber, self.question
-            )
-        except PlomTakenException as err:
-            log.exception("Taken exception while downloading whole paper %s", err)
-            ErrorMessage(
-                f"'Taken exception' while downloading whole paper:\n{err}"
-            ).exec_()
-            return ([], [])
-
-        viewFiles = []
-        for iab in imagesAsBytes:
-            im_type = imghdr.what(None, h=iab)
-            with tempfile.NamedTemporaryFile(
-                "wb", dir=self.workingDirectory, suffix=f".{im_type}", delete=False
-            ) as f:
-                f.write(iab)
-                viewFiles.append(Path(f.name))
-
-        return (pageData, viewFiles)
-
-    def downloadOneImage(self, image_id, md5):
-        """Download one image from server by its database id."""
-        return self.msgr.MrequestOneImage(image_id, md5)
-
-    def doneWithWholePaperFiles(self, viewFiles):
-        """Unlinks files in viewFiles to os."""
-        for f in viewFiles:
-            if os.path.isfile(f):
-                os.unlink(f)
+    def downloadAnyMissingPages(self, test_number):
+        test_number = int(test_number)
+        pagedata = self._full_pagedata[test_number]
+        pagedata = download_pages(
+            self.msgr, pagedata, self.workingDirectory, get_all=True
+        )
+        self._full_pagedata[test_number] = pagedata
 
     def cacheLatexComments(self):
         """Caches Latexed comments."""
@@ -2436,27 +2358,19 @@ class MarkerClient(QWidget):
             self.prxM.filterTags()
 
     def view_testnum_question(self):
-        """shows the image."""
+        """Shows a particular paper number and question."""
         tgs = SelectTestQuestion(self, self.exam_spec, self.question)
         if tgs.exec_() != QDialog.Accepted:
             return
         tn = tgs.tsb.value()
         gn = tgs.gsb.value()
-        task = f"q{tn:04}g{gn}"
-        try:
-            imageList = self.msgr.MrequestOriginalImages(task)
-        except PlomNoMoreException:
-            msg = ErrorMessage(f"No image corresponding to task {task}")
-            msg.exec_()
-            return
-        ifilenames = []
-        for img_bytes in imageList:
-            img_ext = imghdr.what(None, h=img_bytes)
-            with tempfile.NamedTemporaryFile(
-                "wb", dir=self.workingDirectory, suffix=f".{img_ext}", delete=False
-            ) as f:
-                f.write(img_bytes)
-                ifilenames.append(f.name)
+
+        pagedata = self.msgr.get_pagedata_question(tn, gn)
+        pagedata = download_pages(
+            self.msgr, pagedata, self.workingDirectory, get_all=True
+        )
+        # don't cache this pagedata: "gn" might not be our question number
+        # (but the images are cacheable)
         qvmap = self.msgr.getQuestionVersionMap(tn)
         ver = qvmap[gn]
-        QuestionViewDialog(self, ifilenames, tn, gn, ver=ver, marker=self).exec_()
+        QuestionViewDialog(self, pagedata, tn, gn, ver=ver, marker=self).exec_()

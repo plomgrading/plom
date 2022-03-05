@@ -6,14 +6,9 @@
 
 """Misc utilities for the Plom Server"""
 
+import importlib.resources as resources
 import logging
 from pathlib import Path
-import sys
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 import plom
 from plom import Default_Port

@@ -435,41 +435,6 @@ class MarkHandler:
         filename = r[1]
         return web.FileResponse(filename, status=200)
 
-    # @routes.get("/MK/originalImage/{task}")
-    @authenticate_by_token_required_fields([])
-    def MgetOriginalImages(self, data, request):
-        """Return the non-graded original images for a task/question.
-
-        Respond with status 200/204.
-
-        Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): Request of type
-                GET /MK/originalImages/`task code` which the task code
-                is extracted from.
-
-        Returns:
-            aiohttp.web_response.Response: A response object with includes the multipart objects
-                which wrap this task/question's original (ungraded) images.
-        """
-
-        task = request.match_info["task"]
-        ok, stuff = self.server.MgetOriginalImages(task)
-
-        if not ok:
-            # TODO: "stuff" has an error message and there are several cases.
-            # This API soon-to-be-deprecated?  Worth fixing or not?  Issue #1953
-            return web.Response(status=204)  # no content there
-
-        filenames = stuff
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
     # @routes.get("/tags/{task}")
     @authenticate_by_token_required_fields([])
     def get_tags_of_task(self, data, request):
@@ -591,61 +556,23 @@ class MarkHandler:
         tags = tags.split()
         return web.json_response(tags)
 
-    # @routes.get("/MK/whole/{number}")
+    # @routes.get("/pagedata/{number}")
     @authenticate_by_token_required_fields([])
-    def MgetWholePaper(self, data, request):
-        """Return the entire paper which includes the given question.
-
-        Respond with status 200/404.
-
-        Args:
-            data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
-
-        Returns:
-            aiohttp.web_response.Response: Responds with a multipart
-                writer which includes all the images for the exam which
-                includes this question.
-        """
-        test_number = request.match_info["number"]
-        question_number = request.match_info["question"]
-
-        # return [True, pageData, f1, f2, f3, ...] or [False]
-        # 1. True/False for operation status.
-        # 2. A list of lists, documented elsewhere (TODO: I hope)
-        # 3. 3rd element onward: paths for each page of the paper in server.
-        whole_paper_response = self.server.MgetWholePaper(test_number, question_number)
-
-        if not whole_paper_response[0]:
-            return web.Response(status=404)
-
-        pages_data = whole_paper_response[1]
-        filenames = whole_paper_response[2:]
-        # suboptimal but safe: read bytes instead of append(fh) (Issue #1877)
-        with MultipartWriter("images") as mpwriter:
-            mpwriter.append_json(pages_data)
-            for f in filenames:
-                with open(f, "rb") as fh:
-                    b = fh.read()
-                mpwriter.append(b)
-            return web.Response(body=mpwriter, status=200)
-
-    # @routes.get("/MK/TMP/whole/{number}/{question}")
-    @authenticate_by_token_required_fields([])
-    def MgetWholePaperMetadata(self, data, request):
+    def get_pagedata(self, data, request):
         """Return the metadata for all images associated with a paper
 
-        Respond with status 200/404.
+        Respond with status 200/409.
 
         Args:
             data (dict): A dictionary having the user/token.
-            request (aiohttp.web_request.Request): GET /MK/whole/`test_number`/`question_number`.
+            request (aiohttp.web_request.Request):
 
         Returns:
             aiohttp.web_response.Response: JSON data, a list of dicts
                 where each dict has keys:
                 pagename, md5, included, order, id, orientation, server_path
                 as documented below.
+                A 409 is returned with an explanation if paper number not found.
 
         The list of dicts (we think of them as rows) have the following
         contents:
@@ -665,15 +592,6 @@ class MarkHandler:
             and the id could be repeated.  TODO: determine if this only
             happens b/c of bugs/upload issues or if its a reasonably
             normal state.
-
-        `included`
-            boolean, did the server *originally* have this page
-            included in question number `question`?.  Note that clients
-            may pull other pages into their annotating; you can only
-            rely on this information for initializing a new annotating
-            session.  If you're e.g., editing an existing annotation,
-            you should rely on the info from that existing annotation
-            instead of this.
 
         `order`
             None or an integer specifying the relative ordering of
@@ -708,6 +626,99 @@ class MarkHandler:
             [
               {'pagename': 't2',
                'md5': 'e4e131f476bfd364052f2e1d866533ea',
+               'order': None,
+               'id': 19',
+               'orientation': 0
+               'server_path': 'pages/originalPages/t0004p02v1.86784dd1.png',
+              },
+              {'pagename': 't3',
+               'md5': 'a896cb05f2616cb101df175a94c2ef95',
+               'order': 1,
+               'id': 20,
+               'orientation': 270
+               'server_path': 'pages/originalPages/t0004p03v2.ef7f9754.png',
+              }
+            ]
+        """
+        test_number = request.match_info["number"]
+
+        ok, val = self.server.DB.getAllTestImages(test_number)
+
+        if not ok:
+            raise web.HTTPConflict(reason=val)
+
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pages_data = []
+        for row in val:
+            pages_data.append({k: v for k, v in zip(rownames, row)})
+        return web.json_response(pages_data, status=200)
+
+    # @routes.get("/pagedata/{number}/{question}")
+    @authenticate_by_token_required_fields([])
+    def get_pagedata_question(self, data, request):
+        """Return the metadata for all images associated with a paper
+
+        Respond with status 200/409.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request):
+
+        Returns:
+            aiohttp.web_response.Response: JSON data, a list of dicts
+                where each dict has keys:
+                pagename, md5, included, order, id, orientation, server_path
+                as documented in :py:`get_pagedata`.
+                A 409 is returned with an explanation if paper number not found.
+        """
+        test_number = request.match_info["number"]
+        question_number = request.match_info["question"]
+
+        ok, val = self.server.DB.getQuestionImages(test_number, question_number)
+
+        if not ok:
+            raise web.HTTPConflict(reason=val)
+
+        rownames = ("pagename", "md5", "orientation", "id", "server_path")
+        pages_data = []
+        for row in val:
+            pages_data.append({k: v for k, v in zip(rownames, row)})
+        return web.json_response(pages_data, status=200)
+
+    # @routes.get("/pagedata/{number}/{question}")
+    @authenticate_by_token_required_fields([])
+    def get_pagedata_context_question(self, data, request):
+        """Metadata for all non-ID images associated with a paper, highlighting those initially related to a question.
+
+        Respond with status 200/404.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request):
+
+        Returns:
+            aiohttp.web_response.Response: JSON data, a list of dicts
+                where each dict has keys:
+                pagename, md5, included, order, id, orientation, server_path
+                as documented below.
+
+        The list of dicts (we think of them as rows) have the same content
+        as documented in ``get_pagedata`` except an additional key:
+
+        `included`
+            boolean, did the server *originally* have this page
+            included in question number `question`?.  Note that clients
+            may pull other pages into their annotating; you can only
+            rely on this information for initializing a new annotating
+            session.  If you're e.g., editing an existing annotation,
+            you should rely on the info from that existing annotation
+            instead of this.
+
+        Example::
+
+            [
+              {'pagename': 't2',
+               'md5': 'e4e131f476bfd364052f2e1d866533ea',
                'included': False,
                'order': None,
                'id': 19',
@@ -728,6 +739,7 @@ class MarkHandler:
         # this is used to determine the true/false "included" info
         question_number = request.match_info["question"]
 
+        # TODO: now that getWholePaper API is gone, we could refactor this
         # return [True, pageData, f1, f2, f3, ...] or [False]
         # 1. True/False for operation status.
         # 2. A list of lists, as doc'd above
@@ -817,14 +829,17 @@ class MarkHandler:
         router.add_patch("/MK/tasks/{task}", self.MclaimThisTask)
         router.add_put("/MK/tasks/{task}", self.MreturnMarkedTask)
         router.add_get("/MK/images/{image_id}/{md5sum}", self.MgetOneImage)
-        router.add_get("/MK/originalImages/{task}", self.MgetOriginalImages)
         router.add_get("/tags", self.get_all_tags)
         router.add_get("/tags/{task}", self.get_tags_of_task)
         router.add_patch("/tags/{task}", self.add_tag)
         router.add_delete("/tags/{task}", self.remove_tag)
         router.add_patch("/tags", self.create_new_tag)
-        router.add_get("/MK/whole/{number}/{question}", self.MgetWholePaper)
-        router.add_get("/MK/TMP/whole/{number}/{question}", self.MgetWholePaperMetadata)
+        router.add_get("/pagedata/{number}", self.get_pagedata)
+        router.add_get("/pagedata/{number}/{question}", self.get_pagedata_question)
+        router.add_get(
+            "/pagedata/{number}/context/{question}",
+            self.get_pagedata_context_question,
+        )
         router.add_get("/annotations/{number}/{question}", self.get_annotations_latest)
         router.add_get(
             "/annotations/{number}/{question}/{edition}", self.get_annotations

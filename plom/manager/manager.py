@@ -9,19 +9,14 @@
 from collections import defaultdict
 import csv
 import imghdr
+import importlib.resources as resources
 import logging
 import os
 from pathlib import Path
-import sys
 import tempfile
 
 import arrow
 import urllib3
-
-if sys.version_info >= (3, 7):
-    import importlib.resources as resources
-else:
-    import importlib_resources as resources
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QBrush, QIcon, QPixmap, QStandardItem, QStandardItemModel
@@ -49,8 +44,9 @@ import plom.client.icons
 
 from plom.client.useful_classes import ErrorMessage, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
-from plom.client.origscanviewer import WholeTestView, GroupView
+from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
+from plom.client.pagecache import download_pages
 
 from .uiFiles.ui_manager import Ui_Manager
 from .unknownpageview import UnknownViewWindow
@@ -658,23 +654,23 @@ class Manager(QWidget):
     def viewPage(self, t, pdetails, v):
         if pdetails[0] == "t":  # is a test-page t.PPP
             p = pdetails.split(".")[1]
-            vp = self.msgr.getTPageImage(t, p, v)
+            pagedata = self.msgr.getTPageImageData(t, p, v)
         elif pdetails[0] == "h":  # is a hw-page = h.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = self.msgr.getHWPageImage(t, q, o)
+            pagedata = self.msgr.getHWPageImageData(t, q, o)
         elif pdetails[0] == "e":  # is a extra-page = e.q.o
             q = pdetails.split(".")[1]
             o = pdetails.split(".")[2]
-            vp = self.msgr.getEXPageImage(t, q, o)
+            pagedata = self.msgr.getEXPageImageData(t, q, o)
         else:
             return
 
-        if vp is None:
+        if not pagedata:
             return
-        with tempfile.NamedTemporaryFile() as fh:
-            fh.write(vp)
-            GroupView(self, [fh.name]).exec_()
+        with tempfile.TemporaryDirectory() as td:
+            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
+            GroupView(self, pagedata).exec_()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -1072,37 +1068,22 @@ class Manager(QWidget):
                 # )
         self.refreshUList()
 
-    def viewWholeTest(self, testNumber, parent=None):
-        vt = self.msgr.getTestImages(testNumber)
-        if vt is None:
-            return
-        if parent is None:
-            parent = self
-        with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i, img_bytes in enumerate(vt):
-                img_ext = imghdr.what(None, h=img_bytes)
-                iname = Path(td) / f"img.{i}.{img_ext}"
-                with open(iname, "wb") as fh:
-                    fh.write(img_bytes)
-                inames.append(iname)
-            WholeTestView(testNumber, inames, parent=parent).exec_()
+    def viewWholeTest(self, testnum, parent=None):
+        # TODO: used to get the ID page, and DNM etc, "just" need a new metadata
 
-    def viewQuestion(self, testNumber, questionNumber, parent=None):
-        vq = self.msgr.getQuestionImages(testNumber, questionNumber)
-        if vq is None:
-            return
+        # TODO: what was this vt None case here?
+        # vt = self.msgr.getTestImages(testNumber)
+        # if vt is None:
+        #     return
+
         if parent is None:
             parent = self
+        pagedata = self.msgr.get_pagedata(testnum)
         with tempfile.TemporaryDirectory() as td:
-            inames = []
-            for i, img_bytes in enumerate(vq):
-                img_ext = imghdr.what(None, h=img_bytes)
-                iname = Path(td) / f"img.{i}.{img_ext}"
-                with open(iname, "wb") as fh:
-                    fh.write(img_bytes)
-                inames.append(iname)
-            GroupView(parent, inames).exec_()
+            # get_all=True should be default?
+            pagedata = download_pages(self.msgr, pagedata, td, get_all=True)
+            labels = [x["pagename"] for x in pagedata]
+            WholeTestView(testnum, pagedata, labels, parent=parent).exec_()
 
     def checkTPage(self, testNumber, pageNumber, parent=None):
         if parent is None:
@@ -1174,7 +1155,8 @@ class Manager(QWidget):
         page = int(self.collideModel.item(r, 4).text())
         version = int(self.collideModel.item(r, 5).text())
 
-        vop = self.msgr.getTPageImage(test, page, version)
+        (pagedata,) = self.msgr.getTPageImageData(test, page, version)
+        vop = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
