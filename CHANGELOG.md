@@ -9,13 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* ``plom-create get-ver-map`` command to extract the version map from a running server.
-* Canvas utilities can now take student lists from Sections not just Courses.
 
 ### Changed
 
 ### Fixed
 
+
+
+## [0.8.7] - 2022-03-02
+
+### Added
+* ``plom-create get-ver-map`` command to extract the version map from a running server.
+* Canvas utilities can now take student lists from Sections not just Courses.
+
+### Fixed
+* Fixed double-undoing during drag-box creation.
+* Fixes in Canvas utilities.
+* Various other fixes.
 
 
 ## [0.8.6] - 2022-02-13
@@ -694,7 +704,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.6...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.7...main
+[0.8.7]: https://gitlab.com/plom/plom/compare/v0.8.6...v0.8.7
 [0.8.6]: https://gitlab.com/plom/plom/compare/v0.8.5...v0.8.6
 [0.8.5]: https://gitlab.com/plom/plom/compare/v0.8.2...v0.8.5
 [0.8.2]: https://gitlab.com/plom/plom/compare/v0.8.1...v0.8.2

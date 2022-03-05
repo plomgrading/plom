@@ -408,11 +408,13 @@ class Messenger(BaseMessenger):
                             "plom": (plomfile.name, f2, "text/plain"),
                         }
                     )
+                    # increase read timeout relative to default: Issue #1575
+                    timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
                     response = self.put(
                         f"/MK/tasks/{code}",
                         data=dat,
                         headers={"Content-Type": dat.content_type},
-                        timeout=(10, 120),
+                        timeout=timeout,
                     )
                 response.raise_for_status()
                 return response.json()
