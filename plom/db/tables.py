@@ -35,7 +35,7 @@ class Image(BaseModel):
     bundle_order = pw.IntegerField(null=True)
     file_name = pw.CharField(null=True)
     md5sum = pw.CharField(null=True)  # to check for duplications
-    rotation = pw.FloatField(null=True)
+    rotation = pw.IntegerField(null=False, default=0)
 
 
 class Test(BaseModel):
