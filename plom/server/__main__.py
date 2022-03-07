@@ -28,6 +28,7 @@ from plom.server import (
     check_server_fully_configured,
 )
 from plom.server.manageUserFiles import (
+    save_user_list,
     parse_and_save_user_list,
     write_template_csv_user_list,
 )
@@ -178,6 +179,15 @@ def get_parser():
             provide plom-custom.key and plom-custom.cert in this case.
         """,
     )
+    spI.add_argument(
+        "--manager-pw",
+        metavar="STR",
+        help="""
+            An initial password for the manager account.  You can also
+            use the "users" command or even omit altogether and the
+            server will autogenerate a password.
+        """,
+    )
 
     spU = sub.add_parser(
         "users",
@@ -272,6 +282,13 @@ def main():
             name=args.server_name,
             make_selfsigned_keys=args.selfsigned,
         )
+        if args.manager_pw:
+            print("Saving initial manager password from command-line argument")
+            init_user_list = args.dir / confdir / "bootstrap_initial_users.json"
+            if init_user_list.exists():
+                print(f"WARNING - overwriting existing {init_user_list}")
+            save_user_list({"manager": args.manager_pw}, basedir=args.dir)
+
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered, args.dir)
     elif args.command == "launch":
