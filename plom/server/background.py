@@ -26,7 +26,7 @@ from plom.server import theServer
 from plom.server import specdir as specdirname
 from plom.server import confdir
 from plom.server.prepare import initialise_server
-from plom.server.manageUserFiles import get_template_user_list, save_user_list
+from plom.server.manageUserFiles import get_template_user_list, save_initial_user_list
 from plom.messenger import Messenger
 from plom.plom_exceptions import PlomBenignException
 
@@ -65,13 +65,15 @@ class _PlomServerProcess(Process):
 
 class PlomServer:
     @classmethod
-    def initialise_server(cls, basedir, port=None):
+    def initialise_server(cls, basedir, *, port=None):
         """Prepare a directory for a Plom server, roughly equivalent to `plom-server init` on cmdline.
 
         Args:
-            port (int, None): internet port to use or None for default.
             basedir (Path-like/str): the base directory for the server.
                 TODO: error/warning if it exists!
+
+        Keyword Args:
+            port (int/None): internet port to use or None for default.
         """
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
@@ -96,20 +98,22 @@ class PlomServer:
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
         users = get_template_user_list()
-        save_user_list(users, basedir=basedir)
+        save_initial_user_list(users, basedir=basedir)
 
     def add_demo_sources(self):
         """Build and add the demo version1.pdf and version2.pdf to the server dir."""
         if not buildDemoSourceFiles(self.basedir):
             raise RuntimeError("failed to build demo sources")
 
-    def __init__(self, basedir=None, backend=None):
+    def __init__(self, basedir=None, *, backend=None):
         """Start up Plom server to run in a separate process.
 
         Args:
             basedir (Path-like/str): the base directory for the server.
                 Currently this must exist (use `plom-server init` etc).
                 TODO: if does not exist, create and fill?
+
+        Keyword Args:
             backend (str/None): Controls the precise mechanism used to put
                 the server into the background.  Probably you should not
                 need to use this.  Can be the strings `"subprocess"` or

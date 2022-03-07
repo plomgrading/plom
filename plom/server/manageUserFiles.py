@@ -198,10 +198,10 @@ def check_and_save_user_list(username_password_dict, basedir=Path(".")):
         raise ValueError(
             "Userlist must contain 'manager', 'scanner', 'reviewer' and at least 1 regular user."
         )
-    save_user_list(username_password_dict, basedir=basedir)
+    save_initial_user_list(username_password_dict, basedir=basedir)
 
 
-def save_user_list(username_password_dict, basedir=Path(".")):
+def save_initial_user_list(username_password_dict, basedir=Path(".")):
     """Save userlist and the hashed passwords.
 
     Compute hashed passwords and save them to the initial user list file.

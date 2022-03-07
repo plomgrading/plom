@@ -28,7 +28,6 @@ from plom.server import (
     check_server_fully_configured,
 )
 from plom.server.manageUserFiles import (
-    save_user_list,
     parse_and_save_user_list,
     write_template_csv_user_list,
 )
@@ -281,13 +280,8 @@ def main():
             port=args.port,
             name=args.server_name,
             make_selfsigned_keys=args.selfsigned,
+            manager_pw=args.manager_pw,
         )
-        if args.manager_pw:
-            print("Saving initial manager password from command-line argument")
-            init_user_list = args.dir / confdir / "bootstrap_initial_users.json"
-            if init_user_list.exists():
-                print(f"WARNING - overwriting existing {init_user_list}")
-            save_user_list({"manager": args.manager_pw}, basedir=args.dir)
 
     elif args.command == "users":
         processUsers(args.userlist, args.demo, args.auto, args.numbered, args.dir)
