@@ -60,17 +60,10 @@ class Server:
         self.tempDirectory = tempfile.TemporaryDirectory()
         # Give directory correct permissions.
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
-        # Deprecated?
         self.load_users()
-        if self.DB.doesUserExist("manager"):
-            if manager_pw:
-                log.info("Changing manager password")
-                hashpw = self.authority.create_password_hash(manager_pw)
-                assert self.DB.setUserPasswordHash("manager", hashpw)
-        else:  # do not yet have manager user
-            if not manager_pw:
-                manager_pw = simple_password(n=6)
-                print(f"Initial manager password: {manager_pw}")
+        if not self.DB.doesUserExist("manager"):
+            manager_pw = simple_password(n=6)
+            print(f"Initial manager password: {manager_pw}")
             hashpw = self.authority.create_password_hash(manager_pw)
             assert self.DB.createUser("manager", hashpw)
 
