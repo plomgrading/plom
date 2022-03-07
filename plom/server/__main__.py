@@ -177,7 +177,7 @@ def get_parser():
           Manipulate users accounts.  With no arguments, produce a template
           file for you to edit, with passwords displayed in plain text.
           Given a filename, parses a plain-text user list, performs some
-          simple sanity checks and then hashes the passwords a file for the
+          simple sanity checks and then hashes the passwords to a file for the
           server.
         """,
     )
