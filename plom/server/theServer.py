@@ -74,8 +74,9 @@ class Server:
         """
         log = logging.getLogger("server")
         if not (confdir / "userList.json").exists():
-            log.info('"userList.json" not found: no problem as it is deprecated!')
-        log.warning('Loading users from deprecated "userList.json"')
+            log.info('"userList.json" not found: no users will be added at this time')
+            return
+        log.info('Loading users from "userList.json"')
         with open(confdir / "userList.json") as data_file:
             # load list of users + pwd hashes
             userList = json.load(data_file)
