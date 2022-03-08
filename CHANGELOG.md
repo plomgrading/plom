@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
-* Non-zero initial orientations shoud now work properly.
+* Non-zero initial orientations should now work properly.
 
 
 
