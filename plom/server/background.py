@@ -303,7 +303,7 @@ class PlomServer:
                 print("Server died while we waited for ping")
                 return False
             try:
-                r = m.start()
+                _ = m.start()
             except PlomBenignException:
                 pass
             else:
