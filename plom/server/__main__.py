@@ -19,7 +19,7 @@ from pathlib import Path
 
 from plom import __version__
 from plom import Default_Port
-from plom.server import specdir, confdir
+from plom.server import confdir
 from plom.server import theServer
 from plom.server.prepare import initialise_server
 from plom.server import (
