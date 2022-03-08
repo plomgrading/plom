@@ -62,10 +62,11 @@ class Server:
         subprocess.check_call(["chmod", "o-r", self.tempDirectory.name])
         self.load_users()
         if not self.DB.doesUserExist("manager"):
-            log.info("Server has no manager password, autogenerating to stdout")
+            log.info("No manager password: autogenerating and writing to stdout...")
             manager_pw = simple_password(n=6)
             print(f"Initial manager password: {manager_pw}")
             hashpw = self.authority.create_password_hash(manager_pw)
+            del manager_pw
             assert self.DB.createUser("manager", hashpw)
 
     def load_users(self):
