@@ -459,9 +459,8 @@ class UploadHandler:
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        # TODO: restrict to scanner and manager only?
-        # if not data["user"] in ("scanner", "manager"):
-        #     raise web.HTTPForbidden(reason="Only manager and scanner can use this")
+        if not data["user"] in ("scanner", "manager"):
+            raise web.HTTPForbidden(reason="Only manager and scanner can use this")
         rval = self.server.getUnknownPages()
         return web.json_response(rval, status=200)
 
