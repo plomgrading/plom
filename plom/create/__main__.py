@@ -646,12 +646,18 @@ def main():
                     else:
                         print(f'  user "{user}" failed:\t{msg}')
                         all_ok = False
+                user_dict = msgr.getUserDetails()
             finally:
                 msgr.closeUser()
                 msgr.stop()
             if not all_ok:
                 print("One or more failures create/updating users")
                 sys.exit(1)
+            if "scanner" not in user_dict:
+                print('WARNING: server still has no "scanner" user')
+            if "reviewer" not in user_dict:
+                print('WARNING: server still has no "reviewer" user')
+
         else:
             print(f'Created "{f}" - edit passwords, add users as you see fit')
             print(f'Then upload with "plom-create users {f}"')
