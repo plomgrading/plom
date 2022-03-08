@@ -923,7 +923,7 @@ class Manager(QWidget):
         self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.unknownModel.setHorizontalHeaderLabels(
             [
-                "FullFile",
+                "ID",
                 "File",
                 "Bundle name",
                 "Bundle position",
@@ -957,7 +957,7 @@ class Manager(QWidget):
             it4 = QStandardItem("")
             it4.setTextAlignment(Qt.AlignCenter)
             # the displayed value in first column:
-            raw = QStandardItem(u["server_path"])
+            raw = QStandardItem(str(u["id"]))
             # but store entire dict in first entry, may need wrapped in QVariant
             raw.setData(u)
             self.unknownModel.insertRow(
