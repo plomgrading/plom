@@ -42,7 +42,7 @@ def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order
             md5sum=md5,
             bundle=bundle_ref,
             bundle_order=bundle_order,
-            rotation=0
+            rotation=0,
         )
 
 
@@ -418,7 +418,7 @@ def uploadUnknownPage(
                 md5sum=md5,
                 bundle=bref,
                 bundle_order=bundle_order,
-                rotation=0
+                rotation=0,
             )
         except PlomBundleImageDuplicationException:
             return [
@@ -492,7 +492,7 @@ def uploadCollidingPage(
                 md5sum=md5,
                 bundle=bref,
                 bundle_order=bundle_order,
-                rotation=0 # TODO: replace with rotation from original UnknownPage
+                rotation=0,  # TODO: replace with rotation from original UnknownPage
             )
         except PlomBundleImageDuplicationException:
             return [
