@@ -178,7 +178,8 @@ def get_parser():
           file for you to edit, with passwords displayed in plain text.
           Given a filename, parses a plain-text user list, performs some
           simple sanity checks and then hashes the passwords to a file for the
-          server.
+          server.  If you prefer, you can ignore user accounts for now and
+          create them after the server is running.
         """,
     )
     spR = sub.add_parser(
