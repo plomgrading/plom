@@ -63,10 +63,6 @@ def check_server_fully_configured(basedir):
         raise FileNotFoundError(
             "Cannot find the predictionlist. Have you run 'plom-server init'?"
         )
-    if not (basedir / confdir / "userList.json").exists():
-        raise FileNotFoundError(
-            "Processed userlist is not present. Have you run 'plom-server users'?"
-        )
 
 
 def create_server_config(dur=confdir, *, port=None, name=None):
