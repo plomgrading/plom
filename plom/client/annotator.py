@@ -62,7 +62,7 @@ from .viewers import (
 from .pagescene import PageScene
 from .pageview import PageView
 from .uiFiles.ui_annotator import Ui_annotator
-from .useful_classes import WarnMsg
+from .useful_classes import ErrorMsg, WarnMsg
 from .useful_classes import (
     ErrorMessage,
     SimpleQuestion,
@@ -358,6 +358,8 @@ class Annotator(QWidget):
         self.paperDir = None
         self.src_img_data = None
         self.saveName = None
+        # feels like a bit of a kludge
+        self.view.setHidden(True)
 
     def loadNewTGV(
         self,
@@ -733,12 +735,20 @@ class Annotator(QWidget):
                 ).strip()
                 log.error(s)
                 ErrorMessage(s).exec_()
-            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(self.tgvID, perm)
-            # TODO: do we need to do this?
-            # TODO: before or after stuff = ...?
-            # closeCurrentTGV(self)
-            # TODO: possibly md5 stuff broken here too?
+            oldtgv = self.tgvID
+            self.closeCurrentTGV()
+            stuff = self.parentMarkerUI.PermuteAndGetSamePaper(oldtgv, perm)
             log.debug("permuted: new stuff is {}".format(stuff))
+            if not stuff:
+                txt = """
+                    <p>Marker did not give us back the permuted material for
+                    marking.</p>
+                    <p>Probably you cancelled a download that we shouldn't be waiting
+                    on anyway&mdash;see
+                    <a href="https://gitlab.com/plom/plom/-/issues/1967">Issue #1967</a>.
+                    </p>
+                """
+                ErrorMsg(self, txt).exec_()
             self.loadNewTGV(*stuff)
         self.setEnabled(True)
         return
@@ -1462,9 +1472,6 @@ class Annotator(QWidget):
 
         aname, plomfile = self.pickleIt()
         rubrics = self.scene.get_rubrics_from_page()
-
-        # TODO: we should assume its dead?  Or not... let it be and fix scene?
-        self.view.setHidden(True)
 
         # Save the current window settings for next time annotator is launched
         self.saveWindowSettings()

@@ -921,3 +921,22 @@ class BaseMessenger:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def getUnknownPages(self):
+        with self.SRmutex:
+            try:
+                response = self.get(
+                    "/admin/unknownPages",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None

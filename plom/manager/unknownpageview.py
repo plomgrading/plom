@@ -275,6 +275,13 @@ class UnknownViewWindow(QDialog):
         self.numberOfQuestions = tpq[2]
         self.iDict = iDict
 
+        if len(fnames) > 1:
+            self.setWindowTitle("Multiple unknown pages")
+        else:
+            (p,) = fnames
+            self.setWindowTitle(
+                f"Unknown {p['pagename']}: p. {p['bundle_position']} of bundle {p['bundle_name']}"
+            )
         self.action = ""
         self.test = 0
         self.pq = ""

@@ -54,6 +54,8 @@ class ManagerMessenger(BaseMessenger):
         """
         self.SRmutex.acquire()
         try:
+            # increase the timeout, see docs above
+            timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
             response = self.put(
                 "/admin/populateDB",
                 json={
@@ -61,7 +63,7 @@ class ManagerMessenger(BaseMessenger):
                     "token": self.token,
                     "version_map": version_map,
                 },
-                timeout=(10, 180),
+                timeout=timeout,
             )
             response.raise_for_status()
         except requests.HTTPError as e:
@@ -648,25 +650,6 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def getUnknownPageNames(self):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/unknownPageNames",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                },
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
-
     def getDiscardNames(self):
         self.SRmutex.acquire()
         try:
@@ -773,29 +756,6 @@ class ManagerMessenger(BaseMessenger):
                     # TODO? do something else?
                     return None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
-
-    def getUnknownImage(self, fname):
-        self.SRmutex.acquire()
-        try:
-            response = self.get(
-                "/admin/unknownImage",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "fileName": fname,
-                },
-            )
-            response.raise_for_status()
-            image = BytesIO(response.content).getvalue()
-            return image
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 404:
-                return None
-            raise PlomSeriousException(f"Some other sort of error {e}") from None
-        finally:
-            self.SRmutex.release()
 
     def getDiscardImage(self, fname):
         self.SRmutex.acquire()

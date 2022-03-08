@@ -917,31 +917,32 @@ class Manager(QWidget):
         self.refreshIList()
 
     def initUnknownTab(self):
-        self.unknownModel = QStandardItemModel(0, 6)
+        self.unknownModel = QStandardItemModel(0, 8)
         self.ui.unknownTV.setModel(self.unknownModel)
         self.ui.unknownTV.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.ui.unknownTV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.unknownModel.setHorizontalHeaderLabels(
             [
-                "FullFile",
+                "ID",
                 "File",
+                "Bundle name",
+                "Bundle position",
                 "Action to be taken",
                 "Rotation-angle",
                 "Test",
                 "Page or Question",
             ]
         )
-        self.ui.unknownTV.setIconSize(QSize(96, 96))
+        self.ui.unknownTV.setIconSize(QSize(32, 32))
         self.ui.unknownTV.activated.connect(self.viewUPage)
         self.ui.unknownTV.setColumnHidden(0, True)
         self.refreshUList()
 
     def refreshUList(self):
         self.unknownModel.removeRows(0, self.unknownModel.rowCount())
-        unkList = self.msgr.getUnknownPageNames()
-        r = 0
-        for u in unkList:
-            it0 = QStandardItem(os.path.split(u)[1])
+        unkList = self.msgr.getUnknownPages()
+        for r, u in enumerate(unkList):
+            it0 = QStandardItem(Path(u["server_path"]).name)
             pm = QPixmap()
             pm.loadFromData(
                 resources.read_binary(plom.client.icons, "manager_unknown.svg")
@@ -949,14 +950,29 @@ class Manager(QWidget):
             it0.setIcon(QIcon(pm))
             it1 = QStandardItem("?")
             it1.setTextAlignment(Qt.AlignCenter)
-            it2 = QStandardItem("0")
+            it2 = QStandardItem(str(u["orientation"]))
             it2.setTextAlignment(Qt.AlignCenter)
             it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
             it4 = QStandardItem("")
             it4.setTextAlignment(Qt.AlignCenter)
-            self.unknownModel.insertRow(r, [QStandardItem(u), it0, it1, it2, it3, it4])
-            r += 1
+            # the displayed value in first column:
+            raw = QStandardItem(str(u["id"]))
+            # but store entire dict in first entry, may need wrapped in QVariant
+            raw.setData(u)
+            self.unknownModel.insertRow(
+                r,
+                [
+                    raw,
+                    it0,
+                    QStandardItem(u["bundle_name"]),
+                    QStandardItem(str(u["bundle_position"])),
+                    it1,
+                    it2,
+                    it3,
+                    it4,
+                ],
+            )
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
 
@@ -965,26 +981,26 @@ class Manager(QWidget):
         if len(pvi) == 0:
             return
         r = pvi[0].row()
-        fname = self.unknownModel.item(r, 0).text()
-        vp = self.msgr.getUnknownImage(fname)
-        if vp is None:
-            return
+        pagedata = self.unknownModel.item(r, 0).data()  # .toPyObject?
+        vp = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(vp)
+            pagedata["local_filename"] = fh.name
             uvw = UnknownViewWindow(
                 self,
-                [fh.name],
+                [pagedata],
                 [self.max_papers, self.numberOfPages, self.numberOfQuestions],
                 iDict,
             )
             if uvw.exec_() == QDialog.Accepted:
-                self.unknownModel.item(r, 2).setText(uvw.action)
-                self.unknownModel.item(r, 3).setText("{}".format(uvw.theta))
-                self.unknownModel.item(r, 4).setText("{}".format(uvw.test))
+                # Colin hates all these hardcoded integers!
+                self.unknownModel.item(r, 4).setText(uvw.action)
+                self.unknownModel.item(r, 5).setText("{}".format(uvw.theta))
+                self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
                 # questions is now of the form "1" or "1,2" or "1,2,3" etc
-                self.unknownModel.item(r, 5).setText("{}".format(uvw.pq))
+                self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
                 if uvw.action == "discard":
                     pm = QPixmap()
                     pm.loadFromData(
@@ -1012,60 +1028,59 @@ class Manager(QWidget):
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
-            if self.unknownModel.item(r, 2).text() == "discard":
-                self.msgr.removeUnknownImage(self.unknownModel.item(r, 0).text())
-            elif self.unknownModel.item(r, 2).text() == "extra":
+            action = self.unknownModel.item(r, 4).text()
+            pagedata = self.unknownModel.item(r, 0).data()
+            if action == "discard":
+                self.msgr.removeUnknownImage(pagedata["server_path"])
+            elif action == "extra":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
-                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                        int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToExtraPage(
-                        self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
+                        pagedata["server_path"],
+                        self.unknownModel.item(r, 6).text(),
                         question_list,
-                        self.unknownModel.item(r, 3).text(),
+                        self.unknownModel.item(r, 5).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 2).text() == "test":
+            elif action == "test":
                 try:
                     if (
                         self.msgr.unknownToTestPage(
-                            self.unknownModel.item(r, 0).text(),
-                            self.unknownModel.item(r, 4).text(),
+                            pagedata["server_path"],
+                            self.unknownModel.item(r, 6).text(),
+                            self.unknownModel.item(r, 7).text(),
                             self.unknownModel.item(r, 5).text(),
-                            self.unknownModel.item(r, 3).text(),
                         )
                         == "collision"
                     ):
                         ErrorMessage(
                             "Collision created in test {}".format(
-                                self.unknownModel.item(r, 4).text()
+                                self.unknownModel.item(r, 6).text()
                             )
                         ).exec_()
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
-            elif self.unknownModel.item(r, 2).text() == "homework":
+            elif action == "homework":
                 try:
                     # have to convert "1,2,3" into [1,2,3]
                     question_list = [
-                        int(x) for x in self.unknownModel.item(r, 5).text().split(",")
+                        int(x) for x in self.unknownModel.item(r, 7).text().split(",")
                     ]
                     self.msgr.unknownToHWPage(
-                        self.unknownModel.item(r, 0).text(),
-                        self.unknownModel.item(r, 4).text(),
+                        pagedata["server_path"],
+                        self.unknownModel.item(r, 6).text(),
                         question_list,
-                        self.unknownModel.item(r, 3).text(),
+                        self.unknownModel.item(r, 5).text(),
                     )
                 except (PlomOwnersLoggedInException, PlomConflict) as err:
                     ErrorMessage(f"{err}").exec_()
 
             else:
                 pass
-                # print(
-                #     "No action for file {}.".format(self.unknownModel.item(r, 0).text())
-                # )
         self.refreshUList()
 
     def viewWholeTest(self, testnum, parent=None):

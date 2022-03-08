@@ -453,17 +453,16 @@ class UploadHandler:
             else:
                 raise web.HTTPBadRequest()
 
-    async def getUnknownPageNames(self, request):
+    async def getUnknownPages(self, request):
         data = await request.json()
         if not validate_required_fields(data, ["user", "token"]):
             return web.Response(status=400)
         if not self.server.validate(data["user"], data["token"]):
             return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getUnknownPageNames()
-        return web.json_response(rval, status=200)  # all fine
+        if not data["user"] in ("scanner", "manager"):
+            raise web.HTTPForbidden(reason="Only manager and scanner can use this")
+        rval = self.server.getUnknownPages()
+        return web.json_response(rval, status=200)
 
     async def getDiscardNames(self, request):
         data = await request.json()
@@ -547,21 +546,6 @@ class UploadHandler:
         rownames = ("pagename", "md5", "orientation", "id", "server_path")
         pagedata = [{k: v for k, v in zip(rownames, val)}]
         return web.json_response(pagedata, status=200)
-
-    async def getUnknownImage(self, request):
-        data = await request.json()
-        if not validate_required_fields(data, ["user", "token", "fileName"]):
-            return web.Response(status=400)
-        if not self.server.validate(data["user"], data["token"]):
-            return web.Response(status=401)
-        if not data["user"] == "manager":
-            return web.Response(status=401)
-
-        rval = self.server.getUnknownImage(data["fileName"])
-        if rval[0]:
-            return web.FileResponse(rval[1], status=200)  # all fine
-        else:
-            return web.Response(status=404)
 
     async def getDiscardImage(self, request):
         data = await request.json()
@@ -1007,10 +991,9 @@ class UploadHandler:
         router.add_get("/admin/scannedTPage", self.getTPageImage)
         router.add_get("/admin/scannedHWPage", self.getHWPageImage)
         router.add_get("/admin/scannedEXPage", self.getEXPageImage)
-        router.add_get("/admin/unknownPageNames", self.getUnknownPageNames)
+        router.add_get("/admin/unknownPages", self.getUnknownPages)
         router.add_get("/admin/discardNames", self.getDiscardNames)
         router.add_get("/admin/collidingPageNames", self.getCollidingPageNames)
-        router.add_get("/admin/unknownImage", self.getUnknownImage)
         router.add_get("/admin/discardImage", self.getDiscardImage)
         router.add_get("/admin/collidingImage", self.getCollidingImage)
         router.add_get("/admin/checkTPage", self.checkTPage)
