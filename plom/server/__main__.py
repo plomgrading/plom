@@ -65,12 +65,12 @@ def processUsers(userFile, demo, auto, numbered):
     return:
         None
     """
-    userlist = confdir / "userList.json"
+    init_user_list = confdir / "initial_user_list.json"
     # if we have been passed a userFile then process it and return
     if userFile:
-        print("Processing user file '{}' to {}".format(userFile, userlist))
-        if userlist.exists():
-            print("WARNING - overwriting existing {} file.".format(userlist))
+        print(f"Processing user file '{userFile}' to {init_user_list}")
+        if init_user_list.exists():
+            print(f"WARNING - overwriting existing {init_user_list}")
         parse_and_save_user_list(userFile)
         return
 

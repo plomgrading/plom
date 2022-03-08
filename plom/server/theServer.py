@@ -73,11 +73,12 @@ class Server:
         It does simple sanity checks of pwd hashes to see if they have changed.
         """
         log = logging.getLogger("server")
-        if not (confdir / "userList.json").exists():
-            log.info('"userList.json" not found: no users will be added at this time')
+        init_user_list = confdir / "initial_user_list.json"
+        if not init_user_list.exists():
+            log.info(f'"{init_user_list}" not found: skipping')
             return
-        log.info('Loading users from "userList.json"')
-        with open(confdir / "userList.json") as data_file:
+        log.info(f'Loading users from "{init_user_list}"')
+        with open(init_user_list) as data_file:
             # load list of users + pwd hashes
             userList = json.load(data_file)
             # for each name check if in DB by asking for the hash of its pwd
