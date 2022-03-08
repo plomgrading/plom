@@ -65,7 +65,7 @@ class _PlomServerProcess(Process):
 
 class PlomServer:
     @classmethod
-    def initialise_server(cls, basedir, *, port=None):
+    def initialise_server(cls, basedir, *, port=None, manager_pw=None):
         """Prepare a directory for a Plom server, roughly equivalent to `plom-server init` on cmdline.
 
         Args:
@@ -74,11 +74,13 @@ class PlomServer:
 
         Keyword Args:
             port (int/None): internet port to use or None for default.
+            manager_pw (str/None): the initial manager password.  There are
+                various ways to specify this if you omit it.
         """
         basedir = Path(basedir)
         basedir.mkdir(exist_ok=True)
         port = port if port else Default_Port
-        initialise_server(basedir, port=port)
+        initialise_server(basedir, port=port, manager_pw=manager_pw)
 
     initialize_server = initialise_server
 
