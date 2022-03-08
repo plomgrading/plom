@@ -82,16 +82,11 @@ class Server:
         with open(init_user_list) as data_file:
             # load list of users + pwd hashes
             userList = json.load(data_file)
-            # for each name check if in DB by asking for the hash of its pwd
-            for uname in userList.keys():
-                passwordHash = self.DB.getUserPasswordHash(uname)
-                if passwordHash is None:  # not in list
-                    self.DB.createUser(uname, userList[uname])
-                else:
-                    if passwordHash != userList[uname]:
-                        log.warning("User {} password has changed.".format(uname))
-                    self.DB.setUserPasswordHash(userList[uname], passwordHash)
-        log.debug("Loading users")
+        for user, pw in userList.items():
+            if self.DB.doesUserExist(user):
+                log.warning("User %s already exists: not updating password", user)
+                continue
+            self.DB.createUser(user, pw)
 
     from .plomServer.serverUserInit import (
         validate,
