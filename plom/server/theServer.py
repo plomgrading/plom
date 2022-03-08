@@ -38,7 +38,7 @@ from ..misc_utils import working_directory
 
 
 class Server:
-    def __init__(self, db, masterToken, *, manager_pw=None):
+    def __init__(self, db, masterToken):
         log = logging.getLogger("server")
         log.debug("Initialising server")
         try:
@@ -238,14 +238,7 @@ def get_server_info(basedir):
     return serverInfo
 
 
-def launch(
-    basedir=Path("."),
-    *,
-    manager_pw=None,
-    master_token=None,
-    logfile=None,
-    logconsole=True,
-):
+def launch(basedir=Path("."), *, master_token=None, logfile=None, logconsole=True):
     """Launches the Plom server.
 
     args:
@@ -254,10 +247,6 @@ def launch(
         logfile (pathlib.Path/str/None): name-only then relative to basedir else
             If omitted, use a default name with date and time included.
         logconsole (bool): if True (default) then log to the stderr.
-        manager_pw (None/str): Initial password for the manager account.
-            If omitted, and server does not yet have a manager account,
-            generate a random password and echo to the screen (but not
-            to the log file).
         master_token (None/str): a 32 hex-digit string used to encrypt tokens
             in the database.  Not needed on server unless you want to
             hot-restart the server without requiring users to log-off
@@ -296,7 +285,7 @@ def launch(
     else:
         log.info("Cannot find the classlist: we expect it later...")
     with working_directory(basedir):
-        peon = Server(examDB, master_token, manager_pw=manager_pw)
+        peon = Server(examDB, master_token)
         userIniter = UserInitHandler(peon)
         uploader = UploadHandler(peon)
         ider = IDHandler(peon)
