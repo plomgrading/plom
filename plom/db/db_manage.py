@@ -28,7 +28,7 @@ def getUnknownPages(self):
             {
                 "pagename": Path(uref.image.file_name).stem,
                 "md5sum": uref.image.md5sum,
-                "orientation": 0,  # Issue #1879
+                "orientation": uref.image.rotation,
                 "id": uref.image.id,
                 "server_path": uref.image.file_name,
                 "original_name": uref.image.original_name,
