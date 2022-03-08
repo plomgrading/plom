@@ -247,6 +247,26 @@ class SpecVerifier:
         This does not create a Spec object, but rather saves the
         template to disc.
         """
+        s = cls._demo_str(num_to_produce=num_to_produce)
+        with open(fname, "w") as fh:
+            fh.write(s)
+
+    @classmethod
+    def create_demo_solution_template(cls, fname):
+        """Create a documented demo exam-solution specification.
+
+        This does not create a Spec object, but rather saves the
+        template to disc.
+        """
+        with open(fname, "w") as fh:
+            fh.write(resources.read_text(plom, "templateSolutionSpec.toml"))
+
+    @classmethod
+    def demo(cls, *, num_to_produce=None):
+        return cls(toml.loads(cls._demo_str(num_to_produce=num_to_produce)))
+
+    @classmethod
+    def _demo_str(cls, *, num_to_produce=None):
         s = cls._template_as_string()
         if num_to_produce:
             from plom.create.demotools import getDemoClassListLength
@@ -265,22 +285,7 @@ class SpecVerifier:
                 "numberToName = 10",
                 "numberToName = {}".format(min(num_to_produce // 2, classlist_len)),
             )
-        with open(fname, "w") as fh:
-            fh.write(s)
-
-    @classmethod
-    def create_demo_solution_template(cls, fname):
-        """Create a documented demo exam-solution specification.
-
-        This does not create a Spec object, but rather saves the
-        template to disc.
-        """
-        with open(fname, "w") as fh:
-            fh.write(resources.read_text(plom, "templateSolutionSpec.toml"))
-
-    @classmethod
-    def demo(cls):
-        return cls(toml.loads(cls._template_as_string()))
+        return s
 
     @classmethod
     def from_toml_file(cls, fname="testSpec.toml"):

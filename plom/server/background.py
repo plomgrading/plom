@@ -98,31 +98,9 @@ class PlomServer:
         users = get_template_user_list()
         save_user_list(users, basedir=basedir)
 
-    @classmethod
-    def add_demo_spec(cls, basedir, num_to_produce=10):
-        """Add a spec file to a Plom server, roughly equivalent to `plom-create parse` cmdline.
-
-        TODO: add features or other class methods?
-
-        TODO: perhaps soon deprecated?
-
-        Args:
-            basedir (Path-like/str): the base directory for the server.
-            num_to_produce (int): the number of papers in the demo,
-                defaults to 10.
-        """
-        basedir = Path(basedir)
-        basedir.mkdir(exist_ok=True)
-        specdir = basedir / specdirname
-        specdir.mkdir(exist_ok=True)
-        SpecVerifier.create_demo_template(
-            basedir / "demoSpec.toml", num_to_produce=num_to_produce
-        )
-        sv = SpecVerifier.from_toml_file(basedir / "demoSpec.toml")
-        sv.verifySpec()
-        sv.checkCodes()
-        sv.saveVerifiedSpec(verbose=True, basedir=basedir)
-        if not buildDemoSourceFiles(basedir):
+    def add_demo_sources(self):
+        """Build and add the demo version1.pdf and version2.pdf to the server dir."""
+        if not buildDemoSourceFiles(self.basedir):
             raise RuntimeError("failed to build demo sources")
 
     def __init__(self, basedir=None, backend=None):
