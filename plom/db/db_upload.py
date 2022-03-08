@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2022 Joey Shi
 
 from datetime import datetime
 import logging
@@ -41,6 +42,7 @@ def createNewImage(self, original_name, file_name, md5, bundle_ref, bundle_order
             md5sum=md5,
             bundle=bundle_ref,
             bundle_order=bundle_order,
+            rotation=0,
         )
 
 
@@ -416,6 +418,7 @@ def uploadUnknownPage(
                 md5sum=md5,
                 bundle=bref,
                 bundle_order=bundle_order,
+                rotation=0,
             )
         except PlomBundleImageDuplicationException:
             return [
@@ -489,6 +492,7 @@ def uploadCollidingPage(
                 md5sum=md5,
                 bundle=bref,
                 bundle_order=bundle_order,
+                rotation=0,  # TODO: replace with rotation from original UnknownPage
             )
         except PlomBundleImageDuplicationException:
             return [
@@ -1107,3 +1111,14 @@ def getPageFromBundle(self, bundle_name, bundle_order):
         return [False]
     else:
         return [True, iref.file_name]
+
+
+def updateImageRotation(self, file_name, rotation):
+    """Updates the rotation in the metadata of the image with the given name"""
+    iref = Image.get_or_none(Image.file_name == file_name)
+    if iref is None:
+        return [False, "No image with that file name"]
+    else:
+        iref.rotation = rotation
+        iref.save()
+        return [True, None]

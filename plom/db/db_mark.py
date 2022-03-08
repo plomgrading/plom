@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Joey Shi
 
 from datetime import datetime
 import json
@@ -210,6 +211,33 @@ def MgiveTaskToClient(self, user_name, group_id, version):
             )
         )
         return [True, image_metadata, tag_list, aref.integrity_check]
+
+
+def MgetOneImageRotation(self, image_id, md5):
+    """Get the rotation of one image.
+
+    Args:
+        image_id: internal db ref number to image
+        md5: the md5sum of that image (as sanity check)
+
+    Returns:
+        list: [True, rotation] or [False, error_msg] where
+            error_msg is `"no such image"` or `"wrong md5sum"`.
+            rotation is a float.
+    """
+    with plomdb.atomic():
+        iref = Image.get_or_none(id=image_id)
+        if iref is None:
+            log.warning("Asked for a non-existent image with id={}".format(image_id))
+            return [False, "no such image"]
+        if iref.md5sum != md5:
+            log.warning(
+                "Asked for image id={} but supplied wrong md5sum {} instead of {}".format(
+                    image_id, md5, iref.md5sum
+                )
+            )
+            return [False, "wrong md5sum"]
+        return [True, iref.rotation]
 
 
 def MgetOneImageFilename(self, image_id, md5):
