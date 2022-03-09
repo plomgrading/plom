@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Joey Shi
 
+from pathlib import Path
 import logging
 
 from plom.db.tables import plomdb
@@ -12,10 +14,28 @@ from plom.db.tables import EXPage, HWPage, Image, QGroup, Test, TPage
 log = logging.getLogger("DB")
 
 
-def getUnknownPageNames(self):
+def getUnknownPages(self):
+    """Get information about the unknown pages
+
+    Returns:
+        list: each entry is dict of information about an unknown page.
+        Keys include ``server_path``, ``orientation``, ``bundle_name``,
+        ``bundle_position``, ``md5sum``, ``id``.
+    """
     rval = []
     for uref in UnknownPage.select():
-        rval.append(uref.image.file_name)
+        rval.append(
+            {
+                "pagename": Path(uref.image.file_name).stem,
+                "md5sum": uref.image.md5sum,
+                "orientation": uref.image.rotation,
+                "id": uref.image.id,
+                "server_path": uref.image.file_name,
+                "original_name": uref.image.original_name,
+                "bundle_name": uref.image.bundle.name,
+                "bundle_position": uref.order,  # same as uref.image.bundle_order?
+            }
+        )
     return rval
 
 
@@ -56,7 +76,7 @@ def getTPageImage(self, test_number, page_number, version):
         [
             "t{}".format(p.page_number),
             p.image.md5sum,
-            0,  # TODO #1879
+            p.image.rotation,
             p.image.id,
             p.image.file_name,
         ],
@@ -82,7 +102,7 @@ def getHWPageImage(self, test_number, question, order):
         [
             "h{}.{}".format(question, p.order),
             p.image.md5sum,
-            0,  # TODO #1879
+            p.image.rotation,
             p.image.id,
             p.image.file_name,
         ],
@@ -108,7 +128,7 @@ def getEXPageImage(self, test_number, question, order):
         [
             "e{}.{}".format(question, p.order),
             p.image.md5sum,
-            0,  # TODO #1879
+            p.image.rotation,
             p.image.id,
             p.image.file_name,
         ],
@@ -141,7 +161,7 @@ def getAllTestImages(self, test_number):
                 [
                     "id{}".format(p.page_number),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -156,7 +176,7 @@ def getAllTestImages(self, test_number):
                 [
                     "dnm{}".format(p.page_number),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -171,7 +191,7 @@ def getAllTestImages(self, test_number):
                     [
                         "t{}".format(p.page_number),
                         p.image.md5sum,
-                        0,  # TODO #1879
+                        p.image.rotation,
                         p.image.id,
                         p.image.file_name,
                     ]
@@ -181,7 +201,7 @@ def getAllTestImages(self, test_number):
                 [
                     "h{}.{}".format(qref.question, p.order),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -191,7 +211,7 @@ def getAllTestImages(self, test_number):
                 [
                     "e{}.{}".format(qref.question, p.order),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -227,7 +247,7 @@ def getQuestionImages(self, test_number, question):
                 [
                     "t{}".format(p.page_number),
                     p.image.md5sum,
-                    0,  # TODO #1879
+                    p.image.rotation,
                     p.image.id,
                     p.image.file_name,
                 ]
@@ -237,7 +257,7 @@ def getQuestionImages(self, test_number, question):
             [
                 "h{}.{}".format(qref.question, p.order),
                 p.image.md5sum,
-                0,  # TODO #1879
+                p.image.rotation,
                 p.image.id,
                 p.image.file_name,
             ]
@@ -247,25 +267,13 @@ def getQuestionImages(self, test_number, question):
             [
                 "e{}.{}".format(qref.question, p.order),
                 p.image.md5sum,
-                0,  # TODO #1879
+                p.image.rotation,
                 p.image.id,
                 p.image.file_name,
             ]
         )
 
     return (True, rval)
-
-
-def getUnknownImage(self, file_name):
-    # this really just confirms that the file_name belongs to an unknmown
-    iref = Image.get_or_none(file_name=file_name)
-    if iref is None:
-        return [False]
-    uref = iref.upages[0]
-    if uref is None:
-        return [False]
-    else:
-        return [True, uref.image.file_name]
 
 
 def testOwnersLoggedIn(self, tref):

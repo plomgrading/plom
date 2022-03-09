@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
+# Copyright (C) 2022 Joey Shi
 
 from plom.db.tables import *
 from datetime import datetime, timedelta
@@ -135,10 +136,11 @@ class PlomDB:
         getImagesInBundle,
         getBundleFromImage,
         getPageFromBundle,
+        updateImageRotation,
     )
 
     from plom.db.db_manage import (
-        getUnknownPageNames,
+        getUnknownPages,
         getDiscardNames,
         getCollidingPageNames,
         getTPageImage,
@@ -146,7 +148,6 @@ class PlomDB:
         getEXPageImage,
         getAllTestImages,
         getQuestionImages,
-        getUnknownImage,
         testOwnersLoggedIn,
         moveUnknownToExtraPage,
         moveUnknownToHWPage,
@@ -217,6 +218,7 @@ class PlomDB:
         MgetTagsOfTask,
         MaddExistingTag,
         MremoveExistingTag,
+        MgetOneImageRotation,
     )
 
     from plom.db.db_rubric import (

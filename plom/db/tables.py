@@ -2,6 +2,7 @@
 # Copyright (C) 2020-2021 Andrew Rechnitzer
 # Copyright (C) 2021 Colin B. Macdonald
 # Copyright (C) 2021 Nicholas J H Lai
+# Copyright (C) 2022 Joey Shi
 
 import peewee as pw
 
@@ -34,6 +35,7 @@ class Image(BaseModel):
     bundle_order = pw.IntegerField(null=True)
     file_name = pw.CharField(null=True)
     md5sum = pw.CharField(null=True)  # to check for duplications
+    rotation = pw.IntegerField(null=False, default=0)
 
 
 class Test(BaseModel):
