@@ -598,8 +598,8 @@ class Manager(QWidget):
         self.refresh_scan_status_lists()
 
     def refresh_scan_status_lists(self):
-        I = self.refreshIList()
-        S = self.refreshSList()
+        I = self._refreshIList()
+        S = self._refreshSList()
         countstr = str(I + S)
         countstr += "*" if I != 0 else "\N{check mark}"
         self.ui.scanTabW.setTabText(
@@ -607,7 +607,7 @@ class Manager(QWidget):
             f"&Scan Status ({countstr})",
         )
 
-    def refreshIList(self):
+    def _refreshIList(self):
         # delete the children of each toplevel items
         root = self.ui.incompTW.invisibleRootItem()
         for l0 in range(self.ui.incompTW.topLevelItemCount()):
@@ -633,7 +633,7 @@ class Manager(QWidget):
         )
         return len(incomplete)
 
-    def refreshSList(self):
+    def _refreshSList(self):
         # delete the children of each toplevel items
         root = self.ui.scanTW.invisibleRootItem()
         for l0 in range(self.ui.scanTW.topLevelItemCount()):
