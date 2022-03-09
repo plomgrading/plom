@@ -817,37 +817,6 @@ class UploadHandler:
             return web.Response(status=404)
 
     @authenticate_by_token_required_fields(["user", "version_map"])
-    def populateExamDatabase(self, data, request):
-        """Instruct the server to generate paper data in the database.
-
-        TODO: maybe the api call should just be for one row of the database.
-        """
-        if not data["user"] == "manager":
-            raise web.HTTPForbidden(reason="Not manager")
-        spec = self.server.testSpec
-        if not spec:
-            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
-
-        # TODO: talking to DB directly is not design we use elsewhere: call helper?
-        from plom.db import buildExamDatabaseFromSpec
-
-        if len(data["version_map"]) == 0:
-            vmap = None
-        else:
-            vmap = undo_json_packing_of_version_map(data["version_map"])
-
-        try:
-            r, summary = buildExamDatabaseFromSpec(spec, self.server.DB, vmap)
-        except ValueError:
-            raise web.HTTPConflict(
-                reason="Database already present: not overwriting"
-            ) from None
-        if r:
-            return web.Response(text=summary, status=200)
-        else:
-            raise web.HTTPInternalServerError(text=summary)
-
-    @authenticate_by_token_required_fields(["user", "version_map"])
     def initialiseExamDatabase(self, data, request):
         """Instruct the server to generate paper data in the database."""
         if not data["user"] == "manager":
@@ -856,16 +825,13 @@ class UploadHandler:
         if not spec:
             raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
 
-        # TODO this should really be called from the server instead of here
-        from plom.db import initialiseExamDatabaseFromSpec
-
         if len(data["version_map"]) == 0:
             vmap = None
         else:
             vmap = undo_json_packing_of_version_map(data["version_map"])
 
         try:
-            new_vmap = initialiseExamDatabaseFromSpec(spec, self.server.DB, vmap)
+            new_vmap = self.server.initialiseExamDatabase(spec, vmap)
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"
@@ -876,8 +842,6 @@ class UploadHandler:
     @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
     def appendTestToExamDatabase(self, data, request):
         """Append given test to database using given version map.
-
-        TODO: maybe the api call should just be for one row of the database.
         """
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
@@ -1053,7 +1017,6 @@ class UploadHandler:
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/populateDB", self.populateExamDatabase)
         router.add_put("/admin/initialiseDB", self.initialiseExamDatabase)
         router.add_put("/admin/appendTestToDB", self.appendTestToExamDatabase)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)

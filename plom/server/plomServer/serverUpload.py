@@ -428,8 +428,9 @@ def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
 
 
-# def initialiseExamDatabase(self, version_map):
-#     return self.DB.initialiseExamDatabaseFromSpec(self.testSpec, version_map)
+def initialiseExamDatabase(self, spec, vmap):
+    from plom.db import initialiseExamDatabaseFromSpec
+    return initialiseExamDatabaseFromSpec(spec, self.DB, vmap)
 
 
 def appendTestToExamDatabase(self, t, vmap_for_test):

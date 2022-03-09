@@ -132,7 +132,7 @@ class Server:
         getBundleFromImage,
         getImagesInBundle,
         getPageFromBundle,
-        # initialiseExamDatabase,
+        initialiseExamDatabase,
         appendTestToExamDatabase,
         getPageVersions,
         getQuestionVersions,
