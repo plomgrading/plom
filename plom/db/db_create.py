@@ -138,8 +138,9 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
             the given test. It is a slice of the global version_map
 
     Returns:
-        bool: True if succuess.
-        str: a status string, one line per test, ending with an error if failure.
+        (bool, str): where bool is true if succuess, and str is a
+            status string, one line per test, ending with an error
+            if failure.
 
     Raises:
         KeyError: invalid question selection scheme in spec,
