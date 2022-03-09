@@ -1119,6 +1119,7 @@ def updateImageRotation(self, file_name, rotation):
     if iref is None:
         return [False, "No image with that file name"]
     else:
-        iref.rotation = rotation
-        iref.save()
-        return [True, None]
+        with plomdb.atomic():
+            iref.rotation = rotation
+            iref.save()
+            return [True, None]
