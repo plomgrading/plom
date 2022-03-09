@@ -42,6 +42,7 @@ The UnID operation is exposed in the beta Manager Tool -> ID Progress
 tab.
 
 
+
 Test Preparation
 ----------------
 
@@ -52,6 +53,7 @@ answers, especially if they need to use the rearrange pages dialog.
 
 While preparing the test, we suggest writing something like *"Please start
 a new page NOW"* at the start of each question.
+
 
 
 Marking
@@ -74,12 +76,15 @@ Of course, if an energetic co-developer would like to implement fractional marks
 
 ### Why do you have "+0" and "-0" as possible delta-marks?
 
+(Current versions of Plom do not expose this feature.)
+
 Mathematics use "epsilon" to represent small number, often in the
 context of limits. Some markers like to indicate to students via (say)
 "-0" that there is a small error in their work but it is too small to
 reduce their overall mark. Similarly some markers use "+0" to indicate
 that a small amount of progress has been made, but not enough to be
 worth a full point.
+
 
 
 Server administration
