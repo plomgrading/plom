@@ -9,7 +9,6 @@ import hashlib
 import logging
 import os
 import shutil
-import subprocess
 import uuid
 
 from plom.server import pageNotSubmitted
@@ -443,5 +442,3 @@ def getPageVersions(self, paper_idx):
 
 def getQuestionVersions(self, paper_idx):
     return self.DB.getQuestionVersions(paper_idx)
-
-

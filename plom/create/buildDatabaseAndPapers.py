@@ -131,7 +131,6 @@ def build_database(*, msgr, vermap={}):
     """
     check_version_map(vermap)
 
-    # status = msgr.TriggerPopulateDB(vermap)
     new_vmap = msgr.InitialiseDB(vermap)
     # sanity check the version maps
     if vermap:

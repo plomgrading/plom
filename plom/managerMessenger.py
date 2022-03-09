@@ -36,52 +36,6 @@ class ManagerMessenger(BaseMessenger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def TriggerPopulateDB(self, version_map={}):
-        """Instruct the server to generate paper data in the database.
-
-        Returns:
-            str: a big block of largely useless status or summary info
-                from the database commands.
-
-        Raises:
-            PlomExistingDatabase: already has a populated database.
-            PlomServerNotReady: e.g., has no spec.
-            PlomAuthenticationException: login troubles.
-            PlomSeriousException: unexpected errors.
-
-        TODO: currently this call can take quite a long time (for a
-        large number of papers).  Timeout set longer as a workaround.
-        See Issue #1929 for a future proper fix.
-        """
-        self.SRmutex.acquire()
-        try:
-            # increase the timeout, see docs above
-            timeout = (self.default_timeout[0], 3 * self.default_timeout[1])
-            response = self.put(
-                "/admin/populateDB",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "version_map": version_map,
-                },
-                timeout=timeout,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 409:
-                raise PlomExistingDatabase(response.reason) from None
-            if response.status_code == 400:
-                raise PlomServerNotReady(response.reason) from None
-            raise PlomSeriousException("Unexpected {}".format(e)) from None
-        finally:
-            self.SRmutex.release()
-
-        return response.text
-
     def InitialiseDB(self, version_map={}):
         """Instruct the server to initialise the DB ready (but not yet populate with tests)
 
@@ -94,9 +48,6 @@ class ManagerMessenger(BaseMessenger):
             PlomAuthenticationException: login troubles.
             PlomSeriousException: unexpected errors.
 
-        TODO: currently this call can take quite a long time (for a
-        large number of papers).  Timeout set longer as a workaround.
-        See Issue #1929 for a future proper fix.
         """
         self.SRmutex.acquire()
         try:
@@ -156,7 +107,7 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 403:
                 raise PlomAuthenticationException(response.reason) from None
             if response.status_code == 406:
-                raise PlomDatabaseError(response.reason) from None
+                raise PlomDatabaseCreationError(response.reason) from None
             if response.status_code == 409:
                 raise PlomExistingDatabase(response.reason) from None
             if response.status_code == 400:

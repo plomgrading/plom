@@ -62,8 +62,10 @@ class PlomVersionMismatchException(PlomBenignException):
 class PlomBadTagError(PlomBenignException):
     pass
 
+
 class PlomDatabaseCreationError(PlomBenignException):
     pass
+
 
 class PlomExistingDatabase(PlomBenignException):
     """The database has already been populated."""
