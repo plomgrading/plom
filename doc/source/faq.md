@@ -38,7 +38,7 @@ of additional students that are not in your class.
 ### Student wrote a different paper; I cannot ID their new paper.
 
 You must first "Unidentify" the prenamed paper.  For example suppose
-Isla's name was printed on paper 0120 but for wrote blank paper 1280
+Isla's name was printed on paper 0120 but they wrote blank paper 1280
 instead.  In this case you should "UnID" paper 0120, and then you'll
 be able to identify paper 1280 to Isla.
 
