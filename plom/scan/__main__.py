@@ -89,8 +89,16 @@ def get_parser():
     spS = sub.add_parser(
         "status",
         help="Get scanning status report from server",
-        description="Get scanning status report from server.",
+        description="""
+            Get scanning status report from server.
+            You can customize the report using the switches below
+            or omit all switches to get the full report.
+        """,
     )
+    spS.add_argument("--papers", action="store_true", help="show paper info")
+    spS.add_argument("--unknowns", action="store_true", help="Show info about unknowns")
+    spS.add_argument("--bundles", action="store_true", help="Show bundle info")
+
     spC = sub.add_parser(
         "clear",
         help='Clear "scanner" login',
@@ -213,7 +221,12 @@ def main():
             msgr=(args.server, args.password),
         )
     elif args.command == "status":
-        check_and_print_scan_status(msgr=(args.server, args.password))
+        check_and_print_scan_status(
+            args.papers,
+            args.unknowns,
+            args.bundles,
+            msgr=(args.server, args.password),
+        )
     elif args.command == "bundles":
         print_bundle_list(msgr=(args.server, args.password))
     elif args.command == "clear":

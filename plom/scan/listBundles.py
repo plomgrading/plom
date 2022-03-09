@@ -12,6 +12,7 @@ def get_bundle_list(*, msgr):
 
 @with_scanner_messenger
 def print_bundle_list(*, msgr):
+    print("# Bundle info\n")
     bundle_list = msgr.listBundles()
     if len(bundle_list) == 0:
         print("No bundles in database.")
