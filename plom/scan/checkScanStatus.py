@@ -34,7 +34,7 @@ def check_and_print_scan_status(papers, unknowns, bundles, *, msgr):
     if bundles:
         if dirty:
             print("\n" + "- " * 44 + "\n")
-        print_bundle_list(msgr=msgr)
+        print_bundle_list(table_width=88, msgr=msgr)
 
 
 @with_scanner_messenger
