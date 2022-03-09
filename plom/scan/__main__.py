@@ -58,7 +58,6 @@ from plom.scan import __version__
 from plom.scan import clear_login
 from plom.scan import check_and_print_scan_status
 from plom.scan import processScans, uploadImages
-from plom.scan import print_bundle_list
 
 
 def get_parser():
