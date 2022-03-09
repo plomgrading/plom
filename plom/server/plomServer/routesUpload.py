@@ -894,7 +894,7 @@ class UploadHandler:
         if r:
             return web.Response(text=summary, status=200)
         else:
-            raise web.HTTPInternalServerError(text=summary)
+            raise web.HTTPNotAcceptable(reason=summary)
 
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):

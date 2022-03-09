@@ -14,6 +14,7 @@ from plom.plom_exceptions import PlomBenignException, PlomSeriousException
 from plom.plom_exceptions import (
     PlomAuthenticationException,
     PlomConflict,
+    PlomDatabaseCreationError,
     PlomExistingDatabase,
     PlomNoMoreException,
     PlomOwnersLoggedInException,
@@ -154,6 +155,8 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomAuthenticationException() from None
             if response.status_code == 403:
                 raise PlomAuthenticationException(response.reason) from None
+            if response.status_code == 406:
+                raise PlomDatabaseError(response.reason) from None
             if response.status_code == 409:
                 raise PlomExistingDatabase(response.reason) from None
             if response.status_code == 400:
