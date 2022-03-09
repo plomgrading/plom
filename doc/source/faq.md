@@ -15,13 +15,9 @@ Plom Client software
 
 ### Some windows/dialogs are awkward to resize on Gnome Desktop
 
-You could try disabling "Attach Modal Dialogs" in the "Gnome Tweaks" app.
+You could try disabling "Attach Modal Dialogs" in the "Gnome Tweaks" app,
+but mostly this has been fixed recently by improving the way we use modal dialogs.
 
-
-### I don't like ____ about the UI, why don't you do ____?
-
-We are not experts at UI design: please do send patches or merge requests
-to help improve Plom.
 
 
 Identifying
@@ -46,14 +42,16 @@ The UnID operation is exposed in the beta Manager Tool -> ID Progress
 tab.
 
 
-
 Test Preparation
 ----------------
 
-### My QR codes are badly misplaced
+### For self-submitted work, should I start each question on a new page?
 
-This might be a bad interaction with `\scalebox` in LaTeX.
-See [this bug](https://gitlab.com/plom/plom/issues/207).
+Yes.  This is important because it makes it easier for markers to find the
+answers, especially if they need to use the rearrange pages dialog.
+
+While preparing the test, we suggest writing something like *"Please start
+a new page NOW"* at the start of each question.
 
 
 Marking
