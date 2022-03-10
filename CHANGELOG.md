@@ -22,11 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Manager shows totals and highlights tabs that need attention.
 
 ### Changed
 
 ### Fixed
-
+* Misc fixes and code cleanups.
 
 
 ## [0.8.7] - 2022-03-02
@@ -191,8 +192,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Solutions can be attached to each question/version.
-  - client can view solution for the current question/version.
-  - solutions for individual students can be returned along with marked test via webpage
+
+    - client can view solution for the current question/version.
+    - solutions for individual students can be returned along with marked test via webpage
 
 
 ### Changed

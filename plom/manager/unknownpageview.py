@@ -288,8 +288,7 @@ class UnknownViewWindow(QDialog):
         self.sid = ""
 
         self.view = ExamView(fnames, dark_background=True)
-        # Render nicely
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing)
         self.optionTW = QTabWidget()
 
         # reset view button passes to the UnknownView.

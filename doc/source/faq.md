@@ -15,13 +15,9 @@ Plom Client software
 
 ### Some windows/dialogs are awkward to resize on Gnome Desktop
 
-You could try disabling "Attach Modal Dialogs" in the "Gnome Tweaks" app.
+You could try disabling "Attach Modal Dialogs" in the "Gnome Tweaks" app,
+but mostly this has been fixed recently by improving the way we use modal dialogs.
 
-
-### I don't like ____ about the UI, why don't you do ____?
-
-We are not experts at UI design: please do send patches or merge requests
-to help improve Plom.
 
 
 Identifying
@@ -38,7 +34,7 @@ of additional students that are not in your class.
 ### Student wrote a different paper; I cannot ID their new paper.
 
 You must first "Unidentify" the prenamed paper.  For example suppose
-Isla's name was printed on paper 0120 but for wrote blank paper 1280
+Isla's name was printed on paper 0120 but they wrote blank paper 1280
 instead.  In this case you should "UnID" paper 0120, and then you'll
 be able to identify paper 1280 to Isla.
 
@@ -50,10 +46,14 @@ tab.
 Test Preparation
 ----------------
 
-### My QR codes are badly misplaced
+### For self-submitted work, should I start each question on a new page?
 
-This might be a bad interaction with `\scalebox` in LaTeX.
-See [this bug](https://gitlab.com/plom/plom/issues/207).
+Yes.  This is important because it makes it easier for markers to find the
+answers, especially if they need to use the rearrange pages dialog.
+
+While preparing the test, we suggest writing something like *"Please start
+a new page NOW"* at the start of each question.
+
 
 
 Marking
@@ -76,12 +76,15 @@ Of course, if an energetic co-developer would like to implement fractional marks
 
 ### Why do you have "+0" and "-0" as possible delta-marks?
 
+(Current versions of Plom do not expose this feature.)
+
 Mathematics use "epsilon" to represent small number, often in the
 context of limits. Some markers like to indicate to students via (say)
 "-0" that there is a small error in their work but it is too small to
 reduce their overall mark. Similarly some markers use "+0" to indicate
 that a small amount of progress has been made, but not enough to be
 worth a full point.
+
 
 
 Server administration

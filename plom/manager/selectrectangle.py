@@ -46,7 +46,7 @@ class SelectRectangleWindow(QDialog):
     def initUI(self, fnames):
         self.setWindowTitle("Select ID Rectangle")
         self.view = IDView(self, fnames)
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing)
 
         self.resetB = QPushButton("reset view")
         self.zoomB = QPushButton("zoom tool")
@@ -114,7 +114,8 @@ class IDView(QGraphicsView):
     """
 
     def __init__(self, parent, fnames):
-        super().__init__(parent)
+        # parenting this widget gives a postage-stamp-sized view, not sure why
+        super().__init__()
         self._parent = parent
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
@@ -223,8 +224,7 @@ class IDViewWindow(QDialog):
         super().__init__(parent)
         self.sid = sid
         self.view = ExamView(fnames, dark_background=True)
-        # Render nicely
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing)
 
         # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
