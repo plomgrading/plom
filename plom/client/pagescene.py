@@ -222,12 +222,16 @@ class UnderlyingImages(QGraphicsItemGroup):
             qir = QImageReader(str(data["filename"]))
             # deal with jpeg exif rotations
             qir.setAutoTransform(True)
+            # In principle scaling in QImageReader or QPixmap can give better
+            # zoomed out quality: https://gitlab.com/plom/plom/-/issues/1989
+            # qir.setScaledSize(QSize(768, 1000))
             pix = QPixmap(qir.read())
             # after metadata rotations, we might have a further DB-level rotation
             rot = QTransform()
             rot.rotate(data["orientation"])
             pix = pix.transformed(rot)
             img = QGraphicsPixmapItem(pix)
+            # this gives (only) bilinear interpolation
             img.setTransformationMode(Qt.SmoothTransformation)
             # works but need to adjust the origin of rotation, probably faster
             # img.setTransformOriginPoint(..., ...)
