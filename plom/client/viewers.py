@@ -56,12 +56,6 @@ class GroupView(QDialog):
             self.testImg.resetView()
             self.testImg.forceRedrawOrSomeBullshit()
 
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
-
 
 class QuestionViewDialog(GroupView):
     """View the raw scans from a particular question, optionally with tagging.
@@ -117,7 +111,7 @@ class WholeTestView(QDialog):
         self.setLayout(grid)
         prevButton.clicked.connect(self.previousTab)
         nextButton.clicked.connect(self.nextTab)
-        closeButton.clicked.connect(self.closeWindow)
+        closeButton.clicked.connect(self.close)
         self.pageTabs.currentChanged.connect(self.tabSelected)
         self.setMinimumSize(500, 500)
         if not labels:
@@ -126,12 +120,6 @@ class WholeTestView(QDialog):
             # Tab doesn't seem to have padding so compact=False
             tab = ImageViewWidget(self, [f], compact=False)
             self.pageTabs.addTab(tab, label)
-
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
 
     def tabSelected(self, index):
         """Resize on change tab."""
@@ -194,7 +182,7 @@ class SolutionViewer(QWidget):
         grid.addWidget(self.closeButton, 7, 7)
         grid.addWidget(self.maxNormButton, 1, 7)
         self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
+        self.closeButton.clicked.connect(self.close)
         self.maxNormButton.clicked.connect(self.swapMaxNorm)
         self.refreshButton.clicked.connect(self.refresh)
 
@@ -210,12 +198,6 @@ class SolutionViewer(QWidget):
             self.setWindowState(Qt.WindowMaximized)
         else:
             self.setWindowState(Qt.WindowNoState)
-
-    def closeEvent(self, event):
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
 
     def refresh(self):
         solnfile = self._annotr.refreshSolutionImage()
@@ -251,7 +233,7 @@ class CatViewer(QDialog):
         grid.addWidget(self.refreshButton, 7, 1)
         grid.addWidget(self.closeButton, 7, 7)
         self.setLayout(grid)
-        self.closeButton.clicked.connect(self.closeWindow)
+        self.closeButton.clicked.connect(self.close)
         self.refreshButton.clicked.connect(self.refresh)
 
         self.setWindowTitle("Catz")
@@ -260,10 +242,6 @@ class CatViewer(QDialog):
 
     def closeEvent(self, event):
         self.eraseImageFile()
-        self.closeWindow()
-
-    def closeWindow(self):
-        self.close()
 
     def getNewImageFile(self, *, msg=None):
         """Erase the current stored image and try to get a new one.
