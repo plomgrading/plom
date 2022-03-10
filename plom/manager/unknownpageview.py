@@ -3,7 +3,6 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 from PyQt5.QtCore import Qt, QStringListModel
-from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (
     QCheckBox,
     QCompleter,
@@ -21,7 +20,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from plom.client import ExamView
+from plom.client import ImageViewWidget
 from plom.client.useful_classes import ErrorMessage
 
 
@@ -286,9 +285,11 @@ class UnknownViewWindow(QDialog):
         self.test = 0
         self.pq = ""
         self.sid = ""
+        self.theta = 0
 
-        self.view = ExamView(fnames, dark_background=True)
-        self.view.setRenderHint(QPainter.Antialiasing)
+        self.img = ImageViewWidget(
+            self, fnames, has_reset_button=False, dark_background=True
+        )
         self.optionTW = QTabWidget()
 
         # reset view button passes to the UnknownView.
@@ -298,7 +299,7 @@ class UnknownViewWindow(QDialog):
         cancelB = QPushButton("&cancel")
 
         cancelB.clicked.connect(self.reject)
-        resetB.clicked.connect(self.view.resetView)
+        resetB.clicked.connect(self.img.resetView)
         rotatePlusB.clicked.connect(self.rotatePlus)
         rotateMinusB.clicked.connect(self.rotateMinus)
 
@@ -308,38 +309,14 @@ class UnknownViewWindow(QDialog):
 
         # Layout simply
         grid = QGridLayout()
-        grid.addWidget(self.view, 1, 1, 10, 10)
+        grid.addWidget(self.img, 1, 1, 10, 10)
         grid.addWidget(self.optionTW, 1, 11, 10, -1)
         grid.addWidget(resetB, 11, 1)
         grid.addWidget(rotatePlusB, 11, 2)
         grid.addWidget(rotateMinusB, 11, 3)
         grid.addWidget(cancelB, 11, 20)
         self.setLayout(grid)
-        # Store the current exam view as a qtransform
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-        self.theta = 0
         self.initTabs()
-
-    def updateImage(self, fnames):
-        """Pass file to the view to update the image"""
-        # first store the current view transform and scroll values
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-        self.view.updateImages(fnames)
-        # re-set the view transform and scroll values
-        self.view.setTransform(self.viewTrans)
-        self.view.horizontalScrollBar().setValue(self.dx)
-        self.view.verticalScrollBar().setValue(self.dy)
-
-    def resizeEvent(self, whatev):
-        """Seems to ensure image gets resize on window resize."""
-        self.view.resetView()
-
-    def resetView(self):
-        self.view.resetView()
 
     def initTabs(self):
         t0 = ActionTab(self)
@@ -357,13 +334,13 @@ class UnknownViewWindow(QDialog):
         self.theta += 90
         if self.theta == 360:
             self.theta = 0
-        self.view.rotateImage(90)
+        self.img.view.rotateImage(90)
 
     def rotateMinus(self):
         self.theta -= 90
         if self.theta == -90:
             self.theta = 270
-        self.view.rotateImage(-90)
+        self.img.view.rotateImage(-90)
 
     def viewWholeTest(self, testNumber):
         self.parent().viewWholeTest(testNumber, parent=self)

@@ -43,13 +43,22 @@ class ImageViewWidget(QWidget):
         compact (bool): whether to include a margin (default True) or
             not.  Correct choice will depend on parent but is probably
             only cosmetic.
+        dark_background (bool): sometimes its useful to have some
+            higher-constrast matting around images.  Default: False.
     """
 
-    def __init__(self, parent, image_data=None, *, has_reset_button=True, compact=True):
+    def __init__(
+        self,
+        parent,
+        image_data=None,
+        *,
+        has_reset_button=True,
+        compact=True,
+        dark_background=False,
+    ):
         super().__init__(parent)
-        # Grab an examview widget (QGraphicsView)
-        self.view = ExamView(image_data)
-        # Render nicely
+        # Grab an examview widget (a interactive subclass of QGraphicsView)
+        self.view = ExamView(image_data, dark_background=dark_background)
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
         if has_reset_button:
