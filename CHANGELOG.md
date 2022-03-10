@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `plom-scan status` now displays information about unknown pages.
 
 ### Changed
-* `plom-create` DB creation now done one test at a time from the version map (see #1929)
+* Plom now requires Python 3.7.
+* `plom-create` DB creation now done one test at a time which avoids timeouts and enables future flexibility.
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
