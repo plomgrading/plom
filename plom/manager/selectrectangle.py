@@ -114,7 +114,8 @@ class IDView(QGraphicsView):
     """
 
     def __init__(self, parent, fnames):
-        super().__init__(parent)
+        # parenting this widget gives a postage-stamp-sized view, not sure why
+        super().__init__()
         self._parent = parent
         self.scene = QGraphicsScene()
         # TODO = handle different image sizes.
