@@ -46,7 +46,7 @@ class SelectRectangleWindow(QDialog):
     def initUI(self, fnames):
         self.setWindowTitle("Select ID Rectangle")
         self.view = IDView(self, fnames)
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing)
 
         self.resetB = QPushButton("reset view")
         self.zoomB = QPushButton("zoom tool")
@@ -224,8 +224,7 @@ class IDViewWindow(QDialog):
         super().__init__(parent)
         self.sid = sid
         self.view = ExamView(fnames, dark_background=True)
-        # Render nicely
-        self.view.setRenderHint(QPainter.HighQualityAntialiasing)
+        self.view.setRenderHint(QPainter.Antialiasing)
 
         # reset view button passes to the UnknownView.
         self.resetB = QPushButton("reset view")
