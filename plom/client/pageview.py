@@ -36,7 +36,6 @@ class PageView(QGraphicsView):
         self.setStyleSheet("background: transparent")
         self.setBackgroundBrush(BackGrid())
 
-        # Nice antialiasing and scaling of objects (esp the groupimage)
         self.setRenderHint(QPainter.Antialiasing, True)
         self.setRenderHint(QPainter.SmoothPixmapTransform, True)
         # the graphics view accepts drag/drop from the comment list
