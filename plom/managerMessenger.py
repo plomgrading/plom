@@ -46,7 +46,7 @@ class ManagerMessenger(BaseMessenger):
                 its a *suggestion*, not a requirement.
                 See ``plom/create/buildDatabaseAndPapers.py` for how
                 this is currently used (which does not yet take advantage
-                of the above flexibility, see Issue #1995 for example).
+                of the above flexibility, see e.g., Issues #1745, #1995).
 
         Raises:
             PlomExistingDatabase: already has a populated database.
