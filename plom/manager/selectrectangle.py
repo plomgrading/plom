@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import (
 
 from plom.client.useful_classes import ErrorMessage
 from plom.client import ExamView
+from plom.client import ImageViewWidget
 
 
 class SelectRectangleWindow(QDialog):
@@ -222,21 +223,16 @@ class IDViewWindow(QDialog):
 
     def __init__(self, parent, fnames, sid):
         super().__init__(parent)
-        self.sid = sid
-        self.view = ExamView(fnames, dark_background=True)
-        self.view.setRenderHint(QPainter.Antialiasing)
+        self.img = ImageViewWidget(parent, fnames, has_reset_button=False, compact=True)
 
-        # reset view button passes to the UnknownView.
-        self.resetB = QPushButton("reset view")
-        self.resetB.clicked.connect(self.view.resetView)
+        resetB = QPushButton("reset view")
+        resetB.clicked.connect(self.img.resetView)
+        acceptB = QPushButton("&close")
+        acceptB.clicked.connect(self.accept)
 
-        self.acceptB = QPushButton("&close")
+        resetB.setAutoDefault(False)  # return won't click the button by default.
 
-        self.acceptB.clicked.connect(self.accept)
-
-        self.resetB.setAutoDefault(False)  # return won't click the button by default.
-
-        self.idL = QLabel("ID: {}".format(self.sid))
+        self.idL = QLabel("ID: {}".format(sid))
         fnt = self.idL.font()
         fnt.setPointSize(fnt.pointSize() * 2)
         self.idL.setFont(fnt)
@@ -244,23 +240,7 @@ class IDViewWindow(QDialog):
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.idL, 1, 1, 1, -1)
-        grid.addWidget(self.view, 2, 1, 10, -1)
-        grid.addWidget(self.resetB, 19, 1)
-        grid.addWidget(self.acceptB, 19, 20)
+        grid.addWidget(self.img, 2, 1, 10, -1)
+        grid.addWidget(resetB, 19, 1)
+        grid.addWidget(acceptB, 19, 20)
         self.setLayout(grid)
-        # Store the current exam view as a qtransform
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-
-    def updateImage(self, fnames):
-        """Pass file to the view to update the image"""
-        # first store the current view transform and scroll values
-        self.viewTrans = self.view.transform()
-        self.dx = self.view.horizontalScrollBar().value()
-        self.dy = self.view.verticalScrollBar().value()
-        self.view.updateImages(fnames)
-        # re-set the view transform and scroll values
-        self.view.setTransform(self.viewTrans)
-        self.view.horizontalScrollBar().setValue(self.dx)
-        self.view.verticalScrollBar().setValue(self.dy)
