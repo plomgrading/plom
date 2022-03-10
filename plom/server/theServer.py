@@ -132,6 +132,10 @@ class Server:
         getBundleFromImage,
         getImagesInBundle,
         getPageFromBundle,
+        initialiseExamDatabase,
+        appendTestToExamDatabase,
+        getPageVersions,
+        getQuestionVersions,
     )
     from .plomServer.serverID import (
         IDprogressCount,

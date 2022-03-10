@@ -125,6 +125,78 @@ def nextqueue_position(self):
     return lastPos + 1
 
 
+# to create one test of the db at a time
+
+
+def addSingleTestToDB(self, spec, t, vmap_for_test):
+    """Build a single test in the data base from spc and version_map
+
+    Arguments:
+        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
+        t (int): the test number to build
+        vmap_for_test (dict): version map indexed by question number for
+            the given test. It is a slice of the global version_map
+
+    Returns:
+        (bool, str): where bool is true if succuess, and str is a
+            status string, one line per test, ending with an error
+            if failure.
+
+    Raises:
+        KeyError: invalid question selection scheme in spec,
+        ValueError: attempt to create test n without test n-1.
+
+    """
+    ok = True
+    status = ""
+
+    # make sure test numbers are contiguous. Cannot create test n before test n-1.
+    if t > 1:
+        if Test.get_or_none(test_number=t - 1) is None:
+            raise ValueError(f"Error creating test {t} without test {t-1}")
+
+    if self.createTest(t):
+        status += "DB entry for test {:04}:".format(t)
+    else:
+        status += " Error creating"
+        ok = False
+
+    if self.createIDGroup(t, [spec["idPage"]]):
+        status += " ID"
+    else:
+        status += " Error creating idgroup"
+        ok = False
+
+    if self.createDNMGroup(t, spec["doNotMarkPages"]):
+        status += " DNM"
+    else:
+        status += "Error creating DoNotMark-group"
+        ok = False
+
+    for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
+        gs = str(g + 1)  # now a str and 1,2,3,...
+        v = vmap_for_test[g + 1]
+        assert v in range(1, spec["numberOfVersions"] + 1)
+        if spec["question"][gs]["select"] == "fix":
+            vstr = "f{}".format(v)
+            assert v == 1
+        elif spec["question"][gs]["select"] == "shuffle":
+            vstr = "v{}".format(v)
+        else:
+            raise KeyError(
+                'Invalid spec: question {} "select" of "{}" is unexpected'.format(
+                    gs, spec["question"][gs]["select"]
+                )
+            )
+        if self.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
+            status += " Q{}{}".format(gs, vstr)
+        else:
+            status += "Error creating Question {} ver {}".format(gs, vstr)
+            ok = False
+    status += "\n"
+    return ok, status
+
+
 def createTest(self, t):
     with plomdb.atomic():
         try:

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `plom-scan status` now displays information about unknown pages.
 
 ### Changed
+* `plom-create` DB creation now done one test at a time from the version map (see #1929)
 
 ### Fixed
 * Non-zero initial orientations should now work properly.

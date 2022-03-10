@@ -9,7 +9,6 @@ import hashlib
 import logging
 import os
 import shutil
-import subprocess
 import uuid
 
 from plom.server import pageNotSubmitted
@@ -429,6 +428,19 @@ def getPageFromBundle(self, bundle_name, bundle_order):
     return self.DB.getPageFromBundle(bundle_name, bundle_order)
 
 
-##
+def initialiseExamDatabase(self, spec, vmap):
+    from plom.db import initialiseExamDatabaseFromSpec
 
-##
+    return initialiseExamDatabaseFromSpec(spec, self.DB, vmap)
+
+
+def appendTestToExamDatabase(self, t, vmap_for_test):
+    return self.DB.addSingleTestToDB(self.testSpec, t, vmap_for_test)
+
+
+def getPageVersions(self, paper_idx):
+    return self.DB.getPageVersions(paper_idx)
+
+
+def getQuestionVersions(self, paper_idx):
+    return self.DB.getQuestionVersions(paper_idx)

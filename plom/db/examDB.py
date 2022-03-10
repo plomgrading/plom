@@ -92,6 +92,7 @@ class PlomDB:
         createReplacementBundle,
         how_many_papers_in_database,
         is_paper_database_populated,
+        addSingleTestToDB,
         nextqueue_position,
         createTest,
         addTPages,

@@ -817,19 +817,13 @@ class UploadHandler:
             return web.Response(status=404)
 
     @authenticate_by_token_required_fields(["user", "version_map"])
-    def populateExamDatabase(self, data, request):
-        """Instruct the server to generate paper data in the database.
-
-        TODO: maybe the api call should just be for one row of the database.
-        """
+    def initialiseExamDatabase(self, data, request):
+        """Instruct the server to generate paper data in the database."""
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
         spec = self.server.testSpec
         if not spec:
             raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
-
-        # TODO: talking to DB directly is not design we use elsewhere: call helper?
-        from plom.db import buildExamDatabaseFromSpec
 
         if len(data["version_map"]) == 0:
             vmap = None
@@ -837,15 +831,33 @@ class UploadHandler:
             vmap = undo_json_packing_of_version_map(data["version_map"])
 
         try:
-            r, summary = buildExamDatabaseFromSpec(spec, self.server.DB, vmap)
+            new_vmap = self.server.initialiseExamDatabase(spec, vmap)
         except ValueError:
             raise web.HTTPConflict(
                 reason="Database already present: not overwriting"
             ) from None
+
+        return web.json_response(new_vmap, status=200)
+
+    @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
+    def appendTestToExamDatabase(self, data, request):
+        """Append given test to database using given version map."""
+        if not data["user"] == "manager":
+            raise web.HTTPForbidden(reason="Not manager")
+
+        # explicitly cast incoming vmap to ints
+        vmap = {int(q): int(v) for q, v in data["vmap_for_test"].items()}
+
+        try:
+            r, summary = self.server.appendTestToExamDatabase(data["test_number"], vmap)
+        except ValueError:
+            raise web.HTTPConflict(
+                reason="Attempt to build tests without contiguous numbers"
+            ) from None
         if r:
             return web.Response(text=summary, status=200)
         else:
-            raise web.HTTPInternalServerError(text=summary)
+            raise web.HTTPNotAcceptable(reason=summary)
 
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):
@@ -866,7 +878,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.DB.getPageVersions(paper_idx)
+            ver = self.server.getPageVersions(paper_idx)
             if not ver:
                 _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)
@@ -884,7 +896,7 @@ class UploadHandler:
                 Fails with 409 if there is no version map.
         """
         paper_idx = request.match_info["papernum"]
-        vers = self.server.DB.getQuestionVersions(paper_idx)
+        vers = self.server.getQuestionVersions(paper_idx)
         if not vers:
             _msg = f"paper {paper_idx} does not (yet?) have a version map"
             log.warn(_msg)
@@ -908,7 +920,7 @@ class UploadHandler:
             raise web.HTTPNotFound(reason="Server has no spec so no version map")
         vers = {}
         for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.DB.getQuestionVersions(paper_idx)
+            ver = self.server.getQuestionVersions(paper_idx)
             if not ver:
                 _msg = "There is no version map: have you built the database?"
                 log.warn(_msg)
@@ -1004,7 +1016,8 @@ class UploadHandler:
         router.add_put("/admin/unknownToExtraPage", self.unknownToExtraPage)
         router.add_put("/admin/collidingToTestPage", self.collidingToTestPage)
         router.add_put("/admin/discardToUnknown", self.discardToUnknown)
-        router.add_put("/admin/populateDB", self.populateExamDatabase)
+        router.add_put("/admin/initialiseDB", self.initialiseExamDatabase)
+        router.add_put("/admin/appendTestToDB", self.appendTestToExamDatabase)
         router.add_get("/admin/pageVersionMap", self.getGlobalPageVersionMap)
         router.add_get(
             "/admin/questionVersionMap/{papernum}", self.getQuestionVersionMap
