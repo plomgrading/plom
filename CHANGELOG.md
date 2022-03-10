@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* Manager shows totals and highlights tabs that need attention.
 
 ### Changed
 
 ### Fixed
-
+* Misc fixes and code cleanups.
 
 
 ## [0.8.7] - 2022-03-02
