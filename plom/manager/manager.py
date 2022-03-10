@@ -594,8 +594,7 @@ class Manager(QWidget):
         self.initDanglingTab()
 
     def refreshScanTab(self):
-        self.refreshIList()
-        self.refreshSList()
+        self.refresh_scan_status_lists()
         self.refreshUList()
         self.refreshCList()
         self.refreshDList()
@@ -606,10 +605,19 @@ class Manager(QWidget):
         self.ui.scanTW.activated.connect(self.viewSPage)
         self.ui.incompTW.setHeaderLabels(["Test number", "Page", "Version", "Status"])
         self.ui.incompTW.activated.connect(self.viewISTest)
-        self.refreshIList()
-        self.refreshSList()
+        self.refresh_scan_status_lists()
 
-    def refreshIList(self):
+    def refresh_scan_status_lists(self):
+        I = self._refreshIList()
+        S = self._refreshSList()
+        countstr = str(I + S)
+        countstr += "*" if I != 0 else "\N{check mark}"
+        self.ui.scanTabW.setTabText(
+            self.ui.scanTabW.indexOf(self.ui.scanTab),
+            f"&Scan Status ({countstr})",
+        )
+
+    def _refreshIList(self):
         # delete the children of each toplevel items
         root = self.ui.incompTW.invisibleRootItem()
         for l0 in range(self.ui.incompTW.topLevelItemCount()):
@@ -633,8 +641,9 @@ class Manager(QWidget):
         self.ui.groupBox_3.setTitle(
             "Incomplete papers (total: {})".format(len(incomplete))
         )
+        return len(incomplete)
 
-    def refreshSList(self):
+    def _refreshSList(self):
         # delete the children of each toplevel items
         root = self.ui.scanTW.invisibleRootItem()
         for l0 in range(self.ui.scanTW.topLevelItemCount()):
@@ -662,6 +671,7 @@ class Manager(QWidget):
         self.ui.groupBox.setTitle(
             "Completely scanned papers (total: {})".format(len(scanned))
         )
+        return len(scanned)
 
     def viewPage(self, t, pdetails, v):
         if pdetails[0] == "t":  # is a test-page t.PPP
@@ -757,9 +767,7 @@ class Manager(QWidget):
                         err.args[-1]
                     )
                 ).exec_()
-        # refresh the two tables here.
-        self.refreshSList()
-        self.refreshIList()
+        self.refresh_scan_status_lists()
 
     def substituteTestQuestionPage(self, test_number, page_number, question, version):
         msg = SimpleQuestion(
@@ -831,7 +839,7 @@ class Manager(QWidget):
             qnum = int(page_type[1:])  # is qNNN
             self.substituteTestQuestionPage(test_number, page_number, qnum, version)
 
-        self.refreshIList()
+        self.refresh_scan_status_lists()
 
     def substituteHWQuestion(self, test_number, question):
         msg = SimpleQuestion(
@@ -855,7 +863,7 @@ class Manager(QWidget):
                 )
             ).exec_()
 
-        self.refreshIList()
+        self.refresh_scan_status_lists()
 
     def substitutePage(self):
         # THIS SHOULD KEEP VERSION INFORMATION
@@ -926,7 +934,7 @@ class Manager(QWidget):
                         err.args[-1]
                     )
                 ).exec_()
-        self.refreshIList()
+        self.refresh_scan_status_lists()
 
     def initUnknownTab(self):
         self.unknownModel = QStandardItemModel(0, 6)
@@ -972,9 +980,11 @@ class Manager(QWidget):
         self.ui.unknownTV.resizeRowsToContents()
         self.ui.unknownTV.resizeColumnsToContents()
 
+        countstr = str(len(unkList))
+        countstr += "*" if countstr != "0" else "\N{Check Mark}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.unknownTab),
-            "&Unknown Pages ({})".format(len(unkList)),
+            f"&Unknown Pages ({countstr})",
         )
 
     def viewUPage(self):
@@ -1176,9 +1186,11 @@ class Manager(QWidget):
             r += 1
         self.ui.collideTV.resizeRowsToContents()
         self.ui.collideTV.resizeColumnsToContents()
+        countstr = str(len(colDict.keys()))
+        countstr += "*" if countstr != "0" else "\N{Check Mark}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.collideTab),
-            "&Colliding Pages ({})".format(len(colDict.keys())),
+            f"&Colliding Pages ({countstr})",
         )
 
     def viewCPage(self):
@@ -1359,9 +1371,11 @@ class Manager(QWidget):
         self.ui.danglingTV.resizeRowsToContents()
         self.ui.danglingTV.resizeColumnsToContents()
 
+        countstr = str(len(dangList))
+        countstr += "*" if countstr != "0" else "\N{Check Mark}"
         self.ui.scanTabW.setTabText(
             self.ui.scanTabW.indexOf(self.ui.dangleTab),
-            "Dan&gling Pages ({})".format(len(dangList)),
+            f"Dan&gling Pages ({countstr})",
         )
 
     def viewDanglingPage(self):
