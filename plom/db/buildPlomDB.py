@@ -71,55 +71,6 @@ def buildSpecialRubrics(spec, db):
                 )
 
 
-def buildExamDatabaseFromSpec(spec, db, version_map=None):
-    """Build metadata for exams from spec and insert into the database.
-
-    Arguments:
-        spec (dict): exam specification, see :func:`plom.SpecVerifier`.
-        db (database): the database to populate.
-        version_map (dict/None): optional predetermined version map
-            keyed by test number and question number.  If None, we will
-            build our own random version mapping.  For the map format
-            see :func:`plom.finish.make_random_version_map`.
-
-    Returns:
-        bool: True if succuess.
-        str: a status string, one line per test, ending with an error if failure.
-
-    Raises:
-        ValueError: if database already populated.
-        KeyError: invalid question selection scheme in spec.
-    """
-    if db.is_paper_database_populated():
-        raise ValueError("Database already populated")
-
-    # TODO: perhaps this should be called separately...
-    buildSpecialRubrics(spec, db)
-
-    if not version_map:
-        # TODO: move reproducible random seed support to the make fcn?
-        random.seed(spec["privateSeed"])
-        version_map = make_random_version_map(spec)
-    check_version_map(version_map)
-
-    ok = True
-    status = ""
-
-    if not db.createReplacementBundle():
-        ok = False
-        status += "Error making bundle for replacement pages"
-
-    for t in range(1, spec["numberToProduce"] + 1):
-        log.info(
-            "Creating DB entry for test {} of {}.".format(t, spec["numberToProduce"])
-        )
-        success, stat = db.addSingleTestToDB(spec, t, version_map[t])
-        if success is False:
-            ok = False
-        status += stat
-    return ok, status
-
-
 def initialiseExamDatabaseFromSpec(spec, db, version_map=None):
     """Build metadata for exams from spec but do not build tests in DB.
 
