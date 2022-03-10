@@ -44,6 +44,9 @@ class ManagerMessenger(BaseMessenger):
                 server, else the one supplied).  Note: you can change
                 this version map if you wish before instantiating rows;
                 its a *suggestion*, not a requirement.
+                See ``plom/create/buildDatabaseAndPapers.py` for how
+                this is currently used (which does not yet take advantage
+                of the above flexibility, see Issue #1995 for example).
 
         Raises:
             PlomExistingDatabase: already has a populated database.
