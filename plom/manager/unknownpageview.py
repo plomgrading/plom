@@ -292,28 +292,28 @@ class UnknownViewWindow(QDialog):
         self.optionTW = QTabWidget()
 
         # reset view button passes to the UnknownView.
-        self.resetB = QPushButton("reset view")
-        self.rotatePlusB = QPushButton("rotate +90")
-        self.rotateMinusB = QPushButton("rotate -90")
-        self.cancelB = QPushButton("&cancel")
+        resetB = QPushButton("reset view")
+        rotatePlusB = QPushButton("rotate +90")
+        rotateMinusB = QPushButton("rotate -90")
+        cancelB = QPushButton("&cancel")
 
-        self.cancelB.clicked.connect(self.reject)
-        self.resetB.clicked.connect(lambda: self.view.resetView())
-        self.rotatePlusB.clicked.connect(self.rotatePlus)
-        self.rotateMinusB.clicked.connect(self.rotateMinus)
+        cancelB.clicked.connect(self.reject)
+        resetB.clicked.connect(self.view.resetView)
+        rotatePlusB.clicked.connect(self.rotatePlus)
+        rotateMinusB.clicked.connect(self.rotateMinus)
 
-        self.resetB.setAutoDefault(False)  # return won't click the button by default.
-        self.rotatePlusB.setAutoDefault(False)
-        self.rotateMinusB.setAutoDefault(False)
+        resetB.setAutoDefault(False)  # return won't click the button by default.
+        rotatePlusB.setAutoDefault(False)
+        rotateMinusB.setAutoDefault(False)
 
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.view, 1, 1, 10, 10)
         grid.addWidget(self.optionTW, 1, 11, 10, -1)
-        grid.addWidget(self.resetB, 11, 1)
-        grid.addWidget(self.rotatePlusB, 11, 2)
-        grid.addWidget(self.rotateMinusB, 11, 3)
-        grid.addWidget(self.cancelB, 11, 20)
+        grid.addWidget(resetB, 11, 1)
+        grid.addWidget(rotatePlusB, 11, 2)
+        grid.addWidget(rotateMinusB, 11, 3)
+        grid.addWidget(cancelB, 11, 20)
         self.setLayout(grid)
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
@@ -333,6 +333,13 @@ class UnknownViewWindow(QDialog):
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
         self.view.verticalScrollBar().setValue(self.dy)
+
+    def resizeEvent(self, whatev):
+        """Seems to ensure image gets resize on window resize."""
+        self.view.resetView()
+
+    def resetView(self):
+        self.view.resetView()
 
     def initTabs(self):
         t0 = ActionTab(self)
