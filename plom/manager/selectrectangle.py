@@ -21,13 +21,10 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsView,
     QGridLayout,
-    QLabel,
     QPushButton,
 )
 
 from plom.client.useful_classes import ErrorMessage
-from plom.client import ExamView
-from plom.client import ImageViewWidget
 
 
 class SelectRectangleWindow(QDialog):
@@ -109,6 +106,7 @@ class SelectRectangleWindow(QDialog):
         self.view.deleteRect()
 
 
+# TODO: maybe it can be a subclass of ExamView/ImageViewWidget?
 class IDView(QGraphicsView):
     """Simple extension of QGraphicsView
     - containing an image and click-to-zoom/unzoom
@@ -216,31 +214,3 @@ class IDView(QGraphicsView):
     def resetView(self):
         """Reset the view to its reasonable initial state."""
         self.fitInView(self.imageGItem, Qt.KeepAspectRatio)
-
-
-class IDViewWindow(QDialog):
-    """Simple view window for pageimages"""
-
-    def __init__(self, parent, fnames, sid):
-        super().__init__(parent)
-        self.img = ImageViewWidget(parent, fnames, has_reset_button=False, compact=True)
-
-        resetB = QPushButton("reset view")
-        resetB.clicked.connect(self.img.resetView)
-        acceptB = QPushButton("&close")
-        acceptB.clicked.connect(self.accept)
-
-        resetB.setAutoDefault(False)  # return won't click the button by default.
-
-        self.idL = QLabel("ID: {}".format(sid))
-        fnt = self.idL.font()
-        fnt.setPointSize(fnt.pointSize() * 2)
-        self.idL.setFont(fnt)
-
-        # Layout simply
-        grid = QGridLayout()
-        grid.addWidget(self.idL, 1, 1, 1, -1)
-        grid.addWidget(self.img, 2, 1, 10, -1)
-        grid.addWidget(resetB, 19, 1)
-        grid.addWidget(acceptB, 19, 20)
-        self.setLayout(grid)

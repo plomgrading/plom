@@ -30,8 +30,10 @@ log = logging.getLogger("viewerdialog")
 
 
 class GroupView(QDialog):
-    def __init__(self, parent, fnames, bigger=False):
+    def __init__(self, parent, fnames, *, title=None, bigger=False):
         super().__init__(parent)
+        if title:
+            self.setWindowTitle(title)
         grid = QGridLayout()
         self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
         closeButton = QPushButton("&Close")
