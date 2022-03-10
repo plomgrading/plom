@@ -42,7 +42,7 @@ from PyQt5.QtWidgets import (
 
 import plom.client.icons
 
-from plom.client.useful_classes import ErrorMessage, WarnMsg
+from plom.client.useful_classes import ErrorMessage, InfoMsg, WarnMsg
 from plom.client.useful_classes import SimpleQuestion, WarningQuestion
 from plom.client.viewers import WholeTestView, GroupView
 from plom.client import ImageViewWidget
@@ -1129,21 +1129,27 @@ class Manager(QWidget):
         cp = self.msgr.checkTPage(testNumber, pageNumber)
         # returns [v, image] or [v, imageBytes]
         if cp[1] is None:
-            # TODO: ErrorMesage does not support parenting
-            ErrorMessage(
+            InfoMsg(
+                parent,
                 "Page {} of test {} is not scanned - should be version {}".format(
                     pageNumber, testNumber, cp[0]
-                )
+                ),
             ).exec_()
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(cp[1])
-            ErrorMessage(
-                "WARNING: potential collision! Page {} of test {} has been scanned already.".format(
-                    pageNumber, testNumber
-                )
+            # TODO: write a popup dialog class with an embedded group view
+            WarnMsg(
+                parent,
+                f"Potential collision with paper {testNumber} p. {pageNumber}",
+                info=f"""
+                  <p>Paper {testNumber} page {pageNumber} has been scanned already:
+                  we'll show the current image once you close this dialog.<p>
+                """,
+                info_pre=False,
             ).exec_()
-            GroupView(parent, [fh.name]).exec_()
+            msg = f"Collision: current image for test {testNumber} p. {pageNumber}"
+            GroupView(parent, [fh.name], title=msg).exec_()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
