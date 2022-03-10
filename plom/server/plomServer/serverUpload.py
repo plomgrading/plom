@@ -430,6 +430,7 @@ def getPageFromBundle(self, bundle_name, bundle_order):
 
 def initialiseExamDatabase(self, spec, vmap):
     from plom.db import initialiseExamDatabaseFromSpec
+
     return initialiseExamDatabaseFromSpec(spec, self.DB, vmap)
 
 

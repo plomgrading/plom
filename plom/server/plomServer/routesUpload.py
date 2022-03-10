@@ -841,8 +841,7 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
     def appendTestToExamDatabase(self, data, request):
-        """Append given test to database using given version map.
-        """
+        """Append given test to database using given version map."""
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
 
