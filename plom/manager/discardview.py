@@ -4,61 +4,13 @@
 
 from PyQt5.QtWidgets import (
     QDialog,
-    QGridLayout,
+    QHBoxLayout,
+    QLabel,
     QPushButton,
-    QTabWidget,
     QVBoxLayout,
-    QWidget,
 )
 
 from plom.client import ImageViewWidget
-
-
-class ActionTab(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self._parent = parent
-        vb = QVBoxLayout()
-        self.ub = QPushButton("Move to unknown pages")
-        self.nb = QPushButton("No action")
-        vb.addWidget(self.ub)
-        vb.addStretch(0)
-        vb.addWidget(self.nb)
-        vb.addStretch(0)
-        self.setLayout(vb)
-        self.ub.clicked.connect(self.unknown)
-        self.nb.clicked.connect(self.noaction)
-
-    def unknown(self):
-        self._parent.optionTW.setCurrentIndex(1)
-
-    def noaction(self):
-        self._parent.action = ""
-        self._parent.accept()
-
-
-class UnknownTab(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self._parent = parent
-        vb = QVBoxLayout()
-        self.ub = QPushButton("Click to confirm move to unknown")
-        self.ob = QPushButton("Return to other options")
-        vb.addStretch(0)
-        vb.addWidget(self.ub)
-        vb.addStretch(0)
-        vb.addWidget(self.ob)
-        self.setLayout(vb)
-        self.ub.clicked.connect(self.unknown)
-        self.ob.clicked.connect(self.other)
-
-    def unknown(self):
-        self._parent.action = "unknown"
-        self._parent.accept()
-
-    def other(self):
-        self._parent.action = ""
-        self._parent.optionTW.setCurrentIndex(0)
 
 
 class DiscardViewWindow(QDialog):
@@ -66,29 +18,35 @@ class DiscardViewWindow(QDialog):
 
     def __init__(self, parent, fnames):
         super().__init__(parent)
-        self.action = ""
-        self.img = ImageViewWidget(
-            self, fnames, has_reset_button=False, dark_background=True
-        )
-        self.optionTW = QTabWidget()
+        self.img = ImageViewWidget(self, fnames, has_reset_button=False)
+        self.setWindowTitle("Restore discarded page?")
 
         resetB = QPushButton("reset view")
-        cancelB = QPushButton("&cancel")
+        moveB = QPushButton("&Move to unknown pages")
+        moveB.clicked.connect(self.accept)
+        cancelB = QPushButton("&Cancel")
         cancelB.clicked.connect(self.reject)
         resetB.clicked.connect(lambda: self.img.resetView())
-
         resetB.setAutoDefault(False)  # return won't click the button by default.
 
-        grid = QGridLayout()
-        grid.addWidget(self.img, 1, 1, 10, 10)
-        grid.addWidget(self.optionTW, 1, 11, 10, -1)
-        grid.addWidget(resetB, 11, 1)
-        grid.addWidget(cancelB, 11, 20)
-        self.setLayout(grid)
-        self.initTabs()
+        explanation = QLabel(
+            """
+            <p>If you wish to restore this discarded page, you can first
+            convert it to an unknown page.  Then you will be able to
+            attach it to a paper to be marked.</p>
+            """
+        )
+        explanation.setWordWrap(True)
 
-    def initTabs(self):
-        t0 = ActionTab(self)
-        t1 = UnknownTab(self)
-        self.optionTW.addTab(t0, "Actions")
-        self.optionTW.addTab(t1, "Move Page")
+        grid = QVBoxLayout()
+        grid.addWidget(self.img, 1)
+        grid.addWidget(explanation)
+        # probably should use QDialogButtonBox?
+        buttons = QHBoxLayout()
+        buttons.addWidget(resetB)
+        buttons.addSpacing(64)
+        buttons.addStretch(1)
+        buttons.addWidget(moveB)
+        buttons.addWidget(cancelB)
+        grid.addLayout(buttons)
+        self.setLayout(grid)

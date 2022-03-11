@@ -1309,15 +1309,13 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as dh:
             dh.write(vdp)
-            dvw = DiscardViewWindow(self, dh.name)
-            if dvw.exec_() == QDialog.Accepted:
-                if dvw.action == "unknown":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_move.svg")
-                    )
-                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
-                    self.discardModel.item(r, 3).setText("move")
+            if DiscardViewWindow(self, dh.name).exec_() == QDialog.Accepted:
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_move.svg")
+                )
+                self.discardModel.item(r, 1).setIcon(QIcon(pm))
+                self.discardModel.item(r, 3).setText("move")
 
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
