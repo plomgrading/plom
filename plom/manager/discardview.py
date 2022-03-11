@@ -33,7 +33,7 @@ class ActionTab(QWidget):
         self._parent.optionTW.setCurrentIndex(1)
 
     def noaction(self):
-        self._parent.action = "none"
+        self._parent.action = ""
         self._parent.accept()
 
 
@@ -57,7 +57,7 @@ class UnknownTab(QWidget):
         self._parent.accept()
 
     def other(self):
-        self._parent.action = "none"
+        self._parent.action = ""
         self._parent.optionTW.setCurrentIndex(0)
 
 
@@ -66,7 +66,7 @@ class DiscardViewWindow(QDialog):
 
     def __init__(self, parent, fnames):
         super().__init__(parent)
-        self.action = "none"
+        self.action = ""
         self.img = ImageViewWidget(
             self, fnames, has_reset_button=False, dark_background=True
         )
