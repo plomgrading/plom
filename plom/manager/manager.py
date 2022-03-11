@@ -1138,18 +1138,13 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as fh:
             fh.write(cp[1])
-            # TODO: write a popup dialog class with an embedded group view
-            WarnMsg(
+            GroupView(
                 parent,
-                f"Potential collision with paper {testNumber} p. {pageNumber}",
-                info=f"""
-                  <p>Paper {testNumber} page {pageNumber} has been scanned already:
-                  we'll show the current image once you close this dialog.<p>
-                """,
-                info_pre=False,
+                [fh.name],
+                title=f"Paper {testNumber} page {pageNumber} already has an image",
+                before_text="Existing image:",
+                after_text=f"Performing this action would create a collision with paper {testNumber} p. {pageNumber}",
             ).exec_()
-            msg = f"Collision: current image for test {testNumber} p. {pageNumber}"
-            GroupView(parent, [fh.name], title=msg).exec_()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)

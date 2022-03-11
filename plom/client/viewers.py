@@ -13,12 +13,14 @@ import urllib.request
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import (
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QGridLayout,
     QLabel,
     QPushButton,
     QSpinBox,
     QTabWidget,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -30,17 +32,56 @@ log = logging.getLogger("viewerdialog")
 
 
 class GroupView(QDialog):
-    def __init__(self, parent, fnames, *, title=None, bigger=False):
+    """Display one or more images with an Ok button.
+
+    Args:
+        parent (QWidget): the parent window of this dialog.
+        fnames (list): a list of images, see ImageViewWidget docs.
+
+    Keyword Args:
+        title (None/str): optional title for dialog.
+        bigger (bool): some weird hack to make a bigger-than-default
+            dialog.  Using this is probably a sign you're doing
+            something suboptimal.
+        before_text (None/str): some text to display before the image
+            at the top of the dialog.  Can include html formatting.
+        after_text (None/str): some text to display after the image
+            at the bottom of the dialog but above the buttons.
+            Can include html formatting.
+    """
+
+    def __init__(
+        self,
+        parent,
+        fnames,
+        *,
+        title=None,
+        bigger=False,
+        before_text=None,
+        after_text=None,
+    ):
         super().__init__(parent)
         if title:
             self.setWindowTitle(title)
-        grid = QGridLayout()
-        self.testImg = ImageViewWidget(self, fnames, has_reset_button=False)
-        closeButton = QPushButton("&Close")
+        self.testImg = ImageViewWidget(
+            self, fnames, dark_background=True, has_reset_button=True
+        )
         resetB = QPushButton("&reset view")
-        grid.addWidget(self.testImg, 1, 1, 1, 8)
-        grid.addWidget(closeButton, 2, 8)
-        grid.addWidget(resetB, 2, 1)
+        grid = QVBoxLayout()
+        if before_text:
+            label = QLabel(before_text)
+            label.setWordWrap(True)
+            # label.setAlignment(Qt.AlignTop)
+            grid.addWidget(label)
+        grid.addWidget(self.testImg, 1)
+        if after_text:
+            label = QLabel(after_text)
+            label.setWordWrap(True)
+            grid.addWidget(label)
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok)
+        buttons.addButton(resetB, QDialogButtonBox.ActionRole)
+        buttons.accepted.connect(self.accept)
+        grid.addWidget(buttons)
         self.setLayout(grid)
         if bigger:
             self.resize(
@@ -50,7 +91,6 @@ class GroupView(QDialog):
                 )
             )
         resetB.clicked.connect(self.testImg.resetView)
-        closeButton.clicked.connect(self.close)
         if bigger:
             # TODO: seems needed for Ctrl-R double-click popup
             self.testImg.resetView()
