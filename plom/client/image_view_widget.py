@@ -12,8 +12,9 @@ from PyQt5.QtWidgets import (
     QGraphicsItemGroup,
     QGraphicsScene,
     QGraphicsView,
-    QGridLayout,
+    QHBoxLayout,
     QPushButton,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -61,17 +62,20 @@ class ImageViewWidget(QWidget):
         self.view = ExamView(image_data, dark_background=dark_background)
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        grid = QVBoxLayout()
+        if compact:
+            grid.setContentsMargins(0, 0, 0, 0)
+        grid.addWidget(self.view, 1)
         if has_reset_button:
             resetB = QPushButton("&reset view")
             resetB.clicked.connect(self.resetView)
             # return won't click the button by default
             resetB.setAutoDefault(False)
-        grid = QGridLayout()
-        if compact:
-            grid.setContentsMargins(0, 0, 0, 0)
-        grid.addWidget(self.view, 1, 1, 10, 4)
-        if has_reset_button:
-            grid.addWidget(resetB, 20, 1)
+            buttons = QHBoxLayout()
+            buttons.addWidget(resetB)
+            buttons.addSpacing(64)
+            buttons.addStretch(1)
+            grid.addLayout(buttons)
         self.setLayout(grid)
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
