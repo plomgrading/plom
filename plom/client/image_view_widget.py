@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsView,
     QHBoxLayout,
-    QPushButton,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -67,15 +67,28 @@ class ImageViewWidget(QWidget):
             grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view, 1)
         if has_reset_button:
-            resetB = QPushButton("&reset view")
+            resetB = QToolButton()
+            # resetB.setText("\N{Leftwards Arrow To Bar Over Rightwards Arrow To Bar}")
+            resetB.setText("\N{Up Down Black Arrow}")
+            resetB.setToolTip("reset zoom")
             resetB.clicked.connect(self.resetView)
-            # return won't click the button by default
-            resetB.setAutoDefault(False)
+            zoomInB = QToolButton()
+            zoomInB.setText("\N{Heavy Plus Sign}")
+            zoomInB.setToolTip("zoom in")
+            zoomInB.clicked.connect(self.zoomIn)
+            zoomOutB = QToolButton()
+            zoomOutB.setText("\N{Heavy Minus Sign}")
+            zoomOutB.setToolTip("zoom out")
+            zoomOutB.clicked.connect(self.zoomOut)
+
             buttons = QHBoxLayout()
+            buttons.addStretch(1)
             buttons.addWidget(resetB)
-            buttons.addSpacing(64)
+            buttons.addWidget(zoomInB)
+            buttons.addWidget(zoomOutB)
             buttons.addStretch(1)
             grid.addLayout(buttons)
+
         self.setLayout(grid)
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
@@ -101,6 +114,12 @@ class ImageViewWidget(QWidget):
 
     def resetView(self):
         self.view.resetView()
+
+    def zoomIn(self):
+        self.view.zoomIn()
+
+    def zoomOut(self):
+        self.view.zoomOut()
 
     def forceRedrawOrSomeBullshit(self):
         """Horrid workaround when we cannot get proper redraws.
@@ -221,10 +240,16 @@ class ExamView(QGraphicsView):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.scale(0.8, 0.8)
+            self.zoomOut()
         else:
-            self.scale(1.25, 1.25)
+            self.zoomIn()
         self.centerOn(event.pos())
+
+    def zoomOut(self):
+        self.scale(0.8, 0.8)
+
+    def zoomIn(self):
+        self.scale(1.25, 1.25)
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
