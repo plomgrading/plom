@@ -64,7 +64,7 @@ class GroupView(QDialog):
         if title:
             self.setWindowTitle(title)
         self.testImg = ImageViewWidget(
-            self, fnames, dark_background=True, has_reset_button=True
+            self, fnames, dark_background=True, has_reset_button=False
         )
         resetB = QPushButton("&reset view")
         grid = QVBoxLayout()
