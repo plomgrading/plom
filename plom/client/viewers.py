@@ -79,6 +79,8 @@ class GroupView(QDialog):
             label = QLabel(after_text)
             label.setWordWrap(True)
             grid.addWidget(label)
+        # some extra space before the main dialog buttons
+        grid.addSpacing(6)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.addButton(resetB, QDialogButtonBox.ActionRole)
         buttons.accepted.connect(self.accept)

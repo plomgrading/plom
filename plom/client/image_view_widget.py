@@ -66,10 +66,13 @@ class ImageViewWidget(QWidget):
         if compact:
             grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view, 1)
+        grid.setSpacing(3)
+        self.zoomLockB = None
         if has_reset_button:
             resetB = QToolButton()
             # resetB.setText("\N{Leftwards Arrow To Bar Over Rightwards Arrow To Bar}")
-            resetB.setText("\N{Up Down Black Arrow}")
+            # resetB.setText("\N{Up Down Black Arrow}")
+            resetB.setText("reset")
             resetB.setToolTip("reset zoom")
             resetB.clicked.connect(self.resetView)
             zoomInB = QToolButton()
@@ -80,12 +83,22 @@ class ImageViewWidget(QWidget):
             zoomOutB.setText("\N{Heavy Minus Sign}")
             zoomOutB.setToolTip("zoom out")
             zoomOutB.clicked.connect(self.zoomOut)
+            zoomLockB = QToolButton()
+            zoomLockB.setText("\N{Lock}")
+            zoomLockB.setCheckable(True)
+            zoomLockB.setChecked(False)
+            zoomLockB.clicked.connect(self.zoomLockToggle)
+            self.zoomLockB = zoomLockB
+            self._zoomLockUpdateTooltip()
 
             buttons = QHBoxLayout()
+            buttons.setContentsMargins(0, 0, 0, 0)
+            buttons.setSpacing(6)
             buttons.addStretch(1)
             buttons.addWidget(resetB)
             buttons.addWidget(zoomInB)
             buttons.addWidget(zoomOutB)
+            buttons.addWidget(zoomLockB)
             buttons.addStretch(1)
             grid.addLayout(buttons)
 
@@ -110,16 +123,36 @@ class ImageViewWidget(QWidget):
 
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
+        if self.zoomLockB and self.zoomLockB.isChecked():
+            return
         self.view.resetView()
 
     def resetView(self):
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(False)
+            self._zoomLockUpdateTooltip()
         self.view.resetView()
 
     def zoomIn(self):
         self.view.zoomIn()
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(True)
+            self._zoomLockUpdateTooltip()
 
     def zoomOut(self):
         self.view.zoomOut()
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(True)
+            self._zoomLockUpdateTooltip()
+
+    def zoomLockToggle(self):
+        self._zoomLockUpdateTooltip()
+
+    def _zoomLockUpdateTooltip(self):
+        if self.zoomLockB.isChecked():
+            self.zoomLockB.setToolTip("zoom: locked")
+        else:
+            self.zoomLockB.setToolTip("zoom: fit on window resize")
 
     def forceRedrawOrSomeBullshit(self):
         """Horrid workaround when we cannot get proper redraws.
@@ -257,4 +290,5 @@ class ExamView(QGraphicsView):
 
     def rotateImage(self, dTheta):
         self.rotate(dTheta)
+        # TODO: likely to decouple the zoom lock toggle
         self.resetView()
