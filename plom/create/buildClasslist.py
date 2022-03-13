@@ -301,10 +301,13 @@ def get_demo_classlist():
     # classlist = df.to_dict("records")
 
     b = resources.read_binary(plom, "demoClassList.csv")
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as f:
-        with open(f.name, "wb") as fh:
-            fh.write(b)
-        return process_classlist_file(f.name)
+    # Context manager not appropriate here, Issue #1996
+    f = Path(tempfile.NamedTemporaryFile(delete=False, suffix=".csv").name)
+    with open(f, "wb") as fh:
+        fh.write(b)
+    C = process_classlist_file(f)
+    f.unlink()
+    return C
 
 
 def process_classlist_file(student_csv_file_name):

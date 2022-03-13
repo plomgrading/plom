@@ -123,10 +123,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
                     files.append(outname)
                 else:
                     outname = dest / (basename + ".png")
-                    with tempfile.NamedTemporaryFile() as g:
-                        with open(g.name, "wb") as f:
-                            f.write(d["image"])
-                        subprocess.check_call(["convert", g.name, outname])
+                    # Context manager not appropriate here, Issue #1996
+                    f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+                    with open(f, "wb") as fh:
+                        fh.write(d["image"])
+                    subprocess.check_call(["convert", f, outname])
+                    f.unlink()
                     files.append(outname)
                 continue
 
