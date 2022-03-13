@@ -690,9 +690,12 @@ class Manager(QWidget):
 
         if vp is None:
             return
-        with tempfile.NamedTemporaryFile() as fh:
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(vp)
-            GroupView(self, [fh.name]).exec_()
+        GroupView(self, [f]).exec_()
+        f.unlink()
 
     def viewSPage(self):
         pvi = self.ui.scanTW.selectedItems()
@@ -998,11 +1001,14 @@ class Manager(QWidget):
             return
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
-        with tempfile.NamedTemporaryFile() as fh:
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(vp)
+        if True:  # temp, minimise diff
             uvw = UnknownViewWindow(
                 self,
-                [fh.name],
+                [f],
                 [self.max_papers, self.numberOfPages, self.numberOfQuestions],
                 iDict,
             )
@@ -1036,6 +1042,7 @@ class Manager(QWidget):
                         resources.read_binary(plom.client.icons, "manager_hw.svg")
                     )
                     self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+        f.unlink()
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
@@ -1140,14 +1147,17 @@ class Manager(QWidget):
                 )
             ).exec_()
             return
-        with tempfile.NamedTemporaryFile() as fh:
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(cp[1])
-            ErrorMessage(
-                "WARNING: potential collision! Page {} of test {} has been scanned already.".format(
-                    pageNumber, testNumber
-                )
-            ).exec_()
-            GroupView(parent, [fh.name]).exec_()
+        ErrorMessage(
+            "WARNING: potential collision! Page {} of test {} has been scanned already.".format(
+                pageNumber, testNumber
+            )
+        ).exec_()
+        GroupView(parent, [f]).exec_()
+        f.unlink()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
@@ -1207,34 +1217,31 @@ class Manager(QWidget):
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
-        with tempfile.NamedTemporaryFile() as oh:
-            with tempfile.NamedTemporaryFile() as ch:
-                oh.write(vop)
-                ch.write(vcp)
-                cvw = CollideViewWindow(
-                    self,
-                    oh.name,
-                    ch.name,
-                    test,
-                    page,
+        # Context manager not appropriate, Issue #1996
+        fo = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        fc = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(fo, "wb") as fh:
+            fh.write(vop)
+        with open(fc, "wb") as fh:
+            fh.write(vcp)
+        cvw = CollideViewWindow(self, fo, fc, test, page)
+        if cvw.exec_() == QDialog.Accepted:
+            if cvw.action == "original":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_discard.svg")
                 )
-                if cvw.exec_() == QDialog.Accepted:
-                    if cvw.action == "original":
-                        pm = QPixmap()
-                        pm.loadFromData(
-                            resources.read_binary(
-                                plom.client.icons, "manager_discard.svg"
-                            )
-                        )
-                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
-                        self.collideModel.item(r, 2).setText("discard")
-                    elif cvw.action == "collide":
-                        pm = QPixmap()
-                        pm.loadFromData(
-                            resources.read_binary(plom.client.icons, "manager_test.svg")
-                        )
-                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
-                        self.collideModel.item(r, 2).setText("replace")
+                self.collideModel.item(r, 1).setIcon(QIcon(pm))
+                self.collideModel.item(r, 2).setText("discard")
+            elif cvw.action == "collide":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_test.svg")
+                )
+                self.collideModel.item(r, 1).setIcon(QIcon(pm))
+                self.collideModel.item(r, 2).setText("replace")
+        fo.unlink()
+        fc.unlink()
 
     def doCActions(self):
         for r in range(self.collideModel.rowCount()):
@@ -1310,9 +1317,12 @@ class Manager(QWidget):
         vdp = self.msgr.getDiscardImage(fname)
         if vdp is None:
             return
-        with tempfile.NamedTemporaryFile() as dh:
-            dh.write(vdp)
-            dvw = DiscardViewWindow(self, dh.name)
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
+            fh.write(vdp)
+        dvw = DiscardViewWindow(self, f)
+        if True:  # temp minimise diff
             if dvw.exec_() == QDialog.Accepted:
                 if dvw.action == "unknown":
                     pm = QPixmap()
@@ -1328,6 +1338,7 @@ class Manager(QWidget):
                     )
                     self.discardModel.item(r, 1).setIcon(QIcon(pm))
                     self.discardModel.item(r, 3).setText("none")
+        f.unlink()
 
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
@@ -1774,20 +1785,22 @@ class Manager(QWidget):
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
         img = self.msgr.get_annotations_image(test, question)
-        with tempfile.NamedTemporaryFile() as fh:
-            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
+        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
+        # TODO: but more likely superceded by "pagedata" changes
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(img)
-            rvw = ReviewViewWindow(self, [fh.name])
-            if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "review":
-                    # first remove auth from that user - safer.
-                    if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                        self.msgr.clearAuthorisationUser(
-                            self.ui.reviewTW.item(r, 4).text()
-                        )
-                    # then map that question's owner "reviewer"
-                    self.msgr.MreviewQuestion(test, question, version)
-                    self.ui.reviewTW.item(r, 4).setText("reviewer")
+        rvw = ReviewViewWindow(self, [f])
+        if rvw.exec() == QDialog.Accepted:
+            if rvw.action == "review":
+                # first remove auth from that user - safer.
+                if self.ui.reviewTW.item(r, 4).text() != "reviewer":
+                    self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
+                # then map that question's owner "reviewer"
+                self.msgr.MreviewQuestion(test, question, version)
+                self.ui.reviewTW.item(r, 4).setText("reviewer")
+        f.unlink()
 
     def initRevIDTab(self):
         self.ui.reviewIDTW.setColumnCount(5)
