@@ -1218,13 +1218,13 @@ class Manager(QWidget):
         if vop is None or vcp is None:
             return
         # Context manager not appropriate, Issue #1996
-        fo = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        fc = Path(tempfile.NamedTemporaryFile(delete=False).name)
-        with open(fo, "wb") as fh:
+        f_orig = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        f_collides = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f_orig, "wb") as fh:
             fh.write(vop)
-        with open(fc, "wb") as fh:
+        with open(f_collides, "wb") as fh:
             fh.write(vcp)
-        cvw = CollideViewWindow(self, fo, fc, test, page)
+        cvw = CollideViewWindow(self, f_orig, f_collides, test, page)
         if cvw.exec_() == QDialog.Accepted:
             if cvw.action == "original":
                 pm = QPixmap()
@@ -1240,8 +1240,8 @@ class Manager(QWidget):
                 )
                 self.collideModel.item(r, 1).setIcon(QIcon(pm))
                 self.collideModel.item(r, 2).setText("replace")
-        fo.unlink()
-        fc.unlink()
+        f_orig.unlink()
+        f_collides.unlink()
 
     def doCActions(self):
         for r in range(self.collideModel.rowCount()):
@@ -1786,7 +1786,7 @@ class Manager(QWidget):
         version = int(self.ui.reviewTW.item(r, 2).text())
         img = self.msgr.get_annotations_image(test, question)
         # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
-        # TODO: but more likely superceded by "pagedata" changes
+        # TODO: but more likely superseded by "pagedata" changes
         # Context manager not appropriate, Issue #1996
         f = Path(tempfile.NamedTemporaryFile(delete=False).name)
         with open(f, "wb") as fh:
