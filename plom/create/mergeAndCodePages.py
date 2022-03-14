@@ -129,7 +129,7 @@ def create_exam_and_insert_QR(
         exam[p - 1].clean_contents()
         # name of the group to which page belongs
         group = page_to_group[p]
-        text = "{} {} {}".format(f"{papernum:04}", group.ljust(5), f"p. {p}")
+        text = f"Test {papernum:04} {group:5} p. {p}"
         odd = (p - 1) % 2 == 0
         if no_qr:
             odd = None
@@ -175,8 +175,8 @@ def pdf_page_add_labels_QRs(page, shortname, stamp, qr_code, odd=True):
     BL = fitz.Rect(15, page_height - 90, 85, page_height - 20)
     BR = fitz.Rect(page_width - 85, page_height - 90, page_width - 15, page_height - 20)
 
-    # papernum-question-page stamp in top-centre of page
-    rect = fitz.Rect(page_width // 2 - 70, 20, page_width // 2 + 70, 46)
+    # stamp in top-centre of page (TODO: fix hardcoded width Issue #1902)
+    rect = fitz.Rect(page_width // 2 - 90, 20, page_width // 2 + 90, 46)
     excess = page.insert_textbox(
         rect,
         stamp,
