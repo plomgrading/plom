@@ -145,7 +145,7 @@ parser.add_argument(
     metavar="N",
     action="store",
     help="""
-        Specify a Canvas Course ID (an integer N).
+        Specify a Canvas course ID (an integer N).
         Interactively prompt from a list if omitted.
     """,
 )
@@ -155,17 +155,17 @@ parser.add_argument(
     metavar="N",
     action="store",
     help="""
-        Specify a Canvas Section ID (an integer N).
+        Specify a Canvas section ID (an integer N).
         Interactively prompt from a list if omitted.
-        Pass "--no-section" to not use Sections at all.
+        Pass "--no-section" to not use sections at all.
     """,
 )
 parser.add_argument(
     "--no-section",
     action="store_true",
     help="""
-        Overrides the --section flag to not use Sections (and take the
-        classlist directly from the Course).
+        Overrides the --section flag to not use sections (and take the
+        classlist directly from the course).
     """,
 )
 parser.add_argument(
