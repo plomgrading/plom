@@ -44,7 +44,7 @@ from canvasapi.exceptions import CanvasException
 import pandas
 from tqdm import tqdm
 
-from plom import __version__
+from plom import __version__ as __plom_version__
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
     canvas_login,
@@ -59,6 +59,10 @@ from plom.canvas import (
     interactively_get_course,
     interactively_get_section,
 )
+
+
+# bump this a bit if you change this script
+__script_version__ = "0.1.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -107,7 +111,11 @@ parser = argparse.ArgumentParser(
     epilog="\n".join(__doc__.split("\n")[1:]),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--version",
+    action="version",
+    version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__})",
+)
 parser.add_argument(
     "--api_url",
     type=str,

@@ -46,7 +46,7 @@ import PIL.Image
 import requests
 from tqdm import tqdm
 
-from plom import __version__
+from plom import __version__ as __plom_version__
 from plom.misc_utils import working_directory
 from plom.server import PlomServer
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
@@ -62,6 +62,10 @@ from plom.canvas import (
     interactively_get_section,
 )
 import plom.scan
+
+
+# bump this a bit if you change this script
+__script_version__ = "0.1.0"
 
 
 def get_short_name(long_name):
@@ -361,7 +365,11 @@ parser = argparse.ArgumentParser(
     epilog="\n".join(__doc__.split("\n")[1:]),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--version",
+    action="version",
+    version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__})",
+)
 parser.add_argument(
     "--api_url",
     type=str,
