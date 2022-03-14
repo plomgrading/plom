@@ -67,9 +67,9 @@
 % the current question.
 \newcommand{\blankpage}[1][\thequestion]{
 \ifthenelse{\boolean{space}}{
-\pagebreak
+\par\vfill\newpage
 \noindent \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
-\pagebreak
+\par\vfill\newpage
 }{} }
 
 % Use this to make a nice answerbox which will display the correct answer
