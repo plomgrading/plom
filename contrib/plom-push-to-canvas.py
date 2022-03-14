@@ -150,22 +150,26 @@ parser.add_argument(
     """,
 )
 parser.add_argument(
+    "--no-section",
+    action="store_true",
+    help="""
+        Don't use section information from Canvas.
+        In this case we will take the classlist directly from the
+        course.
+        In most cases, this is probably what you want UNLESS you have
+        the same student in multiple sections (causing duplicates in
+        the classlist, leading to problems).
+    """,
+)
+parser.add_argument(
     "--section",
     type=int,
     metavar="N",
     action="store",
     help="""
         Specify a Canvas section ID (an integer N).
-        Interactively prompt from a list if omitted.
-        Pass "--no-section" to not use sections at all.
-    """,
-)
-parser.add_argument(
-    "--no-section",
-    action="store_true",
-    help="""
-        Overrides the --section flag to not use sections (and take the
-        classlist directly from the course).
+        If neither this nor "no-section" is specified then the script
+        will interactively prompt from a list.
     """,
 )
 parser.add_argument(
