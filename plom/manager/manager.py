@@ -53,7 +53,7 @@ from .unknownpageview import UnknownViewWindow
 from .collideview import CollideViewWindow
 from .discardview import DiscardViewWindow
 from .reviewview import ReviewViewWindow
-from .selectrectangle import SelectRectangleWindow, IDViewWindow
+from .selectrectangle import SelectRectangleWindow
 from plom.plom_exceptions import (
     PlomSeriousException,
     PlomAPIException,
@@ -1536,7 +1536,7 @@ class Manager(QWidget):
             imageName = Path(td) / f"id.{img_ext}"
             with open(imageName, "wb") as fh:
                 fh.write(img_bytes)
-            IDViewWindow(self, imageName, sid).exec_()
+            GroupView(self, imageName, title=f"ID page currently IDed as {sid}").exec_()
 
     def runPredictor(self, ignoreStamp=False):
         rmsg = self.msgr.IDrunPredictions(
