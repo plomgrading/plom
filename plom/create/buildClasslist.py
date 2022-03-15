@@ -323,7 +323,9 @@ def get_demo_classlist(spec):
 
     if success is False:
         print(">>>", success, clist)
-        raise Exception(f"Something has gone seriously wrong with the demo classlist - {clist}.")
+        raise Exception(
+            f"Something has gone seriously wrong with the demo classlist - {clist}."
+        )
 
     f.unlink()
     return clist
