@@ -1268,7 +1268,7 @@ class Manager(QWidget):
                 "Action to be taken",
             ]
         )
-        self.ui.discardTV.setIconSize(QSize(96, 96))
+        self.ui.discardTV.setIconSize(QSize(32, 32))
         self.ui.discardTV.activated.connect(self.viewDPage)
         self.ui.discardTV.setColumnHidden(0, True)
         self.refreshDList()
@@ -1287,7 +1287,7 @@ class Manager(QWidget):
             )
             it1.setIcon(QIcon(pm))
             it2 = QStandardItem(reason)
-            it3 = QStandardItem("none")
+            it3 = QStandardItem("")
             it3.setTextAlignment(Qt.AlignCenter)
             self.discardModel.insertRow(r, [it0, it1, it2, it3])
             r += 1
@@ -1309,32 +1309,18 @@ class Manager(QWidget):
             return
         with tempfile.NamedTemporaryFile() as dh:
             dh.write(vdp)
-            dvw = DiscardViewWindow(self, dh.name)
-            if dvw.exec_() == QDialog.Accepted:
-                if dvw.action == "unknown":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_move.svg")
-                    )
-                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
-                    self.discardModel.item(r, 3).setText("move")
-                elif dvw.action == "none":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_none.svg")
-                    )
-                    self.discardModel.item(r, 1).setIcon(QIcon(pm))
-                    self.discardModel.item(r, 3).setText("none")
+            if DiscardViewWindow(self, dh.name).exec_() == QDialog.Accepted:
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_move.svg")
+                )
+                self.discardModel.item(r, 1).setIcon(QIcon(pm))
+                self.discardModel.item(r, 3).setText("move")
 
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
             if self.discardModel.item(r, 3).text() == "move":
                 self.msgr.discardToUnknown(self.discardModel.item(r, 0).text())
-            else:
-                pass
-                # print(
-                #     "No action for file {}.".format(self.discardModel.item(r, 0).text())
-                # )
         self.refreshDList()
         self.refreshUList()
 
