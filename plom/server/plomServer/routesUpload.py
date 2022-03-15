@@ -854,6 +854,8 @@ class UploadHandler:
             raise web.HTTPConflict(
                 reason="Attempt to build tests without contiguous numbers"
             ) from None
+        except KeyError as e:
+            raise web.HTTPConflict(reason=str(e)) from None
         if not r:
             raise web.HTTPNotAcceptable(reason=summary.strip())
         return web.Response(text=summary, status=200)

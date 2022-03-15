@@ -148,16 +148,14 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
 
     """
     ok = True
-    status = ""
 
     # Cannot create test n before test n-1 (yet: Issue #1745)
     if t > 1:
         if Test.get_or_none(test_number=t - 1) is None:
             raise ValueError(f"Error creating test {t} without test {t-1}")
 
-    if self.createTest(t):
-        status += "Add DB row for paper {:04}:".format(t)
-    else:
+    status = f"Add DB row for paper {t:04}:"
+    if not self.createTest(t):
         status += " Error creating"
         ok = False
 
@@ -176,10 +174,12 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
     for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
         gs = str(g + 1)  # now a str and 1,2,3,...
         v = vmap_for_test[g + 1]
-        assert v in range(1, spec["numberOfVersions"] + 1)
+        if v in not range(1, spec["numberOfVersions"] + 1):
+            raise KeyError(f"problem with version map: v = {v} out of range")
         if spec["question"][gs]["select"] == "fix":
             vstr = "f{}".format(v)
-            assert v == 1
+            if v != 1:
+                raise KeyError(f"v={v} but select=fix question only allows v=1")
         elif spec["question"][gs]["select"] == "shuffle":
             vstr = "v{}".format(v)
         else:
