@@ -150,13 +150,13 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
     ok = True
     status = ""
 
-    # make sure test numbers are contiguous. Cannot create test n before test n-1.
+    # Cannot create test n before test n-1 (yet: Issue #1745)
     if t > 1:
         if Test.get_or_none(test_number=t - 1) is None:
             raise ValueError(f"Error creating test {t} without test {t-1}")
 
     if self.createTest(t):
-        status += "DB entry for test {:04}:".format(t)
+        status += "Add DB row for paper {:04}:".format(t)
     else:
         status += " Error creating"
         ok = False

@@ -420,11 +420,10 @@ def main():
 
     elif args.command == "make-db":
         if args.from_file is None:
-            status = build_database(msgr=(args.server, args.password))
+            build_database(msgr=(args.server, args.password))
         else:
             qvmap = version_map_from_file(args.from_file)
-            status = build_database(vermap=qvmap, msgr=(args.server, args.password))
-        print(status)
+            build_database(vermap=qvmap, msgr=(args.server, args.password))
 
     elif args.command == "get-ver-map":
         f = save_version_map(args.file, msgr=(args.server, args.password))
@@ -432,8 +431,7 @@ def main():
 
     elif args.command == "make":
         try:
-            status = build_database(msgr=(args.server, args.password))
-            print(status)
+            build_database(msgr=(args.server, args.password))
         except PlomExistingDatabase:
             print("Since we already have a database, move on to making papers")
         build_papers(
