@@ -44,7 +44,7 @@ from canvasapi.exceptions import CanvasException
 import pandas
 from tqdm import tqdm
 
-from plom import __version__
+from plom import __version__ as __plom_version__
 from plom.canvas import __DEFAULT_CANVAS_API_URL__
 from plom.canvas import (
     canvas_login,
@@ -59,6 +59,10 @@ from plom.canvas import (
     interactively_get_course,
     interactively_get_section,
 )
+
+
+# bump this a bit if you change this script
+__script_version__ = "0.1.0"
 
 
 def sis_id_to_student_dict(student_list):
@@ -107,7 +111,11 @@ parser = argparse.ArgumentParser(
     epilog="\n".join(__doc__.split("\n")[1:]),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
-parser.add_argument("--version", action="version", version="%(prog)s " + __version__)
+parser.add_argument(
+    "--version",
+    action="version",
+    version=f"%(prog)s {__script_version__} (using Plom version {__plom_version__})",
+)
 parser.add_argument(
     "--api_url",
     type=str,
@@ -137,8 +145,20 @@ parser.add_argument(
     metavar="N",
     action="store",
     help="""
-        Specify a Canvas Course ID (an integer N).
+        Specify a Canvas course ID (an integer N).
         Interactively prompt from a list if omitted.
+    """,
+)
+parser.add_argument(
+    "--no-section",
+    action="store_true",
+    help="""
+        Don't use section information from Canvas.
+        In this case we will take the classlist directly from the
+        course.
+        In most cases, this is probably what you want UNLESS you have
+        the same student in multiple sections (causing duplicates in
+        the classlist, leading to problems).
     """,
 )
 parser.add_argument(
@@ -147,17 +167,9 @@ parser.add_argument(
     metavar="N",
     action="store",
     help="""
-        Specify a Canvas Section ID (an integer N).
-        Interactively prompt from a list if omitted.
-        Pass "--no-section" to not use Sections at all.
-    """,
-)
-parser.add_argument(
-    "--no-section",
-    action="store_true",
-    help="""
-        Overrides the --section flag to not use Sections (and take the
-        classlist directly from the Course).
+        Specify a Canvas section ID (an integer N).
+        If neither this nor "no-section" is specified then the script
+        will interactively prompt from a list.
     """,
 )
 parser.add_argument(
