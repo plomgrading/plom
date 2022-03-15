@@ -141,7 +141,9 @@ class PlomDemoServer(PlomServer):
         # TODO: probably want `with Messenger(...) as msgr:` here
         msgr = plom.create.start_messenger(s, pwd, verify_ssl=False)
         try:
-            plom.create.upload_demo_classlist(msgr=msgr)
+            # grab the spec - needed for classlist parsing
+            spec = msgr.get_spec()
+            plom.create.upload_demo_classlist(spec, msgr=msgr)
             # cmdline: "plom-create makedb" and "plom-create make"
             status = plom.create.build_database(msgr=msgr)
             print("Database built with output:")
