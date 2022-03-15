@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019-2020
+%% Template released under AGPLv3 by Andrew Rechnitzer (c) 2019-2022
 %% This template uses latex exam class.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -67,10 +67,11 @@
 % the current question.
 \newcommand{\blankpage}[1][\thequestion]{
 \ifthenelse{\boolean{space}}{
-\pagebreak
+\par\vfill\newpage
 \noindent \emph{This blank page is for your solution to \textbf{Question~{#1}} if you need more space.}
-\pagebreak
+\par\vfill\newpage
 }{} }
+% Thanks to PDL for improving the blankpage.
 
 % Use this to make a nice answerbox which will display the correct answer
 % when solutions are printed and is otherwise blank for the students

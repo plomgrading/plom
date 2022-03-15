@@ -23,11 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-* Manager shows totals and highlights tabs that need attention.
 
 ### Changed
 
 ### Fixed
+
+
+
+## [0.8.8] - 2022-03-14
+
+### Added
+* Manager shows totals and highlights tabs that need attention.
+* Add word "Test" to paper label: "Test 0123 Q1  p. 4".
+* Version numbers to Canvas-related scripts.
+
+### Fixed
+* Manager tool was broken on Windows.
 * Misc fixes and code cleanups.
 
 
@@ -720,7 +731,8 @@ in most cases.
 This is the first release of Plom, PaperLess Open Marking.
 
 
-[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.7...main
+[Unreleased]: https://gitlab.com/plom/plom/compare/v0.8.8...main
+[0.8.8]: https://gitlab.com/plom/plom/compare/v0.8.7...v0.8.8
 [0.8.7]: https://gitlab.com/plom/plom/compare/v0.8.6...v0.8.7
 [0.8.6]: https://gitlab.com/plom/plom/compare/v0.8.5...v0.8.6
 [0.8.5]: https://gitlab.com/plom/plom/compare/v0.8.2...v0.8.5

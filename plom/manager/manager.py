@@ -1008,9 +1008,12 @@ class Manager(QWidget):
         vp = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
         # get the list of ID'd papers
         iDict = self.msgr.getIdentified()
-        with tempfile.NamedTemporaryFile() as fh:
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(vp)
-            pagedata["local_filename"] = fh.name
+        pagedata["local_filename"] = f
+        if True:  # temp, minimise diff
             uvw = UnknownViewWindow(
                 self,
                 [pagedata],
@@ -1048,6 +1051,7 @@ class Manager(QWidget):
                         resources.read_binary(plom.client.icons, "manager_hw.svg")
                     )
                     self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+        f.unlink()
 
     def doUActions(self):
         for r in range(self.unknownModel.rowCount()):
@@ -1136,15 +1140,18 @@ class Manager(QWidget):
                 ),
             ).exec_()
             return
-        with tempfile.NamedTemporaryFile() as fh:
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(cp[1])
-            GroupView(
-                parent,
-                [fh.name],
-                title=f"Paper {testNumber} page {pageNumber} already has an image",
-                before_text="Existing image:",
-                after_text=f"Performing this action would create a collision with paper {testNumber} p. {pageNumber}",
-            ).exec_()
+        GroupView(
+            parent,
+            [f],
+            title=f"Paper {testNumber} page {pageNumber} already has an image",
+            before_text="Existing image:",
+            after_text=f"Performing this action would create a collision with paper {testNumber} p. {pageNumber}",
+        ).exec_()
+        f.unlink()
 
     def initCollideTab(self):
         self.collideModel = QStandardItemModel(0, 6)
@@ -1205,34 +1212,31 @@ class Manager(QWidget):
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
-        with tempfile.NamedTemporaryFile() as oh:
-            with tempfile.NamedTemporaryFile() as ch:
-                oh.write(vop)
-                ch.write(vcp)
-                cvw = CollideViewWindow(
-                    self,
-                    oh.name,
-                    ch.name,
-                    test,
-                    page,
+        # Context manager not appropriate, Issue #1996
+        f_orig = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        f_collides = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f_orig, "wb") as fh:
+            fh.write(vop)
+        with open(f_collides, "wb") as fh:
+            fh.write(vcp)
+        cvw = CollideViewWindow(self, f_orig, f_collides, test, page)
+        if cvw.exec_() == QDialog.Accepted:
+            if cvw.action == "original":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_discard.svg")
                 )
-                if cvw.exec_() == QDialog.Accepted:
-                    if cvw.action == "original":
-                        pm = QPixmap()
-                        pm.loadFromData(
-                            resources.read_binary(
-                                plom.client.icons, "manager_discard.svg"
-                            )
-                        )
-                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
-                        self.collideModel.item(r, 2).setText("discard")
-                    elif cvw.action == "collide":
-                        pm = QPixmap()
-                        pm.loadFromData(
-                            resources.read_binary(plom.client.icons, "manager_test.svg")
-                        )
-                        self.collideModel.item(r, 1).setIcon(QIcon(pm))
-                        self.collideModel.item(r, 2).setText("replace")
+                self.collideModel.item(r, 1).setIcon(QIcon(pm))
+                self.collideModel.item(r, 2).setText("discard")
+            elif cvw.action == "collide":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_test.svg")
+                )
+                self.collideModel.item(r, 1).setIcon(QIcon(pm))
+                self.collideModel.item(r, 2).setText("replace")
+        f_orig.unlink()
+        f_collides.unlink()
 
     def doCActions(self):
         for r in range(self.collideModel.rowCount()):
@@ -1308,15 +1312,18 @@ class Manager(QWidget):
         vdp = self.msgr.getDiscardImage(fname)
         if vdp is None:
             return
-        with tempfile.NamedTemporaryFile() as dh:
-            dh.write(vdp)
-            if DiscardViewWindow(self, dh.name).exec_() == QDialog.Accepted:
-                pm = QPixmap()
-                pm.loadFromData(
-                    resources.read_binary(plom.client.icons, "manager_move.svg")
-                )
-                self.discardModel.item(r, 1).setIcon(QIcon(pm))
-                self.discardModel.item(r, 3).setText("move")
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
+            fh.write(vdp)
+        if DiscardViewWindow(self, f).exec_() == QDialog.Accepted:
+            pm = QPixmap()
+            pm.loadFromData(
+                resources.read_binary(plom.client.icons, "manager_move.svg")
+            )
+            self.discardModel.item(r, 1).setIcon(QIcon(pm))
+            self.discardModel.item(r, 3).setText("move")
+        f.unlink()
 
     def doDActions(self):
         for r in range(self.discardModel.rowCount()):
@@ -1758,20 +1765,22 @@ class Manager(QWidget):
         question = int(self.ui.reviewTW.item(r, 1).text())
         version = int(self.ui.reviewTW.item(r, 2).text())
         img = self.msgr.get_annotations_image(test, question)
-        with tempfile.NamedTemporaryFile() as fh:
-            # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
+        # TODO: issue #1909: use .png/.jpg: inspect bytes with imghdr?
+        # TODO: but more likely superseded by "pagedata" changes
+        # Context manager not appropriate, Issue #1996
+        f = Path(tempfile.NamedTemporaryFile(delete=False).name)
+        with open(f, "wb") as fh:
             fh.write(img)
-            rvw = ReviewViewWindow(self, [fh.name])
-            if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "review":
-                    # first remove auth from that user - safer.
-                    if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                        self.msgr.clearAuthorisationUser(
-                            self.ui.reviewTW.item(r, 4).text()
-                        )
-                    # then map that question's owner "reviewer"
-                    self.msgr.MreviewQuestion(test, question, version)
-                    self.ui.reviewTW.item(r, 4).setText("reviewer")
+        rvw = ReviewViewWindow(self, [f])
+        if rvw.exec() == QDialog.Accepted:
+            if rvw.action == "review":
+                # first remove auth from that user - safer.
+                if self.ui.reviewTW.item(r, 4).text() != "reviewer":
+                    self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
+                # then map that question's owner "reviewer"
+                self.msgr.MreviewQuestion(test, question, version)
+                self.ui.reviewTW.item(r, 4).setText("reviewer")
+        f.unlink()
 
     def initRevIDTab(self):
         self.ui.reviewIDTW.setColumnCount(5)
