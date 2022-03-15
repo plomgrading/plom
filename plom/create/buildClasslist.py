@@ -349,7 +349,7 @@ def process_classlist_file(student_csv_file_name, spec, ignore_warnings=False):
 
     Keyword Arguments:
         ignore_warnings (bool): if true, proceed with classlist
-        upload even if there are warnings.
+        processing even if there are warnings.
 
     Return:
         list: A list of dicts, each with `"id"` and `"studentName"`.
