@@ -3,20 +3,10 @@
 
 import csv
 
-
-# this will need tuning to non-UBC context
-def idValidator(sid):
-    # csv dict-reader gives us a string
-    # should have length 8:
-    if len(sid) == 0:
-        return [False, "missing ID"]
-    if (len(sid) != 8) or (sid.isnumeric() is False):
-        return [False, "id should be an 8 digit number"]
-    return [True]
+from plom.rules import validateStudentNumber
 
 
 possible_surname_fields = ["surname", "familyName", "lastName"]
-
 possible_given_name_fields = [
     "name",
     "givenName",
@@ -122,7 +112,7 @@ class PlomCLValidator:
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = idValidator(x["id"])
+            idv = validateStudentNumber(x["id"])
             if idv[0] is False:
                 err.append([x["line"], idv[1]])
             # check non-trivial length after removing spaces and commas
@@ -147,7 +137,7 @@ class PlomCLValidator:
         for x in classList:
             # this is separate function - will be institution dependent.
             # will be better when we move to UIDs.
-            idv = idValidator(x["id"])
+            idv = validateStudentNumber(x["id"])
             if idv[0] is False:
                 err.append([x["line"], idv[1]])
             # check non-trivial length after removing spaces and commas
