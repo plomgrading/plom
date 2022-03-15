@@ -216,7 +216,7 @@ def check_latin_names(student_info_df):
     encoding_problems = []
     for index, row in student_info_df.iterrows():
         try:
-            tmp = row["studentName"].encode("Latin-1")
+            tmp = row["studentName"].encode("Latin-1")  # noqa: F841
         except UnicodeEncodeError:
             encoding_problems.append(
                 'row {}, number {}, name: "{}"'.format(
@@ -288,6 +288,24 @@ def process_classlist_backend(student_csv_file_name):
     return student_info_df
 
 
+def print_classlist_warnings_errors(warn_err):
+    # separate into warn and err
+    warn = [X for X in warn_err if X["warn_or_err"] == "warning"]
+    err = [X for X in warn_err if X["warn_or_err"] != "warning"]
+    # sort by line number
+    warn.sort(key=lambda X: X["werr_line"])
+    err.sort(key=lambda X: X["werr_line"])
+
+    if warn:
+        print("Classlist validation warnings:")
+        for X in warn:
+            print(f"\tline {X['werr_line']}: {X['werr_text']}")
+    if err:
+        print("Classlist validation errors:")
+        for X in err:
+            print(f"\tline {X['werr_line']}: {X['werr_text']}")
+
+
 def get_demo_classlist():
     """Get the demo classlist."""
     # Direct approach: but maybe I like exercising code-paths with below...
@@ -305,7 +323,7 @@ def get_demo_classlist():
     return C
 
 
-def process_classlist_file(student_csv_file_name):
+def process_classlist_file(student_csv_file_name, spec, ignore_warnings=False):
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
@@ -321,10 +339,11 @@ def process_classlist_file(student_csv_file_name):
 
     Arguments:
         student_csv_file_name (pathlib.Path/str): class info csv file.
+        spec (dict): validated test spec.
 
     Keyword Arguments:
-        demo (bool): if `True`, the filename is ignored and we use demo
-            data (default: `False`).
+        ignore_warnings (bool): if true, proceed with classlist
+        upload even if there are warnings.
 
     Return:
         list: A list of dicts, each with `"id"` and `"studentName"`.
@@ -332,6 +351,26 @@ def process_classlist_file(student_csv_file_name):
     student_csv_file_name = Path(student_csv_file_name)
     if not student_csv_file_name.exists():
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
+
+    # run the validator
+    from .classlistValidator import PlomCLValidator
+
+    vlad = PlomCLValidator()
+    success, warn_err = vlad.validate_csv(student_csv_file_name, spec=spec)
+
+    if success is False:
+        # validation failed, return warning, error list
+        print_classlist_warnings_errors(warn_err)
+        return (False, warn_err)
+
+    # validation passed but there are warnings
+    if warn_err:
+        print_classlist_warnings_errors(warn_err)
+        if ignore_warnings:
+            print("Continuing despite warnings")
+        else:
+            return (False, warn_err)
+
     df = process_classlist_backend(student_csv_file_name)
     # "records" makes it output a list-of-dicts, one per row
-    return df.to_dict("records")
+    return (True, df.to_dict("records"))

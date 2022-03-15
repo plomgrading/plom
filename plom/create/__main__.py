@@ -29,7 +29,7 @@ from stdiomask import getpass
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
-from plom.plom_exceptions import PlomExistingDatabase
+from plom.plom_exceptions import PlomExistingDatabase, PlomServerNotReady
 from plom.create import process_classlist_file, get_demo_classlist, upload_classlist
 from plom.create import start_messenger
 from plom.create import build_database, build_papers
@@ -196,6 +196,8 @@ def get_parser():
     )
     spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
+    spL.add_argument("-i", "--ignore-warnings", action="store_true", help="Ignore any classlist warnings and upload anyway.")
+
     group = spL.add_mutually_exclusive_group(required=True)
     group.add_argument("classlist", nargs="?", help="filename in csv format")
     group.add_argument(
@@ -403,9 +405,28 @@ def main():
     elif args.command == "class":
         if args.demo:
             classlist = get_demo_classlist()
+            upload_classlist(classlist, msgr=(args.server, args.password))
         else:
-            classlist = process_classlist_file(args.classlist)
-        upload_classlist(classlist, msgr=(args.server, args.password))
+            msgr = start_messenger(args.server, args.password)
+            # we need the spec, so grab it from the server
+            try:
+                spec = msgr.get_spec()
+            except PlomServerNotReady:
+                print("Server does not yet have a test-spec. We cannot proceed.")
+                msgr.closeUser()
+                msgr.stop()
+                sys.exit(1)  # TODO = more graceful exit
+
+            success, classlist = process_classlist_file(args.classlist, spec, ignore_warnings=args.ignore_warnings)
+            if success is True:
+                try:
+                    upload_classlist(classlist, msgr=msgr)
+                except Exception as err:   # TODO - make a better error handler here
+                    print("An error occurred when uploading the valid classlist: ", err)
+            else:
+                print("Could not process classlist - see messages above")
+            msgr.closeUser()
+            msgr.stop()
 
     elif args.command == "make-db":
         if args.from_file is None:
