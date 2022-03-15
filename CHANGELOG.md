@@ -10,11 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Manager shows totals and highlights tabs that need attention.
-* Add word "Test" to paper label: "Test 0123 Q1  p. 4"
-
-### Changed
+* Add word "Test" to paper label: "Test 0123 Q1  p. 4".
+* Version numbers to Canvas-related scripts.
 
 ### Fixed
+* Manager tool was broken on Windows.
 * Misc fixes and code cleanups.
 
 
