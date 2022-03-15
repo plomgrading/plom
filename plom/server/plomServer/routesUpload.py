@@ -854,10 +854,9 @@ class UploadHandler:
             raise web.HTTPConflict(
                 reason="Attempt to build tests without contiguous numbers"
             ) from None
-        if r:
-            return web.Response(text=summary, status=200)
-        else:
-            raise web.HTTPNotAcceptable(reason=summary)
+        if not r:
+            raise web.HTTPNotAcceptable(reason=summary.strip())
+        return web.Response(text=summary, status=200)
 
     @authenticate_by_token_required_fields([])
     def getGlobalPageVersionMap(self, data, request):
