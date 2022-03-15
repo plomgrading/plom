@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2020 Andrew Rechnitzer
+# Copyright (C) 2020-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
@@ -196,7 +196,12 @@ def get_parser():
     )
     spL.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     spL.add_argument("-w", "--password", type=str, help='for the "manager" user')
-    spL.add_argument("-i", "--ignore-warnings", action="store_true", help="Ignore any classlist warnings and upload anyway.")
+    spL.add_argument(
+        "-i",
+        "--ignore-warnings",
+        action="store_true",
+        help="Ignore any classlist warnings and upload anyway.",
+    )
 
     group = spL.add_mutually_exclusive_group(required=True)
     group.add_argument("classlist", nargs="?", help="filename in csv format")
@@ -403,30 +408,35 @@ def main():
             msgr.stop()
 
     elif args.command == "class":
-        if args.demo:
-            classlist = get_demo_classlist()
-            upload_classlist(classlist, msgr=(args.server, args.password))
-        else:
-            msgr = start_messenger(args.server, args.password)
-            # we need the spec, so grab it from the server
-            try:
-                spec = msgr.get_spec()
-            except PlomServerNotReady:
-                print("Server does not yet have a test-spec. We cannot proceed.")
-                msgr.closeUser()
-                msgr.stop()
-                sys.exit(1)  # TODO = more graceful exit
+        # we need the spec, so grab it from the server
+        msgr = start_messenger(args.server, args.password)
+        try:
+            spec = msgr.get_spec()
+        except PlomServerNotReady:
+            print("Server does not yet have a test-spec. We cannot proceed.")
+            # bailing out - close and stop messenger
+            msgr.closeUser()
+            msgr.stop()
+            sys.exit(1)  # TODO = more graceful exit
 
-            success, classlist = process_classlist_file(args.classlist, spec, ignore_warnings=args.ignore_warnings)
+        if args.demo:
+            classlist = get_demo_classlist(spec)
+            upload_classlist(classlist, msgr=msgr)
+        else:
+
+            success, classlist = process_classlist_file(
+                args.classlist, spec, ignore_warnings=args.ignore_warnings
+            )
             if success is True:
                 try:
                     upload_classlist(classlist, msgr=msgr)
-                except Exception as err:   # TODO - make a better error handler here
+                except Exception as err:  # TODO - make a better error handler here
                     print("An error occurred when uploading the valid classlist: ", err)
             else:
                 print("Could not process classlist - see messages above")
-            msgr.closeUser()
-            msgr.stop()
+        # close up and stop messenger
+        msgr.closeUser()
+        msgr.stop()
 
     elif args.command == "make-db":
         if args.from_file is None:

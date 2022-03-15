@@ -203,20 +203,19 @@ class PlomCLValidator:
                         "werr_text": f"Classlist too short. Classlist contains {len(cl_as_dicts)} names, but spec:numberToName is {spec['numberToName']}",
                     }
                 )
+                return (False, werr)  # Fail out here
+
             if spec["numberToProduce"] == -1:
                 # nothing to check - will produce as many as in classlist
                 pass
             elif spec["numberToProduce"] < len(cl_as_dicts):
                 werr.append(
                     {
-                        "warn_or_err": "error",  # TODO - should this be a warning rather than an error
+                        "warn_or_err": "warning",
                         "werr_line": 0,
-                        "werr_text": f"Classlist too long. Classlist contains {len(cl_as_dicts)} names, but spec:numberToProduce is {spec['numberToProduce']}",
+                        "werr_text": f"Classlist is long. Classlist contains {len(cl_as_dicts)} names, but spec:numberToProduce is {spec['numberToProduce']}",
                     }
                 )
-            # Fail out if there are any errors at this point.
-            if werr:
-                return (False, werr)
 
         if len(cl_head) == 3:  # is true, id, studentName
             cid = self.check_ID_StudentName(cl_as_dicts)
@@ -230,7 +229,7 @@ class PlomCLValidator:
                 werr.append(
                     {"warn_or_err": "warning", "werr_line": w[0], "werr_text": w[1]}
                 )
-        if cid[0] is False:
+        if cid[0] is False:  # big errors in id/name checking
             for e in cid[2]:
                 werr.append(
                     {"warn_or_err": "error", "werr_line": e[0], "werr_text": e[1]}

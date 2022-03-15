@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2019-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2020 Dryden Wiebe
@@ -306,7 +306,7 @@ def print_classlist_warnings_errors(warn_err):
             print(f"\tline {X['werr_line']}: {X['werr_text']}")
 
 
-def get_demo_classlist():
+def get_demo_classlist(spec):
     """Get the demo classlist."""
     # Direct approach: but maybe I like exercising code-paths with below...
     # with resources.open_binary(plom, "demoClassList.csv") as f:
@@ -318,9 +318,15 @@ def get_demo_classlist():
     f = Path(tempfile.NamedTemporaryFile(delete=False, suffix=".csv").name)
     with open(f, "wb") as fh:
         fh.write(b)
-    C = process_classlist_file(f)
+
+    success, clist = process_classlist_file(f, spec, ignore_warnings=True)
+
+    if success is False:
+        print(">>>", success, clist)
+        raise Exception(f"Something has gone seriously wrong with the demo classlist - {clist}.")
+
     f.unlink()
-    return C
+    return clist
 
 
 def process_classlist_file(student_csv_file_name, spec, ignore_warnings=False):
