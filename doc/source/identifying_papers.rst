@@ -28,6 +28,23 @@ These last two cases require human-intervention, which is where “identifier”
 Running the auto-identifier
 ---------------------------
 
+1. Open the manager tool.  "Progress" -> "ID progress".
+2. Click "Select ID rectangle".
+3. Click "Run predictions".
+4. Wait "a while" (maybe a minute or two) and click
+   "Refresh Prediction list".
+
+.. caution::
+
+   This tool does not fail gracefully: you may have to muck around in your
+   server file space.  If you've waited more than 5 minutes and its still
+   running, contact your server admin, look at logs and server stdout, etc.
+   See `Issue #878 <https://gitlab.com/plom/plom/-/issues/878>`_,
+   `Issue #862 <https://gitlab.com/plom/plom/-/issues/862>`_,
+   `Issue #869 <https://gitlab.com/plom/plom/-/issues/869>`_,
+   and maybe others!
+
+
 
 Manually identifying
 --------------------
