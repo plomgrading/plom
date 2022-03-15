@@ -1013,44 +1013,43 @@ class Manager(QWidget):
         with open(f, "wb") as fh:
             fh.write(vp)
         pagedata["local_filename"] = f
-        if True:  # temp, minimise diff
-            uvw = UnknownViewWindow(
-                self,
-                [pagedata],
-                [self.max_papers, self.numberOfPages, self.numberOfQuestions],
-                iDict,
-            )
-            if uvw.exec_() == QDialog.Accepted:
-                # Colin hates all these hardcoded integers!
-                self.unknownModel.item(r, 4).setText(uvw.action)
-                self.unknownModel.item(r, 5).setText("{}".format(uvw.theta))
-                self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
-                # questions is now of the form "1" or "1,2" or "1,2,3" etc
-                self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
-                if uvw.action == "discard":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_discard.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-                elif uvw.action == "extra":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_extra.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-                elif uvw.action == "test":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_test.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
-                elif uvw.action == "homework":
-                    pm = QPixmap()
-                    pm.loadFromData(
-                        resources.read_binary(plom.client.icons, "manager_hw.svg")
-                    )
-                    self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+        uvw = UnknownViewWindow(
+            self,
+            [pagedata],
+            [self.max_papers, self.numberOfPages, self.numberOfQuestions],
+            iDict,
+        )
+        if uvw.exec_() == QDialog.Accepted:
+            # Colin hates all these hardcoded integers!
+            self.unknownModel.item(r, 4).setText(uvw.action)
+            self.unknownModel.item(r, 5).setText("{}".format(uvw.theta))
+            self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
+            # questions is now of the form "1" or "1,2" or "1,2,3" etc
+            self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
+            if uvw.action == "discard":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_discard.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            elif uvw.action == "extra":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_extra.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            elif uvw.action == "test":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_test.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
+            elif uvw.action == "homework":
+                pm = QPixmap()
+                pm.loadFromData(
+                    resources.read_binary(plom.client.icons, "manager_hw.svg")
+                )
+                self.unknownModel.item(r, 1).setIcon(QIcon(pm))
         f.unlink()
 
     def doUActions(self):
