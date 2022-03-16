@@ -121,16 +121,16 @@ class QuestionViewDialog(GroupView):
             s += f" (ver {ver})"
         self.setWindowTitle(s)
         self.tgv = (testnum, questnum, ver)
-        grid = self.layout()
+        layout = self.layout()
         if marker:
             self.marker = marker
             tagButton = QPushButton("&Tags")
             tagButton.clicked.connect(self.tags)
-            # insert the tag button just before the standard buttons - also fixes #2002
+            # insert the tag button just before the standard buttons
             # cosmetic fixes - fix size of button and align-right
             tagButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            grid.insertWidget(grid.count() - 1, tagButton)
-            grid.setAlignment(tagButton, Qt.AlignRight)
+            layout.insertWidget(layout.count() - 1, tagButton)
+            layout.setAlignment(tagButton, Qt.AlignRight)
 
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
