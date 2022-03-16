@@ -64,10 +64,7 @@ class GroupView(QDialog):
         super().__init__(parent)
         if title:
             self.setWindowTitle(title)
-        self.testImg = ImageViewWidget(
-            self, fnames, dark_background=True, has_reset_button=False
-        )
-        resetB = QPushButton("&reset view")
+        self.testImg = ImageViewWidget(self, fnames, dark_background=True)
         grid = QVBoxLayout()
         if before_text:
             label = QLabel(before_text)
@@ -82,7 +79,6 @@ class GroupView(QDialog):
         # some extra space before the main dialog buttons
         grid.addSpacing(6)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.addButton(resetB, QDialogButtonBox.ActionRole)
         buttons.accepted.connect(self.accept)
         grid.addWidget(buttons)
         self.setLayout(grid)
@@ -93,7 +89,6 @@ class GroupView(QDialog):
                     int(self.parent().height() * 11 / 12),
                 )
             )
-        resetB.clicked.connect(self.testImg.resetView)
         if bigger:
             # TODO: seems needed for Ctrl-R double-click popup
             self.testImg.resetView()
