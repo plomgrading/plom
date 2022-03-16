@@ -59,7 +59,7 @@ class ImageViewWidget(QWidget):
     ):
         super().__init__(parent)
         # Grab an examview widget (a interactive subclass of QGraphicsView)
-        self.view = ExamView(image_data, dark_background=dark_background)
+        self.view = _ExamView(image_data, dark_background=dark_background)
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
         grid = QVBoxLayout()
@@ -167,7 +167,7 @@ class ImageViewWidget(QWidget):
         QTimer.singleShot(32, self.view.resetView)
 
 
-class ExamView(QGraphicsView):
+class _ExamView(QGraphicsView):
     """Display images with some interaction: click-to-zoom/unzoom
 
     args:
