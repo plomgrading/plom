@@ -14,23 +14,7 @@ import pandas
 import plom
 from plom.finish.return_tools import import_canvas_csv
 
-
-possible_surname_fields = ["surname", "familyName", "lastName"]
-
-possible_given_name_fields = [
-    "name",
-    "givenName",
-    "firstName",
-    "givenNames",
-    "firstNames",
-    "preferredName",
-    "preferredNames",
-    "nickName",
-    "nickNames",
-]
-
-canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
-
+from plom.create.classlistValidator import possible_given_name_fields, possible_surname_fields, PlomCLValidator
 
 # Note: file is full of pandas warnings, which I think are false positives
 # pylint: disable=unsubscriptable-object
@@ -59,6 +43,7 @@ def clean_non_canvas_csv(csv_file_name):
     df.rename(columns=lambda x: x.strip(), inplace=True)
 
     if "id" not in df.columns:
+        # note that this should be caught by the validator
         raise ValueError('no "id" column is present')
     print('"id" column present')
     # strip excess whitespace
@@ -99,73 +84,6 @@ def clean_non_canvas_csv(csv_file_name):
     return df[["id", "studentName"]]
 
 
-def check_is_non_canvas_csv(csv_file_name):
-    """Read the csv file and check if id and appropriate student name exist.
-
-    1. Check if id is present.
-    2. Check if studentName is preset.
-    3. If not, check for given name and surname in the document.
-
-    Arguments:
-        csv_file_name (pathlib.Path/str): the csv file.
-
-    Returns:
-        bool
-    """
-
-    student_info_df = pandas.read_csv(csv_file_name, dtype="object")
-    print('Loading from non-Canvas csv file to check file: "{0}"'.format(csv_file_name))
-
-    # strip excess whitespace from column names
-    student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
-
-    if "id" not in student_info_df.columns:
-        print('Cannot find "id" column')
-        print("Columns present = {}".format(student_info_df.columns))
-        return False
-
-    # if we have don't have  then we are good to go.
-    if "studentName" not in student_info_df.columns:
-
-        # we need one of some approx of last-name field
-        firstname_column_title = None
-        for column_title in student_info_df.columns:
-            if column_title.casefold() in (
-                x.casefold() for x in possible_surname_fields
-            ):
-                print('"{}" column present'.format(column_title))
-                firstname_column_title = column_title
-                break
-        if firstname_column_title is None:
-            print(
-                'Cannot find column to use for "surname", tried: {}'.format(
-                    ", ".join(possible_surname_fields)
-                )
-            )
-            print("Columns present = {}".format(student_info_df.columns))
-            return False
-
-        # we need one of some approx of given-name field
-        lastname_column_title = None
-        for column_title in student_info_df.columns:
-            if column_title.casefold() in (
-                x.casefold() for x in possible_given_name_fields
-            ):
-                print('"{}" column present'.format(column_title))
-                lastname_column_title = column_title
-                break
-        if lastname_column_title is None:
-            print(
-                'Cannot find column to use for "given name", tried: {}'.format(
-                    ", ".join(possible_given_name_fields)
-                )
-            )
-            print("Columns present = {}".format(student_info_df.columns))
-            return False
-
-    return True
-
-
 def clean_canvas_csv(csv_file_name):
     """Read the canvas csv file and clean the csv file.
 
@@ -182,55 +100,6 @@ def clean_canvas_csv(csv_file_name):
     student_info_df = student_info_df[["Student Number", "Student"]]
     student_info_df.columns = ["id", "studentName"]
     return student_info_df
-
-
-def check_is_canvas_csv(csv_file_name):
-    """Detect if a csv file is likely a Canvas-exported classlist.
-
-    Arguments:
-        csv_file_name (pathlib.Path/str): csv file to be checked.
-
-    Returns:
-        bool: True if we think the input was from Canvas, based on
-            presence of certain header names.  Otherwise False.
-    """
-    with open(csv_file_name) as csvfile:
-        csv_reader = csv.DictReader(csvfile, skipinitialspace=True)
-        csv_fields = csv_reader.fieldnames
-    return all(x in csv_fields for x in canvas_columns_format)
-
-
-def check_latin_names(student_info_df):
-    """Check if a dataframe has "studentName"s that encode to Latin-1.
-
-    Prints out a warning message for any that are not encodable.
-
-    Arguments:
-        student_info_df (pandas.DataFrame): with at least columns `id`
-            and `studentName`.
-
-    Returns:
-        bool: False if one or more names contain non-Latin characters.
-    """
-    # TODO - make this less eurocentric in the future.
-    encoding_problems = []
-    for index, row in student_info_df.iterrows():
-        try:
-            tmp = row["studentName"].encode("Latin-1")  # noqa: F841
-        except UnicodeEncodeError:
-            encoding_problems.append(
-                'row {}, number {}, name: "{}"'.format(
-                    index, row["id"], row["studentName"]
-                )
-            )
-
-    if len(encoding_problems) > 0:
-        print("WARNING: The following ID/name pairs contain non-Latin characters:")
-        for problem in encoding_problems:
-            print(problem)
-        return False
-    else:
-        return True
 
 
 def process_classlist_backend(student_csv_file_name):
@@ -257,12 +126,15 @@ def process_classlist_backend(student_csv_file_name):
     # we need to check it has the minimum information ie student name/id.
     # If not we will fail the process.
 
-    # First we check if this csv file is a Canvas output
-    if check_is_canvas_csv(student_csv_file_name):
+    # First we check if this csv file is a Canvas output - using the validator
+
+    vlad = PlomCLValidator()
+
+    if vlad.check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
         student_info_df = clean_canvas_csv(student_csv_file_name)
         print("We have successfully extracted columns from Canvas data and renaming")
-    elif check_is_non_canvas_csv(student_csv_file_name):
+    elif vlad.check_is_non_canvas_csv(student_csv_file_name):
         print(
             "This file looks like it was not exported from Canvas; checking for the required information..."
         )
@@ -273,18 +145,6 @@ def process_classlist_backend(student_csv_file_name):
     else:
         raise ValueError("Problems with the supplied classlist. See output above.")
 
-    # Check characters in names are latin-1 compatible
-    if not check_latin_names(student_info_df):
-        print(">>> WARNING <<<")
-        print(
-            "Potential classlist problems",
-            "The classlist you supplied contains non-Latin characters - see console output above. "
-            "You can proceed, but it might cause problems later. "
-            "Apologies for the eurocentricity.",
-        )
-
-    # print("Saving to {}".format(outputfile))
-    # df.to_csv(outputfile, index=False)
     return student_info_df
 
 
@@ -323,7 +183,7 @@ def get_demo_classlist(spec):
 
     if success is False:
         print(">>>", success, clist)
-        raise Exception(
+        raise ValueError(
             f"Something has gone seriously wrong with the demo classlist - {clist}."
         )
 
