@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
@@ -129,7 +129,7 @@ class QuestionViewDialog(GroupView):
             # insert the tag button just before the standard buttons - also fixes #2002
             # cosmetic fixes - fix size of button and align-right
             tagButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            grid.insertWidget(grid.count()-1, tagButton)
+            grid.insertWidget(grid.count() - 1, tagButton)
             grid.setAlignment(tagButton, Qt.AlignRight)
 
     def tags(self):
