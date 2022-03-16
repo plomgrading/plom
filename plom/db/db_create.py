@@ -143,12 +143,13 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
             if failure.
 
     Raises:
-        KeyError: invalid question selection scheme in spec,
+        KeyError: problems with version map or spec
         ValueError: attempt to create test n without test n-1.
-
+            or attempts to create a test that already exists.
+        RuntimeError: unexpected error, for example we were able
+            to create the test but not the question groups
+            associated with it.
     """
-    ok = True
-
     # Cannot create test n before test n-1 (yet: Issue #1745)
     if t > 1:
         if Test.get_or_none(test_number=t - 1) is None:
@@ -156,45 +157,34 @@ def addSingleTestToDB(self, spec, t, vmap_for_test):
 
     status = f"Add DB row for paper {t:04}:"
     if not self.createTest(t):
-        status += " Error creating"
-        ok = False
+        raise ValueError(f"A DB row for paper {t:04} already exists")
+    if not self.createIDGroup(t, [spec["idPage"]]):
+        raise RuntimeError(f"Failed to create idgroup for paper {t:04}")
+    status += " ID"
 
-    if self.createIDGroup(t, [spec["idPage"]]):
-        status += " ID"
-    else:
-        status += " Error creating idgroup"
-        ok = False
-
-    if self.createDNMGroup(t, spec["doNotMarkPages"]):
-        status += " DNM"
-    else:
-        status += "Error creating DoNotMark-group"
-        ok = False
+    if not self.createDNMGroup(t, spec["doNotMarkPages"]):
+        raise RuntimeError(f"Failed to create DoNotMark-group for paper {t:04}")
+    status += " DNM"
 
     for g in range(spec["numberOfQuestions"]):  # runs from 0,1,2,...
         gs = str(g + 1)  # now a str and 1,2,3,...
         v = vmap_for_test[g + 1]
-        if v in not range(1, spec["numberOfVersions"] + 1):
-            raise KeyError(f"problem with version map: v = {v} out of range")
-        if spec["question"][gs]["select"] == "fix":
+        if v not in range(1, spec["numberOfVersions"] + 1):
+            raise KeyError(f"problem with version map for Q{gs}: v={v} out of range")
+        select = spec["question"][gs]["select"]
+        if select == "fix":
             vstr = "f{}".format(v)
             if v != 1:
                 raise KeyError(f"v={v} but select=fix question only allows v=1")
-        elif spec["question"][gs]["select"] == "shuffle":
+        elif select == "shuffle":
             vstr = "v{}".format(v)
         else:
-            raise KeyError(
-                'Invalid spec: question {} "select" of "{}" is unexpected'.format(
-                    gs, spec["question"][gs]["select"]
-                )
-            )
-        if self.createQGroup(t, int(gs), v, spec["question"][gs]["pages"]):
-            status += " Q{}{}".format(gs, vstr)
-        else:
-            status += "Error creating Question {} ver {}".format(gs, vstr)
-            ok = False
-    status += "\n"
-    return ok, status
+            raise KeyError(f'Invalid spec: Q{gs} unexpected select="{select}"')
+        if not self.createQGroup(t, g + 1, v, spec["question"][gs]["pages"]):
+            raise RuntimeError(f"Failed to create Question {gs} ver {v}")
+        status += f" Q{gs}{vstr}"
+
+    return status
 
 
 def createTest(self, t):
