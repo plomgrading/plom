@@ -135,18 +135,19 @@ class ImageViewWidget(QWidget):
 
     def zoomIn(self):
         self.view.zoomIn()
-        if self.zoomLockB:
-            self.zoomLockB.setChecked(True)
-            self._zoomLockUpdateTooltip()
+        self.zoomLockSetOn()
 
     def zoomOut(self):
         self.view.zoomOut()
-        if self.zoomLockB:
-            self.zoomLockB.setChecked(True)
-            self._zoomLockUpdateTooltip()
+        self.zoomLockSetOn()
 
     def zoomLockToggle(self):
         self._zoomLockUpdateTooltip()
+
+    def zoomLockSetOn(self):
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(True)
+            self._zoomLockUpdateTooltip()
 
     def _zoomLockUpdateTooltip(self):
         if self.zoomLockB.isChecked():
@@ -277,6 +278,8 @@ class _ExamView(QGraphicsView):
         else:
             self.zoomIn()
         self.centerOn(event.pos())
+        # Unpleasant to grub in parent but want mouse events to lock zoom
+        self.parent().zoomLockSetOn()
 
     def zoomOut(self):
         self.scale(0.8, 0.8)
