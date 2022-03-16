@@ -77,6 +77,7 @@ class SelectRectangleWindow(QDialog):
             </ul>
         """
         )
+        help.setWordWrap(True)
         grid.addWidget(help, 1, 19, 4, 3)
         grid.addWidget(self.rectB, 5, 20)
         grid.addWidget(self.zoomB, 6, 20)
