@@ -1772,13 +1772,12 @@ class Manager(QWidget):
             fh.write(img)
         rvw = ReviewViewWindow(self, [f])
         if rvw.exec() == QDialog.Accepted:
-            if rvw.action == "review":
-                # first remove auth from that user - safer.
-                if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                    self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
-                # then map that question's owner "reviewer"
-                self.msgr.MreviewQuestion(test, question, version)
-                self.ui.reviewTW.item(r, 4).setText("reviewer")
+            # first remove auth from that user - safer.
+            if self.ui.reviewTW.item(r, 4).text() != "reviewer":
+                self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
+            # then map that question's owner "reviewer"
+            self.msgr.MreviewQuestion(test, question, version)
+            self.ui.reviewTW.item(r, 4).setText("reviewer")
         f.unlink()
 
     def initRevIDTab(self):
@@ -1834,17 +1833,16 @@ class Manager(QWidget):
             imageName = Path(td) / f"id.0.{img_ext}"
             with open(imageName, "wb") as fh:
                 fh.write(img_bytes)
-            rvw = ReviewViewWindow(self, imageName, "ID pages")
+            rvw = ReviewViewWindow(self, imageName, "ID page")
             if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "review":
-                    # first remove auth from that user - safer.
-                    if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
-                        self.msgr.clearAuthorisationUser(
-                            self.ui.reviewIDTW.item(r, 1).text()
-                        )
-                    # then map that question's owner "reviewer"
-                    self.ui.reviewIDTW.item(r, 1).setText("reviewer")
-                    self.msgr.IDreviewID(test)
+                # first remove auth from that user - safer.
+                if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
+                    self.msgr.clearAuthorisationUser(
+                        self.ui.reviewIDTW.item(r, 1).text()
+                    )
+                # then map that question's owner "reviewer"
+                self.ui.reviewIDTW.item(r, 1).setText("reviewer")
+                self.msgr.IDreviewID(test)
 
     ##################
     # Solution tab stuff

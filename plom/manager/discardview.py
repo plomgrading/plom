@@ -26,7 +26,7 @@ class DiscardViewWindow(QDialog):
         moveB.clicked.connect(self.accept)
         cancelB = QPushButton("&Cancel")
         cancelB.clicked.connect(self.reject)
-        resetB.clicked.connect(lambda: self.img.resetView())
+        resetB.clicked.connect(self.img.resetView)
         resetB.setAutoDefault(False)  # return won't click the button by default.
 
         explanation = QLabel(
@@ -44,7 +44,7 @@ class DiscardViewWindow(QDialog):
         # probably should use QDialogButtonBox?
         buttons = QHBoxLayout()
         buttons.addWidget(resetB)
-        buttons.addSpacing(64)
+        buttons.addSpacing(32)
         buttons.addStretch(1)
         buttons.addWidget(moveB)
         buttons.addWidget(cancelB)
