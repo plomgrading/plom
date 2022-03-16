@@ -85,14 +85,14 @@ class ManagerMessenger(BaseMessenger):
     def appendTestToDB(self, test_number, vmap_for_test):
         """Ask server to append given test with the given versions.
 
-        TODO - fix up exceptions
-
         Returns:
             str: summary
 
         Raises:
-            PlomExistingDatabase: test already in database.
             PlomAuthenticationException: login troubles.
+            PlomServerNotReady: server has no spec.
+            PlomDatabaseCreationError: problems with version map or spec.
+            PlomConflict: row already exists or otherwise cannot create.
             PlomSeriousException: unexpected errors.
         """
         self.SRmutex.acquire()
@@ -115,7 +115,7 @@ class ManagerMessenger(BaseMessenger):
             if response.status_code == 406:
                 raise PlomDatabaseCreationError(response.reason) from None
             if response.status_code == 409:
-                raise PlomExistingDatabase(response.reason) from None
+                raise PlomConflict(response.reason) from None
             if response.status_code == 400:
                 raise PlomServerNotReady(response.reason) from None
             raise PlomSeriousException("Unexpected {}".format(e)) from None

@@ -841,23 +841,43 @@ class UploadHandler:
 
     @authenticate_by_token_required_fields(["user", "test_number", "vmap_for_test"])
     def appendTestToExamDatabase(self, data, request):
-        """Append given test to database using given version map."""
+        """Append given test to database using given version map.
+
+        Returns:
+            web.Response: 200 on success and a status message summarizing
+                the newly created row.
+                400 for server does not have spec.
+                401 for authentication, or 403 if not manager.
+                406 (unacceptable) for problems with version map or spec.
+                409 (conflict) for row already exists or otherwise cannot
+                be created.
+                500 for unexpected errors.
+        """
         if not data["user"] == "manager":
             raise web.HTTPForbidden(reason="Not manager")
+        spec = self.server.testSpec
+        if not spec:
+            raise web.HTTPBadRequest(reason="Server has no spec; cannot populate DB")
 
         # explicitly cast incoming vmap to ints
-        vmap = {int(q): int(v) for q, v in data["vmap_for_test"].items()}
+        try:
+            vmap = {int(q): int(v) for q, v in data["vmap_for_test"].items()}
+        except (TypeError, ValueError) as e:
+            raise web.HTTPNotAcceptable(
+                reason=f"Could not convert version map to int: {str(e)}"
+            ) from None
 
         try:
-            r, summary = self.server.appendTestToExamDatabase(data["test_number"], vmap)
-        except ValueError:
-            raise web.HTTPConflict(
-                reason="Attempt to build tests without contiguous numbers"
-            ) from None
-        except KeyError as e:
+            summary = self.server.appendTestToExamDatabase(
+                spec, data["test_number"], vmap
+            )
+        except ValueError as e:
             raise web.HTTPConflict(reason=str(e)) from None
-        if not r:
-            raise web.HTTPNotAcceptable(reason=summary.strip())
+        except KeyError as e:
+            raise web.HTTPNotAcceptable(reason=str(e)) from None
+        except RuntimeError as e:
+            # uneasy about explicit 500, but these are unexpected
+            raise web.HTTPInternalServerError(reason=str(e)) from None
         return web.Response(text=summary, status=200)
 
     @authenticate_by_token_required_fields([])

@@ -434,8 +434,8 @@ def initialiseExamDatabase(self, spec, vmap):
     return initialiseExamDatabaseFromSpec(spec, self.DB, vmap)
 
 
-def appendTestToExamDatabase(self, t, vmap_for_test):
-    return self.DB.addSingleTestToDB(self.testSpec, t, vmap_for_test)
+def appendTestToExamDatabase(self, spec, t, vmap_for_test):
+    return self.DB.addSingleTestToDB(spec, t, vmap_for_test)
 
 
 def getPageVersions(self, paper_idx):
