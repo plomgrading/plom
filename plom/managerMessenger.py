@@ -95,35 +95,31 @@ class ManagerMessenger(BaseMessenger):
             PlomConflict: row already exists or otherwise cannot create.
             PlomSeriousException: unexpected errors.
         """
-        self.SRmutex.acquire()
-        try:
-            response = self.put(
-                "/admin/appendTestToDB",
-                json={
-                    "user": self.user,
-                    "token": self.token,
-                    "test_number": test_number,
-                    "vmap_for_test": vmap_for_test,
-                },
-            )
-            response.raise_for_status()
-        except requests.HTTPError as e:
-            if response.status_code == 401:
-                raise PlomAuthenticationException() from None
-            if response.status_code == 403:
-                raise PlomAuthenticationException(response.reason) from None
-            if response.status_code == 406:
-                raise PlomDatabaseCreationError(response.reason) from None
-            if response.status_code == 409:
-                raise PlomConflict(response.reason) from None
-            if response.status_code == 400:
-                raise PlomServerNotReady(response.reason) from None
-            raise PlomSeriousException("Unexpected {}".format(e)) from None
-        finally:
-            self.SRmutex.release()
-
-        # JSON casts dict keys to str, force back to ints
-        return response.text
+        with self.SRmutex:
+            try:
+                response = self.put(
+                    "/admin/appendTestToDB",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                        "test_number": test_number,
+                        "vmap_for_test": vmap_for_test,
+                    },
+                )
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomDatabaseCreationError(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 400:
+                    raise PlomServerNotReady(response.reason) from None
+                raise PlomSeriousException("Unexpected {}".format(e)) from None
 
     def getGlobalPageVersionMap(self):
         with self.SRmutex:
