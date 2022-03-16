@@ -39,7 +39,7 @@ class ImageViewWidget(QWidget):
             these image files on disc or if the QPixmap will reads it once
             and stores it.  See Issue #1842.  For now, safest to assume
             you must maintain it.
-        has_reset_button (bool): whether to include a reset zoom button,
+        has_controls (bool): whether to include UI elements for zoom.
             default: True.
         compact (bool): whether to include a margin (default True) or
             not.  Correct choice will depend on parent but is probably
@@ -53,7 +53,7 @@ class ImageViewWidget(QWidget):
         parent,
         image_data=None,
         *,
-        has_reset_button=True,
+        has_controls=True,
         compact=True,
         dark_background=False,
     ):
@@ -68,7 +68,7 @@ class ImageViewWidget(QWidget):
         grid.addWidget(self.view, 1)
         grid.setSpacing(3)
         self.zoomLockB = None
-        if has_reset_button:
+        if has_controls:
             resetB = QToolButton()
             # resetB.setText("\N{Leftwards Arrow To Bar Over Rightwards Arrow To Bar}")
             # resetB.setText("\N{Up Down Black Arrow}")
