@@ -142,6 +142,9 @@ class ImageViewWidget(QWidget):
         self.zoomLockSetOn()
 
     def zoomLockToggle(self):
+        if self.zoomLockB and not self.zoomLockB.isChecked():
+            # refit the view on untoggle
+            self.resetView()
         self._zoomLockUpdateTooltip()
 
     def zoomLockSetOn(self):
