@@ -1207,7 +1207,7 @@ class Manager(QWidget):
         version = int(self.collideModel.item(r, 5).text())
 
         (pagedata,) = self.msgr.getTPageImageData(test, page, version)
-        vop = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
+        vop = self.msgr.get_image(pagedata["id"], pagedata["md5"])
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
