@@ -1022,7 +1022,7 @@ class Manager(QWidget):
         if uvw.exec_() == QDialog.Accepted:
             # Colin hates all these hardcoded integers!
             self.unknownModel.item(r, 4).setText(uvw.action)
-            self.unknownModel.item(r, 5).setText("{}".format(uvw.theta))
+            self.unknownModel.item(r, 5).setText("{}".format(uvw.get_orientation()))
             self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
             # questions is now of the form "1" or "1,2" or "1,2,3" etc
             self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))

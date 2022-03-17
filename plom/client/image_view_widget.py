@@ -90,7 +90,14 @@ class ImageViewWidget(QWidget):
             zoomLockB.clicked.connect(self.zoomLockToggle)
             self.zoomLockB = zoomLockB
             self._zoomLockUpdateTooltip()
-
+            rotateB_cw = QToolButton()
+            rotateB_cw.setText("\N{Clockwise Open Circle Arrow}")
+            rotateB_cw.setToolTip("rotate clockwise")
+            rotateB_cw.clicked.connect(lambda: self.view.rotateImage(90))
+            rotateB_ccw = QToolButton()
+            rotateB_ccw.setText("\N{Anticlockwise Open Circle Arrow}")
+            rotateB_ccw.setToolTip("rotate counter-clockwise")
+            rotateB_ccw.clicked.connect(lambda: self.view.rotateImage(-90))
             buttons = QHBoxLayout()
             buttons.setContentsMargins(0, 0, 0, 0)
             buttons.setSpacing(6)
@@ -99,6 +106,9 @@ class ImageViewWidget(QWidget):
             buttons.addWidget(zoomInB)
             buttons.addWidget(zoomOutB)
             buttons.addWidget(zoomLockB)
+            buttons.addSpacing(12)
+            buttons.addWidget(rotateB_cw)
+            buttons.addWidget(rotateB_ccw)
             buttons.addStretch(1)
             grid.addLayout(buttons)
 
@@ -120,6 +130,10 @@ class ImageViewWidget(QWidget):
         self.view.setTransform(self.viewTrans)
         self.view.horizontalScrollBar().setValue(self.dx)
         self.view.verticalScrollBar().setValue(self.dy)
+
+    def get_orientation(self):
+        """Report the sum of user-performed rotations."""
+        return self.view.theta
 
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
@@ -199,6 +213,8 @@ class _ExamView(QGraphicsView):
         self.scene = QGraphicsScene()
         self.imageGItem = QGraphicsItemGroup()
         self.scene.addItem(self.imageGItem)
+        # we track the total user-performed rotations in case caller is interested
+        self.theta = 0
         self.updateImages(image_data)
 
     def updateImages(self, image_data):
@@ -245,6 +261,8 @@ class _ExamView(QGraphicsView):
                 if pix.isNull():
                     raise ValueError(f"Could not read an image from {filename}")
                 rot = QTransform()
+                # if more than one image, its not well-defined which one theta gets
+                self.theta = data["orientation"]
                 rot.rotate(data["orientation"])
                 pix = pix.transformed(rot)
                 pixmap = QGraphicsPixmapItem(pix)
@@ -296,5 +314,10 @@ class _ExamView(QGraphicsView):
 
     def rotateImage(self, dTheta):
         self.rotate(dTheta)
-        # TODO: likely to decouple the zoom lock toggle
-        self.resetView()
+        self.theta += dTheta
+        if self.theta == 360:
+            self.theta = 0
+        if self.theta == -90:
+            self.theta = 270
+        # Unpleasant to grub in parent but want to unlock zoom not just refit
+        self.parent().resetView()
