@@ -13,6 +13,7 @@ ansi_red = "\033[91m"
 ansi_off = "\033[0m"
 warn_mark = "[" + ansi_yellow + "!" + ansi_off + "]"
 cross = "[" + ansi_red + "\N{Multiplication Sign}" + ansi_off + "]"
+question_mark = "[" + ansi_red + "?" + ansi_off + "]"
 check_mark = "[" + ansi_green + "\N{Check Mark}" + ansi_off + "]"
 
 
@@ -24,7 +25,23 @@ def status(*, msgr):
         msgr (plom.Messenger/tuple): either a connected Messenger or a
             tuple appropriate for credientials.
     """
-    print("Specification")
+    # TODO: this can't really fail without the decorator stuff failing!
+    # TODO: need contextmanager for messenger so we can start it later
+    # then we can try except PlomAPIException (e.g., see chooose.py)
+    print("Server status")
+    print("-------------\n")
+    srv_ver = msgr.get_server_version()
+    if "Plom" in srv_ver:
+        print(check_mark + f" online: https://{msgr.server}")
+        print(check_mark + f" {srv_ver}")
+    else:
+        print(question_mark + f" cannot find a Plom server at https://{msgr.server}")
+    if msgr.verify_ssl:
+        print(check_mark + " secure connection verified with SSL")
+    else:
+        print(warn_mark + " unsecure connection (self-signed or invalid SSL cert)")
+
+    print("\nSpecification")
     print("-------------\n")
     try:
         spec = msgr.get_spec()

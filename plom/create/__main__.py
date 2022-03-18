@@ -105,7 +105,9 @@ def get_parser():
     )
 
     sp = sub.add_parser(
-        "status", help="Status of the server", description="Information about the server."
+        "status",
+        help="Status of the server",
+        description="Information about the server.",
     )
     sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
     sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
