@@ -4,7 +4,7 @@
 
 from PyQt5.QtWidgets import (
     QDialog,
-    QHBoxLayout,
+    QDialogButtonBox,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -18,16 +18,8 @@ class DiscardViewWindow(QDialog):
 
     def __init__(self, parent, fnames):
         super().__init__(parent)
-        self.img = ImageViewWidget(self, fnames, has_reset_button=False)
+        self.img = ImageViewWidget(self, fnames)
         self.setWindowTitle("Restore discarded page?")
-
-        resetB = QPushButton("reset view")
-        moveB = QPushButton("&Move to unknown pages")
-        moveB.clicked.connect(self.accept)
-        cancelB = QPushButton("&Cancel")
-        cancelB.clicked.connect(self.reject)
-        resetB.clicked.connect(lambda: self.img.resetView())
-        resetB.setAutoDefault(False)  # return won't click the button by default.
 
         explanation = QLabel(
             """
@@ -41,12 +33,10 @@ class DiscardViewWindow(QDialog):
         grid = QVBoxLayout()
         grid.addWidget(self.img, 1)
         grid.addWidget(explanation)
-        # probably should use QDialogButtonBox?
-        buttons = QHBoxLayout()
-        buttons.addWidget(resetB)
-        buttons.addSpacing(64)
-        buttons.addStretch(1)
-        buttons.addWidget(moveB)
-        buttons.addWidget(cancelB)
-        grid.addLayout(buttons)
+        buttons = QDialogButtonBox(QDialogButtonBox.Cancel)
+        moveB = QPushButton("&Move to unknown pages")
+        moveB.clicked.connect(self.accept)
+        buttons.addButton(moveB, QDialogButtonBox.AcceptRole)
+        buttons.rejected.connect(self.reject)
+        grid.addWidget(buttons)
         self.setLayout(grid)
