@@ -89,4 +89,8 @@ def status(*, msgr):
 
     print("\nDatabase")
     print("---------\n")
-    # TODO
+    try:
+        vmap = msgr.getGlobalQuestionVersionMap()
+        print(check_mark + f" There are {len(vmap)} rows in the papers table")
+    except PlomServerNotReady as e:
+        print(cross + f" {e}")
