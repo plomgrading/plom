@@ -39,8 +39,10 @@ class ImageViewWidget(QWidget):
             these image files on disc or if the QPixmap will reads it once
             and stores it.  See Issue #1842.  For now, safest to assume
             you must maintain it.
-        has_controls (bool): whether to include UI elements for zoom.
-            default: True.
+        has_controls (bool): include UI elements for zooming etc.
+            Default: True.
+        has_rotate_controls (bool): include UI elements for rotation.
+            Default: True.  Does nothing unless `has_controls` is True.
         compact (bool): whether to include a margin (default True) or
             not.  Correct choice will depend on parent but is probably
             only cosmetic.
@@ -54,6 +56,7 @@ class ImageViewWidget(QWidget):
         image_data=None,
         *,
         has_controls=True,
+        has_rotate_controls=True,
         compact=True,
         dark_background=False,
     ):
@@ -90,14 +93,6 @@ class ImageViewWidget(QWidget):
             zoomLockB.clicked.connect(self.zoomLockToggle)
             self.zoomLockB = zoomLockB
             self._zoomLockUpdateTooltip()
-            rotateB_cw = QToolButton()
-            rotateB_cw.setText("\N{Clockwise Open Circle Arrow}")
-            rotateB_cw.setToolTip("rotate clockwise")
-            rotateB_cw.clicked.connect(lambda: self.view.rotateImage(90))
-            rotateB_ccw = QToolButton()
-            rotateB_ccw.setText("\N{Anticlockwise Open Circle Arrow}")
-            rotateB_ccw.setToolTip("rotate counter-clockwise")
-            rotateB_ccw.clicked.connect(lambda: self.view.rotateImage(-90))
             buttons = QHBoxLayout()
             buttons.setContentsMargins(0, 0, 0, 0)
             buttons.setSpacing(3)
@@ -106,9 +101,18 @@ class ImageViewWidget(QWidget):
             buttons.addWidget(zoomInB)
             buttons.addWidget(zoomOutB)
             buttons.addWidget(zoomLockB)
-            buttons.addSpacing(12)
-            buttons.addWidget(rotateB_cw)
-            buttons.addWidget(rotateB_ccw)
+            if has_rotate_controls:
+                rotateB_cw = QToolButton()
+                rotateB_cw.setText("\N{Clockwise Open Circle Arrow}")
+                rotateB_cw.setToolTip("rotate clockwise")
+                rotateB_cw.clicked.connect(lambda: self.view.rotateImage(90))
+                rotateB_ccw = QToolButton()
+                rotateB_ccw.setText("\N{Anticlockwise Open Circle Arrow}")
+                rotateB_ccw.setToolTip("rotate counter-clockwise")
+                rotateB_ccw.clicked.connect(lambda: self.view.rotateImage(-90))
+                buttons.addSpacing(12)
+                buttons.addWidget(rotateB_cw)
+                buttons.addWidget(rotateB_ccw)
             buttons.addStretch(1)
             grid.addLayout(buttons)
 
