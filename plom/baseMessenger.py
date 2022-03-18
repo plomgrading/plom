@@ -762,7 +762,7 @@ class BaseMessenger:
                 ) from None
             elif response.status_code == 410:
                 raise PlomBenignException(
-                    "That ID group of {} has not been scanned.".format(code)
+                    f"The ID page of {code} has not been scanned."
                 ) from None
             elif response.status_code == 409:
                 raise PlomSeriousException(
