@@ -26,6 +26,7 @@ from textwrap import dedent, wrap
 
 from stdiomask import getpass
 
+import plom
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
@@ -348,7 +349,6 @@ def main():
             args.password = getpass('Please enter the "manager" password: ')
 
     if args.command == "status":
-        import plom
         plom.create.status(msgr=(args.server, args.password))
 
     elif args.command == "new":
