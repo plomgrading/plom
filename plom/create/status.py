@@ -94,3 +94,13 @@ def status(*, msgr):
         print(check_mark + f" There are {len(vmap)} rows in the papers table")
     except PlomServerNotReady as e:
         print(cross + f" {e}")
+
+    print("\nRubrics")
+    print("---------\n")
+    rubs = msgr.MgetRubrics()
+    if len(rubs) == 0:
+        print("Server does not yet have any rubrics")
+    else:
+        print(f"Server has {len(rubs)} rubrics")
+        userrubs = [r for r in rubs if r["username"] != "manager"]
+        print(f"  {len(userrubs)} created by users")
