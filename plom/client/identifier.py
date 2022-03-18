@@ -395,9 +395,16 @@ class IDClient(QWidget):
             imageName = None
         else:
             image_ext = imghdr.what(None, h=imageDat)
-            imageName = self.workingDirectory / f"i{test}.0.{image_ext}"
-            with open(imageName, "wb") as fh:
-                fh.write(imageDat)
+            if not image_ext:
+                msg = f"Failed to identify extension of {len(imageDat)} bytes"
+                msg += f" of image data for test {test}"
+                log.error(msg)
+                WarnMsg(self, msg).exec_()
+                imageName = None
+            else:
+                imageName = self.workingDirectory / f"i{test}.0.{image_ext}"
+                with open(imageName, "wb") as fh:
+                    fh.write(imageDat)
 
         self.exM.paperList[r].originalFile = imageName
 
@@ -490,6 +497,11 @@ class IDClient(QWidget):
 
         img_bytes = self.msgr.request_ID_image(test)
         img_ext = imghdr.what(None, h=img_bytes)
+        if not img_ext:
+            msg = f"Failed to identify extension of {len(img_bytes)} bytes"
+            msg += f" of image data for test {test}"
+            log.error(msg)
+            raise PlomSeriousException(msg)
         filename = self.workingDirectory / f"i{test}.0.{img_ext}"
         with open(filename, "wb") as fh:
             fh.write(img_bytes)

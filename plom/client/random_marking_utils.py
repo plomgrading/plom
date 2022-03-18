@@ -3,7 +3,6 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 
-import imghdr
 import json
 from pathlib import Path
 import random

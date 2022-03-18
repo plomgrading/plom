@@ -59,7 +59,6 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomNoMoreException,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
@@ -1252,6 +1251,11 @@ class MarkerClient(QWidget):
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
         im_type = imghdr.what(None, h=annotated_image)
+        if not im_type:
+            msg = f"Failed to identify extension of {len(annotated_image)} bytes"
+            msg += f" of image data for previously annotated task {task}"
+            log.error(msg)
+            raise PlomSeriousException(msg)
         aname = paperdir / "G{}.{}".format(task[1:], im_type)
         pname = paperdir / "G{}.plom".format(task[1:])
         with open(aname, "wb") as fh:

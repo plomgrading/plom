@@ -15,6 +15,7 @@ from plom import get_question_label
 from plom.finish import start_messenger
 from plom.finish.coverPageBuilder import makeCover
 from plom.finish.examReassembler import reassemble
+from plom.plom_exceptions import PlomSeriousException
 
 
 def download_data_build_cover_page(msgr, tmpdir, t, maxMarks, solution=False):
@@ -67,6 +68,8 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     if id_image_blob:
         im_type = imghdr.what(None, h=id_image_blob)
         id_page = tmpdir / f"img_{int(t):04}_id0.{im_type}"
+        if not im_type:
+            raise PlomSeriousException(f"Could not identify image type: {id_page}")
         with open(id_page, "wb") as f:
             f.write(id_image_blob)
         id_pages = [id_page]
@@ -75,6 +78,8 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
         obj = msgr.get_annotations_image(t, q)
         im_type = imghdr.what(None, h=obj)
         filename = tmpdir / f"img_{int(t):04}_q{q:02}.{im_type}"
+        if not im_type:
+            raise PlomSeriousException(f"Could not identify image type: {filename}")
         marked_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
@@ -83,6 +88,8 @@ def download_page_images(msgr, tmpdir, num_questions, t, sid):
     for i, obj in enumerate(dnm_image_blobs):
         im_type = imghdr.what(None, h=obj)
         filename = tmpdir / f"img_{int(t):04}_dnm{i:02}.{im_type}"
+        if not im_type:
+            raise PlomSeriousException(f"Could not identify image type: {filename}")
         dnm_pages.append(filename)
         with open(filename, "wb") as f:
             f.write(obj)
