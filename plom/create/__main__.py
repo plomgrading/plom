@@ -26,6 +26,7 @@ from textwrap import dedent, wrap
 
 from stdiomask import getpass
 
+import plom
 from plom import __version__
 from plom import SpecVerifier
 from plom import specdir
@@ -102,7 +103,14 @@ def get_parser():
     sub = parser.add_subparsers(
         dest="command", description="Perform tasks related to building tests."
     )
-    #
+
+    sp = sub.add_parser(
+        "status",
+        help="Status of the server",
+        description="Information about the server.",
+    )
+    sp.add_argument("-s", "--server", metavar="SERVER[:PORT]", action="store")
+    sp.add_argument("-w", "--password", type=str, help='for the "manager" user')
     spC = sub.add_parser(
         "new", help="Create new spec file", description="Create new spec file."
     )
@@ -342,7 +350,10 @@ def main():
         if not args.password:
             args.password = getpass('Please enter the "manager" password: ')
 
-    if args.command == "new":
+    if args.command == "status":
+        plom.create.status(msgr=(args.server, args.password))
+
+    elif args.command == "new":
         if args.demo:
             fname = "demoSpec.toml"
         else:

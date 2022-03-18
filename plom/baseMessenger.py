@@ -126,7 +126,11 @@ class BaseMessenger:
         return self.session.patch(f"https://{self.server}" + url, *args, **kwargs)
 
     def start(self):
-        """Start the messenger session"""
+        """Start the messenger session.
+
+        Returns:
+            str: the version string of the server,
+        """
         if self.session:
             log.debug("already have an requests-session")
         else:
@@ -169,6 +173,22 @@ class BaseMessenger:
 
     def isStarted(self):
         return bool(self.session)
+
+    def get_server_version(self):
+        """The version info of the server.
+
+        Returns:
+            str: the version string of the server,
+
+        Exceptions:
+        """
+        with self.SRmutex:
+            try:
+                response = self.get("/Version")
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     # ------------------------
     # ------------------------
