@@ -62,15 +62,27 @@ class SelectRectangleWindow(QDialog):
 
         self.resetB.setAutoDefault(False)  # return won't click the button by default.
 
-        # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.view, 1, 1, 10, 6)
-        grid.addWidget(self.zoomB, 6, 20)
+        help = QLabel(
+            """
+            <p>Draw a box around the IDBox template.</p>
+            <ul>
+              <li>Bigger is better: a few cm above and below.</li>
+              <li>Only the top/bottom are currently used.</li>
+              <li>Tool won't work if you didn't use the IDBox template.</li>
+              <li>Tool does not fail gracefully: watch server log/stdout.</li>.
+            </ul>
+        """
+        )
+        help.setWordWrap(True)
+        grid.addWidget(help, 1, 19, 4, 3)
         grid.addWidget(self.rectB, 5, 20)
+        grid.addWidget(self.zoomB, 6, 20)
         grid.addWidget(self.delRectB, 7, 20)
         grid.addWidget(self.resetB, 20, 1)
         grid.addWidget(self.cancelB, 20, 20)
-        grid.addWidget(self.acceptB, 19, 20)
+        grid.addWidget(self.acceptB, 20, 21)
         self.setLayout(grid)
 
         self.rectB.animateClick()
