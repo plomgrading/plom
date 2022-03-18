@@ -27,7 +27,8 @@ def status(*, msgr):
     """
     # TODO: this can't really fail without the decorator stuff failing!
     # TODO: need contextmanager for messenger so we can start it later
-    # then we can try except PlomAPIException (e.g., see chooose.py)
+    # then we can try except PlomAPIException (e.g., see chooser.py)
+    # see https://gitlab.com/plom/plom/-/merge_requests/1275
     print("Server status")
     print("-------------\n")
     srv_ver = msgr.get_server_version()
