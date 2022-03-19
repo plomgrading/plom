@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsView,
     QGridLayout,
+    QLabel,
     QPushButton,
 )
 
