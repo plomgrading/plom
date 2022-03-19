@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2018-2021 Andrew Rechnitzer
-# Copyright (C) 2019-2021 Colin B. Macdonald
+# Copyright (C) 2019-2022 Colin B. Macdonald
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -165,18 +164,6 @@ class SimpleTableView(QTableView):
             self.annotateSignal.emit()
         else:
             super(SimpleTableView, self).keyPressEvent(event)
-
-
-class SimpleToolButton(QToolButton):
-    """Specialise the tool button to be an icon above text."""
-
-    def __init__(self, txt, icon):
-        super(SimpleToolButton, self).__init__()
-        self.setText(txt)
-        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.setIcon(QIcon(QPixmap(icon)))
-        self.setIconSize(QSize(24, 24))
-        self.setMinimumWidth(100)
 
 
 class NoAnswerBox(QDialog):
