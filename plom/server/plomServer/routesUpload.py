@@ -913,11 +913,11 @@ class UploadHandler:
 
         Returns:
             dict: keyed by question number.  Note keys will be strings b/c
-                of json limitations; you may need to convert back to int.
-                Fails with 409 if there is no version map.
+            of json limitations; you may need to convert back to int.
+            Fails with 409 if there is no such paper.
         """
         paper_idx = request.match_info["papernum"]
-        vers = self.server.getQuestionVersions(paper_idx)
+        vers = self.server.get_question_versions(paper_idx)
         if not vers:
             _msg = f"paper {paper_idx} does not (yet?) have a version map"
             log.warn(_msg)
@@ -930,24 +930,13 @@ class UploadHandler:
 
         Returns:
             dict: dict of dicts, keyed first by paper index then by
-                question number.  Both keys will become strings b/c of
-                json limitations; you may need to convert back to int.
-                Fails with 404/409 if there is no version map: 404 if
-                the server has no spec and 409 if the server has a spec
-                but the version map database has not been built yet.
+            question number.  Both keys will become strings b/c of
+            json limitations; you may need to convert back to int.
+            If the server does not yet have any database, the version
+            map will be empty.
         """
-        spec = self.server.testSpec
-        if not spec:
-            raise web.HTTPNotFound(reason="Server has no spec so no version map")
-        vers = {}
-        for paper_idx in range(1, spec["numberToProduce"] + 1):
-            ver = self.server.getQuestionVersions(paper_idx)
-            if not ver:
-                _msg = "There is no version map: have you built the database?"
-                log.warn(_msg)
-                raise web.HTTPConflict(reason=_msg)
-            vers[paper_idx] = ver
-        return web.json_response(vers, status=200)
+        vermap = self.server.get_all_question_versions()
+        return web.json_response(vermap, status=200)
 
     # Some more bundle things
 
