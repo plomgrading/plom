@@ -48,7 +48,7 @@ def calc_log_likelihood(student_ID, prediction_probs):
 
 
 def run_id_reader(files_dict, rectangle, student_IDs):
-    """Run ID detection on papers and save the prediction results to a csv file.
+    """Run ID detection on papers, return prediction results.
 
     Args:
         files_dict (dict): A dictionary of the original paper front page images to
