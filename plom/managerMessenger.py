@@ -1101,7 +1101,7 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def IDrunPredictions(self, rectangle, fileNumber, ignoreTimeStamp):
+    def IDrunPredictions(self, top, bottom, ignoreTimeStamp):
         self.SRmutex.acquire()
         try:
             response = self.post(
@@ -1109,8 +1109,8 @@ class ManagerMessenger(BaseMessenger):
                 json={
                     "user": self.user,
                     "token": self.token,
-                    "rectangle": rectangle,
-                    "fileNumber": fileNumber,
+                    "crop_top": top,
+                    "crop_bottom": bottom,
                     "ignoreStamp": ignoreTimeStamp,
                 },
             )
@@ -1123,6 +1123,8 @@ class ManagerMessenger(BaseMessenger):
         except requests.HTTPError as e:
             if response.status_code == 401:
                 raise PlomAuthenticationException() from None
+            if response.status_code == 403:
+                raise PlomAuthenticationException(response.reason) from None
             raise PlomSeriousException(f"Some other sort of error {e}") from None
         finally:
             self.SRmutex.release()

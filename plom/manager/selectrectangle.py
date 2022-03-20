@@ -39,7 +39,6 @@ class SelectRectangleWindow(QDialog):
         else:
             self.initUI([fnames])
         self.rectangle = None
-        self.whichFile = 0
         self.tool = "zoom"
 
     def initUI(self, fnames):
@@ -95,6 +94,12 @@ class SelectRectangleWindow(QDialog):
             ErrorMessage("Error: no rectangle selected.").exec_()
             pass
         else:
+            t = self.view.imageGItem.boundingRect().top()
+            h = self.view.imageGItem.boundingRect().height() - t
+            self._stuff = (
+                max(0, (self.rectangle.top() - t) / h),
+                min(1, (self.rectangle.bottom() - t) / h),
+            )
             self.accept()
 
     def zoomTool(self):
@@ -211,8 +216,6 @@ class IDView(QGraphicsView):
         if self.boxFlag:
             self.boxFlag = False
             self._parent.rectangle = self.boxItem.rect()
-            # legacy: left over from multiple id pages?
-            self._parent.whichFile = 0
             return
 
         """Left/right click to zoom in and out"""

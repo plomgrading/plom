@@ -9,6 +9,7 @@ See:
 https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 """
 
+import math
 from pathlib import Path
 
 import numpy as np
@@ -38,8 +39,9 @@ def get_digit_box(filename, top, bottom):
 
     Args:
         filename (str/pathlib.Path): the image of the ID page.
-        top (int): Top coordinate of the cropping in pixels.
-        bottom (int): Bottom coordinate of the cropping in pixels.  Its
+        top (float): Top of the cropping in `[0, 1]`, a percentage of
+            the height of the image.
+        bottom (bottom): Bottom of the cropping in `[0, 1`].  Its
             often helpful to crop in case there are other large boxes on
             the page, which might confuse the box-finder.
 
@@ -50,6 +52,8 @@ def get_digit_box(filename, top, bottom):
     """
     front_image = cv2.imread(str(filename))
 
+    top = math.floor(top * front_image.shape[0])
+    bottom = math.ceil(bottom * front_image.shape[0])
     # Extract only the required portion of the image.
     cropped_image = front_image[:][top:bottom]
 
@@ -235,15 +239,14 @@ def get_digit_prob(
     return prob_lists
 
 
-def compute_probabilities(
-    image_file_paths, top_coordinate, bottom_coordinate, num_digits
-):
+def compute_probabilities(image_file_paths, top, bottom, num_digits):
     """Return a list of probabilities for digits for each test.
 
     Args:
         image_file_paths (dict): A dictionary including the paths of the images.
-        top_coordinate (int): Top boundary of image, in pixels.
-        bottom_coordinate (int): Bottom boundary of image, in pixels.
+        top (float): Top boundary of image in `[0, 1]` where 0 is the
+            top of the page and 1 is the bottom.
+        bottom (float): Bottom boundary of image in `[0, 1]`.
         num_digits (int): Number of digits in the student ID.
 
     Returns:
@@ -256,11 +259,7 @@ def compute_probabilities(
 
     for testNumber, image_file in image_file_paths.items():
         prob_lists = get_digit_prob(
-            prediction_model,
-            image_file,
-            top_coordinate,
-            bottom_coordinate,
-            num_digits,
+            prediction_model, image_file, top, bottom, num_digits
         )
         if len(prob_lists) == 0:
             print(
