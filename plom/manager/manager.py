@@ -581,7 +581,6 @@ class Manager(QWidget):
         for q in range(1, info["numberOfQuestions"] + 1):
             for pg in info["question"][str(q)]["pages"]:
                 self.testPageTypes[pg] = f"q{q}"
-        print(self.testPageTypes)
 
     ################
     # scan tab stuff
