@@ -90,11 +90,11 @@ def status(*, msgr):
 
     print("\nDatabase")
     print("---------\n")
-    try:
-        vmap = msgr.getGlobalQuestionVersionMap()
+    vmap = msgr.getGlobalQuestionVersionMap()
+    if len(vmap) > 0:
         print(check_mark + f" There are {len(vmap)} rows in the papers table")
-    except PlomServerNotReady as e:
-        print(cross + f" {e}")
+    else:
+        print(cross + " No rows have been inserted in the papers table")
 
     print("\nRubrics")
     print("---------\n")
