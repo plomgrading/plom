@@ -188,8 +188,8 @@ def get_digit_prob(
     Args:
         prediction_model (sklearn.ensemble._forest.RandomForestClassifier): Prediction model.
         id_page_file (str/pathlib.Path): File path for the image which includes the ID box.
-        top (int): Top boundary of image in pixels.
-        bottom (int): Bottom boundary of image in pixels.
+        top (float): Top boundary of image in `[0, 1]`.
+        bottom (float): Bottom boundary of image in `[0, 1]`.
         num_digits (int): Number of digits in the student ID.
 
     Keyword Args:
