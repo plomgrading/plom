@@ -523,12 +523,12 @@ class IDHandler:
             raise web.HTTPForbidden(reason="I only speak to the manager")
 
         try:
-            self.server.predict_id_lap_solver()
+            status = self.server.predict_id_lap_solver()
         except RuntimeError as e:
             return web.HTTPConflict(reason=e)
         except FileNotFoundError:
             return web.HTTPConflict(reason="You must run the id reader first")
-        return web.Response(status=200)
+        return web.Response(text=status, status=200)
 
     # @routes.patch("/ID/review")
     @authenticate_by_token_required_fields(["testNumber"])

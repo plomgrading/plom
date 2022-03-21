@@ -1561,7 +1561,8 @@ class Manager(QWidget):
             self.run_id_reader(ignoreStamp=True)
 
     def run_predictor(self):
-        rmsg = self.msgr.run_predictor()
+        status = self.msgr.run_predictor()
+        InfoMsg(self, status).exec_()
 
     def un_id_paper(self):
         # should we populate "test" from the list view?

@@ -10,6 +10,7 @@ import logging
 import os
 import shutil
 import subprocess
+import time
 
 from plom import specdir
 from plom.server.IDReader_RF import run_lap_solver
@@ -207,6 +208,9 @@ def predict_id_lap_solver(self):
 
     TODO: arguments to control which papers to run on...?
 
+    Returns:
+        str: status text, appropriate to show to a user.
+
     Raises:
         RuntimeError: id reader still running
         FileNotFoundError: no probability data
@@ -219,9 +223,13 @@ def predict_id_lap_solver(self):
         log.info(_)
         raise RuntimeError(_)
 
+    t = time.process_time()
+
     # implicitly raises FileNotFoundError if no heatmap
     with open(heatmaps_file, "r") as fh:
         probabilities = json.load(fh)
+    # ugh, undo Json mucking our int keys into str
+    probabilities = {int(k): v for k, v in probabilities.items()}
 
     log.info("Getting the classlist")
     student_IDs = []
@@ -230,22 +238,44 @@ def predict_id_lap_solver(self):
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
             student_IDs.append(row[0])
-    # TODO: consider filtering classlist to only those NOT yet used
 
-    # TODO: not quite!
-    papers_to_match = list(probabilities.keys())
-    # with open(lock_file) as fh:
-    #    files, info = json.load(fh)
-    # papers_to_match = list(files.keys())
-    print(papers_to_match)
+    status = f"Original class list has {len(student_IDs)} students.\n"
+    X = self.DB.IDgetIdentifiedTests()
+    for x in X:
+        try:
+            student_IDs.remove(x[1])
+        except ValueError:
+            pass
+    papers = self.DB.IDgetUnidentifiedTests()
+    status += "\nAssignment problem: "
+    status += f"{len(papers)} unidentified papers to match with\n"
+    status += f"{len(student_IDs)} unused names in the classlist."
 
+    # exclude papers for which we don't have probabilities
+    papers_to_match = [n for n in papers if n in probabilities]
+    if len(papers_to_match) < len(papers):
+        status += f"\nNote: {len(papers) - len(papers_to_match)} papers "
+        status += f"were not autoread; now we have {len(papers_to_match)} "
+        status += "papers to match.\n"
+
+    # TODO: raise on degenerate: zero papers to match...
+
+    status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"
+
+    status += "\nSolving assignment problem..."
+
+    t = time.process_time()
     prediction_pairs = run_lap_solver(papers_to_match, probabilities, student_IDs)
+    status += "  done.\nBuilding cost matrix and solution took "
+    status += f"{time.process_time() - t:.02} seconds."
+    # TODO: nice to report those separately
 
     log.info("Saving results in predictionlist.csv")
     with open(specdir / "predictionlist.csv", "w") as fh:
         fh.write("test, id\n")
         for test_number, student_ID in prediction_pairs:
             fh.write("{}, {}\n".format(test_number, student_ID))
+    return status
 
 
 def run_id_reader(self, top, bottom, ignore_stamp):

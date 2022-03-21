@@ -188,6 +188,8 @@ class PlomDB:
     from plom.db.db_identify import (
         IDcountAll,
         IDcountIdentified,
+        IDgetIdentifiedTests,
+        IDgetUnidentifiedTests,
         IDgetNextTask,
         IDgiveTaskToClient,
         IDgetDoneTasks,

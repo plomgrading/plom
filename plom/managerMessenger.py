@@ -1108,11 +1108,14 @@ class ManagerMessenger(BaseMessenger):
                     },
                 )
                 response.raise_for_status()
+                return response.text
             except requests.HTTPError as e:
                 if response.status_code == 401:
                     raise PlomAuthenticationException() from None
                 if response.status_code == 403:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(e) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def run_id_reader(self, top, bottom, ignoreTimeStamp):
