@@ -18,7 +18,10 @@ import json
 import os
 import sys
 
-from .IDReader_RF.idReader import run_id_reader
+# from .IDReader_RF.idReader import run_id_reader
+from .IDReader_RF import download_or_train_model
+from .IDReader_RF import compute_probabilities
+
 from plom import specdir
 
 
@@ -28,29 +31,23 @@ if __name__ == "__main__":
     if not os.path.isfile(lock_file):
         raise RuntimeError('Cannot acquire file "{}"'.format(lock_file))
 
-    # Put student numbers in list
-    print("Getting the classlist")
-    student_IDs = []
-    with open(specdir / "classlist.csv", newline="") as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=",")
-        next(csv_reader, None)  # skip the header
-        for row in csv_reader:
-            student_IDs.append(row[0])
-
     with open(lock_file) as fh:
         files, info = json.load(fh)
 
     print("Firing up the auto id reader.")
-    prediction_pairs = run_id_reader(
-        files, info["crop_top"], info["crop_bottom"], student_IDs
+
+    print("Ensuring we have the model: download if not, or train if cannot download...")
+    download_or_train_model()
+
+    print("Computing probabilities")
+    # Number of digits in the student ID.
+    student_number_length = 8
+    probabilities = compute_probabilities(
+        files, info["crop_top"], info["crop_bottom"], student_number_length
     )
-
-    # now save the result
-    with open(specdir / "predictionlist.csv", "w") as fh:
-        fh.write("test, id\n")
-        for test_number, student_ID in prediction_pairs:
-            fh.write("{}, {}\n".format(test_number, student_ID))
-
-    print("Results saved in predictionlist.csv")
+    # numpy does not jsonify: maybe change compute_probabilities to return arrays?
+    probabilities = {k: [x.tolist() for x in v] for k, v in probabilities.items()}
+    with open(specdir / "id_prob_heatmaps.json", "w") as fh:
+        json.dump(probabilities, fh, indent="  ")
 
     os.unlink(lock_file)

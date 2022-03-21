@@ -476,8 +476,8 @@ class IDHandler:
     @authenticate_by_token_required_fields(
         ["user", "crop_top", "crop_bottom", "ignoreStamp"]
     )
-    def IDrunPredictions(self, data, request):
-        """Runs the id prediction on all paper images.
+    def run_id_reader(self, data, request):
+        """Runs the id digit reader on all paper ID pages.
 
         Responds with status 200/202/205/401.
 
@@ -487,13 +487,13 @@ class IDHandler:
             request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
 
         Returns:
-            aiohttp.web_response.Response: Returns a response with the date and time of the prediction run.
-                Or responds with saying the prediction is already running.
+            aiohttp.web_response.Response: Returns a response with the date and time of the machine reader run.
+            Or responds with saying the machine reader is already running.
         """
         if data["user"] != "manager":
             raise web.HTTPForbidden(reason="I only speak to the manager")
 
-        prediction_results = self.server.IDrunPredictions(
+        prediction_results = self.server.run_id_reader(
             data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
         )
 
@@ -507,6 +507,28 @@ class IDHandler:
                 return web.Response(status=202)  # is already running
         else:  # isn't running because we found a time-stamp
             return web.Response(text=is_running, status=205)
+
+    @authenticate_by_token_required_fields(["user"])
+    def predict_id_lap_solver(self, data, request):
+        """Match Runs the id digit reader on all paper ID pages.
+
+        Args:
+            data (dict): A dictionary having the user/token.
+            request (aiohttp.web_request.Request):
+
+        Returns:
+            aiohttp.web_response.Response: 200/401/403
+        """
+        if data["user"] != "manager":
+            raise web.HTTPForbidden(reason="I only speak to the manager")
+
+        try:
+            self.server.predict_id_lap_solver()
+        except RuntimeError as e:
+            return web.HTTPConflict(reason=e)
+        except FileNotFoundError:
+            return web.HTTPConflict(reason="You must run the id reader first")
+        return web.Response(status=200)
 
     # @routes.patch("/ID/review")
     @authenticate_by_token_required_fields(["testNumber"])
@@ -551,7 +573,8 @@ class IDHandler:
         router.add_put("/ID/tasks/{task}", self.IdentifyPaperTask)
         router.add_get("/ID/randomImage", self.IDgetImageFromATest)
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
-        router.add_post("/ID/predictedID", self.IDrunPredictions)
+        router.add_post("/ID/predictedID", self.predict_id_lap_solver)
+        router.add_post("/ID/run_id_reader", self.run_id_reader)
         router.add_patch("/ID/review", self.IDreviewID)
         # be careful with this one - since is such a general route
         # put it last

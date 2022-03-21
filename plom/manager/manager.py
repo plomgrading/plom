@@ -433,7 +433,8 @@ class Manager(QWidget):
         self.ui.actionCButton.clicked.connect(self.doCActions)
         self.ui.actionDButton.clicked.connect(self.doDActions)
         self.ui.selectRectButton.clicked.connect(self.selectRectangle)
-        self.ui.predictButton.clicked.connect(self.runPredictor)
+        self.ui.machineReadButton.clicked.connect(self.run_id_reader)
+        self.ui.predictButton.clicked.connect(self.run_predictor)
         self.ui.delPredButton.clicked.connect(self.deletePredictions)
         self.ui.forceLogoutB.clicked.connect(self.forceLogout)
         self.ui.enableUserB.clicked.connect(self.enableUsers)
@@ -1533,8 +1534,8 @@ class Manager(QWidget):
                 raise PlomSeriousException(f"Could not identify image type: {img_name}")
             GroupView(self, img_name, title=f"ID page currently IDed as {sid}").exec_()
 
-    def runPredictor(self, ignoreStamp=False):
-        rmsg = self.msgr.IDrunPredictions(
+    def run_id_reader(self, ignoreStamp=False):
+        rmsg = self.msgr.run_id_reader(
             float(self.ui.cropTopLE.text()) / 100,
             float(self.ui.cropBottomLE.text()) / 100,
             ignoreStamp,
@@ -1557,7 +1558,10 @@ class Manager(QWidget):
             )
             if sm.exec_() == QMessageBox.No:
                 return
-            self.runPredictor(ignoreStamp=True)
+            self.run_id_reader(ignoreStamp=True)
+
+    def run_predictor(self):
+        rmsg = self.msgr.run_predictor()
 
     def un_id_paper(self):
         # should we populate "test" from the list view?

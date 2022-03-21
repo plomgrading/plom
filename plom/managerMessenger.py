@@ -1097,11 +1097,29 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def IDrunPredictions(self, top, bottom, ignoreTimeStamp):
+    def run_predictor(self):
+        with self.SRmutex:
+            try:
+                response = self.post(
+                    "/ID/predictedID",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                )
+                response.raise_for_status()
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def run_id_reader(self, top, bottom, ignoreTimeStamp):
         self.SRmutex.acquire()
         try:
             response = self.post(
-                "/ID/predictedID",
+                "/ID/run_id_reader",
                 json={
                     "user": self.user,
                     "token": self.token,

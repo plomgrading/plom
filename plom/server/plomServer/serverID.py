@@ -3,6 +3,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 
+import csv
 from datetime import datetime
 import json
 import logging
@@ -11,6 +12,7 @@ import shutil
 import subprocess
 
 from plom import specdir
+from plom.server.IDReader_RF import run_lap_solver
 
 
 log = logging.getLogger("servID")
@@ -190,7 +192,63 @@ def IDreviewID(self, test_number):
     return self.DB.IDreviewID(test_number)
 
 
-def IDrunPredictions(self, top, bottom, ignore_stamp):
+def predict_id_lap_solver(self):
+    """Predict IDs by matching unidentified papers against the classlist via linear assignment problem.
+
+    Grab the classlist, TODO: and remove all people from it that are already
+    ID'd against a paper.
+
+    Grab the list papers (TODO: that are not yet ID'd).
+
+    Match the two.
+
+    TODO: consider doing this client-side, although Manager tool would
+    then depend on lapsolver or perhaps SciPy's linear_sum_assignment
+
+    TODO: arguments to control which papers to run on...?
+
+    Raises:
+        RuntimeError: id reader still running
+        FileNotFoundError: no probability data
+    """
+    lock_file = specdir / "IDReader.lock"
+    heatmaps_file = specdir / "id_prob_heatmaps.json"
+
+    if lock_file.exists():
+        _ = "ID reader lock present (still running?); cannot perform matching"
+        log.info(_)
+        raise RuntimeError(_)
+
+    # implicitly raises FileNotFoundError if no heatmap
+    with open(heatmaps_file, "r") as fh:
+        probabilities = json.load(fh)
+
+    log.info("Getting the classlist")
+    student_IDs = []
+    with open(specdir / "classlist.csv", newline="") as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=",")
+        next(csv_reader, None)  # skip the header
+        for row in csv_reader:
+            student_IDs.append(row[0])
+    # TODO: consider filtering classlist to only those NOT yet used
+
+    # TODO: not quite!
+    papers_to_match = list(probabilities.keys())
+    # with open(lock_file) as fh:
+    #    files, info = json.load(fh)
+    # papers_to_match = list(files.keys())
+    print(papers_to_match)
+
+    prediction_pairs = run_lap_solver(papers_to_match, probabilities, student_IDs)
+
+    log.info("Saving results in predictionlist.csv")
+    with open(specdir / "predictionlist.csv", "w") as fh:
+        fh.write("test, id\n")
+        for test_number, student_ID in prediction_pairs:
+            fh.write("{}, {}\n".format(test_number, student_ID))
+
+
+def run_id_reader(self, top, bottom, ignore_stamp):
     """Run the ML prediction model on the papers and saves the information.
 
     Args:

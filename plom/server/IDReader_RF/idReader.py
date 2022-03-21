@@ -14,9 +14,6 @@ Note: has hardcoded 8-digit student numbers.
 from lapsolver import solve_dense
 import numpy as np
 
-from .model_utils import download_or_train_model
-from .predictStudentID import compute_probabilities
-
 
 def calc_log_likelihood(student_ID, prediction_probs):
     """Calculate the log likelihood that an ID prediction matches the student ID.
@@ -47,38 +44,23 @@ def calc_log_likelihood(student_ID, prediction_probs):
     return log_likelihood
 
 
-def run_id_reader(files_dict, top, bottom, student_IDs):
-    """Run ID detection on papers, return prediction results.
+def run_lap_solver(test_numbers, probabilities, student_IDs):
+    """Run linear assignment problem solver, return prediction results.
+
+    TODO: log not print throughout
 
     Args:
-        files_dict (dict): A dictionary of the original paper front page images to
-            run the detector on. Of the form {`paper_number`,`paper_image_path`}.
-        top (float): crop the top in `[0, 1]`.
-        bottom (float): crop the top in `[0, 1]`.
+        test_numbers (list): int/str TODO, the ones we want to match.
+        probabilities (dict): testnum (str: TODO WHY?), to list of lists, TODO doc
         student_IDs (list): A list of student ID numbers
 
     Returns:
         list: pairs of (`paper_number`, `student_ID`).
     """
-    # Number of digits in the student ID.
-    student_number_length = 8
-
-    # keeps a list of testNumbers... the ith test in list has testNumber k (i != k?)
-    # will need this for cost-matrix
-    test_numbers = list(files_dict.keys())
     # we may skip some tests if hard to extract the ID boxes
     test_numbers_used = []
 
-    download_or_train_model()
-
-    # probabilities that digit k of ID is "n" for each file.
-    # this is potentially time-consuming - could be parallelized
-    # pass in the list of files to check, top /bottom of image-region to check.
-    print("Computing probabilities")
-    probabilities = compute_probabilities(
-        files_dict, top, bottom, student_number_length
-    )
-
+    # could precompute big cost matrix, then select rows/columns: more complex
     # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.
     print("Computing cost matrix")
     costs = []
