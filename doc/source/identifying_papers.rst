@@ -29,7 +29,7 @@ Running the auto-identifier
 ---------------------------
 
 1. Open the manager tool.  "Progress" -> "ID progress".
-2. Click "Select ID rectangle".
+2. Optionally, adjust the top/bottom crop values, either manually or by clicking "Select interactively".
 3. Click "Run predictions".
 4. Wait "a while" (maybe a minute or two) and click
    "Refresh Prediction list".
