@@ -76,12 +76,12 @@ def test_get_digit_box(tmpdir):
     id_img = files[0]
 
     # these will fail if we don't include the box
-    x = get_digit_box(id_img, 5, 10)
+    x = get_digit_box(id_img, 5/2000, 10/2000)
     assert x is None
-    x = get_digit_box(id_img, 1900, 2000)
+    x = get_digit_box(id_img, 1900/2000, 2000/2000)
     assert x is None
 
-    x = get_digit_box(id_img, 100, 1950)
+    x = get_digit_box(id_img, 100/2000, 1950/2000)
     # should get a bunch of pixels
     assert len(x) > 100
 
@@ -130,6 +130,6 @@ def test_get_digit_box(tmpdir):
 
     id_imgs = {(k + 1): x for k, x in enumerate(id_imgs)}
     with working_directory(tmpdir):
-        pred = run_id_reader(id_imgs, [0, 300, 0, 1800], [x["id"] for x in miniclass])
+        pred = run_id_reader(id_imgs, 0.15, 0.9, [x["id"] for x in miniclass])
     for P, S in zip(pred, miniclass):
         assert P[1] == S["id"]
