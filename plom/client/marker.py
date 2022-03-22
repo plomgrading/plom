@@ -1150,8 +1150,6 @@ class MarkerClient(QWidget):
             None
 
         """
-        if hasattr(self, "testImg"):
-            self.testImg.resetView()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)

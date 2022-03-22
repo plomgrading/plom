@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsView,
     QHBoxLayout,
-    QPushButton,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -39,7 +39,7 @@ class ImageViewWidget(QWidget):
             these image files on disc or if the QPixmap will reads it once
             and stores it.  See Issue #1842.  For now, safest to assume
             you must maintain it.
-        has_reset_button (bool): whether to include a reset zoom button,
+        has_controls (bool): whether to include UI elements for zoom.
             default: True.
         compact (bool): whether to include a margin (default True) or
             not.  Correct choice will depend on parent but is probably
@@ -53,29 +53,55 @@ class ImageViewWidget(QWidget):
         parent,
         image_data=None,
         *,
-        has_reset_button=True,
+        has_controls=True,
         compact=True,
         dark_background=False,
     ):
         super().__init__(parent)
         # Grab an examview widget (a interactive subclass of QGraphicsView)
-        self.view = ExamView(image_data, dark_background=dark_background)
+        self.view = _ExamView(image_data, dark_background=dark_background)
         self.view.setRenderHint(QPainter.Antialiasing, True)
         self.view.setRenderHint(QPainter.SmoothPixmapTransform, True)
         grid = QVBoxLayout()
         if compact:
             grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.view, 1)
-        if has_reset_button:
-            resetB = QPushButton("&reset view")
+        grid.setSpacing(3)
+        self.zoomLockB = None
+        if has_controls:
+            resetB = QToolButton()
+            # resetB.setText("\N{Leftwards Arrow To Bar Over Rightwards Arrow To Bar}")
+            # resetB.setText("\N{Up Down Black Arrow}")
+            resetB.setText("reset")
+            resetB.setToolTip("reset zoom")
             resetB.clicked.connect(self.resetView)
-            # return won't click the button by default
-            resetB.setAutoDefault(False)
+            zoomInB = QToolButton()
+            zoomInB.setText("\N{Heavy Plus Sign}")
+            zoomInB.setToolTip("zoom in")
+            zoomInB.clicked.connect(self.zoomIn)
+            zoomOutB = QToolButton()
+            zoomOutB.setText("\N{Heavy Minus Sign}")
+            zoomOutB.setToolTip("zoom out")
+            zoomOutB.clicked.connect(self.zoomOut)
+            zoomLockB = QToolButton()
+            zoomLockB.setText("\N{Lock}")
+            zoomLockB.setCheckable(True)
+            zoomLockB.setChecked(False)
+            zoomLockB.clicked.connect(self.zoomLockToggle)
+            self.zoomLockB = zoomLockB
+            self._zoomLockUpdateTooltip()
+
             buttons = QHBoxLayout()
+            buttons.setContentsMargins(0, 0, 0, 0)
+            buttons.setSpacing(6)
+            buttons.addStretch(1)
             buttons.addWidget(resetB)
-            buttons.addSpacing(64)
+            buttons.addWidget(zoomInB)
+            buttons.addWidget(zoomOutB)
+            buttons.addWidget(zoomLockB)
             buttons.addStretch(1)
             grid.addLayout(buttons)
+
         self.setLayout(grid)
         # Store the current exam view as a qtransform
         self.viewTrans = self.view.transform()
@@ -97,10 +123,40 @@ class ImageViewWidget(QWidget):
 
     def resizeEvent(self, whatev):
         """Seems to ensure image gets resize on window resize."""
+        if self.zoomLockB and self.zoomLockB.isChecked():
+            return
         self.view.resetView()
 
     def resetView(self):
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(False)
+            self._zoomLockUpdateTooltip()
         self.view.resetView()
+
+    def zoomIn(self):
+        self.view.zoomIn()
+        self.zoomLockSetOn()
+
+    def zoomOut(self):
+        self.view.zoomOut()
+        self.zoomLockSetOn()
+
+    def zoomLockToggle(self):
+        if self.zoomLockB and not self.zoomLockB.isChecked():
+            # refit the view on untoggle
+            self.resetView()
+        self._zoomLockUpdateTooltip()
+
+    def zoomLockSetOn(self):
+        if self.zoomLockB:
+            self.zoomLockB.setChecked(True)
+            self._zoomLockUpdateTooltip()
+
+    def _zoomLockUpdateTooltip(self):
+        if self.zoomLockB.isChecked():
+            self.zoomLockB.setToolTip("zoom: locked")
+        else:
+            self.zoomLockB.setToolTip("zoom: fit on window resize")
 
     def forceRedrawOrSomeBullshit(self):
         """Horrid workaround when we cannot get proper redraws.
@@ -115,7 +171,7 @@ class ImageViewWidget(QWidget):
         QTimer.singleShot(32, self.view.resetView)
 
 
-class ExamView(QGraphicsView):
+class _ExamView(QGraphicsView):
     """Display images with some interaction: click-to-zoom/unzoom
 
     args:
@@ -221,10 +277,18 @@ class ExamView(QGraphicsView):
         if (event.button() == Qt.RightButton) or (
             QGuiApplication.queryKeyboardModifiers() == Qt.ShiftModifier
         ):
-            self.scale(0.8, 0.8)
+            self.zoomOut()
         else:
-            self.scale(1.25, 1.25)
+            self.zoomIn()
         self.centerOn(event.pos())
+        # Unpleasant to grub in parent but want mouse events to lock zoom
+        self.parent().zoomLockSetOn()
+
+    def zoomOut(self):
+        self.scale(0.8, 0.8)
+
+    def zoomIn(self):
+        self.scale(1.25, 1.25)
 
     def resetView(self):
         """Reset the view to its reasonable initial state."""
@@ -232,4 +296,5 @@ class ExamView(QGraphicsView):
 
     def rotateImage(self, dTheta):
         self.rotate(dTheta)
+        # TODO: likely to decouple the zoom lock toggle
         self.resetView()
