@@ -214,6 +214,7 @@ def predict_id_lap_solver(self):
     Raises:
         RuntimeError: id reader still running
         FileNotFoundError: no probability data
+        IndexError: something is zero, degenerate assignment problem.
     """
     lock_file = specdir / "IDReader.lock"
     heatmaps_file = specdir / "id_prob_heatmaps.json"
@@ -257,7 +258,7 @@ def predict_id_lap_solver(self):
         status += f"\nNote: {len(unidentified_papers) - len(papers)} papers "
         status += f"were not autoread; have {len(papers)} papers to match.\n"
 
-    if len(papers) == 0 or len(sids):
+    if len(papers) == 0 or len(sids) == 0:
         raise IndexError(
             "Assignment problem is degenerate: {len(papers)} papers, {len(sids)} students."
         )

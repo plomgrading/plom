@@ -1098,6 +1098,15 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def run_predictor(self):
+        """Match Runs the id digit reader on all paper ID pages.
+
+        Returns:
+            str: status information about the solve.
+
+        Raises:
+            PlomAuthenticationException:
+            PlomConflict: failed, in a non-fatal way, message explains more.
+        """
         with self.SRmutex:
             try:
                 response = self.post(
@@ -1114,8 +1123,12 @@ class ManagerMessenger(BaseMessenger):
                     raise PlomAuthenticationException() from None
                 if response.status_code == 403:
                     raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomConflict(response.reason) from None
                 if response.status_code == 409:
-                    raise PlomConflict(e) from None
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 412:
+                    raise PlomConflict(response.reason) from None
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def run_id_reader(self, top, bottom, ignoreTimeStamp):

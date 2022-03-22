@@ -1561,8 +1561,11 @@ class Manager(QWidget):
             self.run_id_reader(ignoreStamp=True)
 
     def run_predictor(self):
-        status = self.msgr.run_predictor()
-        InfoMsg(self, status).exec_()
+        try:
+            status = self.msgr.run_predictor()
+            InfoMsg(self, "Results of ID matching", info=status, info_pre=False).exec_()
+        except PlomConflict as e:
+            WarnMsg(self, "ID matching failed", info=f"{e}", info_pre=False).exec_()
 
     def un_id_paper(self):
         # should we populate "test" from the list view?

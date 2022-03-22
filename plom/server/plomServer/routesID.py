@@ -518,6 +518,10 @@ class IDHandler:
 
         Returns:
             aiohttp.web_response.Response: 200/401/403
+            401/403: authentication ttroubles
+            406 (not acceptable): LAP is degenerate
+            409 (conflict): ID reader still running
+            412 (precondition failed) for no ID reader
         """
         if data["user"] != "manager":
             raise web.HTTPForbidden(reason="I only speak to the manager")
@@ -526,8 +530,10 @@ class IDHandler:
             status = self.server.predict_id_lap_solver()
         except RuntimeError as e:
             return web.HTTPConflict(reason=e)
-        except FileNotFoundError:
-            return web.HTTPConflict(reason="You must run the id reader first")
+        except IndexError as e:
+            return web.HTTPNotAcceptable(reason=e)
+        except FileNotFoundError as e:
+            return web.HTTPPreconditionFailed(reason=f"Must run id reader first: {e}")
         return web.Response(text=status, status=200)
 
     # @routes.patch("/ID/review")
