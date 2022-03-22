@@ -249,7 +249,7 @@ def predict_id_lap_solver(self):
             pass
     unidentified_papers = self.DB.IDgetUnidentifiedTests()
     status += "\nAssignment problem: "
-    status += f"{len(unidentified_papers)} unidentified papers to match with\n"
+    status += f"{len(unidentified_papers)} unidentified papers to match with "
     status += f"{len(sids)} unused names in the classlist."
 
     # exclude papers for which we don't have probabilities
@@ -260,7 +260,8 @@ def predict_id_lap_solver(self):
 
     if len(papers) == 0 or len(sids) == 0:
         raise IndexError(
-            "Assignment problem is degenerate: {len(papers)} papers, {len(sids)} students."
+            f"Assignment problem is degenerate: {len(papers)} unidentified "
+            f"machine-read papers and {len(sids)} unused students."
         )
 
     status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"

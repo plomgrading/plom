@@ -1563,9 +1563,9 @@ class Manager(QWidget):
     def run_predictor(self):
         try:
             status = self.msgr.run_predictor()
-            InfoMsg(self, "Results of ID matching", info=status, info_pre=False).exec_()
+            InfoMsg(self, "Results of ID matching:", info=status).exec_()
         except PlomConflict as e:
-            WarnMsg(self, "ID matching failed", info=f"{e}", info_pre=False).exec_()
+            WarnMsg(self, "ID matching procedure failed:", info=f"{e}").exec_()
 
     def un_id_paper(self):
         # should we populate "test" from the list view?
