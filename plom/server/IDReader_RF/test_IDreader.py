@@ -76,12 +76,12 @@ def test_get_digit_box(tmpdir):
     id_img = files[0]
 
     # these will fail if we don't include the box
-    x = get_digit_box(id_img, 5 / 2000, 10 / 2000)
+    x = get_digit_box(id_img, 0.001, 0.01)
     assert x is None
-    x = get_digit_box(id_img, 1900 / 2000, 2000 / 2000)
+    x = get_digit_box(id_img, 0.95, 1.0)
     assert x is None
 
-    x = get_digit_box(id_img, 100 / 2000, 1950 / 2000)
+    x = get_digit_box(id_img, 0.01, 0.98)
     # should get a bunch of pixels
     assert len(x) > 100
 

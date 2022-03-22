@@ -96,7 +96,7 @@ class SelectRectangleWindow(QDialog):
         else:
             t = self.view.imageGItem.boundingRect().top()
             h = self.view.imageGItem.boundingRect().height() - t
-            self._stuff = (
+            self.top_bottom_values = (
                 max(0, (self.rectangle.top() - t) / h),
                 min(1, (self.rectangle.bottom() - t) / h),
             )

@@ -1501,8 +1501,9 @@ class Manager(QWidget):
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
-                self.ui.cropTopLE.setText(str(100 * srw._stuff[0]))
-                self.ui.cropBottomLE.setText(str(100 * srw._stuff[1]))
+                top, bottom = srw.top_bottom_values
+                self.ui.cropTopLE.setText(str(100 * top))
+                self.ui.cropBottomLE.setText(str(100 * bottom))
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
