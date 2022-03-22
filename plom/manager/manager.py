@@ -515,6 +515,9 @@ class Manager(QWidget):
                 == QMessageBox.Yes
             ):
                 self.msgr.clearAuthorisation("manager", pwd)
+                self.msgr = None
+                self.login()
+                return
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
