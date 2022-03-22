@@ -112,7 +112,7 @@ def build_papers(
 
 
 @with_manager_messenger
-def build_database(*, msgr, vermap={}):
+def build_database(*, msgr, vermap={}, verbose=True):
     """Build the database from a pre-set version map.
 
     Keyword Args:
@@ -121,9 +121,11 @@ def build_database(*, msgr, vermap={}):
         vermap (dict): question version map.  If empty dict, server will
             make its own mapping.  For the map format see
             :func:`plom.finish.make_random_version_map`.
+        verbose (bool): default True, print status of each DB row
+            creation to stdout.
 
     return:
-        str: long multiline string of all the version DB entries.
+        None
 
     raises:
         PlomExistingDatabase
@@ -138,14 +140,13 @@ def build_database(*, msgr, vermap={}):
             "Report a bug in version_map code - difference between one you gave me and one server gave back at build!"
         )
     # now build the tests one at a time
-    status = ""
     for t in sorted(new_vmap):
-        status += msgr.appendTestToDB(t, new_vmap[t])
-        print(f"Built test number {t}")
+        status_msg = msgr.appendTestToDB(t, new_vmap[t])
+        if verbose:
+            print(status_msg)
 
     # more version map sanity checks
     qvmap = msgr.getGlobalQuestionVersionMap()
     assert qvmap == new_vmap, RuntimeError(
         "Report a bug in version_map code - difference between one you gave me and one server gave back after build!"
     )
-    return status
