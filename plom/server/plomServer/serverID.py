@@ -190,24 +190,22 @@ def IDreviewID(self, test_number):
     return self.DB.IDreviewID(test_number)
 
 
-def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
+def IDrunPredictions(self, top, bottom, ignore_stamp):
     """Run the ML prediction model on the papers and saves the information.
 
     Args:
-        rectangle (list): A list of coordinates if the format of:
-            [top_left_x, top_left_y, bottom_right_x, bottom_right_y]
-        database_reference_number (int): Number of the file which the
-            cropped rectangle was extracted from.
+        top (float): where to crop in `[0, 1]`.
+        bottom (float): where to crop in `[0, 1]`.
         ignore_stamp (bool): Whether to ignore the timestamp when
             deciding whether to skip the run.
 
     Returns:
         list: A list with first value boolean and second value boolean or a
-            message string of the format:
-            [True, False]: it is already running.
-            [False, str]: prediction already exists, `str` is the
-                timestamp of the last time prediction run.
-            [True, True]: we started a new prediction run.
+        message string of the format:
+        `[True, False]`: it is already running.
+        `[False, str]`: prediction already exists, `str` is the
+        timestamp of the last time prediction run.
+        `[True, True]`: we started a new prediction run.
     """
     lock_file = specdir / "IDReader.lock"
     timestamp = specdir / "IDReader.timestamp"
@@ -230,7 +228,7 @@ def IDrunPredictions(self, rectangle, database_reference_number, ignore_stamp):
 
     # dump this as json / lock_file for subprocess to use in background.
     with open(lock_file, "w") as fh:
-        json.dump([test_image_dict, rectangle], fh)
+        json.dump([test_image_dict, {"crop_top": top, "crop_bottom": bottom}], fh)
     # make a timestamp
     last_run_timestamp = datetime.now().strftime("%y:%m:%d-%H:%M:%S")
 

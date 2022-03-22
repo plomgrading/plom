@@ -1503,14 +1503,9 @@ class Manager(QWidget):
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
-                self.IDrectangle = srw.rectangle
-                self.IDwhichFile = srw.whichFile
-                if (
-                    self.IDrectangle is None
-                ):  # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
-                    self.ui.predictButton.setEnabled(False)
-                else:
-                    self.ui.predictButton.setEnabled(True)
+                top, bottom = srw.top_bottom_values
+                self.ui.cropTopLE.setText(str(100 * top))
+                self.ui.cropBottomLE.setText(str(100 * bottom))
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
@@ -1537,13 +1532,8 @@ class Manager(QWidget):
 
     def runPredictor(self, ignoreStamp=False):
         rmsg = self.msgr.IDrunPredictions(
-            [
-                self.IDrectangle.left(),
-                self.IDrectangle.top(),
-                self.IDrectangle.width(),
-                self.IDrectangle.height(),
-            ],
-            self.IDwhichFile,
+            float(self.ui.cropTopLE.text()) / 100,
+            float(self.ui.cropBottomLE.text()) / 100,
             ignoreStamp,
         )
         # returns [True, True] = off and running,

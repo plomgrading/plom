@@ -474,7 +474,7 @@ class IDHandler:
         )
 
     @authenticate_by_token_required_fields(
-        ["user", "rectangle", "fileNumber", "ignoreStamp"]
+        ["user", "crop_top", "crop_bottom", "ignoreStamp"]
     )
     def IDrunPredictions(self, data, request):
         """Runs the id prediction on all paper images.
@@ -482,21 +482,19 @@ class IDHandler:
         Responds with status 200/202/205/401.
 
         Args:
-            data (dict): A dictionary having the user/token in addition to information from the rectangle
-                bounding box coordinates and file information.
+            data (dict): A dictionary having the user/token, cropping info
+                and flag to ignore time stamp.
             request (aiohttp.web_request.Request): Request of type POST /ID/predictedID.
 
         Returns:
             aiohttp.web_response.Response: Returns a response with the date and time of the prediction run.
                 Or responds with saying the prediction is already running.
         """
-
-        # TODO: maybe we want some special message here?
         if data["user"] != "manager":
-            return web.Response(status=401)
+            raise web.HTTPForbidden(reason="I only speak to the manager")
 
         prediction_results = self.server.IDrunPredictions(
-            data["rectangle"], data["fileNumber"], data["ignoreStamp"]
+            data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
         )
 
         timestamp_found = prediction_results[0]
@@ -555,7 +553,6 @@ class IDHandler:
         router.add_delete("/ID/predictedID", self.IDdeletePredictions)
         router.add_post("/ID/predictedID", self.IDrunPredictions)
         router.add_patch("/ID/review", self.IDreviewID)
-        router.add_post("/ID/predictedID", self.IDrunPredictions)
         # be careful with this one - since is such a general route
         # put it last
         router.add_put("/ID/{papernum}", self.IdentifyPaper)

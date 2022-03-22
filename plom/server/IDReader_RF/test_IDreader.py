@@ -76,12 +76,12 @@ def test_get_digit_box(tmpdir):
     id_img = files[0]
 
     # these will fail if we don't include the box
-    x = get_digit_box(id_img, 5, 10)
+    x = get_digit_box(id_img, 0.001, 0.01)
     assert x is None
-    x = get_digit_box(id_img, 1900, 2000)
+    x = get_digit_box(id_img, 0.95, 1.0)
     assert x is None
 
-    x = get_digit_box(id_img, 100, 1950)
+    x = get_digit_box(id_img, 0.01, 0.98)
     # should get a bunch of pixels
     assert len(x) > 100
 
@@ -89,7 +89,7 @@ def test_get_digit_box(tmpdir):
     with working_directory(tmpdir):
         download_or_train_model()
         model = load_model()
-    x = get_digit_prob(model, id_img, 100, 1950, 8, debug=False)
+    x = get_digit_prob(model, id_img, 0.05, 0.975, 8, debug=False)
     assert len(x) == 8
     for probs in x:
         assert len(probs) == 10
@@ -98,7 +98,7 @@ def test_get_digit_box(tmpdir):
 
     # test: debug_extracts_images
     with working_directory(tmpdir):
-        x = get_digit_prob(model, id_img, 1, 2000, 8, debug=True)
+        x = get_digit_prob(model, id_img, 0.0, 1.0, 8, debug=True)
     d = tmpdir / "debug_id_reader"
     assert len(list(d.glob("digit_foo*"))) == 8
     for f in d.glob("digit_*"):
@@ -130,6 +130,6 @@ def test_get_digit_box(tmpdir):
 
     id_imgs = {(k + 1): x for k, x in enumerate(id_imgs)}
     with working_directory(tmpdir):
-        pred = run_id_reader(id_imgs, [0, 300, 0, 1800], [x["id"] for x in miniclass])
+        pred = run_id_reader(id_imgs, 0.15, 0.9, [x["id"] for x in miniclass])
     for P, S in zip(pred, miniclass):
         assert P[1] == S["id"]

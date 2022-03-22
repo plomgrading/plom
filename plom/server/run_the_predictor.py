@@ -3,13 +3,13 @@
 # Copyright (C) 2018-2020 Andrew Rechnitzer
 # Copyright (C) 2020 Dryden Wiebe
 # Copyright (C) 2020 Vala Vakilian
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
 Executable file frontend to the actual ID reader code.
 """
 
-__copyright__ = "Copyright (C) 2018-20120 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
@@ -38,11 +38,11 @@ if __name__ == "__main__":
             student_IDs.append(row[0])
 
     with open(lock_file) as fh:
-        fileDictAndRect = json.load(fh)
+        files, info = json.load(fh)
 
     print("Firing up the auto id reader.")
     prediction_pairs = run_id_reader(
-        fileDictAndRect[0], fileDictAndRect[1], student_IDs
+        files, info["crop_top"], info["crop_bottom"], student_IDs
     )
 
     # now save the result
