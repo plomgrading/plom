@@ -232,40 +232,42 @@ def predict_id_lap_solver(self):
     probabilities = {int(k): v for k, v in probabilities.items()}
 
     log.info("Getting the classlist")
-    student_IDs = []
+    sids = []
     with open(specdir / "classlist.csv", newline="") as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=",")
         next(csv_reader, None)  # skip the header
         for row in csv_reader:
-            student_IDs.append(row[0])
+            sids.append(row[0])
 
-    status = f"Original class list has {len(student_IDs)} students.\n"
+    status = f"Original class list has {len(sids)} students.\n"
     X = self.DB.IDgetIdentifiedTests()
     for x in X:
         try:
-            student_IDs.remove(x[1])
+            sids.remove(x[1])
         except ValueError:
             pass
-    papers = self.DB.IDgetUnidentifiedTests()
+    unidentified_papers = self.DB.IDgetUnidentifiedTests()
     status += "\nAssignment problem: "
-    status += f"{len(papers)} unidentified papers to match with\n"
-    status += f"{len(student_IDs)} unused names in the classlist."
+    status += f"{len(unidentified_papers)} unidentified papers to match with\n"
+    status += f"{len(sids)} unused names in the classlist."
 
     # exclude papers for which we don't have probabilities
-    papers_to_match = [n for n in papers if n in probabilities]
-    if len(papers_to_match) < len(papers):
-        status += f"\nNote: {len(papers) - len(papers_to_match)} papers "
-        status += f"were not autoread; now we have {len(papers_to_match)} "
-        status += "papers to match.\n"
+    papers = [n for n in unidentified_papers if n in probabilities]
+    if len(papers) < len(unidentified_papers):
+        status += f"\nNote: {len(unidentified_papers) - len(papers)} papers "
+        status += f"were not autoread; have {len(papers)} papers to match.\n"
 
-    # TODO: raise on degenerate: zero papers to match...
+    if len(papers) == 0 or len(sids):
+        raise IndexError(
+            "Assignment problem is degenerate: {len(papers)} papers, {len(sids)} students."
+        )
 
     status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"
 
     status += "\nSolving assignment problem..."
 
     t = time.process_time()
-    prediction_pairs = run_lap_solver(papers_to_match, probabilities, student_IDs)
+    prediction_pairs = run_lap_solver(papers, probabilities, sids)
     status += "  done.\nBuilding cost matrix and solution took "
     status += f"{time.process_time() - t:.02} seconds."
     # TODO: nice to report those separately
