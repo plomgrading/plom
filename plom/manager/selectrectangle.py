@@ -160,6 +160,8 @@ class IDView(QGraphicsView):
                 # deal with jpeg exif rotations
                 qir.setAutoTransform(True)
                 pix = QPixmap(qir.read())
+                if pix.isNull():
+                    raise RuntimeError(f"Could not read an image from {fn}")
                 self.images[n] = QGraphicsPixmapItem(pix)
                 self.images[n].setTransformationMode(Qt.SmoothTransformation)
                 self.images[n].setPos(x, 0)
