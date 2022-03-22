@@ -1498,6 +1498,8 @@ class Manager(QWidget):
                 tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
                     fh.write(img_bytes)
+                if not img_ext:
+                    raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
@@ -1526,10 +1528,12 @@ class Manager(QWidget):
             return
         with tempfile.TemporaryDirectory() as td:
             img_ext = imghdr.what(None, h=img_bytes)
-            imageName = Path(td) / f"id.{img_ext}"
-            with open(imageName, "wb") as fh:
+            img_name = Path(td) / f"id.{img_ext}"
+            with open(img_name, "wb") as fh:
                 fh.write(img_bytes)
-            GroupView(self, imageName, title=f"ID page currently IDed as {sid}").exec_()
+            if not img_ext:
+                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            GroupView(self, img_name, title=f"ID page currently IDed as {sid}").exec_()
 
     def runPredictor(self, ignoreStamp=False):
         rmsg = self.msgr.IDrunPredictions(
@@ -1830,10 +1834,12 @@ class Manager(QWidget):
         img_bytes = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
             img_ext = imghdr.what(None, h=img_bytes)
-            imageName = Path(td) / f"id.0.{img_ext}"
-            with open(imageName, "wb") as fh:
+            img_name = Path(td) / f"id.0.{img_ext}"
+            with open(img_name, "wb") as fh:
                 fh.write(img_bytes)
-            rvw = ReviewViewWindow(self, imageName, "ID page")
+            if not img_ext:
+                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            rvw = ReviewViewWindow(self, img_name, "ID page")
             if rvw.exec() == QDialog.Accepted:
                 # first remove auth from that user - safer.
                 if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
