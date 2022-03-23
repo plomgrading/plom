@@ -1670,7 +1670,7 @@ class Manager(QWidget):
     def filterReview(self):
         markedOnly = True if self.ui.markedOnlyCB.checkState() == Qt.Checked else False
         mrList = self.msgr.getMarkReview(
-            filterPaperNumber=self.ui.reviewPaperNumSpinBox.value(),
+            filterPaperNumber=self.ui.reviewPaperNumSpinBox.text(),
             filterQ=self.ui.questionCB.currentText(),
             filterV=self.ui.versionCB.currentText(),
             filterUser=self.ui.userCB.currentText(),
