@@ -7,6 +7,8 @@ from plom.rules import validateStudentNumber
 
 
 possible_sid_fields = ["id"]
+possible_one_name_fields = ["studentName"]
+
 possible_surname_fields = ["surname", "familyName", "lastName"]
 possible_given_name_fields = [
     "name",

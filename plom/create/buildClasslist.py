@@ -16,6 +16,7 @@ from plom.finish.return_tools import import_canvas_csv
 
 from plom.create.classlistValidator import (
     possible_sid_fields,
+    possible_one_name_fields,
     possible_given_name_fields,
     possible_surname_fields,
     PlomCLValidator,
@@ -64,10 +65,20 @@ def clean_non_canvas_csv(csv_file_name):
     df["id"] = df["id"].apply(lambda X: X.strip())
     print('"id" column present')
 
-    # see if we have our preferred format for a name column
-    if "studentName" in df.columns:
-        print('"studentName" column present')
+    # see if there is a single name column
+    one_name_column = None
+    for c in df.columns:
+        if c.casefold() in (x.casefold() for x in possible_one_name_fields):
+            print(f'"{c}" column present')
+            one_name_column = c
+            break
+    if one_name_column is not None:
+        # make sure id column named 'id' - lowercase
+        print(f"Renaming column {one_name_column} to 'studentName'")
+        df.rename(columns={one_name_column: "studentName"}, inplace=True)
+        # clean up the column - strip whitespace
         df["studentName"].apply(lambda X: X.strip())
+        print('"studentName" column present')
         return df
 
     # Otherwise, we will check the column headers again taking the first

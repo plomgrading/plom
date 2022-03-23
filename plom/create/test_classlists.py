@@ -65,6 +65,7 @@ def test_no_ID_column_fails(tmpdir):
 
 
 def test_casefold_column_names1(tmpdir):
+    # for #1140
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
     with working_directory(tmpdir):
@@ -81,17 +82,17 @@ def test_casefold_column_names1(tmpdir):
 
 
 def test_casefold_column_names2(tmpdir):
+    # for #1140
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
-            f.write('"Id","nAmE"\n')
+            f.write('"Id","StuDentNamE"\n')
             f.write('12345678,"Doe"\n')
         assert not vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
         assert "id" in df.columns
         assert "studentName" in df.columns
-
-        with raises(ValueError):
-            _ = clean_non_canvas_csv(foo)
+        assert set(df.columns) == set(("id", "studentName"))
+        
