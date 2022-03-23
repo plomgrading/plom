@@ -164,6 +164,7 @@ def test_check_classlist_length1(tmpdir):
     from plom import SpecVerifier
 
     spec = SpecVerifier.demo(num_to_produce=2)
+    # by default spec names half, ie 1, so this will return a warning.
 
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
@@ -173,12 +174,22 @@ def test_check_classlist_length1(tmpdir):
             f.write('12345679,"Doer"\n')
             f.write('12345680,"Doerr"\n')
         success, warn_err = vlad.validate_csv(foo, spec=spec)
-        # should get
+        # should get [
+        # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1'},
         # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2'}
+        # ]
+
+        # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2'}
+        print(success, warn_err)
         assert success
         assert warn_err[0]["werr_line"] == 0
+        assert warn_err[1]["werr_line"] == 0
         assert (
             warn_err[0]["werr_text"]
+            == "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1"
+        )
+        assert (
+            warn_err[1]["werr_text"]
             == "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2"
         )
 
@@ -202,10 +213,38 @@ def test_check_classlist_length2(tmpdir):
         success, warn_err = vlad.validate_csv(foo, spec=spec)
         print(success, warn_err)
         # should get
-        # [{'warn_or_err': 'error', 'werr_line': 0, 'werr_text': 'Classlist too short. Classlist contains 3 names, but spec:numberToName is 5'}]
+        #  [{'warn_or_err': 'error', 'werr_line': 0, 'werr_text': 'Classlist is too short. Classlist contains 3 names, but spec:numberToName is 5'}]
         assert not success
         assert warn_err[0]["werr_line"] == 0
         assert (
             warn_err[0]["werr_text"]
-            == "Classlist too short. Classlist contains 3 names, but spec:numberToName is 5"
+            == "Classlist is too short. Classlist contains 3 names, but spec:numberToName is 5"
+        )
+
+
+def test_check_classlist_length3(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    from plom import SpecVerifier
+
+    spec = SpecVerifier.demo(num_to_produce=3)
+    # manually set number to name longer than classlist
+    spec.spec["numberToName"] = 2
+
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","studentName"\n')
+            f.write('12345678,"Doe"\n')
+            f.write('12345679,"Doer"\n')
+            f.write('12345680,"Doerr"\n')
+        success, warn_err = vlad.validate_csv(foo, spec=spec)
+        print(success, warn_err)
+        # should get
+        # [{'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2'}]
+        assert success
+        assert warn_err[0]["werr_line"] == 0
+        assert (
+            warn_err[0]["werr_text"]
+            == "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2"
         )

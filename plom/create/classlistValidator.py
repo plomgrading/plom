@@ -241,10 +241,18 @@ class PlomCLValidator:
                     {
                         "warn_or_err": "error",
                         "werr_line": 0,
-                        "werr_text": f"Classlist too short. Classlist contains {len(cl_as_dicts)} names, but spec:numberToName is {spec['numberToName']}",
+                        "werr_text": f"Classlist is too short. Classlist contains {len(cl_as_dicts)} names, but spec:numberToName is {spec['numberToName']}",
                     }
                 )
                 return (False, werr)  # Fail out here
+            elif spec["numberToName"] < len(cl_as_dicts):  # see issue 927
+                werr.append(
+                    {
+                        "warn_or_err": "warning",
+                        "werr_line": 0,
+                        "werr_text": f"Classlist is longer than numberToName. Classlist contains {len(cl_as_dicts)} names, but spec:numberToName is {spec['numberToName']}",
+                    }
+                )
 
             if spec["numberToProduce"] == -1:
                 # nothing to check - will produce as many as in classlist
