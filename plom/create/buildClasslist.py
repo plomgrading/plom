@@ -206,7 +206,7 @@ def get_demo_classlist(spec):
     return clist
 
 
-def process_classlist_file(student_csv_file_name, spec, ignore_warnings=False):
+def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False):
     """Get student names/IDs from a csv file.
 
     Student numbers come from an `id` column.  There is some
@@ -226,7 +226,7 @@ def process_classlist_file(student_csv_file_name, spec, ignore_warnings=False):
 
     Keyword Arguments:
         ignore_warnings (bool): if true, proceed with classlist
-        processing even if there are warnings.
+            processing even if there are warnings.  Default False.
 
     Return:
         list: A list of dicts, each with `"id"` and `"studentName"`.
