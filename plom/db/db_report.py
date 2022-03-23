@@ -532,14 +532,14 @@ def RgetMarkReview(
         [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
     """
     if filterMarked is True:
+        # since it is marked, we know that it will have a user, so join the user table to query.
         query = QGroup.select().join(User).where(QGroup.marked == True)  # noqa: E712
     else:
         query = QGroup.select()
     if filterPaperNumber != "*":
-        print(filterPaperNumber)
-        print(type(filterPaperNumber))
-        # TODO: need to use int(filterPaperNumber) here?  if not why not?
-        query = query.where(Test.test_number == filterPaperNumber)
+        # since filtering on test-number join query with the Test table.
+        query = query.join(Test).where(Test.test_number == filterPaperNumber)
+
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
     if filterV != "*":
