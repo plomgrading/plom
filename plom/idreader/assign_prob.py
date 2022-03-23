@@ -5,10 +5,7 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
-Use sklearn random forest model to read student IDs from ID-pages.
-Relies on use of standard ID template.
-
-Note: has hardcoded 8-digit student numbers.
+Tools for building and solving assignment problems.
 """
 
 from lapsolver import solve_dense

@@ -13,7 +13,7 @@ import subprocess
 import time
 
 from plom import specdir
-from plom.idreader import assemble_cost_matrix, lap_solver
+from plom.idreader.assign_prob import assemble_cost_matrix, lap_solver
 
 
 log = logging.getLogger("servID")

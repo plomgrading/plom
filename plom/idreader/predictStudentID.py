@@ -5,6 +5,8 @@
 # Copyright (C) 2020-2022 Colin B. Macdonald
 
 """
+Use image processing to extract and "read" student numbers.
+
 See:
 https://www.pyimagesearch.com/2017/02/13/recognizing-digits-with-opencv-and-python/
 """
