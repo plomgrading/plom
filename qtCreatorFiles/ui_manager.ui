@@ -1162,6 +1162,23 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_12">
              <item>
+              <layout class="QVBoxLayout" name="verticalLayout_31">
+               <item>
+                <widget class="QLabel" name="label_11">
+                 <property name="text">
+                  <string>Paper number</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="reviewPaperNumSpinBox"/>
+               </item>
+              </layout>
+             </item>
+             <item>
               <layout class="QVBoxLayout" name="verticalLayout_15">
                <item>
                 <widget class="QLabel" name="label_6">

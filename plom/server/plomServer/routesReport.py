@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2019-2020 Andrew Rechnitzer
-# Copyright (C) 2020-2021 Colin B. Macdonald
+# Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Vala Vakilian
 # Copyright (C) 2021 Nicholas J H Lai
 
@@ -392,12 +392,17 @@ class ReportHandler:
 
     # @routes.get("/REP/markReview")
     @authenticate_by_token_required_fields(
-        ["user", "filterQ", "filterV", "filterU", "filterM"]
+        [
+            "user",
+            "filterPaperNumber",
+            "filterQ",
+            "filterV",
+            "filterUser",
+            "filterMarked",
+        ]
     )
     def RgetMarkReview(self, data, request):
         """Respond with a list of graded tasks that match the filter description.
-
-        Responds with status 200/401.
 
         Args:
             data (dict): A dictionary which includes the user data in addition to the
@@ -405,20 +410,21 @@ class ReportHandler:
             request (aiohttp.web_request.Request): Request of type GET /REP/markReview.
 
         Returns:
-            aiohttp.web_response.Response: Response object including  metadata on the
-                graded exams that match the filter.
+            aiohttp.web_response.Response: JSON of a list of lists of the form
+            [Test number, Question number, Version number, Mark, Username, seconds spent marking, date/time of marking].
+            For example: ``[[3, 1, 1, 5, 'user0', 7, '20:06:21-01:21:56'], [...]]``.
+            Can fail with 401/403 for authentication problems.
         """
-
         if not data["user"] == "manager":
-            return web.Response(status=401)
-        rmsg = self.server.RgetMarkReview(
-            data["filterQ"], data["filterV"], data["filterU"], data["filterM"]
+            raise web.HTTPConflict(reason="I want to speak to the manager")
+        matches = self.server.RgetMarkReview(
+            filterPaperNumber=data["filterPaperNumber"],
+            filterQ=data["filterQ"],
+            filterV=data["filterV"],
+            filterUser=data["filterUser"],
+            filterMarked=data["filterMarked"],
         )
-
-        # A list of lists including metadata information for the graded exams matching the filter with the format of:
-        # [Test number, Question number, Version number, Mark, Username, # TODO: Explain Marking Time, date/time of marking ]
-        # Ex:[[3, 1, 1, 5, 'user0', 7, '20:06:21-01:21:56'],
-        return web.json_response(rmsg, status=200)
+        return web.json_response(matches, status=200)
 
     # @routes.get("/REP/idReview")
     @authenticate_by_token_required_fields(["user"])

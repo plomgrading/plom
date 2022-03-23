@@ -511,22 +511,38 @@ def RgetCoverPageInfo(self, test_number):
     return coverpage
 
 
-def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
+def RgetMarkReview(
+    self,
+    *,
+    filterPaperNumber,
+    filterQ,
+    filterV,
+    filterUser,
+    filterMarked,
+):
     """Return a list of all marked qgroups satisfying the filter conditions.
-    Filter on question-number, version, and user-name.
-    For each matching qgroup we return a tuple of
-    [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
+
+    Filter on paper-number, question-number, version, user-name and whether
+    it is marked.  The string ``"*"`` is a wildcard to match all papers.
+    TODO: how does type work here?  I guess they are either int/str,
+    would it be better to use None/int with None as the wildcard?
+
+    Returns:
+        list: for each matching qgroup we return a list of
+        [testnumber, question, version, mark of latest annotation, username, marking_time, time finished.]
     """
-    if filterM is True:
+    if filterMarked is True:
         query = QGroup.select().join(User).where(QGroup.marked == True)  # noqa: E712
     else:
         query = QGroup.select()
+    if filterPaperNumber != "*":
+        query = query.where(Test.test_number == filterPaperNumber)
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
     if filterV != "*":
         query = query.where(QGroup.version == filterV)
-    if filterU != "*":
-        query = query.where(User.name == filterU)
+    if filterUser != "*":
+        query = query.where(User.name == filterUser)
     filtered = []
     for qref in query:
         if qref.marked is True:
@@ -556,11 +572,10 @@ def RgetMarkReview(self, filterQ, filterV, filterU, filterM):
             )
 
     log.debug(
-        "Sending filtered mark-review data. filters (Q,V,U)={}.{}.{}".format(
-            filterQ, filterV, filterU
-        )
+        f"Sending {len(filtered)} filtered mark-review data: "
+        + f"(Papernum,Q,V,User,Marked)=({filterPaperNumber},"
+        + f"{filterQ},{filterV},{filterUser},{filterMarked})"
     )
-    log.warn(f"FILT = {filtered}")
     return filtered
 
 
