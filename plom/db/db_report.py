@@ -536,6 +536,9 @@ def RgetMarkReview(
     else:
         query = QGroup.select()
     if filterPaperNumber != "*":
+        print(filterPaperNumber)
+        print(type(filterPaperNumber))
+        # TODO: need to use int(filterPaperNumber) here?  if not why not?
         query = query.where(Test.test_number == filterPaperNumber)
     if filterQ != "*":
         query = query.where(QGroup.question == filterQ)
