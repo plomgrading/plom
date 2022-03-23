@@ -15,6 +15,7 @@ import plom
 from plom.finish.return_tools import import_canvas_csv
 
 from plom.create.classlistValidator import (
+    possible_sid_fields,
     possible_given_name_fields,
     possible_surname_fields,
     PlomCLValidator,
@@ -46,12 +47,22 @@ def clean_non_canvas_csv(csv_file_name):
     # strip excess whitespace from column names
     df.rename(columns=lambda x: x.strip(), inplace=True)
 
-    if "id" not in df.columns:
+    # find the id column
+    id_column = None
+    for c in df.columns:
+        if c.casefold() in (x.casefold() for x in possible_sid_fields):
+            print(f'"{c}" column present')
+            id_column = c
+            break
+    if id_column is None:
         # note that this should be caught by the validator
         raise ValueError('no "id" column is present')
-    print('"id" column present')
-    # strip excess whitespace
+    # make sure id column named 'id' - lowercase
+    print(f"Renaming column {id_column} to 'id'")
+    df.rename(columns={id_column: "id"}, inplace=True)
+    # clean up the column - strip whitespace
     df["id"] = df["id"].apply(lambda X: X.strip())
+    print('"id" column present')
 
     # see if we have our preferred format for a name column
     if "studentName" in df.columns:

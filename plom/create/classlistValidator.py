@@ -6,6 +6,7 @@ import pandas
 from plom.rules import validateStudentNumber
 
 
+possible_sid_fields = ["id"]
 possible_surname_fields = ["surname", "familyName", "lastName"]
 possible_given_name_fields = [
     "name",
@@ -56,21 +57,6 @@ class PlomCLValidator:
             # return the list
             return classAsDict
 
-    # def getGivenNameKeys(self, casefoldKeyList):
-    #     """Given the """
-    #     rl = []
-    #     for n in possible_given_name_fields:
-    #         if n.casefold() in casefoldKeyList:
-    #             rl.append(n)
-    #     return rl
-
-    # def getSurnameKeys(self, casefoldKeyList):
-    #     rl = []
-    #     for n in possible_surname_fields:
-    #         if n.casefold() in casefoldKeyList:
-    #             rl.append(n)
-    #     return rl
-
     def checkHeaders(self, rowFromDict):
         """Check existence of given-name and surname columns in the classlist.
 
@@ -92,6 +78,9 @@ class PlomCLValidator:
         """
         theKeys = rowFromDict.keys()
         casefoldKeyList = [x.casefold() for x in theKeys]
+        id_keys = [
+            x.casefold() for x in possible_sid_fields if x.casefold() in casefoldKeyList
+        ]
         given_name_keys = [
             x.casefold()
             for x in possible_given_name_fields
@@ -104,8 +93,9 @@ class PlomCLValidator:
         ]
 
         err = []
-        if "id" not in theKeys:  # must have an id column
+        if "id" not in casefoldKeyList:  # must have an id column
             err.append("Missing id column")
+
         if "studentName" in theKeys:  # if studentName then no other name column
             if len(given_name_keys) > 0:
                 err.append(
@@ -139,9 +129,9 @@ class PlomCLValidator:
         if len(err) > 0:
             return [False, err]
         if len(surname_keys) == 0 and len(given_name_keys) == 0:
-            return [True, "id", "studentName"]
+            return [True, id_keys[0], "studentName"]
         else:
-            return [True, "id", surname_keys[0], given_name_keys[0]]
+            return [True, id_keys[0], surname_keys[0], given_name_keys[0]]
 
     def check_ID_StudentName(self, classList):
         """Check ID and StudentName when student-name is a single field"""
@@ -315,7 +305,7 @@ class PlomCLValidator:
         # strip excess whitespace from column names
         student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
 
-        if "id" not in student_info_df.columns:
+        if "id" not in [x.casefold() for x in student_info_df.columns]:
             print('Cannot find "id" column')
             print("Columns present = {}".format(student_info_df.columns))
             return False

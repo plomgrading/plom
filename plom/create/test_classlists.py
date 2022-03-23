@@ -62,3 +62,36 @@ def test_no_ID_column_fails(tmpdir):
         assert not vlad.check_is_non_canvas_csv(foo)
         with raises(ValueError):
             _ = clean_non_canvas_csv(foo)
+
+
+def test_casefold_column_names1(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"ID","surNaMe","preFeRRedname"\n')
+            f.write('12345677,"Doe","Ursula"\n')
+            f.write('12345678,"Doe","Carol"\n')
+        assert vlad.check_is_non_canvas_csv(foo)
+        df = clean_non_canvas_csv(foo)
+        assert "id" in df.columns
+        assert "studentName" in df.columns
+        assert set(df.columns) == set(("id", "studentName"))
+
+
+def test_casefold_column_names2(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"Id","nAmE"\n')
+            f.write('12345678,"Doe"\n')
+        assert not vlad.check_is_non_canvas_csv(foo)
+        df = clean_non_canvas_csv(foo)
+        assert "id" in df.columns
+        assert "studentName" in df.columns
+
+        with raises(ValueError):
+            _ = clean_non_canvas_csv(foo)
