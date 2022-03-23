@@ -15,13 +15,13 @@ def isValidUBCStudentNumber(n):
     try:
         sid = int(str(n))
     except:  # noqa: E722
-        return (False, f"SID {n} is not an integer")
+        return (False, f"SID '{n}' is not an integer")
     if sid < 0:
-        return (False, f"SID {n} is negative")
+        return (False, f"SID '{n}' is negative")
     if len(str(n)) != StudentIDLength:
         return (
             False,
-            f"SID {n} has incorrect length - expecting {StudentIDLength} digits",
+            f"SID '{n}' has incorrect length - expecting {StudentIDLength} digits",
         )
     return (True, "")
 

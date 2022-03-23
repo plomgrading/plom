@@ -22,6 +22,15 @@ possible_given_name_fields = [
     "nickNames",
 ]
 canvas_columns_format = ("Student", "ID", "SIS User ID", "SIS Login ID")
+# combine all of these potential column headers into one casefolded list
+potential_column_names = [
+    x.casefold()
+    for x in possible_sid_fields
+    + possible_one_name_fields
+    + possible_surname_fields
+    + possible_given_name_fields
+    + list(canvas_columns_format)
+]
 
 
 class PlomCLValidator:
@@ -46,11 +55,19 @@ class PlomCLValidator:
             csvfile.seek(0)
             # guess the dialect
             dialect = csv.Sniffer().sniff(sample)
-            # check it has a header
-            if csv.Sniffer().has_header(sample) is False:
-                raise ValueError("No header")
-            # now read the entries
+            # build the dict_reader
             reader = csv.DictReader(csvfile, dialect=dialect)
+            # check it has a header - csv.sniffer.has_header is a bit flakey
+            # instead check that we have some of the potential keys - careful of case
+            column_names = [x.casefold() for x in reader.fieldnames]
+            if any(x in potential_column_names for x in column_names):
+                print("Appears to have reasonable header - continuing.")
+            else:
+                print(
+                    "The header is either unreadable or has no fields that Plom recognises."
+                )
+                raise ValueError("No header")
+            # now actually read the entries
             l = 1
             for row in reader:
                 l += 1
@@ -80,18 +97,12 @@ class PlomCLValidator:
         """
         theKeys = rowFromDict.keys()
         casefoldKeyList = [x.casefold() for x in theKeys]
-        id_keys = [
-            x.casefold() for x in possible_sid_fields if x.casefold() in casefoldKeyList
-        ]
+        id_keys = [x for x in possible_sid_fields if x.casefold() in casefoldKeyList]
         given_name_keys = [
-            x.casefold()
-            for x in possible_given_name_fields
-            if x.casefold() in casefoldKeyList
+            x for x in possible_given_name_fields if x.casefold() in casefoldKeyList
         ]
         surname_keys = [
-            x.casefold()
-            for x in possible_surname_fields
-            if x.casefold() in casefoldKeyList
+            x for x in possible_surname_fields if x.casefold() in casefoldKeyList
         ]
 
         err = []
@@ -209,8 +220,8 @@ class PlomCLValidator:
             return (False, [f"Cannot open {filename}"])
         except ValueError:
             return (False, [f"No header in {filename}"])
-        except Exception:
-            return (False, [f"Some other sort of error reading {filename}"])
+        except Exception as err:
+            return (False, [f"Some other sort of error reading {filename} - {err}"])
 
         werr = []
 
@@ -305,7 +316,9 @@ class PlomCLValidator:
         )
 
         # strip excess whitespace from column names
-        student_info_df.rename(columns=lambda x: x.strip(), inplace=True)
+        student_info_df.rename(
+            columns=lambda x: str(x).strip(), inplace=True
+        )  # avoid issues with blanks
 
         if "id" not in [x.casefold() for x in student_info_df.columns]:
             print('Cannot find "id" column')

@@ -95,3 +95,64 @@ def test_casefold_column_names2(tmpdir):
         assert "id" in df.columns
         assert "studentName" in df.columns
         assert set(df.columns) == set(("id", "studentName"))
+
+
+def test_missing_student_info1(tmpdir):
+    # testing for #1314
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","studentName","hungry"\n')
+            f.write('12345677,"Doe, Ursula","yes"\n')
+            f.write('87654322,"","who knows"\n')
+            f.write(',"Doe, John","who knows"\n')
+            f.write('"x","Doe, Jan","who knows"\n')
+
+        assert vlad.check_is_non_canvas_csv(foo)
+        df = clean_non_canvas_csv(foo)
+        print(">>>>> ", df.columns)
+        assert set(df.columns) == set(("id", "studentName"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        print(f"Found errors = {success}, {warn_err}")
+        assert not success
+        # should see errors on lies 3,4,5
+        # [
+        # {'warn_or_err': 'error', 'werr_line': 3, 'werr_text': 'Missing name'},
+        # {'warn_or_err': 'error', 'werr_line': 4, 'werr_text': "SID '' is not an integer, "}
+        # {'warn_or_err': 'error', 'werr_line': 5, 'werr_text': "SID 'x' is not an integer, "}
+        # ]
+        where_errors = sorted([x["werr_line"] for x in warn_err])
+        assert where_errors == [3, 4, 5]
+
+
+def test_missing_student_info2(tmpdir):
+    # testing for #1314
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","surname","preferredName","hungry"\n')
+            f.write('12345677,"Doe","Ursula","yes"\n')
+            f.write('87654321,"Doe","","who knows"\n')
+            f.write('87654322,"","John","who knows"\n')
+            f.write(',"Doe","John","who knows"\n')
+            f.write('"x","Doe", "Jan", "who knows"\n')
+
+        assert vlad.check_is_non_canvas_csv(foo)
+        df = clean_non_canvas_csv(foo)
+        assert set(df.columns) == set(("id", "studentName"))
+        success, warn_err = vlad.validate_csv(foo, spec=None)
+        print(f"Found errors = {success}, {warn_err}")
+        assert not success
+        # should see errors on lies 3,4,5,6
+        # [
+        # {'warn_or_err': 'error', 'werr_line': 3, 'werr_text': 'Missing given name'},
+        # {'warn_or_err': 'error', 'werr_line': 4, 'werr_text': 'Missing surname'},
+        # {'warn_or_err': 'error', 'werr_line': 5, 'werr_text': 'SID '' is not an integer, '}
+        # {'warn_or_err': 'error', 'werr_line': 6, 'werr_text': "SID 'x' is not an integer, "}
+        # ]
+        where_errors = sorted([x["werr_line"] for x in warn_err])
+        assert where_errors == [3, 4, 5, 6]

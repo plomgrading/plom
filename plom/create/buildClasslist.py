@@ -46,13 +46,13 @@ def clean_non_canvas_csv(csv_file_name):
     print('Extracting columns from csv file: "{0}"'.format(csv_file_name))
 
     # strip excess whitespace from column names
-    df.rename(columns=lambda x: x.strip(), inplace=True)
+    df.rename(columns=lambda x: str(x).strip(), inplace=True)
 
     # find the id column
     id_column = None
     for c in df.columns:
         if c.casefold() in (x.casefold() for x in possible_sid_fields):
-            print(f'"{c}" column present')
+            # print(f'"{c}" column present')
             id_column = c
             break
     if id_column is None:
@@ -62,24 +62,25 @@ def clean_non_canvas_csv(csv_file_name):
     print(f"Renaming column {id_column} to 'id'")
     df.rename(columns={id_column: "id"}, inplace=True)
     # clean up the column - strip whitespace
-    df["id"] = df["id"].apply(lambda X: X.strip())
-    print('"id" column present')
+    df["id"] = df["id"].apply(lambda X: str(X).strip())  # avoid issues with non-string
+    # print('"id" column present')
 
     # see if there is a single name column
     one_name_column = None
     for c in df.columns:
         if c.casefold() in (x.casefold() for x in possible_one_name_fields):
-            print(f'"{c}" column present')
+            # print(f'"{c}" column present')
             one_name_column = c
             break
     if one_name_column is not None:
         # make sure id column named 'id' - lowercase
         print(f"Renaming column {one_name_column} to 'studentName'")
         df.rename(columns={one_name_column: "studentName"}, inplace=True)
-        # clean up the column - strip whitespace
-        df["studentName"].apply(lambda X: X.strip())
-        print('"studentName" column present')
-        return df
+        # clean up the column - strip whitespace 
+        df["studentName"].apply(lambda X: str(X).strip())  # avoid errors with blanks
+        # print('"studentName" column present')
+        # now return only the id and studentName columns
+        return df[["id", "studentName"]]
 
     # Otherwise, we will check the column headers again taking the first
     # columns that looks like firstname and a lastname fields
@@ -87,12 +88,12 @@ def clean_non_canvas_csv(csv_file_name):
     lastname_column = None
     for c in df.columns:
         if c.casefold() in (x.casefold() for x in possible_surname_fields):
-            print(f'"{c}" column present')
+            # print(f'"{c}" column present')
             firstname_column = c
             break
     for c in df.columns:
         if c.casefold() in (x.casefold() for x in possible_given_name_fields):
-            print(f'"{c}" column present')
+            # print(f'"{c}" column present')
             lastname_column = c
             break
 
@@ -100,8 +101,8 @@ def clean_non_canvas_csv(csv_file_name):
         raise ValueError("Cannot find appropriate column titles for names")
 
     # strip excess whitespace
-    df[firstname_column] = df[firstname_column].apply(lambda X: X.strip())
-    df[lastname_column] = df[lastname_column].apply(lambda X: X.strip())
+    df[firstname_column] = df[firstname_column].apply(lambda X: str(X).strip())
+    df[lastname_column] = df[lastname_column].apply(lambda X: str(X).strip())
 
     # concat columns to our preferred column
     df["studentName"] = df[firstname_column] + ", " + df[lastname_column]
