@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Plom now requires Python 3.7.
 * `plom-create` DB creation now done one test at a time which avoids timeouts and enables future flexibility.
+* Manager: improvements to the prediction-related UI.
 
 ### Fixed
 * Non-zero initial orientations should now work properly.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+* plom-create subcommand "status" reports server status.
 
 ### Changed
 

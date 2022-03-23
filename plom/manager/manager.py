@@ -515,6 +515,9 @@ class Manager(QWidget):
                 == QMessageBox.Yes
             ):
                 self.msgr.clearAuthorisation("manager", pwd)
+                self.msgr = None
+                self.login()
+                return
             self.msgr = None  # reset to avoid Issue #1622
             return
         except PlomAuthenticationException as e:
@@ -1022,7 +1025,7 @@ class Manager(QWidget):
         if uvw.exec_() == QDialog.Accepted:
             # Colin hates all these hardcoded integers!
             self.unknownModel.item(r, 4).setText(uvw.action)
-            self.unknownModel.item(r, 5).setText("{}".format(uvw.theta))
+            self.unknownModel.item(r, 5).setText("{}".format(uvw.get_orientation()))
             self.unknownModel.item(r, 6).setText("{}".format(uvw.test))
             # questions is now of the form "1" or "1,2" or "1,2,3" etc
             self.unknownModel.item(r, 7).setText("{}".format(uvw.pq))
@@ -1207,7 +1210,7 @@ class Manager(QWidget):
         version = int(self.collideModel.item(r, 5).text())
 
         (pagedata,) = self.msgr.getTPageImageData(test, page, version)
-        vop = self.msgr.get_image(pagedata["id"], pagedata["md5sum"])
+        vop = self.msgr.get_image(pagedata["id"], pagedata["md5"])
         vcp = self.msgr.getCollidingImage(fname)
         if vop is None or vcp is None:
             return
@@ -1498,17 +1501,14 @@ class Manager(QWidget):
                 tmp = Path(td) / "id.{}.{}".format(i, img_ext)
                 with open(tmp, "wb") as fh:
                     fh.write(img_bytes)
+                if not img_ext:
+                    raise PlomSeriousException(f"Could not identify image type: {tmp}")
                 inames.append(tmp)
             srw = SelectRectangleWindow(self, inames)
             if srw.exec_() == QDialog.Accepted:
-                self.IDrectangle = srw.rectangle
-                self.IDwhichFile = srw.whichFile
-                if (
-                    self.IDrectangle is None
-                ):  # We do not allow the IDReader to run if no rectangle is selected (this would cause a crash)
-                    self.ui.predictButton.setEnabled(False)
-                else:
-                    self.ui.predictButton.setEnabled(True)
+                top, bottom = srw.top_bottom_values
+                self.ui.cropTopLE.setText(str(100 * top))
+                self.ui.cropBottomLE.setText(str(100 * bottom))
 
     def viewIDPage(self):
         idi = self.ui.predictionTW.selectedIndexes()
@@ -1526,20 +1526,17 @@ class Manager(QWidget):
             return
         with tempfile.TemporaryDirectory() as td:
             img_ext = imghdr.what(None, h=img_bytes)
-            imageName = Path(td) / f"id.{img_ext}"
-            with open(imageName, "wb") as fh:
+            img_name = Path(td) / f"id.{img_ext}"
+            with open(img_name, "wb") as fh:
                 fh.write(img_bytes)
-            GroupView(self, imageName, title=f"ID page currently IDed as {sid}").exec_()
+            if not img_ext:
+                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            GroupView(self, img_name, title=f"ID page currently IDed as {sid}").exec_()
 
     def runPredictor(self, ignoreStamp=False):
         rmsg = self.msgr.IDrunPredictions(
-            [
-                self.IDrectangle.left(),
-                self.IDrectangle.top(),
-                self.IDrectangle.width(),
-                self.IDrectangle.height(),
-            ],
-            self.IDwhichFile,
+            float(self.ui.cropTopLE.text()) / 100,
+            float(self.ui.cropBottomLE.text()) / 100,
             ignoreStamp,
         )
         # returns [True, True] = off and running,
@@ -1772,13 +1769,12 @@ class Manager(QWidget):
             fh.write(img)
         rvw = ReviewViewWindow(self, [f])
         if rvw.exec() == QDialog.Accepted:
-            if rvw.action == "review":
-                # first remove auth from that user - safer.
-                if self.ui.reviewTW.item(r, 4).text() != "reviewer":
-                    self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
-                # then map that question's owner "reviewer"
-                self.msgr.MreviewQuestion(test, question, version)
-                self.ui.reviewTW.item(r, 4).setText("reviewer")
+            # first remove auth from that user - safer.
+            if self.ui.reviewTW.item(r, 4).text() != "reviewer":
+                self.msgr.clearAuthorisationUser(self.ui.reviewTW.item(r, 4).text())
+            # then map that question's owner "reviewer"
+            self.msgr.MreviewQuestion(test, question, version)
+            self.ui.reviewTW.item(r, 4).setText("reviewer")
         f.unlink()
 
     def initRevIDTab(self):
@@ -1831,20 +1827,21 @@ class Manager(QWidget):
         img_bytes = self.msgr.request_ID_image(test)
         with tempfile.TemporaryDirectory() as td:
             img_ext = imghdr.what(None, h=img_bytes)
-            imageName = Path(td) / f"id.0.{img_ext}"
-            with open(imageName, "wb") as fh:
+            img_name = Path(td) / f"id.0.{img_ext}"
+            with open(img_name, "wb") as fh:
                 fh.write(img_bytes)
-            rvw = ReviewViewWindow(self, imageName, "ID pages")
+            if not img_ext:
+                raise PlomSeriousException(f"Could not identify image type: {img_name}")
+            rvw = ReviewViewWindow(self, img_name, "ID page")
             if rvw.exec() == QDialog.Accepted:
-                if rvw.action == "review":
-                    # first remove auth from that user - safer.
-                    if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
-                        self.msgr.clearAuthorisationUser(
-                            self.ui.reviewIDTW.item(r, 1).text()
-                        )
-                    # then map that question's owner "reviewer"
-                    self.ui.reviewIDTW.item(r, 1).setText("reviewer")
-                    self.msgr.IDreviewID(test)
+                # first remove auth from that user - safer.
+                if self.ui.reviewIDTW.item(r, 1).text() != "reviewer":
+                    self.msgr.clearAuthorisationUser(
+                        self.ui.reviewIDTW.item(r, 1).text()
+                    )
+                # then map that question's owner "reviewer"
+                self.ui.reviewIDTW.item(r, 1).setText("reviewer")
+                self.msgr.IDreviewID(test)
 
     ##################
     # Solution tab stuff

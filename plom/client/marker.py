@@ -59,7 +59,6 @@ from plom.plom_exceptions import (
     PlomTaskDeletedError,
     PlomConflict,
     PlomException,
-    PlomNoMoreException,
     PlomNoSolutionException,
 )
 from plom.messenger import Messenger
@@ -954,7 +953,7 @@ class MarkerClient(QWidget):
         )  # Exam model for the table of groupimages - connect to table
         self.prxM = ProxyModel()  # set proxy for filtering and sorting
         # A view window for the papers so user can zoom in as needed.
-        self.testImg = ImageViewWidget(self)
+        self.testImg = ImageViewWidget(self, has_rotate_controls=False)
         self.annotatorSettings = defaultdict(
             lambda: None
         )  # settings variable for annotator settings (initially None)
@@ -1151,8 +1150,6 @@ class MarkerClient(QWidget):
             None
 
         """
-        if hasattr(self, "testImg"):
-            self.testImg.resetView()
         if hasattr(self, "ui.tableView"):
             self.ui.tableView.resizeRowsToContents()
         super().resizeEvent(event)
@@ -1252,6 +1249,11 @@ class MarkerClient(QWidget):
         log.debug("create paperdir %s for already-graded download", paperdir)
         self.examModel.setPaperDirByTask(task, paperdir)
         im_type = imghdr.what(None, h=annotated_image)
+        if not im_type:
+            msg = f"Failed to identify extension of {len(annotated_image)} bytes"
+            msg += f" of image data for previously annotated task {task}"
+            log.error(msg)
+            raise PlomSeriousException(msg)
         aname = paperdir / "G{}.{}".format(task[1:], im_type)
         pname = paperdir / "G{}.plom".format(task[1:])
         with open(aname, "wb") as fh:

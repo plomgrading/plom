@@ -47,15 +47,14 @@ def calc_log_likelihood(student_ID, prediction_probs):
     return log_likelihood
 
 
-def run_id_reader(files_dict, rectangle, student_IDs):
-    """Run ID detection on papers and save the prediction results to a csv file.
+def run_id_reader(files_dict, top, bottom, student_IDs):
+    """Run ID detection on papers, return prediction results.
 
     Args:
         files_dict (dict): A dictionary of the original paper front page images to
             run the detector on. Of the form {`paper_number`,`paper_image_path`}.
-        rectangle (list): A list of the rectangle information of the form
-            [top_left_x_coord, top_left_y_coord, x_width, y_height] for the
-            cropped rectangle.
+        top (float): crop the top in `[0, 1]`.
+        bottom (float): crop the top in `[0, 1]`.
         student_IDs (list): A list of student ID numbers
 
     Returns:
@@ -63,11 +62,6 @@ def run_id_reader(files_dict, rectangle, student_IDs):
     """
     # Number of digits in the student ID.
     student_number_length = 8
-
-    # convert rectangle to "top" and "bottom"
-    # IDrectangle is a 4-tuple top_left_x, top_left_y, width, height - floats, but we'll need ints.
-    top_coordinate = int(rectangle[1])
-    bottom_coordinate = int(rectangle[1] + rectangle[3])
 
     # keeps a list of testNumbers... the ith test in list has testNumber k (i != k?)
     # will need this for cost-matrix
@@ -82,7 +76,7 @@ def run_id_reader(files_dict, rectangle, student_IDs):
     # pass in the list of files to check, top /bottom of image-region to check.
     print("Computing probabilities")
     probabilities = compute_probabilities(
-        files_dict, top_coordinate, bottom_coordinate, student_number_length
+        files_dict, top, bottom, student_number_length
     )
 
     # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.

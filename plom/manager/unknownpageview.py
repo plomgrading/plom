@@ -285,35 +285,17 @@ class UnknownViewWindow(QDialog):
         self.test = 0
         self.pq = ""
         self.sid = ""
-        self.theta = 0
 
-        self.img = ImageViewWidget(
-            self, fnames, has_reset_button=False, dark_background=True
-        )
+        self.img = ImageViewWidget(self, fnames, dark_background=True)
         self.optionTW = QTabWidget()
 
-        # reset view button passes to the UnknownView.
-        resetB = QPushButton("reset view")
-        rotatePlusB = QPushButton("rotate +90")
-        rotateMinusB = QPushButton("rotate -90")
         cancelB = QPushButton("&cancel")
-
         cancelB.clicked.connect(self.reject)
-        resetB.clicked.connect(self.img.resetView)
-        rotatePlusB.clicked.connect(self.rotatePlus)
-        rotateMinusB.clicked.connect(self.rotateMinus)
-
-        resetB.setAutoDefault(False)  # return won't click the button by default.
-        rotatePlusB.setAutoDefault(False)
-        rotateMinusB.setAutoDefault(False)
 
         # Layout simply
         grid = QGridLayout()
         grid.addWidget(self.img, 1, 1, 10, 10)
         grid.addWidget(self.optionTW, 1, 11, 10, -1)
-        grid.addWidget(resetB, 11, 1)
-        grid.addWidget(rotatePlusB, 11, 2)
-        grid.addWidget(rotateMinusB, 11, 3)
         grid.addWidget(cancelB, 11, 20)
         self.setLayout(grid)
         self.initTabs()
@@ -330,17 +312,8 @@ class UnknownViewWindow(QDialog):
         self.optionTW.addTab(t3, "Homework Page")
         self.optionTW.addTab(t4, "Discard")
 
-    def rotatePlus(self):
-        self.theta += 90
-        if self.theta == 360:
-            self.theta = 0
-        self.img.view.rotateImage(90)
-
-    def rotateMinus(self):
-        self.theta -= 90
-        if self.theta == -90:
-            self.theta = 270
-        self.img.view.rotateImage(-90)
+    def get_orientation(self):
+        return self.img.get_orientation()
 
     def viewWholeTest(self, testNumber):
         self.parent().viewWholeTest(testNumber, parent=self)

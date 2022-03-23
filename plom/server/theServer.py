@@ -135,7 +135,8 @@ class Server:
         initialiseExamDatabase,
         appendTestToExamDatabase,
         getPageVersions,
-        getQuestionVersions,
+        get_question_versions,
+        get_all_question_versions,
     )
     from .plomServer.serverID import (
         IDprogressCount,

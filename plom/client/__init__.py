@@ -15,7 +15,7 @@ from .identifier import IDClient
 from .chooser import Chooser
 from .random_marking_utils import do_rando_marking
 from .random_identifying_utils import do_rando_identifying
-from .image_view_widget import ImageViewWidget, ExamView
+from .image_view_widget import ImageViewWidget
 
 # what you get from "from plom.client import *"
 __all__ = ["MarkerClient", "IDClient", "Chooser"]

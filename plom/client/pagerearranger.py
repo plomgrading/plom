@@ -75,6 +75,8 @@ class SourceList(QListWidget):
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        if pix.isNull():
+            raise RuntimeError(f"Could not read an image from {pfile}")
         rot = QTransform()
         rot.rotate(angle)
         if angle != 0:
@@ -196,6 +198,8 @@ class SinkList(QListWidget):
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        if pix.isNull():
+            raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
         ci = QListWidgetItem(QIcon(pix), name)
         if self.item_belongs[name]:
             ci.setBackground(QBrush(Qt.darkGreen))
@@ -280,6 +284,8 @@ class SinkList(QListWidget):
         # deal with jpeg exif rotations
         qir.setAutoTransform(True)
         pix = QPixmap(qir.read())
+        if pix.isNull():
+            raise RuntimeError(f"Could not read an image from {self.item_files[name]}")
         rot = QTransform()
         rot.rotate(angle)
         if angle != 0:

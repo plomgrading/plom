@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2018-2020 Andrew Rechnitzer
+# Copyright (C) 2018-2022 Andrew Rechnitzer
 # Copyright (C) 2020-2022 Colin B. Macdonald
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Vala Vakilian
@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QLabel,
     QPushButton,
+    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -63,10 +64,7 @@ class GroupView(QDialog):
         super().__init__(parent)
         if title:
             self.setWindowTitle(title)
-        self.testImg = ImageViewWidget(
-            self, fnames, dark_background=True, has_reset_button=False
-        )
-        resetB = QPushButton("&reset view")
+        self.testImg = ImageViewWidget(self, fnames, dark_background=True)
         grid = QVBoxLayout()
         if before_text:
             label = QLabel(before_text)
@@ -78,8 +76,9 @@ class GroupView(QDialog):
             label = QLabel(after_text)
             label.setWordWrap(True)
             grid.addWidget(label)
+        # some extra space before the main dialog buttons
+        grid.addSpacing(6)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
-        buttons.addButton(resetB, QDialogButtonBox.ActionRole)
         buttons.accepted.connect(self.accept)
         grid.addWidget(buttons)
         self.setLayout(grid)
@@ -90,7 +89,6 @@ class GroupView(QDialog):
                     int(self.parent().height() * 11 / 12),
                 )
             )
-        resetB.clicked.connect(self.testImg.resetView)
         if bigger:
             # TODO: seems needed for Ctrl-R double-click popup
             self.testImg.resetView()
@@ -120,13 +118,16 @@ class QuestionViewDialog(GroupView):
             s += f" (ver {ver})"
         self.setWindowTitle(s)
         self.tgv = (testnum, questnum, ver)
-        grid = self.layout()
+        layout = self.layout()
         if marker:
             self.marker = marker
             tagButton = QPushButton("&Tags")
             tagButton.clicked.connect(self.tags)
-            # add new button to bottom right
-            grid.addWidget(tagButton, grid.rowCount() - 1, grid.columnCount() - 2)
+            # insert the tag button just before the standard buttons
+            # cosmetic fixes - fix size of button and align-right
+            tagButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            layout.insertWidget(layout.count() - 1, tagButton)
+            layout.setAlignment(tagButton, Qt.AlignRight)
 
     def tags(self):
         """If we have a marker parent then use it to manage tags"""
