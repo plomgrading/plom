@@ -44,18 +44,21 @@ def calc_log_likelihood(student_ID, prediction_probs):
     return log_likelihood
 
 
-def run_lap_solver(test_numbers, probabilities, student_IDs):
-    """Run linear assignment problem solver, return prediction results.
+def assemble_cost_matrix(test_numbers, probabilities, student_IDs):
+    """Compute the cost matrix between list of tests and list of student IDs.
 
     TODO: log not print throughout
 
     Args:
-        test_numbers (list): int/str TODO, the ones we want to match.
-        probabilities (dict): testnum (str: TODO WHY?), to list of lists, TODO doc
+        test_numbers (list): int, the ones we want to match.
+        probabilities (dict): keyed by testnum (int), to list of lists of floats.
         student_IDs (list): A list of student ID numbers
 
     Returns:
-        list: pairs of (`paper_number`, `student_ID`).
+        list: list of lists of floats representing a matrix.
+
+    Raises:
+        KeyError: TODO?  If probabilities is missing data for one of the test numbers.
     """
     # we may skip some tests if hard to extract the ID boxes
     test_numbers_used = []
@@ -73,6 +76,23 @@ def run_lap_solver(test_numbers, probabilities, student_IDs):
         for student_ID in student_IDs:
             row.append(calc_log_likelihood(student_ID, probabilities[test]))
         costs.append(row)
+    return test_numbers_used, costs
+
+
+def run_lap_solver(test_numbers, probabilities, student_IDs):
+    """Run linear assignment problem solver, return prediction results.
+
+    TODO: log not print throughout
+
+    Args:
+        test_numbers (list): int, the ones we want to match.
+        probabilities (dict): keyed by testnum (int), to list of lists of floats.
+        student_IDs (list): A list of student ID numbers
+
+    Returns:
+        list: pairs of (`paper_number`, `student_ID`).
+    """
+    test_numbers_used, costs = assemble_cost_matrix(test_numbers, probabilities, student_IDs)
 
     # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
     # as coded up in lapsolver
