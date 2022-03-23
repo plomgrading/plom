@@ -156,3 +156,56 @@ def test_missing_student_info2(tmpdir):
         # ]
         where_errors = sorted([x["werr_line"] for x in warn_err])
         assert where_errors == [3, 4, 5, 6]
+
+
+def test_check_classlist_length1(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    from plom import SpecVerifier
+
+    spec = SpecVerifier.demo(num_to_produce=2)
+
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","studentName"\n')
+            f.write('12345678,"Doe"\n')
+            f.write('12345679,"Doer"\n')
+            f.write('12345680,"Doerr"\n')
+        success, warn_err = vlad.validate_csv(foo, spec=spec)
+        # should get
+        # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2'}
+        assert success
+        assert warn_err[0]["werr_line"] == 0
+        assert (
+            warn_err[0]["werr_text"]
+            == "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2"
+        )
+
+
+def test_check_classlist_length2(tmpdir):
+    tmpdir = Path(tmpdir)
+    vlad = PlomCLValidator()
+    from plom import SpecVerifier
+
+    spec = SpecVerifier.demo(num_to_produce=3)
+    # manually set number to name longer than classlist
+    spec.spec["numberToName"] = 5
+
+    with working_directory(tmpdir):
+        foo = tmpdir / "foo.csv"
+        with open(foo, "w") as f:
+            f.write('"id","studentName"\n')
+            f.write('12345678,"Doe"\n')
+            f.write('12345679,"Doer"\n')
+            f.write('12345680,"Doerr"\n')
+        success, warn_err = vlad.validate_csv(foo, spec=spec)
+        print(success, warn_err)
+        # should get
+        # [{'warn_or_err': 'error', 'werr_line': 0, 'werr_text': 'Classlist too short. Classlist contains 3 names, but spec:numberToName is 5'}]
+        assert not success
+        assert warn_err[0]["werr_line"] == 0
+        assert (
+            warn_err[0]["werr_text"]
+            == "Classlist too short. Classlist contains 3 names, but spec:numberToName is 5"
+        )
