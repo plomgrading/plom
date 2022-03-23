@@ -160,6 +160,7 @@ def IDputPredictions(self, predictions, classlist, spec):
     for test, sid in predictions:
         if int(sid) not in ids:
             return [False, f"ID {sid} not in classlist"]
+        # TODO: Issue #1745: maybe check test is in database instead?
         if test < 0 or test > spec["numberToProduce"]:
             return [False, f"Test {test} outside range"]
 

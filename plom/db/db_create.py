@@ -364,7 +364,7 @@ def getPageVersions(self, t):
     return {p.page_number: p.version for p in tref.tpages}
 
 
-def getQuestionVersions(self, t):
+def get_question_versions(self, t):
     """Get the mapping between question numbers and versions for a test.
 
     Args:
@@ -372,12 +372,28 @@ def getQuestionVersions(self, t):
 
     Returns:
         dict: keys are question numbers (int) and value is the question
-            version (int), or empty dict if there was no such paper.
+        version (int), or empty dict if there was no such paper.
     """
     tref = Test.get_or_none(test_number=t)
     if tref is None:
         return {}
     return {q.question: q.version for q in tref.qgroups}
+
+
+def get_all_question_versions(self):
+    """Get the mapping between question numbers and versions for all tests.
+
+    Returns:
+        dict: a dict of dicts, where the outer keys are test number (int),
+        the inner keys are question numbers (int), and values are the
+        question version (int).  If there are no papers yet, return an
+        empty dict.
+    """
+    qvmap = {}
+    for tref in Test.select():
+        tn = tref.test_number
+        qvmap[tn] = {q.question: q.version for q in tref.qgroups}
+    return qvmap
 
 
 def id_paper(self, paper_num, user_name, sid, sname):

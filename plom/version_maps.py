@@ -26,6 +26,7 @@ def check_version_map(vm, spec=None):
         AssertionError
     """
     if spec:
+        # Issue #1745: no such restriction and/or not accurate
         assert len(vm) == spec["numberToProduce"]
     rowlens = set()
     for t, qd in vm.items():

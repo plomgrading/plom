@@ -442,5 +442,9 @@ def getPageVersions(self, paper_idx):
     return self.DB.getPageVersions(paper_idx)
 
 
-def getQuestionVersions(self, paper_idx):
-    return self.DB.getQuestionVersions(paper_idx)
+def get_question_versions(self, paper_idx):
+    return self.DB.get_question_versions(paper_idx)
+
+
+def get_all_question_versions(self):
+    return self.DB.get_all_question_versions()

@@ -49,6 +49,7 @@ def status(*, msgr):
     except PlomServerNotReady:
         print(cross + " Server does not yet have a spec")
         print("    You will need to add specification for your test.")
+        spec = None
     else:
         print(check_mark + " Server has a spec ")
         sv = SpecVerifier(spec)
@@ -90,11 +91,14 @@ def status(*, msgr):
 
     print("\nDatabase")
     print("---------\n")
-    try:
-        vmap = msgr.getGlobalQuestionVersionMap()
+    vmap = msgr.getGlobalQuestionVersionMap()
+    if len(vmap) > 0:
         print(check_mark + f" There are {len(vmap)} rows in the papers table")
-    except PlomServerNotReady as e:
-        print(cross + f" {e}")
+    elif spec is None:
+        print(cross + " No rows have been inserted in the papers table")
+        print("    (you will not be able to add any until you add a spec)")
+    else:
+        print(warn_mark + " No rows have been inserted in the papers table")
 
     print("\nRubrics")
     print("---------\n")
