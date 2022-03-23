@@ -14,7 +14,11 @@ import pandas
 import plom
 from plom.finish.return_tools import import_canvas_csv
 
-from plom.create.classlistValidator import possible_given_name_fields, possible_surname_fields, PlomCLValidator
+from plom.create.classlistValidator import (
+    possible_given_name_fields,
+    possible_surname_fields,
+    PlomCLValidator,
+)
 
 # Note: file is full of pandas warnings, which I think are false positives
 # pylint: disable=unsubscriptable-object

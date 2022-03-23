@@ -74,8 +74,8 @@ class PlomCLValidator:
     def checkHeaders(self, rowFromDict):
         """Check existence of given-name and surname columns in the classlist.
 
-        Checks the column titles (as given by the supplied row from the classlist). 
-        Tests for an 'id' column, and then name-columns. Names are either single-column 
+        Checks the column titles (as given by the supplied row from the classlist).
+        Tests for an 'id' column, and then name-columns. Names are either single-column
         or surname/givenname column pair.  To avoid issues with upper
         and lower case, everything needs to be tested by casefolding.
 
