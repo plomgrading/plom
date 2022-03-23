@@ -13,7 +13,6 @@ __copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer and others"
 __credits__ = ["Andrew Rechnitzer", "Dryden Wiebe", "Vala Vakilian"]
 __license__ = "AGPLv3"
 
-import csv
 import json
 import os
 import sys
