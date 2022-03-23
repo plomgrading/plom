@@ -17,8 +17,8 @@ import json
 import os
 import sys
 
-from plom.server.IDReader_RF.model_utils import download_or_train_model
-from plom.server.IDReader_RF.predictStudentID import compute_probabilities
+from plom.IDReader_RF.model_utils import download_or_train_model
+from plom.IDReader_RF.predictStudentID import compute_probabilities
 
 from plom import specdir
 
