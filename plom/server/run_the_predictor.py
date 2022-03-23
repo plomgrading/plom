@@ -17,9 +17,8 @@ import json
 import os
 import sys
 
-# from .IDReader_RF.idReader import run_id_reader
-from .IDReader_RF import download_or_train_model
-from .IDReader_RF import compute_probabilities
+from plom.server.IDReader_RF import download_or_train_model
+from plom.server.IDReader_RF import compute_probabilities
 
 from plom import specdir
 
