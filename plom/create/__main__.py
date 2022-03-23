@@ -438,7 +438,7 @@ def main():
             success, classlist = process_classlist_file(
                 args.classlist, spec, ignore_warnings=args.ignore_warnings
             )
-            if success is True:
+            if success:
                 try:
                     upload_classlist(classlist, msgr=msgr)
                 except Exception as err:  # TODO - make a better error handler here
