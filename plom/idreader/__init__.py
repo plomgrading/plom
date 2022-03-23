@@ -5,16 +5,17 @@
 
 """Read student IDs using Scikit-learn"""
 
-__copyright__ = "Copyright (C) 2020-2022 Andrew Rechnitzer and others"
+__copyright__ = "Copyright (C) 2018-2022 Andrew Rechnitzer, Colin B. Macdonald et al"
 __credits__ = "The Plom Project Developers"
 __license__ = "AGPL-3.0-or-later"
 
 from .model_utils import download_or_train_model
 from .predictStudentID import compute_probabilities
-from .idReader import lap_solver
+from .idReader import assemble_cost_matrix, lap_solver
 
 __all__ = [
     "download_or_train_model",
     "compute_probabilities",
+    "assemble_cost_matrix",
     "lap_solver",
 ]

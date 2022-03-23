@@ -12,9 +12,9 @@ from pytest import raises
 
 from plom.misc_utils import working_directory
 from .predictStudentID import compute_probabilities
+from .idReader import calc_log_likelihood
 from .idReader import assemble_cost_matrix, lap_solver
 from .model_utils import download_or_train_model
-from .idReader import calc_log_likelihood
 from .model_utils import load_model, is_model_present, download_model
 from .predictStudentID import get_digit_box, get_digit_prob
 
