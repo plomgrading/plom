@@ -196,10 +196,12 @@ def IDreviewID(self, test_number):
 def predict_id_lap_solver(self):
     """Predict IDs by matching unidentified papers against the classlist via linear assignment problem.
 
-    Grab the classlist, TODO: and remove all people from it that are already
-    ID'd against a paper.
+    Get the classlist and remove all people that are already IDed
+    against a paper.  Get the list of unidentified papers.  Get the
+    previously-computed probabilities of images being each digit.
 
-    Grab the list papers (TODO: that are not yet ID'd).
+    Probably some cannot be read: drop those from the list of unidenfied
+    papers.
 
     Match the two.
 
