@@ -95,4 +95,3 @@ def test_casefold_column_names2(tmpdir):
         assert "id" in df.columns
         assert "studentName" in df.columns
         assert set(df.columns) == set(("id", "studentName"))
-        
