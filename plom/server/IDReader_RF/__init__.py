@@ -11,10 +11,10 @@ __license__ = "AGPL-3.0-or-later"
 
 from .model_utils import download_or_train_model
 from .predictStudentID import compute_probabilities
-from .idReader import run_lap_solver
+from .idReader import lap_solver
 
 __all__ = [
     "download_or_train_model",
     "compute_probabilities",
-    "run_lap_solver",
+    "lap_solver",
 ]

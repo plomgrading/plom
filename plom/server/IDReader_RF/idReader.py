@@ -44,10 +44,8 @@ def calc_log_likelihood(student_ID, prediction_probs):
     return log_likelihood
 
 
-def assemble_cost_matrix(test_numbers, probabilities, student_IDs):
+def assemble_cost_matrix(test_numbers, student_IDs, probabilities):
     """Compute the cost matrix between list of tests and list of student IDs.
-
-    TODO: log not print throughout
 
     Args:
         test_numbers (list): int, the ones we want to match.
@@ -58,55 +56,36 @@ def assemble_cost_matrix(test_numbers, probabilities, student_IDs):
         list: list of lists of floats representing a matrix.
 
     Raises:
-        KeyError: TODO?  If probabilities is missing data for one of the test numbers.
+        KeyError: If probabilities is missing data for one of the test numbers.
     """
-    # we may skip some tests if hard to extract the ID boxes
-    test_numbers_used = []
-
     # could precompute big cost matrix, then select rows/columns: more complex
-    # now build "costs" -- annoyance is that test-number might not be row number in cost matrix.
-    print("Computing cost matrix")
     costs = []
     for test in test_numbers:
-        if test not in probabilities:
-            print(f"Test {test} is excluded")
-            continue
-        test_numbers_used.append(test)
         row = []
         for student_ID in student_IDs:
             row.append(calc_log_likelihood(student_ID, probabilities[test]))
         costs.append(row)
-    return test_numbers_used, costs
+    return costs
 
 
-def run_lap_solver(test_numbers, probabilities, student_IDs):
+def lap_solver(test_numbers, student_IDs, costs):
     """Run linear assignment problem solver, return prediction results.
-
-    TODO: log not print throughout
 
     Args:
         test_numbers (list): int, the ones we want to match.
-        probabilities (dict): keyed by testnum (int), to list of lists of floats.
-        student_IDs (list): A list of student ID numbers
+        student_IDs (list): A list of student ID numbers.
+        cost_matrix (list): list of list of floats.
 
     Returns:
         list: pairs of (`paper_number`, `student_ID`).
+
+    use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
+    as coded up in lapsolver
+    to find least cost assignment of tests to studentIDs
+    this is potentially time-consuming, cannot be parallelized.
     """
-    test_numbers_used, costs = assemble_cost_matrix(test_numbers, probabilities, student_IDs)
-
-    # use Hungarian method (or similar) https://en.wikipedia.org/wiki/Hungarian_algorithm
-    # as coded up in lapsolver
-    # to find least cost assignment of tests to studentIDs
-    # this is potentially time-consuming, cannot be parallelized.
-    print("Going hungarian")
     row_IDs, column_IDs = solve_dense(costs)
-
     prediction_pairs = []
-
     for r, c in zip(row_IDs, column_IDs):
-        # the get test-number of r-th from the test_numbers_used
-        # since we may have skipped a few tests with hard-to-read IDs
-        test_number = test_numbers_used[r]
-        prediction_pairs.append((test_number, student_IDs[c]))
-
+        prediction_pairs.append((test_numbers[r], student_IDs[c]))
     return prediction_pairs

@@ -12,7 +12,7 @@ from pytest import raises
 
 from plom.misc_utils import working_directory
 from .predictStudentID import compute_probabilities
-from .idReader import run_lap_solver
+from .idReader import assemble_cost_matrix, lap_solver
 from .model_utils import download_or_train_model
 from .idReader import calc_log_likelihood
 from .model_utils import load_model, is_model_present, download_model
@@ -132,7 +132,8 @@ def test_get_digit_box(tmpdir):
     ids = [x["id"] for x in miniclass]
     with working_directory(tmpdir):
         probs = compute_probabilities(id_imgs, 0.15, 0.9, 8)
-        pred = run_lap_solver(test_nums, probs, ids)
+        cost_matrix = assemble_cost_matrix(test_nums, ids, probs)
+        pred = lap_solver(test_nums, ids, cost_matrix)
 
     for P, S in zip(pred, miniclass):
         assert P[1] == S["id"]

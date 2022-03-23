@@ -13,7 +13,7 @@ import subprocess
 import time
 
 from plom import specdir
-from plom.server.IDReader_RF.idReader import run_lap_solver
+from plom.server.IDReader_RF.idReader import assemble_cost_matrix, lap_solver
 
 
 log = logging.getLogger("servID")
@@ -266,13 +266,15 @@ def predict_id_lap_solver(self):
 
     status += f"\nTime loading data: {time.process_time() - t:.02} seconds.\n"
 
-    status += "\nSolving assignment problem..."
-
+    status += "\nBuilding cost matrix..."
     t = time.process_time()
-    prediction_pairs = run_lap_solver(papers, probabilities, sids)
-    status += "  done.\nBuilding cost matrix and solution took "
-    status += f"{time.process_time() - t:.02} seconds."
-    # TODO: nice to report those separately
+    cost_matrix = assemble_cost_matrix(papers, sids, probabilities)
+    status += f" done in {time.process_time() - t:.02} seconds.\n"
+
+    status += "\nSolving assignment problem..."
+    t = time.process_time()
+    prediction_pairs = lap_solver(papers, sids, cost_matrix)
+    status += f" done in {time.process_time() - t:.02} seconds."
 
     log.info("Saving results in predictionlist.csv")
     with open(specdir / "predictionlist.csv", "w") as fh:
