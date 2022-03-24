@@ -195,7 +195,7 @@ def test_check_classlist_length1(tmpdir):
 def test_check_classlist_length2(tmpdir):
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
-    spec = SpecVerifier.demo(num_to_produce=3)
+    spec = SpecVerifier.demo(num_to_produce=5)
     # manually set number to name longer than classlist
     spec.spec["numberToName"] = 5
 
