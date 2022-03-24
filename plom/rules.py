@@ -15,12 +15,15 @@ def isValidUBCStudentNumber(n):
     try:
         sid = int(str(n))
     except:  # noqa: E722
-        return False
+        return (False, f"SID '{n}' is not an integer")
     if sid < 0:
-        return False
+        return (False, f"SID '{n}' is negative")
     if len(str(n)) != StudentIDLength:
-        return False
-    return True
+        return (
+            False,
+            f"SID '{n}' has incorrect length - expecting {StudentIDLength} digits",
+        )
+    return (True, "")
 
 
 def is_z_padded_integer(n):
@@ -30,15 +33,18 @@ def is_z_padded_integer(n):
     """
     de_z = n.replace("z", "0").replace("Z", "0")
     if len(de_z) != StudentIDLength:
-        return False
+        return (
+            False,
+            f"SID {n} has incorrect length - expecting {StudentIDLength} digits",
+        )
     try:
         sid = int(str(de_z))
     except:  # noqa: E722
-        return False
+        return (False, f"SID {n} is not a z-padded integer")
     if sid < 0:
-        return False
+        return (False, f"SID {n} is a negative z-padded integer")
 
-    return True
+    return (True, "")
 
 
 def censorStudentNumber(n):
@@ -58,7 +64,21 @@ def censorStudentName(s):
     return r
 
 
-def isValidStudentNumber(n):
-    """Check if is either a valid UBC SID or a z-padded int of correct length."""
+def validateStudentNumber(n):
+    """Check if is either a valid UBC SID or a z-padded int of correct length, and return any errors."""
+    s, msg1 = isValidUBCStudentNumber(n)
+    if s:
+        # is valid UBC SID.
+        return s, msg1
+    else:  # Could still be z-padded int
+        s, msg2 = is_z_padded_integer(n)
+        if s:
+            return (s, msg2)
+        else:
+            return (s, msg1 + ", ", msg2)
 
-    return isValidUBCStudentNumber(n) or is_z_padded_integer(n)
+
+def isValidStudentNumber(n):
+    """Check if is either a valid UBC SID or a z-padded int of correct length. Ignores any error messages"""
+
+    return isValidUBCStudentNumber(n)[0] or is_z_padded_integer(n)[0]
