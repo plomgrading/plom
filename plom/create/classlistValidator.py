@@ -34,6 +34,8 @@ potential_column_names = [
 
 
 class PlomCLValidator:
+    """The Plom Classlist Validator has methods to help ensure compatible classlists."""
+
     def __init__(
         self,
     ):
@@ -92,8 +94,6 @@ class PlomCLValidator:
             list: If errors then return [False, error-list],
                 if single name column then [True, 'id', 'studentName'] ,
                 if surname/given name column then [True, "id", surname_key, given_name_key]
-
-
         """
         theKeys = rowFromDict.keys()
         casefoldKeyList = [x.casefold() for x in theKeys]
@@ -210,10 +210,24 @@ class PlomCLValidator:
 
     def validate_csv(self, filename, spec=None):
         """
-        Validate the classlist csv and return (True, []) or (False, warnings_and_errors)
-        If spec given then run tests against that too.
-        """
+        Validate the classlist csv and return summaries of any errors and warnings.
 
+        Args:
+            filename (str/pathlib.Path): a csv file from which to try to
+                load the classlist.
+
+        Keyword Args:
+            spec (None/dict/SpecVerifier): an optional test specification,
+                 if given then run additional classlist-related tests.
+
+        Returns:
+            tuple: ``(ok, warnings_and_errors)`` where ``ok`` is either
+            `True` or `False` and ``warnings_and_errors`` is a list of
+            dicts.  Each dict encodes a single warning or an error: see
+            doc for precise format.  It is possible for ``ok`` to be True
+            and still have non-empty ``warnings_and_errors`` for example
+            when there are only warnings.
+        """
         try:
             cl_as_dicts = self.readClassList(filename)
         except FileNotFoundError:
