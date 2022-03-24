@@ -1097,11 +1097,60 @@ class ManagerMessenger(BaseMessenger):
         finally:
             self.SRmutex.release()
 
-    def IDrunPredictions(self, top, bottom, ignoreTimeStamp):
+    def run_predictor(self):
+        """Match the results of the id digit reader with unidentified papers.
+
+        Returns:
+            str: status information about the solve.
+
+        Raises:
+            PlomAuthenticationException:
+            PlomConflict: failed, in a non-fatal way, message explains more.
+        """
+        with self.SRmutex:
+            try:
+                # increase timeout as unsure how long this will take on real data
+                timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
+                response = self.post(
+                    "/ID/predictedID",
+                    json={
+                        "user": self.user,
+                        "token": self.token,
+                    },
+                    timeout=timeout,
+                )
+                response.raise_for_status()
+                return response.text
+            except requests.HTTPError as e:
+                if response.status_code == 401:
+                    raise PlomAuthenticationException() from None
+                if response.status_code == 403:
+                    raise PlomAuthenticationException(response.reason) from None
+                if response.status_code == 406:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 409:
+                    raise PlomConflict(response.reason) from None
+                if response.status_code == 412:
+                    raise PlomConflict(response.reason) from None
+                raise PlomSeriousException(f"Some other sort of error {e}") from None
+
+    def run_id_reader(self, top, bottom, ignoreTimeStamp):
+        """Runs the id digit reader on the ID pages of all papers.
+
+        Returns:
+            list: ``[True, True]`` ID reader was (probably) started.
+                ``[True, False]`` ID reader is still running OR has
+                crashed (unfortunately we cannot yet tell difference)
+                ``[False, last_time]`` ID reader was previously run,
+                where ``last_time`` is a time-stamp.
+
+        Raises:
+            PlomAuthenticationException:
+        """
         self.SRmutex.acquire()
         try:
             response = self.post(
-                "/ID/predictedID",
+                "/ID/run_id_reader",
                 json={
                     "user": self.user,
                     "token": self.token,

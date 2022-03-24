@@ -830,9 +830,22 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="predictButton">
+                    <widget class="QPushButton" name="machineReadButton">
+                     <property name="toolTip">
+                      <string>Maachine read the digits from the ID pages</string>
+                     </property>
                      <property name="text">
-                      <string>Run predictions</string>
+                      <string>Recognize digits in IDs</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="predictButton">
+                     <property name="toolTip">
+                      <string>Predict IDs by matching unID'd papers with machine-read digits</string>
+                     </property>
+                     <property name="text">
+                      <string>Predict IDs</string>
                      </property>
                     </widget>
                    </item>
@@ -1635,7 +1648,7 @@
   <tabstop>subsPageB</tabstop>
   <tabstop>overallTW</tabstop>
   <tabstop>papersLE</tabstop>
-  <tabstop>predictButton</tabstop>
+  <tabstop>machineReadButton</tabstop>
   <tabstop>delPredButton</tabstop>
   <tabstop>predictionTW</tabstop>
   <tabstop>scrollArea</tabstop>

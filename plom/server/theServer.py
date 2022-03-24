@@ -150,7 +150,8 @@ class Server:
         ID_id_paper,
         IDdeletePredictions,
         IDputPredictions,
-        IDrunPredictions,
+        predict_id_lap_solver,
+        run_id_reader,
         IDreviewID,
     )
     from .plomServer.serverMark import (

@@ -54,6 +54,38 @@ def IDcountIdentified(self):
         return 0
 
 
+def IDgetIdentifiedTests(self):
+    """All tests in which the ID page is scanned and student has been identified."""
+    try:
+        stuff = (
+            IDGroup.select()
+            .join(Group)
+            .where(
+                Group.scanned == True,  # noqa: E712
+                IDGroup.identified == True,  # noqa: E712
+            )
+        )
+    except pw.DoesNotExist:
+        stuff = []
+    return [(x.test.test_number, x.student_id, x.student_name) for x in stuff]
+
+
+def IDgetUnidentifiedTests(self):
+    """All tests in which the ID page is scanned but the student is not yet identified."""
+    try:
+        stuff = (
+            IDGroup.select()
+            .join(Group)
+            .where(
+                Group.scanned == True,  # noqa: E712
+                IDGroup.identified == False,  # noqa: E712
+            )
+        )
+    except pw.DoesNotExist:
+        stuff = []
+    return [x.test.test_number for x in stuff]
+
+
 def IDgetNextTask(self):
     """Find unid'd test and send test_number to client"""
     with plomdb.atomic():

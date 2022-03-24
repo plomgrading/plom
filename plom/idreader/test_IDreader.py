@@ -11,14 +11,13 @@ import PIL.Image
 from pytest import raises
 
 from plom.misc_utils import working_directory
-from .idReader import calc_log_likelihood, run_id_reader
-from .model_utils import (
-    load_model,
-    is_model_present,
-    download_model,
-    download_or_train_model,
-)
+from .predictStudentID import compute_probabilities
+from .assign_prob import calc_log_likelihood
+from .assign_prob import assemble_cost_matrix, lap_solver
+from .model_utils import download_or_train_model
+from .model_utils import load_model, is_model_present, download_model
 from .predictStudentID import get_digit_box, get_digit_prob
+
 from plom.create.demotools import buildDemoSourceFiles
 from plom.scan import processFileToBitmaps
 from plom.create.scribble_utils import scribble_name_and_id
@@ -129,7 +128,12 @@ def test_get_digit_box(tmpdir):
         id_imgs.append(files[0])
 
     id_imgs = {(k + 1): x for k, x in enumerate(id_imgs)}
+    test_nums = list(range(1, len(id_imgs)))
+    ids = [x["id"] for x in miniclass]
     with working_directory(tmpdir):
-        pred = run_id_reader(id_imgs, 0.15, 0.9, [x["id"] for x in miniclass])
+        probs = compute_probabilities(id_imgs, 0.15, 0.9, 8)
+        cost_matrix = assemble_cost_matrix(test_nums, ids, probs)
+        pred = lap_solver(test_nums, ids, cost_matrix)
+
     for P, S in zip(pred, miniclass):
         assert P[1] == S["id"]
