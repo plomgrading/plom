@@ -314,7 +314,7 @@ def run_id_reader(self, top, bottom, ignore_stamp):
         if ignore_stamp is False:
             with open(timestamp, "r") as fh:
                 txt = json.load(fh)
-                return [False, txt]
+            return [False, txt]
         else:
             os.unlink(timestamp)
 

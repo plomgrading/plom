@@ -493,20 +493,17 @@ class IDHandler:
         if data["user"] != "manager":
             raise web.HTTPForbidden(reason="I only speak to the manager")
 
-        prediction_results = self.server.run_id_reader(
+        is_running, other = self.server.run_id_reader(
             data["crop_top"], data["crop_bottom"], data["ignoreStamp"]
         )
 
-        timestamp_found = prediction_results[0]
-        is_running = prediction_results[1]
-
-        if timestamp_found:  # set running or is running
-            if is_running:
+        if is_running:
+            if other:  # if OUR job started
                 return web.Response(status=200)
-            else:
-                return web.Response(status=202)  # is already running
-        else:  # isn't running because we found a time-stamp
-            return web.Response(text=is_running, status=205)
+            else:  # ... or one was already running
+                return web.Response(status=202)
+        else:  # isn't running (we found a time-stamp, in other)
+            return web.Response(text=other, status=205)
 
     @authenticate_by_token_required_fields(["user"])
     def predict_id_lap_solver(self, data, request):

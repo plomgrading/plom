@@ -1098,7 +1098,7 @@ class ManagerMessenger(BaseMessenger):
             self.SRmutex.release()
 
     def run_predictor(self):
-        """Match Runs the id digit reader on all paper ID pages.
+        """Match the results of the id digit reader with unidentified papers.
 
         Returns:
             str: status information about the solve.
@@ -1135,6 +1135,18 @@ class ManagerMessenger(BaseMessenger):
                 raise PlomSeriousException(f"Some other sort of error {e}") from None
 
     def run_id_reader(self, top, bottom, ignoreTimeStamp):
+        """Runs the id digit reader on the ID pages of all papers.
+
+        Returns:
+            list: ``[True, True]`` ID reader was (probably) started.
+                ``[True, False]`` ID reader is still running OR has
+                crashed (unfortunately we cannot yet tell difference)
+                ``[False, last_time]`` ID reader was previously run,
+                where ``last_time`` is a time-stamp.
+
+        Raises:
+            PlomAuthenticationException:
+        """
         self.SRmutex.acquire()
         try:
             response = self.post(
