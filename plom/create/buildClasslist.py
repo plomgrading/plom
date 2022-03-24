@@ -239,8 +239,13 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
         ignore_warnings (bool): if true, proceed with classlist
             processing even if there are warnings.  Default False.
 
-    Return:
-        list: A list of dicts, each with `"id"` and `"studentName"`.
+    Return: tuple: if successful then "(True, clist)" where clist is a
+        list of dicts each with "id" and "studentName". On failure
+        "(False, warn_err)" where "warn_err" is a list of dicts of
+        warnings and errors. Each dict contains "warn_or_err" which is
+        'warning' or 'error', "werr_line" being the line number at
+        which the error occurs, and 'werr_text' being a string
+        describing the warning/error.
     """
     student_csv_file_name = Path(student_csv_file_name)
     if not student_csv_file_name.exists():
