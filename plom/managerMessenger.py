@@ -1109,12 +1109,15 @@ class ManagerMessenger(BaseMessenger):
         """
         with self.SRmutex:
             try:
+                # increase timeout as unsure how long this will take on real data
+                timeout = (self.default_timeout[0], 5 * self.default_timeout[1])
                 response = self.post(
                     "/ID/predictedID",
                     json={
                         "user": self.user,
                         "token": self.token,
                     },
+                    timeout=timeout,
                 )
                 response.raise_for_status()
                 return response.text
