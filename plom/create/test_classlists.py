@@ -178,19 +178,19 @@ def test_check_classlist_length1(tmpdir):
         # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1'},
         # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2'}
         # ]
-
-        # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2'}
-        print(success, warn_err)
         assert success
-        assert warn_err[0]["werr_line"] == 0
-        assert warn_err[1]["werr_line"] == 0
+        for x in warn_err:
+            assert x["warn_or_err"] == "warning"
+            assert x["werr_line"] == 0
+        warning_msgs = set(x["werr_text"] for x in warn_err)
+        # Issue #927
         assert (
-            warn_err[0]["werr_text"]
-            == "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1"
+            "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1"
+            in warning_msgs
         )
         assert (
-            warn_err[1]["werr_text"]
-            == "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2"
+            "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2"
+            in warning_msgs
         )
 
 

@@ -76,7 +76,7 @@ def clean_non_canvas_csv(csv_file_name):
         # make sure id column named 'id' - lowercase
         print(f"Renaming column {one_name_column} to 'studentName'")
         df.rename(columns={one_name_column: "studentName"}, inplace=True)
-        # clean up the column - strip whitespace 
+        # clean up the column - strip whitespace
         df["studentName"].apply(lambda X: str(X).strip())  # avoid errors with blanks
         # print('"studentName" column present')
         # now return only the id and studentName columns
