@@ -19,7 +19,7 @@ from plom.create.classlistValidator import (
     possible_one_name_fields,
     possible_given_name_fields,
     possible_surname_fields,
-    PlomCLValidator,
+    PlomClasslistValidator,
 )
 
 # Note: file is full of pandas warnings, which I think are false positives
@@ -155,7 +155,7 @@ def process_classlist_backend(student_csv_file_name):
 
     # First we check if this csv file is a Canvas output - using the validator
 
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
 
     if vlad.check_is_canvas_csv(student_csv_file_name):
         print("This file looks like it was exported from Canvas")
@@ -246,12 +246,12 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     if not student_csv_file_name.exists():
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
 
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     success, warn_err = vlad.validate_csv(student_csv_file_name, spec=spec)
 
     if success is False:
         # validation failed, return warning, error list
-        print_classlist_warnings_errors(warn_err)
+        PlomClasslistValidator.print_classlist_warnings_errors(warn_err)
         return (False, warn_err)
 
     # validation passed but there are warnings

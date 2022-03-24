@@ -36,7 +36,7 @@ potential_column_names = [
 ]
 
 
-class PlomCLValidator:
+class PlomClasslistValidator:
     """The Plom Classlist Validator has methods to help ensure compatible classlists."""
 
     def __init__(
@@ -73,10 +73,8 @@ class PlomCLValidator:
                 )
                 raise ValueError("No header")
             # now actually read the entries
-            l = 1
             for row in reader:
-                l += 1
-                row["line"] = l
+                row["_src_line"] = reader.line_num
                 classAsDict.append(row)
             # return the list
             return classAsDict
@@ -158,19 +156,19 @@ class PlomCLValidator:
             # will be better when we move to UIDs.
             idv = validateStudentNumber(x["id"])
             if idv[0] is False:
-                err.append([x["line"], idv[1]])
+                err.append([x["_src_line"], idv[1]])
             # check non-trivial length after removing spaces and commas
             tmp = x["studentName"].replace(" ", "").replace(",", "")
             # any other checks?
             if len(tmp) < 2:  # what is sensible here?
-                err.append([x["line"], "Missing name"])
+                err.append([x["_src_line"], "Missing name"])
             # warn if non-latin char present
             try:
                 tmp = x["studentName"].encode("Latin-1")
             except UnicodeEncodeError:
                 warn.append(
                     [
-                        x["line"],
+                        x["_src_line"],
                         f"Non-latin characters - {x['studentName']} - Apologies for the eurocentricity.",
                     ]
                 )
@@ -188,21 +186,21 @@ class PlomCLValidator:
             # will be better when we move to UIDs.
             idv = validateStudentNumber(x["id"])
             if idv[0] is False:
-                err.append([x["line"], idv[1]])
+                err.append([x["_src_line"], idv[1]])
             # check non-trivial length after removing spaces and commas
             tmp = x[surnameKey].replace(" ", "").replace(",", "")
             if len(tmp) < 2:  # what is sensible here?
-                err.append([x["line"], "Missing surname"])
+                err.append([x["_src_line"], "Missing surname"])
             tmp = x[givenNameKey].replace(" ", "").replace(",", "")
             if len(tmp) < 2:  # what is sensible here?
-                err.append([x["line"], "Missing given name"])
+                err.append([x["_src_line"], "Missing given name"])
             # warn if non-latin char present
             try:
                 tmp = (x[surnameKey] + x[givenNameKey]).encode("Latin-1")
             except UnicodeEncodeError:
                 warn.append(
                     [
-                        x["line"],
+                        x["_src_line"],
                         f"Non-latin characters - {x['studentName']} - Apologies for the eurocentricity.",
                     ]
                 )
@@ -390,3 +388,21 @@ class PlomCLValidator:
                 return False
 
         return True
+
+    @classmethod
+    def print_classlist_warnings_errors(cls, warn_err):
+        # separate into warn and err
+        warn = [X for X in warn_err if X["warn_or_err"] == "warning"]
+        err = [X for X in warn_err if X["warn_or_err"] != "warning"]
+        # sort by line number
+        warn.sort(key=lambda X: X["werr_line"])
+        err.sort(key=lambda X: X["werr_line"])
+
+        if warn:
+            print("Classlist validation warnings:")
+            for X in warn:
+                print(f"\tline {X['werr_line']}: {X['werr_text']}")
+        if err:
+            print("Classlist validation errors:")
+            for X in err:
+                print(f"\tline {X['werr_line']}: {X['werr_text']}")

@@ -7,14 +7,14 @@ from pathlib import Path
 
 from plom import SpecVerifier
 
-from .classlistValidator import PlomCLValidator
+from .classlistValidator import PlomClasslistValidator
 from .buildClasslist import clean_non_canvas_csv
 from ..misc_utils import working_directory
 
 
 def test_multi_column_names(tmpdir):
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -30,7 +30,7 @@ def test_multi_column_names(tmpdir):
 
 def test_ok_to_contain_unused_column_names(tmpdir):
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -43,7 +43,7 @@ def test_ok_to_contain_unused_column_names(tmpdir):
 
 def test_only_one_name_column(tmpdir):
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -56,7 +56,7 @@ def test_only_one_name_column(tmpdir):
 
 def test_no_ID_column_fails(tmpdir):
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -70,7 +70,7 @@ def test_no_ID_column_fails(tmpdir):
 def test_casefold_column_names1(tmpdir):
     # for #1140
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -87,7 +87,7 @@ def test_casefold_column_names1(tmpdir):
 def test_casefold_column_names2(tmpdir):
     # for #1140
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -103,7 +103,7 @@ def test_casefold_column_names2(tmpdir):
 def test_missing_student_info1(tmpdir):
     # testing for #1314
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -131,7 +131,7 @@ def test_missing_student_info1(tmpdir):
 def test_missing_student_info2(tmpdir):
     # testing for #1314
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     with working_directory(tmpdir):
         foo = tmpdir / "foo.csv"
         with open(foo, "w") as f:
@@ -161,7 +161,7 @@ def test_missing_student_info2(tmpdir):
 def test_check_classlist_length1(tmpdir):
     # Issue #927
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     spec = SpecVerifier.demo(num_to_produce=2)
     # by default spec names half, ie 1, so this will return a warning.
 
@@ -194,7 +194,7 @@ def test_check_classlist_length1(tmpdir):
 
 def test_check_classlist_length2(tmpdir):
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     spec = SpecVerifier.demo(num_to_produce=5)
     # manually set number to name longer than classlist
     spec.spec["numberToName"] = 5
@@ -218,7 +218,7 @@ def test_check_classlist_length2(tmpdir):
 
 def test_check_classlist_length3(tmpdir):
     tmpdir = Path(tmpdir)
-    vlad = PlomCLValidator()
+    vlad = PlomClasslistValidator()
     spec = SpecVerifier.demo(num_to_produce=3)
     # manually set number to name longer than classlist
     spec.spec["numberToName"] = 2
