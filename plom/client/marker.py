@@ -57,6 +57,7 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
+    PlomForceLogoutException,
     PlomConflict,
     PlomException,
     PlomNoSolutionException,
@@ -1223,7 +1224,7 @@ class MarkerClient(QWidget):
             # This would avoid seeing the crash dialog...
             # import sys
             # sys.exit(58)
-            raise PlomSeriousException("Manager changed task") from ex
+            raise PlomForceLogoutException("Manager changed task") from ex
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
@@ -2018,7 +2019,7 @@ class MarkerClient(QWidget):
         # This would avoid seeing the crash dialog...
         # import sys
         # sys.exit(57)
-        raise PlomSeriousException(
+        raise PlomForceLogoutException(
             "Server changed under us: {}".format(error_message)
         ) from None
 

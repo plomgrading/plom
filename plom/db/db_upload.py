@@ -146,9 +146,10 @@ def replaceMissingTestPage(
     if tref is None:
         return [False, "Cannot find that test"]
     # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
+    # TODO - delete this for fix of #1829
+    # owners = self.testOwnersLoggedIn(tref)
+    # if owners:
+    # return [False, "owners", owners]
 
     # we can actually just call uploadTPage - we just need to set the bundle_name and bundle_order.
     # hw is different because we need to verify no hw pages present already.
@@ -342,9 +343,10 @@ def replaceMissingHWQuestion(self, sid, question, original_name, file_name, md5)
         return [False, "SID does not correspond to any test on file."]
     tref = iref.test
     # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
+    # remove this for test of #1829
+    # owners = self.testOwnersLoggedIn(tref)
+    # if owners:
+    # return [False, "owners", owners]
 
     qref = QGroup.get_or_none(test=tref, question=question)
     if qref is None:  # should not happen.
@@ -881,9 +883,10 @@ def removeScannedTestPage(self, test_number, page_number):
     if tref is None:
         return [False, "testError", f"Cannot find test {test_number}"]
     # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
+    # TODO - delete this for fix of #1829
+    # owners = self.testOwnersLoggedIn(tref)
+    # if owners:
+    # return [False, "owners", owners]
     pref = tref.tpages.where(TPage.page_number == page_number).first()
     if pref is None:
         log.warn(f"Cannot find t-page {page_number} of test {test_number}.")
@@ -920,9 +923,10 @@ def removeScannedHWPage(self, test_number, question, order):
     if tref is None:
         return [False, "testError", f"Cannot find test {test_number}"]
     # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
+    # TODO - delete this for fix of #1829
+    # owners = self.testOwnersLoggedIn(tref)
+    # if owners:
+    # return [False, "owners", owners]
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
@@ -961,9 +965,10 @@ def removeScannedEXPage(self, test_number, question, order):
     if tref is None:
         return [False, "testError", f"Cannot find test {test_number}"]
     # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
+    # TODO - delete this for fix of #1829
+    # owners = self.testOwnersLoggedIn(tref)
+    # if owners:
+    # return [False, "owners", owners]
 
     qref = tref.qgroups.where(QGroup.question == question).first()
     if qref is None:
@@ -1001,9 +1006,10 @@ def removeAllScannedPages(self, test_number):
     if tref is None:
         return [False, "testError", f"Cannot find test {test_number}"]
     # check if all owners of tasks in that test are logged out.
-    owners = self.testOwnersLoggedIn(tref)
-    if owners:
-        return [False, "owners", owners]
+    # remove this for fix of #1829
+    # owners = self.testOwnersLoggedIn(tref)
+    # if owners:
+    # return [False, "owners", owners]
 
     with plomdb.atomic():
         # move all tpages to discards
