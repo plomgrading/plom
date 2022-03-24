@@ -16,6 +16,7 @@ their work.  But the precise relationship between this work and questions
 in the exam is less clear.  For these, see :py:module:`frontend_hwscan`.
 """
 
+import logging
 from pathlib import Path
 
 import toml
@@ -43,6 +44,9 @@ from plom.scan.bundle_utils import (
 )
 from plom.scan.scansToImages import process_scans
 from plom.scan import readQRCodes
+
+
+log = logging.getLogger("scan")
 
 
 def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
@@ -75,6 +79,7 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
     pdf_fname = Path(pdf_fname)
     bundle_name, md5 = bundle_name_and_md5_from_file(pdf_fname)
 
+    new_bundle = True
     print(f'Checking if bundle "{bundle_name}" already exists on server')
     exists, reason = does_bundle_exist_on_server(bundle_name, md5, msgr=msgr)
     if exists:
@@ -89,13 +94,26 @@ def processScans(pdf_fname, *, msgr, gamma=False, extractbmp=False, demo=False):
             )
             return
         elif reason == "both":
-            print(
-                f'Warning - bundle "{bundle_name}" has been declared previously - you are likely trying again as a result of a crash. Continuing'
-            )
+            new_bundle = False
         else:
             raise RuntimeError("Should not be here: unexpected code path!")
 
     bundledir = get_bundle_dir(bundle_name)
+
+    logfile = bundledir / "processing.log"
+    print(f"Logging details to {logfile}")
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)5s:%(name)s\t%(message)s",
+        datefmt="%b%d %H:%M:%S %Z",
+        filename=logfile,
+    )
+    logging.getLogger().setLevel("INFO")
+    if new_bundle:
+        log.info(f'Starting processing new bundle "{bundle_name}", {md5}')
+    else:
+        m = f'bundle "{bundle_name}" {md5} previously declared: you are likely trying again after a crash.'
+        print(f"Warning {m}")
+        log.warning(m)
 
     with open(bundledir / "source.toml", "w") as f:
         toml.dump({"file": str(pdf_fname), "md5": md5}, f)

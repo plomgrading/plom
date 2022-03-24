@@ -5,6 +5,7 @@
 # Copyright (C) 2020 Victoria Schuster
 # Copyright (C) 2020 Andreas Buttenschoen
 
+import logging
 from pathlib import Path
 import shutil
 import subprocess
@@ -22,6 +23,9 @@ from plom import PlomImageExts
 from plom import ScenePixelHeight
 from plom.scan.rotate import normalizeJPEGOrientation
 from plom.scan.bundle_utils import make_bundle_dir
+
+
+log = logging.getLogger("scan")
 
 
 def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=False):
@@ -106,15 +110,17 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             if not r:
                 msgs.append(d)
             else:
-                print(
-                    '{}: Extracted "{}" from single-image page w={} h={}'.format(
-                        basename, d["ext"], d["width"], d["height"]
-                    )
+                log.info(
+                    '%s: Extracted "%s" from single-image page %sx%s',
+                    basename,
+                    d["ext"],
+                    d["width"],
+                    d["height"],
                 )
                 converttopng = False
                 if d["ext"].lower() not in PlomImageExts:
                     converttopng = True
-                    print(f"  {d['ext']} format not in allowlist: transcoding to PNG")
+                    log.info(f"  {d['ext']} not in allowlist: transcoding to PNG")
 
                 if not converttopng:
                     outname = dest / (basename + "." + d["ext"])
@@ -174,9 +180,12 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             z = (float(H) - 0.0001) / p.mediabox_size[1]
         # # For testing, choose widely varying random sizes
         # z = random.uniform(1, 5)
-        print(f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs))
+        log.info(
+            f"{basename}: Fitz render z={z:4.2f}. No extract b/c: " + "; ".join(msgs)
+        )
         pix = p.get_pixmap(matrix=fitz.Matrix(z, z), annots=True)
         if not (W == pix.width or H == pix.height):
+            # TODO: log.warn?
             warn(
                 "Debug: some kind of rounding error in scaling image?"
                 f" Rendered to {pix.width}x{pix.height} from target {W}x{H}"
@@ -199,7 +208,7 @@ def processFileToBitmaps(file_name, dest, *, do_not_extract=False, debug_jpeg=Fa
             r = random.choice([None, None, None, 3, 6, 8])
             if r:
                 msgs.append(f"exif rotate {r}")
-            print("  Randomly making jpeg " + ", ".join(msgs))
+            log.info("  Randomly making jpeg " + ", ".join(msgs))
             img.save(outname, "JPEG", quality=quality, optimize=True)
             if r:
                 im = exif.Image(outname)

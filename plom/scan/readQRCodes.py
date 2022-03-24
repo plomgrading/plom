@@ -4,10 +4,11 @@
 
 from collections import defaultdict
 import json
-import os
-import shutil
+import logging
 from multiprocessing import Pool
+import os
 from pathlib import Path
+import shutil
 
 from tqdm import tqdm
 
@@ -22,6 +23,9 @@ from plom.scan import with_scanner_messenger
 from plom.scan import QRextract
 from plom.scan.rotate import rotateBitmap
 from plom import PlomImageExts
+
+
+log = logging.getLogger("scan")
 
 
 def decode_QRs_in_image_files(where):
@@ -217,10 +221,9 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
         if not problemFlag:
             # we have a valid TGVC and the code matches.
             if warnFlag:
-                print("[W] {0}: {1}".format(fname, msg))
-                print(
-                    "   (high occurrences of these warnings may mean printer/scanner problems)"
-                )
+                explain = "(high occurrences of these warnings may mean printer/scanner problems)"
+                print(f"[W] {fname}: {msg}\n    {explain}")
+                log.warn(f"[W] {fname}: {msg}\n    {explain}")
             # store the tpv in examsScannedNow
             examsScannedNow[fname] = [tn, pn, vn]
             # later we check that list against those produced during build
@@ -234,7 +237,8 @@ def checkQRsValid(bundledir, spec, examsScannedNow):
             )  # pref = "bname/pageImages", suf = blah-n.png
             dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
 
-            print("[F] {0}: {1} - moving to unknownPages".format(fname, msg))
+            print(f"[F] {fname}: {msg}  Moving to unknownPages")
+            log.warn(f"[F] {fname}: {msg}  Moving to unknownPages")
             # move blah.<ext> and blah.<ext>.qr
             shutil.move(fname, dst)
             # TODO: better with some `.with_suffix()` juggling
@@ -262,6 +266,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
         if not flag:
             print(">> Mismatch between page scanned and spec - this should NOT happen")
             print(f">> Produced t{t} p{p} v{v}")
+            # TODO: Issue #1745
             print(
                 ">> Must have t-code in [1,{}], p-code in [1,{}], v-code in [1,{}]".format(
                     spec["numberToProduce"],
@@ -270,6 +275,7 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
                 )
             )
             print(">> Moving problem files to unknownPages")
+            print(f"[F] {fname}: moving to unknownPages")
             # fname =  bname/pageImages/blah-n.png
             # dst = bname/unknownPages/blah-n.png
             [prefix, suffix] = os.path.split(
@@ -277,7 +283,6 @@ def validateQRsAgainstSpec(spec, examsScannedNow):
             )  # pref = "bname/pageImages", suf = blah-n.png
             dst = os.path.join(os.path.split(prefix)[0], "unknownPages", suffix)
 
-            print(f"[F] {fname}: moving to unknownPages")
             # move the blah.<ext> and blah.<ext>.qr
             # this means that they won't be added to the
             # list of correctly scanned page images
