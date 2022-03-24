@@ -4,6 +4,8 @@
 from pytest import raises
 from pathlib import Path
 
+from plom import SpecVerifier
+
 from .classlistValidator import PlomCLValidator
 from .buildClasslist import clean_non_canvas_csv
 from ..misc_utils import working_directory
@@ -161,8 +163,6 @@ def test_missing_student_info2(tmpdir):
 def test_check_classlist_length1(tmpdir):
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
-    from plom import SpecVerifier
-
     spec = SpecVerifier.demo(num_to_produce=2)
     # by default spec names half, ie 1, so this will return a warning.
 
@@ -197,8 +197,6 @@ def test_check_classlist_length1(tmpdir):
 def test_check_classlist_length2(tmpdir):
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
-    from plom import SpecVerifier
-
     spec = SpecVerifier.demo(num_to_produce=3)
     # manually set number to name longer than classlist
     spec.spec["numberToName"] = 5
@@ -225,8 +223,6 @@ def test_check_classlist_length2(tmpdir):
 def test_check_classlist_length3(tmpdir):
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
-    from plom import SpecVerifier
-
     spec = SpecVerifier.demo(num_to_produce=3)
     # manually set number to name longer than classlist
     spec.spec["numberToName"] = 2
