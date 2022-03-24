@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Copyright (C) 2021-2022 Colin B. Macdonald
+# Copyright (C) 2022 Andrew Rechnitzer
+# Copyright (C) 2022 Colin B. Macdonald
 
 from pytest import raises
 from pathlib import Path
@@ -114,10 +115,8 @@ def test_missing_student_info1(tmpdir):
 
         assert vlad.check_is_non_canvas_csv(foo)
         df = clean_non_canvas_csv(foo)
-        print(">>>>> ", df.columns)
         assert set(df.columns) == set(("id", "studentName"))
         success, warn_err = vlad.validate_csv(foo, spec=None)
-        print(f"Found errors = {success}, {warn_err}")
         assert not success
         # should see errors on lies 3,4,5
         # [
@@ -147,7 +146,6 @@ def test_missing_student_info2(tmpdir):
         df = clean_non_canvas_csv(foo)
         assert set(df.columns) == set(("id", "studentName"))
         success, warn_err = vlad.validate_csv(foo, spec=None)
-        print(f"Found errors = {success}, {warn_err}")
         assert not success
         # should see errors on lies 3,4,5,6
         # [
@@ -161,6 +159,7 @@ def test_missing_student_info2(tmpdir):
 
 
 def test_check_classlist_length1(tmpdir):
+    # Issue #927
     tmpdir = Path(tmpdir)
     vlad = PlomCLValidator()
     spec = SpecVerifier.demo(num_to_produce=2)
@@ -174,24 +173,23 @@ def test_check_classlist_length1(tmpdir):
             f.write('12345679,"Doer"\n')
             f.write('12345680,"Doerr"\n')
         success, warn_err = vlad.validate_csv(foo, spec=spec)
-        # should get [
-        # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1'},
-        # {'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2'}
-        # ]
         assert success
-        for x in warn_err:
-            assert x["warn_or_err"] == "warning"
-            assert x["werr_line"] == 0
-        warning_msgs = set(x["werr_text"] for x in warn_err)
-        # Issue #927
-        assert (
-            "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1"
-            in warning_msgs
-        )
-        assert (
-            "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2"
-            in warning_msgs
-        )
+        expected = [
+            {
+                "warn_or_err": "warning",
+                "werr_line": 0,
+                "werr_text": "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 1",
+            },
+            {
+                "warn_or_err": "warning",
+                "werr_line": 0,
+                "werr_text": "Classlist is long. Classlist contains 3 names, but spec:numberToProduce is 2",
+            },
+        ]
+        # here the ordering of the list is not important
+        assert warn_err[0] in expected
+        assert warn_err[1] in expected
+        assert len(warn_err) == 2
 
 
 def test_check_classlist_length2(tmpdir):
@@ -209,15 +207,13 @@ def test_check_classlist_length2(tmpdir):
             f.write('12345679,"Doer"\n')
             f.write('12345680,"Doerr"\n')
         success, warn_err = vlad.validate_csv(foo, spec=spec)
-        print(success, warn_err)
-        # should get
-        #  [{'warn_or_err': 'error', 'werr_line': 0, 'werr_text': 'Classlist is too short. Classlist contains 3 names, but spec:numberToName is 5'}]
         assert not success
-        assert warn_err[0]["werr_line"] == 0
-        assert (
-            warn_err[0]["werr_text"]
-            == "Classlist is too short. Classlist contains 3 names, but spec:numberToName is 5"
-        )
+        assert warn_err[0] == {
+            "warn_or_err": "error",
+            "werr_line": 0,
+            "werr_text": "Classlist is too short. Classlist contains 3 names, but spec:numberToName is 5",
+        }
+        assert len(warn_err) == 1
 
 
 def test_check_classlist_length3(tmpdir):
@@ -235,12 +231,10 @@ def test_check_classlist_length3(tmpdir):
             f.write('12345679,"Doer"\n')
             f.write('12345680,"Doerr"\n')
         success, warn_err = vlad.validate_csv(foo, spec=spec)
-        print(success, warn_err)
-        # should get
-        # [{'warn_or_err': 'warning', 'werr_line': 0, 'werr_text': 'Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2'}]
         assert success
-        assert warn_err[0]["werr_line"] == 0
-        assert (
-            warn_err[0]["werr_text"]
-            == "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2"
-        )
+        assert warn_err[0] == {
+            "warn_or_err": "warning",
+            "werr_line": 0,
+            "werr_text": "Classlist is longer than numberToName. Classlist contains 3 names, but spec:numberToName is 2",
+        }
+        assert len(warn_err) == 1
