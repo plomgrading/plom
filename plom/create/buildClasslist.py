@@ -209,7 +209,6 @@ def get_demo_classlist(spec):
     success, clist = process_classlist_file(f, spec, ignore_warnings=True)
 
     if success is False:
-        print(">>>", success, clist)
         raise ValueError(
             f"Something has gone seriously wrong with the demo classlist - {clist}."
         )
@@ -246,9 +245,6 @@ def process_classlist_file(student_csv_file_name, spec, *, ignore_warnings=False
     student_csv_file_name = Path(student_csv_file_name)
     if not student_csv_file_name.exists():
         raise FileNotFoundError(f'Cannot find file "{student_csv_file_name}"')
-
-    # run the validator
-    from .classlistValidator import PlomCLValidator
 
     vlad = PlomCLValidator()
     success, warn_err = vlad.validate_csv(student_csv_file_name, spec=spec)
