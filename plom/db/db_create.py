@@ -211,7 +211,7 @@ def createDNMGroup(self, t, pages):
                 queue_position=self.nextqueue_position(),
             )
         except pw.IntegrityError as e:
-            log.error("Create DNM - cannot make Group %s of Test %s - %s", gid, t, e)
+            log.error("Create DNM - cannot make Group for %s - %s", gid, e)
             return False
         try:
             dref = DNMGroup.create(test=tref, group=gref)
