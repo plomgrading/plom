@@ -323,16 +323,6 @@ def moveUnknownToExtraPage(self, file_name, test_number, questions):
     if tref is None:
         return (False, "notfound", f"Cannot find test {test_number}")
 
-    # check if all owners of tasks in that test are logged out.
-    # TODO - remove this code for #1829 - put onus on client to handle
-    # changes to tasks.
-    # owners = self.testOwnersLoggedIn(tref)
-    # if owners:
-    #     msg = f"Cannot move unknown {file_name} to extra page b/c"
-    #     msg += " owners of tasks in that test are logged in: "
-    #     msg += ", ".join(owners)
-    #     return (False, "owners", msg)
-
     qref_list = []
     fails = []
     for question in questions:

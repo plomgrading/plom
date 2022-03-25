@@ -25,6 +25,7 @@ import tempfile
 from textwrap import shorten
 import time
 import threading
+import sys
 
 # in order to get shortcuts under OSX this needs to set this.... but only osx.
 import platform
@@ -57,7 +58,6 @@ from plom.plom_exceptions import (
     PlomTakenException,
     PlomTaskChangedError,
     PlomTaskDeletedError,
-    PlomForceLogoutException,
     PlomConflict,
     PlomException,
     PlomNoSolutionException,
@@ -1219,7 +1219,8 @@ class MarkerClient(QWidget):
                 "may need to be remarked.</p>\n\n"
                 '<p>Specifically, the server says: "{}"</p>\n\n'
                 "<p>This is a rare situation; just in case, we'll now force a "
-                "shutdown of your client.  Sorry.</p>".format(task, str(ex))
+                "shutdown of your client.  Sorry.</p>"
+                "<p>Please log back in and continue marking.</p>".format(task, str(ex))
             ).exec_()
             # Log out the user and then raise an exception
             try:
@@ -1227,7 +1228,9 @@ class MarkerClient(QWidget):
             except PlomAuthenticationException:
                 log.warn("User tried to logout but was already logged out.")
                 pass
-            raise PlomForceLogoutException("Manager changed task") from ex
+            # exit with code that is not 0 or 1
+            sys.exit(57)
+            # raise PlomForceLogoutException("Manager changed task") from ex
 
         # Not yet easy to use full_pagedata to build src_img_data (e.g., "included"
         # column means different things).  Instead, extract from .plom file.
@@ -2017,7 +2020,10 @@ class MarkerClient(QWidget):
             "your annotations have been discarded just in case.  You will be "
             "asked to redo the task later.</p>\n\n"
             "<p>For now you've been logged out and we'll now force a shutdown "
-            "of your client.  Sorry.</p>".format(task, error_message)
+            "of your client.  Sorry.</p>"
+            "<p>Please log back in and continue marking.</p>".format(
+                task, error_message
+            )
         ).exec_()
         # Log out the user and then raise an exception
         try:
@@ -2025,9 +2031,11 @@ class MarkerClient(QWidget):
         except PlomAuthenticationException:
             log.warn("User tried to logout but was already logged out.")
             pass
-        raise PlomForceLogoutException(
-            "Server changed under us: {}".format(error_message)
-        ) from None
+        # exit with code that is not 0 or 1
+        sys.exit(57)
+        # raise PlomForceLogoutException(
+        # "Server changed under us: {}".format(error_message)
+        # ) from None
 
     def backgroundUploadFailed(self, task, errmsg):
         """An upload has failed, we don't know why, do something LOUDLY.

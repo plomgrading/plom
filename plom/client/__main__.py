@@ -25,7 +25,6 @@ from plom import __version__
 from plom import Default_Port
 from plom.client import Chooser
 from plom.client.useful_classes import ErrorMsg, WarningQuestion
-from plom.plom_exceptions import PlomForceLogoutException
 
 
 def add_popup_to_toplevel_exception_handler():
@@ -41,20 +40,6 @@ def add_popup_to_toplevel_exception_handler():
             abbrev = "".join(lines)
         lines.insert(0, f"Timestamp: {datetime.now()}\n\n")
 
-        # check to see if a force-logout exception called
-        if exctype == PlomForceLogoutException:
-            txt = """<p><b>The Plom system has logged you out.</b></p>
-            <p>This has happened because the manager has changed the task you were working on</p>
-            <p>This should only happen on very rare occasions and no data loss has occurred.</p>
-            <p>Please log back in and continue marking.</p>
-            """
-            msg = ErrorMsg(None, txt)
-            msg.setIcon(QMessageBox.Warning)
-            msg.exec_()
-            # now exit quietly
-            sys.exit(1)
-
-        # otherwise return "unexcepted" exception message.
         txt = """<p><b>Something unexpected has happened!</b>
         A partial error message is shown below.</p>
         <p>(You could consider filing an issue; if you do, please copy-paste
